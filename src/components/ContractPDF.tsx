@@ -18,10 +18,10 @@ export const ContractPDF: React.FC = () => {
     <div id="contract-pdf-wrapper" style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '800px' }}>
       
       {/* ===================== PAGINA 1 ===================== */}
-      <div className="pdf-page relative bg-white text-black pt-28 pb-12 px-12 w-[800px] h-[1131px] font-sans flex flex-col text-justify overflow-hidden border-b-2 border-gray-100">
+      <div className="pdf-page relative bg-white text-black pt-28 pb-32 px-12 w-[800px] h-[1131px] font-sans flex flex-col text-justify overflow-hidden border-b-2 border-gray-100">
         <WatermarkAndLogos />
 
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-col h-full">
           <div className="text-right mb-8 border-b-2 border-ecar-blue pb-4">
              <h1 className="text-xl font-black text-gray-900 tracking-tight">CONTRATO PROVISORIO</h1>
              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sujeto a modificaciones de mutuo acuerdo</p>
@@ -33,7 +33,7 @@ export const ContractPDF: React.FC = () => {
             A los efectos del presente pre-acuerdo de servicios, entre <strong>GROW LABS</strong> (en adelante "El Desarrollador"), legal y operativamente representado por <strong>Lucas Marinero (DNI: 37.298.023)</strong>, y por la otra parte el Sr. <strong>Gustavo Regalado</strong> en representación de su entidad corporativa o personería física correspondiente (en adelante "El Cliente"), convienen celebrar este instrumento sujeto a las cláusulas comerciales, técnicas y operacionales detalladas a continuación:
           </p>
 
-          <div className="space-y-6">
+          <div className="space-y-6 flex-grow">
             <div>
               <h3 className="font-bold text-sm text-gray-900 mb-2 border-l-4 border-ecar-blue pl-2 bg-blue-50/50 py-1">CLÁUSULA PRIMERA: Objeto Fundamental</h3>
               <p className="text-[13px] leading-relaxed mb-2 text-gray-700">
@@ -65,13 +65,6 @@ export const ContractPDF: React.FC = () => {
                 <li><strong>Trazabilidad de Nube (Commits):</strong> El Cliente podrá corroborar los "Git Commits" en el repositorio para validar el avance palpable del producto software.</li>
               </ul>
             </div>
-            
-            <div>
-              <h3 className="font-bold text-sm text-gray-900 mb-2 border-l-4 border-ecar-blue pl-2 bg-blue-50/50 py-1">CLÁUSULA CUARTA: Metodología Agile</h3>
-              <p className="text-[13px] leading-relaxed mb-2 text-gray-700">
-                El desarrollo operará sobre <strong>Sprints de quince (15) días corridos</strong>. Al inicio del Sprint se acuerda el submódulo a realizar. A los 15 días, el sistema es subido a pruebas de calidad y el Cliente asume la obligación de probar y entregar feedback oportuno.
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -84,7 +77,11 @@ export const ContractPDF: React.FC = () => {
           <div className="space-y-6">
             
             <div>
-              <p className="text-xs leading-relaxed bg-red-50 p-3 text-red-900 border border-red-200">
+              <h3 className="font-bold text-sm text-gray-900 mb-2 border-l-4 border-ecar-blue pl-2 bg-blue-50/50 py-1">CLÁUSULA CUARTA: Metodología Agile</h3>
+              <p className="text-[13px] leading-relaxed mb-2 text-gray-700">
+                El desarrollo operará sobre <strong>Sprints de quince (15) días corridos</strong>. Al inicio del Sprint se acuerda el submódulo a realizar. A los 15 días, el sistema es subido a pruebas de calidad y el Cliente asume la obligación de probar y entregar feedback oportuno.
+              </p>
+              <p className="text-xs leading-relaxed bg-red-50 p-3 text-red-900 border border-red-200 mt-2">
                 <strong>(Continuación Cláusula 4) Control Anti-Desvíos (Scope Management):</strong> La Bolsa presupone el desarrollo de la hoja de ruta inicial. Si durante la marcha el Cliente detecta nuevas necesidades que alteren profundamente un submódulo o impongan nuevas reglas lógicas extensas, El Desarrollador las ejecutará; no obstante, dichas horas se descontarán del paquete total asumiendo la inhabilitación/cancelación de otros módulos futuros de menor prioridad, hasta que se formalice la compra de anexos.
               </p>
             </div>
