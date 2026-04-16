@@ -27,49 +27,47 @@ export const ProposalModule: React.FC = () => {
 
   const downloadContract = async () => {
     setIsDownloading(true);
-    const element = document.getElementById('contract-pdf-content');
-    if (!element) {
+    const container = document.getElementById('contract-pdf-wrapper');
+    if (!container) {
       setIsDownloading(false);
       return;
     }
     
     try {
       // Temporary un-hide for canvas capture
-      element.style.position = 'static';
+      container.style.position = 'static';
       
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pages = document.querySelectorAll('.pdf-page');
       
-      let heightLeft = pdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      for (let i = 0; i < pages.length; i++) {
+        const pageElement = pages[i] as HTMLElement;
+        const canvas = await html2canvas(pageElement, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        
+        if (i < pages.length - 1) {
+          pdf.addPage();
+        }
       }
       
-      pdf.save('Contrato_Provisorio_ECAR.pdf');
+      pdf.save('Contrato_GrowLabs_ECAR.pdf');
       
     } catch (error) {
       console.error('Error generating PDF', error);
     } finally {
       // Re-hide
-      element.style.position = 'absolute';
-      element.style.left = '-9999px';
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
       setIsDownloading(false);
     }
   };
