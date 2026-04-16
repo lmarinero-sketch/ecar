@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-900 bg-white font-sans min-h-screen relative overflow-x-hidden;
+  }
+}
+
+@layer components {
+  /* Fondo de cuadrícula global (Transcriptor Style) */
+  .bg-grid {
+    @apply bg-grid-pattern fixed inset-0 pointer-events-none z-0 opacity-50;
+    background-size: 40px 40px;
+  }
+
+  /* Cards - Glassmorphism Light */
+  .light-card {
+    @apply bg-white border border-gray-200 rounded-xl transition-all duration-200 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)];
+  }
+  .light-card:hover {
+    @apply border-gray-300 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] -translate-y-1;
+  }
+
+  /* Botones primarios (Azul ECAR) */
+  .btn-primary {
+    @apply bg-ecar-blue text-white rounded-full font-semibold px-4 py-2 transition-all duration-200 shadow-sm flex items-center justify-center gap-2 hover:bg-ecar-blueDark hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  /* Botones secundarios */
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 rounded-full font-semibold px-4 py-2 transition-all duration-200 hover:bg-gray-50 hover:-translate-y-0.5 focus:ring-2 focus:ring-ecar-blue/50;
+  }
+  
+  /* Botones Peligro / Red */
+  .btn-danger {
+    @apply bg-ecar-red text-white rounded-full font-semibold px-4 py-2 transition-all duration-200 shadow-sm hover:bg-red-600 hover:-translate-y-0.5;
+  }
+
+  /* Tablas */
+  .data-table {
+    @apply w-full text-left text-sm text-gray-600;
+  }
+  .data-table th {
+    @apply bg-gray-50 px-4 py-3 font-semibold text-gray-900 border-b border-gray-200 uppercase tracking-wider text-xs;
+  }
+  .data-table td {
+    @apply px-4 py-3 border-b border-gray-100 align-middle;
+  }
+  .data-table tr:hover td {
+    @apply bg-blue-50/50;
+  }
+}
