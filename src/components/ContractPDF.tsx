@@ -1,9 +1,6 @@
 import React from 'react';
 
 export const ContractPDF: React.FC = () => {
-import React from 'react';
-
-export const ContractPDF: React.FC = () => {
   return (
     <div id="contract-pdf-content" className="bg-white text-black p-12 max-w-[800px] w-[800px] font-sans mx-auto text-justify relative" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
       
