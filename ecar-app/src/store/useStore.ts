@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { mockData } from './mockData';
-import type { WbsElement, Warehouse, Item, Asset, Project } from './mockData';
+import type { WbsElement, Asset, Project } from './mockData';
 import { v4 as uuidv4 } from 'uuid';
 
 type State = {
-  activeModule: 'bi' | 'wbs' | 'logistics' | 'field' | 'fleet' | 'certifications' | 'redetermination';
+  activeModule: 'bi' | 'wbs' | 'logistics' | 'field' | 'fleet' | 'certifications' | 'redetermination' | 'finances' | 'accounting' | 'rrhh';
   projects: Project[];
   wbsElements: WbsElement[];
   financialAcopios: typeof mockData.financialAcopios;

@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 export type Tenant = { id: string; name: string };
 export type Project = { id: string; tenantId: string; name: string; status: 'Active' | 'Completed'; budgetARS: number; client: string; location: string };
 export type WbsElement = { id: string; projectId: string; parentId: string | null; name: string; budgetCostARS: number; budgetRevenueARS: number; committedCostARS: number; accruedCostARS: number; progressPct: number; isHardStop?: boolean };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { Activity, Clock, Package, Truck, CheckCircle2, TrendingUp, AlertTriangle, LayoutDashboard } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const timeSeriesData = [
   { name: 'Ene', cost: 120000000, revenue: 150000000, otif: 75 },
@@ -137,12 +137,12 @@ export const BiDashboard: React.FC = () => {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {projectRevenueData.map((entry, index) => (
+                    {projectRevenueData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <RechartsTooltip 
-                    formatter={(value: number) => formatARS(value)}
+                    formatter={(value: any) => formatARS(value)}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
                   />
                   <Legend verticalAlign="bottom" height={36} wrapperStyle={{fontSize: '11px', paddingTop: '10px'}}/>
@@ -173,7 +173,7 @@ export const BiDashboard: React.FC = () => {
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 11}} tickFormatter={(val) => `$${val/1000000}M`} />
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <RechartsTooltip 
-                    formatter={(value: number) => formatARS(value)}
+                    formatter={(value: any) => formatARS(value)}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
                   />
                   <Area type="monotone" dataKey="revenue" name="Facturación" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />

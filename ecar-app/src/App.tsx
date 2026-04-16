@@ -1,4 +1,3 @@
-import React from 'react';
 import { Layout } from './components/Layout';
 import { useStore } from './store/useStore';
 import { BiDashboard } from './components/BiDashboard';

@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useStore } from '../store/useStore';
-import { mockData } from '../store/mockData';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { Search, Bell, ChevronDown, Check, Clock, AlertCircle } from 'lucide-react';
 
@@ -170,7 +168,7 @@ export const LogisticsModule: React.FC = () => {
                {filteredData.length === 0 ? (
                  <tr><td colSpan={7} className="text-center py-8 text-gray-400">No se encontraron resultados</td></tr>
                ) : (
-                 filteredData.map((row, i) => (
+                 filteredData.map((row) => (
                    <tr key={row.id} className="hover:bg-blue-50/50 transition-colors">
                      <td className="px-4 py-3 text-gray-500 font-mono">#{row.id}</td>
                      <td className="px-4 py-3 font-medium text-gray-800">{row.tipo}</td>

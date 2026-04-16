@@ -21,7 +21,7 @@ const mockCheques = [
 ];
 
 export const FinancesModule: React.FC = () => {
-  const [data, setData] = useState(mockCheques);
+  const [data] = useState(mockCheques);
   const [activeTab, setActiveTab] = useState('Todos');
 
   const formatARS = (val: number) => `A$ ${(val).toLocaleString()}`;

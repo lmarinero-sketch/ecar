@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
-import { Calculator, CheckCircle2, FileWarning, Search, FileDown, Receipt, Send } from 'lucide-react';
+import React from 'react';
+import { Calculator, Search, FileDown, Receipt, Send } from 'lucide-react';
 
 const mockInvoices = [
   { id: 'FCA-0001-000124', date: '10/04/2026', client: 'Vialidad Nacional', cuit: '30-50012345-1', caeca: '70213456789012', amountNet: 14000000, iva: 2940000, total: 16940000, status: 'Aprobado ARCA' },

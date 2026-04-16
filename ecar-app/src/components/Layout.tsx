@@ -1,7 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { mockData } from '../store/mockData';
-import { LayoutDashboard, Target, Warehouse, Smartphone, Building2, Truck, FileSignature, Landmark, Calculator, Users } from 'lucide-react';
+import { LayoutDashboard, Target, Warehouse, Smartphone, Truck, FileSignature, Landmark, Calculator, Users } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeModule, setActiveModule } = useStore();
