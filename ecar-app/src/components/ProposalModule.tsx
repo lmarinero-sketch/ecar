@@ -1,0 +1,256 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Handshake, Target, Rocket, CheckCircle2, DollarSign, Clock, ArrowRight, BrainCircuit, BarChart3, Presentation, Users, FileSignature, LineChart as LineChartIcon, ShieldCheck } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+
+const roiData = [
+  { month: 'Mes 1', ahogoOperativo: 100, tiempoAhorrado: 5 },
+  { month: 'Mes 2', ahogoOperativo: 80, tiempoAhorrado: 25 },
+  { month: 'Mes 3', ahogoOperativo: 50, tiempoAhorrado: 60 },
+  { month: 'Mes 4', ahogoOperativo: 30, tiempoAhorrado: 85 },
+  { month: 'Mes 5', ahogoOperativo: 15, tiempoAhorrado: 95 },
+  { month: 'Mes 6', ahogoOperativo: 5, tiempoAhorrado: 120 },
+];
+
+const hoursDistribution = [
+  { name: 'Relevamiento & Discovery', hrs: 30, fill: '#3b82f6' },
+  { name: 'Arquitectura & Base de Datos', hrs: 40, fill: '#14b8a6' },
+  { name: 'Frontend Web & Móvil', hrs: 90, fill: '#8b5cf6' },
+  { name: 'Implementación & Capacit.', hrs: 40, fill: '#f59e0b' },
+];
+
+export const ProposalModule: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-800">
+      
+      {/* Top Fixed Header with Link to Live Demo */}
+      <div className="bg-ecar-blueDark text-white sticky top-0 z-50 shadow-md">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <img src="/logoECAR.png" alt="ECAR Logo" className="h-8 w-auto brightness-0 invert" />
+            <div className="h-6 w-px bg-white/20"></div>
+            <span className="font-medium text-sm tracking-widest text-blue-200 uppercase">Propuesta Comercial</span>
+          </div>
+          <Link to="/" className="bg-[#00FF88] text-black px-5 py-2 rounded font-bold text-sm hover:scale-105 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]">
+            Ir al Simulador (Demo) <ArrowRight size={16}/>
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto w-full px-6 py-12 space-y-12">
+        
+        {/* Cover Section */}
+        <section className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+             <Handshake size={300} />
+           </div>
+           
+           <div className="relative z-10 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold mb-6 border border-blue-200">
+                 <Rocket size={14} /> FASE 1: GESTIÓN DE CONSTRUCCIÓN E INFRAESTRUCTURA
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
+                Propuesta Técnica y Comercial:<br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-teal-500">
+                  Desarrollo de ERP Modular
+                </span>
+              </h1>
+              
+              <div className="flex flex-col gap-2 text-sm text-gray-500 mb-8 font-medium">
+                <p><strong>Atención:</strong> Gustavo Regalado</p>
+                <p><strong>De:</strong> Lucas Marinero – Grow Labs</p>
+                <p><strong>Fecha:</strong> 15 de abril de 2026</p>
+              </div>
+
+              {/* The "Real" Goal Notice */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-6 rounded-r-xl">
+                 <h3 className="font-bold text-amber-900 text-lg flex items-center gap-2 mb-2">
+                   <Target className="text-amber-600" /> Visión Estratégica a Largo Plazo
+                 </h3>
+                 <p className="text-amber-800/80 leading-relaxed text-sm md:text-base">
+                   Esta propuesta contempla una tarifa ultra-preferencial, <strong>por debajo del piso mínimo de mercado para un programador SSR/SR (30-40 USD/hora)</strong>. 
+                   <br/><br/>
+                   El objetivo real de Grow Labs no es obtener rentabilidad inmediata en esta primera fase, sino <strong>sellar una alianza estratégica (Sociedad Conjunta) con Gustavo</strong>. El foco final es empaquetar este tremendo <i>know-how</i> y desarrollar la versión SaaS para facturarlo a múltiples empresas constructoras de la región de manera recurrente.
+                 </p>
+              </div>
+           </div>
+        </section>
+
+        {/* 1. Introducción */}
+        <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative">
+           <h2 className="text-2xl font-bold text-ecar-blue mb-4 flex items-center gap-2"><BrainCircuit /> 1. Introducción y Visión del Proyecto</h2>
+           <p className="text-gray-600 leading-relaxed">
+             La presente propuesta detalla el desarrollo de un sistema de gestión empresarial (ERP) diseñado específicamente para las necesidades operativas de la industria de la construcción, con una <strong>arquitectura escalable que permita su futura comercialización como modelo SaaS</strong>. El objetivo central de esta primera fase es digitalizar el "know-how" de la empresa para optimizar la logística, el control de stock y la toma de decisiones basada en datos.
+           </p>
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          
+          {/* 2. Alcance */}
+          <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm flex flex-col">
+            <h2 className="text-2xl font-bold text-ecar-blue mb-6 flex items-center gap-2"><Clock /> 2. Alcance (200 Horas)</h2>
+            <div className="space-y-4 flex-1">
+              <div className="flex gap-3">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={20}/>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-sm">Relevamiento y Auditoría (Discovery)</h4>
+                  <p className="text-sm text-gray-500">Entrevistas directas para documentar 50 casos de uso logísticos estructurales. Traducción de procesos de obra a lógica de código.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={20}/>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-sm">Arquitectura de Datos y Backend</h4>
+                  <p className="text-sm text-gray-500">Diseño de BD relacional (dato único y trazable) y desarrollo de APIs seguras y asíncronas.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={20}/>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-sm">Frontend (Móvil y Escritorio)</h4>
+                  <p className="text-sm text-gray-500">Creación de plataforma web intuitiva, PWA adaptada a celulares para reporte de campo y presentismo.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={20}/>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-sm">Implementación y Capacitación</h4>
+                  <p className="text-sm text-gray-500">Puesta a punto y formación de usuarios finales en taller central y obra presencialmente.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Gráfico de Distribución */}
+          <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+             <h3 className="font-bold text-gray-900 mb-4 text-center">Distribución de las 200 Horas Base</h3>
+             <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={hoursDistribution} layout="vertical" margin={{top: 0, right: 30, left: 40, bottom: 0}}>
+                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false}/>
+                     <XAxis type="number" fontSize={11} />
+                     <YAxis dataKey="name" type="category" width={110} fontSize={10} fontWeight={600} tick={{fill: '#4B5563'}} />
+                     <RechartsTooltip cursor={{fill: '#f3f4f6'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}/>
+                     <Bar dataKey="hrs" name="Horas" radius={[0, 4, 4, 0]}>
+                       {hoursDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                       ))}
+                     </Bar>
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </section>
+        </div>
+
+        {/* 3. Módulos Core */}
+        <section>
+          <h2 className="text-2xl font-bold text-ecar-blue mb-6 flex items-center gap-2"><Presentation /> 3. Módulos Core a Desarrollar</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600"><Target/></div>
+               <h3 className="font-bold text-gray-800 mb-2">Logística y Pañol</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">Gestión de ingresos/egresos, transferencias entre obras, control de herramientas críticas y alertas de stock mínimo automáticas.</p>
+             </div>
+             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+               <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-4 text-teal-600"><Users/></div>
+               <h3 className="font-bold text-gray-800 mb-2">Gestión de Obra</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">Creación de centros de costo por proyecto (WBS) y seguimiento de partes de avance diario desde el terreno.</p>
+             </div>
+             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4 text-purple-600"><FileSignature/></div>
+               <h3 className="font-bold text-gray-800 mb-2">Proveedores & Compras</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">Registro de facturas, comparativa de precios y trazabilidad de materiales (desde el pedido hasta el acopio en obra).</p>
+             </div>
+             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-4 text-orange-600"><BarChart3/></div>
+               <h3 className="font-bold text-gray-800 mb-2">Dashboard BI</h3>
+               <p className="text-xs text-gray-500 leading-relaxed">Tablero de control con indicadores de rentabilidad, desvíos presupuestarios y algoritmos de rendimiento de recursos de máquina.</p>
+             </div>
+          </div>
+        </section>
+
+        {/* Crecimiento / ROI Chart */}
+        <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+           <h3 className="font-bold text-gray-900 mb-2 text-center text-xl flex justify-center items-center gap-2"><LineChartIcon className="text-green-500"/> Proyección: Impacto de la Digitalización (6 Meses)</h3>
+           <p className="text-center text-sm text-gray-500 mb-6">Métrica proyectada del ahogo operativo vs. horas hombre ahorradas</p>
+           
+           <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={roiData} margin={{top: 10, right: 30, left: 0, bottom: 0}}>
+                   <defs>
+                     <linearGradient id="colorAhogo" x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                       <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                     </linearGradient>
+                     <linearGradient id="colorAhorro" x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                     </linearGradient>
+                   </defs>
+                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#6b7280'}} />
+                   <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#6b7280'}} />
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                   <RechartsTooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}/>
+                   <Legend verticalAlign="top" height={36}/>
+                   <Area type="monotone" dataKey="ahogoOperativo" name="Trabajo Manual (%)" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorAhogo)" />
+                   <Area type="monotone" dataKey="tiempoAhorrado" name="Horas Ahorradas" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorAhorro)" />
+                 </AreaChart>
+              </ResponsiveContainer>
+           </div>
+        </section>
+
+        {/* 4. Inversión y Forma de Pago */}
+        <section className="bg-ecar-blueDark rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-2xl">
+           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-blue-900/50 pointer-events-none"></div>
+           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+             
+             <div>
+               <h2 className="text-3xl font-bold mb-4 flex items-center gap-2"><DollarSign size={32} className="text-green-400"/> 4. Inversión y Plan</h2>
+               <p className="text-blue-100 text-lg mb-6 leading-relaxed">
+                 Se define un valor de <strong className="text-white bg-blue-800/50 px-2 py-1 rounded">A$ 25.000 / hora</strong> de desarrollo.<br/>
+                 Inversión de <strong className="text-white text-2xl font-bold font-mono block mt-2 text-green-400">A$ 5.000.000</strong> (para esta primera etapa).
+               </p>
+               
+               <div className="space-y-4">
+                 <div className="bg-white/10 p-4 rounded-xl border border-white/20 backdrop-blur-sm">
+                   <div className="flex justify-between items-end mb-1">
+                     <span className="font-bold text-blue-50 text-sm">Adelanto 50%</span>
+                     <span className="font-mono text-xl font-black text-white">$2.500.000</span>
+                   </div>
+                   <p className="text-xs text-blue-200">Relevamiento, diseño arquitectónico y setup del entorno backend.</p>
+                 </div>
+                 
+                 <div className="bg-white/10 p-4 rounded-xl border border-white/20 backdrop-blur-sm">
+                   <div className="flex justify-between items-end mb-1">
+                     <span className="font-bold text-blue-50 text-sm">Contraentrega 50%</span>
+                     <span className="font-mono text-xl font-black text-white">$2.500.000</span>
+                   </div>
+                   <p className="text-xs text-blue-200">Al finalizar sistema en producción tras éxito en pruebas de usuario (UAT).</p>
+                 </div>
+               </div>
+             </div>
+
+             <div className="bg-white rounded-2xl p-8 text-gray-800 shadow-xl border border-gray-100">
+                <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-ecar-blue"><ShieldCheck className="text-ecar-red"/> Garantía y Transparencia</h3>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  El desarrollo se realizará bajo metodologías ágiles, con <strong>entregas parciales demostrables cada 15 días</strong>. Esto garantiza visibilidad total sobre el código y ajustes en tiempo real iterativos.
+                </p>
+                <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full border-2 border-ecar-blue overflow-hidden">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="Lucas Marinero" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">Lucas Marinero</h4>
+                    <p className="text-xs text-gray-500 font-medium">Arquitecto de Software & Analista de Datos</p>
+                    <p className="text-xs text-ecar-blue font-bold tracking-wide mt-0.5">GROW LABS</p>
+                  </div>
+                </div>
+             </div>
+
+           </div>
+        </section>
+
+      </div>
+    </div>
+  );
+};
