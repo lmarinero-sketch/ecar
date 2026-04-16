@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { LayoutDashboard, Target, Warehouse, Smartphone, Truck, FileSignature, Landmark, Calculator, Users } from 'lucide-react';
+import { LayoutDashboard, Target, Warehouse, Smartphone, Truck, FileSignature, Landmark, Calculator, Users, Info } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeModule, setActiveModule } = useStore();
@@ -16,6 +16,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { id: 'certifications', label: 'Certificaciones / ICC', icon: FileSignature },
     { id: 'field', label: 'Terreno / Parte Diario', icon: Smartphone },
   ] as const;
+
+  const moduleDescriptions: Record<string, string> = {
+    'bi': 'Dashboard Ejecutivo (BI): Visualiza métricas como la rentabilidad de las obras y KPIs en tiempo real. En un entorno real, cruza datos de bancos, facturación contable y gastos logísticos de manera automática.',
+    'wbs': 'Planificación WBS: Desglosa líneas de costos presupuestados contra los devengados. Permite frenar Órdenes de Compra (Hard-Stops) si exceden el límite de presupuesto preventivo parametrizado.',
+    'finances': 'Finanzas y Valores: Administración de Cartera de eCheqs y físicos. En producción, se enlazan APIs bancarias (Macro, Santander) para leer acreditaciones y rechazos en la cuenta corriente automáticamente.',
+    'accounting': 'Módulo Contable ARCA: Control y facturación electrónica. Listo para homologar web services de AFIP y generar Libro IVA o cruzar padrón de Retenciones IIBB de los subcontratistas.',
+    'rrhh': 'Gestión de Personal UOCRA: Fichas de nómina con sus categorías. Escalable a integraciones con relojes biométricos, huellas o reconocimiento facial en el ingreso del campamento de obra.',
+    'logistics': 'Acopios y Logística: Control estricto de bodega. Diseñado para autorizar salidas escaneando QR desde el celular, reduciendo mermas y cruzando el gasto contra la línea WBS del proyecto de destino.',
+    'fleet': 'Flota y Taller: Asignación de camiones y grúas pesadas. Adaptable para cruzar horas máquina leyendo sensores GPS/IoT e integrando el gasto de combustible por litraje mensual.',
+    'certifications': 'Certificaciones (RPI/ICC): Cálculos de avance de obra y redeterminación de precios usando el Índice CAC en automático. Evita errores humanos de excel durante licitaciones públicas.',
+    'field': 'Parte Diario en Terreno: Interfaz pensada para que el capataz, desde su celular, cargue presentismo, firme novedades y envíe fotografías del avance real de la obra sin utilizar papel.'
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 flex-col md:flex-row overflow-hidden">
@@ -70,8 +82,27 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
            </div>
         </header>
 
-        <div className="p-6 md:p-8 max-w-7xl mx-auto relative z-10">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto relative z-10 pb-[180px] md:pb-[140px]">
           {children}
+        </div>
+        
+        {/* Global Demo Disclaimer Banner */}
+        <div className="fixed bottom-0 left-0 md:left-64 right-0 p-4 z-50 bg-white/95 backdrop-blur-md border-t border-blue-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+           <div className="max-w-7xl mx-auto flex items-start md:items-center gap-4">
+             <div className="bg-ecar-blue/10 p-3 rounded-full shrink-0 flex items-center justify-center">
+               <Info size={24} className="text-ecar-blue" />
+             </div>
+             <div className="flex-1">
+               <h4 className="text-sm font-black tracking-wide text-gray-900 mb-1 flex items-center gap-2">
+                 Versión Demostrativa — <span className="text-ecar-red">Módulo Actual: {navItems.find(i => i.id === activeModule)?.label}</span>
+               </h4>
+               <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                 {moduleDescriptions[activeModule] || 'Módulo bajo configuración.'}
+                 <br className="hidden md:block"/>
+                 <strong className="text-ecar-blue">Aclaración importante:</strong> Este software es una maqueta (Mock-up). Todos los procesos, interfaces y lógicas pueden ser adaptados al 100% y reconstruidos para comportarse de la forma exacta en que su empresa lo requiere.
+               </p>
+             </div>
+           </div>
         </div>
       </main>
 
