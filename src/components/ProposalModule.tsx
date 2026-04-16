@@ -2,6 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Handshake, Target, Rocket, CheckCircle2, DollarSign, Clock, ArrowRight, BrainCircuit, BarChart3, Presentation, Users, FileSignature, LineChart as LineChartIcon, ShieldCheck, Database, Code, Lock, Server } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { ContractPDF } from './ContractPDF';
 
 const roiData = [
   { month: 'Mes 1', ahogoOperativo: 100, tiempoAhorrado: 5 },
@@ -20,8 +23,47 @@ const hoursDistribution = [
 ];
 
 export const ProposalModule: React.FC = () => {
+  const [isDownloading, setIsDownloading] = React.useState(false);
+
+  const downloadContract = async () => {
+    setIsDownloading(true);
+    const element = document.getElementById('contract-pdf-content');
+    if (!element) {
+      setIsDownloading(false);
+      return;
+    }
+    
+    try {
+      // Temporary un-hide for canvas capture
+      element.style.position = 'static';
+      
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('Contrato_GrowLabs_ECAR.pdf');
+      
+    } catch (error) {
+      console.error('Error generating PDF', error);
+    } finally {
+      // Re-hide
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-800">
+      <ContractPDF />
       
       {/* Top Fixed Header with Link to Live Demo */}
       <div className="bg-ecar-blueDark text-white sticky top-0 z-50 shadow-md">
@@ -317,11 +359,19 @@ export const ProposalModule: React.FC = () => {
            <div className="bg-orange-100 p-3 rounded-xl shrink-0">
               <FileSignature className="text-orange-600" size={28} />
            </div>
-           <div className="relative z-10">
+           <div className="relative z-10 w-full">
              <h4 className="font-bold text-orange-950 mb-2 text-lg">Acuerdo y Formalidad Legal de Inicio</h4>
-             <p className="text-orange-900/80 leading-relaxed font-medium">
+             <p className="text-orange-900/80 leading-relaxed font-medium mb-6">
                Para dar inicio oficial al relevamiento y desarrollo del proyecto, es estrictamente necesario rubricar un <strong>Contrato de Locación de Servicios de Software</strong>. En dicho documento formal se pactarán detalladamente las obligaciones, derechos de propiedad intelectual, hitos de avance y las responsabilidades mutuas de todas las partes involucradas.
              </p>
+             <button
+                onClick={downloadContract}
+                disabled={isDownloading}
+                className={`bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md ${isDownloading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 hover:shadow-lg'}`}
+             >
+                <FileSignature size={18} />
+                {isDownloading ? 'Generando PDF...' : 'Descargar Contrato (PDF)'}
+             </button>
            </div>
         </div>
 
