@@ -336,8 +336,8 @@ export const ProposalModule: React.FC = () => {
                   El desarrollo se realizará bajo metodologías ágiles, con <strong>entregas parciales demostrables cada 15 días</strong>. Esto garantiza visibilidad total sobre el código y ajustes en tiempo real iterativos.
                 </p>
                 <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-4">
-                  <div className="w-16 h-16 bg-black rounded-full border-2 border-ecar-blue overflow-hidden flex items-center justify-center shadow-md">
-                    <img src="/logogrow.png" alt="Grow Labs Logo" className="w-[85%] h-[85%] object-contain" />
+                  <div className="w-16 h-16 bg-white rounded-full border-2 border-ecar-blue overflow-hidden flex items-center justify-center shadow-md p-1">
+                    <img src="/logogrow.png" alt="Grow Labs Logo" className="w-full h-full object-contain mix-blend-multiply" />
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 text-lg">Lucas Marinero</h4>
