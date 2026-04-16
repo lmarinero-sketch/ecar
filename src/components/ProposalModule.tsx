@@ -227,6 +227,15 @@ export const ProposalModule: React.FC = () => {
                    </div>
                    <p className="text-xs text-blue-200">Al finalizar sistema en producción tras éxito en pruebas de usuario (UAT).</p>
                  </div>
+                 
+                 <div className="mt-4 border-t border-white/20 pt-4">
+                   <p className="text-xs text-blue-100 leading-relaxed">
+                     <strong className="text-white">Modalidad Comercial:</strong> Se emitirá Factura A o B según corresponda. Recibimos todos los medios de pago (transferencia bancaria, eCheq, MercadoPago). Los pagos efectuados con tarjeta de crédito estarán sujetos a los intereses de financiación correspondientes.
+                   </p>
+                   <p className="text-xs text-blue-200 mt-2 leading-relaxed bg-black/20 p-3 rounded-lg border border-black/10">
+                     <strong className="text-white">Aclaración sobre Servidores:</strong> Los honorarios de la presente propuesta cubren estrictamente la ingeniería de desarrollo de software. Los costos variables de terceros inherentes al despliegue en la nube (registro de dominios web, alojamiento/hosting, base de datos y consumo de tokens de Inteligencia Artificial) **corren por cuenta del Cliente (Gustavo)** y se facturarán de manera externa o directamente a nombre del Cliente.
+                   </p>
+                 </div>
                </div>
              </div>
 
