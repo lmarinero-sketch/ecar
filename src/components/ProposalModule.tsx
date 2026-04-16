@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Handshake, Target, Rocket, CheckCircle2, DollarSign, Clock, ArrowRight, BrainCircuit, BarChart3, Presentation, Users, FileSignature, LineChart as LineChartIcon, ShieldCheck } from 'lucide-react';
+import { Handshake, Target, Rocket, CheckCircle2, DollarSign, Clock, ArrowRight, BrainCircuit, BarChart3, Presentation, Users, FileSignature, LineChart as LineChartIcon, ShieldCheck, Database, Code, Lock, Server } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
 
 const roiData = [
@@ -199,13 +199,62 @@ export const ProposalModule: React.FC = () => {
            </div>
         </section>
 
-        {/* 4. Inversión y Forma de Pago */}
+        {/* 4. Tech Stack & Security */}
+        <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden">
+           <h2 className="text-2xl font-bold text-ecar-blue mb-2 flex items-center gap-2"><Server /> 4. Arquitectura Tecnológica y Seguridad</h2>
+           <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+             El código madre será íntegramente documentado y comentado con estándares profesionales. Esto garantiza que cualquier programador futuro pueda leer, escalar o auditar el software sin depender tecnológicamente de nosotros de manera abusiva (Vendor Lock-in).
+           </p>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="space-y-4">
+               <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2 mb-4">Stack de Desarrollo (FASE 1)</h3>
+               <div className="flex gap-4 items-start">
+                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Code size={20}/></div>
+                 <div>
+                   <h4 className="font-bold text-sm text-gray-800">React + Vite + Tailwind CSS</h4>
+                   <p className="text-xs text-gray-500">Framework Frontend. Interfaz ultra rápida e interacciones en tiempo real sin recargar la página local.</p>
+                 </div>
+               </div>
+               <div className="flex gap-4 items-start">
+                 <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Database size={20}/></div>
+                 <div>
+                   <h4 className="font-bold text-sm text-gray-800">Supabase (PostgreSQL)</h4>
+                   <p className="text-xs text-gray-500">Base de datos relacional de nivel corporativo. Dato inmutable y trazable basado en la nube.</p>
+                 </div>
+               </div>
+               <div className="flex gap-4 items-start">
+                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><BrainCircuit size={20}/></div>
+                 <div>
+                   <h4 className="font-bold text-sm text-gray-800">OpenAI (Motor IA)</h4>
+                   <p className="text-xs text-gray-500">Lógica de inteligencia subyacente para procesar reportes en lenguaje natural.</p>
+                 </div>
+               </div>
+             </div>
+
+             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Lock size={18} className="text-slate-600"/> Ciberseguridad y Accesos</h3>
+               <ul className="space-y-4">
+                 <li className="flex gap-3 items-start">
+                   <ShieldCheck className="text-ecar-blue shrink-0 mt-0.5" size={16}/>
+                   <p className="text-sm text-gray-700 leading-relaxed"><strong>RBAC (Roles):</strong> El sistema segmentará rigurosamente qué ven y qué pueden editar los usuarios según su cargo jerárquico.</p>
+                 </li>
+                 <li className="flex gap-3 items-start">
+                   <ShieldCheck className="text-ecar-blue shrink-0 mt-0.5" size={16}/>
+                   <p className="text-sm text-gray-700 leading-relaxed"><strong>Seguridad Anti-Vulnerabilidades:</strong> Prácticas OWASP aplicadas: prevención de inyecciones SQL y comunicaciones encriptadas por TLS/SSL.</p>
+                 </li>
+               </ul>
+             </div>
+           </div>
+        </section>
+
+        {/* 5. Inversión y Forma de Pago */}
         <section className="bg-ecar-blueDark rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-2xl">
            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-blue-900/50 pointer-events-none"></div>
            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
              
              <div>
-               <h2 className="text-3xl font-bold mb-4 flex items-center gap-2"><DollarSign size={32} className="text-green-400"/> 4. Inversión y Plan</h2>
+               <h2 className="text-3xl font-bold mb-4 flex items-center gap-2"><DollarSign size={32} className="text-green-400"/> 5. Inversión y Plan</h2>
                <p className="text-blue-100 text-lg mb-6 leading-relaxed">
                  Se define un valor de <strong className="text-white bg-blue-800/50 px-2 py-1 rounded">A$ 25.000 / hora</strong> de desarrollo.<br/>
                  Inversión de <strong className="text-white text-2xl font-bold font-mono block mt-2 text-green-400">A$ 5.000.000</strong> (para esta primera etapa).
