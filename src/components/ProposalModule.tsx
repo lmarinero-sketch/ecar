@@ -236,12 +236,12 @@ export const ProposalModule: React.FC = () => {
                   El desarrollo se realizará bajo metodologías ágiles, con <strong>entregas parciales demostrables cada 15 días</strong>. Esto garantiza visibilidad total sobre el código y ajustes en tiempo real iterativos.
                 </p>
                 <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full border-2 border-ecar-blue overflow-hidden">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" alt="Lucas Marinero" />
+                  <div className="w-16 h-16 bg-black rounded-full border-2 border-ecar-blue overflow-hidden flex items-center justify-center shadow-md">
+                    <img src="/logogrow.png" alt="Grow Labs Logo" className="w-[85%] h-[85%] object-contain" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900">Lucas Marinero</h4>
-                    <p className="text-xs text-gray-500 font-medium">Arquitecto de Software & Analista de Datos</p>
+                    <h4 className="font-bold text-gray-900 text-lg">Lucas Marinero</h4>
+                    <p className="text-sm text-gray-500 font-medium">Arquitecto de Software & Analista de Datos</p>
                     <p className="text-xs text-ecar-blue font-bold tracking-wide mt-0.5">GROW LABS</p>
                   </div>
                 </div>
