@@ -100,9 +100,16 @@ export const ContractPDF: React.FC = () => {
             </p>
           </div>
           
+          <div className="break-inside-avoid">
+            <h3 className="font-bold text-base text-gray-900 mb-2 border-l-4 border-ecar-blue pl-2">CLÁUSULA SÉPTIMA: Jurisdicción y Competencia</h3>
+            <p className="text-sm leading-relaxed mb-2">
+              Para cualquier controversia, divergencia o reclamo que pudiera surgir con motivo de la interpretación, cumplimiento, ejecución o rescisión del presente pre-acuerdo o de su posterior formalización, las partes acuerdan someterse de manera exclusiva a la jurisdicción y competencia de los Tribunales Ordinarios de la Provincia de San Juan, renunciando expresamente a cualquier otro fuero, jurisdicción o excepción de arraigo que por razón de sus domicilios presentes o futuros pudiera corresponderles.
+            </p>
+          </div>
+          
         </div>
 
-        <div className="mt-12 text-sm text-justify italic text-gray-500 mb-24 border-t border-gray-300 pt-8">
+        <div className="mt-12 text-sm text-justify italic text-gray-500 mb-24 border-t border-gray-300 pt-8 break-inside-avoid">
           Habiendo comprendido la extensión, propósito y carácter provisorio sujeto a las personalizaciones de acuerdo que exija el rubro operativo previo inicio, y asumiendo plenamente el marco preventivo y responsivo antedicho; procedemos a celebrar dicho borrador legal con las firmas en San Juan, a los _____ días del mes de ____________________ de 2026.
         </div>
 
