@@ -77,10 +77,12 @@ export const ProposalModule: React.FC = () => {
       <ContractPDF />
       
       {/* Top Fixed Header with Link to Live Demo */}
-      <div className="bg-ecar-blueDark text-white sticky top-0 z-50 shadow-md">
+      <div className="bg-ecar-blueDark text-white sticky top-0 z-50 shadow-md border-b border-white/10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <img src="/logoECAR.png" alt="ECAR Logo" className="h-8 w-auto brightness-0 invert" />
+          <div className="flex items-center gap-4">
+            <div className="bg-white rounded p-1.5 h-10 flex items-center shadow-sm">
+              <img src="/logoECAR.png" alt="ECAR Logo" className="h-full w-auto object-contain mix-blend-multiply" />
+            </div>
             <div className="h-6 w-px bg-white/20"></div>
             <span className="font-medium text-sm tracking-widest text-blue-200 uppercase">Propuesta Comercial</span>
           </div>
