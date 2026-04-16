@@ -250,6 +250,23 @@ export const ProposalModule: React.FC = () => {
            </div>
         </section>
 
+        {/* Legal Notice */}
+        <div className="bg-orange-50 border border-orange-200 p-6 md:p-8 rounded-3xl flex flex-col md:flex-row items-start gap-4 md:gap-6 shadow-sm relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+             <FileSignature size={150} />
+           </div>
+           
+           <div className="bg-orange-100 p-3 rounded-xl shrink-0">
+              <FileSignature className="text-orange-600" size={28} />
+           </div>
+           <div className="relative z-10">
+             <h4 className="font-bold text-orange-950 mb-2 text-lg">Acuerdo y Formalidad Legal de Inicio</h4>
+             <p className="text-orange-900/80 leading-relaxed font-medium">
+               Para dar inicio oficial al relevamiento y desarrollo del proyecto, es estrictamente necesario rubricar un <strong>Contrato de Locación de Servicios de Software</strong>. En dicho documento formal se pactarán detalladamente las obligaciones, derechos de propiedad intelectual, hitos de avance y las responsabilidades mutuas de todas las partes involucradas.
+             </p>
+           </div>
+        </div>
+
       </div>
     </div>
   );
