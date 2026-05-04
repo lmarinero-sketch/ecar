@@ -1,111 +1,180 @@
 import React from 'react';
-import { useStore } from '../store/useStore';
-import { LayoutDashboard, Target, Warehouse, Smartphone, Truck, FileSignature, Landmark, Calculator, Users, Info } from 'lucide-react';
+import { useAppStore } from '../store/useStore';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  LayoutDashboard, Target, Landmark, Calculator, Users,
+  Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
+  Bell, FolderOpen, LogOut, Shield, Menu, X
+} from 'lucide-react';
+import type { ModuleId } from '../lib/types';
+import { MODULE_LABELS } from '../lib/types';
+
+const iconMap: Record<ModuleId, React.ElementType> = {
+  bi: LayoutDashboard,
+  wbs: Target,
+  invoicing: Calculator,
+  purchases: ShoppingCart,
+  finances: Landmark,
+  obligations: Bell,
+  rrhh: Users,
+  logistics: Warehouse,
+  fleet: Truck,
+  certifications: FileSignature,
+  field: Smartphone,
+  documents: FolderOpen,
+};
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { activeModule, setActiveModule } = useStore();
-
-  const navItems = [
-    { id: 'bi', label: 'Inicio', icon: LayoutDashboard },
-    { id: 'wbs', label: 'Planificación WBS', icon: Target },
-    { id: 'finances', label: 'Finanzas & Valores', icon: Landmark },
-    { id: 'accounting', label: 'Contabilidad (ARCA)', icon: Calculator },
-    { id: 'rrhh', label: 'RRHH y Convenios', icon: Users },
-    { id: 'logistics', label: 'Acopios & Logística', icon: Warehouse },
-    { id: 'fleet', label: 'Flota y Maquinaria', icon: Truck },
-    { id: 'certifications', label: 'Certificaciones / ICC', icon: FileSignature },
-    { id: 'field', label: 'Terreno / Parte Diario', icon: Smartphone },
-  ] as const;
-
-  const moduleDescriptions: Record<string, string> = {
-    'bi': 'Dashboard Ejecutivo (BI): Visualiza métricas como la rentabilidad de las obras y KPIs en tiempo real. En un entorno real, cruza datos de bancos, facturación contable y gastos logísticos de manera automática.',
-    'wbs': 'Planificación WBS: Desglosa líneas de costos presupuestados contra los devengados. Permite frenar Órdenes de Compra (Hard-Stops) si exceden el límite de presupuesto preventivo parametrizado.',
-    'finances': 'Finanzas y Valores: Administración de Cartera de eCheqs y físicos. En producción, se enlazan APIs bancarias (Macro, Santander) para leer acreditaciones y rechazos en la cuenta corriente automáticamente.',
-    'accounting': 'Módulo Contable ARCA: Control y facturación electrónica. Listo para homologar web services de AFIP y generar Libro IVA o cruzar padrón de Retenciones IIBB de los subcontratistas.',
-    'rrhh': 'Gestión de Personal UOCRA: Fichas de nómina con sus categorías. Escalable a integraciones con relojes biométricos, huellas o reconocimiento facial en el ingreso del campamento de obra.',
-    'logistics': 'Acopios y Logística: Control estricto de bodega. Diseñado para autorizar salidas escaneando QR desde el celular, reduciendo mermas y cruzando el gasto contra la línea WBS del proyecto de destino.',
-    'fleet': 'Flota y Taller: Asignación de camiones y grúas pesadas. Adaptable para cruzar horas máquina leyendo sensores GPS/IoT e integrando el gasto de combustible por litraje mensual.',
-    'certifications': 'Certificaciones (RPI/ICC): Cálculos de avance de obra y redeterminación de precios usando el Índice CAC en automático. Evita errores humanos de excel durante licitaciones públicas.',
-    'field': 'Parte Diario en Terreno: Interfaz pensada para que el capataz, desde su celular, cargue presentismo, firme novedades y envíe fotografías del avance real de la obra sin utilizar papel.'
-  };
+  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen } = useAppStore();
+  const { profile, signOut, hasModule, isAdmin } = useAuth();
 
   return (
     <div className="flex h-screen bg-gray-50 flex-col md:flex-row overflow-hidden">
-      
-      {/* Sidebar Desktop / Navbar Mobile */}
-      <aside className="w-full md:w-64 bg-ecar-blueDark border-b md:border-b-0 border-r border-[#08355e] flex shrink-0 flex-col relative z-20 overflow-hidden">
-        {/* Background Overlay */}
-        <div className="absolute inset-0 z-0 opacity-20 bg-[url('/sidebar-construction.png')] bg-cover bg-bottom mix-blend-overlay"></div>
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 
-        <div className="p-4 md:p-6 flex items-center justify-center border-b border-white/10 relative z-10 bg-white">
-           <img src="/logoECAR.png" alt="ECAR Logo" className="h-10 w-auto object-contain hover:scale-105 transition-transform" />
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 bg-ecar-blueDark text-white p-2 rounded-lg shadow-lg"
+      >
+        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed md:relative inset-y-0 left-0 z-40
+        w-64 bg-ecar-blueDark border-r border-[#08355e] flex flex-col shrink-0
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="p-4 md:p-6 flex items-center justify-center border-b border-white/10 bg-white">
+          <img src="/logoECAR.png" alt="ECAR Logo" className="h-10 w-auto object-contain" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 flex md:flex-col gap-2 overflow-x-auto md:overflow-x-hidden relative z-10">
-          {navItems.map(item => (
+        {/* User badge */}
+        <div className="px-4 py-3 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold">
+              {profile?.full_name?.charAt(0) || '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-medium truncate">{profile?.full_name}</p>
+              <p className="text-blue-200 text-xs flex items-center gap-1">
+                {isAdmin && <Shield size={10} />}
+                {isAdmin ? 'Administrador' : 'Operario'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          {/* Dashboard */}
+          {hasModule('bi') && (
+            <SidebarItem id="bi" icon={iconMap.bi} label={MODULE_LABELS.bi} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
+          )}
+
+          {/* Grupo: Administración y Finanzas */}
+          {(hasModule('purchases') || hasModule('finances') || hasModule('obligations') || hasModule('invoicing')) && (
+            <div className="pt-3">
+              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Administración y Finanzas</p>
+              {hasModule('purchases') && <SidebarItem id="purchases" icon={iconMap.purchases} label="Compras & Libro IVA" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('finances') && <SidebarItem id="finances" icon={iconMap.finances} label="Finanzas & Tesorería" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('obligations') && <SidebarItem id="obligations" icon={iconMap.obligations} label="Alertas & Obligaciones" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('invoicing') && <SidebarItem id="invoicing" icon={iconMap.invoicing} label="Facturación (ARCA)" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+            </div>
+          )}
+
+          {/* Grupo: RRHH */}
+          {hasModule('rrhh') && (
+            <div className="pt-3">
+              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Recursos Humanos</p>
+              <SidebarItem id="rrhh" icon={iconMap.rrhh} label="RRHH & Legajos" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
+            </div>
+          )}
+
+          {/* Grupo: Operaciones */}
+          {(hasModule('wbs') || hasModule('logistics') || hasModule('fleet') || hasModule('certifications') || hasModule('field') || hasModule('documents')) && (
+            <div className="pt-3">
+              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Operaciones</p>
+              {hasModule('wbs') && <SidebarItem id="wbs" icon={iconMap.wbs} label={MODULE_LABELS.wbs} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('logistics') && <SidebarItem id="logistics" icon={iconMap.logistics} label={MODULE_LABELS.logistics} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('fleet') && <SidebarItem id="fleet" icon={iconMap.fleet} label={MODULE_LABELS.fleet} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('certifications') && <SidebarItem id="certifications" icon={iconMap.certifications} label={MODULE_LABELS.certifications} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('field') && <SidebarItem id="field" icon={iconMap.field} label={MODULE_LABELS.field} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('documents') && <SidebarItem id="documents" icon={iconMap.documents} label={MODULE_LABELS.documents} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+            </div>
+          )}
+
+          {/* Admin: User management */}
+          {isAdmin && (
             <button
-              key={item.id}
-              onClick={() => setActiveModule(item.id)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm text-left whitespace-nowrap md:whitespace-normal
-                ${activeModule === item.id 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/20' 
-                  : 'text-blue-100 hover:bg-white/5 hover:text-white'
-                }`}
+              onClick={() => { setActiveModule('bi' as ModuleId); }}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-yellow-200 hover:bg-white/5 hover:text-yellow-100 font-medium text-sm mt-4 border-t border-white/10 pt-4"
             >
-              <item.icon size={18} className={activeModule === item.id ? 'text-white' : 'text-blue-300'} />
-              <span className="hidden sm:inline-block">{item.label}</span>
+              <Shield size={18} />
+              Admin: Gestión de Roles
             </button>
-          ))}
+          )}
         </div>
 
-        <div className="p-4 border-t border-white/10 hidden md:block relative z-10">
-          <div className="text-xs text-center text-blue-200/50 font-medium tracking-wide">
+        <div className="p-3 border-t border-white/10">
+          <button
+            onClick={signOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-red-200 hover:bg-red-500/10 hover:text-red-100 font-medium text-sm transition-all"
+          >
+            <LogOut size={18} />
+            Cerrar Sesión
+          </button>
+          <div className="text-xs text-center text-blue-200/40 font-medium tracking-wide mt-2">
             SISTEMA CREADO POR GROW LABS
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Main Content */}
       <main className="flex-1 relative overflow-y-auto z-10 w-full">
-        {/* The faint background grid pattern */}
-        <div className="bg-grid"></div>
-        
-        {/* Topbar for context */}
-        <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-50">
-           <h2 className="text-xl font-bold text-gray-900">
-             {navItems.find(i => i.id === activeModule)?.label}
-           </h2>
-           <div className="text-xs font-mono px-3 py-1 bg-gray-100 rounded-full text-gray-600 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Conectado (San Juan)
-           </div>
+        <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-20">
+          <h2 className="text-xl font-bold text-gray-900 ml-10 md:ml-0">
+            {MODULE_LABELS[activeModule]}
+          </h2>
+          <div className="text-xs font-mono px-3 py-1 bg-gray-100 rounded-full text-gray-600 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Conectado
+          </div>
         </header>
 
-        <div className="p-6 md:p-8 max-w-7xl mx-auto relative z-10 pb-[180px] md:pb-[140px]">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
           {children}
         </div>
-        
-        {/* Global Demo Disclaimer Banner */}
-        <div className="fixed bottom-0 left-0 md:left-64 right-0 p-4 z-50 bg-white/95 backdrop-blur-md border-t border-blue-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
-           <div className="max-w-7xl mx-auto flex items-start md:items-center gap-4">
-             <div className="bg-ecar-blue/10 p-3 rounded-full shrink-0 flex items-center justify-center">
-               <Info size={24} className="text-ecar-blue" />
-             </div>
-             <div className="flex-1">
-               <h4 className="text-sm font-black tracking-wide text-gray-900 mb-1 flex items-center gap-2">
-                 Versión Demostrativa — <span className="text-ecar-red">Módulo Actual: {navItems.find(i => i.id === activeModule)?.label}</span>
-               </h4>
-               <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                 {moduleDescriptions[activeModule] || 'Módulo bajo configuración.'}
-                 <br className="hidden md:block"/>
-                 <strong className="text-ecar-blue">Aclaración importante:</strong> Este software es una maqueta (Mock-up). Todos los procesos, interfaces y lógicas pueden ser adaptados al 100% y reconstruidos para comportarse de la forma exacta en que su empresa lo requiere.
-               </p>
-             </div>
-           </div>
-        </div>
       </main>
-
     </div>
+  );
+};
+
+/* ───── Sidebar Item ───── */
+const SidebarItem: React.FC<{
+  id: ModuleId;
+  icon: React.ElementType;
+  label: string;
+  active: ModuleId;
+  onSelect: (id: ModuleId) => void;
+}> = ({ id, icon: Icon, label, active, onSelect }) => {
+  const isActive = active === id;
+  return (
+    <button
+      onClick={() => onSelect(id)}
+      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all font-medium text-sm text-left
+        ${isActive
+          ? 'bg-white/10 text-white ring-1 ring-white/20'
+          : 'text-blue-100 hover:bg-white/5 hover:text-white'
+        }`}
+    >
+      <Icon size={18} className={isActive ? 'text-white' : 'text-blue-300'} />
+      {label}
+    </button>
   );
 };

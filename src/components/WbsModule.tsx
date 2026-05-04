@@ -1,132 +1,104 @@
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
-import { AlertCircle, FileText, CheckCircle } from 'lucide-react';
+import { Target, Plus, X, ChevronRight, FolderTree } from 'lucide-react';
+import { useProjects, useCreateProject, useWbsElements } from '../hooks/useData';
+import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 
 export const WbsModule: React.FC = () => {
-  const { wbsElements, createPurchaseOrder } = useStore();
-  const [purchaseWbsId, setPurchaseWbsId] = useState<string | null>(null);
-  const [purchaseAmount, setPurchaseAmount] = useState<string>('');
-  const [alertMsg, setAlertMsg] = useState<{type: 'error'|'success', msg: string} | null>(null);
+  const { data: projects = [], isLoading } = useProjects();
+  const createProject = useCreateProject();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const { data: wbs = [] } = useWbsElements(selectedProjectId || undefined);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
 
-  const formatARS = (val: number) => `A$ ${val.toLocaleString()}`;
-
-  const handleCreatePO = () => {
-    if (!purchaseWbsId || !purchaseAmount) return;
-    const amountNum = parseInt(purchaseAmount.replace(/\D/g,''), 10);
-    if (isNaN(amountNum) || amountNum <= 0) return;
-
-    const res = createPurchaseOrder(purchaseWbsId, amountNum);
-    setAlertMsg({ type: res.success ? 'success' : 'error', msg: res.message });
-    if(res.success) {
-      setPurchaseWbsId(null);
-      setPurchaseAmount('');
-    }
+  const handleCreate = async () => {
+    await createProject.mutateAsync(form as any);
+    setShowForm(false);
+    setForm({ name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
   };
+
+  const formatARS = (v: number) => v >= 1e6 ? `A$ ${(v / 1e6).toFixed(1)}M` : `A$ ${v.toLocaleString()}`;
+
+  if (isLoading) return <div className="text-center py-12 text-gray-400">Cargando planificación...</div>;
 
   return (
     <div className="space-y-6">
-      
-      {/* Simulation Header */}
-      <div className="bg-ecar-blue/10 border border-ecar-blue/20 rounded-xl p-4 flex gap-4">
-         <div className="bg-white w-10 h-10 rounded-full flex items-center justify-center text-ecar-blue shrink-0">
-            <FileText size={20} />
-         </div>
-         <div>
-            <h3 className="font-bold text-ecar-blue">Gestión de Presupuesto y "Hard Stops"</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              La tabla WBS es el sumidero de costos. El <strong>Costo Comprometido</strong> aumenta al emitir Órdenes de Compra. El <strong>Costo Devengado (Accrual)</strong> aumentará cuando el Capataz consuma material real en el terreno. Intenta emitir una OC que supere la "Diferencia" para ver el Hard Stop.
-            </p>
-         </div>
+      <div className="bg-gradient-to-r from-cyan-800 to-cyan-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
+        <div className="relative z-10">
+          <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Planificación WBS</h3>
+          <p className="text-cyan-100 text-sm mt-1">{projects.length} obras registradas. Estructura de desglose de trabajo con presupuesto y avance.</p>
+        </div>
       </div>
 
-      {alertMsg && (
-        <div className={`p-4 rounded-xl flex items-start gap-3 border ${alertMsg.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
-          {alertMsg.type === 'error' ? <AlertCircle className="shrink-0" /> : <CheckCircle className="shrink-0" />}
-          <span className="text-sm font-medium">{alertMsg.msg}</span>
+      <div className="flex justify-end">
+        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+          <Plus size={16} /> Nueva Obra
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nueva Obra</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
+            <input placeholder="Nombre de la obra" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <div className="grid grid-cols-2 gap-3">
+              <input placeholder="Cliente" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="px-3 py-2 border rounded-lg text-sm" />
+              <input placeholder="CUIT Cliente" value={form.client_cuit} onChange={e => setForm({ ...form, client_cuit: e.target.value })} className="px-3 py-2 border rounded-lg text-sm" />
+              <input placeholder="Ubicación" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="px-3 py-2 border rounded-lg text-sm" />
+              <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2 border rounded-lg text-sm" />
+              <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2 border rounded-lg text-sm col-span-2" />
+            </div>
+            <button onClick={handleCreate} disabled={!form.name || createProject.isPending} className="w-full bg-ecar-blue text-white py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+              {createProject.isPending ? 'Creando...' : 'Crear Obra'}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* WBS Table */}
-      <div className="light-card overflow-hidden">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th className="w-[28%]">Estructura WBS</th>
-              <th className="text-right">Avance %</th>
-              <th className="text-right">Presupuesto Apercibir</th>
-              <th className="text-right text-ecar-blue bg-blue-50/20">Presupuesto Costo</th>
-              <th className="text-right bg-blue-50/20">Costo Comprometido</th>
-              <th className="text-right bg-green-50/20">Costo Devengado</th>
-              <th className="text-right text-gray-400">Resto Financiero</th>
-              <th className="w-16">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {wbsElements.map(el => {
-              const diff = el.budgetCostARS - el.committedCostARS;
-              const isDanger = diff < el.budgetCostARS * 0.1;
-              const margin = el.budgetRevenueARS - el.budgetCostARS;
-
-              return (
-                <tr key={el.id} className={el.parentId ? 'bg-gray-50/20' : 'font-semibold bg-gray-50/60'}>
-                  <td className={`py-4 ${el.parentId ? 'pl-8 text-gray-600 border-l-2 border-l-gray-300' : 'text-gray-900 border-l-4 border-l-ecar-blue'}`}>
-                    {el.name}
-                  </td>
-                  <td className="text-right font-medium">
-                     <span className={`px-2 py-0.5 rounded text-xs ${el.progressPct === 100 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
-                        {el.progressPct}%
-                     </span>
-                  </td>
-                  <td className="text-right font-mono text-green-700">{formatARS(el.budgetRevenueARS)}<br/><span className="text-[10px] text-gray-400">Margen: {formatARS(margin)}</span></td>
-                  <td className="text-right font-mono text-ecar-blue bg-blue-50/20">{formatARS(el.budgetCostARS)}</td>
-                  <td className="text-right font-mono text-gray-800 bg-blue-50/20">{formatARS(el.committedCostARS)}</td>
-                  <td className="text-right font-mono text-green-600 bg-green-50/20">{formatARS(el.accruedCostARS)}</td>
-                  <td className={`text-right font-mono ${isDanger ? 'text-ecar-red font-bold' : 'text-gray-500'}`}>
-                    {formatARS(diff)}
-                  </td>
-                  <td className="text-center">
-                    {el.parentId && (
-                      <button onClick={() => setPurchaseWbsId(el.id)} className="text-ecar-blue hover:text-ecar-blueDark p-1 font-bold">
-                        + OC
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Generate PO Form Modal-like inline */}
-      {purchaseWbsId && (
-        <div className="light-card p-6 mt-4 border-l-4 border-l-ecar-blue animate-in fade-in slide-in-from-top-4">
-           <h4 className="font-bold text-gray-900 mb-4">Emitir Nueva Orden de Compra</h4>
-           <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Partida Destino</label>
-                <input disabled value={wbsElements.find(e => e.id === purchaseWbsId)?.name} className="w-full border border-gray-200 rounded-lg px-4 py-2 bg-gray-50 text-gray-600 outline-none" />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Monto de la OC (A$)</label>
-                <input 
-                  type="text" 
-                  value={purchaseAmount}
-                  onChange={(e) => setPurchaseAmount(e.target.value)}
-                  placeholder="Ej: 50000000"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 outline-none focus:border-ecar-blue focus:ring-1 focus:ring-ecar-blue font-mono" 
-                />
-              </div>
-              <button onClick={handleCreatePO} className="btn-primary py-2 px-6 h-[42px]">
-                Validar y Emitir
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Projects list */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:col-span-1">
+          <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800 text-sm">Obras</h3></div>
+          <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            {projects.length === 0 && <p className="p-4 text-gray-400 text-sm">Sin obras. Creá la primera.</p>}
+            {projects.map(p => (
+              <button key={p.id} onClick={() => setSelectedProjectId(p.id)} className={`w-full text-left p-4 hover:bg-gray-50 transition-all flex items-center gap-3 ${selectedProjectId === p.id ? 'bg-blue-50 border-l-4 border-ecar-blue' : ''}`}>
+                <FolderTree size={16} className="text-gray-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-gray-900 truncate">{p.name}</p>
+                  <p className="text-xs text-gray-500">{p.client_name || 'Sin cliente'} · {formatARS(p.budget_ars)}</p>
+                </div>
+                <ChevronRight size={16} className="text-gray-300 shrink-0" />
               </button>
-              <button onClick={() => setPurchaseWbsId(null)} className="btn-secondary py-2 px-6 h-[42px]">
-                Cancelar
-              </button>
-           </div>
+            ))}
+          </div>
         </div>
-      )}
 
+        {/* WBS Tree */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:col-span-2">
+          <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800 text-sm">Estructura WBS</h3></div>
+          {!selectedProjectId ? (
+            <div className="text-center py-16 text-gray-400 text-sm">Seleccioná una obra para ver su WBS</div>
+          ) : wbs.length === 0 ? (
+            <div className="text-center py-16 text-gray-400 text-sm">Sin elementos WBS. Próximamente: editor visual.</div>
+          ) : (
+            <div className="p-4 space-y-2">
+              {wbs.map(el => (
+                <div key={el.id} className="p-3 border rounded-lg hover:bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sm">{el.name}</span>
+                    <span className="text-xs text-gray-400">{el.progress_pct}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                    <div className="bg-ecar-blue h-1.5 rounded-full" style={{ width: `${el.progress_pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
