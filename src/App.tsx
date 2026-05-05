@@ -17,6 +17,7 @@ import { FieldModule } from './components/FieldModule';
 import { ObligationsModule } from './components/ObligationsModule';
 import { PurchasesModule } from './components/PurchasesModule';
 import { DocumentsModule } from './components/DocumentsModule';
+import { RomboChat } from './components/RomboChat';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ function AppContent() {
   return (
     <Layout>
       {renderModule()}
+      <RomboChat />
     </Layout>
   );
 }

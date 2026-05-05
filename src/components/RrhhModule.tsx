@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Users, Plus, Search, UserPlus, FileText, Calendar, X, Edit3, Download, Upload, Printer } from 'lucide-react';
+import { Users, Plus, Search, UserPlus, FileText, Calendar, X, Edit3, Download, Upload, Printer, FileSpreadsheet } from 'lucide-react';
+import { AttendancePanel } from './AttendancePanel';
+import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
 import { useEmployees, useCreateEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUpdateEmployee, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 
-type Tab = 'roster' | 'add' | 'legajo' | 'attendance';
+type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades';
 
 export const RrhhModule: React.FC = () => {
   const { data: employees = [], isLoading } = useEmployees();
@@ -63,6 +65,7 @@ export const RrhhModule: React.FC = () => {
           { id: 'add', label: 'Nuevo Empleado', icon: UserPlus },
           { id: 'legajo', label: 'Legajo Digital', icon: FileText },
           { id: 'attendance', label: 'Asistencia', icon: Calendar },
+          { id: 'novedades', label: 'Novedades al Contador', icon: FileSpreadsheet },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === t.id ? 'bg-ecar-blue text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
             <t.icon size={16} /> {t.label}
@@ -215,13 +218,14 @@ export const RrhhModule: React.FC = () => {
         />
       )}
 
-      {/* TAB: Attendance placeholder */}
+      {/* TAB: Attendance — QR Dynamic System */}
       {tab === 'attendance' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-400">
-          <Calendar size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">Módulo de Asistencia</p>
-          <p className="text-sm">Registro diario de entrada/salida. Próximamente: integración con reloj biométrico.</p>
-        </div>
+        <AttendancePanel />
+      )}
+
+      {/* TAB: Novedades al Contador */}
+      {tab === 'novedades' && (
+        <AccountantNovedadesPanel />
       )}
     </div>
   );

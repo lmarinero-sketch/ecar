@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Bell, Plus, Upload, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
+import { Bell, Plus, Upload, CheckCircle, Clock, AlertTriangle, X, MessageSquare } from 'lucide-react';
 import { useObligations, useCreateObligation } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
+import { NotificationPanel } from './NotificationPanel';
 
 export const ObligationsModule: React.FC = () => {
   const { data: obligations = [], isLoading } = useObligations();
@@ -131,6 +132,18 @@ export const ObligationsModule: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Notification System */}
+      <div className="border-t border-gray-200 pt-6">
+        <div className="bg-gradient-to-r from-green-700 to-green-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden mb-6">
+          <div className="absolute top-0 right-0 p-6 opacity-10"><MessageSquare size={120} /></div>
+          <div className="relative z-10">
+            <h3 className="font-bold text-2xl flex items-center gap-2"><MessageSquare size={24} /> Notificaciones WhatsApp</h3>
+            <p className="text-green-100 text-sm mt-1">Configurá recordatorios y enviá alertas automáticas a tus contactos.</p>
+          </div>
+        </div>
+        <NotificationPanel />
+      </div>
     </div>
   );
 };

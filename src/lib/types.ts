@@ -299,6 +299,49 @@ export type DocumentRequest = {
   created_at: string;
 };
 
+// ========== NOTIFICATION SYSTEM ==========
+
+export type NotificationContact = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  phone: string;
+  role: string; // e.g., "Contador", "Encargado", "Administrador", "Proveedor"
+  is_active: boolean;
+  created_at: string;
+};
+
+export type NotificationReminder = {
+  id: string;
+  tenant_id: string;
+  title: string;
+  description: string | null;
+  trigger_type: 'manual' | 'cheque_due' | 'obligation_due' | 'custom_date';
+  trigger_days_before: number; // Days before due date to trigger
+  trigger_date: string | null; // For custom_date type
+  recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
+  contact_ids: string[]; // Array of NotificationContact IDs
+  message_template: string; // Template with {variables}
+  is_active: boolean;
+  last_triggered_at: string | null;
+  created_at: string;
+};
+
+export type NotificationLog = {
+  id: string;
+  tenant_id: string;
+  reminder_id: string | null;
+  contact_id: string;
+  contact_name: string;
+  contact_phone: string;
+  message_content: string;
+  status: 'sent' | 'failed' | 'pending';
+  error_message: string | null;
+  sent_at: string;
+  contact?: NotificationContact;
+  reminder?: NotificationReminder;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',

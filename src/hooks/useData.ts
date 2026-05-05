@@ -4,7 +4,8 @@ import type {
   Employee, Project, UnionCategory, Shift, AttendanceRecord,
   Obligation, Invoice, Supplier, PurchaseInvoice, Cheque,
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
-  WbsElement, DocumentRequest, Profile
+  WbsElement, DocumentRequest, Profile,
+  NotificationContact, NotificationReminder, NotificationLog
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -371,3 +372,120 @@ type InvoiceItem = {
   subtotal_ars: number;
   iva_rate: number;
 };
+
+// ========== NOTIFICATION CONTACTS ==========
+export function useNotificationContacts() {
+  return useQuery({
+    queryKey: ['notification_contacts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('notification_contacts').select('*').order('name');
+      if (error) throw error;
+      return data as NotificationContact[];
+    },
+  });
+}
+
+export function useCreateNotificationContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (contact: Partial<NotificationContact>) => {
+      const { data, error } = await supabase.from('notification_contacts').insert({ ...contact, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_contacts'] }),
+  });
+}
+
+export function useUpdateNotificationContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<NotificationContact> & { id: string }) => {
+      const { error } = await supabase.from('notification_contacts').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_contacts'] }),
+  });
+}
+
+export function useDeleteNotificationContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('notification_contacts').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_contacts'] }),
+  });
+}
+
+// ========== NOTIFICATION REMINDERS ==========
+export function useNotificationReminders() {
+  return useQuery({
+    queryKey: ['notification_reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('notification_reminders').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as NotificationReminder[];
+    },
+  });
+}
+
+export function useCreateNotificationReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (reminder: Partial<NotificationReminder>) => {
+      const { data, error } = await supabase.from('notification_reminders').insert({ ...reminder, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_reminders'] }),
+  });
+}
+
+export function useUpdateNotificationReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<NotificationReminder> & { id: string }) => {
+      const { error } = await supabase.from('notification_reminders').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_reminders'] }),
+  });
+}
+
+export function useDeleteNotificationReminder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('notification_reminders').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_reminders'] }),
+  });
+}
+
+// ========== NOTIFICATION LOG ==========
+export function useNotificationLog() {
+  return useQuery({
+    queryKey: ['notification_log'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('notification_log').select('*').order('sent_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      return data as NotificationLog[];
+    },
+  });
+}
+
+export function useCreateNotificationLog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (log: Partial<NotificationLog>) => {
+      const { data, error } = await supabase.from('notification_log').insert({ ...log, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_log'] }),
+  });
+}
+
