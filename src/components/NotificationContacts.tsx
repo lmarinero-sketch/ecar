@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPlus, Phone, Trash2, X, Edit3, Check, User } from 'lucide-react';
+import { UserPlus, Phone, Trash2, X, User } from 'lucide-react';
 import { useNotificationContacts, useCreateNotificationContact, useDeleteNotificationContact } from '../hooks/useData';
 import { formatArgPhone } from '../lib/builderbot';
 

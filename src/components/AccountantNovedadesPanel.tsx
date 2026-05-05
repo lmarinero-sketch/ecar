@@ -3,7 +3,7 @@ import {
   FileSpreadsheet, Download, Calendar, Users, Clock,
   CheckCircle2, XCircle, AlertTriangle, TrendingUp,
   ChevronLeft, ChevronRight, Briefcase, UserPlus, UserMinus,
-  Filter, Printer
+  Printer
 } from 'lucide-react';
 import { useEmployees, useAttendance } from '../hooks/useData';
 

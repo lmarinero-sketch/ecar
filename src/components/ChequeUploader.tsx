@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, Camera, FileText, Loader2, CheckCircle, AlertCircle, X, Eye } from 'lucide-react';
+import { Upload, Camera, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 type ExtractedData = {

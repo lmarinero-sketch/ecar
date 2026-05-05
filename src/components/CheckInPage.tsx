@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { validateQRToken } from '../lib/qrToken';
 import { supabase } from '../lib/supabase';
-import { CheckCircle2, XCircle, Clock, HardHat, Loader2, ShieldCheck, UserCheck, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, HardHat, Loader2, ShieldCheck, UserCheck } from 'lucide-react';
 
 type CheckInStatus = 'validating' | 'select_employee' | 'confirming' | 'success' | 'error' | 'already_checked';
 

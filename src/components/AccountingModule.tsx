@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, Plus, FileText, X, AlertCircle } from 'lucide-react';
+import { Calculator, Plus, X, AlertCircle } from 'lucide-react';
 import { useInvoices, useCreateInvoice, useProjects } from '../hooks/useData';
 
 export const AccountingModule: React.FC = () => {

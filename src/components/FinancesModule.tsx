@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Landmark, TrendingUp, TrendingDown, CreditCard, Plus, X, Camera, Edit3 } from 'lucide-react';
+import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3 } from 'lucide-react';
 import { useCheques, useCreateCheque, useFixedExpenses } from '../hooks/useData';
 import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
@@ -13,7 +13,7 @@ export const FinancesModule: React.FC = () => {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [scanUrl, setScanUrl] = useState('');
   const [form, setForm] = useState({
-    cheque_number: '', bank_name: '', type: 'physical' as const,
+    cheque_number: '', bank_name: '', type: 'physical' as 'physical' | 'echeq',
     direction: 'receivable' as const, beneficiary_or_issuer: '',
     amount_ars: 0, due_date: '', issue_date: '', scan_url: '',
   });

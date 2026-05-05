@@ -142,7 +142,7 @@ export const CartaDocumentoPDF: React.FC<Props> = ({ data, onClose }) => {
 };
 
 /* Demo overlay: visual representation of the pre-printed form (not printed) */
-const DemoOverlay: React.FC<{ data: CartaDocumentoData }> = ({ data }) => {
+const DemoOverlay: React.FC<{ data: CartaDocumentoData }> = ({ data: _data }) => {
   const hdr = (title: string) => (
     <div style={{ display: 'flex', borderBottom: '2px solid #003399', height: '13mm' }}>
       <div style={{ backgroundColor: '#FFD700', width: '28mm', padding: '2mm 3mm', borderRight: '2px solid #003399', display: 'flex', alignItems: 'center' }}>
