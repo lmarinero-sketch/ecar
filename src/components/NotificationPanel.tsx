@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import {
   Bell, Plus, Send, Clock, CheckCircle2, XCircle, X, MessageSquare,
-  Calendar, Banknote, AlertTriangle, Trash2, ToggleLeft, ToggleRight, History
+  Calendar, Banknote, AlertTriangle, Trash2, History
 } from 'lucide-react';
 import {
   useNotificationReminders, useCreateNotificationReminder, useDeleteNotificationReminder,
   useNotificationContacts, useNotificationLog, useCreateNotificationLog,
   useCheques, useObligations
 } from '../hooks/useData';
-import { sendWhatsAppMessage, formatArgPhone } from '../lib/builderbot';
+import { sendWhatsAppMessage } from '../lib/builderbot';
 import { NotificationContacts } from './NotificationContacts';
-import type { NotificationContact } from '../lib/types';
+
 
 type Tab = 'reminders' | 'contacts' | 'log';
 
@@ -39,7 +39,6 @@ export const NotificationPanel: React.FC = () => {
   const { data: contacts = [] } = useNotificationContacts();
   const { data: logs = [] } = useNotificationLog();
   const { data: cheques = [] } = useCheques();
-  const { data: obligations = [] } = useObligations();
   const createReminder = useCreateNotificationReminder();
   const deleteReminder = useDeleteNotificationReminder();
   const createLog = useCreateNotificationLog();

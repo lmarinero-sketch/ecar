@@ -322,6 +322,11 @@ export type NotificationReminder = {
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
   contact_ids: string[]; // Array of NotificationContact IDs
   message_template: string; // Template with {variables}
+  schedule_days: number[] | null;
+  schedule_time: string | null;
+  date_from: string | null;
+  date_until: string | null;
+  next_run_at: string | null;
   is_active: boolean;
   last_triggered_at: string | null;
   created_at: string;
