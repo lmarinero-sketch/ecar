@@ -276,7 +276,7 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: async ({ employeeId, file, docType, title }: { employeeId: string; file: File; docType: string; title: string }) => {
       // 1. Upload file to Storage
-      const ext = file.name.split('.').pop() || 'bin';
+
       const filePath = `${employeeId}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
       const { error: uploadError } = await supabase.storage.from('legajos').upload(filePath, file, {
         cacheControl: '3600',

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import type { Profile, ModuleId } from '../lib/types';
 import type { User, Session } from '@supabase/supabase-js';
 

@@ -6,10 +6,11 @@ import {
 import {
   useNotificationReminders, useCreateNotificationReminder, useDeleteNotificationReminder,
   useNotificationContacts, useNotificationLog, useCreateNotificationLog,
-  useCheques, useObligations
+  useCheques
 } from '../hooks/useData';
 import { sendWhatsAppMessage } from '../lib/builderbot';
 import { NotificationContacts } from './NotificationContacts';
+import type { NotificationReminder } from '../lib/types';
 
 
 type Tab = 'reminders' | 'contacts' | 'log';
@@ -27,11 +28,24 @@ export const NotificationPanel: React.FC = () => {
   const [sending, setSending] = useState<string | null>(null);
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [form, setForm] = useState({
-    title: '', description: '', trigger_type: 'manual' as string,
-    trigger_days_before: 3, trigger_date: '', recurrence: 'once' as string,
-    contact_ids: [] as string[], message_template: '',
-    schedule_days: [] as number[], schedule_time: '09:00',
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    trigger_type: NotificationReminder['trigger_type'];
+    trigger_days_before: number;
+    trigger_date: string;
+    recurrence: NotificationReminder['recurrence'];
+    contact_ids: string[];
+    message_template: string;
+    schedule_days: number[];
+    schedule_time: string;
+    date_from: string;
+    date_until: string;
+  }>({
+    title: '', description: '', trigger_type: 'manual',
+    trigger_days_before: 3, trigger_date: '', recurrence: 'once',
+    contact_ids: [], message_template: '',
+    schedule_days: [], schedule_time: '09:00',
     date_from: '', date_until: '',
   });
 
@@ -222,7 +236,7 @@ export const NotificationPanel: React.FC = () => {
                           {r.schedule_time && r.recurrence !== 'once' && (
                             <span className="px-2 py-1 bg-amber-50 rounded-lg text-amber-700 font-medium font-mono">{r.schedule_time?.slice(0, 5)} hs</span>
                           )}
-                          {r.schedule_days?.length > 0 && r.recurrence === 'weekly' && (
+                          {(r.schedule_days?.length ?? 0) > 0 && r.recurrence === 'weekly' && (
                             <span className="px-2 py-1 bg-indigo-50 rounded-lg text-indigo-600 font-medium">
                               {(r.schedule_days as number[]).map((d: number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}
                             </span>
@@ -325,7 +339,7 @@ export const NotificationPanel: React.FC = () => {
 
               <div>
                 <label className="text-xs font-bold text-gray-500">Tipo de Disparador</label>
-                <select value={form.trigger_type} onChange={e => setForm({...form, trigger_type: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
+                <select value={form.trigger_type} onChange={e => setForm({...form, trigger_type: e.target.value as NotificationReminder['trigger_type']})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
                   {TRIGGER_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                 </select>
               </div>
@@ -346,7 +360,7 @@ export const NotificationPanel: React.FC = () => {
 
               <div>
                 <label className="text-xs font-bold text-gray-500">Recurrencia</label>
-                <select value={form.recurrence} onChange={e => setForm({...form, recurrence: e.target.value, schedule_days: e.target.value === 'once' ? [] : form.schedule_days})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
+                <select value={form.recurrence} onChange={e => setForm({...form, recurrence: e.target.value as NotificationReminder['recurrence'], schedule_days: e.target.value === 'once' ? [] : form.schedule_days})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
                   <option value="once">Una vez</option>
                   <option value="daily">Diario</option>
                   <option value="weekly">Semanal</option>

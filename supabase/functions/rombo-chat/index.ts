@@ -40,6 +40,26 @@ const tools = [
   },
   {
     type: 'function', function: {
+      name: 'create_cheque',
+      description: 'Cargar un nuevo cheque (emitido o recibido).',
+      parameters: { 
+        type: 'object', 
+        properties: { 
+          cheque_number: { type: 'string' }, 
+          bank_name: { type: 'string' }, 
+          amount_ars: { type: 'number' }, 
+          direction: { type: 'string', description: 'payable (emitido por la empresa) o receivable (recibido de un cliente)' }, 
+          type: { type: 'string', description: 'physical o echeq' }, 
+          issue_date: { type: 'string', description: 'YYYY-MM-DD' }, 
+          due_date: { type: 'string', description: 'YYYY-MM-DD' }, 
+          beneficiary_or_issuer: { type: 'string', description: 'Beneficiario (si es payable) o Emisor (si es receivable)' } 
+        },
+        required: ['cheque_number', 'bank_name', 'amount_ars', 'direction', 'due_date']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
       name: 'query_obligations',
       description: 'Consultar obligaciones fiscales/contractuales.',
       parameters: { type: 'object', properties: { status: { type: 'string', description: 'pending/paid/overdue/notified' } } }
@@ -138,13 +158,31 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         return JSON.stringify(data || [])
       }
       case 'query_cheques': {
-        let q = sb.from('cheques').select('cheque_number, bank_name, beneficiary, amount_ars, due_date, status, direction, issue_date')
+        let q = sb.from('cheques').select('cheque_number, bank_name, beneficiary_or_issuer, amount_ars, due_date, status, direction, issue_date')
         if (args.status) q = q.eq('status', args.status)
         if (args.direction) q = q.eq('direction', args.direction)
         const { data } = await q.order('due_date').limit(args.limit || 25)
         if (!data?.length) return '[]'
         const total = data.reduce((s, c) => s + (c.amount_ars || 0), 0)
         return JSON.stringify({ cheques: data, total_ars: total, count: data.length })
+      }
+      case 'create_cheque': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        const { data, error } = await sb.from('cheques').insert({
+          tenant_id: tenant?.id,
+          cheque_number: args.cheque_number,
+          bank_name: args.bank_name,
+          amount_ars: args.amount_ars,
+          direction: args.direction,
+          type: args.type || 'physical',
+          issue_date: args.issue_date || null,
+          due_date: args.due_date,
+          beneficiary_or_issuer: args.beneficiary_or_issuer || null,
+          status: 'pending'
+        }).select().single()
+        
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ success: true, message: `Cheque ${args.cheque_number} cargado correctamente.`, id: data.id })
       }
       case 'query_obligations': {
         let q = sb.from('obligations').select('name, description, due_day_of_month, amount_ars, status, recurrence')

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Users, Plus, Search, UserPlus, FileText, Calendar, X, Edit3, Download, Upload, Printer, FileSpreadsheet } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
-import { useEmployees, useCreateEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUpdateEmployee, useUploadDocument } from '../hooks/useData';
+import { useEmployees, useCreateEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 
 type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades';
@@ -14,7 +14,7 @@ export const RrhhModule: React.FC = () => {
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useLetterTemplates();
   const createEmployee = useCreateEmployee();
-  const updateEmployee = useUpdateEmployee();
+
   const [tab, setTab] = useState<Tab>('roster');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);

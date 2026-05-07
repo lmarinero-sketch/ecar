@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText } from 'lucide-react';
+import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Message { role: 'user' | 'assistant'; content: string; }
@@ -120,7 +120,7 @@ export const RomboChat: React.FC = () => {
   const [bounce, setBounce] = useState(true);
   const [showGreeting, setShowGreeting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart } = useIdleWalker(open);
+  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => { const t = setTimeout(() => setBounce(false), 8000); return () => clearTimeout(t); }, []);

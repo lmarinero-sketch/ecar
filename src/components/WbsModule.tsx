@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Target, Plus, X, ChevronRight, FolderTree } from 'lucide-react';
 import { useProjects, useCreateProject, useWbsElements } from '../hooks/useData';
-import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
+
 
 export const WbsModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();

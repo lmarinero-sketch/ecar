@@ -206,7 +206,7 @@ export function generateLibroIVA(
   }
 
   // Download
-  const now = new Date();
+
   const fileName = `Libro_IVA_ECAR_${periodoDesde.replace(/\//g, '-')}_${periodoHasta.replace(/\//g, '-')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

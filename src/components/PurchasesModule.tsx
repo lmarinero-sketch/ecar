@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, FileText, Eye, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download } from 'lucide-react';
 import { usePurchaseInvoices, useSuppliers, useCreateSupplier } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
