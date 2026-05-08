@@ -6,7 +6,9 @@ import type {
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
   WbsElement, DocumentRequest, Profile,
   NotificationContact, NotificationReminder, NotificationLog,
-  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate
+  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
+  InventoryItem, InventoryMovement, ToolAssignment,
+  PurchaseRequest, PurchaseRequestItem
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -582,3 +584,141 @@ export function useCreateProjectCertificate() {
   });
 }
 
+// ========== INVENTORY ==========
+export function useInventoryItems() {
+  return useQuery({
+    queryKey: ['inventory_items'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('inventory_items').select('*').order('category').order('name');
+      if (error) throw error;
+      return data as InventoryItem[];
+    },
+  });
+}
+
+export function useCreateInventoryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: Partial<InventoryItem>) => {
+      const { data, error } = await supabase.from('inventory_items').insert({ ...item, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
+  });
+}
+
+export function useUpdateInventoryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<InventoryItem> & { id: string }) => {
+      const { error } = await supabase.from('inventory_items').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
+  });
+}
+
+export function useInventoryMovements(itemId?: string) {
+  return useQuery({
+    queryKey: ['inventory_movements', itemId],
+    queryFn: async () => {
+      let q = supabase.from('inventory_movements').select('*, item:inventory_items(id, name), project:projects(id, name)').order('created_at', { ascending: false });
+      if (itemId) q = q.eq('item_id', itemId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as InventoryMovement[];
+    },
+  });
+}
+
+export function useCreateInventoryMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (mov: Partial<InventoryMovement>) => {
+      const { data, error } = await supabase.from('inventory_movements').insert({ ...mov, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+    },
+  });
+}
+
+export function useToolAssignments() {
+  return useQuery({
+    queryKey: ['tool_assignments'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tool_assignments').select('*, item:inventory_items(id, name), employee:employees(id, first_name, last_name), project:projects(id, name)').order('assigned_date', { ascending: false });
+      if (error) throw error;
+      return data as ToolAssignment[];
+    },
+  });
+}
+
+export function useCreateToolAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (a: Partial<ToolAssignment>) => {
+      const { data, error } = await supabase.from('tool_assignments').insert({ ...a, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tool_assignments'] }),
+  });
+}
+
+export function useUpdateToolAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ToolAssignment> & { id: string }) => {
+      const { error } = await supabase.from('tool_assignments').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tool_assignments'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+    },
+  });
+}
+
+// ========== PURCHASE REQUESTS ==========
+export function usePurchaseRequests() {
+  return useQuery({
+    queryKey: ['purchase_requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('purchase_requests').select('*, project:projects(id, name), items:purchase_request_items(*)').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as PurchaseRequest[];
+    },
+  });
+}
+
+export function useCreatePurchaseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ items, ...req }: Partial<PurchaseRequest> & { items: Partial<PurchaseRequestItem>[] }) => {
+      const { data: request, error } = await supabase.from('purchase_requests').insert({ ...req, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      if (items.length > 0) {
+        const { error: itemsError } = await supabase.from('purchase_request_items').insert(items.map(i => ({ ...i, request_id: request.id })));
+        if (itemsError) throw itemsError;
+      }
+      return request;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_requests'] }),
+  });
+}
+
+export function useUpdatePurchaseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<PurchaseRequest> & { id: string }) => {
+      const { error } = await supabase.from('purchase_requests').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_requests'] }),
+  });
+}

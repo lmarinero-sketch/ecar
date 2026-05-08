@@ -168,6 +168,67 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'check_stock',
+      description: 'Consultar el stock de un material o herramienta del pañol. Úsalo cuando pregunten "¿cuántas bolsas de cemento hay?" o "¿qué herramientas tenemos?".',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Nombre o parte del nombre del material/herramienta a buscar' },
+          category: { type: 'string', enum: ['material', 'herramienta', 'consumible'], description: 'Filtrar por categoría (opcional)' },
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'register_stock_movement',
+      description: 'Registrar una entrada o salida de material del pañol. Úsalo cuando digan "sacamos 10 bolsas de cemento para la obra X" o "llegaron 50 barras de hierro".',
+      parameters: {
+        type: 'object',
+        properties: {
+          item_name: { type: 'string', description: 'Nombre del material/herramienta' },
+          movement_type: { type: 'string', enum: ['in', 'out'], description: 'in = ingreso al pañol, out = salida del pañol' },
+          quantity: { type: 'number', description: 'Cantidad' },
+          project_name: { type: 'string', description: 'Nombre de la obra destino (para salidas)' },
+          notes: { type: 'string', description: 'Notas adicionales' },
+        },
+        required: ['item_name', 'movement_type', 'quantity']
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'create_purchase_request',
+      description: 'Crear un pedido de compra desde la obra. Úsalo cuando digan "necesitamos 4 placas de yeso y 10 bolsas de cemento para San Martín".',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra que necesita los materiales' },
+          urgency: { type: 'string', enum: ['low', 'normal', 'urgent'], description: 'Urgencia del pedido' },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                description: { type: 'string' },
+                quantity: { type: 'number' },
+                unit: { type: 'string' },
+              }
+            },
+            description: 'Lista de materiales solicitados'
+          },
+          requested_by: { type: 'string', description: 'Quién hace el pedido' },
+        },
+        required: ['project_name', 'items']
+      }
+    }
+  },
 ];
 
 const SYSTEM_PROMPT = `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
@@ -180,6 +241,9 @@ Sos el copiloto financiero y operativo de ECAR. Podés:
 - 🏦 *Gestionar cheques* → cargar, consultar pendientes
 - 📋 *Cargar facturas* → foto de factura → OCR automático
 - 🏗️ *Registrar certificados de obra* → "Se aprobó cert 6 de San Martín por 5.4M"
+- 📦 *Consultar stock del pañol* → "¿Cuántas bolsas de cemento hay?"
+- 📦 *Registrar entrada/salida de material* → "Sacamos 10 bolsas de cemento para San Martín"
+- 🛒 *Crear pedidos de compra* → "Necesitamos 4 placas de yeso para la obra"
 - 📅 *Obligaciones fiscales* → consultar y marcar como pagadas
 - 👷 *Empleados y asistencia* → consultar personal activo
 
@@ -550,6 +614,69 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           redetermination: args.redetermination || 0,
           total: totalCertified,
           net_deposit: netDeposit,
+        })
+      }
+      case 'check_stock': {
+        let q = supabase.from('inventory_items').select('name, category, current_stock, min_stock, unit, unit_cost')
+        if (args.search) q = q.ilike('name', `%${args.search}%`)
+        if (args.category) q = q.eq('category', args.category)
+        const { data: items } = await q.order('name').limit(20)
+        if (!items?.length) return JSON.stringify({ message: args.search ? `No encontré "${args.search}" en el pañol` : 'El pañol está vacío' })
+        const lowStock = items.filter((i: any) => i.current_stock <= i.min_stock && i.min_stock > 0)
+        return JSON.stringify({
+          items: items.map((i: any) => ({
+            nombre: i.name, categoria: i.category,
+            stock: `${i.current_stock} ${i.unit}`,
+            minimo: i.min_stock, stock_bajo: i.current_stock <= i.min_stock && i.min_stock > 0
+          })),
+          total_items: items.length,
+          items_stock_bajo: lowStock.length,
+        })
+      }
+      case 'register_stock_movement': {
+        const { data: item } = await supabase.from('inventory_items').select('id, name, current_stock, unit').ilike('name', `%${args.item_name}%`).limit(1).single()
+        if (!item) return JSON.stringify({ error: `No encontré "${args.item_name}" en el inventario` })
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        let projectId = null
+        if (args.project_name) {
+          const { data: proj } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projectId = proj?.id
+        }
+        await supabase.from('inventory_movements').insert({
+          tenant_id: tenant?.id, item_id: item.id,
+          movement_type: args.movement_type, quantity: args.quantity,
+          project_id: projectId, notes: args.notes || null, created_by: 'rombo-whatsapp',
+        })
+        const newStock = args.movement_type === 'in' ? item.current_stock + args.quantity : item.current_stock - args.quantity
+        await supabase.from('inventory_items').update({ current_stock: newStock }).eq('id', item.id)
+        return JSON.stringify({
+          success: true,
+          message: `${args.movement_type === 'in' ? 'Ingreso' : 'Egreso'} de ${args.quantity} ${item.unit} de ${item.name}`,
+          item: item.name, stock_anterior: item.current_stock, stock_nuevo: newStock,
+        })
+      }
+      case 'create_purchase_request': {
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        const { data: project } = await supabase.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+        if (!project) return JSON.stringify({ error: `No encontré el proyecto "${args.project_name}"` })
+        const { data: req, error: reqErr } = await supabase.from('purchase_requests').insert({
+          tenant_id: tenant?.id, project_id: project.id,
+          requested_by: args.requested_by || 'WhatsApp',
+          urgency: args.urgency || 'normal', status: 'pending',
+        }).select().single()
+        if (reqErr) return JSON.stringify({ error: reqErr.message })
+        if (args.items?.length) {
+          await supabase.from('purchase_request_items').insert(
+            args.items.map((i: any) => ({ request_id: req.id, description: i.description, quantity: i.quantity || 1, unit: i.unit || 'unidad' }))
+          )
+        }
+        return JSON.stringify({
+          success: true,
+          message: `Pedido de compra creado para ${project.name}`,
+          id: req.id, project: project.name,
+          urgency: args.urgency || 'normal',
+          items_count: args.items?.length || 0,
+          items: args.items,
         })
       }
       default:

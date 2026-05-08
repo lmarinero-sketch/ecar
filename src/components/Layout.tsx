@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Target, Landmark, Calculator, Users,
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
-  Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign
+  Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -18,6 +18,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   finances: Landmark,
   obligations: Bell,
   rrhh: Users,
+  inventory: Package,
   logistics: Warehouse,
   fleet: Truck,
   certifications: FileSignature,
@@ -96,10 +97,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           )}
 
           {/* Grupo: Operaciones */}
-          {(hasModule('wbs') || hasModule('logistics') || hasModule('fleet') || hasModule('certifications') || hasModule('field') || hasModule('documents')) && (
+          {(hasModule('wbs') || hasModule('inventory') || hasModule('logistics') || hasModule('fleet') || hasModule('certifications') || hasModule('field') || hasModule('documents')) && (
             <div className="pt-3">
               <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Operaciones</p>
               {hasModule('wbs') && <SidebarItem id="wbs" icon={iconMap.wbs} label={MODULE_LABELS.wbs} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('inventory') && <SidebarItem id="inventory" icon={iconMap.inventory} label={MODULE_LABELS.inventory} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('logistics') && <SidebarItem id="logistics" icon={iconMap.logistics} label={MODULE_LABELS.logistics} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('fleet') && <SidebarItem id="fleet" icon={iconMap.fleet} label={MODULE_LABELS.fleet} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('certifications') && <SidebarItem id="certifications" icon={iconMap.certifications} label={MODULE_LABELS.certifications} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}

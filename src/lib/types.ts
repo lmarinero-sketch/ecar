@@ -419,6 +419,84 @@ export type ProjectCertificate = {
   project?: Project;
 };
 
+// ========== INVENTARIO / PAÑOL ==========
+
+export type InventoryItem = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  category: 'material' | 'herramienta' | 'consumible';
+  unit: string;
+  current_stock: number;
+  min_stock: number;
+  location: string;
+  qr_code: string | null;
+  barcode: string | null;
+  unit_cost: number;
+  is_tool: boolean;
+  created_at: string;
+};
+
+export type InventoryMovement = {
+  id: string;
+  tenant_id: string;
+  item_id: string;
+  movement_type: 'in' | 'out' | 'return' | 'adjustment';
+  quantity: number;
+  project_id: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  item?: InventoryItem;
+  project?: Project;
+  employee?: Employee;
+};
+
+export type ToolAssignment = {
+  id: string;
+  tenant_id: string;
+  item_id: string;
+  employee_id: string;
+  project_id: string | null;
+  assigned_date: string;
+  returned_date: string | null;
+  status: 'assigned' | 'returned' | 'lost' | 'damaged';
+  notes: string | null;
+  created_at: string;
+  item?: InventoryItem;
+  employee?: Employee;
+  project?: Project;
+};
+
+// ========== PEDIDOS DE COMPRA ==========
+
+export type PurchaseRequest = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  requested_by: string | null;
+  urgency: 'low' | 'normal' | 'urgent';
+  status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected';
+  notes: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  project?: Project;
+  items?: PurchaseRequestItem[];
+};
+
+export type PurchaseRequestItem = {
+  id: string;
+  request_id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  estimated_unit_cost: number;
+  inventory_item_id: string | null;
+  created_at: string;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
@@ -429,6 +507,7 @@ export const ALL_MODULES = [
   'finances',
   'obligations',
   'rrhh',
+  'inventory',
   'logistics',
   'fleet',
   'certifications',
@@ -447,6 +526,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   finances: 'Finanzas & Tesorería',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'RRHH & Legajos',
+  inventory: 'Pañol & Inventario',
   logistics: 'Acopios & Logística',
   fleet: 'Flota y Maquinaria',
   certifications: 'Certificaciones / ICC',
