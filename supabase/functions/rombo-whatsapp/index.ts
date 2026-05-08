@@ -229,6 +229,40 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_monthly_summary',
+      description: 'Obtener el resumen financiero del mes actual o de un mes específico. Úsalo cuando pregunten "¿Cómo vamos en mayo?" o "Resumen de abril".',
+      parameters: {
+        type: 'object',
+        properties: {
+          month: { type: 'string', description: 'Mes en formato YYYY-MM (ej: 2026-04). Si no se especifica, usa el mes actual.' },
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'process_cheque_photo',
+      description: 'Procesar la foto de un cheque físico o echeq para extraer datos (banco, número, monto, fecha, beneficiario). Se activa cuando el usuario envía una foto de un cheque.',
+      parameters: {
+        type: 'object',
+        properties: {
+          image_analysis: { type: 'string', description: 'Descripción/datos extraídos de la imagen del cheque' },
+          bank: { type: 'string', description: 'Banco emisor' },
+          cheque_number: { type: 'string', description: 'Número del cheque' },
+          amount: { type: 'number', description: 'Monto del cheque' },
+          date: { type: 'string', description: 'Fecha del cheque (YYYY-MM-DD)' },
+          beneficiary: { type: 'string', description: 'Beneficiario' },
+          payment_date: { type: 'string', description: 'Fecha de pago/vencimiento (YYYY-MM-DD)' },
+        },
+        required: ['amount']
+      }
+    }
+  },
 ];
 
 const SYSTEM_PROMPT = `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
@@ -238,7 +272,8 @@ Hablás en español argentino (vos/vosotros). Sos profesional, cercano y eficien
 Sos el copiloto financiero y operativo de ECAR. Podés:
 - 💰 *Registrar pagos y cobros* → "Pagué 960 mil a Elio"
 - 📊 *Consultar liquidez* → "¿Cuánta plata tengo?"
-- 🏦 *Gestionar cheques* → cargar, consultar pendientes
+- 📈 *Resumen mensual* → "¿Cómo vamos en mayo?" o "Resumen de abril"
+- 🏦 *Gestionar cheques* → cargar, consultar pendientes, OCR de foto de cheque
 - 📋 *Cargar facturas* → foto de factura → OCR automático
 - 🏗️ *Registrar certificados de obra* → "Se aprobó cert 6 de San Martín por 5.4M"
 - 📦 *Consultar stock del pañol* → "¿Cuántas bolsas de cemento hay?"
@@ -677,6 +712,69 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           urgency: args.urgency || 'normal',
           items_count: args.items?.length || 0,
           items: args.items,
+        })
+      }
+      case 'get_monthly_summary': {
+        const now = new Date()
+        const monthStr = args.month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        const monthStart = `${monthStr}-01`
+        // Get snapshot
+        const { data: snap } = await supabase.from('monthly_snapshots').select('*').eq('month', monthStart).limit(1).single()
+        // Get movements for the month
+        const { data: movements } = await supabase.from('cash_movements')
+          .select('type, category, amount, description')
+          .gte('movement_date', monthStart)
+          .lte('movement_date', `${monthStr}-31`)
+          .order('movement_date')
+        const totalExpenses = movements?.filter((m: any) => m.type === 'expense').reduce((s: number, m: any) => s + m.amount, 0) || 0
+        const totalIncome = movements?.filter((m: any) => m.type === 'income').reduce((s: number, m: any) => s + m.amount, 0) || 0
+        const byCategory: Record<string, number> = {}
+        movements?.filter((m: any) => m.type === 'expense').forEach((m: any) => {
+          byCategory[m.category] = (byCategory[m.category] || 0) + m.amount
+        })
+        return JSON.stringify({
+          mes: monthStr,
+          snapshot: snap ? {
+            caja_inicio: snap.opening_balance,
+            ingresos: snap.total_income,
+            gastos: snap.total_expenses,
+            caja_proyectada: snap.projected_closing,
+            caja_real: snap.real_closing,
+            desvio: (snap.real_closing || 0) - (snap.projected_closing || 0),
+          } : null,
+          movimientos_del_mes: {
+            total_gastos: totalExpenses,
+            total_ingresos: totalIncome,
+            cant_movimientos: movements?.length || 0,
+            gastos_por_categoria: byCategory,
+          }
+        })
+      }
+      case 'process_cheque_photo': {
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        const chequeData: any = {
+          tenant_id: tenant?.id,
+          type: 'emitted',
+          bank: args.bank || 'Sin especificar',
+          cheque_number: args.cheque_number || 'OCR-' + Date.now(),
+          amount: args.amount,
+          issue_date: args.date || new Date().toISOString().split('T')[0],
+          payment_date: args.payment_date || args.date || new Date().toISOString().split('T')[0],
+          beneficiary: args.beneficiary || 'Sin especificar',
+          status: 'pending',
+        }
+        const { data: cheque, error: chequeErr } = await supabase.from('cheques').insert(chequeData).select().single()
+        if (chequeErr) return JSON.stringify({ error: chequeErr.message })
+        return JSON.stringify({
+          success: true,
+          message: `Cheque registrado desde foto`,
+          id: cheque?.id,
+          banco: chequeData.bank,
+          numero: chequeData.cheque_number,
+          monto: chequeData.amount,
+          fecha: chequeData.issue_date,
+          vencimiento: chequeData.payment_date,
+          beneficiario: chequeData.beneficiary,
         })
       }
       default:

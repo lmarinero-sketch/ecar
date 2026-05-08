@@ -20,6 +20,8 @@ import { DocumentsModule } from './components/DocumentsModule';
 import { RomboChat } from './components/RomboChat';
 import { LiquidityDashboard } from './components/LiquidityDashboard';
 import { InventoryModule } from './components/InventoryModule';
+import { MonthlyReportModule } from './components/MonthlyReportModule';
+import { PurchaseRequestsModule } from './components/PurchaseRequestsModule';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +60,8 @@ function AppContent() {
       case 'obligations': return <ObligationsModule />;
       case 'rrhh': return <RrhhModule />;
       case 'inventory': return <InventoryModule />;
+      case 'monthly_report': return <MonthlyReportModule />;
+      case 'purchase_requests': return <PurchaseRequestsModule />;
       case 'logistics': return <LogisticsModule />;
       case 'fleet': return <FleetModule />;
       case 'certifications': return <CertificationsModule />;

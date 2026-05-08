@@ -497,13 +497,37 @@ export type PurchaseRequestItem = {
   created_at: string;
 };
 
+// ========== CERTIFICACIONES DE OBRA ==========
+
+export type ProjectCertificate = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  certificate_number: number;
+  period_description: string | null;
+  gross_amount: number;
+  redetermination: number;
+  total_certified: number;
+  retention_iibb: number;
+  retention_imp_cheque: number;
+  other_retentions: number;
+  net_deposit: number;
+  deposit_date: string | null;
+  deposit_bank_account_id: string | null;
+  status: 'pending' | 'approved' | 'deposited' | 'rejected';
+  created_at: string;
+  project?: Project;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
   'liquidity',
+  'monthly_report',
   'wbs',
   'invoicing',
   'purchases',
+  'purchase_requests',
   'finances',
   'obligations',
   'rrhh',
@@ -520,9 +544,11 @@ export type ModuleId = typeof ALL_MODULES[number];
 export const MODULE_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard BI',
   liquidity: 'Tablero de Liquidez',
+  monthly_report: 'Resumen Mensual',
   wbs: 'Planificación WBS',
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',
+  purchase_requests: 'Pedidos de Compra',
   finances: 'Finanzas & Tesorería',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'RRHH & Legajos',
