@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Package, Wrench, Search, Plus, X, ArrowDownToLine, ArrowUpFromLine,
-  RotateCcw, AlertTriangle, Boxes, User, Building2, Filter
+  Package, Wrench, Search, Plus, X, ArrowDownToLine,
+  RotateCcw, AlertTriangle, Boxes, User
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -31,7 +31,7 @@ export const InventoryModule: React.FC = () => {
   const [showNewItem, setShowNewItem] = useState(false);
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', category: 'material' as const, unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false });
+  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false });
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
 
@@ -323,7 +323,7 @@ export const InventoryModule: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Asignar: {showAssign.name}</h3><button onClick={() => setShowAssign(null)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleAssign} className="space-y-3">
-              <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>)}</select></div>
+              <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
               <button type="submit" disabled={createAssignment.isPending} className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-purple-700 transition-all shadow-md disabled:opacity-50">

@@ -13,13 +13,6 @@ const fmtShort = (n: number) => {
 };
 const monthName = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
 
-const ACCOUNT_ICONS: Record<string, React.ElementType> = { cash: Wallet, bank: Landmark, investment: TrendingUp };
-const ACCOUNT_COLORS: Record<string, string> = {
-  cash: 'from-green-500 to-emerald-600',
-  bank: 'from-blue-500 to-indigo-600',
-  investment: 'from-purple-500 to-violet-600',
-};
-
 const CATEGORIES = [
   'Sueldos/Honorarios', 'Seguros', 'Servicios', 'Impuestos ARCA',
   'Gremios', 'Combustibles', 'Cheques/Echeqs', 'Pagos a terceros',

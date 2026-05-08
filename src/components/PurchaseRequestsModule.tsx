@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
   ShoppingBag, Plus, X, Check, XCircle, Clock, AlertTriangle,
-  Building2, ChevronDown, Filter, Package
+  Building2, Package
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects
 } from '../hooks/useData';
-import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
+import type { PurchaseRequestItem } from '../lib/types';
 
 const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
   low: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  FileSignature, Plus, X, TrendingUp, Banknote, AlertCircle,
+  FileSignature, Plus, X, TrendingUp, Banknote,
   ChevronDown, ChevronUp, Building2
 } from 'lucide-react';
 import { useProjects, useProjectCertificates, useCreateProjectCertificate } from '../hooks/useData';

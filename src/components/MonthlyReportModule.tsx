@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowRight, ChevronLeft, ChevronRight, PieChart } from 'lucide-react';
-import { useMonthlySnapshots, useCashMovements } from '../hooks/useData';
+import { Calendar, ChevronLeft, ChevronRight, PieChart } from 'lucide-react';
+import { useMonthlySnapshots } from '../hooks/useData';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const fmtM = (n: number) => {
@@ -29,7 +29,6 @@ const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 
 
 export const MonthlyReportModule: React.FC = () => {
   const { data: snapshots, isLoading } = useMonthlySnapshots();
-  const { data: movements } = useCashMovements();
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
 
   const sortedSnapshots = useMemo(() => {
