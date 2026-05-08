@@ -306,7 +306,7 @@ export type NotificationContact = {
   tenant_id: string;
   name: string;
   phone: string;
-  role: string; // e.g., "Contador", "Encargado", "Administrador", "Proveedor"
+  role: string;
   is_active: boolean;
   created_at: string;
 };
@@ -317,11 +317,11 @@ export type NotificationReminder = {
   title: string;
   description: string | null;
   trigger_type: 'manual' | 'cheque_due' | 'obligation_due' | 'custom_date';
-  trigger_days_before: number; // Days before due date to trigger
-  trigger_date: string | null; // For custom_date type
+  trigger_days_before: number;
+  trigger_date: string | null;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
-  contact_ids: string[]; // Array of NotificationContact IDs
-  message_template: string; // Template with {variables}
+  contact_ids: string[];
+  message_template: string;
   schedule_days: number[] | null;
   schedule_time: string | null;
   date_from: string | null;
@@ -347,9 +347,82 @@ export type NotificationLog = {
   reminder?: NotificationReminder;
 };
 
+// ========== LIQUIDITY / FINANCE ==========
+
+
+export type BankAccount = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  type: 'cash' | 'bank' | 'investment';
+  bank_name: string | null;
+  account_number: string | null;
+  cbu: string | null;
+  current_balance: number;
+  last_updated: string;
+  created_at: string;
+};
+
+export type CashMovement = {
+  id: string;
+  tenant_id: string;
+  bank_account_id: string | null;
+  movement_date: string;
+  type: 'income' | 'expense' | 'transfer';
+  category: string;
+  subcategory: string | null;
+  description: string | null;
+  amount: number;
+  counterpart: string | null;
+  payment_method: string | null;
+  linked_invoice_id: string | null;
+  linked_cheque_id: string | null;
+  linked_project_id: string | null;
+  is_pending: boolean;
+  created_by: string;
+  created_at: string;
+  bank_account?: BankAccount;
+};
+
+export type MonthlySnapshot = {
+  id: string;
+  tenant_id: string;
+  month: string;
+  opening_balance: number;
+  total_income: number;
+  other_income: number;
+  total_expenses: number;
+  projected_closing: number;
+  real_closing: number;
+  deviation: number;
+  expense_breakdown: Record<string, number> | null;
+  created_at: string;
+};
+
+export type ProjectCertificate = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  certificate_number: number;
+  period_description: string | null;
+  gross_amount: number;
+  redetermination: number;
+  total_certified: number;
+  retention_iibb: number;
+  retention_imp_cheque: number;
+  other_retentions: number;
+  net_deposit: number;
+  deposit_date: string | null;
+  deposit_bank_account_id: string | null;
+  status: 'pending' | 'approved' | 'deposited' | 'rejected';
+  created_at: string;
+  project?: Project;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
+  'liquidity',
   'wbs',
   'invoicing',
   'purchases',
@@ -367,6 +440,7 @@ export type ModuleId = typeof ALL_MODULES[number];
 
 export const MODULE_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard BI',
+  liquidity: 'Tablero de Liquidez',
   wbs: 'Planificación WBS',
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',

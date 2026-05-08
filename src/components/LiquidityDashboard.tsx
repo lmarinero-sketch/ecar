@@ -1,0 +1,353 @@
+import React, { useState, useMemo } from 'react';
+import {
+  Wallet, Landmark, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight,
+  Calendar, AlertTriangle, Plus, X, CreditCard, ChevronDown, ChevronUp
+} from 'lucide-react';
+import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement } from '../hooks/useData';
+
+const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+const fmtShort = (n: number) => {
+  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+  return fmt(n);
+};
+const monthName = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+
+const ACCOUNT_ICONS: Record<string, React.ElementType> = { cash: Wallet, bank: Landmark, investment: TrendingUp };
+const ACCOUNT_COLORS: Record<string, string> = {
+  cash: 'from-green-500 to-emerald-600',
+  bank: 'from-blue-500 to-indigo-600',
+  investment: 'from-purple-500 to-violet-600',
+};
+
+const CATEGORIES = [
+  'Sueldos/Honorarios', 'Seguros', 'Servicios', 'Impuestos ARCA',
+  'Gremios', 'Combustibles', 'Cheques/Echeqs', 'Pagos a terceros',
+  'Servicios contratados', 'Viandas', 'Varios', 'Certificación',
+  'Cobro certificado', 'Otro ingreso',
+];
+
+export const LiquidityDashboard: React.FC = () => {
+  const { data: accounts, isLoading: loadingAccounts } = useBankAccounts();
+  const { data: movements, isLoading: loadingMovements } = useCashMovements();
+  const { data: snapshots } = useMonthlySnapshots();
+  const { data: cheques } = useCheques();
+  const createMovement = useCreateCashMovement();
+
+  const [showNewMovement, setShowNewMovement] = useState(false);
+  const [showAllMovements, setShowAllMovements] = useState(false);
+  const [form, setForm] = useState({ type: 'expense' as 'income' | 'expense', category: '', description: '', amount: '', counterpart: '', bank_account_id: '' });
+
+  // KPIs
+  const totalLiquidity = useMemo(() => (accounts || []).reduce((s, a) => s + a.current_balance, 0), [accounts]);
+  const cashBalance = useMemo(() => (accounts || []).find(a => a.type === 'cash')?.current_balance || 0, [accounts]);
+  const bankBalance = useMemo(() => (accounts || []).filter(a => a.type === 'bank').reduce((s, a) => s + a.current_balance, 0), [accounts]);
+  const investBalance = useMemo(() => (accounts || []).filter(a => a.type === 'investment').reduce((s, a) => s + a.current_balance, 0), [accounts]);
+
+  // Cheques próximos 7 días
+  const today = new Date();
+  const weekAhead = new Date(today.getTime() + 7 * 86400000);
+  const upcomingCheques = useMemo(() => {
+    if (!cheques) return [];
+    return cheques.filter(c => {
+      if (c.status !== 'pending' || !c.due_date) return false;
+      const d = new Date(c.due_date);
+      return d >= today && d <= weekAhead;
+    }).sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+  }, [cheques]);
+
+  const chequesPayable = upcomingCheques.filter(c => c.direction === 'payable');
+  const chequesReceivable = upcomingCheques.filter(c => c.direction === 'receivable');
+  const totalPayable = chequesPayable.reduce((s, c) => s + c.amount_ars, 0);
+  const totalReceivable = chequesReceivable.reduce((s, c) => s + c.amount_ars, 0);
+
+  // Chart data from snapshots
+  const chartData = useMemo(() => (snapshots || []).slice(-6), [snapshots]);
+  const chartMax = useMemo(() => Math.max(...chartData.map(s => Math.max(s.real_closing, s.projected_closing, s.total_expenses)), 1), [chartData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.category || !form.amount) return;
+    await createMovement.mutateAsync({
+      type: form.type,
+      category: form.category,
+      description: form.description || null,
+      amount: parseFloat(form.amount),
+      counterpart: form.counterpart || null,
+      bank_account_id: form.bank_account_id || null,
+      movement_date: new Date().toISOString().split('T')[0],
+      created_by: 'web',
+    });
+    setForm({ type: 'expense', category: '', description: '', amount: '', counterpart: '', bank_account_id: '' });
+    setShowNewMovement(false);
+  };
+
+  if (loadingAccounts || loadingMovements) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-emerald-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const displayedMovements = showAllMovements ? (movements || []) : (movements || []).slice(0, 8);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><DollarSign size={120} /></div>
+        <div className="relative z-10">
+          <h3 className="font-bold text-2xl flex items-center gap-2"><DollarSign size={24} /> Tablero de Liquidez</h3>
+          <p className="text-emerald-100 text-sm mt-1">Posición financiera en tiempo real — {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Efectivo', value: cashBalance, icon: Wallet, color: 'emerald', type: 'cash' },
+          { label: 'Bancos', value: bankBalance, icon: Landmark, color: 'blue', type: 'bank' },
+          { label: 'Inversiones', value: investBalance, icon: TrendingUp, color: 'purple', type: 'investment' },
+          { label: 'Disponibilidad Total', value: totalLiquidity, icon: DollarSign, color: 'amber', type: 'total' },
+        ].map(kpi => (
+          <div key={kpi.label} className={`bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${kpi.type === 'total' ? 'ring-2 ring-amber-200' : ''}`}>
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
+              <kpi.icon size={16} className={`text-${kpi.color}-500`} /> {kpi.label}
+            </div>
+            <p className={`text-2xl font-black text-${kpi.color}-600 font-mono`}>{fmt(kpi.value)}</p>
+            {kpi.type !== 'total' && accounts?.filter(a => a.type === kpi.type).map(a => (
+              <p key={a.id} className="text-xs text-gray-400 mt-1">{a.name}{a.bank_name ? ` (${a.bank_name})` : ''}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Alerts + Chart row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Alertas de Caja */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2"><AlertTriangle size={16} className="text-amber-500" /> Alertas de Caja (7 días)</h3>
+          </div>
+          <div className="p-4 space-y-3">
+            {chequesPayable.length > 0 && (
+              <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-red-700 flex items-center gap-1"><ArrowUpRight size={14} /> Cheques a pagar</span>
+                  <span className="font-mono font-bold text-red-700">{fmt(totalPayable)}</span>
+                </div>
+                {chequesPayable.map(c => (
+                  <div key={c.id} className="flex justify-between text-xs text-red-600 py-0.5">
+                    <span>N° {c.cheque_number} — {c.beneficiary_or_issuer || c.bank_name}</span>
+                    <span className="font-mono">{fmt(c.amount_ars)} · {new Date(c.due_date!).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {chequesReceivable.length > 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-green-700 flex items-center gap-1"><ArrowDownRight size={14} /> Cheques a cobrar</span>
+                  <span className="font-mono font-bold text-green-700">{fmt(totalReceivable)}</span>
+                </div>
+                {chequesReceivable.map(c => (
+                  <div key={c.id} className="flex justify-between text-xs text-green-600 py-0.5">
+                    <span>N° {c.cheque_number} — {c.beneficiary_or_issuer || c.bank_name}</span>
+                    <span className="font-mono">{fmt(c.amount_ars)} · {new Date(c.due_date!).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {upcomingCheques.length === 0 && (
+              <div className="text-center py-6 text-gray-400">
+                <CreditCard size={32} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm font-medium">Sin vencimientos próximos</p>
+              </div>
+            )}
+            <div className="pt-2 border-t border-gray-100 flex justify-between text-sm">
+              <span className="text-gray-500">Neto 7 días:</span>
+              <span className={`font-mono font-bold ${totalReceivable - totalPayable >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {totalReceivable - totalPayable >= 0 ? '+' : ''}{fmt(totalReceivable - totalPayable)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Chart Evolución */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-indigo-500" /> Evolución de Caja</h3>
+          </div>
+          <div className="p-4">
+            {chartData.length > 0 ? (
+              <div className="space-y-3">
+                {/* Mini bar chart */}
+                <div className="flex items-end gap-2 h-32">
+                  {chartData.map(s => {
+                    const h = Math.max((s.real_closing / chartMax) * 100, 4);
+                    const ph = Math.max((s.projected_closing / chartMax) * 100, 4);
+                    return (
+                      <div key={s.month} className="flex-1 flex flex-col items-center gap-1">
+                        <div className="w-full flex gap-0.5 items-end justify-center" style={{ height: '100%' }}>
+                          <div className="w-3 bg-indigo-200 rounded-t transition-all" style={{ height: `${ph}%` }} title={`Proy: ${fmtShort(s.projected_closing)}`} />
+                          <div className="w-3 bg-emerald-500 rounded-t transition-all" style={{ height: `${h}%` }} title={`Real: ${fmtShort(s.real_closing)}`} />
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-medium">{monthName(s.month)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-200" /> Proyectado</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Real</span>
+                </div>
+                {/* Último mes stats */}
+                {chartData.length > 0 && (() => {
+                  const last = chartData[chartData.length - 1];
+                  return (
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold">Ingresos</p>
+                        <p className="font-mono font-bold text-green-600 text-sm">{fmtShort(last.total_income)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold">Egresos</p>
+                        <p className="font-mono font-bold text-red-500 text-sm">{fmtShort(last.total_expenses)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold">Desvío</p>
+                        <p className={`font-mono font-bold text-sm ${last.deviation >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                          {last.deviation >= 0 ? '+' : ''}{fmtShort(last.deviation)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <Calendar size={32} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Sin datos de evolución aún</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Movimientos */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <h3 className="font-bold text-gray-800">Últimos Movimientos</h3>
+          <button onClick={() => setShowNewMovement(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all">
+            <Plus size={16} /> Nuevo Movimiento
+          </button>
+        </div>
+
+        {(movements || []).length > 0 ? (
+          <>
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                <tr>
+                  <th className="px-4 py-3">Fecha</th>
+                  <th className="px-4 py-3">Categoría</th>
+                  <th className="px-4 py-3">Descripción</th>
+                  <th className="px-4 py-3">Contraparte</th>
+                  <th className="px-4 py-3 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {displayedMovements.map(m => (
+                  <tr key={m.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{new Date(m.movement_date).toLocaleDateString('es-AR')}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.type === 'income' ? 'bg-green-100 text-green-700' : m.type === 'transfer' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                        {m.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{m.description || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{m.counterpart || '—'}</td>
+                    <td className={`px-4 py-3 text-right font-mono font-bold ${m.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {m.type === 'income' ? '+' : '-'}{fmt(m.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {(movements || []).length > 8 && (
+              <div className="p-3 border-t border-gray-100 text-center">
+                <button onClick={() => setShowAllMovements(!showAllMovements)} className="text-sm text-ecar-blue font-bold flex items-center gap-1 mx-auto hover:underline">
+                  {showAllMovements ? <><ChevronUp size={14} /> Mostrar menos</> : <><ChevronDown size={14} /> Ver todos ({(movements || []).length})</>}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-12 text-gray-400">
+            <ArrowDownRight size={48} className="mx-auto mb-3 opacity-30" />
+            <p className="font-medium">Sin movimientos registrados</p>
+            <p className="text-sm">Cargá tu primer movimiento o pedíselo a Rombo por WhatsApp 📱</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Nuevo Movimiento */}
+      {showNewMovement && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Nuevo Movimiento</h3>
+              <button onClick={() => setShowNewMovement(false)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                {(['expense', 'income'] as const).map(t => (
+                  <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
+                    className={`flex-1 py-2.5 rounded-md text-sm font-bold transition-all ${form.type === t ? (t === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'bg-white text-green-600 shadow-sm') : 'text-gray-500 hover:text-gray-700'}`}>
+                    {t === 'expense' ? '📤 Egreso' : '📥 Ingreso'}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500">Categoría *</label>
+                <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all">
+                  <option value="">Seleccioná...</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Monto ($) *</label>
+                  <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required placeholder="1500000" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Contraparte</label>
+                  <input type="text" value={form.counterpart} onChange={e => setForm({ ...form, counterpart: e.target.value })} placeholder="Ej: Elio, Proveedor" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500">Descripción</label>
+                <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalle opcional" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500">Cuenta</label>
+                <select value={form.bank_account_id} onChange={e => setForm({ ...form, bank_account_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                  <option value="">Sin asignar</option>
+                  {(accounts || []).map(a => <option key={a.id} value={a.id}>{a.name}{a.bank_name ? ` (${a.bank_name})` : ''}</option>)}
+                </select>
+              </div>
+
+              <button type="submit" disabled={createMovement.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+                {createMovement.isPending ? 'Guardando...' : '✅ Registrar Movimiento'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

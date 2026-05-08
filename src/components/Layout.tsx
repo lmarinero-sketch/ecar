@@ -4,13 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Target, Landmark, Calculator, Users,
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
-  Bell, FolderOpen, LogOut, Shield, Menu, X
+  Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 
 const iconMap: Record<ModuleId, React.ElementType> = {
   bi: LayoutDashboard,
+  liquidity: DollarSign,
   wbs: Target,
   invoicing: Calculator,
   purchases: ShoppingCart,
@@ -70,6 +71,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {/* Dashboard */}
           {hasModule('bi') && (
             <SidebarItem id="bi" icon={iconMap.bi} label={MODULE_LABELS.bi} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
+          )}
+          {hasModule('liquidity') && (
+            <SidebarItem id="liquidity" icon={iconMap.liquidity} label={MODULE_LABELS.liquidity} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
           )}
 
           {/* Grupo: Administración y Finanzas */}

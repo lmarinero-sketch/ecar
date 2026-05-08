@@ -5,7 +5,8 @@ import type {
   Obligation, Invoice, Supplier, PurchaseInvoice, Cheque,
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
   WbsElement, DocumentRequest, Profile,
-  NotificationContact, NotificationReminder, NotificationLog
+  NotificationContact, NotificationReminder, NotificationLog,
+  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -486,6 +487,98 @@ export function useCreateNotificationLog() {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_log'] }),
+  });
+}
+
+// ========== BANK ACCOUNTS ==========
+export function useBankAccounts() {
+  return useQuery({
+    queryKey: ['bank_accounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('bank_accounts').select('*').order('type');
+      if (error) throw error;
+      return data as BankAccount[];
+    },
+  });
+}
+
+export function useUpdateBankBalance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, current_balance }: { id: string; current_balance: number }) => {
+      const { error } = await supabase.from('bank_accounts').update({ current_balance, last_updated: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bank_accounts'] }),
+  });
+}
+
+// ========== CASH MOVEMENTS ==========
+export function useCashMovements(month?: string) {
+  return useQuery({
+    queryKey: ['cash_movements', month],
+    queryFn: async () => {
+      let q = supabase.from('cash_movements').select('*, bank_account:bank_accounts(id, name, type)').order('movement_date', { ascending: false });
+      if (month) {
+        q = q.gte('movement_date', `${month}-01`).lte('movement_date', `${month}-31`);
+      }
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return data as CashMovement[];
+    },
+  });
+}
+
+export function useCreateCashMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (mov: Partial<CashMovement>) => {
+      const { data, error } = await supabase.from('cash_movements').insert({ ...mov, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cash_movements'] });
+      qc.invalidateQueries({ queryKey: ['bank_accounts'] });
+    },
+  });
+}
+
+// ========== MONTHLY SNAPSHOTS ==========
+export function useMonthlySnapshots() {
+  return useQuery({
+    queryKey: ['monthly_snapshots'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('monthly_snapshots').select('*').order('month');
+      if (error) throw error;
+      return data as MonthlySnapshot[];
+    },
+  });
+}
+
+// ========== PROJECT CERTIFICATES ==========
+export function useProjectCertificates(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_certificates', projectId],
+    queryFn: async () => {
+      let q = supabase.from('project_certificates').select('*, project:projects(id, name)').order('certificate_number');
+      if (projectId) q = q.eq('project_id', projectId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ProjectCertificate[];
+    },
+  });
+}
+
+export function useCreateProjectCertificate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cert: Partial<ProjectCertificate>) => {
+      const { data, error } = await supabase.from('project_certificates').insert({ ...cert, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_certificates'] }),
   });
 }
 

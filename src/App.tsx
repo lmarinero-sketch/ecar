@@ -18,6 +18,7 @@ import { ObligationsModule } from './components/ObligationsModule';
 import { PurchasesModule } from './components/PurchasesModule';
 import { DocumentsModule } from './components/DocumentsModule';
 import { RomboChat } from './components/RomboChat';
+import { LiquidityDashboard } from './components/LiquidityDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +49,7 @@ function AppContent() {
   const renderModule = () => {
     switch (activeModule) {
       case 'bi': return <BiDashboard />;
+      case 'liquidity': return <LiquidityDashboard />;
       case 'wbs': return <WbsModule />;
       case 'invoicing': return <AccountingModule />;
       case 'purchases': return <PurchasesModule />;

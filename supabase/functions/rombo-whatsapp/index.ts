@@ -123,13 +123,65 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'register_payment',
+      description: 'Registrar un pago o cobro. Úsalo cuando el usuario diga cosas como "Pagué X a Y" o "Cobré X de Y". Crea un movimiento de caja.',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['income', 'expense'], description: 'income = cobro/ingreso, expense = pago/egreso' },
+          amount: { type: 'number', description: 'Monto del pago/cobro' },
+          counterpart: { type: 'string', description: 'A quién se le pagó o de quién se cobró' },
+          category: { type: 'string', description: 'Categoría: Sueldos/Honorarios, Seguros, Servicios, Impuestos ARCA, Gremios, Combustibles, Cheques/Echeqs, Pagos a terceros, Servicios contratados, Viandas, Varios, Cobro certificado, Otro ingreso' },
+          description: { type: 'string', description: 'Detalle adicional del movimiento' },
+          payment_method: { type: 'string', description: 'Forma de pago: transfer, cash, cheque, echeq' },
+        },
+        required: ['type', 'amount', 'counterpart', 'category']
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_liquidity',
+      description: 'Consultar la posición de liquidez actual: efectivo, bancos, inversiones y disponibilidad total. Úsalo cuando pregunten "¿cuánta plata tengo?" o "¿cómo está la caja?".',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'register_certificate',
+      description: 'Registrar un certificado de obra aprobado. Úsalo cuando digan "se aprobó el certificado N de la obra X por Y monto".',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra/proyecto' },
+          certificate_number: { type: 'number', description: 'Número del certificado' },
+          gross_amount: { type: 'number', description: 'Monto bruto' },
+          redetermination: { type: 'number', description: 'Monto por redeterminación (ajuste inflación)' },
+          net_deposit: { type: 'number', description: 'Monto neto depositado (después de retenciones)' },
+        },
+        required: ['project_name', 'certificate_number', 'gross_amount']
+      }
+    }
+  },
 ];
 
 const SYSTEM_PROMPT = `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
 Hablás en español argentino (vos/vosotros). Sos profesional, cercano y eficiente.
 
 ## TU ROL
-Sos el copiloto digital de ECAR. Podés crear y consultar registros del ERP: cheques, obligaciones fiscales, empleados, asistencia, facturas, gastos y proyectos.
+Sos el copiloto financiero y operativo de ECAR. Podés:
+- 💰 *Registrar pagos y cobros* → "Pagué 960 mil a Elio"
+- 📊 *Consultar liquidez* → "¿Cuánta plata tengo?"
+- 🏦 *Gestionar cheques* → cargar, consultar pendientes
+- 📋 *Cargar facturas* → foto de factura → OCR automático
+- 🏗️ *Registrar certificados de obra* → "Se aprobó cert 6 de San Martín por 5.4M"
+- 📅 *Obligaciones fiscales* → consultar y marcar como pagadas
+- 👷 *Empleados y asistencia* → consultar personal activo
 
 ## FORMATO DE RESPUESTA (MUY IMPORTANTE)
 - Usá formato *WhatsApp nativo*: asteriscos simples para *negrita* (ej: *Cheque cargado*).
@@ -140,7 +192,27 @@ Sos el copiloto digital de ECAR. Podés crear y consultar registros del ERP: che
 
 ## EJEMPLOS DE FORMATO CORRECTO
 
-Cuando confirmes una acción:
+Cuando registres un pago:
+✅ *Pago registrado*
+
+👤 A: Elio
+💰 Monto: $960.000
+📂 Categoría: Sueldos/Honorarios
+📅 Fecha: 08/05/2026
+
+Cuando muestres liquidez:
+💰 *Posición de Liquidez ECAR*
+
+💵 Efectivo: $975.000
+🏦 Bancos: $3.504.828
+📈 Inversiones: $103.045.454
+
+💎 *Disponibilidad Total: $107.525.282*
+
+⚠️ Cheques a pagar (7 días): $2.500.000
+✅ Cheques a cobrar (7 días): $5.400.000
+
+Cuando confirmes un cheque:
 ✅ *Cheque cargado exitosamente*
 
 🏦 Banco: Macro
@@ -149,37 +221,30 @@ Cuando confirmes una acción:
 📋 Número: 00123456
 
 Cuando falte información:
-⚠️ Me falta info para cargar el cheque:
+⚠️ Me falta info para cargar el pago:
 
-1️⃣ *Número de cheque*
-2️⃣ *Banco emisor*
-3️⃣ ¿Es *emitido* o *recibido*?
+1️⃣ *¿A quién le pagaste?*
+2️⃣ *¿Cuánto?*
+3️⃣ *¿Es sueldo, servicio, proveedor?*
 
 📝 Mandame esos datos y lo cargo.
 
-Cuando muestres una lista:
-📊 *Cheques pendientes (3)*
-
-🔹 N° 001234 — Macro — $500.000 — Vence 10/05
-🔹 N° 005678 — Galicia — $1.200.000 — Vence 15/05
-🔹 N° 009012 — BBVA — $800.000 — Vence 20/05
-
-💰 *Total: $2.500.000*
-
 ## REGLAS CRÍTICAS
-1. Cuando el usuario quiera CREAR un registro, extraé toda la info posible del mensaje.
-2. Si falta información obligatoria, PREGUNTÁ específicamente qué falta usando el formato numerado con emojis.
-3. Cuando tengas todos los datos, ejecutá la herramienta y confirmá con ✅.
-4. NUNCA inventes datos. Si no sabés algo, preguntá.
-5. Valores monetarios siempre con $ y separador de miles con punto: $1.500.000
-6. Para cheques necesitás: número, banco, monto, dirección (emitido/recibido), fecha vencimiento.
-7. Si el usuario manda un audio, ya fue transcrito. Tratá el texto como si lo hubiera escrito.
-8. Cuando el usuario salude, respondé brevemente y preguntá en qué podés ayudar.
-9. Si te piden un resumen, usá el formato con emojis y negritas para que sea escaneable.
-10. SIEMPRE terminá tu mensaje con un CTA (call to action) contextual. Ejemplos:
-   - Después de cargar un cheque: "¿Querés cargar otro o consultar los pendientes? 📋"
-   - Después de una consulta: "¿Necesitás algo más o queres que profundice en alguno? 🔍"
-   - Después de un resumen: "¿Querés ver el detalle de algún punto? 👆"
+1. Cuando el usuario diga "pagué X a Y" → usá *register_payment* con type='expense'.
+2. Cuando diga "cobré X de Y" → usá *register_payment* con type='income'.
+3. Cuando pregunte por plata/caja/liquidez → usá *get_liquidity*.
+4. Si falta información obligatoria, PREGUNTÁ específicamente qué falta.
+5. Cuando tengas todos los datos, ejecutá la herramienta y confirmá con ✅.
+6. NUNCA inventes datos. Si no sabés algo, preguntá.
+7. Valores monetarios siempre con $ y separador de miles con punto: $1.500.000
+8. Si "960 mil" → $960.000. Si "5 palos" → $5.000.000. Interpretá jerga argentina.
+9. Si el usuario manda un audio, ya fue transcrito. Tratá el texto como si lo hubiera escrito.
+10. Cuando el usuario salude, respondé brevemente y preguntá en qué podés ayudar.
+11. Si te piden un resumen, usá el formato con emojis y negritas para que sea escaneable.
+12. SIEMPRE terminá tu mensaje con un CTA (call to action) contextual. Ejemplos:
+   - Después de registrar pago: "¿Querés registrar otro pago o ver la liquidez? 💰"
+   - Después de liquidez: "¿Querés ver los cheques pendientes o registrar un movimiento? 📊"
+   - Después de un certificado: "¿Querés cargar otro certificado o ver el estado de la obra? 🏗️"
    - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.`;
 
 // ==================== TOOL EXECUTION ====================
@@ -389,6 +454,102 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           iva_21: args.iva_21_ars || 0,
           iva_105: args.iva_105_ars || 0,
           percepciones: (args.perceptions_iva_ars || 0) + (args.perceptions_iibb_ars || 0),
+        })
+      }
+      case 'register_payment': {
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        const movData: Record<string, any> = {
+          tenant_id: tenant?.id,
+          movement_date: todayStr,
+          type: args.type || 'expense',
+          category: args.category || 'Varios',
+          description: args.description || null,
+          amount: args.amount,
+          counterpart: args.counterpart || null,
+          payment_method: args.payment_method || 'transfer',
+          is_pending: false,
+          created_by: 'rombo-whatsapp',
+        }
+        const { data: mov, error: movErr } = await supabase.from('cash_movements').insert(movData).select().single()
+        if (movErr) return JSON.stringify({ error: movErr.message })
+
+        // Update bank balance if possible
+        if (args.type === 'expense') {
+          const { data: mainBank } = await supabase.from('bank_accounts').select('id, current_balance').eq('type', 'bank').limit(1).single()
+          if (mainBank) {
+            await supabase.from('bank_accounts').update({ current_balance: mainBank.current_balance - args.amount, last_updated: new Date().toISOString() }).eq('id', mainBank.id)
+          }
+        }
+
+        return JSON.stringify({
+          success: true,
+          message: `${args.type === 'income' ? 'Cobro' : 'Pago'} de $${args.amount.toLocaleString()} ${args.type === 'expense' ? 'a' : 'de'} ${args.counterpart} registrado`,
+          id: mov?.id,
+          category: args.category,
+          amount: args.amount,
+          counterpart: args.counterpart,
+        })
+      }
+      case 'get_liquidity': {
+        const { data: accounts } = await supabase.from('bank_accounts').select('name, type, current_balance, bank_name')
+        if (!accounts?.length) return JSON.stringify({ message: 'No hay cuentas bancarias configuradas' })
+
+        const cash = accounts.filter((a: any) => a.type === 'cash').reduce((s: number, a: any) => s + a.current_balance, 0)
+        const banks = accounts.filter((a: any) => a.type === 'bank').reduce((s: number, a: any) => s + a.current_balance, 0)
+        const investments = accounts.filter((a: any) => a.type === 'investment').reduce((s: number, a: any) => s + a.current_balance, 0)
+        const total = cash + banks + investments
+
+        // Get upcoming 7-day cheques
+        const weekAhead = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0]
+        const { data: chqPay } = await supabase.from('cheques').select('amount_ars').eq('status', 'pending').eq('direction', 'payable').gte('due_date', todayStr).lte('due_date', weekAhead)
+        const { data: chqRec } = await supabase.from('cheques').select('amount_ars').eq('status', 'pending').eq('direction', 'receivable').gte('due_date', todayStr).lte('due_date', weekAhead)
+        const toPay = (chqPay || []).reduce((s: number, c: any) => s + c.amount_ars, 0)
+        const toReceive = (chqRec || []).reduce((s: number, c: any) => s + c.amount_ars, 0)
+
+        return JSON.stringify({
+          efectivo: cash,
+          bancos: banks,
+          inversiones: investments,
+          disponibilidad_total: total,
+          cuentas: accounts,
+          cheques_a_pagar_7dias: toPay,
+          cheques_a_cobrar_7dias: toReceive,
+          neto_7dias: toReceive - toPay,
+        })
+      }
+      case 'register_certificate': {
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        // Find project by name
+        const { data: project } = await supabase.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+        if (!project) return JSON.stringify({ error: `No encontré el proyecto "${args.project_name}"` })
+
+        const totalCertified = (args.gross_amount || 0) + (args.redetermination || 0)
+        const retentions = totalCertified * 0.05 // ~5% retenciones estimadas
+        const netDeposit = args.net_deposit || (totalCertified - retentions)
+
+        const { data: cert, error: certErr } = await supabase.from('project_certificates').insert({
+          tenant_id: tenant?.id,
+          project_id: project.id,
+          certificate_number: args.certificate_number,
+          gross_amount: args.gross_amount,
+          redetermination: args.redetermination || 0,
+          total_certified: totalCertified,
+          retention_iibb: retentions * 0.6,
+          retention_imp_cheque: retentions * 0.4,
+          net_deposit: netDeposit,
+          status: 'approved',
+        }).select().single()
+
+        if (certErr) return JSON.stringify({ error: certErr.message })
+        return JSON.stringify({
+          success: true,
+          message: `Certificado N° ${args.certificate_number} de ${project.name} registrado`,
+          id: cert?.id,
+          project: project.name,
+          gross: args.gross_amount,
+          redetermination: args.redetermination || 0,
+          total: totalCertified,
+          net_deposit: netDeposit,
         })
       }
       default:
