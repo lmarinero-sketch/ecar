@@ -8,7 +8,10 @@ import type {
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
   InventoryItem, InventoryMovement, ToolAssignment,
-  PurchaseRequest, PurchaseRequestItem
+  PurchaseRequest, PurchaseRequestItem,
+  ParteDiario, SeguridadIncidente, SeguridadObservacion,
+  Inspeccion, PunchListItem, ConsultaObra,
+  GastoItem, GastoRegistro
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -720,5 +723,306 @@ export function useUpdatePurchaseRequest() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_requests'] }),
+  });
+}
+
+// ========== PARTE DIARIO DE OBRA ==========
+export function usePartesDiarios(obraId?: string) {
+  return useQuery({
+    queryKey: ['partes_diarios', obraId],
+    queryFn: async () => {
+      let q = supabase.from('parte_diario').select('*, obra:projects(id, name)').order('fecha', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(60);
+      if (error) throw error;
+      return data as ParteDiario[];
+    },
+  });
+}
+
+export function useCreateParteDiario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (parte: Partial<ParteDiario>) => {
+      const { data, error } = await supabase.from('parte_diario').insert({ ...parte, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['partes_diarios'] }),
+  });
+}
+
+export function useUpdateParteDiario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ParteDiario> & { id: string }) => {
+      const { error } = await supabase.from('parte_diario').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['partes_diarios'] }),
+  });
+}
+
+// ========== SEGURIDAD E INCIDENTES ==========
+export function useSeguridadIncidentes(obraId?: string) {
+  return useQuery({
+    queryKey: ['seguridad_incidentes', obraId],
+    queryFn: async () => {
+      let q = supabase.from('seguridad_incidentes').select('*, obra:projects(id, name)').order('fecha', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as SeguridadIncidente[];
+    },
+  });
+}
+
+export function useCreateSeguridadIncidente() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (inc: Partial<SeguridadIncidente>) => {
+      const { data, error } = await supabase.from('seguridad_incidentes').insert({ ...inc, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['seguridad_incidentes'] }),
+  });
+}
+
+export function useUpdateSeguridadIncidente() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<SeguridadIncidente> & { id: string }) => {
+      const { error } = await supabase.from('seguridad_incidentes').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['seguridad_incidentes'] }),
+  });
+}
+
+export function useSeguridadObservaciones(obraId?: string) {
+  return useQuery({
+    queryKey: ['seguridad_observaciones', obraId],
+    queryFn: async () => {
+      let q = supabase.from('seguridad_observaciones').select('*, obra:projects(id, name)').order('fecha', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as SeguridadObservacion[];
+    },
+  });
+}
+
+export function useCreateSeguridadObservacion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (obs: Partial<SeguridadObservacion>) => {
+      const { data, error } = await supabase.from('seguridad_observaciones').insert({ ...obs, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['seguridad_observaciones'] }),
+  });
+}
+
+// ========== INSPECCIONES ==========
+export function useInspecciones(obraId?: string) {
+  return useQuery({
+    queryKey: ['inspecciones', obraId],
+    queryFn: async () => {
+      let q = supabase.from('inspecciones').select('*, obra:projects(id, name)').order('fecha', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as Inspeccion[];
+    },
+  });
+}
+
+export function useCreateInspeccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (insp: Partial<Inspeccion>) => {
+      const { data, error } = await supabase.from('inspecciones').insert({ ...insp, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspecciones'] }),
+  });
+}
+
+export function useUpdateInspeccion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Inspeccion> & { id: string }) => {
+      const { error } = await supabase.from('inspecciones').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inspecciones'] }),
+  });
+}
+
+// ========== PUNCH LIST ==========
+export function usePunchList(obraId?: string) {
+  return useQuery({
+    queryKey: ['punch_list', obraId],
+    queryFn: async () => {
+      let q = supabase.from('punch_list').select('*, obra:projects(id, name)').order('created_at', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return data as PunchListItem[];
+    },
+  });
+}
+
+export function useCreatePunchItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: Partial<PunchListItem>) => {
+      const { data, error } = await supabase.from('punch_list').insert({ ...item, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['punch_list'] }),
+  });
+}
+
+export function useUpdatePunchItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<PunchListItem> & { id: string }) => {
+      const { error } = await supabase.from('punch_list').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['punch_list'] }),
+  });
+}
+
+// ========== CONSULTAS DE OBRA (RFI) ==========
+export function useConsultasObra(obraId?: string) {
+  return useQuery({
+    queryKey: ['consultas_obra', obraId],
+    queryFn: async () => {
+      let q = supabase.from('consultas_obra').select('*, obra:projects(id, name)').order('created_at', { ascending: false });
+      if (obraId) q = q.eq('obra_id', obraId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as ConsultaObra[];
+    },
+  });
+}
+
+export function useCreateConsultaObra() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (consulta: Partial<ConsultaObra>) => {
+      const { data, error } = await supabase.from('consultas_obra').insert({ ...consulta, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['consultas_obra'] }),
+  });
+}
+
+export function useUpdateConsultaObra() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ConsultaObra> & { id: string }) => {
+      const { error } = await supabase.from('consultas_obra').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['consultas_obra'] }),
+  });
+}
+
+// ========== GASTOS OPERATIVOS ==========
+export function useGastosItems() {
+  return useQuery({
+    queryKey: ['gastos_items'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('gastos_items').select('*').eq('activo', true).order('categoria').order('orden');
+      if (error) throw error;
+      return data as GastoItem[];
+    },
+  });
+}
+
+export function useCreateGastoItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: Partial<GastoItem>) => {
+      const { error } = await supabase.from('gastos_items').insert({ ...item, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gastos_items'] }),
+  });
+}
+
+export function useUpdateGastoItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<GastoItem> & { id: string }) => {
+      const { error } = await supabase.from('gastos_items').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gastos_items'] }),
+  });
+}
+
+export function useDeleteGastoItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('gastos_items').update({ activo: false }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gastos_items'] });
+      qc.invalidateQueries({ queryKey: ['gastos_registros'] });
+    },
+  });
+}
+
+export function useGastosRegistros(periodo?: string) {
+  return useQuery({
+    queryKey: ['gastos_registros', periodo],
+    queryFn: async () => {
+      let q = supabase.from('gastos_registros').select('*, item:gastos_items(*)');
+      if (periodo) q = q.eq('periodo', periodo);
+      const { data, error } = await q.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as GastoRegistro[];
+    },
+  });
+}
+
+export function useGastosRegistrosByRange(periodos: string[]) {
+  return useQuery({
+    queryKey: ['gastos_registros_range', periodos],
+    queryFn: async () => {
+      if (!periodos.length) return [];
+      const { data, error } = await supabase.from('gastos_registros').select('*, item:gastos_items(*)').in('periodo', periodos).order('periodo');
+      if (error) throw error;
+      return data as GastoRegistro[];
+    },
+    enabled: periodos.length > 0,
+  });
+}
+
+export function useUpsertGastoRegistro() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (reg: { item_id: string; periodo: string; monto: number; pagado?: boolean; metodo_pago?: string; notas?: string }) => {
+      const { error } = await supabase.from('gastos_registros').upsert(
+        { ...reg, tenant_id: ECAR_TENANT_ID },
+        { onConflict: 'item_id,periodo' }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['gastos_registros'] });
+      qc.invalidateQueries({ queryKey: ['gastos_registros_range'] });
+    },
   });
 }

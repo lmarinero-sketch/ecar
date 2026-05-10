@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Target, Landmark, Calculator, Users,
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
-  Calendar, ShoppingBag
+  Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -26,6 +26,10 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   fleet: Truck,
   certifications: FileSignature,
   field: Smartphone,
+  safety: ShieldAlert,
+  inspections: ClipboardCheck,
+  rfi: MessageSquareText,
+  expenses: Wallet,
   documents: FolderOpen,
 };
 
@@ -89,6 +93,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               {hasModule('obligations') && <SidebarItem id="obligations" icon={iconMap.obligations} label="Alertas & Obligaciones" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('invoicing') && <SidebarItem id="invoicing" icon={iconMap.invoicing} label="Facturación (ARCA)" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               <SidebarItem id="monthly_report" icon={iconMap.monthly_report} label={MODULE_LABELS.monthly_report} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
+              {hasModule('expenses') && <SidebarItem id="expenses" icon={iconMap.expenses} label={MODULE_LABELS.expenses} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
             </div>
           )}
 
@@ -111,6 +116,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               {hasModule('fleet') && <SidebarItem id="fleet" icon={iconMap.fleet} label={MODULE_LABELS.fleet} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('certifications') && <SidebarItem id="certifications" icon={iconMap.certifications} label={MODULE_LABELS.certifications} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('field') && <SidebarItem id="field" icon={iconMap.field} label={MODULE_LABELS.field} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('safety') && <SidebarItem id="safety" icon={iconMap.safety} label={MODULE_LABELS.safety} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('inspections') && <SidebarItem id="inspections" icon={iconMap.inspections} label={MODULE_LABELS.inspections} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
+              {hasModule('rfi') && <SidebarItem id="rfi" icon={iconMap.rfi} label={MODULE_LABELS.rfi} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
               {hasModule('documents') && <SidebarItem id="documents" icon={iconMap.documents} label={MODULE_LABELS.documents} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
             </div>
           )}

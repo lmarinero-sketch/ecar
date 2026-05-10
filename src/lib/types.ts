@@ -497,6 +497,179 @@ export type PurchaseRequestItem = {
   created_at: string;
 };
 
+// ========== PARTE DIARIO DE OBRA ==========
+
+export type ParteDiario = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  fecha: string;
+  clima: 'despejado' | 'nublado' | 'lluvia' | 'tormenta' | 'nieve' | 'ventoso' | null;
+  temperatura_min: number | null;
+  temperatura_max: number | null;
+  trabajo_realizado: string;
+  personal_presente: Array<{ nombre: string; categoria?: string }> | null;
+  equipos_en_obra: Array<{ equipo: string; horas?: number }> | null;
+  materiales_usados: Array<{ material: string; cantidad?: number; unidad?: string }> | null;
+  entregas: string | null;
+  incidentes: string | null;
+  horas_trabajadas: number;
+  fotos: string[];
+  notas: string | null;
+  firmado_por: string | null;
+  estado: 'borrador' | 'enviado' | 'aprobado' | 'rechazado';
+  aprobado_por: string | null;
+  aprobado_en: string | null;
+  created_at: string;
+  updated_at: string;
+  obra?: Project;
+};
+
+// ========== SEGURIDAD E INCIDENTES ==========
+
+export type SeguridadIncidente = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  fecha: string;
+  hora: string | null;
+  tipo: 'accidente' | 'incidente' | 'cuasi_accidente' | 'enfermedad_laboral';
+  gravedad: 'leve' | 'moderado' | 'grave' | 'fatal';
+  ubicacion: string | null;
+  descripcion: string;
+  persona_afectada: string | null;
+  persona_afectada_dni: string | null;
+  testigos: string | null;
+  tratamiento: 'primeros_auxilios' | 'medico' | 'hospital' | 'ninguno' | null;
+  dias_perdidos: number;
+  causa_raiz: string | null;
+  acciones_correctivas: string | null;
+  responsable_accion: string | null;
+  fecha_cierre_accion: string | null;
+  estado: 'abierto' | 'en_investigacion' | 'cerrado';
+  reportado_a_art: boolean;
+  fotos: string[];
+  created_at: string;
+  updated_at: string;
+  obra?: Project;
+};
+
+export type SeguridadObservacion = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  fecha: string;
+  observador: string;
+  categoria: 'epp' | 'orden_limpieza' | 'senalizacion' | 'electrico' | 'altura' | 'excavacion' | 'vehicular' | 'incendio' | 'otros' | null;
+  descripcion: string;
+  severidad: number;
+  probabilidad: number;
+  riesgo_score: number;
+  accion_sugerida: string | null;
+  estado: 'abierta' | 'en_correccion' | 'resuelta';
+  fotos: string[];
+  created_at: string;
+  obra?: Project;
+};
+
+// ========== INSPECCIONES + PUNCH LIST ==========
+
+export type Inspeccion = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  fecha: string;
+  tipo: 'estructura' | 'electrica' | 'sanitaria' | 'gas' | 'seguridad_contra_incendio' | 'terminaciones' | 'general';
+  inspector: string;
+  ubicacion: string | null;
+  checklist: Array<{ item: string; estado: 'ok' | 'falla' | 'na'; nota?: string }> | null;
+  resultado: 'pendiente' | 'aprobada' | 'aprobada_con_observaciones' | 'rechazada';
+  observaciones: string | null;
+  fotos: string[];
+  created_at: string;
+  updated_at: string;
+  obra?: Project;
+  punch_items?: PunchListItem[];
+};
+
+export type PunchListItem = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  inspeccion_id: string | null;
+  numero: number;
+  titulo: string;
+  descripcion: string | null;
+  ubicacion: string | null;
+  prioridad: 'baja' | 'media' | 'alta' | 'critica';
+  asignado_a: string | null;
+  estado: 'abierto' | 'en_correccion' | 'corregido' | 'verificado' | 'cerrado';
+  fecha_limite: string | null;
+  foto_antes: string | null;
+  foto_despues: string | null;
+  verificado_por: string | null;
+  verificado_en: string | null;
+  created_at: string;
+  updated_at: string;
+  obra?: Project;
+  inspeccion?: Inspeccion;
+};
+
+// ========== CONSULTAS DE OBRA (RFI) ==========
+
+export type ConsultaObra = {
+  id: string;
+  tenant_id: string;
+  obra_id: string | null;
+  numero: number;
+  asunto: string;
+  pregunta: string;
+  consultado_por: string;
+  asignado_a: string | null;
+  estado: 'borrador' | 'abierta' | 'respondida' | 'cerrada';
+  respuesta_oficial: string | null;
+  respondido_por: string | null;
+  respondido_en: string | null;
+  impacto_costo: boolean;
+  impacto_costo_monto: number;
+  impacto_cronograma: boolean;
+  impacto_cronograma_dias: number;
+  fecha_requerida: string | null;
+  fecha_limite_respuesta: string | null;
+  fotos: string[];
+  created_at: string;
+  updated_at: string;
+  obra?: Project;
+};
+
+// ─── GASTOS OPERATIVOS ───
+export type GastoItemCategoria = 'personal' | 'seguros' | 'servicios' | 'impuestos' | 'gremios' | 'combustibles' | 'terceros' | 'servicios_contratados' | 'viandas' | 'varios';
+
+export type GastoItem = {
+  id: string;
+  tenant_id: string;
+  categoria: GastoItemCategoria;
+  descripcion: string;
+  orden: number;
+  activo: boolean;
+  created_at: string;
+};
+
+export type GastoRegistro = {
+  id: string;
+  tenant_id: string;
+  item_id: string;
+  periodo: string; // 'YYYY-MM'
+  monto: number;
+  pagado: boolean;
+  fecha_pago: string | null;
+  metodo_pago: string | null;
+  notas: string | null;
+  created_at: string;
+  updated_at: string;
+  item?: GastoItem;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
@@ -514,6 +687,10 @@ export const ALL_MODULES = [
   'fleet',
   'certifications',
   'field',
+  'safety',
+  'inspections',
+  'rfi',
+  'expenses',
   'documents',
 ] as const;
 
@@ -534,6 +711,10 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   logistics: 'Acopios & Logística',
   fleet: 'Flota y Maquinaria',
   certifications: 'Certificaciones / ICC',
-  field: 'Parte Diario',
+  field: 'Parte Diario de Obra',
+  safety: 'Seguridad & Incidentes',
+  inspections: 'Inspecciones & Calidad',
+  rfi: 'Consultas de Obra',
+  expenses: 'Gastos Operativos',
   documents: 'Documentos & Correo',
 };

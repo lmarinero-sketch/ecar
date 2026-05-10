@@ -10,9 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablás en español argentino. Sos experto en el ERP de ECAR.
+const BASE_SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablás en español argentino. Sos experto en el ERP de ECAR.
 
-## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Acopios & Logística, Flota y Maquinaria, Certificaciones/ICC, Parte Diario, Documentos & Correo.
+## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Acopios & Logística, Flota y Maquinaria, Certificaciones/ICC, Parte Diario de Obra (registro diario, clima, avance), Seguridad & Incidentes (accidentes, observaciones, matriz riesgo 5×5), Inspecciones & Calidad (checklists, punch list, no conformidades), Consultas de Obra RFI (consultas técnicas formales con impacto costo/cronograma), Documentos & Correo.
 
 ## REGLAS
 1. Usá las herramientas disponibles para consultar datos reales antes de responder
@@ -21,6 +21,129 @@ const SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablá
 4. Cuando ejecutes acciones, confirmá qué hiciste
 5. Sugerí funcionalidades que el usuario podría no conocer
 6. Valores monetarios en formato ARS: $ 1.234,56`
+
+// Module-specific context instructions for the AI
+const MODULE_CONTEXT: Record<string, string> = {
+  bi: `## CONTEXTO ACTUAL: El usuario está en el Dashboard BI
+- Mostrá resúmenes ejecutivos con KPIs clave: total de cheques, facturas, empleados activos, obligaciones pendientes.
+- Ofrecé detectar anomalías, comparar períodos, o alertar sobre items urgentes.
+- Sugerí navegación a módulos específicos si el usuario necesita detalle ("Podés ir a Finanzas para ver los cheques en detalle").`,
+  
+  purchases: `## CONTEXTO ACTUAL: El usuario está en Compras & Libro IVA
+- Este módulo permite subir fotos/PDFs de facturas de compra. La IA extrae los datos con OCR automáticamente.
+- El usuario puede ver el Libro IVA (compras y ventas), filtrar por fechas, y descargar el libro en Excel.
+- Ayudalo a: revisar facturas pendientes de validación, calcular IVA crédito fiscal del mes, buscar facturas por proveedor.
+- Datos clave: proveedor, CUIT, tipo/número factura, neto gravado, IVA 21%, total, estado (Revisar/Validado).
+- Sugerí: "¿Querés que revise las facturas sin validar?" o "Puedo calcular tu posición de IVA este mes".`,
+  
+  finances: `## CONTEXTO ACTUAL: El usuario está en Finanzas & Tesorería
+- Muestra la cartera de cheques (a cobrar y a pagar), gastos fijos mensuales y flujo de caja.
+- El usuario puede cargar cheques manualmente o escaneando una foto (OCR).
+- Tipos: physical (físico) y echeq (electrónico). Direcciones: payable (emitido) y receivable (recibido).
+- Ayudalo a: ver cheques próximos a vencer, calcular flujo de caja, gestionar gastos fijos, cargar nuevos cheques.
+- Sugerí: "¿Querés que te calcule el flujo de caja de los próximos 30 días?" o "Puedo mostrarte los cheques que vencen esta semana".`,
+  
+  obligations: `## CONTEXTO ACTUAL: El usuario está en Alertas & Obligaciones
+- Gestiona vencimientos fiscales/contractuales mensuales (AFIP, ART, seguros, alquileres).
+- Incluye el panel de Notificaciones WhatsApp: recordatorios automáticos, contactos, historial de envíos.
+- Ayudalo a: crear obligaciones, marcarlas como pagadas, configurar recordatorios WhatsApp automáticos.
+- Los recordatorios se ejecutan automáticamente cada 5 minutos desde la nube (pg_cron).
+- Sugerí: "¿Querés que configure un recordatorio WhatsApp para cheques próximos a vencer?" o "Puedo marcar esta obligación como pagada".`,
+  
+  rrhh: `## CONTEXTO ACTUAL: El usuario está en RRHH & Legajos
+- Gestiona la nómina de personal: datos personales, CUIL, categoría, proyecto asignado.
+- Legajo digital con documentos (DNI, ART, recibos, contratos).
+- Asistencia con QR (clock-in/clock-out), novedades al contador.
+- Ayudalo a: consultar empleados activos, revisar asistencia, solicitar documentos faltantes, detectar anomalías de presentismo.
+- Sugerí: "¿Querés que revise quién faltó hoy?" o "Puedo solicitar el DNI actualizado a un empleado".`,
+  
+  inventory: `## CONTEXTO ACTUAL: El usuario está en Pañol & Inventario
+- Gestiona materiales, herramientas y consumibles. Control de stock con mínimos.
+- Movimientos: entrada, salida, devolución, ajuste. Asignación de herramientas a empleados.
+- Ayudalo a: revisar stock bajo mínimo, ver herramientas asignadas, consultar movimientos recientes.
+- Sugerí: "¿Querés que revise qué materiales están por debajo del stock mínimo?"`,
+  
+  liquidity: `## CONTEXTO ACTUAL: El usuario está en el Tablero de Liquidez
+- Muestra la posición de caja, saldos bancarios y proyecciones de flujo.
+- Integra datos de cheques, certificaciones, gastos fijos y obligaciones para proyectar liquidez.
+- Ayudalo a: entender su posición de caja actual, proyectar flujo futuro, identificar riesgos de iliquidez.
+- Sugerí: "¿Querés que proyecte tu flujo de caja con los cheques pendientes y obligaciones?"`,
+  
+  certifications: `## CONTEXTO ACTUAL: El usuario está en Certificaciones / ICC
+- Gestiona certificados de obra: montos brutos, redeterminaciones, retenciones (IIBB, imp. cheque), neto depositado.
+- Vincula certificados a proyectos y cuentas bancarias.
+- Ayudalo a: ver certificados pendientes de cobro, calcular retenciones, registrar depósitos.`,
+  
+  invoicing: `## CONTEXTO ACTUAL: El usuario está en Facturación ARCA
+- Emisión de facturas electrónicas vía AFIP. Tipos: A, B, C. CAE y vencimiento.
+- Datos: receptor, CUIT, montos netos, IVA, retenciones.
+- Ayudalo a: consultar facturas emitidas, estados de CAE, totales facturados.`,
+  
+  wbs: `## CONTEXTO ACTUAL: El usuario está en Planificación WBS
+- Estructura de desglose de trabajo (Work Breakdown Structure) por proyecto.
+- Muestra: presupuesto, costo comprometido, devengado, avance %, hitos.
+- Ayudalo a: consultar avance de obra, comparar presupuesto vs real, identificar desvíos.`,
+  
+  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Pedidos de Compra
+- Solicitudes internas de compra de materiales. Estados: pendiente, aprobado, consolidado, recibido.
+- Cada pedido tiene items con descripción, cantidad, unidad y costo estimado.
+- Ayudalo a: ver pedidos pendientes, aprobar solicitudes, consultar montos consolidados.`,
+  
+  field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario de Obra
+- Registro diario de actividades en obra: tareas realizadas, personal, clima (con ícono), temperatura, hs trabajadas, entregas, incidentes.
+- Workflow: borrador → enviado → aprobado/rechazado.
+- Ayudalo a: crear un parte, consultar partes anteriores, aprobar partes pendientes, ver resumen semanal de avance.
+- Sugerí: "¿Querés que cree el parte de hoy?" o "Puedo mostrarte el resumen semanal de avance".
+- Si pide crear uno, necesitás: obra_name, trabajo_realizado, clima. El resto es opcional.`,
+  
+  safety: `## CONTEXTO ACTUAL: El usuario está en Seguridad e Incidentes
+- Este módulo registra: accidentes, incidentes, cuasi-accidentes, enfermedades laborales.
+- Cada incidente tiene: tipo, gravedad (leve/moderado/grave/fatal), persona afectada, tratamiento, causa raíz, acciones correctivas.
+- También tiene Observaciones de seguridad con matriz de riesgo 5×5 (severidad × probabilidad = score).
+- KPIs clave: días sin accidente, incidentes abiertos, observaciones alto riesgo, días perdidos.
+- Cumplimiento: Res. SRT 905/2015 (registro obligatorio de accidentes/incidentes).
+- Sugerí: "¿Querés que revise los incidentes abiertos?" o "Puedo calcular el índice de frecuencia de accidentes".`,
+
+  inspections: `## CONTEXTO ACTUAL: El usuario está en Inspecciones & Calidad
+- Gestiona inspecciones de obra: estructura, eléctrica, sanitaria, gas, contra incendio, terminaciones, general.
+- Workflow: pendiente → aprobada / aprobada con observaciones / rechazada.
+- Punch List: items de no conformidad con prioridad (baja/media/alta/crítica) y ciclo: abierto → en corrección → corregido → verificado → cerrado.
+- Ayudalo a: crear inspecciones, agregar items al punch list, verificar correcciones, generar reportes de calidad.
+- Sugerí: "¿Querés que revise los items del punch list sin resolver?" o "Puedo generar un resumen de inspecciones por obra".`,
+
+  rfi: `## CONTEXTO ACTUAL: El usuario está en Consultas de Obra (RFI)
+- RFI = Request For Information. Formaliza consultas técnicas entre obra y oficina/proyectistas.
+- Cada RFI tiene: asunto, pregunta, consultado por, asignado a, respuesta oficial.
+- Tracking de impacto: puede afectar costo (monto $) y/o cronograma (días de atraso).
+- Workflow: borrador → abierta → respondida → cerrada.
+- Ayudalo a: crear RFIs, responder consultas, identificar RFIs con impacto económico, analizar tiempos de respuesta.
+- Sugerí: "¿Querés que revise las consultas abiertas?" o "Puedo analizar el impacto acumulado de las RFI".`,
+
+  documents: `## CONTEXTO ACTUAL: El usuario está en Documentos & Correo
+- Solicitudes de documentos a empleados y gestión de correspondencia.
+- Ayudalo a: crear solicitudes de documentos, ver el estado de las pendientes.`,
+  
+  expenses: `## CONTEXTO ACTUAL: El usuario está en Gastos Operativos
+- Estructura de gastos mensuales de la empresa, replicando la planilla Excel "Resumen Gastos Mesuales ECAR".
+- Categorías: Personal/Honorarios, Seguros, Servicios (luz/gas/expensas/teléfono/internet), Impuestos ARCA/Provincia (F931/Autónomos/IVA/IIBB), Gremios (IERIC/UOCRA), Combustibles, Pagos a Terceros, Servicios HyS Contratados, Viandas, Varios.
+- Cada item tiene montos por mes (período YYYY-MM), se puede marcar como pagado y registrar método de pago.
+- La vista es tipo planilla: filas = items agrupados por categoría, columnas = meses seleccionados.
+- KPIs: total visible, mes actual, variación vs mes anterior, cantidad de rubros.
+- Ayudalo a: cargar gastos, comparar períodos, identificar categorías con mayor variación, verificar qué queda sin pagar.
+- Sugerí: "¿Querés que analice los gastos del mes?" o "Puedo comparar los gastos de este mes vs el anterior".`,
+
+  monthly_report: `## CONTEXTO ACTUAL: El usuario está en Resumen Mensual
+- Informe financiero mensual: ingresos, egresos, desglose por categoría, desviaciones.
+- Ayudalo a: generar resúmenes, comparar meses, identificar tendencias de gasto.`,
+}
+
+function buildSystemPrompt(activeModule?: string): string {
+  const moduleContext = activeModule ? MODULE_CONTEXT[activeModule] : ''
+  if (moduleContext) {
+    return `${BASE_SYSTEM_PROMPT}\n\n${moduleContext}`
+  }
+  return BASE_SYSTEM_PROMPT
+}
 
 // Tool definitions for OpenAI function calling
 const tools = [
@@ -140,6 +263,63 @@ const tools = [
       name: 'detect_anomalies',
       description: 'Detectar anomalías: ausencias inusuales, gastos atípicos, patrones irregulares.',
       parameters: { type: 'object', properties: { area: { type: 'string', description: 'attendance/expenses/cheques (opcional, analiza todo si no se especifica)' } } }
+    }
+  },
+  // ─── TOOLS NUEVOS: MÓDULOS DE OBRA ───
+  {
+    type: 'function', function: {
+      name: 'query_partes_diarios',
+      description: 'Consultar partes diarios de obra. Puede filtrar por obra o fecha.',
+      parameters: { type: 'object', properties: { obra_name: { type: 'string' }, fecha: { type: 'string', description: 'YYYY-MM-DD' }, estado: { type: 'string', description: 'borrador/enviado/aprobado/rechazado' }, limit: { type: 'number' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'create_parte_diario',
+      description: 'Crear un parte diario de obra con información del día.',
+      parameters: { type: 'object', properties: { obra_name: { type: 'string', description: 'Nombre de la obra' }, fecha: { type: 'string', description: 'YYYY-MM-DD' }, trabajo_realizado: { type: 'string' }, clima: { type: 'string', description: 'despejado/nublado/lluvia/tormenta/nieve/ventoso' }, horas_trabajadas: { type: 'number' }, entregas: { type: 'string' }, incidentes: { type: 'string' }, firmado_por: { type: 'string' } }, required: ['obra_name', 'trabajo_realizado'] }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_safety_incidents',
+      description: 'Consultar incidentes de seguridad. Puede filtrar por estado, tipo o gravedad.',
+      parameters: { type: 'object', properties: { estado: { type: 'string', description: 'abierto/en_investigacion/cerrado' }, tipo: { type: 'string', description: 'accidente/incidente/cuasi_accidente/enfermedad_laboral' }, gravedad: { type: 'string' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_safety_observations',
+      description: 'Consultar observaciones de seguridad. Puede filtrar por riesgo alto.',
+      parameters: { type: 'object', properties: { min_riesgo: { type: 'number', description: 'Filtrar observaciones con riesgo >= este valor' }, estado: { type: 'string' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_inspections',
+      description: 'Consultar inspecciones de calidad.',
+      parameters: { type: 'object', properties: { resultado: { type: 'string', description: 'pendiente/aprobada/aprobada_con_observaciones/rechazada' }, tipo: { type: 'string' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_punch_list',
+      description: 'Consultar items del punch list (no conformidades).',
+      parameters: { type: 'object', properties: { estado: { type: 'string', description: 'abierto/en_correccion/corregido/verificado/cerrado' }, prioridad: { type: 'string' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_rfi',
+      description: 'Consultar consultas de obra (RFI). Puede filtrar por estado.',
+      parameters: { type: 'object', properties: { estado: { type: 'string', description: 'borrador/abierta/respondida/cerrada' }, con_impacto_costo: { type: 'boolean' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'get_obra_health_score',
+      description: 'Calcular el "health score" integral de una obra: combina partes diarios, seguridad, inspecciones, RFI, y certificaciones para dar un diagnóstico general.',
+      parameters: { type: 'object', properties: { obra_name: { type: 'string', description: 'Nombre de la obra (parcial)' } } }
     }
   },
 ]
@@ -331,6 +511,125 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         }
         return JSON.stringify(results)
       }
+      // ─── PARTE DIARIO ───
+      case 'query_partes_diarios': {
+        let q = sb.from('parte_diario').select('fecha, trabajo_realizado, clima, horas_trabajadas, estado, firmado_por, entregas, incidentes, obra_id, projects(name)')
+        if (args.obra_name) {
+          const { data: obra } = await sb.from('projects').select('id').ilike('name', `%${args.obra_name}%`).limit(1).single()
+          if (obra) q = q.eq('obra_id', obra.id)
+        }
+        if (args.fecha) q = q.eq('fecha', args.fecha)
+        if (args.estado) q = q.eq('estado', args.estado)
+        const { data } = await q.order('fecha', { ascending: false }).limit(args.limit || 15)
+        return JSON.stringify(data || [])
+      }
+      case 'create_parte_diario': {
+        const { data: obra } = await sb.from('projects').select('id').ilike('name', `%${args.obra_name}%`).limit(1).single()
+        if (!obra) return JSON.stringify({ error: `No se encontró obra "${args.obra_name}"` })
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        const { data, error } = await sb.from('parte_diario').insert({
+          tenant_id: tenant?.id, obra_id: obra.id,
+          fecha: args.fecha || today.toISOString().split('T')[0],
+          trabajo_realizado: args.trabajo_realizado,
+          clima: args.clima || 'despejado',
+          horas_trabajadas: args.horas_trabajadas || 8,
+          entregas: args.entregas || null,
+          incidentes: args.incidentes || null,
+          firmado_por: args.firmado_por || null,
+          estado: 'borrador',
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ success: true, message: `Parte diario creado para ${args.obra_name} (${args.fecha || 'hoy'})`, id: data.id })
+      }
+      // ─── SEGURIDAD ───
+      case 'query_safety_incidents': {
+        let q = sb.from('seguridad_incidentes').select('fecha, tipo, gravedad, descripcion, persona_afectada, estado, dias_perdidos, causa_raiz, acciones_correctivas, projects(name)')
+        if (args.estado) q = q.eq('estado', args.estado)
+        if (args.tipo) q = q.eq('tipo', args.tipo)
+        if (args.gravedad) q = q.eq('gravedad', args.gravedad)
+        const { data } = await q.order('fecha', { ascending: false }).limit(20)
+        if (!data?.length) return '[]'
+        const summary = { total: data.length, abiertos: data.filter((i: any) => i.estado === 'abierto').length, dias_perdidos_total: data.reduce((s: number, i: any) => s + (i.dias_perdidos || 0), 0), incidentes: data }
+        return JSON.stringify(summary)
+      }
+      case 'query_safety_observations': {
+        let q = sb.from('seguridad_observaciones').select('fecha, observador, categoria, descripcion, severidad, probabilidad, riesgo_score, estado, accion_sugerida, projects(name)')
+        if (args.min_riesgo) q = q.gte('riesgo_score', args.min_riesgo)
+        if (args.estado) q = q.eq('estado', args.estado)
+        const { data } = await q.order('riesgo_score', { ascending: false }).limit(20)
+        return JSON.stringify(data || [])
+      }
+      // ─── INSPECCIONES ───
+      case 'query_inspections': {
+        let q = sb.from('inspecciones').select('fecha, tipo, inspector, ubicacion, resultado, observaciones, projects(name)')
+        if (args.resultado) q = q.eq('resultado', args.resultado)
+        if (args.tipo) q = q.eq('tipo', args.tipo)
+        const { data } = await q.order('fecha', { ascending: false }).limit(20)
+        if (!data?.length) return '[]'
+        const summary = { total: data.length, aprobadas: data.filter((i: any) => i.resultado === 'aprobada').length, rechazadas: data.filter((i: any) => i.resultado === 'rechazada').length, inspecciones: data }
+        return JSON.stringify(summary)
+      }
+      case 'query_punch_list': {
+        let q = sb.from('punch_list').select('numero, titulo, descripcion, ubicacion, prioridad, asignado_a, estado, fecha_limite, projects(name)')
+        if (args.estado) q = q.eq('estado', args.estado)
+        if (args.prioridad) q = q.eq('prioridad', args.prioridad)
+        const { data } = await q.order('created_at', { ascending: false }).limit(30)
+        if (!data?.length) return '[]'
+        const summary = { total: data.length, abiertos: data.filter((p: any) => p.estado === 'abierto' || p.estado === 'en_correccion').length, items: data }
+        return JSON.stringify(summary)
+      }
+      // ─── RFI ───
+      case 'query_rfi': {
+        let q = sb.from('consultas_obra').select('numero, asunto, pregunta, consultado_por, asignado_a, estado, respuesta_oficial, impacto_costo, impacto_costo_monto, impacto_cronograma, impacto_cronograma_dias, projects(name)')
+        if (args.estado) q = q.eq('estado', args.estado)
+        if (args.con_impacto_costo) q = q.eq('impacto_costo', true)
+        const { data } = await q.order('created_at', { ascending: false }).limit(20)
+        if (!data?.length) return '[]'
+        const costoTotal = data.filter((r: any) => r.impacto_costo).reduce((s: number, r: any) => s + (r.impacto_costo_monto || 0), 0)
+        const diasTotal = data.filter((r: any) => r.impacto_cronograma).reduce((s: number, r: any) => s + (r.impacto_cronograma_dias || 0), 0)
+        return JSON.stringify({ total: data.length, abiertas: data.filter((r: any) => r.estado === 'abierta').length, impacto_costo_acumulado: costoTotal, impacto_cronograma_acumulado_dias: diasTotal, consultas: data })
+      }
+      // ─── HEALTH SCORE ───
+      case 'get_obra_health_score': {
+        const { data: obra } = await sb.from('projects').select('id, name').ilike('name', `%${args.obra_name || ''}%`).limit(1).single()
+        if (!obra) return JSON.stringify({ error: `No se encontró obra "${args.obra_name}"` })
+        const [partes, incidentes, observaciones, inspecciones, punch, rfis] = await Promise.all([
+          sb.from('parte_diario').select('id, estado').eq('obra_id', obra.id),
+          sb.from('seguridad_incidentes').select('id, estado, gravedad').eq('obra_id', obra.id),
+          sb.from('seguridad_observaciones').select('id, riesgo_score, estado').eq('obra_id', obra.id),
+          sb.from('inspecciones').select('id, resultado').eq('obra_id', obra.id),
+          sb.from('punch_list').select('id, estado, prioridad').eq('obra_id', obra.id),
+          sb.from('consultas_obra').select('id, estado, impacto_costo_monto').eq('obra_id', obra.id),
+        ])
+        const pData = partes.data || []; const iData = incidentes.data || []; const oData = observaciones.data || []
+        const inspData = inspecciones.data || []; const puData = punch.data || []; const rData = rfis.data || []
+        let score = 100
+        const incGraves = iData.filter((i: any) => (i.gravedad === 'grave' || i.gravedad === 'fatal') && i.estado === 'abierto')
+        score -= incGraves.length * 15
+        const obsAltas = oData.filter((o: any) => o.riesgo_score >= 10 && o.estado !== 'resuelta')
+        score -= obsAltas.length * 5
+        const inspRechazadas = inspData.filter((i: any) => i.resultado === 'rechazada')
+        score -= inspRechazadas.length * 10
+        const punchCriticos = puData.filter((p: any) => p.prioridad === 'critica' && (p.estado === 'abierto' || p.estado === 'en_correccion'))
+        score -= punchCriticos.length * 8
+        const rfiAbiertas = rData.filter((r: any) => r.estado === 'abierta')
+        score -= rfiAbiertas.length * 3
+        const partesAprobados = pData.filter((p: any) => p.estado === 'aprobado')
+        if (pData.length > 0) score += Math.min(10, Math.round((partesAprobados.length / pData.length) * 10))
+        score = Math.max(0, Math.min(100, score))
+        const nivel = score >= 80 ? '🟢 Saludable' : score >= 50 ? '🟡 Con observaciones' : '🔴 Crítico'
+        return JSON.stringify({
+          obra: obra.name, health_score: score, nivel,
+          resumen: { partes_diarios: pData.length, partes_aprobados: partesAprobados.length, incidentes_total: iData.length, incidentes_abiertos: iData.filter((i: any) => i.estado === 'abierto').length, incidentes_graves_abiertos: incGraves.length, observaciones_alto_riesgo: obsAltas.length, inspecciones_total: inspData.length, inspecciones_rechazadas: inspRechazadas.length, punch_items_total: puData.length, punch_criticos_abiertos: punchCriticos.length, rfi_total: rData.length, rfi_abiertas: rfiAbiertas.length },
+          alertas: [
+            ...(incGraves.length ? [`⚠️ ${incGraves.length} incidentes graves abiertos`] : []),
+            ...(obsAltas.length ? [`⚠️ ${obsAltas.length} observaciones de alto riesgo sin resolver`] : []),
+            ...(inspRechazadas.length ? [`❌ ${inspRechazadas.length} inspecciones rechazadas`] : []),
+            ...(punchCriticos.length ? [`🔴 ${punchCriticos.length} items críticos en punch list`] : []),
+            ...(rfiAbiertas.length > 3 ? [`📋 ${rfiAbiertas.length} RFIs abiertas pendientes de respuesta`] : []),
+          ],
+        })
+      }
       default:
         return JSON.stringify({ error: `Herramienta desconocida: ${name}` })
     }
@@ -343,10 +642,13 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { messages } = await req.json()
+    const { messages, activeModule } = await req.json()
     if (!messages?.length) {
       return new Response(JSON.stringify({ error: 'messages requerido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
+
+    // Build context-aware system prompt based on the user's current screen
+    const systemPrompt = buildSystemPrompt(activeModule)
 
     // Build input for Responses API (no system role - use instructions param)
     const input: any[] = messages.slice(-12)
@@ -363,7 +665,7 @@ serve(async (req) => {
     let response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: SYSTEM_PROMPT, input, tools: responsesTools, temperature: 0.7 }),
+      body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: systemPrompt, input, tools: responsesTools, temperature: 0.7 }),
     })
 
     if (!response.ok) {
@@ -396,7 +698,7 @@ serve(async (req) => {
       response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: SYSTEM_PROMPT, input: followUp, tools: responsesTools, temperature: 0.7 }),
+        body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: systemPrompt, input: followUp, tools: responsesTools, temperature: 0.7 }),
       })
 
       if (!response.ok) break

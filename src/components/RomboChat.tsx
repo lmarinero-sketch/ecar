@@ -1,18 +1,68 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAppStore } from '../store/useStore';
+import { MODULE_LABELS } from '../lib/types';
+import type { ModuleId } from '../lib/types';
 
 interface Message { role: 'user' | 'assistant'; content: string; }
 
-const GREETING = '¡Hola! 👋 Soy **Rombo**, tu asistente IA de ECAR.\n\nPuedo ayudarte con:\n• 📊 Consultar datos del sistema\n• 💰 Calcular flujo de caja\n• 📱 Enviar WhatsApp a contactos\n• ✅ Marcar obligaciones como pagadas\n• 📋 Solicitar documentos a empleados\n• 🔍 Detectar anomalías\n\n¡Preguntame lo que necesites!';
+// Quick actions per module — contextual suggestions based on what the user is viewing
+const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; label: string; prompt: string }[]>> = {
+  bi: [
+    { icon: Zap, label: 'Resumen del día', prompt: '¿Cómo está la empresa hoy? Dame el resumen ejecutivo.' },
+    { icon: Banknote, label: 'Flujo de caja', prompt: '¿Cuál es mi flujo de caja para los próximos 30 días?' },
+    { icon: BarChart3, label: 'Anomalías', prompt: 'Detectá anomalías en asistencia, gastos y cheques.' },
+    { icon: Bell, label: 'Alertas urgentes', prompt: '¿Hay algo urgente que deba atender?' },
+  ],
+  purchases: [
+    { icon: ShoppingCart, label: 'Facturas del mes', prompt: '¿Cuántas facturas de compra tengo este mes y cuál es el total?' },
+    { icon: Receipt, label: 'IVA acumulado', prompt: '¿Cuánto IVA crédito fiscal tengo acumulado este mes?' },
+    { icon: FileText, label: 'Proveedores top', prompt: '¿Cuáles son mis principales proveedores por monto facturado?' },
+    { icon: Zap, label: 'Facturas sin validar', prompt: '¿Cuántas facturas están pendientes de revisión?' },
+  ],
+  finances: [
+    { icon: Banknote, label: 'Cheques por vencer', prompt: '¿Qué cheques vencen esta semana?' },
+    { icon: BarChart3, label: 'Cartera total', prompt: '¿Cuál es el total de la cartera de cheques a pagar y a cobrar?' },
+    { icon: Zap, label: 'Flujo de caja 30d', prompt: '¿Cuál es mi flujo de caja para los próximos 30 días?' },
+    { icon: FileText, label: 'Gastos fijos', prompt: '¿Cuánto pago en gastos fijos mensuales?' },
+  ],
+  obligations: [
+    { icon: Bell, label: 'Próximos vencimientos', prompt: '¿Qué obligaciones vencen esta semana?' },
+    { icon: CalendarCheck, label: 'Estado general', prompt: 'Dame el estado de todas las obligaciones: cuántas pendientes, pagadas y vencidas.' },
+    { icon: Banknote, label: 'Monto pendiente', prompt: '¿Cuál es el monto total de obligaciones pendientes de pago?' },
+    { icon: Zap, label: 'Recordatorios activos', prompt: '¿Qué recordatorios WhatsApp tengo configurados?' },
+  ],
+  rrhh: [
+    { icon: Users, label: 'Plantilla activa', prompt: '¿Cuántos empleados activos tengo y en qué categorías?' },
+    { icon: ClipboardList, label: 'Asistencia hoy', prompt: '¿Cómo está la asistencia de hoy? ¿Quién faltó?' },
+    { icon: BarChart3, label: 'Anomalías asistencia', prompt: 'Detectá anomalías en asistencia del último mes.' },
+    { icon: FileText, label: 'Docs pendientes', prompt: '¿Hay solicitudes de documentos pendientes?' },
+  ],
+  inventory: [
+    { icon: ShoppingCart, label: 'Stock bajo', prompt: '¿Qué materiales tienen stock por debajo del mínimo?' },
+    { icon: HardHat, label: 'Herramientas asignadas', prompt: '¿Qué herramientas están asignadas actualmente?' },
+    { icon: Truck, label: 'Últimos movimientos', prompt: '¿Cuáles fueron los últimos movimientos de inventario?' },
+    { icon: Zap, label: 'Resumen pañol', prompt: 'Dame un resumen general del estado del pañol.' },
+  ],
+  liquidity: [
+    { icon: Banknote, label: 'Posición de caja', prompt: '¿Cuál es mi posición de caja actual? Saldos de cuentas bancarias.' },
+    { icon: BarChart3, label: 'Proyección 30 días', prompt: 'Proyectá mi flujo de caja para los próximos 30 días con ingresos y egresos esperados.' },
+    { icon: Zap, label: 'Alertas de liquidez', prompt: '¿Hay riesgo de iliquidez en las próximas semanas?' },
+    { icon: FileText, label: 'Gastos vs ingresos', prompt: 'Compará gastos vs ingresos del mes actual.' },
+  ],
+  certifications: [
+    { icon: Building2, label: 'Certificados activos', prompt: '¿Cuántos certificados de obra tengo pendientes de cobro?' },
+    { icon: Banknote, label: 'Montos retenidos', prompt: '¿Cuánto tengo en retenciones (IIBB, impuesto al cheque) de certificados?' },
+    { icon: Zap, label: 'Redeterminaciones', prompt: '¿Cuál es el estado de redeterminaciones de precio en mis obras?' },
+  ],
+};
 
-const QUICK_ACTIONS = [
+const DEFAULT_QUICK_ACTIONS = [
   { icon: Zap, label: 'Resumen del día', prompt: '¿Cómo está la empresa hoy? Dame el resumen ejecutivo.' },
   { icon: Banknote, label: 'Flujo de caja', prompt: '¿Cuál es mi flujo de caja para los próximos 30 días?' },
   { icon: Users, label: 'Asistencia hoy', prompt: '¿Cómo está la asistencia de hoy?' },
   { icon: Bell, label: 'Alertas urgentes', prompt: '¿Hay algo urgente que deba atender? Cheques por vencer, obligaciones próximas.' },
-  { icon: BarChart3, label: 'Anomalías', prompt: 'Detectá anomalías en asistencia, gastos y cheques.' },
-  { icon: FileText, label: 'Gastos fijos', prompt: '¿Cuánto pago en gastos fijos mensuales?' },
 ];
 
 const IDLE_PHRASES = [
@@ -113,14 +163,64 @@ function useIdleWalker(chatOpen: boolean) {
 
 // ==================== MAIN COMPONENT ====================
 export const RomboChat: React.FC = () => {
+  const activeModule = useAppStore((s) => s.activeModule);
+  const moduleLabel = MODULE_LABELS[activeModule] || 'Dashboard';
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: GREETING }]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [bounce, setBounce] = useState(true);
   const [showGreeting, setShowGreeting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevModuleRef = useRef<ModuleId>(activeModule);
   const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open);
+
+  // Build the contextual greeting based on the active module
+  const contextualGreeting = useMemo(() => {
+    const moduleHints: Partial<Record<ModuleId, string>> = {
+      bi: 'Estás en el **Dashboard BI**. Puedo darte un resumen ejecutivo, detectar anomalías o mostrarte KPIs clave.',
+      purchases: 'Estás en **Compras & Libro IVA**. Puedo consultar facturas, calcular IVA crédito fiscal o buscar proveedores.',
+      finances: 'Estás en **Finanzas & Tesorería**. Puedo consultar la cartera de cheques, calcular flujo de caja o revisar gastos fijos.',
+      obligations: 'Estás en **Alertas & Obligaciones**. Puedo ver vencimientos próximos, marcar obligaciones como pagadas o configurar recordatorios WhatsApp.',
+      rrhh: 'Estás en **RRHH & Legajos**. Puedo consultar la plantilla, verificar asistencia, solicitar documentos o detectar anomalías.',
+      inventory: 'Estás en **Pañol & Inventario**. Puedo revisar stock, herramientas asignadas o movimientos recientes.',
+      liquidity: 'Estás en el **Tablero de Liquidez**. Puedo proyectar tu flujo de caja, analizar la posición de caja o alertarte sobre riesgos.',
+      invoicing: 'Estás en **Facturación ARCA**. Puedo ayudarte con la emisión de facturas electrónicas y consultar el estado de CAEs.',
+      wbs: 'Estás en **Planificación WBS**. Puedo consultar avances de obra, presupuestos y estructura de desglose.',
+      certifications: 'Estás en **Certificaciones / ICC**. Puedo revisar certificados pendientes, retenciones y redeterminaciones.',
+      purchase_requests: 'Estás en **Pedidos de Compra**. Puedo consultar solicitudes pendientes, aprobar o consolidar pedidos.',
+      logistics: 'Estás en **Acopios & Logística**. Puedo revisar la logística de materiales y acopios de obra.',
+      fleet: 'Estás en **Flota y Maquinaria**. Puedo consultar el estado de vehículos y maquinaria.',
+      field: 'Estás en **Parte Diario**. Puedo ayudarte con el registro diario de actividades en obra.',
+      documents: 'Estás en **Documentos & Correo**. Puedo gestionar solicitudes de documentos y correspondencia.',
+      monthly_report: 'Estás en **Resumen Mensual**. Puedo generar el informe financiero del mes.',
+    };
+    const hint = moduleHints[activeModule] || `Estás en **${moduleLabel}**. ¡Preguntame lo que necesites!`;
+    return `¡Hola! 👋 Soy **Rombo**, tu asistente IA de ECAR.\n\n📍 ${hint}\n\n¡Preguntame lo que necesites!`;
+  }, [activeModule, moduleLabel]);
+
+  // Initialize greeting on first render
+  useEffect(() => {
+    setMessages([{ role: 'assistant', content: contextualGreeting }]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When the user navigates to a different module while chat is open, inject a context update
+  useEffect(() => {
+    if (prevModuleRef.current !== activeModule && messages.length > 0) {
+      prevModuleRef.current = activeModule;
+      const navLabel = MODULE_LABELS[activeModule] || activeModule;
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `📍 Veo que cambiaste a **${navLabel}**. ¿En qué te ayudo acá?` 
+      }]);
+    }
+  }, [activeModule, messages.length]);
+
+  // Quick actions based on active module
+  const quickActions = useMemo(() => 
+    MODULE_QUICK_ACTIONS[activeModule] || DEFAULT_QUICK_ACTIONS
+  , [activeModule]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => { const t = setTimeout(() => setBounce(false), 8000); return () => clearTimeout(t); }, []);
@@ -134,7 +234,11 @@ export const RomboChat: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('rombo-chat', {
-        body: { messages: newMessages.map(m => ({ role: m.role, content: m.content })) },
+        body: { 
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          activeModule,
+          moduleLabel,
+        },
       });
       const reply = error ? `⚠️ ${error.message}` : (data?.error ? `⚠️ ${data.error}` : data?.reply || '⚠️ Sin respuesta');
       setMessages([...newMessages, { role: 'assistant', content: reply }]);
@@ -248,7 +352,7 @@ export const RomboChat: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="text-white font-bold text-sm flex items-center gap-1.5">Rombo <span className="text-[9px] font-normal bg-white/20 px-1.5 py-0.5 rounded-full">GPT-5.4 mini</span></h4>
-              <p className="text-blue-200 text-[10px]">Asistente IA · Consulta datos, ejecuta acciones</p>
+              <p className="text-blue-200 text-[10px]">📍 {moduleLabel}</p>
             </div>
             <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white transition-colors"><Minimize2 size={18} /></button>
           </div>
@@ -268,7 +372,7 @@ export const RomboChat: React.FC = () => {
             ))}
             {showQuickActions && (
               <div className="grid grid-cols-2 gap-2 pt-2">
-                {QUICK_ACTIONS.map((qa, i) => (
+                {quickActions.map((qa, i) => (
                   <button key={i} onClick={() => sendMessage(qa.prompt)} className="flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-ecar-blue/40 hover:text-ecar-blue hover:shadow-sm transition-all text-left">
                     <qa.icon size={14} className="text-ecar-blue shrink-0" /> {qa.label}
                   </button>

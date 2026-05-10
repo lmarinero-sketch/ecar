@@ -22,6 +22,10 @@ import { LiquidityDashboard } from './components/LiquidityDashboard';
 import { InventoryModule } from './components/InventoryModule';
 import { MonthlyReportModule } from './components/MonthlyReportModule';
 import { PurchaseRequestsModule } from './components/PurchaseRequestsModule';
+import { SafetyModule } from './components/SafetyModule';
+import { InspectionsModule } from './components/InspectionsModule';
+import { RFIModule } from './components/RFIModule';
+import { ExpensesModule } from './components/ExpensesModule';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +70,10 @@ function AppContent() {
       case 'fleet': return <FleetModule />;
       case 'certifications': return <CertificationsModule />;
       case 'field': return <FieldModule />;
+      case 'safety': return <SafetyModule />;
+      case 'inspections': return <InspectionsModule />;
+      case 'rfi': return <RFIModule />;
+      case 'expenses': return <ExpensesModule />;
       case 'documents': return <DocumentsModule />;
       default: return <BiDashboard />;
     }
