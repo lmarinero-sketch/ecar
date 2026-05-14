@@ -97,7 +97,7 @@ export const InventoryModule: React.FC = () => {
       <div className="bg-gradient-to-r from-orange-700 to-orange-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Boxes size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Package size={24} /> Pañol & Inventario</h3>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><Package size={24} /> Depósito & Inventario</h3>
           <p className="text-orange-100 text-sm mt-1">Control de materiales, herramientas y asignaciones</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export const InventoryModule: React.FC = () => {
           <p className="text-2xl font-black text-red-600 font-mono">{lowStockItems.length}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Pañol</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Depósito</div>
           <p className="text-2xl font-black text-emerald-600 font-mono">{fmt(totalValue)}</p>
         </div>
       </div>
@@ -209,10 +209,10 @@ export const InventoryModule: React.FC = () => {
                     <td className="px-4 py-3 font-medium">{(a.item as any)?.name || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
-                          {((a.employee as any)?.first_name || '?')[0]}
+                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
+                          {((a.employee as any)?.full_name || '?')[0]}
                         </div>
-                        {(a.employee as any)?.first_name} {(a.employee as any)?.last_name}
+                        {(a.employee as any)?.full_name}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500">{(a.project as any)?.name || '—'}</td>

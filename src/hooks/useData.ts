@@ -654,7 +654,7 @@ export function useToolAssignments() {
   return useQuery({
     queryKey: ['tool_assignments'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tool_assignments').select('*, item:inventory_items(id, name), employee:employees(id, first_name, last_name), project:projects(id, name)').order('assigned_date', { ascending: false });
+      const { data, error } = await supabase.from('tool_assignments').select('*, item:inventory_items(id, name), employee:employees(id, full_name), project:projects(id, name)').order('assigned_date', { ascending: false });
       if (error) throw error;
       return data as ToolAssignment[];
     },

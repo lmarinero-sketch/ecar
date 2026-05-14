@@ -201,7 +201,7 @@ export const ProposalModule: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
              <div className="bg-white p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600"><Target/></div>
-               <h3 className="font-bold text-gray-800 mb-2">Logística y Pañol</h3>
+               <h3 className="font-bold text-gray-800 mb-2">Logística y Depósito</h3>
                <p className="text-xs text-gray-500 leading-relaxed">Gestión de ingresos/egresos, transferencias entre obras, control de herramientas críticas y alertas de stock mínimo automáticas.</p>
              </div>
              <div className="bg-white p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">

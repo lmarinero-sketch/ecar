@@ -707,7 +707,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   finances: 'Finanzas & Tesorería',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'RRHH & Legajos',
-  inventory: 'Pañol & Inventario',
+  inventory: 'Depósito & Inventario',
   logistics: 'Acopios & Logística',
   fleet: 'Flota y Maquinaria',
   certifications: 'Certificaciones / ICC',

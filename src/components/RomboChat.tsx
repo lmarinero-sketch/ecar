@@ -43,7 +43,7 @@ const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; 
     { icon: ShoppingCart, label: 'Stock bajo', prompt: '¿Qué materiales tienen stock por debajo del mínimo?' },
     { icon: HardHat, label: 'Herramientas asignadas', prompt: '¿Qué herramientas están asignadas actualmente?' },
     { icon: Truck, label: 'Últimos movimientos', prompt: '¿Cuáles fueron los últimos movimientos de inventario?' },
-    { icon: Zap, label: 'Resumen pañol', prompt: 'Dame un resumen general del estado del pañol.' },
+    { icon: Zap, label: 'Resumen depósito', prompt: 'Dame un resumen general del estado del depósito.' },
   ],
   liquidity: [
     { icon: Banknote, label: 'Posición de caja', prompt: '¿Cuál es mi posición de caja actual? Saldos de cuentas bancarias.' },
@@ -183,7 +183,7 @@ export const RomboChat: React.FC = () => {
       finances: 'Estás en **Finanzas & Tesorería**. Puedo consultar la cartera de cheques, calcular flujo de caja o revisar gastos fijos.',
       obligations: 'Estás en **Alertas & Obligaciones**. Puedo ver vencimientos próximos, marcar obligaciones como pagadas o configurar recordatorios WhatsApp.',
       rrhh: 'Estás en **RRHH & Legajos**. Puedo consultar la plantilla, verificar asistencia, solicitar documentos o detectar anomalías.',
-      inventory: 'Estás en **Pañol & Inventario**. Puedo revisar stock, herramientas asignadas o movimientos recientes.',
+      inventory: 'Estás en **Depósito & Inventario**. Puedo revisar stock, herramientas asignadas o movimientos recientes.',
       liquidity: 'Estás en el **Tablero de Liquidez**. Puedo proyectar tu flujo de caja, analizar la posición de caja o alertarte sobre riesgos.',
       invoicing: 'Estás en **Facturación ARCA**. Puedo ayudarte con la emisión de facturas electrónicas y consultar el estado de CAEs.',
       wbs: 'Estás en **Planificación WBS**. Puedo consultar avances de obra, presupuestos y estructura de desglose.',
