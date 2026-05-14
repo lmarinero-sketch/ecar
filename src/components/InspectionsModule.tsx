@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardCheck, Plus, X, Check, ListChecks, AlertCircle, CheckCircle2, Clock, CircleDot, ChevronDown, ChevronUp } from 'lucide-react';
+import { ClipboardCheck, Plus, X, Check, ListChecks, AlertCircle, CheckCircle2, CircleDot } from 'lucide-react';
 import { useInspecciones, useCreateInspeccion, useUpdateInspeccion, usePunchList, useCreatePunchItem, useUpdatePunchItem, useProjects } from '../hooks/useData';
 
 const TIPO_LABELS: Record<string, string> = { estructura: 'Estructura', electrica: 'Eléctrica', sanitaria: 'Sanitaria', gas: 'Gas', seguridad_contra_incendio: 'Contra Incendio', terminaciones: 'Terminaciones', general: 'General' };
@@ -17,7 +17,7 @@ export const InspectionsModule: React.FC = () => {
   const updatePunchItem = useUpdatePunchItem();
   const [tab, setTab] = useState<'inspecciones' | 'punch'>('inspecciones');
   const [showForm, setShowForm] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [_expanded, _setExpanded] = useState<string | null>(null);
 
   const [formInsp, setFormInsp] = useState({ obra_id: '', tipo: 'general', inspector: '', ubicacion: '', observaciones: '' });
   const [formPunch, setFormPunch] = useState({ obra_id: '', titulo: '', descripcion: '', ubicacion: '', prioridad: 'media', asignado_a: '', fecha_limite: '' });

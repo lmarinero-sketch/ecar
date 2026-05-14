@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquareText, Plus, X, Check, Clock, CheckCircle2, AlertCircle, DollarSign, Calendar, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquareText, Plus, X, Check, Clock, CheckCircle2, DollarSign, Calendar, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { useConsultasObra, useCreateConsultaObra, useUpdateConsultaObra, useProjects } from '../hooks/useData';
 
 const ESTADO_COLORS: Record<string, string> = { borrador: 'bg-gray-100 text-gray-600', abierta: 'bg-yellow-100 text-yellow-700', respondida: 'bg-blue-100 text-blue-700', cerrada: 'bg-green-100 text-green-700' };
@@ -40,7 +40,6 @@ export const RFIModule: React.FC = () => {
   };
 
   const abiertas = consultas.filter(c => c.estado === 'abierta').length;
-  const respondidas = consultas.filter(c => c.estado === 'respondida').length;
   const conImpactoCosto = consultas.filter(c => c.impacto_costo).length;
   const conImpactoCrono = consultas.filter(c => c.impacto_cronograma).length;
 

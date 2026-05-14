@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardList, Plus, Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind, Check, X, Clock, Users, Wrench, Package, Camera, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { ClipboardList, Plus, Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind, Check, X, Clock, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { usePartesDiarios, useCreateParteDiario, useUpdateParteDiario, useProjects } from '../hooks/useData';
 import type { ParteDiario } from '../lib/types';
 
