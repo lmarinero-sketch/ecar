@@ -4,51 +4,160 @@
 
 @layer base {
   body {
-    @apply text-gray-900 bg-white font-sans min-h-screen relative overflow-x-hidden;
+    @apply text-slate-800 font-sans min-h-screen relative overflow-x-hidden antialiased;
+    background-color: #F8FAFC;
+    letter-spacing: -0.011em;
+  }
+
+  /* Premium font rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-ecar-blue/15 text-ecar-blueDark;
   }
 }
 
 @layer components {
-  /* Fondo de cuadrícula global (Transcriptor Style) */
-  .bg-grid {
-    @apply bg-grid-pattern fixed inset-0 pointer-events-none z-0 opacity-50;
-    background-size: 40px 40px;
-  }
 
-  /* Cards - Glassmorphism Light */
+  /* ─── Cards ─── */
   .light-card {
-    @apply bg-white border border-gray-200 rounded-xl transition-all duration-200 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)];
+    @apply bg-white border border-slate-200/70 rounded-xl transition-all duration-250 shadow-[0_1px_3px_rgba(0,0,0,0.04)];
   }
   .light-card:hover {
-    @apply border-gray-300 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05)] -translate-y-1;
+    @apply border-slate-300/80 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.07)] -translate-y-0.5;
+  }
+  .light-card-flat {
+    @apply bg-white border border-slate-200/60 rounded-xl;
   }
 
-  /* Botones primarios (Azul ECAR) */
+  /* ─── Botones ─── */
   .btn-primary {
-    @apply bg-ecar-blue text-white rounded-full font-semibold px-4 py-2 transition-all duration-200 shadow-sm flex items-center justify-center gap-2 hover:bg-ecar-blueDark hover:-translate-y-0.5 hover:shadow-md;
+    @apply bg-ecar-blue text-white rounded-lg font-semibold text-sm px-4 py-2 transition-all duration-200
+           shadow-[0_1px_3px_rgba(17,92,156,0.3)] flex items-center justify-center gap-2
+           hover:bg-ecar-blueDark hover:shadow-[0_4px_12px_rgba(17,92,156,0.25)] hover:-translate-y-px
+           active:scale-[0.97] active:shadow-sm;
   }
-
-  /* Botones secundarios */
   .btn-secondary {
-    @apply bg-white text-gray-700 border border-gray-300 rounded-full font-semibold px-4 py-2 transition-all duration-200 hover:bg-gray-50 hover:-translate-y-0.5 focus:ring-2 focus:ring-ecar-blue/50;
+    @apply bg-white text-slate-700 border border-slate-200 rounded-lg font-semibold text-sm px-4 py-2
+           transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 hover:-translate-y-px
+           focus:ring-2 focus:ring-ecar-blue/15 active:scale-[0.97];
   }
-  
-  /* Botones Peligro / Red */
   .btn-danger {
-    @apply bg-ecar-red text-white rounded-full font-semibold px-4 py-2 transition-all duration-200 shadow-sm hover:bg-red-600 hover:-translate-y-0.5;
+    @apply bg-red-500 text-white rounded-lg font-semibold text-sm px-4 py-2 transition-all duration-200
+           shadow-sm hover:bg-red-600 hover:-translate-y-px active:scale-[0.97];
+  }
+  .btn-ghost {
+    @apply text-slate-600 rounded-lg font-medium text-sm px-3 py-1.5 transition-all duration-150
+           hover:bg-slate-100 hover:text-slate-900 active:scale-[0.97];
   }
 
-  /* Tablas */
+  /* ─── Tablas ─── */
   .data-table {
-    @apply w-full text-left text-sm text-gray-600;
+    @apply w-full text-left text-sm text-slate-600;
   }
   .data-table th {
-    @apply bg-gray-50 px-4 py-3 font-semibold text-gray-900 border-b border-gray-200 uppercase tracking-wider text-xs;
+    @apply bg-slate-50/80 px-4 py-2.5 font-semibold text-slate-500 border-b border-slate-200
+           uppercase tracking-[0.06em] text-[11px];
   }
   .data-table td {
-    @apply px-4 py-3 border-b border-gray-100 align-middle;
+    @apply px-4 py-3 border-b border-slate-100/80 align-middle;
+  }
+  .data-table tr {
+    @apply transition-colors duration-150;
   }
   .data-table tr:hover td {
-    @apply bg-blue-50/50;
+    @apply bg-ecar-blueLight/30;
+  }
+
+  /* ─── Status Badges ─── */
+  .badge {
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 tracking-wide;
+  }
+  .badge-pending {
+    @apply bg-amber-50 text-amber-700 ring-1 ring-amber-200/50;
+  }
+  .badge-success {
+    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50;
+  }
+  .badge-danger {
+    @apply bg-red-50 text-red-700 ring-1 ring-red-200/50;
+  }
+  .badge-info {
+    @apply bg-blue-50 text-blue-700 ring-1 ring-blue-200/50;
+  }
+  .badge-neutral {
+    @apply bg-slate-100 text-slate-600 ring-1 ring-slate-200/50;
+  }
+
+  /* ─── Sidebar ─── */
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148,163,184,0.2);
+    border-radius: 100px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(148,163,184,0.35);
+  }
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148,163,184,0.15) transparent;
+  }
+
+  /* ─── Sidebar Group Header ─── */
+  .sidebar-group-label {
+    @apply px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400/80
+           select-none;
+  }
+
+  /* ─── Module Content Transition ─── */
+  .module-content-enter {
+    animation: fadeInUp 0.35s ease-out forwards;
+  }
+
+  /* ─── KPI Card ─── */
+  .kpi-card {
+    @apply bg-white border border-slate-200/60 rounded-xl p-5 transition-all duration-250
+           hover:shadow-[0_8px_24px_-6px_rgba(0,0,0,0.06)] hover:-translate-y-0.5
+           relative overflow-hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-transparent to-slate-50/50 pointer-events-none;
+  }
+
+  /* ─── Focus Rings ─── */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ecar-blue/30 focus-visible:ring-offset-1;
+  }
+
+  /* ─── Input Fields ─── */
+  .input-field {
+    @apply w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue
+           placeholder:text-slate-400;
+  }
+
+  /* ─── Tooltip ─── */
+  .tooltip-bubble {
+    @apply absolute px-2.5 py-1 bg-slate-800 text-white text-[11px] font-medium rounded-md
+           shadow-lg border border-slate-700/50 whitespace-nowrap z-50 pointer-events-none
+           opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-0 -translate-x-1;
+  }
+}
+
+/* ─── Utility duration override (Tailwind v3 doesn't have duration-250) ─── */
+@layer utilities {
+  .duration-250 {
+    transition-duration: 250ms;
   }
 }

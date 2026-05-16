@@ -12,15 +12,24 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 const SYSTEM_PROMPT = `Eres un experto contable argentino especializado en lectura de facturas. Tu trabajo es analizar imágenes de facturas y extraer todos los datos relevantes para el Libro IVA.
 
-REGLAS DE CLASIFICACIÓN:
-- Si el REMITENTE/EMISOR de la factura es "ECAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de VENTA (ECAR vende)
-- Si el DESTINATARIO/RECEPTOR/SEÑOR(ES) es "ECAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de COMPRA (ECAR compra)
-- Si no se identifica ECAR en ningún lado, clasifica como COMPRA por defecto
+REGLAS DE CLASIFICACIÓN COMPRA vs VENTA:
+- PRIMERO identificá quién EMITE la factura (aparece arriba, con CUIT, logo y datos del emisor)
+- LUEGO identificá quién RECIBE ("Señor(es)", "Destinatario", "Cliente", aparece más abajo)
+- Si el EMISOR es "ECAR", "REGALADO OSCAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de VENTA (ECAR vende)
+- Si el RECEPTOR es "ECAR", "REGALADO OSCAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de COMPRA (ECAR compra)
+- Si ECAR no aparece en ningún lado, clasifica como COMPRA por defecto
+- IMPORTANTE: La mayoría de las facturas que se suben son de COMPRA. Solo clasificá como venta si estás seguro que el EMISOR es ECAR.
+
+EXTRACCIÓN DE NOMBRE:
+- "proveedor_cliente" debe ser el nombre/razón social de la OTRA parte (NO ECAR)
+- Si es COMPRA: el proveedor_cliente es el EMISOR de la factura
+- Si es VENTA: el proveedor_cliente es el RECEPTOR de la factura
+- NUNCA dejes proveedor_cliente vacío. Si no lo podés leer, poné "No legible"
 
 Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin explicaciones:
 {
   "tipo": "compra" o "venta",
-  "proveedor_cliente": "Nombre/Razón Social de la otra parte (no ECAR)",
+  "proveedor_cliente": "Nombre/Razón Social de la otra parte (NO ECAR)",
   "cuit": "XX-XXXXXXXX-X",
   "tipo_factura": "A", "B" o "C",
   "punto_venta": "0003",
@@ -40,7 +49,11 @@ Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin expli
   "descripcion_items": "Resumen breve de lo facturado"
 }
 
-Si algún campo no se puede leer, usa null. Los montos son numéricos sin signo $. La fecha en formato YYYY-MM-DD.`;
+IMPORTANTE sobre MONTOS:
+- Todos los montos son numéricos con decimales (ej: 12100.50, NO 12100)
+- Preservá siempre los centavos/decimales
+- Si un campo no se puede leer, usá null
+- La fecha en formato YYYY-MM-DD`;
 
 function jsonResponse(data: Record<string, unknown>) {
   return new Response(JSON.stringify(data), {

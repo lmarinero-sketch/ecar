@@ -18,7 +18,30 @@ export const FinancesModule: React.FC = () => {
     amount_ars: 0, due_date: '', issue_date: '', scan_url: '',
   });
 
-  const formatARS = (v: number) => `A$ ${v.toLocaleString()}`;
+  const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+  // Argentine holidays 2026 (national)
+  const FERIADOS_2026 = [
+    '2026-01-01','2026-02-16','2026-02-17','2026-03-24','2026-04-02','2026-04-03','2026-04-04',
+    '2026-05-01','2026-05-25','2026-06-15','2026-06-20','2026-07-09','2026-08-17','2026-10-12',
+    '2026-11-20','2026-11-23','2026-12-08','2026-12-25',
+  ];
+
+  const getNextBusinessDay = (dateStr: string | null): string | null => {
+    if (!dateStr) return null;
+    let d = new Date(dateStr + 'T12:00:00');
+    let iso = d.toISOString().split('T')[0];
+    while (d.getDay() === 0 || d.getDay() === 6 || FERIADOS_2026.includes(iso)) {
+      d.setDate(d.getDate() + 1);
+      iso = d.toISOString().split('T')[0];
+    }
+    return iso;
+  };
+
+  const isPostponed = (original: string | null): boolean => {
+    if (!original) return false;
+    return getNextBusinessDay(original) !== original;
+  };
 
   const payable = cheques.filter(c => c.direction === 'payable' && c.status === 'pending');
   const receivable = cheques.filter(c => c.direction === 'receivable' && c.status === 'pending');
@@ -178,6 +201,7 @@ export const FinancesModule: React.FC = () => {
                   <th className="px-4 py-3">Nro</th>
                   <th className="px-4 py-3">Banco</th>
                   <th className="px-4 py-3">Dir.</th>
+                  <th className="px-4 py-3">Tipo</th>
                   <th className="px-4 py-3">Beneficiario</th>
                   <th className="px-4 py-3 text-right">Monto</th>
                   <th className="px-4 py-3">Vto</th>
@@ -195,9 +219,27 @@ export const FinancesModule: React.FC = () => {
                         {ch.direction === 'payable' ? '↑ Pagar' : '↓ Cobrar'}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${ch.type === 'echeq' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{ch.beneficiary_or_issuer || '—'}</td>
                     <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{ch.due_date || '—'}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {ch.due_date ? (
+                        <div>
+                          {isPostponed(ch.due_date) ? (
+                            <>
+                              <span className="line-through text-gray-400">{ch.due_date}</span>
+                              <span className="block text-green-600 font-bold">→ {getNextBusinessDay(ch.due_date)}</span>
+                            </>
+                          ) : (
+                            <span className="text-gray-500">{ch.due_date}</span>
+                          )}
+                        </div>
+                      ) : '—'}
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[ch.status]}`}>{ch.status}</span>
                     </td>

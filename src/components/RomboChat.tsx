@@ -65,7 +65,7 @@ const DEFAULT_QUICK_ACTIONS = [
   { icon: Bell, label: 'Alertas urgentes', prompt: '¿Hay algo urgente que deba atender? Cheques por vencer, obligaciones próximas.' },
 ];
 
-const IDLE_PHRASES = [
+const IDLE_PHRASES_GENERIC = [
   '🔍 Revisando los datos...',
   '📊 Todo en orden por acá',
   '💪 ¡Listo para ayudarte!',
@@ -74,8 +74,25 @@ const IDLE_PHRASES = [
   '📋 Chequeando vencimientos...',
 ];
 
+const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
+  bi: ['📊 Analizando los KPIs...', '🔍 Todo bajo control desde acá', '📈 Revisando métricas...'],
+  purchases: ['🧾 Mirando facturas de compra...', '📑 Revisando el Libro IVA...', '🔍 Chequeando proveedores...'],
+  finances: ['💰 Controlando la cartera...', '📅 Revisando cheques por vencer...', '🏦 Monitoreando el flujo de caja...'],
+  obligations: ['⏰ Revisando vencimientos...', '📱 Chequeando recordatorios...', '🔔 Todo al día con las obligaciones...'],
+  rrhh: ['👷 Revisando la nómina...', '📋 Chequeando asistencia...', '🪪 Verificando legajos...'],
+  inventory: ['📦 Contando stock...', '🔧 Revisando herramientas...', '📋 Controlando el pañol...'],
+  field: ['🏗️ Revisando partes de obra...', '☀️ Chequeando el clima de hoy...', '📝 Monitoreando avance...'],
+  safety: ['🦺 Cero accidentes = objetivo...', '⚠️ Revisando observaciones...', '🔍 Chequeando seguridad...'],
+  inspections: ['✅ Revisando inspecciones...', '📋 Mirando el punch list...', '🔍 Verificando calidad...'],
+  rfi: ['📨 Chequeando consultas abiertas...', '🔍 Revisando RFIs pendientes...', '💡 Analizando impactos...'],
+};
+
+function getIdlePhrases(moduleId: ModuleId): string[] {
+  return MODULE_IDLE_PHRASES[moduleId] || IDLE_PHRASES_GENERIC;
+}
+
 // ==================== IDLE WALKER HOOK ====================
-function useIdleWalker(chatOpen: boolean) {
+function useIdleWalker(chatOpen: boolean, moduleId: ModuleId) {
   const [walking, setWalking] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [facingRight, setFacingRight] = useState(true);
@@ -97,7 +114,8 @@ function useIdleWalker(chatOpen: boolean) {
     setFacingRight(true);
     setPos({ x: startX, y: startY });
     setWalking(true);
-    setPhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]);
+    const phrases = getIdlePhrases(moduleId);
+    setPhrase(phrases[Math.floor(Math.random() * phrases.length)]);
     setShowPhrase(true);
     setTimeout(() => setShowPhrase(false), 4000);
   }, []);
@@ -129,7 +147,8 @@ function useIdleWalker(chatOpen: boolean) {
         setFacingRight(false);
         posRef.current.x = maxX;
         // Random phrase on bounce
-        setPhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]);
+        const phrases = getIdlePhrases(moduleId);
+        setPhrase(phrases[Math.floor(Math.random() * phrases.length)]);
         setShowPhrase(true);
         setTimeout(() => setShowPhrase(false), 3000);
       } else if (posRef.current.x <= 0) {
@@ -173,31 +192,206 @@ export const RomboChat: React.FC = () => {
   const [showGreeting, setShowGreeting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevModuleRef = useRef<ModuleId>(activeModule);
-  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open);
+  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open, activeModule);
 
   // Build the contextual greeting based on the active module
+  // Rich context per module — Rombo explains what the user can do HERE
+  const MODULE_CAPABILITIES: Partial<Record<ModuleId, { where: string; capabilities: string[]; proTip?: string }>> = useMemo(() => ({
+    bi: {
+      where: 'Dashboard BI',
+      capabilities: [
+        'Pedirme un **resumen ejecutivo** del estado de la empresa',
+        '**Detectar anomalías** en asistencia, gastos o cheques',
+        'Ver **KPIs clave**: empleados, cheques, obligaciones, facturas',
+        'Consultar **alertas urgentes** que requieran tu atención',
+      ],
+      proTip: 'Desde acá tenés la vista de pájaro de todo ECAR. Si necesitás detalle, te digo a qué módulo ir.',
+    },
+    purchases: {
+      where: 'Compras & Libro IVA',
+      capabilities: [
+        'Consultar **facturas de compra** del mes y su estado',
+        'Calcular el **IVA crédito fiscal** acumulado',
+        'Buscar facturas por **proveedor** o estado (validado/revisar)',
+        'Revisar **facturas pendientes de validación**',
+      ],
+      proTip: 'Podés subir una foto/PDF de factura y el OCR la procesa automáticamente.',
+    },
+    finances: {
+      where: 'Finanzas & Tesorería',
+      capabilities: [
+        'Ver **cheques próximos a vencer** esta semana',
+        'Consultar la **cartera total** (a cobrar y a pagar)',
+        'Calcular el **flujo de caja** para los próximos 30 días',
+        'Cargar un **nuevo cheque** dictándome los datos',
+        'Revisar **gastos fijos** mensuales',
+      ],
+      proTip: 'Puedo cargar cheques por vos: decime número, banco, monto y vencimiento.',
+    },
+    obligations: {
+      where: 'Alertas & Obligaciones',
+      capabilities: [
+        'Ver **obligaciones que vencen** esta semana',
+        'Marcar una obligación como **pagada**',
+        'Configurar **recordatorios WhatsApp** automáticos',
+        'Ver el **monto total pendiente** de pago',
+        'Consultar el **historial de notificaciones** enviadas',
+      ],
+      proTip: 'Los recordatorios se ejecutan solos cada 5 minutos desde la nube.',
+    },
+    rrhh: {
+      where: 'RRHH & Legajos',
+      capabilities: [
+        'Consultar la **plantilla activa**: cuántos empleados, categorías',
+        'Ver la **asistencia de hoy**: quién vino, quién faltó, tardanzas',
+        '**Detectar anomalías** de presentismo del último mes',
+        'Solicitar **documentos** a un empleado (DNI, ART, etc.)',
+      ],
+      proTip: 'Acá también se gestionan las novedades para el contador.',
+    },
+    inventory: {
+      where: 'Pañol & Inventario',
+      capabilities: [
+        'Ver materiales con **stock bajo mínimo**',
+        'Consultar **herramientas asignadas** a empleados',
+        'Revisar los **últimos movimientos** (entradas, salidas, devoluciones)',
+        'Obtener un **resumen general** del estado del pañol',
+      ],
+    },
+    liquidity: {
+      where: 'Tablero de Liquidez',
+      capabilities: [
+        'Consultar la **posición de caja actual** y saldos bancarios',
+        '**Proyectar flujo de caja** a 30 días con ingresos y egresos',
+        'Identificar **riesgos de iliquidez** próximos',
+        '**Comparar gastos vs ingresos** del mes',
+      ],
+      proTip: 'Este tablero integra cheques, certificaciones, gastos fijos y obligaciones para darte la foto completa.',
+    },
+    invoicing: {
+      where: 'Facturación ARCA',
+      capabilities: [
+        'Consultar **facturas emitidas** y su estado',
+        'Revisar el estado de **CAEs** y vencimientos',
+        'Ver **totales facturados** por período',
+      ],
+    },
+    wbs: {
+      where: 'Planificación WBS',
+      capabilities: [
+        'Consultar **avance de obra** por proyecto',
+        'Comparar **presupuesto vs costo real**',
+        'Identificar **desvíos** en la planificación',
+        'Ver la **estructura de desglose** (WBS) de cada obra',
+      ],
+    },
+    certifications: {
+      where: 'Certificaciones / ICC',
+      capabilities: [
+        'Ver **certificados pendientes de cobro**',
+        'Calcular **retenciones** (IIBB, imp. cheque)',
+        'Revisar el estado de **redeterminaciones de precio**',
+        'Registrar **depósitos** de certificados cobrados',
+      ],
+    },
+    purchase_requests: {
+      where: 'Pedidos de Compra',
+      capabilities: [
+        'Ver **pedidos pendientes** de aprobación',
+        'Consultar montos de **pedidos consolidados**',
+        'Revisar el **detalle** de cada solicitud (items, cantidades, costos)',
+      ],
+    },
+    logistics: {
+      where: 'Acopios & Logística',
+      capabilities: [
+        'Revisar la **logística de materiales** por obra',
+        'Consultar **acopios activos** y su estado',
+      ],
+    },
+    fleet: {
+      where: 'Flota y Maquinaria',
+      capabilities: [
+        'Consultar el **estado de vehículos** y maquinaria',
+        'Revisar **asignaciones** y disponibilidad',
+      ],
+    },
+    field: {
+      where: 'Parte Diario de Obra',
+      capabilities: [
+        '**Crear el parte de hoy**: decime la obra y qué se hizo',
+        'Consultar **partes anteriores** por obra o fecha',
+        'Aprobar o rechazar **partes pendientes**',
+        'Ver un **resumen semanal** de avance',
+      ],
+      proTip: 'Puedo crear el parte dictándome: obra, trabajo realizado, y clima. El resto es opcional.',
+    },
+    safety: {
+      where: 'Seguridad e Incidentes',
+      capabilities: [
+        'Revisar **incidentes abiertos** y su gravedad',
+        'Consultar **observaciones de alto riesgo** (matriz 5×5)',
+        'Ver **KPIs de seguridad**: días sin accidente, días perdidos',
+        'Calcular el **índice de frecuencia** de accidentes',
+      ],
+      proTip: 'Cumplimiento Res. SRT 905/2015: registro obligatorio de accidentes.',
+    },
+    inspections: {
+      where: 'Inspecciones & Calidad',
+      capabilities: [
+        'Consultar **inspecciones pendientes** o rechazadas',
+        'Revisar items del **punch list** sin resolver',
+        'Verificar **correcciones** de no conformidades',
+        'Generar un **reporte de calidad** por obra',
+      ],
+    },
+    rfi: {
+      where: 'Consultas de Obra (RFI)',
+      capabilities: [
+        'Ver **RFIs abiertas** pendientes de respuesta',
+        'Analizar el **impacto económico** acumulado de consultas',
+        'Revisar **tiempos de respuesta** por consulta',
+        'Identificar RFIs con **impacto en cronograma**',
+      ],
+      proTip: 'Las RFI trackean impacto en costo ($) y cronograma (días de atraso).',
+    },
+    documents: {
+      where: 'Documentos & Correo',
+      capabilities: [
+        'Crear **solicitudes de documentos** a empleados',
+        'Ver el **estado** de solicitudes pendientes',
+        'Gestionar **correspondencia** del proyecto',
+      ],
+    },
+    expenses: {
+      where: 'Gastos Operativos',
+      capabilities: [
+        'Analizar los **gastos del mes** por categoría',
+        '**Comparar** gastos de este mes vs el anterior',
+        'Identificar **categorías con mayor variación**',
+        'Verificar qué rubros quedan **sin pagar**',
+      ],
+      proTip: 'La vista replica tu planilla Excel "Resumen Gastos Mensuales ECAR" pero con IA.',
+    },
+    monthly_report: {
+      where: 'Resumen Mensual',
+      capabilities: [
+        'Generar el **informe financiero** del mes',
+        '**Comparar meses**: ingresos, egresos, desvíos',
+        'Identificar **tendencias de gasto** por categoría',
+      ],
+    },
+  }), []);
+
   const contextualGreeting = useMemo(() => {
-    const moduleHints: Partial<Record<ModuleId, string>> = {
-      bi: 'Estás en el **Dashboard BI**. Puedo darte un resumen ejecutivo, detectar anomalías o mostrarte KPIs clave.',
-      purchases: 'Estás en **Compras & Libro IVA**. Puedo consultar facturas, calcular IVA crédito fiscal o buscar proveedores.',
-      finances: 'Estás en **Finanzas & Tesorería**. Puedo consultar la cartera de cheques, calcular flujo de caja o revisar gastos fijos.',
-      obligations: 'Estás en **Alertas & Obligaciones**. Puedo ver vencimientos próximos, marcar obligaciones como pagadas o configurar recordatorios WhatsApp.',
-      rrhh: 'Estás en **RRHH & Legajos**. Puedo consultar la plantilla, verificar asistencia, solicitar documentos o detectar anomalías.',
-      inventory: 'Estás en **Depósito & Inventario**. Puedo revisar stock, herramientas asignadas o movimientos recientes.',
-      liquidity: 'Estás en el **Tablero de Liquidez**. Puedo proyectar tu flujo de caja, analizar la posición de caja o alertarte sobre riesgos.',
-      invoicing: 'Estás en **Facturación ARCA**. Puedo ayudarte con la emisión de facturas electrónicas y consultar el estado de CAEs.',
-      wbs: 'Estás en **Planificación WBS**. Puedo consultar avances de obra, presupuestos y estructura de desglose.',
-      certifications: 'Estás en **Certificaciones / ICC**. Puedo revisar certificados pendientes, retenciones y redeterminaciones.',
-      purchase_requests: 'Estás en **Pedidos de Compra**. Puedo consultar solicitudes pendientes, aprobar o consolidar pedidos.',
-      logistics: 'Estás en **Acopios & Logística**. Puedo revisar la logística de materiales y acopios de obra.',
-      fleet: 'Estás en **Flota y Maquinaria**. Puedo consultar el estado de vehículos y maquinaria.',
-      field: 'Estás en **Parte Diario**. Puedo ayudarte con el registro diario de actividades en obra.',
-      documents: 'Estás en **Documentos & Correo**. Puedo gestionar solicitudes de documentos y correspondencia.',
-      monthly_report: 'Estás en **Resumen Mensual**. Puedo generar el informe financiero del mes.',
-    };
-    const hint = moduleHints[activeModule] || `Estás en **${moduleLabel}**. ¡Preguntame lo que necesites!`;
-    return `¡Hola! 👋 Soy **Rombo**, tu asistente IA de ECAR.\n\n📍 ${hint}\n\n¡Preguntame lo que necesites!`;
-  }, [activeModule, moduleLabel]);
+    const moduleInfo = MODULE_CAPABILITIES[activeModule];
+    if (moduleInfo) {
+      const capsList = moduleInfo.capabilities.map(c => `• ${c}`).join('\n');
+      const tip = moduleInfo.proTip ? `\n\n💡 **Tip:** ${moduleInfo.proTip}` : '';
+      return `¡Hola! 👋 Soy **Rombo**, tu asistente IA de ECAR.\n\n📍 Estás en **${moduleInfo.where}**. Acá puedo ayudarte a:\n\n${capsList}${tip}\n\n¿Qué necesitás?`;
+    }
+    return `¡Hola! 👋 Soy **Rombo**, tu asistente IA de ECAR.\n\n📍 Estás en **${moduleLabel}**. ¡Preguntame lo que necesites!`;
+  }, [activeModule, moduleLabel, MODULE_CAPABILITIES]);
 
   // Initialize greeting on first render
   useEffect(() => {
@@ -205,17 +399,22 @@ export const RomboChat: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When the user navigates to a different module while chat is open, inject a context update
+  // When the user navigates to a different module while chat is open, inject a rich context update
   useEffect(() => {
     if (prevModuleRef.current !== activeModule && messages.length > 0) {
       prevModuleRef.current = activeModule;
-      const navLabel = MODULE_LABELS[activeModule] || activeModule;
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: `📍 Veo que cambiaste a **${navLabel}**. ¿En qué te ayudo acá?` 
-      }]);
+      const moduleInfo = MODULE_CAPABILITIES[activeModule];
+      let navMsg: string;
+      if (moduleInfo) {
+        const topCaps = moduleInfo.capabilities.slice(0, 3).map(c => `• ${c}`).join('\n');
+        navMsg = `📍 Cambiaste a **${moduleInfo.where}**. Acá puedo:\n\n${topCaps}\n\n¿Qué necesitás?`;
+      } else {
+        const navLabel = MODULE_LABELS[activeModule] || activeModule;
+        navMsg = `📍 Cambiaste a **${navLabel}**. ¿En qué te ayudo acá?`;
+      }
+      setMessages(prev => [...prev, { role: 'assistant', content: navMsg }]);
     }
-  }, [activeModule, messages.length]);
+  }, [activeModule, messages.length, MODULE_CAPABILITIES]);
 
   // Quick actions based on active module
   const quickActions = useMemo(() => 

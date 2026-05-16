@@ -1,172 +1,305 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useStore';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Target, Landmark, Calculator, Users,
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
-  Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet
+  Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
+  PanelLeftClose, PanelLeftOpen, Search, ChevronRight,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 
+/* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
-  bi: LayoutDashboard,
-  liquidity: DollarSign,
-  monthly_report: Calendar,
-  wbs: Target,
-  invoicing: Calculator,
-  purchases: ShoppingCart,
-  purchase_requests: ShoppingBag,
-  finances: Landmark,
-  obligations: Bell,
-  rrhh: Users,
-  inventory: Package,
-  logistics: Warehouse,
-  fleet: Truck,
-  certifications: FileSignature,
-  field: Smartphone,
-  safety: ShieldAlert,
-  inspections: ClipboardCheck,
-  rfi: MessageSquareText,
-  expenses: Wallet,
-  documents: FolderOpen,
+  bi: LayoutDashboard, liquidity: DollarSign, monthly_report: Calendar,
+  wbs: Target, invoicing: Calculator, purchases: ShoppingCart,
+  purchase_requests: ShoppingBag, finances: Landmark, obligations: Bell,
+  rrhh: Users, inventory: Package, logistics: Warehouse,
+  fleet: Truck, certifications: FileSignature, field: Smartphone,
+  safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
+  expenses: Wallet, documents: FolderOpen,
 };
 
+/* ─── Short labels for collapsed tooltips ─── */
+const SHORT_LABELS: Record<ModuleId, string> = {
+  bi: 'Dashboard', liquidity: 'Liquidez', monthly_report: 'Mensual',
+  wbs: 'WBS', invoicing: 'ARCA', purchases: 'Compras',
+  purchase_requests: 'Pedidos', finances: 'Finanzas', obligations: 'Alertas',
+  rrhh: 'RRHH', inventory: 'Pañol', logistics: 'Logística',
+  fleet: 'Flota', certifications: 'Cert. ICC', field: 'Parte Diario',
+  safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
+  expenses: 'Gastos', documents: 'Documentos',
+};
+
+/* ─── Module accent colors for active indicator ─── */
+const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
+  bi: 'bg-ecar-blue',
+  liquidity: 'bg-emerald-500',
+  purchases: 'bg-violet-500', finances: 'bg-emerald-500', obligations: 'bg-amber-500',
+  invoicing: 'bg-blue-500', monthly_report: 'bg-indigo-500', expenses: 'bg-orange-500',
+  rrhh: 'bg-indigo-500',
+  wbs: 'bg-cyan-500', inventory: 'bg-teal-500', purchase_requests: 'bg-purple-500',
+  logistics: 'bg-slate-500', fleet: 'bg-sky-500', certifications: 'bg-lime-600',
+  field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
+  rfi: 'bg-rose-500', documents: 'bg-slate-400',
+};
+
+/* ─── Sidebar sections ─── */
+type SidebarSection = { label: string; emoji: string; items: { id: ModuleId; requires?: boolean }[] };
+
+const SIDEBAR_SECTIONS: SidebarSection[] = [
+  {
+    label: '', emoji: '',
+    items: [
+      { id: 'bi', requires: true },
+      { id: 'liquidity', requires: true },
+    ],
+  },
+  {
+    label: 'Administración', emoji: '💼',
+    items: [
+      { id: 'purchases', requires: true },
+      { id: 'finances', requires: true },
+      { id: 'obligations', requires: true },
+      { id: 'invoicing', requires: true },
+      { id: 'monthly_report' },
+      { id: 'expenses', requires: true },
+    ],
+  },
+  {
+    label: 'Personal', emoji: '👥',
+    items: [
+      { id: 'rrhh', requires: true },
+    ],
+  },
+  {
+    label: 'Operaciones', emoji: '🏗️',
+    items: [
+      { id: 'wbs', requires: true },
+      { id: 'inventory', requires: true },
+      { id: 'purchase_requests' },
+      { id: 'logistics', requires: true },
+      { id: 'fleet', requires: true },
+      { id: 'certifications', requires: true },
+      { id: 'field', requires: true },
+      { id: 'safety', requires: true },
+      { id: 'inspections', requires: true },
+      { id: 'rfi', requires: true },
+      { id: 'documents', requires: true },
+    ],
+  },
+];
+
+/* ════════════════════════════════════════════════════════════ */
+/*                          LAYOUT                             */
+/* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen } = useAppStore();
   const { profile, signOut, hasModule, isAdmin } = useAuth();
+  const [expanded, setExpanded] = useState(true);
+  const [contentKey, setContentKey] = useState(0);
+  const prevModule = useRef(activeModule);
+
+  // Trigger content animation on module change
+  useEffect(() => {
+    if (prevModule.current !== activeModule) {
+      setContentKey(k => k + 1);
+      prevModule.current = activeModule;
+    }
+  }, [activeModule]);
+
+  const handleSelect = (id: ModuleId) => {
+    setActiveModule(id);
+    setSidebarOpen(false);
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50 flex-col md:flex-row overflow-hidden">
+    <div className="flex h-screen bg-surface-secondary flex-col md:flex-row overflow-hidden">
 
-      {/* Mobile hamburger */}
+      {/* ─── Mobile hamburger ─── */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 bg-ecar-blueDark text-white p-2 rounded-lg shadow-lg"
+        className="md:hidden fixed top-3.5 left-3.5 z-50 bg-white text-slate-700 p-2 rounded-xl shadow-lg border border-slate-200/80 active:scale-95 transition-transform"
       >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
       </button>
 
-      {/* Sidebar */}
+      {/* ─── Sidebar ─── */}
       <aside className={`
         fixed md:relative inset-y-0 left-0 z-40
-        w-64 bg-ecar-blueDark border-r border-[#08355e] flex flex-col shrink-0
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${expanded ? 'w-[240px]' : 'w-[68px]'}
+        bg-white border-r border-slate-200/80 flex flex-col shrink-0 overflow-hidden
+        transition-all duration-300 ease-smooth
+        transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        shadow-[1px_0_0_0_rgba(0,0,0,0.02)]
       `}>
-        <div className="p-4 md:p-6 flex items-center justify-center border-b border-white/10 bg-white">
-          <img src="/logoECAR.png" alt="ECAR Logo" className="h-10 w-auto object-contain" />
-        </div>
 
-        {/* User badge */}
-        <div className="px-4 py-3 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold">
-              {profile?.full_name?.charAt(0) || '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">{profile?.full_name}</p>
-              <p className="text-blue-200 text-xs flex items-center gap-1">
-                {isAdmin && <Shield size={10} />}
-                {isAdmin ? 'Administrador' : 'Operario'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          {/* Dashboard */}
-          {hasModule('bi') && (
-            <SidebarItem id="bi" icon={iconMap.bi} label={MODULE_LABELS.bi} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
-          )}
-          {hasModule('liquidity') && (
-            <SidebarItem id="liquidity" icon={iconMap.liquidity} label={MODULE_LABELS.liquidity} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
-          )}
-
-          {/* Grupo: Administración y Finanzas */}
-          {(hasModule('purchases') || hasModule('finances') || hasModule('obligations') || hasModule('invoicing')) && (
-            <div className="pt-3">
-              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Administración y Finanzas</p>
-              {hasModule('purchases') && <SidebarItem id="purchases" icon={iconMap.purchases} label="Compras & Libro IVA" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('finances') && <SidebarItem id="finances" icon={iconMap.finances} label="Finanzas & Tesorería" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('obligations') && <SidebarItem id="obligations" icon={iconMap.obligations} label="Alertas & Obligaciones" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('invoicing') && <SidebarItem id="invoicing" icon={iconMap.invoicing} label="Facturación (ARCA)" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              <SidebarItem id="monthly_report" icon={iconMap.monthly_report} label={MODULE_LABELS.monthly_report} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
-              {hasModule('expenses') && <SidebarItem id="expenses" icon={iconMap.expenses} label={MODULE_LABELS.expenses} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-            </div>
-          )}
-
-          {/* Grupo: RRHH */}
-          {hasModule('rrhh') && (
-            <div className="pt-3">
-              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Recursos Humanos</p>
-              <SidebarItem id="rrhh" icon={iconMap.rrhh} label="RRHH & Legajos" active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
-            </div>
-          )}
-
-          {/* Grupo: Operaciones */}
-          {(hasModule('wbs') || hasModule('inventory') || hasModule('logistics') || hasModule('fleet') || hasModule('certifications') || hasModule('field') || hasModule('documents')) && (
-            <div className="pt-3">
-              <p className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-300/50">Operaciones</p>
-              {hasModule('wbs') && <SidebarItem id="wbs" icon={iconMap.wbs} label={MODULE_LABELS.wbs} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('inventory') && <SidebarItem id="inventory" icon={iconMap.inventory} label={MODULE_LABELS.inventory} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              <SidebarItem id="purchase_requests" icon={iconMap.purchase_requests} label={MODULE_LABELS.purchase_requests} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />
-              {hasModule('logistics') && <SidebarItem id="logistics" icon={iconMap.logistics} label={MODULE_LABELS.logistics} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('fleet') && <SidebarItem id="fleet" icon={iconMap.fleet} label={MODULE_LABELS.fleet} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('certifications') && <SidebarItem id="certifications" icon={iconMap.certifications} label={MODULE_LABELS.certifications} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('field') && <SidebarItem id="field" icon={iconMap.field} label={MODULE_LABELS.field} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('safety') && <SidebarItem id="safety" icon={iconMap.safety} label={MODULE_LABELS.safety} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('inspections') && <SidebarItem id="inspections" icon={iconMap.inspections} label={MODULE_LABELS.inspections} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('rfi') && <SidebarItem id="rfi" icon={iconMap.rfi} label={MODULE_LABELS.rfi} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-              {hasModule('documents') && <SidebarItem id="documents" icon={iconMap.documents} label={MODULE_LABELS.documents} active={activeModule} onSelect={(id) => { setActiveModule(id); setSidebarOpen(false); }} />}
-            </div>
-          )}
-
-          {/* Admin: User management */}
-          {isAdmin && (
+        {/* ── Logo area ── */}
+        <div className={`h-[56px] flex items-center ${expanded ? 'px-4 justify-between' : 'justify-center'} border-b border-slate-100 shrink-0`}>
+          {expanded ? (
+            <>
+              <div className="flex items-center gap-2.5 group">
+                <div className="w-9 h-9 rounded-full bg-white ring-1 ring-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] group-hover:shadow-[0_2px_12px_rgba(17,92,156,0.15)] group-hover:ring-ecar-blue/30 transition-all duration-300 overflow-hidden flex items-center justify-center p-[3px]">
+                  <img src="/logogrow.png" alt="Grow Labs" className="w-full h-full object-contain rounded-full" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-slate-900 font-bold text-sm tracking-tight leading-none">ECAR</span>
+                  <span className="text-slate-400 text-[9px] font-medium tracking-wider uppercase">ERP Sistema</span>
+                </div>
+              </div>
+              <button
+                id="btn-collapse-sidebar"
+                onClick={() => setExpanded(false)}
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-all"
+                title="Colapsar sidebar"
+              >
+                <PanelLeftClose size={16} />
+              </button>
+            </>
+          ) : (
             <button
-              onClick={() => { setActiveModule('bi' as ModuleId); }}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-yellow-200 hover:bg-white/5 hover:text-yellow-100 font-medium text-sm mt-4 border-t border-white/10 pt-4"
+              onClick={() => setExpanded(true)}
+              className="group"
+              title="Expandir sidebar"
             >
-              <Shield size={18} />
-              Admin: Gestión de Roles
+              <div className="w-9 h-9 rounded-full bg-white ring-1 ring-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] group-hover:shadow-[0_2px_12px_rgba(17,92,156,0.15)] group-hover:ring-ecar-blue/30 group-hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center p-[3px]">
+                <img src="/logogrow.png" alt="Grow Labs" className="w-full h-full object-contain rounded-full" />
+              </div>
             </button>
           )}
         </div>
 
-        <div className="p-3 border-t border-white/10">
+        {/* ── Navigation ── */}
+        <div className="flex-1 overflow-y-auto py-2 sidebar-scrollbar">
+          {SIDEBAR_SECTIONS.map((section, si) => {
+            const visibleItems = section.items.filter(
+              item => !item.requires || hasModule(item.id)
+            );
+            if (!visibleItems.length) return null;
+
+            return (
+              <div key={si} className={si > 0 ? 'mt-1' : ''}>
+                {/* Section divider/label */}
+                {section.label && expanded && (
+                  <div className="mx-2 mt-3 mb-1">
+                    <div className="flex items-center gap-1.5 px-3 py-[6px] bg-ecar-blue/90 rounded-md">
+                      <span className="text-[10px] opacity-80">{section.emoji}</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">{section.label}</span>
+                    </div>
+                  </div>
+                )}
+                {section.label && !expanded && (
+                  <div className="mx-3 my-2 border-t-2 border-ecar-blue/30" />
+                )}
+
+                <div className={expanded ? 'px-2 space-y-0.5' : 'px-1.5 space-y-0.5'}>
+                  {visibleItems.map((item, idx) => (
+                    <SidebarItem
+                      key={item.id}
+                      id={item.id}
+                      icon={iconMap[item.id]}
+                      active={activeModule}
+                      expanded={expanded}
+                      onSelect={handleSelect}
+                      delay={idx * 20}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Footer ── */}
+        <div className={`border-t border-slate-100 ${expanded ? 'p-3' : 'p-2'}`}>
+          {/* Expand toggle (collapsed) */}
+          {!expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all mb-2"
+              title="Expandir"
+            >
+              <PanelLeftOpen size={16} />
+            </button>
+          )}
+
+          {/* User info */}
+          <div className={`flex items-center ${expanded ? 'gap-2.5 px-1.5' : 'justify-center'} mb-2`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ecar-blue/10 to-ecar-blue/20 flex items-center justify-center text-ecar-blue text-[11px] font-bold shrink-0 ring-1 ring-ecar-blue/10">
+              {profile?.full_name?.charAt(0) || '?'}
+            </div>
+            {expanded && (
+              <div className="flex-1 min-w-0">
+                <p className="text-slate-800 text-xs font-semibold truncate">{profile?.full_name}</p>
+                <p className="text-slate-400 text-[10px] flex items-center gap-1 font-medium">
+                  {isAdmin && <Shield size={9} className="text-amber-500" />}
+                  {isAdmin ? 'Admin' : 'Operario'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Logout */}
           <button
             onClick={signOut}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-red-200 hover:bg-red-500/10 hover:text-red-100 font-medium text-sm transition-all"
+            className={`flex items-center ${expanded ? 'gap-2 px-2.5 w-full' : 'justify-center w-full'} py-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all text-xs font-medium`}
+            title="Cerrar sesión"
           >
-            <LogOut size={18} />
-            Cerrar Sesión
+            <LogOut size={15} />
+            {expanded && <span>Cerrar Sesión</span>}
           </button>
-          <div className="text-xs text-center text-blue-200/40 font-medium tracking-wide mt-2">
-            SISTEMA CREADO POR GROW LABS
-          </div>
+
+          {expanded && (
+            <p className="text-[8px] text-slate-300 text-center mt-2 font-semibold tracking-[0.15em] uppercase">
+              Grow Labs
+            </p>
+          )}
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Main Content */}
+      {/* ─── Main Content ─── */}
       <main className="flex-1 relative overflow-y-auto z-10 w-full">
-        <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center z-20">
-          <h2 className="text-xl font-bold text-gray-900 ml-10 md:ml-0">
-            {MODULE_LABELS[activeModule]}
-          </h2>
-          <div className="text-xs font-mono px-3 py-1 bg-gray-100 rounded-full text-gray-600 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Conectado
+        {/* Sticky Header */}
+        <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-6 py-2.5 flex justify-between items-center z-20">
+          <div className="flex items-center gap-2 ml-10 md:ml-0">
+            {/* Module breadcrumb */}
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="text-slate-400 font-medium hidden sm:inline">ECAR</span>
+              <ChevronRight size={12} className="text-slate-300 hidden sm:block" />
+              <h2 className="font-semibold text-slate-900 tracking-tight">
+                {MODULE_LABELS[activeModule]}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {/* Search bar */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg text-xs text-slate-400 border border-slate-200/60 hover:border-slate-300 hover:bg-white transition-all cursor-pointer min-w-[180px] group">
+              <Search size={13} className="text-slate-400 group-hover:text-slate-500 transition-colors" />
+              <span className="group-hover:text-slate-500 transition-colors">Buscar...</span>
+              <kbd className="ml-auto text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200/80 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
+            </div>
+
+            {/* Connection status */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
+              <span className="text-[10px] text-emerald-600 font-semibold hidden sm:inline">Conectado</span>
+            </div>
           </div>
         </header>
 
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        {/* Content with entrance animation */}
+        <div key={contentKey} className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in-up">
           {children}
         </div>
       </main>
@@ -174,26 +307,69 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   );
 };
 
-/* ───── Sidebar Item ───── */
+/* ═══════════════════════════════════════════════ */
+/*               SIDEBAR ITEM                      */
+/* ═══════════════════════════════════════════════ */
 const SidebarItem: React.FC<{
   id: ModuleId;
   icon: React.ElementType;
-  label: string;
   active: ModuleId;
+  expanded: boolean;
   onSelect: (id: ModuleId) => void;
-}> = ({ id, icon: Icon, label, active, onSelect }) => {
+  delay?: number;
+}> = ({ id, icon: Icon, active, expanded, onSelect, delay = 0 }) => {
   const isActive = active === id;
+  const accent = MODULE_ACCENT[id] || 'bg-ecar-blue';
+
   return (
     <button
       onClick={() => onSelect(id)}
-      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all font-medium text-sm text-left
+      className={`
+        group relative flex items-center w-full transition-all duration-200 ease-smooth
+        ${expanded
+          ? 'gap-2.5 px-3 py-[9px] rounded-lg text-left'
+          : 'justify-center py-2.5 rounded-lg mx-auto'
+        }
         ${isActive
-          ? 'bg-white/10 text-white ring-1 ring-white/20'
-          : 'text-blue-100 hover:bg-white/5 hover:text-white'
-        }`}
+          ? 'bg-ecar-blueLight text-ecar-blue shadow-[0_1px_3px_rgba(17,92,156,0.06)]'
+          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+        }
+      `}
+      title={expanded ? undefined : SHORT_LABELS[id]}
     >
-      <Icon size={18} className={isActive ? 'text-white' : 'text-blue-300'} />
-      {label}
+      {/* Active accent bar */}
+      {isActive && (
+        <span className={`absolute ${expanded ? 'left-0 w-[3px] h-5 rounded-r-full' : 'left-1 w-[3px] h-4 rounded-full'} top-1/2 -translate-y-1/2 ${accent} transition-all duration-300`} />
+      )}
+
+      <Icon
+        size={expanded ? 16 : 18}
+        className={`shrink-0 transition-all duration-200 ${
+          isActive
+            ? 'text-ecar-blue'
+            : 'text-slate-400 group-hover:text-slate-600'
+        }`}
+        strokeWidth={isActive ? 2.2 : 1.8}
+      />
+
+      {expanded ? (
+        <span className={`text-[13px] font-medium truncate transition-colors duration-200 whitespace-nowrap ${
+          isActive ? 'text-ecar-blue font-semibold' : ''
+        }`}>
+          {SHORT_LABELS[id]}
+        </span>
+      ) : (
+        <>
+          {/* Active dot for collapsed */}
+          {isActive && (
+            <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${accent}`} />
+          )}
+          {/* Tooltip (collapsed) */}
+          <span className="tooltip-bubble left-full ml-3">
+            {SHORT_LABELS[id]}
+          </span>
+        </>
+      )}
     </button>
   );
 };

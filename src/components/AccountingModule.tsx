@@ -13,7 +13,19 @@ export const AccountingModule: React.FC = () => {
     project_id: '', net_amount_ars: 0, iva_21_ars: 0,
   });
 
-  const formatARS = (v: number) => `A$ ${v.toLocaleString()}`;
+  const formatARS = (v: number) => `A$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+  const taxConditionLabel: Record<string, string> = {
+    RI: 'Responsable Inscripto',
+    M: 'Monotributo',
+    EX: 'Exento',
+    CF: 'Consumidor Final',
+  };
+
+  const invoiceTypeLabel: Record<string, string> = {
+    FA: 'Factura A', FB: 'Factura B', FC: 'Factura C', FE: 'Factura E',
+    NCA: 'Nota de Crédito A', NCB: 'Nota de Crédito B', NCC: 'Nota de Crédito C',
+  };
 
   const statusColor: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-700', pending_cae: 'bg-yellow-100 text-yellow-700',
@@ -59,13 +71,13 @@ export const AccountingModule: React.FC = () => {
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nueva Factura</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
             <div className="grid grid-cols-2 gap-3">
               <select value={form.invoice_type} onChange={e => setForm({ ...form, invoice_type: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
-                {['FA','FB','FC','FE','NCA','NCB','NCC'].map(t => <option key={t} value={t}>{t}</option>)}
+                {['FA','FB','FC','FE','NCA','NCB','NCC'].map(t => <option key={t} value={t}>{invoiceTypeLabel[t] || t}</option>)}
               </select>
               <input type="date" value={form.issue_date} onChange={e => setForm({ ...form, issue_date: e.target.value })} className="px-3 py-2 border rounded-lg text-sm" />
               <input placeholder="Razón Social Receptor" value={form.receptor_name} onChange={e => setForm({ ...form, receptor_name: e.target.value })} className="px-3 py-2 border rounded-lg text-sm col-span-2" />
               <input placeholder="CUIT Receptor" value={form.receptor_cuit} onChange={e => setForm({ ...form, receptor_cuit: e.target.value })} className="px-3 py-2 border rounded-lg text-sm" />
               <select value={form.receptor_tax_condition} onChange={e => setForm({ ...form, receptor_tax_condition: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
-                <option value="RI">Resp. Inscripto</option>
+                <option value="RI">Responsable Inscripto</option>
                 <option value="M">Monotributo</option>
                 <option value="EX">Exento</option>
                 <option value="CF">Consumidor Final</option>
@@ -106,6 +118,7 @@ export const AccountingModule: React.FC = () => {
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3">Receptor</th>
                 <th className="px-4 py-3">CUIT</th>
+                <th className="px-4 py-3">Cond. IVA</th>
                 <th className="px-4 py-3">Fecha</th>
                 <th className="px-4 py-3 text-right">Neto</th>
                 <th className="px-4 py-3 text-right">Total</th>
@@ -116,9 +129,10 @@ export const AccountingModule: React.FC = () => {
             <tbody className="divide-y divide-gray-100">
               {invoices.map(inv => (
                 <tr key={inv.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-bold">{inv.invoice_type}</td>
+                  <td className="px-4 py-3 font-bold">{invoiceTypeLabel[inv.invoice_type] || inv.invoice_type}</td>
                   <td className="px-4 py-3 font-medium">{inv.receptor_name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{inv.receptor_cuit}</td>
+                  <td className="px-4 py-3 text-xs text-gray-500">{taxConditionLabel[inv.receptor_tax_condition || ''] || inv.receptor_tax_condition || '—'}</td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{inv.issue_date}</td>
                   <td className="px-4 py-3 text-right font-mono">{formatARS(inv.net_amount_ars)}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(inv.total_ars)}</td>

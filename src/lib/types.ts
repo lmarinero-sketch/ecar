@@ -44,6 +44,15 @@ export type Employee = {
   termination_reason: string | null;
   profile_photo_url: string | null;
   custom_fields: Record<string, unknown>;
+  // New RRHH fields
+  bank_name: string | null;
+  bank_alias_cbu: string | null;
+  trial_start_date: string | null;
+  digital_signature_url: string | null;
+  obra_social: string | null;
+  art_provider: string | null;
+  modo_liquidacion: string | null;
+  retribucion_pactada: number | null;
   created_at: string;
   // Joined
   category?: UnionCategory | null;
@@ -208,6 +217,63 @@ export type Cheque = {
   status: 'pending' | 'deposited' | 'cashed' | 'bounced' | 'cancelled';
   bounce_reason: string | null;
   linked_payment_id: string | null;
+  scan_url: string | null;
+  created_at: string;
+};
+
+// ========== RRHH EXPANSION ==========
+export type EmployeeAbsence = {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  type: 'vacation' | 'medical' | 'suspension' | 'art_leave';
+  start_date: string;
+  end_date: string | null;
+  days: number | null;
+  reason: string | null;
+  certificate_url: string | null;
+  art_case_number: string | null;
+  status: 'active' | 'closed';
+  created_at: string;
+  employee?: Employee;
+};
+
+export type EmployeeAdvance = {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  amount_ars: number;
+  advance_date: string;
+  reason: string | null;
+  deducted: boolean;
+  deducted_from_period: string | null;
+  created_at: string;
+  employee?: Employee;
+};
+
+export type SalaryHistoryEntry = {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  category_id: string | null;
+  hourly_rate_ars: number | null;
+  daily_rate_ars: number | null;
+  effective_from: string;
+  reason: string | null;
+  created_at: string;
+  category?: UnionCategory;
+};
+
+export type DailyTask = {
+  id: string;
+  tenant_id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  priority: 'urgent' | 'normal' | 'low';
+  status: 'pending' | 'done';
+  completed_at: string | null;
+  created_by: string | null;
   created_at: string;
 };
 

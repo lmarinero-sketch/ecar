@@ -5,10 +5,11 @@ import { supabase } from '../lib/supabase';
 import { NotificationPanel } from './NotificationPanel';
 
 export const ObligationsModule: React.FC = () => {
-  const { data: obligations = [], isLoading } = useObligations();
+  const { data: obligations = [], isLoading, refetch } = useObligations();
   const createObligation = useCreateObligation();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', due_day_of_month: 15, amount_ars: 0, recurrence: 'monthly' as const });
+  const [uploadFeedback, setUploadFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   const today = new Date().getDate();
 
@@ -36,9 +37,14 @@ export const ObligationsModule: React.FC = () => {
   };
 
   const handleUploadReceipt = async (obligationId: string, file: File) => {
-    const path = `receipts/${obligationId}/${file.name}`;
-    const { error } = await supabase.storage.from('obligation-docs').upload(path, file);
-    if (!error) {
+    setUploadFeedback(null);
+    try {
+      const path = `receipts/${obligationId}/${Date.now()}_${file.name}`;
+      const { error } = await supabase.storage.from('obligation-docs').upload(path, file);
+      if (error) {
+        setUploadFeedback({ type: 'error', msg: `Error al subir: ${error.message}` });
+        return;
+      }
       const { data: { publicUrl } } = supabase.storage.from('obligation-docs').getPublicUrl(path);
       await supabase.from('obligation_payments').insert({
         obligation_id: obligationId,
@@ -47,6 +53,10 @@ export const ObligationsModule: React.FC = () => {
         receipt_url: publicUrl,
       });
       await supabase.from('obligations').update({ status: 'paid' }).eq('id', obligationId);
+      setUploadFeedback({ type: 'success', msg: '✅ Comprobante subido correctamente. Estado actualizado a "Pagado".' });
+      refetch();
+    } catch (err: any) {
+      setUploadFeedback({ type: 'error', msg: `Error: ${err.message || 'No se pudo subir el comprobante'}` });
     }
   };
 
@@ -59,7 +69,7 @@ export const ObligationsModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Bell size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Bell size={24} /> Alertas y Obligaciones</h3>
-          <p className="text-amber-100 text-sm mt-1">Vencimientos mensuales (Yeric, Fodeco) con recordatorios automáticos. Día actual: {today}</p>
+          <p className="text-amber-100 text-sm mt-1">Vencimientos mensuales (IERIC, FODECO) con recordatorios automáticos. Día actual: {today}</p>
         </div>
       </div>
 
@@ -70,6 +80,14 @@ export const ObligationsModule: React.FC = () => {
         </button>
       </div>
 
+      {/* Upload feedback */}
+      {uploadFeedback && (
+        <div className={`rounded-xl p-4 flex justify-between items-center ${uploadFeedback.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+          <p className={`text-sm font-bold ${uploadFeedback.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>{uploadFeedback.msg}</p>
+          <button onClick={() => setUploadFeedback(null)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+        </div>
+      )}
+
       {/* Create form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -78,7 +96,7 @@ export const ObligationsModule: React.FC = () => {
               <h3 className="font-bold text-lg">Nueva Obligación</h3>
               <button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <input placeholder="Nombre (ej: Yeric)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <input placeholder="Nombre (ej: IERIC)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             <input placeholder="Descripción" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             <div className="grid grid-cols-2 gap-3">
               <div>

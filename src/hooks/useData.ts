@@ -11,7 +11,8 @@ import type {
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, SeguridadIncidente, SeguridadObservacion,
   Inspeccion, PunchListItem, ConsultaObra,
-  GastoItem, GastoRegistro
+  GastoItem, GastoRegistro,
+  EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -1024,5 +1025,141 @@ export function useUpsertGastoRegistro() {
       qc.invalidateQueries({ queryKey: ['gastos_registros'] });
       qc.invalidateQueries({ queryKey: ['gastos_registros_range'] });
     },
+  });
+}
+
+// ========== EMPLOYEE ABSENCES ==========
+export function useEmployeeAbsences(employeeId?: string) {
+  return useQuery({
+    queryKey: ['employee_absences', employeeId],
+    queryFn: async () => {
+      let q = supabase.from('employee_absences').select('*, employee:employees(id, full_name)').order('start_date', { ascending: false });
+      if (employeeId) q = q.eq('employee_id', employeeId);
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return data as EmployeeAbsence[];
+    },
+    enabled: employeeId ? !!employeeId : true,
+  });
+}
+
+export function useCreateEmployeeAbsence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (absence: Partial<EmployeeAbsence>) => {
+      const { error } = await supabase.from('employee_absences').insert({ ...absence, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_absences'] }),
+  });
+}
+
+export function useUpdateEmployeeAbsence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<EmployeeAbsence> & { id: string }) => {
+      const { error } = await supabase.from('employee_absences').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_absences'] }),
+  });
+}
+
+// ========== EMPLOYEE ADVANCES ==========
+export function useEmployeeAdvances(employeeId?: string) {
+  return useQuery({
+    queryKey: ['employee_advances', employeeId],
+    queryFn: async () => {
+      let q = supabase.from('employee_advances').select('*, employee:employees(id, full_name)').order('advance_date', { ascending: false });
+      if (employeeId) q = q.eq('employee_id', employeeId);
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return data as EmployeeAdvance[];
+    },
+    enabled: employeeId ? !!employeeId : true,
+  });
+}
+
+export function useCreateEmployeeAdvance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (advance: Partial<EmployeeAdvance>) => {
+      const { error } = await supabase.from('employee_advances').insert({ ...advance, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_advances'] }),
+  });
+}
+
+// ========== SALARY HISTORY ==========
+export function useSalaryHistory(employeeId?: string) {
+  return useQuery({
+    queryKey: ['salary_history', employeeId],
+    queryFn: async () => {
+      let q = supabase.from('salary_history').select('*, category:union_categories(id, name)').order('effective_from', { ascending: false });
+      if (employeeId) q = q.eq('employee_id', employeeId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as SalaryHistoryEntry[];
+    },
+    enabled: employeeId ? !!employeeId : true,
+  });
+}
+
+export function useCreateSalaryHistoryEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entry: Partial<SalaryHistoryEntry>) => {
+      const { error } = await supabase.from('salary_history').insert({ ...entry, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['salary_history'] }),
+  });
+}
+
+// ========== DAILY TASKS ==========
+export function useDailyTasks(date?: string) {
+  return useQuery({
+    queryKey: ['daily_tasks', date],
+    queryFn: async () => {
+      let q = supabase.from('daily_tasks').select('*').order('created_at', { ascending: false });
+      if (date) q = q.eq('due_date', date);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as DailyTask[];
+    },
+  });
+}
+
+export function useCreateDailyTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (task: Partial<DailyTask>) => {
+      const { error } = await supabase.from('daily_tasks').insert({ ...task, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily_tasks'] }),
+  });
+}
+
+export function useUpdateDailyTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<DailyTask> & { id: string }) => {
+      const { error } = await supabase.from('daily_tasks').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily_tasks'] }),
+  });
+}
+
+export function useDeleteDailyTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('daily_tasks').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily_tasks'] }),
   });
 }

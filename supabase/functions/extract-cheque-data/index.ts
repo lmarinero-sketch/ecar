@@ -7,10 +7,18 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const SYSTEM_PROMPT = `Sos un sistema OCR especializado en cheques bancarios argentinos.
 Extraé los datos del cheque de la imagen y devolvé SOLO un JSON válido, sin markdown.
-Campos: cheque_number (string), bank_name (string), amount (number sin separadores),
+Campos: cheque_number (string), bank_name (string), amount (number CON decimales, ej: 150000.50),
 issue_date (YYYY-MM-DD), due_date (YYYY-MM-DD o null), beneficiary (string o null),
 issuer_name (string o null), branch (string o null), type ("physical" o "echeq").
-Si un campo no es legible, poné null.`;
+
+REGLAS IMPORTANTES:
+- AMOUNT: Siempre incluí los centavos/decimales. Si dice "$150.000,50" → 150000.50. Si dice "$200.000" → 200000.00
+- BENEFICIARY: Si el cheque dice "AL PORTADOR" o "NO A LA ORDEN" o no tiene nombre de beneficiario escrito, poné null. NO inventes nombres.
+- DATES: Leé las fechas con cuidado. En Argentina el formato es DD/MM/AAAA. Convertí a YYYY-MM-DD.
+  - "due_date" es la fecha de COBRO/PAGO DIFERIDO (si existe). NO es la fecha de emisión.
+  - "issue_date" es la fecha en que se EMITIÓ el cheque.
+  - Si solo hay una fecha, ponela como issue_date y due_date en null.
+- Si un campo no es legible, poné null. NUNCA inventes datos.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

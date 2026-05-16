@@ -80,10 +80,12 @@ function AppContent() {
   };
 
   return (
-    <Layout>
-      {renderModule()}
+    <>
+      <Layout>
+        {renderModule()}
+      </Layout>
       <RomboChat />
-    </Layout>
+    </>
   );
 }
 

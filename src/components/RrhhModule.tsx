@@ -4,6 +4,8 @@ import { AttendancePanel } from './AttendancePanel';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
 import { useEmployees, useCreateEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
+import { EmployeeCostPanel } from './EmployeeCostPanel';
+import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
 
 type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades';
 
@@ -21,6 +23,8 @@ export const RrhhModule: React.FC = () => {
   const [form, setForm] = useState({
     full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '',
+    bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '',
+    modo_liquidacion: 'mensual', retribucion_pactada: '',
   });
 
   const activeEmployees = employees.filter(e => e.employment_status === 'active');
@@ -30,14 +34,24 @@ export const RrhhModule: React.FC = () => {
     (e.dni || '').includes(search)
   );
 
+  const calcAntiguedad = (hireDate: string | null) => {
+    if (!hireDate) return '—';
+    const diff = Date.now() - new Date(hireDate).getTime();
+    const years = Math.floor(diff / (365.25 * 86400000));
+    const months = Math.floor((diff % (365.25 * 86400000)) / (30.44 * 86400000));
+    if (years > 0) return `${years}a ${months}m`;
+    return `${months} meses`;
+  };
+
   const handleCreate = async () => {
     await createEmployee.mutateAsync({
       ...form,
       category_id: form.category_id || null,
       current_project_id: form.current_project_id || null,
       shift_id: form.shift_id || null,
+      retribucion_pactada: form.retribucion_pactada ? parseFloat(form.retribucion_pactada) : null,
     });
-    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '' });
+    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '' });
     setTab('roster');
   };
 
@@ -95,8 +109,9 @@ export const RrhhModule: React.FC = () => {
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3">CUIL</th>
                     <th className="px-4 py-3">Categoría</th>
-                    <th className="px-4 py-3">Obra Actual</th>
-                    <th className="px-4 py-3">Ingreso</th>
+                    <th className="px-4 py-3">Obra</th>
+                    <th className="px-4 py-3">Antigüedad</th>
+                    <th className="px-4 py-3">Banco / Alias</th>
                     <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
@@ -114,7 +129,8 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
                       <td className="px-4 py-3 text-gray-700">{emp.category?.name || '—'}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{emp.project?.name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{emp.hire_date || '—'}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-indigo-600">{calcAntiguedad(emp.hire_date)}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{emp.bank_alias_cbu || emp.bank_name || '—'}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">
                           Ver legajo
@@ -131,9 +147,12 @@ export const RrhhModule: React.FC = () => {
 
       {/* TAB: Add Employee */}
       {tab === 'add' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-3xl">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} /> Nuevo Empleado</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Datos personales */}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Personales</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="md:col-span-2">
               <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
               <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
@@ -152,18 +171,7 @@ export const RrhhModule: React.FC = () => {
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Teléfono</label>
-              <input
-                value={form.phone}
-                onChange={e => {
-                  const raw = e.target.value.replace(/\D/g, '');
-                  if (raw.length <= 10) setForm({ ...form, phone: raw });
-                }}
-                placeholder="2645438114"
-                maxLength={10}
-                inputMode="numeric"
-                className="w-full px-3 py-2 border rounded-lg text-sm"
-              />
-              <p className="text-[11px] text-gray-400 mt-1">Sin 15, sin +, sin guiones. Ej: 2645438114</p>
+              <input value={form.phone} onChange={e => { const raw = e.target.value.replace(/\D/g, ''); if (raw.length <= 10) setForm({ ...form, phone: raw }); }} placeholder="2645438114" maxLength={10} inputMode="numeric" className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
             <div className="md:col-span-2">
               <label className="text-xs font-bold text-gray-500 block mb-1">Dirección</label>
@@ -173,15 +181,24 @@ export const RrhhModule: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 block mb-1">Contacto Emergencia</label>
               <input value={form.emergency_contact} onChange={e => setForm({ ...form, emergency_contact: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
+          </div>
+
+          {/* Datos laborales */}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Laborales</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso</label>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso (Alta ARCA)</label>
               <input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Inicio Período de Prueba</label>
+              <input type="date" value={form.trial_start_date} onChange={e => setForm({ ...form, trial_start_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Categoría UOCRA</label>
               <select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
                 <option value="">Seleccionar</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name} (A$ {c.hourly_rate_ars}/h)</option>)}
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name} ($ {c.hourly_rate_ars}/h)</option>)}
               </select>
             </div>
             <div>
@@ -198,8 +215,42 @@ export const RrhhModule: React.FC = () => {
                 {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time} - {s.end_time})</option>)}
               </select>
             </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
+              <select value={form.modo_liquidacion} onChange={e => setForm({ ...form, modo_liquidacion: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="mensual">Mensual</option>
+                <option value="quincenal">Quincenal</option>
+                <option value="jornalizado">Jornalizado</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Retribución Pactada ($)</label>
+              <input type="number" value={form.retribucion_pactada} onChange={e => setForm({ ...form, retribucion_pactada: e.target.value })} placeholder="0.00" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+            </div>
           </div>
-          <div className="mt-6">
+
+          {/* Datos bancarios y cobertura */}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Banco y Cobertura</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Banco</label>
+              <input value={form.bank_name} onChange={e => setForm({ ...form, bank_name: e.target.value })} placeholder="Ej: Banco Nación" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Alias / CBU</label>
+              <input value={form.bank_alias_cbu} onChange={e => setForm({ ...form, bank_alias_cbu: e.target.value })} placeholder="Ej: JUAN.PEREZ.MP o CBU" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Obra Social</label>
+              <input value={form.obra_social} onChange={e => setForm({ ...form, obra_social: e.target.value })} placeholder="Ej: UOCRA" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">ART</label>
+              <input value={form.art_provider} onChange={e => setForm({ ...form, art_provider: e.target.value })} placeholder="Ej: Experta ART" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+          </div>
+
+          <div className="mt-2">
             <button onClick={handleCreate} disabled={!form.full_name || createEmployee.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
               {createEmployee.isPending ? 'Guardando...' : 'Registrar Empleado'}
             </button>
@@ -215,6 +266,7 @@ export const RrhhModule: React.FC = () => {
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
+          calcAntiguedad={calcAntiguedad}
         />
       )}
 
@@ -274,7 +326,8 @@ const LegajoView: React.FC<{
   templates: any[];
   onSelect: (id: string) => void;
   onBack: () => void;
-}> = ({ employee, employees, templates, onSelect, onBack }) => {
+  calcAntiguedad: (d: string | null) => string;
+}> = ({ employee, employees, templates, onSelect, onBack, calcAntiguedad }) => {
   const { data: docs = [] } = useEmployeeDocuments(employee?.id || '');
   const uploadDoc = useUploadDocument();
   const [showUpload, setShowUpload] = useState(false);
@@ -354,11 +407,23 @@ const LegajoView: React.FC<{
             </div>
           </div>
         </div>
-        <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div><span className="text-xs font-bold text-gray-400 block">Teléfono</span>{employee.phone || '—'}</div>
-          <div><span className="text-xs font-bold text-gray-400 block">Dirección</span>{employee.address || '—'}</div>
-          <div><span className="text-xs font-bold text-gray-400 block">Ingreso</span>{employee.hire_date || '—'}</div>
-          <div><span className="text-xs font-bold text-gray-400 block">Emergencia</span>{employee.emergency_contact || '—'}</div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div><span className="text-xs font-bold text-gray-400 block">Teléfono</span>{employee.phone || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Dirección</span>{employee.address || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Alta ARCA</span>{employee.hire_date || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Período Prueba</span>{employee.trial_start_date || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Emergencia</span>{employee.emergency_contact || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Antigüedad</span><span className="text-indigo-600 font-bold">{calcAntiguedad(employee.hire_date)}</span></div>
+            <div><span className="text-xs font-bold text-gray-400 block">Modo Liquidación</span>{employee.modo_liquidacion || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Retribución</span>{employee.retribucion_pactada ? `$ ${Number(employee.retribucion_pactada).toLocaleString('es-AR')}` : '—'}</div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-100 pt-4">
+            <div><span className="text-xs font-bold text-gray-400 block">🏦 Banco</span>{employee.bank_name || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">🔗 Alias/CBU</span><span className="font-mono text-xs">{employee.bank_alias_cbu || '—'}</span></div>
+            <div><span className="text-xs font-bold text-gray-400 block">🏥 Obra Social</span>{employee.obra_social || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">🛡️ ART</span>{employee.art_provider || '—'}</div>
+          </div>
         </div>
       </div>
 
@@ -575,6 +640,12 @@ const LegajoView: React.FC<{
       {cartaData && (
         <CartaDocumentoPDF data={cartaData} onClose={() => setCartaData(null)} />
       )}
+
+      {/* Novedades: Ausencias y Adelantos */}
+      <EmployeeNovedadesPanel employeeId={employee.id} employeeName={employee.full_name} />
+
+      {/* Costo Salarial & F.931 */}
+      <EmployeeCostPanel employee={employee} />
     </div>
   );
 };
