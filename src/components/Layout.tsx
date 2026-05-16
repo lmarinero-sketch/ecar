@@ -317,7 +317,7 @@ const SidebarItem: React.FC<{
   expanded: boolean;
   onSelect: (id: ModuleId) => void;
   delay?: number;
-}> = ({ id, icon: Icon, active, expanded, onSelect, delay = 0 }) => {
+}> = ({ id, icon: Icon, active, expanded, onSelect, delay: _delay = 0 }) => {
   const isActive = active === id;
   const accent = MODULE_ACCENT[id] || 'bg-ecar-blue';
 

@@ -14,7 +14,7 @@ interface Props {
   employeeName: string;
 }
 
-export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeName }) => {
+export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeName: _employeeName }) => {
   const { data: absences = [] } = useEmployeeAbsences(employeeId);
   const { data: advances = [] } = useEmployeeAdvances(employeeId);
   const createAbsence = useCreateEmployeeAbsence();

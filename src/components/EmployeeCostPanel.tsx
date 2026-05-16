@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Calculator, TrendingUp } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 
 // Alícuotas estándar UOCRA / Construcción Argentina
 const ALICUOTAS = {
