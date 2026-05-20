@@ -28,7 +28,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard', liquidity: 'Liquidez', monthly_report: 'Mensual',
   wbs: 'WBS', invoicing: 'ARCA', purchases: 'Compras',
   purchase_requests: 'Pedidos', finances: 'Finanzas', obligations: 'Alertas',
-  rrhh: 'RRHH', inventory: 'Pañol', logistics: 'Logística',
+  rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Acopios',
   fleet: 'Flota', certifications: 'Cert. ICC', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
@@ -69,6 +69,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'invoicing', requires: true },
       { id: 'monthly_report' },
       { id: 'expenses', requires: true },
+      { id: 'certifications', requires: true },
     ],
   },
   {
@@ -78,16 +79,19 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
+    label: 'Logística', emoji: '📦',
+    items: [
+      { id: 'inventory', requires: true },
+      { id: 'logistics', requires: true },
+      { id: 'purchase_requests' },
+    ],
+  },
+  {
     label: 'Operaciones', emoji: '🏗️',
     items: [
       { id: 'project_budget', requires: true },
       { id: 'wbs', requires: true },
-      { id: 'inventory', requires: true },
-      { id: 'purchase_requests' },
-      { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
-      { id: 'fuel', requires: true },
-      { id: 'certifications', requires: true },
       { id: 'field', requires: true },
       { id: 'safety', requires: true },
       { id: 'inspections', requires: true },
