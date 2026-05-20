@@ -343,13 +343,43 @@ export type WbsElement = {
   project_id: string;
   parent_id: string | null;
   name: string;
+  description: string | null;
   budget_cost_ars: number;
   budget_revenue_ars: number;
   committed_cost_ars: number;
   accrued_cost_ars: number;
   progress_pct: number;
   is_hard_stop: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  duration_days: number;
+  dependency_id: string | null;
+  assigned_to: string | null;
+  phase: 'planificacion' | 'programacion' | 'ejecucion' | 'completado';
+  actual_start_date: string | null;
+  actual_end_date: string | null;
+  priority: 'baja' | 'media' | 'alta' | 'critica';
+  color: string;
+  sort_order: number;
+  notes: string | null;
   created_at: string;
+  employee?: Employee;
+};
+
+export type ProjectFeedback = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  wbs_element_id: string | null;
+  tipo: 'desviacion' | 'leccion' | 'mejora' | 'riesgo';
+  descripcion: string;
+  impacto: string | null;
+  accion_correctiva: string | null;
+  responsable: string | null;
+  estado: 'abierto' | 'en_proceso' | 'resuelto';
+  created_by: string | null;
+  created_at: string;
+  wbs_element?: WbsElement;
 };
 
 export type DocumentRequest = {

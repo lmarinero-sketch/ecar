@@ -4,7 +4,7 @@ import type {
   Employee, Project, UnionCategory, Shift, AttendanceRecord,
   Obligation, Invoice, Supplier, PurchaseInvoice, Cheque,
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
-  WbsElement, DocumentRequest, Profile,
+  WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
   InventoryItem, InventoryMovement, ToolAssignment,
@@ -329,12 +329,84 @@ export function useWbsElements(projectId?: string) {
   return useQuery({
     queryKey: ['wbs', projectId],
     queryFn: async () => {
-      let q = supabase.from('wbs_elements').select('*').order('name');
+      let q = supabase.from('wbs_elements').select('*, employee:employees(id, full_name)').order('sort_order').order('name');
       if (projectId) q = q.eq('project_id', projectId);
       const { data, error } = await q;
       if (error) throw error;
       return data as WbsElement[];
     },
+  });
+}
+
+export function useCreateWbsElement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (el: Partial<WbsElement>) => {
+      const { data, error } = await supabase.from('wbs_elements').insert(el).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wbs'] }),
+  });
+}
+
+export function useUpdateWbsElement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<WbsElement> & { id: string }) => {
+      const { error } = await supabase.from('wbs_elements').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wbs'] }),
+  });
+}
+
+export function useDeleteWbsElement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('wbs_elements').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wbs'] }),
+  });
+}
+
+// ========== PROJECT FEEDBACK ==========
+export function useProjectFeedback(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_feedback', projectId],
+    queryFn: async () => {
+      let q = supabase.from('project_feedback').select('*, wbs_element:wbs_elements(id, name)').order('created_at', { ascending: false });
+      if (projectId) q = q.eq('project_id', projectId);
+      const { data, error } = await q.limit(50);
+      if (error) throw error;
+      return data as ProjectFeedback[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateProjectFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (fb: Partial<ProjectFeedback>) => {
+      const { data, error } = await supabase.from('project_feedback').insert({ ...fb, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_feedback'] }),
+  });
+}
+
+export function useUpdateProjectFeedback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ProjectFeedback> & { id: string }) => {
+      const { error } = await supabase.from('project_feedback').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_feedback'] }),
   });
 }
 

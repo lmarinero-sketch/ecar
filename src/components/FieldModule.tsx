@@ -20,6 +20,7 @@ const CLIMA_LABELS: Record<string, string> = { despejado: 'Despejado', nublado: 
 const ESTADO_COLORS: Record<string, string> = { borrador: 'bg-gray-100 text-gray-600', enviado: 'bg-yellow-100 text-yellow-700', aprobado: 'bg-green-100 text-green-700', rechazado: 'bg-red-100 text-red-700' };
 
 type DetailTab = 'actividad' | 'fotos' | 'personal' | 'materiales' | 'equipos';
+type PendingPhoto = { file: File; preview: string; tipo: 'avance' | 'entrega' | 'incidente' | 'otro' };
 
 export const FieldModule: React.FC = () => {
   const { data: partes = [], isLoading } = usePartesDiarios();
@@ -34,6 +35,9 @@ export const FieldModule: React.FC = () => {
     temperatura_min: '', temperatura_max: '', trabajo_realizado: '', entregas: '', incidentes: '',
     horas_trabajadas: '8', notas: '', firmado_por: '', avance_porcentual: '0',
   });
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
+  const [fotoTipoForm, setFotoTipoForm] = useState<'avance' | 'entrega' | 'incidente' | 'otro'>('avance');
+  const createParteFoto = useCreateParteFoto();
 
   const handleSubmit = async () => {
     if (!form.obra_id || !form.trabajo_realizado) return;
@@ -48,6 +52,21 @@ export const FieldModule: React.FC = () => {
     });
     setShowForm(false);
     setForm({ obra_id: '', fecha: new Date().toISOString().split('T')[0], clima: 'despejado', temperatura_min: '', temperatura_max: '', trabajo_realizado: '', entregas: '', incidentes: '', horas_trabajadas: '8', notas: '', firmado_por: '', avance_porcentual: '0' });
+    // Upload pending photos
+    if (newParte && pendingPhotos.length > 0) {
+      for (const photo of pendingPhotos) {
+        try {
+          const ext = photo.file.name.split('.').pop();
+          const path = `${(newParte as any).id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error: upErr } = await supabase.storage.from('parte-diario-fotos').upload(path, photo.file);
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from('parte-diario-fotos').getPublicUrl(path);
+            await createParteFoto.mutateAsync({ parte_id: (newParte as any).id, foto_url: urlData.publicUrl, tipo: photo.tipo });
+          }
+        } catch (err) { console.error('Photo upload error:', err); }
+      }
+    }
+    setPendingPhotos([]);
     if (newParte) setSelectedParte(newParte as ParteDiario);
   };
 
@@ -135,6 +154,48 @@ export const FieldModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Firmado por</label><input type="text" value={form.firmado_por} onChange={e => setForm({...form, firmado_por: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Nombre del encargado" /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Notas</label><input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones" /></div>
           </div>
+
+          {/* 📸 Fotos del Parte */}
+          <div className="border border-dashed border-gray-300 rounded-xl p-4 space-y-3 bg-gray-50/50">
+            <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-cyan-600" /> 📸 Fotos de Avance</h4>
+            <div className="flex flex-wrap gap-2">
+              {(['avance', 'entrega', 'incidente', 'otro'] as const).map(t => (
+                <button key={t} onClick={() => setFotoTipoForm(t)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${fotoTipoForm === t ? 'bg-cyan-100 text-cyan-700 ring-2 ring-offset-1 ring-cyan-300' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                  {t === 'avance' ? '📊 Avance' : t === 'entrega' ? '📦 Entrega' : t === 'incidente' ? '⚠️ Incidente' : '📎 Otro'}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-cyan-400 hover:bg-cyan-50/50 transition-all">
+              <Camera size={20} className="text-gray-400" />
+              <span className="text-sm font-medium text-gray-500">Tomar foto o elegir archivo</span>
+              <input type="file" accept="image/*" capture="environment" onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setPendingPhotos(prev => [...prev, { file, preview: URL.createObjectURL(file), tipo: fotoTipoForm }]);
+                }
+                e.target.value = '';
+              }} className="hidden" />
+            </label>
+            {pendingPhotos.length > 0 && (
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                {pendingPhotos.map((p, i) => (
+                  <div key={i} className="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
+                    <img src={p.preview} alt={`Foto ${i+1}`} className="w-full h-24 object-cover" />
+                    <div className="absolute top-1 left-1"><span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/90 text-gray-600">{p.tipo}</span></div>
+                    <button onClick={() => { URL.revokeObjectURL(p.preview); setPendingPhotos(prev => prev.filter((_, j) => j !== i)); }} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {pendingPhotos.length > 0 && <p className="text-xs text-gray-400">📎 {pendingPhotos.length} foto{pendingPhotos.length > 1 ? 's' : ''} pendiente{pendingPhotos.length > 1 ? 's' : ''} — se subirán al crear el parte</p>}
+          </div>
+
+          {/* Info about post-creation tabs */}
+          <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-3 flex items-start gap-3">
+            <span className="text-lg">💡</span>
+            <p className="text-xs text-cyan-700"><strong>Tip:</strong> Al crear el parte podrás agregar <strong>personal presente</strong>, <strong>solicitar materiales</strong> del pañol y registrar <strong>equipos/maquinaria</strong> usados.</p>
+          </div>
+
           <button onClick={handleSubmit} disabled={createParte.isPending || !form.obra_id || !form.trabajo_realizado} className="w-full md:w-auto bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 transition-all disabled:opacity-50 justify-center">
             {createParte.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Crear Parte y Continuar
           </button>
