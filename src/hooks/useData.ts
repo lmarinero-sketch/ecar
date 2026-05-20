@@ -13,7 +13,8 @@ import type {
   Inspeccion, PunchListItem, ConsultaObra,
   GastoItem, GastoRegistro,
   EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
-  BudgetResource, Budget, BudgetSection, BudgetItem
+  BudgetResource, Budget, BudgetSection, BudgetItem,
+  FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -1297,5 +1298,108 @@ export function useCreateBudgetResource() {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_resources'] }),
+  });
+}
+
+// ========== FUEL MODULE ==========
+export function useFuelVehicles() {
+  return useQuery({
+    queryKey: ['fuel_vehicles'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fuel_vehicles').select('*').eq('status', 'active').order('code');
+      if (error) throw error;
+      return data as FuelVehicle[];
+    },
+  });
+}
+
+export function useCreateFuelVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vehicle: Partial<FuelVehicle>) => {
+      const { data, error } = await supabase.from('fuel_vehicles').insert({ ...vehicle, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_vehicles'] }),
+  });
+}
+
+export function useFuelLoads() {
+  return useQuery({
+    queryKey: ['fuel_loads'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fuel_loads').select('*').order('load_date', { ascending: false }).limit(200);
+      if (error) throw error;
+      return data as FuelLoad[];
+    },
+  });
+}
+
+export function useCreateFuelLoad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (load: Partial<FuelLoad>) => {
+      const { data, error } = await supabase.from('fuel_loads').insert({ ...load, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_loads'] }),
+  });
+}
+
+export function useUpdateFuelLoad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<FuelLoad> & { id: string }) => {
+      const { error } = await supabase.from('fuel_loads').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_loads'] }),
+  });
+}
+
+export function useFuelBatanMovements() {
+  return useQuery({
+    queryKey: ['fuel_batan_movements'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fuel_batan_movements').select('*').order('movement_date', { ascending: false }).limit(100);
+      if (error) throw error;
+      return data as FuelBatanMovement[];
+    },
+  });
+}
+
+export function useCreateFuelBatanMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (mov: Partial<FuelBatanMovement>) => {
+      const { data, error } = await supabase.from('fuel_batan_movements').insert({ ...mov, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_batan_movements'] }),
+  });
+}
+
+export function useFuelReconciliation() {
+  return useQuery({
+    queryKey: ['fuel_reconciliation'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fuel_monthly_reconciliation').select('*').order('year', { ascending: false }).order('month', { ascending: false });
+      if (error) throw error;
+      return data as FuelMonthlyReconciliation[];
+    },
+  });
+}
+
+export function useUpdateFuelReconciliation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<FuelMonthlyReconciliation> & { id: string }) => {
+      const { error } = await supabase.from('fuel_monthly_reconciliation').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_reconciliation'] }),
   });
 }

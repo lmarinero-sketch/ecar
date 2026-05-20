@@ -834,6 +834,112 @@ export type BudgetAPUComponent = {
   resource?: BudgetResource | null;
 };
 
+// ========== COMBUSTIBLE ==========
+
+export type FuelVehicle = {
+  id: string;
+  tenant_id: string;
+  code: string;
+  vehicle_type: string;
+  description: string;
+  brand: string | null;
+  model: string | null;
+  plate: string | null;
+  year: number | null;
+  preferred_fuel: string | null;
+  tank_capacity_liters: number | null;
+  area: string | null;
+  default_driver: string | null;
+  status: 'active' | 'inactive' | 'maintenance';
+  created_at: string;
+};
+
+export type FuelLoad = {
+  id: string;
+  tenant_id: string;
+  load_number: string;
+  load_date: string;
+  month: string | null;
+  year: number | null;
+  day_of_week: string | null;
+  vehicle_id: string | null;
+  vehicle_code: string | null;
+  vehicle_description: string | null;
+  plate: string | null;
+  vehicle_type: string | null;
+  driver_name: string | null;
+  project_name: string | null;
+  project_id: string | null;
+  supplier: string | null;
+  fuel_type: string | null;
+  liters: number | null;
+  price_per_liter: number | null;
+  total_amount: number | null;
+  odometer_km: number | null;
+  hourmeter: number | null;
+  km_since_last: number | null;
+  hours_since_last: number | null;
+  estimated_yield: number | null;
+  payment_method: string | null;
+  voucher_number: string | null;
+  remito_number: string | null;
+  observations: string | null;
+  validation_status: 'pending' | 'ok' | 'observed';
+  load_source: 'station' | 'batan';
+  batan_load_id: string | null;
+  batan_price_applied: number | null;
+  batan_balance_after: number | null;
+  created_at: string;
+  created_by: string;
+  // Joined
+  vehicle?: FuelVehicle | null;
+};
+
+export type FuelBatanMovement = {
+  id: string;
+  tenant_id: string;
+  movement_number: string;
+  movement_date: string;
+  batan_name: string;
+  capacity_liters: number;
+  movement_type: 'purchase' | 'discharge';
+  supplier: string | null;
+  fuel_type: string | null;
+  liters_loaded: number | null;
+  price_per_liter: number | null;
+  total_amount: number | null;
+  remito_number: string | null;
+  voucher_number: string | null;
+  vehicle_id: string | null;
+  vehicle_code: string | null;
+  liters_discharged: number | null;
+  driver_name: string | null;
+  project_name: string | null;
+  balance_after: number | null;
+  movement_status: 'available' | 'used' | 'reconciled';
+  observations: string | null;
+  created_at: string;
+};
+
+export type FuelMonthlyReconciliation = {
+  id: string;
+  tenant_id: string;
+  year: number;
+  month: number;
+  month_name: string | null;
+  total_loads: number;
+  total_liters: number;
+  total_amount_sheet: number;
+  total_vouchers: number;
+  avg_per_load: number;
+  supplier_invoice_amount: number | null;
+  supplier_invoice_number: string | null;
+  difference: number | null;
+  reconciliation_notes: string | null;
+  status: 'pending' | 'controlled' | 'observed';
+  created_at: string;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
@@ -857,6 +963,7 @@ export const ALL_MODULES = [
   'expenses',
   'documents',
   'project_budget',
+  'fuel',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -883,4 +990,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   expenses: 'Gastos Operativos',
   documents: 'Documentos & Correo',
   project_budget: 'Proyectos & Presupuestos',
+  fuel: 'Combustible',
 };
