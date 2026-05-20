@@ -754,13 +754,14 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
         const chequeData: any = {
           tenant_id: tenant?.id,
-          type: 'emitted',
-          bank: args.bank || 'Sin especificar',
+          type: 'physical',
+          bank_name: args.bank || 'Sin especificar',
           cheque_number: args.cheque_number || 'OCR-' + Date.now(),
-          amount: args.amount,
+          amount_ars: args.amount,
+          direction: 'receivable',
           issue_date: args.date || new Date().toISOString().split('T')[0],
-          payment_date: args.payment_date || args.date || new Date().toISOString().split('T')[0],
-          beneficiary: args.beneficiary || 'Sin especificar',
+          due_date: args.payment_date || args.date || new Date().toISOString().split('T')[0],
+          beneficiary_or_issuer: args.beneficiary || null,
           status: 'pending',
         }
         const { data: cheque, error: chequeErr } = await supabase.from('cheques').insert(chequeData).select().single()
@@ -769,12 +770,12 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           success: true,
           message: `Cheque registrado desde foto`,
           id: cheque?.id,
-          banco: chequeData.bank,
+          banco: chequeData.bank_name,
           numero: chequeData.cheque_number,
-          monto: chequeData.amount,
+          monto: chequeData.amount_ars,
           fecha: chequeData.issue_date,
-          vencimiento: chequeData.payment_date,
-          beneficiario: chequeData.beneficiary,
+          vencimiento: chequeData.due_date,
+          beneficiario: chequeData.beneficiary_or_issuer,
         })
       }
       default:
@@ -877,11 +878,18 @@ serve(async (req) => {
             bodyText = transcribeJson.text;
             console.log(`Transcripción exitosa: ${bodyText}`);
           }
-        } else if (contentType.includes("image")) {
-          console.log("Imagen detectada. Procesando como posible factura con Vision OCR...");
+        } else if (contentType.includes("image") || contentType.includes("pdf")) {
+          const isPdf = contentType.includes("pdf");
+          console.log(`${isPdf ? 'PDF' : 'Imagen'} detectado. Procesando con Vision OCR...`);
           visionImageUrl = mediaUrl;
           if (!bodyText || !bodyText.trim()) {
-            bodyText = "Te envié una foto de una factura. Extraé todos los datos y cargala al sistema.";
+            bodyText = "Te envié una foto. Analizá si es un cheque o una factura. Si es un cheque, extraé los datos y cargalo con process_cheque_photo. Si es una factura, usá create_purchase_invoice.";
+          } else {
+            // Si el usuario escribió algo junto con la foto, agregar contexto de detección
+            const lowerBody = bodyText.toLowerCase();
+            if (lowerBody.includes('cheque') || lowerBody.includes('chq')) {
+              bodyText += " [IMAGEN ADJUNTA: Es un cheque. Usá process_cheque_photo para cargarlo.]";
+            }
           }
         }
       } catch (e: any) {
@@ -929,16 +937,40 @@ serve(async (req) => {
       chatMessages.push({ role: 'user', content: bodyText, timestamp: new Date().toISOString() });
 
       // Build OpenAI messages (system + history without timestamps)
-      const invoiceOcrPrompt = visionImageUrl ? `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTA IMAGEN
-El usuario envió una FOTO DE FACTURA. Debés:
+      let imageOcrPrompt = '';
+      if (visionImageUrl) {
+        const lowerBody = bodyText.toLowerCase();
+        const isChequeContext = lowerBody.includes('cheque') || lowerBody.includes('chq');
+        
+        if (isChequeContext) {
+          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTA IMAGEN — CHEQUE
+El usuario envió una FOTO DE CHEQUE. Debés:
 1. Analizar la imagen con máximo detalle.
-2. Extraer TODOS los datos fiscales: proveedor, CUIT, condición fiscal, tipo factura (A/B/C), punto de venta, número, fecha, neto gravado, IVA 21%, IVA 10.5%, IVA 27%, exento, percepciones IVA, percepciones IIBB, total, CAE.
-3. Ejecutar la herramienta create_purchase_invoice con TODOS los campos extraídos.
-4. Mostrar un resumen visual bonito de lo que cargaste.
-5. Si algún dato no es legible, marcalo como 0 o vacío y avisá al usuario.` : '';
+2. Extraer los datos del cheque: banco emisor, número de cheque, monto, fecha de emisión (DD/MM/AAAA → YYYY-MM-DD), fecha de pago/vencimiento, beneficiario.
+3. Ejecutar la herramienta process_cheque_photo con los campos extraídos.
+4. Mostrar un resumen visual con emojis de lo que cargaste.
+5. Si algún dato no es legible, avisá al usuario.
+6. En Argentina "$150.000,50" = 150000.50 (punto como separador de miles, coma decimal).`;
+        } else {
+          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTA IMAGEN
+El usuario envió una FOTO. Primero determiná si es:
+A) Un CHEQUE bancario → extraé banco, número, monto, fechas, beneficiario y usá process_cheque_photo
+B) Una FACTURA de compra → extraé proveedor, CUIT, tipo, número, montos, IVA y usá create_purchase_invoice
+
+Analizá la imagen con máximo detalle. Si es una factura:
+- Extraé TODOS los datos fiscales: proveedor, CUIT, condición fiscal, tipo factura (A/B/C), punto de venta, número, fecha, neto gravado, IVA 21%, IVA 10.5%, IVA 27%, exento, percepciones IVA, percepciones IIBB, total, CAE.
+- Ejecutá create_purchase_invoice con TODOS los campos extraídos.
+
+Si es un cheque:
+- Extraé banco, número, monto, fecha emisión, fecha pago/vencimiento, beneficiario.
+- Ejecutá process_cheque_photo.
+
+Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legible, marcalo como 0 o vacío y avisá al usuario.`;
+        }
+      }
 
       const openaiMessages: any[] = [
-        { role: 'system', content: SYSTEM_PROMPT + invoiceOcrPrompt }
+        { role: 'system', content: SYSTEM_PROMPT + imageOcrPrompt }
       ];
       for (const m of chatMessages) {
         // If this is the last user message and has an image, send as multimodal

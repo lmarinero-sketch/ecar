@@ -20,6 +20,11 @@ REGLAS IMPORTANTES:
   - Si solo hay una fecha, ponela como issue_date y due_date en null.
 - Si un campo no es legible, poné null. NUNCA inventes datos.`;
 
+// Supported image MIME types for OpenAI Vision image_url
+const IMAGE_MIME_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif",
+]);
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -47,7 +52,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Download image from Storage
+    // Download file from Storage
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data, error } = await supabase.storage.from("cheque-scans").download(storage_path);
     if (error) throw new Error(`Storage: ${error.message}`);
@@ -56,8 +61,44 @@ Deno.serve(async (req: Request) => {
     const bytes = new Uint8Array(buffer);
     let binary = "";
     for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    const imageBase64 = btoa(binary);
+    const fileBase64 = btoa(binary);
     const mimeType = data.type || "image/jpeg";
+
+    const isPdf = mimeType === "application/pdf" || storage_path.toLowerCase().endsWith(".pdf");
+    const isImage = IMAGE_MIME_TYPES.has(mimeType);
+
+    if (!isPdf && !isImage) {
+      return new Response(JSON.stringify({ error: `Tipo de archivo no soportado: ${mimeType}. Usá JPG, PNG, WebP o PDF.` }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    // Build the content array for the user message
+    // PDFs use the "file" content type; images use "image_url"
+    const userContent: any[] = [
+      { type: "text", text: "Extraé los datos de este cheque:" },
+    ];
+
+    if (isPdf) {
+      // GPT-4o supports PDF input via file content type with base64
+      userContent.push({
+        type: "file",
+        file: {
+          filename: storage_path.split("/").pop() || "cheque.pdf",
+          file_data: `data:application/pdf;base64,${fileBase64}`,
+        },
+      });
+    } else {
+      // Standard image_url for images
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType};base64,${fileBase64}`,
+          detail: "high",
+        },
+      });
+    }
 
     // Call OpenAI GPT-4o Vision
     const oaiResp = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -70,13 +111,7 @@ Deno.serve(async (req: Request) => {
         model: "gpt-4o",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "Extraé los datos de este cheque:" },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}`, detail: "high" } },
-            ],
-          },
+          { role: "user", content: userContent },
         ],
         temperature: 0.1,
         max_tokens: 500,
@@ -86,6 +121,7 @@ Deno.serve(async (req: Request) => {
 
     if (!oaiResp.ok) {
       const errText = await oaiResp.text();
+      console.error(`OpenAI error ${oaiResp.status}:`, errText);
       throw new Error(`OpenAI ${oaiResp.status}: ${errText}`);
     }
 
@@ -100,6 +136,7 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("extract-cheque-data error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },

@@ -26,6 +26,7 @@ import { SafetyModule } from './components/SafetyModule';
 import { InspectionsModule } from './components/InspectionsModule';
 import { RFIModule } from './components/RFIModule';
 import { ExpensesModule } from './components/ExpensesModule';
+import { ProjectBudgetModule } from './components/ProjectBudgetModule';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,7 @@ function AppContent() {
       case 'inspections': return <InspectionsModule />;
       case 'rfi': return <RFIModule />;
       case 'expenses': return <ExpensesModule />;
+      case 'project_budget': return <ProjectBudgetModule />;
       case 'documents': return <DocumentsModule />;
       default: return <BiDashboard />;
     }

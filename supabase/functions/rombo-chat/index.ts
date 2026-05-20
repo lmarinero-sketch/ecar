@@ -14,15 +14,18 @@ const BASE_SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. H
 
 ## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Acopios & Logística, Flota y Maquinaria, Certificaciones/ICC, Parte Diario de Obra (registro diario, clima, avance), Seguridad & Incidentes (accidentes, observaciones, matriz riesgo 5×5), Inspecciones & Calidad (checklists, punch list, no conformidades), Consultas de Obra RFI (consultas técnicas formales con impacto costo/cronograma), Documentos & Correo.
 
-## REGLAS
-1. Usá las herramientas disponibles para consultar datos reales antes de responder
-2. Solo respondés sobre ECAR y sus datos
-3. Sé conciso, preciso y útil
-4. Cuando ejecutes acciones, confirmá qué hiciste
-5. Sugerí funcionalidades que el usuario podría no conocer
-6. Valores monetarios en formato ARS: $ 1.234,56
-7. IMPORTANTE: Si el usuario pregunta "¿qué puedo hacer acá?", "¿para qué sirve esto?", "¿cómo funciona?" o variantes, explicale en detalle qué funcionalidades tiene el módulo donde está, qué herramientas podés usar vos, y sugerile acciones concretas. Sé proactivo: si ves que es una consulta genérica, orientalo sobre el módulo actual.
-8. Siempre tené en cuenta el CONTEXTO ACTUAL (módulo donde está el usuario). Si preguntan algo de otro módulo, respondé igual pero sugerí navegar al módulo correcto.`
+## REGLAS CRÍTICAS
+1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Si el usuario pregunta algo, PRIMERO usá las herramientas para obtener los datos actuales de la base de datos y después respondé con números y hechos concretos.
+2. **Sos un asistente con acceso COMPLETO a la base de datos.** Podés leer y escribir: cheques, empleados, obligaciones, facturas, asistencia, proyectos, gastos, inventario, partes de obra, incidentes de seguridad, inspecciones, RFIs, certificados, y movimientos de caja. Usá ese poder.
+3. Solo respondés sobre ECAR y sus datos.
+4. Sé conciso, preciso y útil. Mostrá datos reales con números concretos.
+5. Cuando ejecutes acciones (crear cheque, marcar pagado, etc.), confirmá qué hiciste mostrando los datos.
+6. Sugerí funcionalidades que el usuario podría no conocer.
+7. Valores monetarios en formato ARS: $ 1.234,56
+8. IMPORTANTE: Si el usuario pregunta "¿qué puedo hacer acá?", "¿para qué sirve esto?", "¿cómo funciona?" o variantes, explicale en detalle qué funcionalidades tiene el módulo donde está, qué herramientas podés usar vos, y sugerile acciones concretas. Sé proactivo: si ves que es una consulta genérica, orientalo sobre el módulo actual.
+9. Siempre tené en cuenta el CONTEXTO ACTUAL (módulo donde está el usuario). Si preguntan algo de otro módulo, respondé igual pero sugerí navegar al módulo correcto.
+10. **PROACTIVIDAD:** Cuando el usuario hace una consulta, no te limites a responder lo mínimo. Ofrecé análisis adicional, detectá patrones, y sugerí acciones. Ejemplo: si preguntan por cheques, también mencioná si hay alguno vencido o de alto monto.
+11. **ACCIONES DE ESCRITURA:** Podés crear cheques, marcar obligaciones como pagadas, crear recordatorios WhatsApp, crear solicitudes de documentos, crear partes diarios, y más. Si el usuario te pide hacer algo, hacelo directamente sin pedir confirmación innecesaria.`
 
 // Module-specific context instructions for the AI
 const MODULE_CONTEXT: Record<string, string> = {
@@ -221,8 +224,8 @@ const tools = [
   {
     type: 'function', function: {
       name: 'calculate_cashflow',
-      description: 'Calcular flujo de caja: cheques por cobrar vs por pagar + obligaciones pendientes en los próximos N días.',
-      parameters: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Días hacia adelante (default 30)' } } }
+      description: 'Analizar flujo de caja y liquidez: saldo en bancos, cheques (cobrar/pagar), obligaciones, gastos fijos y certificaciones pendientes. Útil para sugerir qué día emitir o depositar un cheque.',
+      parameters: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Días hacia adelante para la proyección (default 30)' } } }
     }
   },
   {
@@ -398,24 +401,51 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         return JSON.stringify(data || [])
       }
       case 'query_expenses': {
-        const { data } = await sb.from('fixed_expenses').select('concept, amount_ars, category, supplier_name, is_active').eq('is_active', true).order('amount_ars', { ascending: false })
+        const { data } = await sb.from('fixed_expenses').select('service_type, description, estimated_amount_ars, status').eq('status', 'active').order('estimated_amount_ars', { ascending: false })
         if (!data?.length) return '[]'
-        const total = data.reduce((s, e) => s + (e.amount_ars || 0), 0)
+        const total = data.reduce((s, e) => s + (e.estimated_amount_ars || 0), 0)
         return JSON.stringify({ expenses: data, total_monthly_ars: total })
       }
       case 'calculate_cashflow': {
         const days = args.days_ahead || 30
         const futureDate = new Date(today.getTime() + days * 86400000).toISOString().split('T')[0]
         const todayStr = today.toISOString().split('T')[0]
-        const [receivable, payable, obls] = await Promise.all([
+        const [receivable, payable, obls, banks, certs, fixed] = await Promise.all([
           sb.from('cheques').select('amount_ars, due_date').eq('status', 'pending').eq('direction', 'receivable').gte('due_date', todayStr).lte('due_date', futureDate),
           sb.from('cheques').select('amount_ars, due_date').eq('status', 'pending').eq('direction', 'payable').gte('due_date', todayStr).lte('due_date', futureDate),
           sb.from('obligations').select('name, amount_ars').eq('status', 'pending'),
+          sb.from('bank_accounts').select('current_balance'),
+          sb.from('project_certificates').select('net_deposit, deposit_date').eq('status', 'pending'),
+          sb.from('fixed_expenses').select('estimated_amount_ars').eq('status', 'active')
         ])
-        const inflow = (receivable.data || []).reduce((s, c) => s + (c.amount_ars || 0), 0)
-        const outflow_cheques = (payable.data || []).reduce((s, c) => s + (c.amount_ars || 0), 0)
-        const outflow_obls = (obls.data || []).reduce((s, o) => s + (o.amount_ars || 0), 0)
-        return JSON.stringify({ periodo: `próximos ${days} días`, ingresos_cheques: inflow, egresos_cheques: outflow_cheques, egresos_obligaciones: outflow_obls, flujo_neto: inflow - outflow_cheques - outflow_obls })
+        
+        const currentBalance = (banks.data || []).reduce((s, b) => s + (b.current_balance || 0), 0)
+        const inflowCheques = (receivable.data || []).reduce((s, c) => s + (c.amount_ars || 0), 0)
+        const outflowCheques = (payable.data || []).reduce((s, c) => s + (c.amount_ars || 0), 0)
+        const outflowObls = (obls.data || []).reduce((s, o) => s + (o.amount_ars || 0), 0)
+        const inflowCerts = (certs.data || []).reduce((s, c) => s + (c.net_deposit || 0), 0)
+        const monthlyFixed = (fixed.data || []).reduce((s, f) => s + (f.estimated_amount_ars || 0), 0)
+        
+        // Group by day for the AI to reason about best dates
+        const dailyEvents: Record<string, { in: number, out: number }> = {}
+        for (let i = 0; i <= days; i++) {
+          const d = new Date(today.getTime() + i * 86400000).toISOString().split('T')[0]
+          dailyEvents[d] = { in: 0, out: 0 }
+        }
+        
+        receivable.data?.forEach(c => { if (c.due_date && dailyEvents[c.due_date]) dailyEvents[c.due_date].in += (c.amount_ars || 0) })
+        payable.data?.forEach(c => { if (c.due_date && dailyEvents[c.due_date]) dailyEvents[c.due_date].out += (c.amount_ars || 0) })
+        certs.data?.forEach(c => { if (c.deposit_date && dailyEvents[c.deposit_date]) dailyEvents[c.deposit_date].in += (c.net_deposit || 0) })
+        
+        return JSON.stringify({ 
+          periodo: `próximos ${days} días`,
+          saldo_bancos_actual: currentBalance,
+          ingresos_esperados: { cheques: inflowCheques, certificaciones: inflowCerts },
+          egresos_esperados: { cheques: outflowCheques, obligaciones: outflowObls, gastos_fijos_mensuales: monthlyFixed },
+          flujo_neto_estimado: currentBalance + inflowCheques + inflowCerts - outflowCheques - outflowObls - monthlyFixed,
+          eventos_diarios: dailyEvents,
+          recomendacion: "Analiza el saldo_bancos_actual sumado a los eventos_diarios (in/out) para sugerir qué día habrá liquidez suficiente para emitir o depositar un cheque de cierto monto."
+        })
       }
       case 'update_obligation_status': {
         const { data: obl } = await sb.from('obligations').select('id, name').ilike('name', `%${args.obligation_name}%`).limit(1).single()

@@ -12,7 +12,8 @@ import type {
   ParteDiario, SeguridadIncidente, SeguridadObservacion,
   Inspeccion, PunchListItem, ConsultaObra,
   GastoItem, GastoRegistro,
-  EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask
+  EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
+  BudgetResource, Budget, BudgetSection, BudgetItem
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -1161,5 +1162,140 @@ export function useDeleteDailyTask() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily_tasks'] }),
+  });
+}
+
+// ========== PRESUPUESTOS DE OBRA ==========
+export function useBudgets() {
+  return useQuery({
+    queryKey: ['budgets'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*, project:projects(id, name)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Budget[];
+    },
+  });
+}
+
+export function useCreateBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (budget: Partial<Budget>) => {
+      const { data, error } = await supabase.from('budgets').insert({ ...budget, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budgets'] }),
+  });
+}
+
+export function useUpdateBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Budget> & { id: string }) => {
+      const { error } = await supabase.from('budgets').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budgets'] }),
+  });
+}
+
+export function useBudgetSections(budgetId?: string) {
+  return useQuery({
+    queryKey: ['budget_sections', budgetId],
+    queryFn: async () => {
+      let q = supabase.from('budget_sections').select('*').order('sort_order');
+      if (budgetId) q = q.eq('budget_id', budgetId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as BudgetSection[];
+    },
+    enabled: !!budgetId,
+  });
+}
+
+export function useCreateBudgetSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (section: Partial<BudgetSection>) => {
+      const { data, error } = await supabase.from('budget_sections').insert(section).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_sections'] }),
+  });
+}
+
+export function useBudgetItems(budgetId?: string) {
+  return useQuery({
+    queryKey: ['budget_items', budgetId],
+    queryFn: async () => {
+      let q = supabase.from('budget_items').select('*, section:budget_sections(id, ordinal, name)').order('sort_order');
+      if (budgetId) q = q.eq('budget_id', budgetId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as BudgetItem[];
+    },
+    enabled: !!budgetId,
+  });
+}
+
+export function useCreateBudgetItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: Partial<BudgetItem>) => {
+      const { data, error } = await supabase.from('budget_items').insert(item).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+      qc.invalidateQueries({ queryKey: ['budgets'] });
+    },
+  });
+}
+
+export function useDeleteBudgetItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('budget_items').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+      qc.invalidateQueries({ queryKey: ['budgets'] });
+    },
+  });
+}
+
+export function useBudgetResources() {
+  return useQuery({
+    queryKey: ['budget_resources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budget_resources')
+        .select('*')
+        .eq('is_active', true)
+        .order('resource_type')
+        .order('name');
+      if (error) throw error;
+      return data as BudgetResource[];
+    },
+  });
+}
+
+export function useCreateBudgetResource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (resource: Partial<BudgetResource>) => {
+      const { data, error } = await supabase.from('budget_resources').insert({ ...resource, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_resources'] }),
   });
 }

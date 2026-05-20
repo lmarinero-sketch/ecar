@@ -3,7 +3,7 @@ import {
   Wallet, Landmark, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight,
   Calendar, AlertTriangle, Plus, X, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement } from '../hooks/useData';
+import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const fmtShort = (n: number) => {
@@ -25,6 +25,7 @@ export const LiquidityDashboard: React.FC = () => {
   const { data: movements, isLoading: loadingMovements } = useCashMovements();
   const { data: snapshots } = useMonthlySnapshots();
   const { data: cheques } = useCheques();
+  const { data: certificates } = useProjectCertificates();
   const createMovement = useCreateCashMovement();
 
   const [showNewMovement, setShowNewMovement] = useState(false);
@@ -54,9 +55,58 @@ export const LiquidityDashboard: React.FC = () => {
   const totalPayable = chequesPayable.reduce((s, c) => s + c.amount_ars, 0);
   const totalReceivable = chequesReceivable.reduce((s, c) => s + c.amount_ars, 0);
 
+  // Certificaciones pendientes
+  const upcomingCerts = useMemo(() => {
+    if (!certificates) return [];
+    return certificates.filter(c => c.status === 'pending');
+  }, [certificates]);
+  const totalCerts = upcomingCerts.reduce((s, c) => s + (c.net_deposit || 0), 0);
+
   // Chart data from snapshots
   const chartData = useMemo(() => (snapshots || []).slice(-6), [snapshots]);
   const chartMax = useMemo(() => Math.max(...chartData.map(s => Math.max(s.real_closing, s.projected_closing, s.total_expenses)), 1), [chartData]);
+
+  // Cheques a cubrir (Line Chart Data) - Próximos 45 días
+  const chequesChartData = useMemo(() => {
+    if (!cheques) return [];
+    const t = new Date();
+    t.setHours(0,0,0,0);
+    const maxDate = new Date(t.getTime() + 45 * 86400000);
+    
+    const pendingPayable = cheques.filter(c => {
+        if (c.direction !== 'payable' || c.status !== 'pending' || !c.due_date) return false;
+        const d = new Date(c.due_date);
+        return d >= t && d <= maxDate;
+    });
+
+    if (pendingPayable.length === 0) return [];
+
+    const grouped = pendingPayable.reduce((acc, c) => {
+      const date = c.due_date!;
+      acc[date] = (acc[date] || 0) + c.amount_ars;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const sortedDates = Object.keys(grouped).sort();
+    return sortedDates.map(date => ({
+      date,
+      daily: grouped[date]
+    }));
+  }, [cheques]);
+
+  const maxChequeAmount = useMemo(() => Math.max(...chequesChartData.map(d => d.daily), 1), [chequesChartData]);
+  
+  // SVG Chart Dimensions
+  const svgWidth = 1000;
+  const svgHeight = 220;
+  const paddingY = 40;
+  const paddingX = 40;
+  const stepX = chequesChartData.length > 1 ? (svgWidth - paddingX * 2) / (chequesChartData.length - 1) : 0;
+  const chartPoints = chequesChartData.map((d, i) => {
+    const x = paddingX + i * stepX;
+    const y = svgHeight - paddingY - ((d.daily / maxChequeAmount) * (svgHeight - paddingY * 2));
+    return `${x},${y}`;
+  }).join(' ');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,14 +202,28 @@ export const LiquidityDashboard: React.FC = () => {
                 ))}
               </div>
             )}
-            {upcomingCheques.length === 0 && (
+            {upcomingCerts.length > 0 && (
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-blue-700 flex items-center gap-1"><TrendingUp size={14} /> Certificaciones a cobrar</span>
+                  <span className="font-mono font-bold text-blue-700">{fmt(totalCerts)}</span>
+                </div>
+                {upcomingCerts.map(c => (
+                  <div key={c.id} className="flex justify-between text-xs text-blue-600 py-0.5">
+                    <span className="truncate mr-2">Cert. N° {c.certificate_number} — {c.project?.name || 'Obra'}</span>
+                    <span className="font-mono whitespace-nowrap">{fmt(c.net_deposit || 0)} {c.deposit_date ? `· ${new Date(c.deposit_date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}` : ''}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {upcomingCheques.length === 0 && upcomingCerts.length === 0 && (
               <div className="text-center py-6 text-gray-400">
                 <CreditCard size={32} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm font-medium">Sin vencimientos próximos</p>
               </div>
             )}
             <div className="pt-2 border-t border-gray-100 flex justify-between text-sm">
-              <span className="text-gray-500">Neto 7 días:</span>
+              <span className="text-gray-500">Neto Cheques (7 días):</span>
               <span className={`font-mono font-bold ${totalReceivable - totalPayable >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {totalReceivable - totalPayable >= 0 ? '+' : ''}{fmt(totalReceivable - totalPayable)}
               </span>
@@ -181,8 +245,8 @@ export const LiquidityDashboard: React.FC = () => {
                     const h = Math.max((s.real_closing / chartMax) * 100, 4);
                     const ph = Math.max((s.projected_closing / chartMax) * 100, 4);
                     return (
-                      <div key={s.month} className="flex-1 flex flex-col items-center gap-1">
-                        <div className="w-full flex gap-0.5 items-end justify-center" style={{ height: '100%' }}>
+                      <div key={s.month} className="flex-1 flex flex-col items-center gap-1 h-full">
+                        <div className="w-full flex-1 flex gap-0.5 items-end justify-center">
                           <div className="w-3 bg-indigo-200 rounded-t transition-all" style={{ height: `${ph}%` }} title={`Proy: ${fmtShort(s.projected_closing)}`} />
                           <div className="w-3 bg-emerald-500 rounded-t transition-all" style={{ height: `${h}%` }} title={`Real: ${fmtShort(s.real_closing)}`} />
                         </div>
@@ -227,6 +291,61 @@ export const LiquidityDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Gráfico de Línea - Cheques a Cubrir */}
+      {chequesChartData.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              <TrendingUp size={16} className="text-red-500" /> Proyección de Cheques a Cubrir (Próximos 45 días)
+            </h3>
+          </div>
+          <div className="p-6 overflow-x-auto">
+            <div className="min-w-[800px] h-56 relative">
+              <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full overflow-visible">
+                <defs>
+                  <linearGradient id="gradient-red" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Grid lines */}
+                <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="#f3f4f6" strokeWidth="1" />
+                <line x1={paddingX} y1={svgHeight/2} x2={svgWidth - paddingX} y2={svgHeight/2} stroke="#f3f4f6" strokeWidth="1" />
+                <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="#e5e7eb" strokeWidth="2" />
+                
+                {/* Max Value Label */}
+                <text x={paddingX - 10} y={paddingY + 4} fontSize="12" fill="#9ca3af" textAnchor="end">{fmtShort(maxChequeAmount)}</text>
+                <text x={paddingX - 10} y={svgHeight - paddingY + 4} fontSize="12" fill="#9ca3af" textAnchor="end">$0</text>
+
+                {chequesChartData.length > 1 && (
+                  <>
+                    <polygon points={`${paddingX},${svgHeight-paddingY} ${chartPoints} ${paddingX + (chequesChartData.length-1)*stepX},${svgHeight-paddingY}`} fill="url(#gradient-red)" />
+                    <polyline points={chartPoints} fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </>
+                )}
+                {chequesChartData.length === 1 && (
+                  <circle cx={paddingX} cy={svgHeight - paddingY - ((chequesChartData[0].daily / maxChequeAmount) * (svgHeight - paddingY * 2))} r="6" fill="#ef4444" />
+                )}
+
+                {/* Points and Text */}
+                {chequesChartData.map((d, i) => {
+                  const x = paddingX + i * stepX;
+                  const y = svgHeight - paddingY - ((d.daily / maxChequeAmount) * (svgHeight - paddingY * 2));
+                  return (
+                    <g key={d.date} className="hover:opacity-80 cursor-pointer transition-opacity">
+                      <circle cx={x} cy={y} r="5" fill="#ffffff" stroke="#ef4444" strokeWidth="2" />
+                      <text x={x} y={svgHeight - 15} fontSize="12" fill="#6b7280" textAnchor="middle">{new Date(d.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })}</text>
+                      <text x={x} y={y - 12} fontSize="12" fill="#1f2937" fontWeight="bold" textAnchor="middle">{fmtShort(d.daily)}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Movimientos */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

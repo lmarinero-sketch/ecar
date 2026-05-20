@@ -736,6 +736,104 @@ export type GastoRegistro = {
   item?: GastoItem;
 };
 
+// ========== PRESUPUESTOS DE OBRA ==========
+
+export type BudgetResource = {
+  id: string;
+  tenant_id: string;
+  code: string | null;
+  name: string;
+  resource_type: 'material' | 'mano_obra' | 'equipo' | 'subcontrato';
+  category: string | null;
+  unit: string;
+  unit_price_ars: number;
+  supplier_ref: string | null;
+  notes: string | null;
+  is_active: boolean;
+  last_price_update: string;
+  created_at: string;
+};
+
+export type Budget = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  name: string;
+  description: string | null;
+  version: number;
+  status: 'draft' | 'approved' | 'revision' | 'closed';
+  gastos_generales_pct: number;
+  beneficio_pct: number;
+  financieros_pct: number;
+  impuestos_pct: number;
+  iibb_pct: number;
+  total_direct_ars: number;
+  total_indirect_ars: number;
+  total_final_ars: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  project?: Project | null;
+};
+
+export type BudgetSection = {
+  id: string;
+  budget_id: string;
+  parent_id: string | null;
+  ordinal: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type BudgetItem = {
+  id: string;
+  budget_id: string;
+  section_id: string | null;
+  resource_id: string | null;
+  ordinal: string | null;
+  description: string;
+  unit: string;
+  quantity: number;
+  unit_price_ars: number;
+  cost_type: 'material' | 'mano_obra' | 'equipo' | 'subcontrato' | 'gasto_general' | 'financiero';
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  // Joined
+  section?: BudgetSection | null;
+  resource?: BudgetResource | null;
+};
+
+export type BudgetAPU = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  unit: string;
+  description: string | null;
+  total_ars: number;
+  is_template: boolean;
+  created_at: string;
+  // Virtual
+  components?: BudgetAPUComponent[];
+};
+
+export type BudgetAPUComponent = {
+  id: string;
+  apu_id: string;
+  resource_id: string | null;
+  description: string;
+  resource_type: string;
+  unit: string;
+  quantity: number;
+  unit_price_ars: number;
+  sort_order: number;
+  created_at: string;
+  // Joined
+  resource?: BudgetResource | null;
+};
+
 // All modules available in the system
 export const ALL_MODULES = [
   'bi',
@@ -758,6 +856,7 @@ export const ALL_MODULES = [
   'rfi',
   'expenses',
   'documents',
+  'project_budget',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -783,4 +882,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   rfi: 'Consultas de Obra',
   expenses: 'Gastos Operativos',
   documents: 'Documentos & Correo',
+  project_budget: 'Proyectos & Presupuestos',
 };
