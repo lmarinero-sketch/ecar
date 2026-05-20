@@ -6,7 +6,7 @@ const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits
 
 export const ProjectBudgetModule: React.FC = () => {
   const { data: budgets, isLoading } = useBudgets();
-  const { data: projects } = useProjects();
+  useProjects();
   const [search, setSearch] = useState('');
 
   if (isLoading) {

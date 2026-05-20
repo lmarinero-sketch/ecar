@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, AlertTriangle } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 
@@ -7,7 +7,7 @@ const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Ago
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const SUPPLIERS = ['Shell Agro','YPF Agro','Axion','Puma','Otro'];
 const FUEL_TYPES = ['Diesel V-Power','Diesel - EVOLUX','Nafta','Aceite'];
-const PAYMENT_METHODS = ['Cuenta corriente','Tarjeta flota','Transferencia','Efectivo'];
+
 
 const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -16,8 +16,8 @@ type Tab = 'loads' | 'batan' | 'reconciliation' | 'fleet';
 export const FuelModule: React.FC = () => {
   const [tab, setTab] = useState<Tab>('loads');
   const [showForm, setShowForm] = useState(false);
-  const { data: vehicles = [], isLoading: loadingV } = useFuelVehicles();
-  const { data: loads = [], isLoading: loadingL } = useFuelLoads();
+  const { data: vehicles = [] } = useFuelVehicles();
+  const { data: loads = [] } = useFuelLoads();
   const { data: batanMovements = [] } = useFuelBatanMovements();
   const { data: reconciliation = [] } = useFuelReconciliation();
   const { data: projects = [] } = useProjects();
