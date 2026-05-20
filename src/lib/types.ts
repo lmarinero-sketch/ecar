@@ -586,9 +586,59 @@ export type ParteDiario = {
   estado: 'borrador' | 'enviado' | 'aprobado' | 'rechazado';
   aprobado_por: string | null;
   aprobado_en: string | null;
+  created_by: string | null;
+  avance_porcentual: number;
+  tareas_realizadas: Array<{ wbs_element_id?: string; descripcion: string; avance_pct: number }> | null;
   created_at: string;
   updated_at: string;
   obra?: Project;
+};
+
+export type ParteDiarioFoto = {
+  id: string;
+  parte_id: string;
+  foto_url: string;
+  descripcion: string | null;
+  tipo: 'avance' | 'entrega' | 'incidente' | 'otro';
+  taken_at: string;
+  created_at: string;
+};
+
+export type ParteDiarioSolicitud = {
+  id: string;
+  tenant_id: string;
+  parte_id: string;
+  item_id: string | null;
+  descripcion: string;
+  cantidad: number;
+  unidad: string;
+  urgencia: 'baja' | 'normal' | 'urgente';
+  estado: 'pendiente' | 'aprobada' | 'rechazada' | 'entregada';
+  purchase_request_id: string | null;
+  aprobada_por: string | null;
+  aprobada_en: string | null;
+  created_at: string;
+  item?: InventoryItem;
+};
+
+export type ParteDiarioPersonal = {
+  id: string;
+  parte_id: string;
+  employee_id: string;
+  horas_trabajadas: number;
+  tarea: string | null;
+  created_at: string;
+  employee?: Employee;
+};
+
+export type ParteDiarioEquipo = {
+  id: string;
+  parte_id: string;
+  vehicle_id: string;
+  horas_uso: number;
+  tarea: string | null;
+  created_at: string;
+  vehicle?: FuelVehicle;
 };
 
 // ========== SEGURIDAD E INCIDENTES ==========

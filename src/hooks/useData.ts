@@ -9,7 +9,8 @@ import type {
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
   InventoryItem, InventoryMovement, ToolAssignment,
   PurchaseRequest, PurchaseRequestItem,
-  ParteDiario, SeguridadIncidente, SeguridadObservacion,
+  ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
+  SeguridadIncidente, SeguridadObservacion,
   Inspeccion, PunchListItem, ConsultaObra,
   GastoItem, GastoRegistro,
   EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
@@ -763,6 +764,150 @@ export function useUpdateParteDiario() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partes_diarios'] }),
+  });
+}
+
+// ========== PARTE DIARIO: FOTOS ==========
+export function useParteFotos(parteId?: string) {
+  return useQuery({
+    queryKey: ['parte_fotos', parteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('parte_diario_fotos').select('*').eq('parte_id', parteId!).order('taken_at', { ascending: false });
+      if (error) throw error;
+      return data as ParteDiarioFoto[];
+    },
+    enabled: !!parteId,
+  });
+}
+
+export function useCreateParteFoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (foto: Partial<ParteDiarioFoto>) => {
+      const { data, error } = await supabase.from('parte_diario_fotos').insert(foto).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_fotos'] }),
+  });
+}
+
+export function useDeleteParteFoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('parte_diario_fotos').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_fotos'] }),
+  });
+}
+
+// ========== PARTE DIARIO: SOLICITUDES DE MATERIALES ==========
+export function useParteSolicitudes(parteId?: string) {
+  return useQuery({
+    queryKey: ['parte_solicitudes', parteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('parte_diario_solicitudes').select('*, item:inventory_items(id, name, unit, category)').eq('parte_id', parteId!).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as ParteDiarioSolicitud[];
+    },
+    enabled: !!parteId,
+  });
+}
+
+export function useCreateParteSolicitud() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sol: Partial<ParteDiarioSolicitud>) => {
+      const { data, error } = await supabase.from('parte_diario_solicitudes').insert({ ...sol, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_solicitudes'] }),
+  });
+}
+
+export function useUpdateParteSolicitud() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ParteDiarioSolicitud> & { id: string }) => {
+      const { error } = await supabase.from('parte_diario_solicitudes').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_solicitudes'] }),
+  });
+}
+
+// ========== PARTE DIARIO: PERSONAL PRESENTE ==========
+export function usePartePersonal(parteId?: string) {
+  return useQuery({
+    queryKey: ['parte_personal', parteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('parte_diario_personal').select('*, employee:employees(id, full_name, dni)').eq('parte_id', parteId!).order('created_at');
+      if (error) throw error;
+      return data as ParteDiarioPersonal[];
+    },
+    enabled: !!parteId,
+  });
+}
+
+export function useCreatePartePersonal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: Partial<ParteDiarioPersonal>) => {
+      const { data, error } = await supabase.from('parte_diario_personal').insert(p).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_personal'] }),
+  });
+}
+
+export function useDeletePartePersonal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('parte_diario_personal').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_personal'] }),
+  });
+}
+
+// ========== PARTE DIARIO: EQUIPOS EN OBRA ==========
+export function useParteEquipos(parteId?: string) {
+  return useQuery({
+    queryKey: ['parte_equipos', parteId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('parte_diario_equipos').select('*, vehicle:fuel_vehicles(id, code, description, vehicle_type)').eq('parte_id', parteId!).order('created_at');
+      if (error) throw error;
+      return data as ParteDiarioEquipo[];
+    },
+    enabled: !!parteId,
+  });
+}
+
+export function useCreateParteEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (e: Partial<ParteDiarioEquipo>) => {
+      const { data, error } = await supabase.from('parte_diario_equipos').insert(e).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_equipos'] }),
+  });
+}
+
+export function useDeleteParteEquipo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('parte_diario_equipos').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['parte_equipos'] }),
   });
 }
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
-  RotateCcw, AlertTriangle, Boxes, User
+  RotateCcw, AlertTriangle, Boxes, User, Barcode
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -9,6 +9,7 @@ import {
   useUpdateToolAssignment, useProjects, useEmployees
 } from '../hooks/useData';
 import type { InventoryItem } from '../lib/types';
+import { BarcodeLabel } from './BarcodeLabel';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -31,6 +32,7 @@ export const InventoryModule: React.FC = () => {
   const [showNewItem, setShowNewItem] = useState(false);
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
+  const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
   const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false });
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
@@ -176,6 +178,7 @@ export const InventoryModule: React.FC = () => {
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
                       {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-purple-600" /></button>}
+                      <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
                     </div>
                   </td>
                 </tr>
@@ -332,6 +335,11 @@ export const InventoryModule: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal Código de Barras */}
+      {showBarcode && (
+        <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
       )}
     </div>
   );

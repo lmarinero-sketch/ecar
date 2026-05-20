@@ -83,6 +83,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'inventory', requires: true },
       { id: 'logistics', requires: true },
+      { id: 'fleet', requires: true },
       { id: 'purchase_requests' },
     ],
   },
@@ -91,7 +92,6 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'project_budget', requires: true },
       { id: 'wbs', requires: true },
-      { id: 'fleet', requires: true },
       { id: 'field', requires: true },
       { id: 'safety', requires: true },
       { id: 'inspections', requires: true },
