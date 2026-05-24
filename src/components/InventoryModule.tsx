@@ -10,6 +10,7 @@ import {
 } from '../hooks/useData';
 import type { InventoryItem } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
+import { BarcodeScannerModal } from './BarcodeScannerModal';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -30,12 +31,41 @@ export const InventoryModule: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('');
   const [showNewItem, setShowNewItem] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false });
+  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '' });
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
+
+  const generateRandomBarcode = () => {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewItem(prev => ({ ...prev, barcode: `ECAR-${result}` }));
+  };
+
+  const printTempBarcode = () => {
+    if (!newItem.barcode) return;
+    setShowBarcode({
+      id: 'temp',
+      tenant_id: '',
+      name: newItem.name || 'Nuevo Ítem',
+      barcode: newItem.barcode,
+      category: newItem.category || 'material',
+      location: newItem.location || 'Depósito',
+      current_stock: parseFloat(newItem.current_stock) || 0,
+      unit: newItem.unit || 'unidad',
+      is_tool: newItem.category === 'herramienta',
+      min_stock: parseFloat(newItem.min_stock) || 0,
+      unit_cost: parseFloat(newItem.unit_cost) || 0,
+      qr_code: '',
+      created_at: new Date().toISOString()
+    });
+  };
 
   const filtered = useMemo(() => {
     if (!items) return [];
@@ -59,9 +89,11 @@ export const InventoryModule: React.FC = () => {
       min_stock: parseFloat(newItem.min_stock) || 0,
       unit_cost: parseFloat(newItem.unit_cost) || 0,
       is_tool: newItem.is_tool || newItem.category === 'herramienta',
+      barcode: newItem.barcode || null,
+      location: newItem.location || 'Depósito',
     });
     setShowNewItem(false);
-    setNewItem({ name: '', category: 'material', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false });
+    setNewItem({ name: '', category: 'material', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '' });
   };
 
   const handleMovement = async (e: React.FormEvent) => {
@@ -145,6 +177,9 @@ export const InventoryModule: React.FC = () => {
               <option value="herramienta">🔧 Herramientas</option>
               <option value="consumible">🔩 Consumibles</option>
             </select>
+            <button onClick={() => setShowScanner(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
+              <Barcode size={16} /> Escanear Código
+            </button>
             <button onClick={() => setShowNewItem(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
               <Plus size={16} /> Nuevo Ítem
             </button>
@@ -276,8 +311,37 @@ export const InventoryModule: React.FC = () => {
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Ítem</h3><button onClick={() => setShowNewItem(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleNewItem} className="space-y-3">
               <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: Amoladora Bosch 7&quot;" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Código de Barras / QR (Opcional)</label>
+                <div className="flex gap-2 items-center mt-1">
+                  <input
+                    value={newItem.barcode}
+                    onChange={e => setNewItem({ ...newItem, barcode: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30"
+                    placeholder="Ej: ECAR-A1B2C3D4"
+                  />
+                  <button
+                    type="button"
+                    onClick={generateRandomBarcode}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 shrink-0"
+                    title="Generar código de barras aleatorio"
+                  >
+                    ⚡ Generar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!newItem.barcode}
+                    onClick={printTempBarcode}
+                    className="bg-ecar-blue text-white px-3 py-2 rounded-xl text-xs font-bold transition-all hover:bg-ecar-blueDark disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
+                    title="Imprimir código de barras"
+                  >
+                    🖨️ Imprimir
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
+                <div><label className="text-xs font-bold text-gray-500">Ubicación</label><input value={newItem.location} onChange={e => setNewItem({ ...newItem, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm uppercase" placeholder="Ej: EST2-N1-A" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Unidad</label><input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="unidad, kg, m3" /></div>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -340,6 +404,17 @@ export const InventoryModule: React.FC = () => {
       {/* Modal Código de Barras */}
       {showBarcode && (
         <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
+      )}
+
+      {showScanner && (
+        <BarcodeScannerModal
+          items={items || []}
+          onClose={() => setShowScanner(false)}
+          onNewItemRequest={(code) => {
+            setNewItem(prev => ({ ...prev, barcode: code }));
+            setShowNewItem(true);
+          }}
+        />
       )}
     </div>
   );

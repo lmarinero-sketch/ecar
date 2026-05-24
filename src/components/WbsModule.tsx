@@ -2,16 +2,25 @@ import React, { useState, useMemo } from 'react';
 import {
   Target, Plus, X, FolderTree, Calendar, BarChart3, RefreshCw,
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
-  MessageSquare, TrendingUp, Flag,
+  MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
+  ShoppingCart, FileCheck, DollarSign, Truck
 } from 'lucide-react';
 import {
   useProjects, useCreateProject, useWbsElements, useCreateWbsElement,
   useUpdateWbsElement, useDeleteWbsElement, useEmployees,
   useProjectFeedback, useCreateProjectFeedback, useUpdateProjectFeedback,
+  // Project-Hub specific resource/financial hooks:
+  useProjectEmployees, useProjectInventoryMovements, useProjectToolAssignments,
+  useProjectFuelLoads, useProjectPurchaseRequests, useProjectCertificates,
+  useCreateToolAssignment, useUpdateToolAssignment, useCreateInventoryMovement,
+  useCreateFuelLoad, useCreatePurchaseRequest, useCreateProjectCertificate,
+  useUpdateProjectCertificate, useInventoryItems, useFuelVehicles, useBankAccounts
 } from '../hooks/useData';
-import type { WbsElement, ProjectFeedback } from '../lib/types';
+import type {
+  WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
+} from '../lib/types';
 
-type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'retroalimentacion';
+type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion';
 
 const PHASE_COLORS: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700',
@@ -112,6 +121,10 @@ export const WbsModule: React.FC = () => {
     { id: 'planificacion', label: 'Planificación', emoji: '📋', icon: Target },
     { id: 'programacion', label: 'Programación', emoji: '📅', icon: Calendar },
     { id: 'ejecucion', label: 'Ejecución', emoji: '🔨', icon: BarChart3 },
+    { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
+    { id: 'movimientos', label: 'Movimientos', emoji: '📦', icon: ArrowLeftRight },
+    { id: 'pedidos', label: 'Pedidos', emoji: '🛒', icon: ShoppingCart },
+    { id: 'certificados', label: 'Certificados', emoji: '📄', icon: FileCheck },
     { id: 'retroalimentacion', label: 'Retro', emoji: '🔄', icon: RefreshCw },
   ];
 
@@ -124,7 +137,7 @@ export const WbsModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gestión de Proyectos</h3>
-          <p className="text-indigo-200 text-sm mt-1">Planificación · Programación · Ejecución · Retroalimentación</p>
+          <p className="text-indigo-200 text-sm mt-1">Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
         </div>
       </div>
 
@@ -158,9 +171,9 @@ export const WbsModule: React.FC = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
             {tabs.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${tab === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[90px] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${tab === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 <span className="md:hidden text-base">{t.emoji}</span>
                 <span className="hidden md:inline">{t.emoji} {t.label}</span>
               </button>
@@ -171,6 +184,10 @@ export const WbsModule: React.FC = () => {
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
+          {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
+          {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}
+          {tab === 'pedidos' && <PedidosTab projectId={selectedProjectId} />}
+          {tab === 'certificados' && <CertificadosTab projectId={selectedProjectId} />}
           {tab === 'retroalimentacion' && <RetroTab projectId={selectedProjectId} wbs={wbs} />}
         </>
       )}
@@ -575,6 +592,1050 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
           <RefreshCw size={48} className="mx-auto mb-3 opacity-20" /><p className="font-medium">Sin registros de retroalimentación</p>
           <p className="text-sm">Registrá desviaciones, lecciones aprendidas y mejoras del proyecto.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// TAB: RECURSOS
+// ==========================================
+interface RecursosTabProps {
+  projectId: string;
+}
+
+const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
+  const { data: projectEmployees = [], isLoading: loadingEmployees } = useProjectEmployees(projectId);
+  const { data: toolAssignments = [], isLoading: loadingAssignments } = useProjectToolAssignments(projectId);
+  const { data: inventoryItems = [] } = useInventoryItems();
+  const { data: globalEmployees = [] } = useEmployees();
+  const createToolAssignment = useCreateToolAssignment();
+  const updateToolAssignment = useUpdateToolAssignment();
+
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [notes, setNotes] = useState('');
+
+  // Filtrar ítems de inventario que sean herramientas
+  const tools = useMemo(() => {
+    return inventoryItems.filter(item => item.category === 'herramienta');
+  }, [inventoryItems]);
+
+  const handleAssign = async () => {
+    if (!selectedItemId || !selectedEmployeeId) return;
+    await createToolAssignment.mutateAsync({
+      project_id: projectId,
+      item_id: selectedItemId,
+      employee_id: selectedEmployeeId,
+      assigned_date: new Date().toISOString().split('T')[0],
+      status: 'assigned',
+      notes: notes || null,
+    });
+    setShowAssignModal(false);
+    setSelectedItemId('');
+    setSelectedEmployeeId('');
+    setNotes('');
+  };
+
+  const handleReturn = async (id: string) => {
+    await updateToolAssignment.mutateAsync({
+      id,
+      returned_date: new Date().toISOString().split('T')[0],
+      status: 'returned',
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Sección Personal de Obra */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+            <Users size={20} className="text-indigo-600" /> Personal Asignado
+          </h3>
+          <span className="text-xs text-gray-500 font-medium">Asignados en el módulo de RRHH</span>
+        </div>
+
+        {loadingEmployees ? (
+          <div className="text-center py-6 text-gray-400 text-sm">Cargando personal...</div>
+        ) : projectEmployees.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {projectEmployees.map((emp: Employee) => {
+              const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+              return (
+                <div key={emp.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm text-gray-800 truncate">{emp.full_name}</p>
+                    <p className="text-xs text-gray-400 truncate">{emp.category?.name || 'Operario'}</p>
+                    <p className="text-[10px] font-mono text-gray-500 mt-0.5">CUIL: {emp.cuil || 'S/D'}</p>
+                  </div>
+                  {emp.category?.daily_rate_ars && (
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Jornal</p>
+                      <p className="text-sm font-bold font-mono text-indigo-600">${emp.category.daily_rate_ars.toLocaleString('es-AR')}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-white rounded-xl border border-gray-200 text-gray-400">
+            <Users size={32} className="mx-auto mb-2 opacity-30" />
+            <p className="font-medium text-sm">Sin personal asignado a esta obra</p>
+            <p className="text-xs">Podés asignar operarios editando sus legajos en el módulo de RRHH.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Sección Herramientas y Equipamiento */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+            <Wrench size={20} className="text-indigo-600" /> Herramientas y Equipamiento
+          </h3>
+          <button onClick={() => setShowAssignModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+            <Plus size={14} /> Asignar Herramienta
+          </button>
+        </div>
+
+        {loadingAssignments ? (
+          <div className="text-center py-6 text-gray-400 text-sm">Cargando herramientas asignadas...</div>
+        ) : toolAssignments.length > 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                <tr>
+                  <th className="px-4 py-3">Herramienta</th>
+                  <th className="px-4 py-3">Responsable</th>
+                  <th className="px-4 py-3">Fecha Asig.</th>
+                  <th className="px-4 py-3">Devolución</th>
+                  <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {toolAssignments.map(asg => (
+                  <tr key={asg.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 font-medium text-gray-800">
+                      {asg.item?.name || 'Herramienta Desconocida'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {asg.employee ? asg.employee.full_name : 'No asignado'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                      {asg.assigned_date}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                      {asg.returned_date || '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        asg.status === 'returned' ? 'bg-green-100 text-green-700' :
+                        asg.status === 'assigned' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {asg.status === 'assigned' ? 'Asignado' :
+                         asg.status === 'returned' ? 'Devuelto' :
+                         asg.status === 'lost' ? 'Perdido' : 'Dañado'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {asg.status === 'assigned' && (
+                        <button onClick={() => handleReturn(asg.id)} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold text-[10px] border transition-all">
+                          Devolver
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-white rounded-xl border border-gray-200 text-gray-400">
+            <Wrench size={32} className="mx-auto mb-2 opacity-30" />
+            <p className="font-medium text-sm">No hay herramientas asignadas actualmente</p>
+            <p className="text-xs">Hacé clic en "Asignar Herramienta" para registrar una salida del pañol a esta obra.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Asignar Herramienta */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <Wrench size={18} className="text-indigo-600" /> Asignar Herramienta a Obra
+              </h3>
+              <button onClick={() => setShowAssignModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Seleccioná la Herramienta *</label>
+                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                  <option value="">Seleccionar herramienta...</option>
+                  {tools.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} (Stock: {t.current_stock} {t.unit})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Responsable (Empleado) *</label>
+                <select value={selectedEmployeeId} onChange={e => setSelectedEmployeeId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                  <option value="">Seleccionar responsable...</option>
+                  {globalEmployees.map((emp: Employee) => (
+                    <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.category?.name || 'Operario'})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Notas / Observaciones</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" placeholder="Ej: Estado al entregar, accesorios incluidos..." />
+              </div>
+
+              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+                {createToolAssignment.isPending ? 'Asignando...' : 'Confirmar Asignación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// TAB: MOVIMIENTOS Y CONSUMOS
+// ==========================================
+const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
+  const { data: movements = [], isLoading: loadingMovements } = useProjectInventoryMovements(projectId);
+  const { data: fuelLoads = [], isLoading: loadingFuel } = useProjectFuelLoads(projectId);
+  const { data: inventoryItems = [] } = useInventoryItems();
+  const { data: vehicles = [] } = useFuelVehicles();
+  const createMovement = useCreateInventoryMovement();
+  const createFuelLoad = useCreateFuelLoad();
+
+  const [activeSubTab, setActiveSubTab] = useState<'materiales' | 'combustible'>('materiales');
+  
+  // Movimiento Inventario Form
+  const [showMovModal, setShowMovModal] = useState(false);
+  const [itemId, setItemId] = useState('');
+  const [movType, setMovType] = useState<'in' | 'out'>('out');
+  const [qty, setQty] = useState('1');
+  const [movNotes, setMovNotes] = useState('');
+
+  // Fuel Load Form
+  const [showFuelModal, setShowFuelModal] = useState(false);
+  const [vehicleId, setVehicleId] = useState('');
+  const [liters, setLiters] = useState('');
+  const [totalCost, setTotalCost] = useState('');
+  const [odometer, setOdometer] = useState('');
+  const [driver, setDriver] = useState('');
+  const [obs, setObs] = useState('');
+
+  const handleSaveMovement = async () => {
+    if (!itemId || !qty) return;
+    await createMovement.mutateAsync({
+      project_id: projectId,
+      item_id: itemId,
+      movement_type: movType,
+      quantity: parseFloat(qty),
+      notes: movNotes || null,
+    });
+    setShowMovModal(false);
+    setItemId('');
+    setQty('1');
+    setMovNotes('');
+  };
+
+  const handleSaveFuel = async () => {
+    if (!vehicleId || !liters || !totalCost) return;
+    const v = vehicles.find(x => x.id === vehicleId);
+    await createFuelLoad.mutateAsync({
+      project_id: projectId,
+      vehicle_id: vehicleId,
+      vehicle_code: v?.code || null,
+      vehicle_description: v?.description || null,
+      plate: v?.plate || null,
+      vehicle_type: v?.vehicle_type || null,
+      load_date: new Date().toISOString().split('T')[0],
+      liters: parseFloat(liters),
+      total_amount: parseFloat(totalCost),
+      price_per_liter: parseFloat(totalCost) / parseFloat(liters),
+      odometer_km: odometer ? parseFloat(odometer) : null,
+      driver_name: driver || null,
+      observations: obs || null,
+      load_source: 'station',
+      validation_status: 'pending',
+    });
+    setShowFuelModal(false);
+    setVehicleId('');
+    setLiters('');
+    setTotalCost('');
+    setOdometer('');
+    setDriver('');
+    setObs('');
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Sub Tabs Toggle */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 max-w-md">
+        <button onClick={() => setActiveSubTab('materiales')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'materiales' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          📦 Materiales / Consumibles
+        </button>
+        <button onClick={() => setActiveSubTab('combustible')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'combustible' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          ⛽ Carga de Combustible
+        </button>
+      </div>
+
+      {activeSubTab === 'materiales' ? (
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Historial de Movimientos de Material</h3>
+            <button onClick={() => setShowMovModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+              <Plus size={14} /> Registrar Movimiento
+            </button>
+          </div>
+
+          {loadingMovements ? (
+            <div className="text-center py-6 text-gray-400 text-sm">Cargando movimientos...</div>
+          ) : movements.length > 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                  <tr>
+                    <th className="px-4 py-3">Material</th>
+                    <th className="px-4 py-3">Tipo</th>
+                    <th className="px-4 py-3">Cantidad</th>
+                    <th className="px-4 py-3">Notas</th>
+                    <th className="px-4 py-3">Fecha</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {movements.map(mov => (
+                    <tr key={mov.id} className="hover:bg-gray-50/50">
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        {mov.item?.name || 'Material Desconocido'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          mov.movement_type === 'in' ? 'bg-green-100 text-green-700' :
+                          mov.movement_type === 'out' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {mov.movement_type === 'in' ? 'Ingreso' :
+                           mov.movement_type === 'out' ? 'Consumo' :
+                           mov.movement_type === 'return' ? 'Devolución' : 'Ajuste'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-gray-700">
+                        {mov.quantity} {mov.item?.unit}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-xs truncate max-w-[200px]">
+                        {mov.notes || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs font-mono">
+                        {new Date(mov.created_at).toLocaleDateString('es-AR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-400">
+              <ArrowLeftRight size={48} className="mx-auto mb-3 opacity-20" />
+              <p className="font-medium">No hay movimientos registrados</p>
+              <p className="text-sm">Registrá ingresos de materiales o consumos en el proyecto.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Planillas de Carga de Combustible</h3>
+            <button onClick={() => setShowFuelModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+              <Plus size={14} /> Cargar Combustible
+            </button>
+          </div>
+
+          {loadingFuel ? (
+            <div className="text-center py-6 text-gray-400 text-sm">Cargando consumos de combustible...</div>
+          ) : fuelLoads.length > 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                  <tr>
+                    <th className="px-4 py-3">Fecha</th>
+                    <th className="px-4 py-3">Vehículo</th>
+                    <th className="px-4 py-3">Litros</th>
+                    <th className="px-4 py-3">Monto Total</th>
+                    <th className="px-4 py-3">Chofer</th>
+                    <th className="px-4 py-3">Odómetro</th>
+                    <th className="px-4 py-3">Notas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {fuelLoads.map(load => (
+                    <tr key={load.id} className="hover:bg-gray-50/50">
+                      <td className="px-4 py-3 text-gray-600 font-mono text-xs">
+                        {load.load_date}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        {load.vehicle_code ? `${load.vehicle_code} (${load.plate || 'S/P'})` : 'Flota General'}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-gray-700">
+                        {load.liters ? `${load.liters.toLocaleString('es-AR')} L` : '-'}
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-indigo-600">
+                        {load.total_amount ? `$${load.total_amount.toLocaleString('es-AR')}` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">
+                        {load.driver_name || '-'}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-gray-500 text-xs">
+                        {load.odometer_km ? `${load.odometer_km.toLocaleString('es-AR')} Km` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs truncate max-w-[150px]">
+                        {load.observations || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-400">
+              <Truck size={48} className="mx-auto mb-3 opacity-20" />
+              <p className="font-medium">Sin cargas de combustible registradas</p>
+              <p className="text-sm">Registrá los consumos de la flota asignada al proyecto.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal Registrar Movimiento Inventario */}
+      {showMovModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <ArrowLeftRight size={18} className="text-indigo-600" /> Registrar Movimiento de Material
+              </h3>
+              <button onClick={() => setShowMovModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 bg-gray-100 rounded-lg p-1">
+              <button onClick={() => setMovType('out')} className={`py-1.5 rounded text-xs font-bold transition-all ${movType === 'out' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500'}`}>
+                Consumo / Salida
+              </button>
+              <button onClick={() => setMovType('in')} className={`py-1.5 rounded text-xs font-bold transition-all ${movType === 'in' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500'}`}>
+                Ingreso a Obra
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Material / Insumo *</label>
+                <select value={itemId} onChange={e => setItemId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none">
+                  <option value="">Seleccionar material...</option>
+                  {inventoryItems.filter(x => !x.is_tool).map(item => (
+                    <option key={item.id} value={item.id}>{item.name} (Stock: {item.current_stock} {item.unit})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad *</label>
+                <input type="number" min="0.01" step="any" value={qty} onChange={e => setQty(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Notas</label>
+                <textarea value={movNotes} onChange={e => setMovNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Motivo o detalle del movimiento..." />
+              </div>
+
+              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+                {createMovement.isPending ? 'Procesando...' : 'Confirmar Movimiento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registrar Carga de Combustible */}
+      {showFuelModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <Truck size={18} className="text-indigo-600" /> Registrar Consumo de Combustible
+              </h3>
+              <button onClick={() => setShowFuelModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Vehículo de Flota *</label>
+                <select value={vehicleId} onChange={e => setVehicleId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none">
+                  <option value="">Seleccionar vehículo...</option>
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id}>{v.code} — {v.brand} {v.model} ({v.plate})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Litros cargados *</label>
+                  <input type="number" min="0.1" step="any" value={liters} onChange={e => setLiters(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Costo Total ($ ARS) *</label>
+                  <input type="number" min="1" step="any" value={totalCost} onChange={e => setTotalCost(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Odómetro (Km)</label>
+                  <input type="number" value={odometer} onChange={e => setOdometer(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Chofer responsable</label>
+                  <input type="text" value={driver} onChange={e => setDriver(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Nombre completo" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones</label>
+                <textarea value={obs} onChange={e => setObs(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Detalles de la carga..." />
+              </div>
+
+              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+                {createFuelLoad.isPending ? 'Guardando planilla...' : 'Guardar Planilla de Carga'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// TAB: PEDIDOS DE MERCADERÍA / COMPRAS
+// ==========================================
+const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
+  const { data: purchaseRequests = [], isLoading: loadingRequests } = useProjectPurchaseRequests(projectId);
+  const { data: inventoryItems = [] } = useInventoryItems();
+  const createRequest = useCreatePurchaseRequest();
+
+  const [showNewOrderModal, setShowNewOrderModal] = useState(false);
+  const [urgency, setUrgency] = useState<'low' | 'normal' | 'urgent'>('normal');
+  const [notes, setNotes] = useState('');
+  
+  // Temporary list of items to request
+  const [items, setItems] = useState<{
+    inventory_item_id: string | null;
+    description: string;
+    quantity: number;
+    unit: string;
+    estimated_unit_cost: number;
+  }[]>([]);
+
+  const [selectedItemId, setSelectedItemId] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [unitCost, setUnitCost] = useState('0');
+
+  const handleAddItem = () => {
+    const invItem = inventoryItems.find(x => x.id === selectedItemId);
+    const description = invItem ? invItem.name : customDescription;
+    if (!description || !quantity) return;
+
+    setItems([
+      ...items,
+      {
+        inventory_item_id: selectedItemId || null,
+        description,
+        quantity: parseFloat(quantity),
+        unit: invItem?.unit || 'U',
+        estimated_unit_cost: parseFloat(unitCost) || 0,
+      }
+    ]);
+
+    setSelectedItemId('');
+    setCustomDescription('');
+    setQuantity('1');
+    setUnitCost('0');
+  };
+
+  const handleRemoveItem = (idx: number) => {
+    setItems(items.filter((_, i) => i !== idx));
+  };
+
+  const handleSubmit = async () => {
+    if (items.length === 0) return;
+    await createRequest.mutateAsync({
+      project_id: projectId,
+      urgency,
+      status: 'pending',
+      notes: notes || null,
+      items: items,
+    });
+    setShowNewOrderModal(false);
+    setItems([]);
+    setNotes('');
+    setUrgency('normal');
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Pedidos de Materiales y Suministros</h3>
+        <button onClick={() => setShowNewOrderModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+          <Plus size={14} /> Nuevo Pedido
+        </button>
+      </div>
+
+      {loadingRequests ? (
+        <div className="text-center py-6 text-gray-400 text-sm">Cargando pedidos...</div>
+      ) : purchaseRequests.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4">
+          {purchaseRequests.map(req => {
+            const requestItems = req.items || [];
+            const estimatedTotal = requestItems.reduce((acc, it) => acc + (it.quantity * (it.estimated_unit_cost || 0)), 0);
+
+            return (
+              <div key={req.id} className={`bg-white border rounded-xl p-5 shadow-sm transition-all space-y-3 relative overflow-hidden ${
+                req.urgency === 'urgent' ? 'border-red-200' : 'border-gray-200'
+              }`}>
+                {req.urgency === 'urgent' && (
+                  <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black uppercase px-2 py-0.5 tracking-wider">
+                    Urgente
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-start flex-wrap gap-2">
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-gray-400 font-mono">Solicitado el {new Date(req.created_at).toLocaleDateString('es-AR')}</p>
+                    {req.notes && <p className="text-sm text-gray-700 italic">"{req.notes}"</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      req.status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                      req.status === 'ordered' ? 'bg-purple-100 text-purple-700' :
+                      req.status === 'received' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {req.status === 'pending' ? 'Pendiente' :
+                       req.status === 'approved' ? 'Aprobado' :
+                       req.status === 'ordered' ? 'Ordenado' :
+                       req.status === 'received' ? 'Recibido' : 'Rechazado'}
+                    </span>
+                    {estimatedTotal > 0 && (
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                        Total Est.: ${estimatedTotal.toLocaleString('es-AR')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Items List */}
+                <div className="border-t border-gray-100 pt-2.5 space-y-1">
+                  {requestItems.map((item, idx) => (
+                    <div key={item.id || idx} className="flex justify-between items-center text-xs py-0.5">
+                      <span className="text-gray-700 font-medium">
+                        {item.description}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500 font-mono">
+                          {item.quantity} {item.unit || 'U'}
+                        </span>
+                        {item.estimated_unit_cost ? (
+                          <span className="text-gray-400 font-mono">
+                            c/u: ${item.estimated_unit_cost.toLocaleString('es-AR')}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-400">
+          <ShoppingCart size={48} className="mx-auto mb-3 opacity-20" />
+          <p className="font-medium">No hay pedidos solicitados</p>
+          <p className="text-sm">Hacé clic en "Nuevo Pedido" para enviar una solicitud al sector de compras.</p>
+        </div>
+      )}
+
+      {/* Modal Nuevo Pedido */}
+      {showNewOrderModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <ShoppingCart size={18} className="text-indigo-600" /> Crear Pedido de Compras
+              </h3>
+              <button onClick={() => setShowNewOrderModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Urgencia</label>
+                <select value={urgency} onChange={e => setUrgency(e.target.value as any)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none">
+                  <option value="low">Baja</option>
+                  <option value="normal">Normal</option>
+                  <option value="urgent">Urgente</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Notas / Motivo</label>
+                <input type="text" value={notes} onChange={e => setNotes(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Destino, justificación..." />
+              </div>
+            </div>
+
+            {/* Agregar item form */}
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-3">
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Agregar ítem al pedido</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Item del Catálogo (Opcional)</label>
+                  <select value={selectedItemId} onChange={e => {
+                    setSelectedItemId(e.target.value);
+                    if (e.target.value) setCustomDescription('');
+                  }} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white">
+                    <option value="">Seleccionar del pañol...</option>
+                    {inventoryItems.map(item => (
+                      <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Descripción Manual (Si no está en catálogo)</label>
+                  <input type="text" value={customDescription} onChange={e => {
+                    setCustomDescription(e.target.value);
+                    if (e.target.value) setSelectedItemId('');
+                  }} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white" placeholder="Ej: Clavos de 2 pulgadas" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad *</label>
+                  <input type="number" min="0.01" step="any" value={quantity} onChange={e => setQuantity(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Costo Unitario Est. (Opcional)</label>
+                  <input type="number" min="0" step="any" value={unitCost} onChange={e => setUnitCost(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white" />
+                </div>
+              </div>
+
+              <button onClick={handleAddItem} className="bg-gray-800 text-white px-3 py-2 rounded-lg font-bold text-xs hover:bg-gray-700 transition-all">
+                Agregar Ítem
+              </button>
+            </div>
+
+            {/* List of items added */}
+            {items.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Items agregados</p>
+                <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+                  {items.map((it, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 text-xs bg-white">
+                      <div>
+                        <span className="font-bold text-gray-800">{it.description}</span>
+                        <span className="text-gray-400 ml-2 font-mono">{it.quantity} {it.unit}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {it.estimated_unit_cost > 0 && (
+                          <span className="font-mono text-gray-500 font-medium">
+                            Est: ${(it.quantity * it.estimated_unit_cost).toLocaleString('es-AR')}
+                          </span>
+                        )}
+                        <button onClick={() => handleRemoveItem(idx)} className="text-red-500 hover:text-red-700 font-bold">
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              {createRequest.isPending ? 'Enviando pedido...' : 'Registrar Pedido y Enviar'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// TAB: CERTIFICADOS DE OBRA
+// ==========================================
+const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
+  const { data: certificates = [], isLoading: loadingCerts } = useProjectCertificates(projectId);
+  const { data: bankAccounts = [] } = useBankAccounts();
+  const createCert = useCreateProjectCertificate();
+  const updateCert = useUpdateProjectCertificate();
+
+  const [showNewCertModal, setShowNewCertModal] = useState(false);
+  const [showPayModal, setShowPayModal] = useState<ProjectCertificate | null>(null);
+
+  // New certificate form fields
+  const [certNumber, setCertNumber] = useState('');
+  const [period, setPeriod] = useState('');
+  const [gross, setGross] = useState('');
+  const [redet, setRedet] = useState('');
+  const [retIibb, setRetIibb] = useState('');
+  const [retCheque, setRetCheque] = useState('');
+  const [retOther, setRetOther] = useState('');
+
+  // Payment fields
+  const [bankAccountId, setBankAccountId] = useState('');
+  const [depositDate, setDepositDate] = useState('');
+
+  const handleSaveCert = async () => {
+    const grossVal = parseFloat(gross) || 0;
+    const redetVal = parseFloat(redet) || 0;
+    const totalCertifiedVal = grossVal + redetVal;
+    const iibbVal = parseFloat(retIibb) || 0;
+    const chequeVal = parseFloat(retCheque) || 0;
+    const otherVal = parseFloat(retOther) || 0;
+    const netVal = totalCertifiedVal - (iibbVal + chequeVal + otherVal);
+
+    await createCert.mutateAsync({
+      project_id: projectId,
+      certificate_number: parseInt(certNumber) || 1,
+      period_description: period || null,
+      gross_amount: grossVal,
+      redetermination: redetVal,
+      total_certified: totalCertifiedVal,
+      retention_iibb: iibbVal,
+      retention_imp_cheque: chequeVal,
+      other_retentions: otherVal,
+      net_deposit: netVal,
+      status: 'pending',
+    });
+
+    setShowNewCertModal(false);
+    setCertNumber('');
+    setPeriod('');
+    setGross('');
+    setRedet('');
+    setRetIibb('');
+    setRetCheque('');
+    setRetOther('');
+  };
+
+  const handlePayCert = async () => {
+    if (!showPayModal || !bankAccountId || !depositDate) return;
+    await updateCert.mutateAsync({
+      id: showPayModal.id,
+      status: 'deposited',
+      deposit_bank_account_id: bankAccountId,
+      deposit_date: depositDate,
+    });
+    setShowPayModal(null);
+    setBankAccountId('');
+    setDepositDate('');
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Certificaciones e Ingresos</h3>
+        <button onClick={() => setShowNewCertModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+          <Plus size={14} /> Registrar Certificado
+        </button>
+      </div>
+
+      {loadingCerts ? (
+        <div className="text-center py-6 text-gray-400 text-sm">Cargando certificados...</div>
+      ) : certificates.length > 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <tr>
+                <th className="px-4 py-3">Cert. N°</th>
+                <th className="px-4 py-3">Período</th>
+                <th className="px-4 py-3 text-right">Monto Bruto</th>
+                <th className="px-4 py-3 text-right">Redet.</th>
+                <th className="px-4 py-3 text-right">Retenciones</th>
+                <th className="px-4 py-3 text-right">Neto A Cobrar</th>
+                <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 font-mono text-xs text-gray-700">
+              {certificates.map(cert => {
+                const totalRetentions = (cert.retention_iibb || 0) + (cert.retention_imp_cheque || 0) + (cert.other_retentions || 0);
+
+                return (
+                  <tr key={cert.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 font-bold text-gray-800 font-sans">
+                      #{cert.certificate_number}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 font-sans">
+                      {cert.period_description || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-800">
+                      ${cert.gross_amount.toLocaleString('es-AR')}
+                    </td>
+                    <td className="px-4 py-3 text-right text-green-600">
+                      +${(cert.redetermination || 0).toLocaleString('es-AR')}
+                    </td>
+                    <td className="px-4 py-3 text-right text-red-500">
+                      -${totalRetentions.toLocaleString('es-AR')}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-indigo-600">
+                      ${cert.net_deposit.toLocaleString('es-AR')}
+                    </td>
+                    <td className="px-4 py-3 font-sans">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        cert.status === 'deposited' ? 'bg-green-100 text-green-700' :
+                        cert.status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                        cert.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {cert.status === 'deposited' ? 'Cobrado' :
+                         cert.status === 'approved' ? 'Aprobado' :
+                         cert.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-sans">
+                      {cert.status !== 'deposited' && cert.status !== 'rejected' && (
+                        <button onClick={() => setShowPayModal(cert)} className="bg-emerald-600 text-white px-2 py-1 rounded font-bold text-[10px] hover:bg-emerald-700 transition-all">
+                          Registrar Cobro
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-400">
+          <FileCheck size={48} className="mx-auto mb-3 opacity-20" />
+          <p className="font-medium">Sin certificados registrados</p>
+          <p className="text-sm">Registrá los certificados de obra correspondientes para su liquidación.</p>
+        </div>
+      )}
+
+      {/* Modal Registrar Certificado */}
+      {showNewCertModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <FileCheck size={18} className="text-indigo-600" /> Registrar Certificado de Obra
+              </h3>
+              <button onClick={() => setShowNewCertModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">N° Certificado *</label>
+                  <input type="number" value={certNumber} onChange={e => setCertNumber(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Período / Detalle *</label>
+                  <input type="text" value={period} onChange={e => setPeriod(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Ej: Mayo 2026" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Monto Bruto Básico *</label>
+                  <input type="number" min="0" step="any" value={gross} onChange={e => setGross(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Redetermination Provisoria</label>
+                  <input type="number" min="0" step="any" value={redet} onChange={e => setRedet(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+              </div>
+
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-wider border-t border-gray-100 pt-3">Retenciones Impositivas y de Garantía</p>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Ret. IIBB</label>
+                  <input type="number" min="0" step="any" value={retIibb} onChange={e => setRetIibb(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Imp. Cheque</label>
+                  <input type="number" min="0" step="any" value={retCheque} onChange={e => setRetCheque(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Otras Retenciones</label>
+                  <input type="number" min="0" step="any" value={retOther} onChange={e => setRetOther(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                </div>
+              </div>
+
+              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+                {createCert.isPending ? 'Guardando...' : 'Guardar y Registrar Certificado'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registrar Cobro */}
+      {showPayModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <DollarSign size={18} className="text-emerald-600" /> Registrar Cobro de Certificado #{showPayModal.certificate_number}
+              </h3>
+              <button onClick={() => setShowPayModal(null)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-800">
+              <p>Monto Neto a Acreditar: <strong className="font-mono">${showPayModal.net_deposit.toLocaleString('es-AR')}</strong></p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Cuenta Bancaria de Destino *</label>
+                <select value={bankAccountId} onChange={e => setBankAccountId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none">
+                  <option value="">Seleccionar cuenta...</option>
+                  {bankAccounts.map((acc: BankAccount) => (
+                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.bank_name || 'Sin banco'}) — CBU: {acc.cbu || 'S/D'}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Fecha de Acreditación / Depósito *</label>
+                <input type="date" value={depositDate} onChange={e => setDepositDate(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+              </div>
+
+              <button onClick={handlePayCert} disabled={!bankAccountId || !depositDate || updateCert.isPending} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+                {updateCert.isPending ? 'Confirmando...' : 'Confirmar Cobro y Acreditación'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -29,18 +29,18 @@ const tools = [
     type: 'function' as const,
     function: {
       name: 'create_cheque',
-      description: 'Cargar un nuevo cheque.',
+      description: 'Cargar un nuevo cheque en la base de datos.',
       parameters: {
         type: 'object',
         properties: {
-          cheque_number: { type: 'string' },
-          bank_name: { type: 'string' },
-          amount_ars: { type: 'number' },
-          direction: { type: 'string', description: 'payable o receivable' },
-          type: { type: 'string', description: 'physical o echeq' },
-          issue_date: { type: 'string' },
-          due_date: { type: 'string' },
-          beneficiary_or_issuer: { type: 'string' }
+          cheque_number: { type: 'string', description: 'Número del cheque.' },
+          bank_name: { type: 'string', description: 'Nombre del banco emisor.' },
+          amount_ars: { type: 'number', description: 'Monto en pesos del cheque.' },
+          direction: { type: 'string', enum: ['payable', 'receivable'], description: 'Dirección del cheque. Si es un cheque de cobro/recibido/a cobrar usa "receivable". Si es un cheque emitido/de pago/a pagar usa "payable".' },
+          type: { type: 'string', enum: ['physical', 'echeq'], description: 'Tipo de cheque: "physical" (físico) o "echeq" (electrónico).' },
+          issue_date: { type: 'string', description: 'Fecha de emisión en formato YYYY-MM-DD.' },
+          due_date: { type: 'string', description: 'Fecha de pago/vencimiento en formato YYYY-MM-DD.' },
+          beneficiary_or_issuer: { type: 'string', description: 'Beneficiario o emisor del cheque.' }
         },
         required: ['cheque_number', 'bank_name', 'amount_ars', 'direction', 'due_date']
       }
@@ -131,7 +131,7 @@ const tools = [
       parameters: {
         type: 'object',
         properties: {
-          type: { type: 'string', enum: ['income', 'expense'], description: 'income = cobro/ingreso, expense = pago/egreso' },
+          type: { type: 'string', enum: ['income', 'expense'], description: 'Tipo de movimiento. Si es un cobro/ingreso/entrada usa "income". Si es un pago/egreso/gasto usa "expense".' },
           amount: { type: 'number', description: 'Monto del pago/cobro' },
           counterpart: { type: 'string', description: 'A quién se le pagó o de quién se cobró' },
           category: { type: 'string', description: 'Categoría: Sueldos/Honorarios, Seguros, Servicios, Impuestos ARCA, Gremios, Combustibles, Cheques/Echeqs, Pagos a terceros, Servicios contratados, Viandas, Varios, Cobro certificado, Otro ingreso' },
@@ -344,7 +344,8 @@ Cuando falte información:
    - Después de registrar pago: "¿Querés registrar otro pago o ver la liquidez? 💰"
    - Después de liquidez: "¿Querés ver los cheques pendientes o registrar un movimiento? 📊"
    - Después de un certificado: "¿Querés cargar otro certificado o ver el estado de la obra? 🏗️"
-   - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.`;
+   - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.
+13. SIEMPRE llamá a la herramienta correspondiente (create_cheque, register_payment, etc.) cuando el usuario solicite registrar o cargar información. NUNCA respondas diciendo que algo fue cargado o registrado con éxito si no ejecutaste la herramienta correspondiente primero y esta te devolvió éxito.`;
 
 // ==================== TOOL EXECUTION ====================
 async function executeTool(supabase: any, name: string, args: Record<string, any>): Promise<string> {
@@ -1088,10 +1089,10 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
         updated_at: new Date().toISOString(),
       }, { onConflict: 'phone' });
 
-      // ── Send reply via BuilderBot API ──
-      const bbApiKey = 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6';
-      const bbProjectId = 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d';
+      const bbApiKey = Deno.env.get("BUILDERBOT_API_KEY") || 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6';
+      const bbProjectId = Deno.env.get("BUILDERBOT_PROJECT_ID") || 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d';
       const bbUrl = `https://app.builderbot.cloud/api/v2/${bbProjectId}/messages`;
+
 
       console.log(`Enviando respuesta vía BuilderBot a ${phone}...`);
 

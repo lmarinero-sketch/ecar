@@ -1,8 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-const BUILDERBOT_API_KEY = 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6'
-const BUILDERBOT_PROJECT_ID = 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d'
+const BUILDERBOT_API_KEY = Deno.env.get("BUILDERBOT_API_KEY") || 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6'
+const BUILDERBOT_PROJECT_ID = Deno.env.get("BUILDERBOT_PROJECT_ID") || 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d'
 const BUILDERBOT_URL = `https://app.builderbot.cloud/api/v2/${BUILDERBOT_PROJECT_ID}/messages`
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

@@ -15,9 +15,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const BUILDERBOT_API_KEY = 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6';
-const BUILDERBOT_PROJECT_ID = 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d';
+const BUILDERBOT_API_KEY = Deno.env.get("BUILDERBOT_API_KEY") || 'bb-3c45fa69-2776-4275-82b6-2d6df9e08ec6';
+const BUILDERBOT_PROJECT_ID = Deno.env.get("BUILDERBOT_PROJECT_ID") || 'c3fd918b-b736-40dc-a841-cbb73d3b2a8d';
 const BUILDERBOT_URL = `https://app.builderbot.cloud/api/v2/${BUILDERBOT_PROJECT_ID}/messages`;
+
 
 /**
  * Send WhatsApp message via BuilderBot cloud API

@@ -663,6 +663,17 @@ export function useCreateProjectCertificate() {
   });
 }
 
+export function useUpdateProjectCertificate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ProjectCertificate> & { id: string }) => {
+      const { error } = await supabase.from('project_certificates').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_certificates'] }),
+  });
+}
+
 // ========== INVENTORY ==========
 export function useInventoryItems() {
   return useQuery({
@@ -778,7 +789,7 @@ export function usePurchaseRequests() {
 export function useCreatePurchaseRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ items, ...req }: Partial<PurchaseRequest> & { items: Partial<PurchaseRequestItem>[] }) => {
+    mutationFn: async ({ items, ...req }: Omit<Partial<PurchaseRequest>, 'items'> & { items: Partial<PurchaseRequestItem>[] }) => {
       const { data: request, error } = await supabase.from('purchase_requests').insert({ ...req, tenant_id: ECAR_TENANT_ID }).select().single();
       if (error) throw error;
       if (items.length > 0) {
@@ -1618,5 +1629,106 @@ export function useUpdateFuelReconciliation() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_reconciliation'] }),
+  });
+}
+
+// ========== PROJECT HUB: FILTERED HOOKS ==========
+
+export function useProjectEmployees(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_employees', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*, category:union_categories(id, name, daily_rate_ars)')
+        .eq('current_project_id', projectId!)
+        .eq('employment_status', 'active')
+        .order('full_name');
+      if (error) throw error;
+      return data as Employee[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectInventoryMovements(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_inventory_movements', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('inventory_movements')
+        .select('*, item:inventory_items(id, name, unit, category)')
+        .eq('project_id', projectId!)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as InventoryMovement[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectToolAssignments(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_tool_assignments', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tool_assignments')
+        .select('*, item:inventory_items(id, name), employee:employees(id, full_name)')
+        .eq('project_id', projectId!)
+        .order('assigned_date', { ascending: false });
+      if (error) throw error;
+      return data as ToolAssignment[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectFuelLoads(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_fuel_loads', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fuel_loads')
+        .select('*')
+        .eq('project_id', projectId!)
+        .order('load_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as FuelLoad[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectPurchaseRequests(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_purchase_requests', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('purchase_requests')
+        .select('*, items:purchase_request_items(*)')
+        .eq('project_id', projectId!)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as PurchaseRequest[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useProjectBudgets(projectId?: string) {
+  return useQuery({
+    queryKey: ['project_budgets', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('project_id', projectId!)
+        .order('version', { ascending: false });
+      if (error) throw error;
+      return data as Budget[];
+    },
+    enabled: !!projectId,
   });
 }
