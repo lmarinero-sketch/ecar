@@ -21,8 +21,8 @@ const tools = [
     type: 'function' as const,
     function: {
       name: 'query_cheques',
-      description: 'Consultar cheques. Filtrar por estado y dirección.',
-      parameters: { type: 'object', properties: { status: { type: 'string' }, direction: { type: 'string' }, limit: { type: 'number' } } }
+      description: 'Consultar cheques. Filtrar por estado, dirección y rango de fechas de vencimiento. IMPORTANTE: Cuando el usuario pregunte por cheques de "esta semana", "próximos 7 días" o similar, SIEMPRE usá due_date_from y due_date_to para filtrar por el rango correcto.',
+      parameters: { type: 'object', properties: { status: { type: 'string', description: 'Estado: pending, deposited, cashed, bounced' }, direction: { type: 'string', description: 'Dirección: payable (emitidos/a pagar), receivable (recibidos/a cobrar)' }, due_date_from: { type: 'string', description: 'Fecha inicio rango vencimiento YYYY-MM-DD (inclusive). Para "esta semana" usá el lunes de la semana actual.' }, due_date_to: { type: 'string', description: 'Fecha fin rango vencimiento YYYY-MM-DD (inclusive). Para "esta semana" usá el domingo de la semana actual.' }, limit: { type: 'number' } } }
     }
   },
   {
@@ -280,8 +280,49 @@ const tools = [
   },
 ];
 
-const SYSTEM_PROMPT = `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
+// Helper to get Argentina date/time
+function getArgentinaDate(): Date {
+  // Create a date string in Argentina timezone
+  const now = new Date()
+  const argStr = now.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })
+  return new Date(argStr)
+}
+
+function getArgentinaDateStr(): string {
+  const d = getArgentinaDate()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function getArgentinaWeekRange(): { monday: string, sunday: string } {
+  const d = getArgentinaDate()
+  const day = d.getDay() // 0=domingo, 1=lunes...
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return { monday: fmt(monday), sunday: fmt(sunday) }
+}
+
+function buildSystemPrompt(): string {
+  const argDate = getArgentinaDate()
+  const todayStr = getArgentinaDateStr()
+  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+  const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+  const dayName = dayNames[argDate.getDay()]
+  const monthName = monthNames[argDate.getMonth()]
+  const { monday, sunday } = getArgentinaWeekRange()
+
+  return `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
 Hablás en español argentino (vos/vosotros). Sos profesional, cercano y eficiente.
+
+## FECHA Y HORA ACTUAL
+📅 Hoy es *${dayName} ${argDate.getDate()} de ${monthName} de ${argDate.getFullYear()}* (${todayStr})
+📆 Esta semana va del *lunes ${monday}* al *domingo ${sunday}*
+⏰ Hora Argentina: ${String(argDate.getHours()).padStart(2, '0')}:${String(argDate.getMinutes()).padStart(2, '0')}
+
+Cuando el usuario pregunte por "esta semana", "esta semana que viene", etc., usá SIEMPRE los rangos de fecha correctos basándote en la fecha actual. Un cheque que vence el ${monday} a ${sunday} está "esta semana". Un cheque que vence después del ${sunday} NO es de esta semana.
 
 ## TU ROL
 Sos el copiloto financiero y operativo de ECAR. Podés:
@@ -361,12 +402,14 @@ Cuando falte información:
    - Después de un certificado: "¿Querés cargar otro certificado o ver el estado de la obra? 🏗️"
    - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.
 13. SIEMPRE llamá a la herramienta correspondiente (create_cheque, register_payment, delete_cheque, etc.) cuando el usuario solicite registrar, cargar o eliminar información. NUNCA respondas diciendo que algo fue cargado, registrado o eliminado con éxito si no ejecutaste la herramienta correspondiente primero y esta te devolvió éxito.
-14. ELIMINAR CHEQUES: Si el usuario pide eliminar o borrar un cheque, usá la herramienta delete_cheque. Si dice "el último" o "el que acabo de cargar", usá delete_last=true. Si dice un número específico, usá cheque_number. NUNCA digas que no podés eliminar cheques — SÍ podés.`;
+14. ELIMINAR CHEQUES: Si el usuario pide eliminar o borrar un cheque, usá la herramienta delete_cheque. Si dice "el último" o "el que acabo de cargar", usá delete_last=true. Si dice un número específico, usá cheque_number. NUNCA digas que no podés eliminar cheques — SÍ podés.
+15. FILTRO DE FECHAS EN CHEQUES: Cuando pregunten por cheques de "esta semana", SIEMPRE usá query_cheques con due_date_from=${monday} y due_date_to=${sunday}. Si no hay cheques en ese rango, respondé "No hay cheques a pagar esta semana" y mencioná cuándo es el próximo. NUNCA muestres cheques fuera del rango como si fueran de esta semana.`
+}
 
 // ==================== TOOL EXECUTION ====================
 async function executeTool(supabase: any, name: string, args: Record<string, any>): Promise<string> {
-  const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = getArgentinaDateStr()
+  const today = getArgentinaDate()
 
   try {
     switch (name) {
@@ -380,8 +423,22 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         let q = supabase.from('cheques').select('cheque_number, bank_name, beneficiary_or_issuer, amount_ars, due_date, status, direction')
         if (args.status) q = q.eq('status', args.status)
         if (args.direction) q = q.eq('direction', args.direction)
+        if (args.due_date_from) q = q.gte('due_date', args.due_date_from)
+        if (args.due_date_to) q = q.lte('due_date', args.due_date_to)
         const { data } = await q.order('due_date').limit(args.limit || 15)
-        if (!data?.length) return '[]'
+        if (!data?.length) {
+          // If filtering by date range and no results, find the next upcoming cheque for context
+          if (args.due_date_from || args.due_date_to) {
+            let nextQ = supabase.from('cheques').select('cheque_number, bank_name, beneficiary_or_issuer, amount_ars, due_date, status, direction').eq('status', 'pending')
+            if (args.direction) nextQ = nextQ.eq('direction', args.direction)
+            nextQ = nextQ.gte('due_date', args.due_date_to || args.due_date_from).order('due_date').limit(3)
+            const { data: nextCheques } = await nextQ
+            if (nextCheques?.length) {
+              return JSON.stringify({ cheques: [], total_ars: 0, count: 0, message: 'No hay cheques en el rango solicitado', proximos_cheques: nextCheques })
+            }
+          }
+          return JSON.stringify({ cheques: [], total_ars: 0, count: 0, message: 'No hay cheques que coincidan con los filtros' })
+        }
         const total = data.reduce((s: number, c: any) => s + (c.amount_ars || 0), 0)
         return JSON.stringify({ cheques: data, total_ars: total, count: data.length })
       }
@@ -1006,8 +1063,9 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
         }
       }
 
+      const systemPrompt = buildSystemPrompt()
       const openaiMessages: any[] = [
-        { role: 'system', content: SYSTEM_PROMPT + imageOcrPrompt }
+        { role: 'system', content: systemPrompt + imageOcrPrompt }
       ];
       for (const m of chatMessages) {
         // If this is the last user message and has an image, send as multimodal

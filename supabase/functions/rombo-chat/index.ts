@@ -143,7 +143,7 @@ const MODULE_CONTEXT: Record<string, string> = {
 
   guide: `## CONTEXTO ACTUAL: El usuario está en la Guía de Uso del Sistema
 - Este módulo es una guía interactiva y detallada de cómo usar el ERP de ECAR, incluyendo todas las secciones.
-- Destacá especialmente el uso del asistente por WhatsApp (número +54 9 11 3016-8646 o el canal configurado), explicando todo lo que se puede enviar por ahí (fotos de facturas/cheques, audios relatando partes de obra, novedades de empleados, etc.).
+- Destacá especialmente el uso del asistente por WhatsApp (número +54 9 2643 22-9503 o el canal configurado), explicando todo lo que se puede enviar por ahí (fotos de facturas/cheques, audios relatando partes de obra, novedades de empleados, etc.).
 - Ofrecé explicar al usuario cómo usar cualquiera de las herramientas o módulos.
 - Explicá que la IA puede interpretar texto natural en español argentino.
 - Sugerí: "Puedo darte ejemplos de mensajes que le podés mandar al bot de WhatsApp" o "Preguntame sobre qué podés hacer en cualquiera de los módulos de ECAR".`,
@@ -169,8 +169,8 @@ const tools = [
   {
     type: 'function', function: {
       name: 'query_cheques',
-      description: 'Consultar cheques. Puede filtrar por estado (pending/deposited/cashed/bounced) y dirección (payable=emitidos, receivable=recibidos).',
-      parameters: { type: 'object', properties: { status: { type: 'string' }, direction: { type: 'string' }, limit: { type: 'number' } } }
+      description: 'Consultar cheques. Puede filtrar por estado (pending/deposited/cashed/bounced), dirección (payable=emitidos, receivable=recibidos) y rango de fechas. IMPORTANTE: Si preguntan por cheques de "esta semana" o similar, SIEMPRE usá due_date_from y due_date_to.',
+      parameters: { type: 'object', properties: { status: { type: 'string' }, direction: { type: 'string' }, due_date_from: { type: 'string', description: 'Fecha inicio rango vencimiento YYYY-MM-DD (inclusive)' }, due_date_to: { type: 'string', description: 'Fecha fin rango vencimiento YYYY-MM-DD (inclusive)' }, limit: { type: 'number' } } }
     }
   },
   {
@@ -343,10 +343,35 @@ const tools = [
   },
 ]
 
+// Helper to get Argentina date/time
+function getArgentinaDate(): Date {
+  const now = new Date()
+  const argStr = now.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })
+  return new Date(argStr)
+}
+
+function getArgentinaDateStr(): string {
+  const d = getArgentinaDate()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function getArgentinaWeekRange(): { monday: string, sunday: string } {
+  const d = getArgentinaDate()
+  const day = d.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return { monday: fmt(monday), sunday: fmt(sunday) }
+}
+
 // Execute tool calls against Supabase
 async function executeTool(name: string, args: Record<string, any>): Promise<string> {
   const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-  const today = new Date()
+  const todayStr = getArgentinaDateStr()
+  const today = getArgentinaDate()
 
   try {
     switch (name) {
@@ -360,8 +385,21 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         let q = sb.from('cheques').select('cheque_number, bank_name, beneficiary_or_issuer, amount_ars, due_date, status, direction, issue_date')
         if (args.status) q = q.eq('status', args.status)
         if (args.direction) q = q.eq('direction', args.direction)
+        if (args.due_date_from) q = q.gte('due_date', args.due_date_from)
+        if (args.due_date_to) q = q.lte('due_date', args.due_date_to)
         const { data } = await q.order('due_date').limit(args.limit || 25)
-        if (!data?.length) return '[]'
+        if (!data?.length) {
+          if (args.due_date_from || args.due_date_to) {
+            let nextQ = sb.from('cheques').select('cheque_number, bank_name, beneficiary_or_issuer, amount_ars, due_date, status, direction').eq('status', 'pending')
+            if (args.direction) nextQ = nextQ.eq('direction', args.direction)
+            nextQ = nextQ.gte('due_date', args.due_date_to || args.due_date_from).order('due_date').limit(3)
+            const { data: nextCheques } = await nextQ
+            if (nextCheques?.length) {
+              return JSON.stringify({ cheques: [], total_ars: 0, count: 0, message: 'No hay cheques en el rango solicitado', proximos_cheques: nextCheques })
+            }
+          }
+          return JSON.stringify({ cheques: [], total_ars: 0, count: 0, message: 'No hay cheques que coincidan' })
+        }
         const total = data.reduce((s, c) => s + (c.amount_ars || 0), 0)
         return JSON.stringify({ cheques: data, total_ars: total, count: data.length })
       }
@@ -708,7 +746,14 @@ serve(async (req) => {
     }
 
     // Build context-aware system prompt based on the user's current screen
-    const systemPrompt = buildSystemPrompt(activeModule)
+    // Inject current Argentina date context
+    const argDate = getArgentinaDate()
+    const argTodayStr = getArgentinaDateStr()
+    const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+    const { monday, sunday } = getArgentinaWeekRange()
+    const dateContext = `\n\n## FECHA Y HORA ACTUAL\n📅 Hoy es ${dayNames[argDate.getDay()]} ${argDate.getDate()} de ${monthNames[argDate.getMonth()]} de ${argDate.getFullYear()} (${argTodayStr})\n📆 Esta semana: ${monday} a ${sunday}\nCuando pregunten por "esta semana", usá due_date_from=${monday} y due_date_to=${sunday}. Si no hay resultados en ese rango, respondé que no hay y mencioná el próximo.`
+    const systemPrompt = buildSystemPrompt(activeModule) + dateContext
 
     // Build input for Responses API (no system role - use instructions param)
     const input: any[] = messages.slice(-12)

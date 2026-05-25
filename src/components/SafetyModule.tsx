@@ -1,7 +1,212 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search } from 'lucide-react';
+import * as THREE from 'three';
 import { useSeguridadIncidentes, useCreateSeguridadIncidente, useUpdateSeguridadIncidente, useSeguridadObservaciones, useCreateSeguridadObservacion, useProjects, useEmployees } from '../hooks/useData';
 import type { Employee } from '../lib/types';
+
+// 3D Body Map Component
+const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) => void }> = ({ selectedZone, onSelectZone }) => {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const meshesRef = useRef<{ [name: string]: THREE.Mesh }>({});
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+    const container = mountRef.current;
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#ffffff');
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 1.8, 4.8);
+    camera.lookAt(0, 0.8, 0);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    dirLight.position.set(2, 4, 3);
+    scene.add(dirLight);
+
+    // Group for the body
+    const bodyGroup = new THREE.Group();
+    scene.add(bodyGroup);
+
+    // Color definitions
+    const defaultColor = 0xe2e8f0; // Slate-200
+    const activeColor = 0xef4444; // ecar-red
+    const hoverColor = 0x93c5fd; // Blue-300
+
+    const createPart = (geometry: THREE.BufferGeometry, name: string, pos: [number, number, number]) => {
+      const mat = new THREE.MeshPhongMaterial({
+        color: selectedZone === name ? activeColor : defaultColor,
+        shininess: 30,
+        flatShading: true,
+      });
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.position.set(...pos);
+      mesh.name = name;
+      bodyGroup.add(mesh);
+      meshesRef.current[name] = mesh;
+      return mesh;
+    };
+
+    // Head
+    createPart(new THREE.SphereGeometry(0.24, 16, 16), 'Cabeza', [0, 1.8, 0]);
+    // Neck
+    createPart(new THREE.CylinderGeometry(0.08, 0.09, 0.15, 12), 'Cuello', [0, 1.55, 0]);
+    // Torso
+    createPart(new THREE.CylinderGeometry(0.3, 0.22, 0.8, 16), 'Torso', [0, 1.1, 0]);
+    
+    // Arms & Hands
+    createPart(new THREE.CylinderGeometry(0.08, 0.07, 0.55, 12), 'Brazo Derecho', [0.45, 1.15, 0]);
+    createPart(new THREE.CylinderGeometry(0.08, 0.07, 0.55, 12), 'Brazo Izquierdo', [-0.45, 1.15, 0]);
+    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Derecha', [0.45, 0.8, 0]);
+    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Izquierda', [-0.45, 0.8, 0]);
+
+    // Legs & Feet
+    createPart(new THREE.CylinderGeometry(0.11, 0.08, 0.75, 12), 'Pierna Derecha', [0.18, 0.45, 0]);
+    createPart(new THREE.CylinderGeometry(0.11, 0.08, 0.75, 12), 'Pierna Izquierda', [-0.18, 0.45, 0]);
+    createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Derecho', [0.18, 0.04, 0.08]);
+    createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Izquierdo', [-0.18, 0.04, 0.08]);
+
+    // Floor Grid
+    const grid = new THREE.GridHelper(4, 8, 0xe5e7eb, 0xf3f4f6);
+    grid.position.y = 0;
+    scene.add(grid);
+
+    // Interaction Raycasting
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredName: string | null = null;
+
+    const getMouseCoords = (e: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      getMouseCoords(e);
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(bodyGroup.children);
+
+      let currentHover: string | null = null;
+      if (intersects.length > 0) {
+        const obj = intersects[0].object as THREE.Mesh;
+        currentHover = obj.name;
+      }
+
+      if (currentHover !== hoveredName) {
+        if (hoveredName && hoveredName !== selectedZone) {
+          const m = meshesRef.current[hoveredName];
+          if (m) (m.material as THREE.MeshPhongMaterial).color.setHex(defaultColor);
+        }
+        if (currentHover && currentHover !== selectedZone) {
+          const m = meshesRef.current[currentHover];
+          if (m) (m.material as THREE.MeshPhongMaterial).color.setHex(hoverColor);
+        }
+        hoveredName = currentHover;
+      }
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      getMouseCoords(e);
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(bodyGroup.children);
+
+      if (intersects.length > 0) {
+        const obj = intersects[0].object as THREE.Mesh;
+        onSelectZone(obj.name);
+      }
+    };
+
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mousedown', handleMouseDown);
+
+    // Rotation Drag
+    let isDragging = false;
+    let previousMouseX = 0;
+
+    const onContainerMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      previousMouseX = e.clientX;
+    };
+
+    const onContainerMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - previousMouseX;
+      bodyGroup.rotation.y += deltaX * 0.015;
+      previousMouseX = e.clientX;
+    };
+
+    const onContainerMouseUp = () => {
+      isDragging = false;
+    };
+
+    container.addEventListener('mousedown', onContainerMouseDown);
+    window.addEventListener('mousemove', onContainerMouseMove);
+    window.addEventListener('mouseup', onContainerMouseUp);
+
+    const handleResize = () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    let animId: number;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      if (!isDragging && !selectedZone) {
+        bodyGroup.rotation.y += 0.005;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      container.removeEventListener('mousemove', handleMouseMove);
+      container.removeEventListener('mousedown', handleMouseDown);
+      container.removeEventListener('mousedown', onContainerMouseDown);
+      window.removeEventListener('mousemove', onContainerMouseMove);
+      window.removeEventListener('mouseup', onContainerMouseUp);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, [selectedZone, onSelectZone]);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-center">
+      <div className="w-full flex justify-between items-center px-1 mb-2">
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mapa Corporal 3D</span>
+        <span className="text-[10px] text-gray-400">Arrastrá para rotar</span>
+      </div>
+      <div ref={mountRef} className="w-full h-[320px] rounded-lg overflow-hidden border border-gray-100 bg-white cursor-pointer" />
+      {selectedZone ? (
+        <div className="mt-3 text-center">
+          <p className="text-xs text-gray-400 uppercase font-bold">Zona Seleccionada</p>
+          <p className="text-sm font-black text-red-600 font-mono mt-0.5">{selectedZone}</p>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400 mt-3 text-center">Hacé clic sobre la parte afectada</p>
+      )}
+    </div>
+  );
+};
 
 // Reusable searchable employee dropdown
 const EmployeeCombobox: React.FC<{
@@ -91,13 +296,16 @@ export const SafetyModule: React.FC = () => {
   const createObservacion = useCreateSeguridadObservacion();
   const [tab, setTab] = useState<'incidentes' | 'observaciones'>('incidentes');
   const [showForm, setShowForm] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<string>('');
 
   const [formInc, setFormInc] = useState({ obra_id: '', fecha: new Date().toISOString().split('T')[0], tipo: 'incidente', gravedad: 'leve', ubicacion: '', descripcion: '', persona_afectada: '', persona_afectada_dni: '', testigos: '', tratamiento: 'ninguno', causa_raiz: '', acciones_correctivas: '', responsable_accion: '' });
   const [formObs, setFormObs] = useState({ obra_id: '', observador: '', categoria: 'epp', descripcion: '', severidad: '3', probabilidad: '3', accion_sugerida: '' });
 
   const handleSubmitInc = async () => {
     if (!formInc.obra_id || !formInc.descripcion) return;
-    await createIncidente.mutateAsync({ ...formInc, tratamiento: formInc.tratamiento as any, tipo: formInc.tipo as any, gravedad: formInc.gravedad as any });
+    const finalDesc = selectedZone ? `${formInc.descripcion} [Zona Afectada: ${selectedZone}]` : formInc.descripcion;
+    await createIncidente.mutateAsync({ ...formInc, descripcion: finalDesc, tratamiento: formInc.tratamiento as any, tipo: formInc.tipo as any, gravedad: formInc.gravedad as any });
+    setSelectedZone('');
     setShowForm(false);
   };
 
@@ -165,25 +373,38 @@ export const SafetyModule: React.FC = () => {
 
       {/* Forms */}
       {showForm && tab === 'incidentes' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formInc.obra_id} onChange={e => setFormInc({...formInc, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha</label><input type="date" value={formInc.fecha} onChange={e => setFormInc({...formInc, fecha: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Tipo</label><select value={formInc.tipo} onChange={e => setFormInc({...formInc, tipo: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">{Object.entries(TIPO_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formInc.obra_id} onChange={e => setFormInc({...formInc, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha</label><input type="date" value={formInc.fecha} onChange={e => setFormInc({...formInc, fecha: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Tipo</label><select value={formInc.tipo} onChange={e => setFormInc({...formInc, tipo: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">{Object.entries(TIPO_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Gravedad</label><select value={formInc.gravedad} onChange={e => setFormInc({...formInc, gravedad: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="leve">Leve</option><option value="moderado">Moderado</option><option value="grave">Grave</option><option value="fatal">Fatal</option></select></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Persona Afectada</label><EmployeeCombobox value={formInc.persona_afectada} onChange={name => setFormInc({...formInc, persona_afectada: name})} employees={employees} placeholder="Seleccioná colaborador..." /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Tratamiento</label><select value={formInc.tratamiento} onChange={e => setFormInc({...formInc, tratamiento: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="ninguno">Ninguno</option><option value="primeros_auxilios">Primeros Auxilios</option><option value="medico">Médico</option><option value="hospital">Hospital</option></select></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Ubicación del Suceso</label><input value={formInc.ubicacion || ''} onChange={e => setFormInc({...formInc, ubicacion: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej. Sector excavación" /></div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Zona Afectada (Mapa 3D)</label>
+                <input readOnly value={selectedZone || 'Ninguna'} className={`w-full px-3 py-2 border rounded-xl text-sm bg-gray-50 font-bold ${selectedZone ? 'text-red-600' : 'text-gray-400'}`} placeholder="Hacé clic en el cuerpo" />
+              </div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Testigos</label><input value={formInc.testigos || ''} onChange={e => setFormInc({...formInc, testigos: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Nombres" /></div>
+            </div>
+            <div><label className="text-xs font-bold text-gray-500 uppercase">Descripción *</label><textarea value={formInc.descripcion} onChange={e => setFormInc({...formInc, descripcion: e.target.value})} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción detallada del incidente..." /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Causa Raíz</label><textarea value={formInc.causa_raiz} onChange={e => setFormInc({...formInc, causa_raiz: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Análisis de causa raíz..." /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Acciones Correctivas</label><textarea value={formInc.acciones_correctivas} onChange={e => setFormInc({...formInc, acciones_correctivas: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Medidas a tomar..." /></div>
+            </div>
+            <button onClick={handleSubmitInc} disabled={createIncidente.isPending} className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-700 transition-all">
+              {createIncidente.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Registrar Incidente
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Gravedad</label><select value={formInc.gravedad} onChange={e => setFormInc({...formInc, gravedad: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="leve">Leve</option><option value="moderado">Moderado</option><option value="grave">Grave</option><option value="fatal">Fatal</option></select></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Persona Afectada</label><EmployeeCombobox value={formInc.persona_afectada} onChange={name => setFormInc({...formInc, persona_afectada: name})} employees={employees} placeholder="Seleccioná colaborador..." /></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Tratamiento</label><select value={formInc.tratamiento} onChange={e => setFormInc({...formInc, tratamiento: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="ninguno">Ninguno</option><option value="primeros_auxilios">Primeros Auxilios</option><option value="medico">Médico</option><option value="hospital">Hospital</option></select></div>
+          <div className="lg:col-span-1">
+            <Body3dMap selectedZone={selectedZone} onSelectZone={setSelectedZone} />
           </div>
-          <div><label className="text-xs font-bold text-gray-500 uppercase">Descripción *</label><textarea value={formInc.descripcion} onChange={e => setFormInc({...formInc, descripcion: e.target.value})} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción detallada del incidente..." /></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Causa Raíz</label><textarea value={formInc.causa_raiz} onChange={e => setFormInc({...formInc, causa_raiz: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Análisis de causa raíz..." /></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Acciones Correctivas</label><textarea value={formInc.acciones_correctivas} onChange={e => setFormInc({...formInc, acciones_correctivas: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Medidas a tomar..." /></div>
-          </div>
-          <button onClick={handleSubmitInc} disabled={createIncidente.isPending} className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-700 transition-all">
-            {createIncidente.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Registrar Incidente
-          </button>
         </div>
       )}
 

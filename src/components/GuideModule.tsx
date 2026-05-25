@@ -274,7 +274,7 @@ export const GuideModule: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Smartphone size={15} className="text-ecar-blue" /> Celular de Rombo
             </div>
-            <p className="text-lg font-bold text-slate-800 font-mono">+54 9 11 3016-8646</p>
+            <p className="text-lg font-bold text-slate-800 font-mono">+54 9 2643 22-9503</p>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-[11px] text-green-700 font-bold">Activo en WhatsApp</span>
@@ -366,7 +366,7 @@ export const GuideModule: React.FC = () => {
               {/* Botón de Enlace Real a WhatsApp */}
               <div className="pt-2">
                 <a
-                  href="https://wa.me/5491130168646?text=Hola%20Rombo"
+                  href="https://wa.me/5492643229503?text=Hola%20Rombo"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 bg-[#00a884] hover:bg-[#008f72] text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
@@ -600,7 +600,7 @@ export const GuideModule: React.FC = () => {
               Si experimentás problemas con la integración de WhatsApp o detectás discrepancias impositivas, podés contactar al equipo de desarrollo.
             </p>
             <a
-              href="https://wa.me/5491130168646"
+              href="https://wa.me/5492643229503"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm"

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import * as THREE from 'three';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
@@ -49,28 +50,36 @@ export const FuelModule: React.FC = () => {
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI icon={Fuel} label={`Litros ${currentMonth}`} value={`${fmt(totalLiters)} L`} color="sky" />
-        <KPI icon={BarChart3} label={`Importe ${currentMonth}`} value={totalAmount > 0 ? `$ ${fmt(totalAmount)}` : 'Sin precio'} color="emerald" />
-        <KPI icon={Calendar} label="Cargas del mes" value={String(monthLoads.length)} color="violet" />
-        <KPI icon={Droplets} label="Saldo Batán" value={`${fmt(batanBalance)} L`} color="amber" />
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
+        <div className="lg:col-span-3 space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KPI icon={Fuel} label={`Litros ${currentMonth}`} value={`${fmt(totalLiters)} L`} color="sky" />
+            <KPI icon={BarChart3} label={`Importe ${currentMonth}`} value={totalAmount > 0 ? `$ ${fmt(totalAmount)}` : 'Sin precio'} color="emerald" />
+            <KPI icon={Calendar} label="Cargas del mes" value={String(monthLoads.length)} color="violet" />
+            <KPI icon={Droplets} label="Saldo Batán" value={`${fmt(batanBalance)} L`} color="amber" />
+          </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === t.id ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            <t.icon size={16} /> {t.label}
-          </button>
-        ))}
-      </div>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === t.id ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                <t.icon size={16} /> {t.label}
+              </button>
+            ))}
+          </div>
 
-      {/* Content */}
-      {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} />}
-      {tab === 'batan' && <BatanTab movements={batanMovements} createBatan={createBatan} />}
-      {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
-      {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
+          {/* Content */}
+          {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} />}
+          {tab === 'batan' && <BatanTab movements={batanMovements} createBatan={createBatan} />}
+          {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
+          {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
+        </div>
+
+        <div className="lg:col-span-1">
+          <Batan3dTank balance={batanBalance} capacity={15000} />
+        </div>
+      </div>
     </div>
   );
 };
@@ -334,3 +343,187 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
     </table>
   </div>
 );
+
+/* ── 3D Batán Tank Component ── */
+const Batan3dTank: React.FC<{ balance: number; capacity?: number }> = ({ balance, capacity = 15000 }) => {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const percent = Math.min(100, Math.max(0, (balance / capacity) * 100));
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+    const container = mountRef.current;
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#ffffff'); // Pure white inside light card
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 2.5, 6);
+    camera.lookAt(0, 0, 0);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(5, 10, 5);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x0b477d, 0.5);
+    dirLight2.position.set(-5, -5, -5);
+    scene.add(dirLight2);
+
+    // Group for rotation
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // 1. Tank Glass Outer Shell
+    const tankRadius = 1.2;
+    const tankHeight = 3.2;
+    
+    // Cylinder geometry for outer shell
+    const outerGeo = new THREE.CylinderGeometry(tankRadius, tankRadius, tankHeight, 32, 1, true);
+    const outerMat = new THREE.MeshPhongMaterial({
+      color: 0x0b477d,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.DoubleSide,
+      shininess: 90,
+      depthWrite: false
+    });
+    const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+    group.add(outerMesh);
+
+    // Tank metal caps (top and bottom)
+    const capGeo = new THREE.CylinderGeometry(tankRadius, tankRadius, 0.15, 32);
+    const capMat = new THREE.MeshPhongMaterial({
+      color: 0x0b477d,
+      shininess: 80
+    });
+    
+    const bottomCap = new THREE.Mesh(capGeo, capMat);
+    bottomCap.position.y = -tankHeight / 2 - 0.075;
+    group.add(bottomCap);
+
+    const topCap = bottomCap.clone();
+    topCap.position.y = tankHeight / 2 + 0.075;
+    group.add(topCap);
+
+    // Support legs
+    const legGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+    const legMat = new THREE.MeshPhongMaterial({ color: 0x334155 });
+    
+    for (let i = 0; i < 4; i++) {
+      const leg = new THREE.Mesh(legGeo, legMat);
+      const angle = (i * Math.PI) / 2 + Math.PI / 4;
+      leg.position.set(
+        Math.cos(angle) * (tankRadius - 0.1),
+        -tankHeight / 2 - 0.3,
+        Math.sin(angle) * (tankRadius - 0.1)
+      );
+      group.add(leg);
+    }
+
+    // 2. Liquid inside
+    // Height of liquid is based on balance percentage
+    const fillRatio = balance / capacity;
+    const liquidHeight = tankHeight * fillRatio;
+    
+    const liquidGeo = new THREE.CylinderGeometry(tankRadius - 0.05, tankRadius - 0.05, Math.max(0.01, liquidHeight), 32);
+    const liquidMat = new THREE.MeshPhongMaterial({
+      color: 0x0ea5e9, // Sky blue fuel
+      transparent: true,
+      opacity: 0.75,
+      shininess: 100,
+    });
+    
+    const liquidMesh = new THREE.Mesh(liquidGeo, liquidMat);
+    // Align bottom of liquid mesh with bottom of outer tank
+    liquidMesh.position.y = -tankHeight / 2 + liquidHeight / 2;
+    group.add(liquidMesh);
+
+    // 3. Grid helper for visual reference
+    const grid = new THREE.GridHelper(8, 8, 0xe5e7eb, 0xf3f4f6);
+    grid.position.y = -tankHeight / 2 - 0.55;
+    scene.add(grid);
+
+    // Animate fluid ripple / physics
+    let waveTime = 0;
+    let targetY = -tankHeight / 2 + liquidHeight / 2;
+    let currentY = targetY;
+    let targetScaleY = Math.max(0.001, fillRatio);
+    let currentScaleY = targetScaleY;
+
+    // Window resize
+    const handleResize = () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Animation loop
+    let animId: number;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+
+      // Rotate group slowly
+      group.rotation.y += 0.007;
+
+      // Ripple animation on scale/position to feel alive
+      waveTime += 0.05;
+      const ripple = Math.sin(waveTime) * 0.03 * (1 - fillRatio) * fillRatio;
+      
+      // Interpolate values in case balance changes dynamically
+      currentY += (targetY - currentY) * 0.1;
+      currentScaleY += (targetScaleY - currentScaleY) * 0.1;
+
+      liquidMesh.scale.y = currentScaleY + ripple;
+      liquidMesh.position.y = currentY;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, [balance, capacity]);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 flex flex-col items-center">
+      <div className="w-full flex justify-between items-center px-1">
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tanque Batán 3D</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-green-700 uppercase">Monitoreo</span>
+        </div>
+      </div>
+      
+      <div ref={mountRef} className="w-full h-[220px] rounded-lg overflow-hidden border border-gray-100 shadow-inner bg-white" />
+      
+      <div className="w-full text-center space-y-1">
+        <p className="text-2xl font-black text-sky-600 font-mono">{percent.toFixed(1)}%</p>
+        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+          <div className="bg-sky-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }} />
+        </div>
+        <p className="text-[11px] text-gray-400 font-mono">
+          {balance.toLocaleString('es-AR')} L / {capacity.toLocaleString('es-AR')} L
+        </p>
+      </div>
+    </div>
+  );
+};

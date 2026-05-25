@@ -3,8 +3,9 @@ import {
   Target, Plus, X, FolderTree, Calendar, BarChart3, RefreshCw,
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
   MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
-  ShoppingCart, FileCheck, DollarSign, Truck
+  ShoppingCart, FileCheck, DollarSign, Truck, Sparkles
 } from 'lucide-react';
+import { Wbs3dView } from './Wbs3dView';
 import {
   useProjects, useCreateProject, useWbsElements, useCreateWbsElement,
   useUpdateWbsElement, useDeleteWbsElement, useEmployees,
@@ -20,7 +21,7 @@ import type {
   WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
 } from '../lib/types';
 
-type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion';
+type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d';
 
 const PHASE_COLORS: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700',
@@ -50,6 +51,219 @@ export const WbsModule: React.FC = () => {
   const createWbs = useCreateWbsElement();
   const updateWbs = useUpdateWbsElement();
   const deleteWbs = useDeleteWbsElement();
+
+  const [aiInput, setAiInput] = useState('');
+  const [aiSuccessMessage, setAiSuccessMessage] = useState(false);
+
+  const calculateDuration = (start: string, end: string): string => {
+    if (!start || !end) return '1';
+    const s = new Date(start);
+    const e = new Date(end);
+    const diff = Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return diff > 0 ? String(diff) : '1';
+  };
+
+  const calculateEndDate = (start: string, duration: string): string => {
+    if (!start) return '';
+    const d = parseInt(duration) || 1;
+    const s = new Date(start);
+    s.setDate(s.getDate() + d - 1);
+    return s.toISOString().split('T')[0];
+  };
+
+  const handleStartDateChange = (val: string) => {
+    const updated = { ...taskForm, start_date: val };
+    if (val && taskForm.end_date) {
+      updated.duration_days = calculateDuration(val, taskForm.end_date);
+    } else if (val && taskForm.duration_days) {
+      updated.end_date = calculateEndDate(val, taskForm.duration_days);
+    }
+    setTaskForm(updated);
+  };
+
+  const handleEndDateChange = (val: string) => {
+    const updated = { ...taskForm, end_date: val };
+    if (taskForm.start_date && val) {
+      updated.duration_days = calculateDuration(taskForm.start_date, val);
+    }
+    setTaskForm(updated);
+  };
+
+  const handleDurationChange = (val: string) => {
+    const updated = { ...taskForm, duration_days: val };
+    if (taskForm.start_date && val) {
+      updated.end_date = calculateEndDate(taskForm.start_date, val);
+    }
+    setTaskForm(updated);
+  };
+
+  const parseNaturalLanguageTask = (text: string, employeesList: Employee[]) => {
+    const normalized = text.toLowerCase().trim();
+    
+    let name = '';
+    let description = '';
+    let start_date = '';
+    let end_date = '';
+    let duration_days = '1';
+    let assigned_to = '';
+    let priority: 'baja' | 'media' | 'alta' | 'critica' = 'media';
+    let phase: 'planificacion' | 'programacion' | 'ejecucion' | 'completado' = 'planificacion';
+    let budget_cost_ars = '0';
+    let notes = '';
+
+    // 1. Budget parsing
+    const budgetMatch = text.match(/(?:presupuesto|costo|costar|ars|\$)\s*([\d\.,]+)\s*(millón|millones|m|mil|k)?/i);
+    if (budgetMatch) {
+      let numStr = budgetMatch[1].replace(/\./g, '').replace(',', '.');
+      let val = parseFloat(numStr) || 0;
+      const unit = budgetMatch[2]?.toLowerCase() || '';
+      if (unit.includes('mill') || unit === 'm') {
+        val *= 1000000;
+      } else if (unit.includes('mil') || unit === 'k') {
+        val *= 1000;
+      }
+      budget_cost_ars = String(val);
+    }
+
+    // 2. Priority parsing
+    if (normalized.includes('critica') || normalized.includes('crítica') || normalized.includes('urgente')) {
+      priority = 'critica';
+    } else if (normalized.includes('alta')) {
+      priority = 'alta';
+    } else if (normalized.includes('baja')) {
+      priority = 'baja';
+    } else if (normalized.includes('media')) {
+      priority = 'media';
+    }
+
+    // 3. Phase parsing
+    if (normalized.includes('planific') || normalized.includes('planif') || normalized.includes(' plan ')) {
+      phase = 'planificacion';
+    } else if (normalized.includes('program') || normalized.includes('prog')) {
+      phase = 'programacion';
+    } else if (normalized.includes('ejecuc') || normalized.includes('ejec') || normalized.includes('haciendo')) {
+      phase = 'ejecucion';
+    } else if (normalized.includes('completado') || normalized.includes('terminado') || normalized.includes('finalizado') || normalized.includes('hecho')) {
+      phase = 'completado';
+    }
+
+    // 4. Assignee parsing
+    const assigneeMatch = text.match(/(?:asignado a|responsable|encargado|a cargo de)\s+([a-záéíóúñ\s]+)/i);
+    if (assigneeMatch) {
+      const namePart = assigneeMatch[1].trim().toLowerCase();
+      const found = employeesList.find(e => e.full_name.toLowerCase().includes(namePart));
+      if (found) {
+        assigned_to = found.id;
+      }
+    }
+
+    // 5. Notes / Comments
+    const notesMatch = text.match(/(?:nota|comentario|obs):\s*([^\.]+)/i) || text.match(/(?:nota|comentario|observacion)\s+([^\.]+)/i);
+    if (notesMatch) {
+      notes = notesMatch[1].trim();
+    }
+
+    // 6. Dates and Duration
+    const durationMatch = text.match(/(\d+)\s*(?:días|dias|dia|días)/i);
+    if (durationMatch) {
+      duration_days = durationMatch[1];
+    }
+
+    const monthMap: Record<string, string> = {
+      enero: '01', ene: '01', febrero: '02', feb: '02', marzo: '03', mar: '03',
+      abril: '04', abr: '04', mayo: '05', may: '05', junio: '06', jun: '06',
+      julio: '07', jul: '07', agosto: '08', ago: '08', septiembre: '09', sep: '09',
+      octubre: '10', oct: '10', noviembre: '11', nov: '11', diciembre: '12', dic: '12'
+    };
+
+    const parseSingleDate = (dayStr: string, monthStr: string, yearStr?: string) => {
+      const day = dayStr.padStart(2, '0');
+      let month = '01';
+      if (monthMap[monthStr.toLowerCase()]) {
+        month = monthMap[monthStr.toLowerCase()];
+      } else if (/^\d{1,2}$/.test(monthStr)) {
+        month = monthStr.padStart(2, '0');
+      }
+      const year = yearStr || '2026';
+      return `${year}-${month}-${day}`;
+    };
+
+    const rangeMatch = text.match(/(?:del|desde el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))\s+(?:al|hasta el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))/i);
+    if (rangeMatch) {
+      const startDay = rangeMatch[1];
+      const startMonth = rangeMatch[2] || rangeMatch[3];
+      const endDay = rangeMatch[4];
+      const endMonth = rangeMatch[5] || rangeMatch[6];
+      
+      start_date = parseSingleDate(startDay, startMonth);
+      end_date = parseSingleDate(endDay, endMonth);
+      
+      const d1 = new Date(start_date);
+      const d2 = new Date(end_date);
+      const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > 0) {
+        duration_days = String(diff);
+      }
+    } else {
+      const singleDateMatch = text.match(/(?:el|desde el|inicio el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))/i);
+      if (singleDateMatch) {
+        const day = singleDateMatch[1];
+        const month = singleDateMatch[2] || singleDateMatch[3];
+        start_date = parseSingleDate(day, month);
+        
+        const dur = parseInt(duration_days) || 1;
+        const d1 = new Date(start_date);
+        d1.setDate(d1.getDate() + dur - 1);
+        end_date = d1.toISOString().split('T')[0];
+      }
+    }
+
+    let cleanName = text;
+    if (budgetMatch) cleanName = cleanName.replace(budgetMatch[0], '');
+    if (assigneeMatch) cleanName = cleanName.replace(assigneeMatch[0], '');
+    if (notesMatch) cleanName = cleanName.replace(notesMatch[0], '');
+    if (durationMatch) cleanName = cleanName.replace(durationMatch[0], '');
+    if (rangeMatch) {
+      cleanName = cleanName.replace(rangeMatch[0], '');
+    } else {
+      const singleDateMatch = text.match(/(?:el|desde el|inicio el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))/i);
+      if (singleDateMatch) cleanName = cleanName.replace(singleDateMatch[0], '');
+    }
+
+    cleanName = cleanName
+      .replace(/(?:crear|hacer|pintar|realizar|agregar|nueva tarea|tarea|prioridad\s+[a-z]+|fase\s+[a-z]+)/gi, '')
+      .replace(/[,;\.\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleanName) {
+      cleanName = text.split(' ').slice(0, 4).join(' ');
+    }
+    
+    name = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+    return { name, description, start_date, end_date, duration_days, assigned_to, priority, phase, budget_cost_ars, notes };
+  };
+
+  const handleAiFill = () => {
+    if (!aiInput.trim()) return;
+    const parsed = parseNaturalLanguageTask(aiInput, employees);
+    setTaskForm({
+      name: parsed.name,
+      description: parsed.description,
+      start_date: parsed.start_date || taskForm.start_date,
+      end_date: parsed.end_date || taskForm.end_date,
+      duration_days: parsed.duration_days,
+      assigned_to: parsed.assigned_to,
+      priority: parsed.priority,
+      phase: parsed.phase,
+      budget_cost_ars: parsed.budget_cost_ars,
+      notes: parsed.notes,
+      color: taskForm.color,
+    });
+    setAiSuccessMessage(true);
+    setTimeout(() => setAiSuccessMessage(false), 3000);
+  };
 
   const [taskForm, setTaskForm] = useState<{
     name: string; description: string; start_date: string; end_date: string; duration_days: string;
@@ -121,6 +335,7 @@ export const WbsModule: React.FC = () => {
     { id: 'planificacion', label: 'Planificación', emoji: '📋', icon: Target },
     { id: 'programacion', label: 'Programación', emoji: '📅', icon: Calendar },
     { id: 'ejecucion', label: 'Ejecución', emoji: '🔨', icon: BarChart3 },
+    { id: 'avance3d', label: 'Avance 3D', emoji: '✨', icon: Sparkles },
     { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
     { id: 'movimientos', label: 'Movimientos', emoji: '📦', icon: ArrowLeftRight },
     { id: 'pedidos', label: 'Pedidos', emoji: '🛒', icon: ShoppingCart },
@@ -184,6 +399,7 @@ export const WbsModule: React.FC = () => {
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
+          {tab === 'avance3d' && <Wbs3dView wbs={wbs} />}
           {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
           {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}
           {tab === 'pedidos' && <PedidosTab projectId={selectedProjectId} />}
@@ -222,42 +438,311 @@ export const WbsModule: React.FC = () => {
 
       {/* Modal Nueva/Editar Tarea */}
       {showNewTask && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-3 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editTask ? 'Editar Tarea' : 'Nueva Tarea'}</h3><button onClick={() => { setShowNewTask(false); setEditTask(null); }}><X size={20} className="text-gray-400" /></button></div>
-            <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={taskForm.name} onChange={e => setTaskForm({...taskForm, name: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" placeholder="Ej: Excavación de fundaciones" /></div>
-            <div><label className="text-xs font-bold text-gray-500">Descripción</label><textarea value={taskForm.description} onChange={e => setTaskForm({...taskForm, description: e.target.value})} rows={2} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-bold text-gray-500">Fecha Inicio</label><input type="date" value={taskForm.start_date} onChange={e => setTaskForm({...taskForm, start_date: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-              <div><label className="text-xs font-bold text-gray-500">Fecha Fin</label><input type="date" value={taskForm.end_date} onChange={e => setTaskForm({...taskForm, end_date: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-              <div><label className="text-xs font-bold text-gray-500">Duración (días)</label><input type="number" value={taskForm.duration_days} onChange={e => setTaskForm({...taskForm, duration_days: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm font-mono" /></div>
-              <div><label className="text-xs font-bold text-gray-500">Presupuesto ($)</label><input type="number" value={taskForm.budget_cost_ars} onChange={e => setTaskForm({...taskForm, budget_cost_ars: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm font-mono" /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-bold text-gray-500">Responsable</label>
-                <select value={taskForm.assigned_to} onChange={e => setTaskForm({...taskForm, assigned_to: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm">
-                  <option value="">Sin asignar</option>
-                  {employees.filter(e => e.employment_status === 'active').map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-                </select>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center pb-6 pt-12 px-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-gray-100">
+            {/* Modal Header — sticky */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                  <FolderTree size={20} className="text-[#115C9C]" />
+                  {editTask ? 'Editar Tarea de Obra' : 'Nueva Tarea de Obra'}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">Definí los detalles, cronograma y responsables del item del WBS.</p>
               </div>
-              <div><label className="text-xs font-bold text-gray-500">Prioridad</label>
-                <select value={taskForm.priority} onChange={e => setTaskForm({...taskForm, priority: e.target.value as any})} className="w-full px-3 py-2.5 border rounded-xl text-sm">
-                  <option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="critica">Crítica</option>
-                </select>
-              </div>
+              <button 
+                onClick={() => { setShowNewTask(false); setEditTask(null); }}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                <X size={20} className="text-gray-400 hover:text-gray-600" />
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-bold text-gray-500">Fase</label>
-                <select value={taskForm.phase} onChange={e => setTaskForm({...taskForm, phase: e.target.value as any})} className="w-full px-3 py-2.5 border rounded-xl text-sm">
-                  <option value="planificacion">📋 Planificación</option><option value="programacion">📅 Programación</option><option value="ejecucion">🔨 Ejecución</option><option value="completado">✅ Completado</option>
-                </select>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5">
+
+            {/* Split Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              
+              {/* Left Column: Form Fields (7 Columns) */}
+              <div className="lg:col-span-7 space-y-4">
+                
+                {/* Nombre */}
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre de la Tarea *</label>
+                  <input 
+                    value={taskForm.name} 
+                    onChange={e => setTaskForm({...taskForm, name: e.target.value})} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] transition-all" 
+                    placeholder="Ej: Excavación de fundaciones y vigas de riostra" 
+                  />
+                </div>
+
+                {/* Descripción */}
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Descripción / Alcance</label>
+                  <textarea 
+                    value={taskForm.description} 
+                    onChange={e => setTaskForm({...taskForm, description: e.target.value})} 
+                    rows={2} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] transition-all resize-none"
+                    placeholder="Detalles adicionales sobre las tareas a realizar..."
+                  />
+                </div>
+
+                {/* Cronograma Sincronizado */}
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-205 space-y-3 relative">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1">
+                    <Clock size={14} className="text-[#115C9C]" />
+                    CRONOGRAMA DE TRABAJO
+                    <span className="ml-auto text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                      Fechas & Duración Sincronizadas
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Fecha de Inicio</label>
+                      <input 
+                        type="date" 
+                        value={taskForm.start_date} 
+                        onChange={e => handleStartDateChange(e.target.value)} 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Fecha de Fin</label>
+                      <input 
+                        type="date" 
+                        value={taskForm.end_date} 
+                        onChange={e => handleEndDateChange(e.target.value)} 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200/60">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Duración (días corridos)</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={taskForm.duration_days} 
+                        onChange={e => handleDurationChange(e.target.value)} 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Presupuesto Asignado ($)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-400 font-mono text-sm font-bold">$</span>
+                        <input 
+                          type="number" 
+                          value={taskForm.budget_cost_ars} 
+                          onChange={e => setTaskForm({...taskForm, budget_cost_ars: e.target.value})} 
+                          className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Prioridad + Fase en una fila */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Prioridad */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Prioridad</label>
+                    <div className="grid grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
+                      {(['baja', 'media', 'alta', 'critica'] as const).map(p => {
+                        const isSelected = taskForm.priority === p;
+                        const activeStyles = {
+                          baja: 'bg-green-600 text-white shadow-sm',
+                          media: 'bg-blue-600 text-white shadow-sm',
+                          alta: 'bg-amber-600 text-white shadow-sm',
+                          critica: 'bg-red-600 text-white shadow-sm',
+                        };
+                        return (
+                          <button key={p} type="button" onClick={() => setTaskForm({ ...taskForm, priority: p })}
+                            className={`py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all ${isSelected ? activeStyles[p] : 'text-gray-500 hover:text-gray-800'}`}
+                          >
+                            {p === 'critica' ? 'Crítica' : p.charAt(0).toUpperCase() + p.slice(1)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {/* Fase */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Fase del WBS</label>
+                    <div className="grid grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
+                      {(['planificacion', 'programacion', 'ejecucion', 'completado'] as const).map(f => {
+                        const isSelected = taskForm.phase === f;
+                        const labels: Record<string, string> = { planificacion: 'Planif.', programacion: 'Program.', ejecucion: 'Ejecuc.', completado: 'Complet.' };
+                        return (
+                          <button key={f} type="button" onClick={() => setTaskForm({ ...taskForm, phase: f })}
+                            className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-white text-[#115C9C] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800'}`}
+                          >
+                            {labels[f]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Responsable, Color & Notas en fila compacta */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Responsable</label>
+                    <select 
+                      value={taskForm.assigned_to} 
+                      onChange={e => setTaskForm({...taskForm, assigned_to: e.target.value})} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all"
+                    >
+                      <option value="">Sin asignar</option>
+                      {employees.filter(e => e.employment_status === 'active').map(e => (
+                        <option key={e.id} value={e.id}>{e.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Color</label>
+                    <div className="flex gap-1.5">
+                      <input type="color" value={taskForm.color} onChange={e => setTaskForm({...taskForm, color: e.target.value})} className="w-10 h-9 rounded-lg border border-gray-300 cursor-pointer p-0.5 bg-white" />
+                      <input type="text" value={taskForm.color} onChange={e => setTaskForm({...taskForm, color: e.target.value})} className="w-full px-2 py-2 border border-gray-300 rounded-xl text-xs font-mono text-center uppercase" maxLength={7} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Notas</label>
+                    <input 
+                      value={taskForm.notes} 
+                      onChange={e => setTaskForm({...taskForm, notes: e.target.value})} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] transition-all" 
+                      placeholder="Observaciones..."
+                    />
+                  </div>
+                </div>
+
               </div>
-              <div><label className="text-xs font-bold text-gray-500">Color</label><input type="color" value={taskForm.color} onChange={e => setTaskForm({...taskForm, color: e.target.value})} className="w-full h-10 rounded-xl border cursor-pointer" /></div>
+
+              {/* Right Column: AI Assistant (5 Columns) */}
+              <div className="lg:col-span-5 bg-gradient-to-br from-[#0B477D] to-[#08355e] text-white p-4 rounded-2xl shadow-inner relative overflow-hidden flex flex-col border border-[#08355e] max-h-[520px]">
+                {/* Decorative background icon */}
+                <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none translate-x-1/4 -translate-y-1/4">
+                  <Sparkles size={220} />
+                </div>
+
+                <div className="relative z-10 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                      <Sparkles size={18} className="text-amber-400 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm tracking-wide">Carga Rápida con IA</h4>
+                      <p className="text-[10px] text-blue-200">Asistente en Lenguaje Natural</p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-blue-100 leading-relaxed">
+                    Escribí una frase detallando la tarea y el cargador inteligente completará los campos de fechas, presupuesto, prioridad y responsable automáticamente.
+                  </p>
+
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-blue-200 uppercase tracking-wider block">Tu frase / instrucción:</label>
+                    <textarea
+                      value={aiInput}
+                      onChange={e => setAiInput(e.target.value)}
+                      placeholder="Ej: Excavación de zapatas desde el 15 de junio por 8 días con presupuesto de 1.5 millones asignado a gomez..."
+                      className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all resize-none h-24"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAiFill}
+                      disabled={!aiInput.trim()}
+                      className="w-full bg-white hover:bg-blue-50 text-[#0B477D] font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md disabled:opacity-50 active:scale-[0.98]"
+                    >
+                      <Sparkles size={13} className="text-amber-500 animate-pulse" />
+                      Procesar Frase
+                    </button>
+                    
+                    {aiSuccessMessage && (
+                      <div className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 text-[10px] px-3 py-2 rounded-xl text-center font-bold animate-pulse flex items-center justify-center gap-1">
+                        <Check size={12} /> ¡Datos autocompletados!
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Suggestion Chips */}
+                  <div className="pt-2 border-t border-white/10">
+                    <span className="text-[9px] font-bold text-blue-200 uppercase tracking-wider block mb-2">Presioná para probar ejemplos:</span>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/20">
+                      {[
+                        {
+                          label: "📅 Rango de Fechas + Responsable + Presupuesto",
+                          text: "Crear Pintura exterior del 12/05 al 25/05 asignado a Gomez con costo de 250 mil"
+                        },
+                        {
+                          label: "⏱️ Fecha Inicio + Duración + Prioridad Crítica",
+                          text: "Excavación de fundaciones desde el 15/06 durante 12 días prioridad critica nota: peligro derrumbe"
+                        },
+                        {
+                          label: "💰 Millones + Fase Completada",
+                          text: "Estructura de hormigón armado fase completado presupuesto 5 millones el 01/05"
+                        }
+                      ].map((ex, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setAiInput(ex.text);
+                            const parsed = parseNaturalLanguageTask(ex.text, employees);
+                            setTaskForm({
+                              name: parsed.name,
+                              description: parsed.description || taskForm.description,
+                              start_date: parsed.start_date || taskForm.start_date,
+                              end_date: parsed.end_date || taskForm.end_date,
+                              duration_days: parsed.duration_days,
+                              assigned_to: parsed.assigned_to || taskForm.assigned_to,
+                              priority: parsed.priority,
+                              phase: parsed.phase,
+                              budget_cost_ars: parsed.budget_cost_ars,
+                              notes: parsed.notes || taskForm.notes,
+                              color: taskForm.color,
+                            });
+                            setAiSuccessMessage(true);
+                            setTimeout(() => setAiSuccessMessage(false), 3000);
+                          }}
+                          className="w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 p-2 rounded-xl text-blue-100 hover:text-white transition-all block text-[10px]"
+                        >
+                          <div className="font-semibold text-white/90 truncate mb-0.5">{ex.label}</div>
+                          <div className="opacity-60 truncate font-mono text-[9px]">{ex.text}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-white/10 text-center relative z-10">
+                  <span className="text-[9px] tracking-widest text-blue-200/50 font-bold uppercase">SISTEMA CREADO POR GROW LABS</span>
+                </div>
+              </div>
+
+            </div>{/* end grid */}
+            </div>{/* end scrollable body */}
+
+            {/* Modal Actions — sticky footer */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0 bg-white rounded-b-2xl">
+              <button 
+                onClick={() => { setShowNewTask(false); setEditTask(null); }}
+                className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-bold text-sm border hover:bg-gray-200 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSaveTask} 
+                disabled={!taskForm.name || createWbs.isPending || updateWbs.isPending} 
+                className="bg-[#115C9C] text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-[#0B477D] shadow-md transition-all disabled:opacity-50"
+              >
+                <Check size={16} /> 
+                {editTask ? 'Guardar Cambios' : 'Crear Tarea'}
+              </button>
             </div>
-            <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={taskForm.notes} onChange={e => setTaskForm({...taskForm, notes: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-            <button onClick={handleSaveTask} disabled={!taskForm.name || createWbs.isPending || updateWbs.isPending} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
-              <Check size={16} /> {editTask ? 'Guardar Cambios' : 'Crear Tarea'}
-            </button>
           </div>
         </div>
       )}
