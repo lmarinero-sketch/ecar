@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   HelpCircle, Copy, Check, Smartphone, BookOpen,
   Sparkles, Send, CheckCheck, Image, Info, Layers, Bot,
-  ArrowRight, ExternalLink
+  ArrowRight, ExternalLink, Landmark, ShoppingCart, Wallet, Users
 } from 'lucide-react';
 
 interface SimulatedMessage {
@@ -35,6 +35,7 @@ export const GuideModule: React.FC = () => {
 
   // WhatsApp simulation prompt flows
   const simulateFlow = (type: 'check_load' | 'invoice_ocr' | 'expense' | 'attendance' | 'check_delete') => {
+    if (isTyping) return; // Prevent spamming simulator
     setIsTyping(true);
     let userMsg: SimulatedMessage;
     let botMsg: SimulatedMessage;
@@ -91,7 +92,7 @@ export const GuideModule: React.FC = () => {
       botMsg = {
         id: `bot-${Date.now() + 1}`,
         sender: 'bot',
-        text: '👷 **Reporte de ausentismo para hoy (Obra Alvear & Mitre):**\n\nPresentes: 14 operarios\nAusentes: 2 operarios\n\n❌ **Ausentes:**\n1. **Gomez, Carlos** (Sin aviso - Obra Alvear)\n2. **Rodriguez, Martin** (Parte médico cargado por carpeta - Obra Mitre)\n\n¿Querés que le mande un mensaje de WhatsApp a Carlos Gomez para reclamar aviso?',
+        text: '👷 **Reporte de ausentismo para hoy (Obra Alvear & Mitre):**\n\nPresentes: 14 operarios\nAusentes: 2 operarios\n\n❌ **Ausentes:**\n• **Gomez, Carlos** (Sin aviso - Obra Alvear)\n• **Rodriguez, Martin** (Parte médico cargado por carpeta - Obra Mitre)\n\n¿Querés que le mande un mensaje de WhatsApp a Carlos Gomez para reclamar aviso?',
         timestamp: time
       };
     } else {
@@ -128,18 +129,54 @@ export const GuideModule: React.FC = () => {
     ]);
   };
 
-  // Prompts array
+  // Helper function to render markdown in simulator bubbles
+  const formatMessageText = (text: string) => {
+    return text.split('\n').map((line, index) => {
+      const isBullet = line.trim().startsWith('•');
+      const cleanLine = isBullet ? line.replace('•', '').trim() : line;
+
+      // Split by ** to find bold matches
+      const parts = cleanLine.split('**');
+      const renderedParts = parts.map((part, i) => {
+        if (i % 2 === 1) {
+          return <strong key={i} className="font-bold text-gray-900">{part}</strong>;
+        }
+        return part;
+      });
+
+      if (isBullet) {
+        return (
+          <div key={index} className="flex items-start gap-1.5 ml-1 my-0.5 text-slate-700">
+            <span className="text-[#00a884] font-extrabold shrink-0">•</span>
+            <span className="leading-relaxed">{renderedParts}</span>
+          </div>
+        );
+      }
+
+      return (
+        <div key={index} className="min-h-[1.2em] leading-relaxed text-slate-700">
+          {renderedParts}
+        </div>
+      );
+    });
+  };
+
+  // Prompts array categorized with nice metadata
   const WHATSAPP_PROMPTS = [
     {
       category: 'Cheques y Finanzas',
+      icon: Landmark,
+      color: 'bg-emerald-50 text-emerald-700 border-emerald-100',
       items: [
         { text: 'Cargar cheque Galicia de $150.000 vencimiento 15/06/2026 nro 1234567 emitido para Ferretería Central', type: 'check_load' },
         { text: '¿Qué cheques vencen esta semana?', type: 'info' },
-        { text: 'Borrar el cheque 1234567', type: 'check_delete' }
+        { text: 'Borrar el cheque 8847293', type: 'check_delete' }
       ]
     },
     {
       category: 'Compras y Facturas OCR',
+      icon: ShoppingCart,
+      color: 'bg-violet-50 text-violet-700 border-violet-100',
       items: [
         { text: '[Enviar foto de factura] Carga esta factura de compra por favor', type: 'invoice_ocr' },
         { text: '¿Cuántas facturas tengo sin validar?', type: 'info' },
@@ -148,18 +185,20 @@ export const GuideModule: React.FC = () => {
     },
     {
       category: 'Caja y Movimientos',
+      icon: Wallet,
+      color: 'bg-orange-50 text-orange-700 border-orange-100',
       items: [
-        { text: 'Registrar gasto de $45.000 por viáticos de obra Alvear, pagado con transferencia de Banco Galicia', type: 'expense' },
-        { text: '¿Cuánta plata hay en las cuentas y cajas?', type: 'info' },
-        { text: 'Registrar cobro de $2.500.000 por certificado nro 5 de obra Mitre', type: 'expense' }
+        { text: 'Registrar gasto de $32.000 por viandas de personal hoy en efectivo, categoría Viandas', type: 'expense' },
+        { text: '¿Cuánta plata hay en las cuentas y cajas?', type: 'info' }
       ]
     },
     {
       category: 'Personal y Obra',
+      icon: Users,
+      color: 'bg-indigo-50 text-indigo-700 border-indigo-100',
       items: [
-        { text: '¿Cómo viene el presentismo hoy?', type: 'attendance' },
-        { text: 'Registrar parte diario obra Alvear: Hormigonado de vigas de fundación completado. Clima soleado, 4 operarios.', type: 'info' },
-        { text: 'Pedirle el DNI y constancia de ART a Jorge Gimenez', type: 'info' }
+        { text: '¿Quién faltó hoy a la obra?', type: 'attendance' },
+        { text: 'Registrar parte diario obra Alvear: Hormigonado completado. Clima soleado, 4 operarios.', type: 'info' }
       ]
     }
   ];
@@ -235,7 +274,7 @@ export const GuideModule: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Smartphone size={15} className="text-ecar-blue" /> Celular de Rombo
             </div>
-            <p className="text-xl font-bold text-slate-800 font-mono">+54 9 11 3016-8646</p>
+            <p className="text-lg font-bold text-slate-800 font-mono">+54 9 11 3016-8646</p>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-[11px] text-green-700 font-bold">Activo en WhatsApp</span>
@@ -252,8 +291,8 @@ export const GuideModule: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Sparkles size={15} className="text-violet-500" /> Tecnología de IA
             </div>
-            <p className="text-xl font-bold text-slate-800">Procesamiento Natural</p>
-            <p className="text-xs text-gray-400 mt-2">OpenAI GPT-4o / OCR / Whisper</p>
+            <p className="text-lg font-bold text-slate-800">Procesamiento Natural</p>
+            <p className="text-xs text-gray-400 mt-2 font-mono">GPT-4o / OCR / Whisper</p>
           </div>
           <div className="bg-violet-50 p-2.5 rounded-lg">
             <Sparkles size={22} className="text-violet-600" />
@@ -266,7 +305,7 @@ export const GuideModule: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Layers size={15} className="text-emerald-500" /> Cobertura del ERP
             </div>
-            <p className="text-xl font-bold text-slate-800">22 Módulos Integrados</p>
+            <p className="text-lg font-bold text-slate-800">22 Módulos Integrados</p>
             <p className="text-xs text-gray-400 mt-2">Operaciones, Finanzas y RRHH</p>
           </div>
           <div className="bg-emerald-50 p-2.5 rounded-lg">
@@ -305,7 +344,7 @@ export const GuideModule: React.FC = () => {
 
       {/* Tab 1: WhatsApp Bot */}
       {activeTab === 'whatsapp' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left panel: Info & prompt groups */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
@@ -319,80 +358,98 @@ export const GuideModule: React.FC = () => {
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
                 <Info size={20} className="text-ecar-blue shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-600 space-y-1">
-                  <p className="font-bold text-slate-800">Pro Tip: ¡Rombo aprende tus fotos!</p>
+                  <p className="font-bold text-slate-800">Pro Tip: ¡Rombo aprende de tus fotos!</p>
                   <p>Si le mandás una foto nítida de un cheque físico o una factura de compra, Rombo leerá el texto usando OCR e ingresará los importes, vencimientos y proveedores automáticamente.</p>
                 </div>
+              </div>
+
+              {/* Botón de Enlace Real a WhatsApp */}
+              <div className="pt-2">
+                <a
+                  href="https://wa.me/5491130168646?text=Hola%20Rombo"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#00a884] hover:bg-[#008f72] text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                >
+                  <Smartphone size={16} /> Abrir chat de WhatsApp real
+                  <ExternalLink size={14} />
+                </a>
               </div>
             </div>
 
             {/* Prompt Examples List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50">
-                <h4 className="font-bold text-gray-800 text-sm">Mensajes sugeridos para probar</h4>
-              </div>
-              <div className="p-5 space-y-6">
-                {WHATSAPP_PROMPTS.map((group, gi) => (
-                  <div key={gi} className="space-y-2">
-                    <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{group.category}</h5>
-                    <div className="space-y-2">
-                      {group.items.map((item, ii) => (
-                        <div
-                          key={ii}
-                          className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-ecar-blue/20 hover:bg-slate-50/50 transition-all text-xs group"
-                        >
-                          <span className="font-mono text-slate-600 break-words flex-1 pr-4">{item.text}</span>
-                          <div className="flex gap-2 shrink-0">
-                            {item.type !== 'info' && (
+            <div className="space-y-4">
+              <h4 className="font-bold text-gray-800 text-sm pl-1 uppercase tracking-wider text-slate-400">Mensajes sugeridos para probar</h4>
+              <div className="grid grid-cols-1 gap-4">
+                {WHATSAPP_PROMPTS.map((group, gi) => {
+                  const CategoryIcon = group.icon;
+                  return (
+                    <div key={gi} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div className={`px-4 py-3 border-b flex items-center gap-2 font-bold text-xs uppercase tracking-wider ${group.color}`}>
+                        <CategoryIcon size={14} />
+                        <span>{group.category}</span>
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {group.items.map((item, ii) => (
+                          <div
+                            key={ii}
+                            className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-all text-xs gap-3 group"
+                          >
+                            <span className="font-mono text-slate-700 break-words flex-1 leading-relaxed bg-slate-50 px-2.5 py-1.5 rounded-md border border-gray-100">{item.text}</span>
+                            <div className="flex gap-2 shrink-0">
+                              {item.type !== 'info' && (
+                                <button
+                                  onClick={() => simulateFlow(item.type as any)}
+                                  className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-[11px] hover:bg-ecar-blueDark active:scale-95 transition-all flex items-center gap-1 shadow-sm relative overflow-hidden group-hover:scale-105"
+                                  title="Simular en el celular de la derecha"
+                                >
+                                  Simular <ArrowRight size={12} />
+                                </button>
+                              )}
                               <button
-                                onClick={() => simulateFlow(item.type as any)}
-                                className="bg-ecar-blue text-white px-2.5 py-1 rounded-md font-bold text-[10px] hover:bg-ecar-blueDark active:scale-95 transition-all flex items-center gap-1"
-                                title="Simular en el celular de la derecha"
+                                onClick={() => handleCopy(item.text)}
+                                className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 active:scale-95 transition-all flex items-center justify-center border border-gray-200"
+                                title="Copiar prompt"
                               >
-                                Simular <ArrowRight size={10} />
+                                {copiedPrompt === item.text ? <Check size={14} className="text-green-600 font-bold" /> : <Copy size={14} />}
                               </button>
-                            )}
-                            <button
-                              onClick={() => handleCopy(item.text)}
-                              className="bg-gray-100 text-gray-600 p-1.5 rounded-md hover:bg-gray-200 transition-all"
-                              title="Copiar prompt"
-                            >
-                              {copiedPrompt === item.text ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
-                            </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
 
           {/* Right panel: Phone Mockup Simulation */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="w-full max-w-[360px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-4 border-slate-800 relative">
+          <div className="lg:col-span-5 flex justify-center sticky top-24">
+            <div className="w-full max-w-[340px] h-[644px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-4 border-slate-800 relative self-start flex flex-col justify-between overflow-hidden">
               {/* Phone speaker/camera notch */}
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 w-32 h-5 bg-slate-950 rounded-full z-20 flex items-center justify-center">
-                <span className="w-3 h-3 rounded-full bg-slate-800 absolute right-4" />
-                <span className="w-8 h-1 bg-slate-700 rounded-full" />
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-4.5 bg-slate-950 rounded-full z-20 flex items-center justify-center">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-900 absolute right-3 border border-slate-850" />
+                <span className="w-6 h-0.5 bg-slate-800 rounded-full" />
               </div>
 
               {/* Screen */}
-              <div className="w-full h-[620px] bg-[#E5DDD5] rounded-[2.5rem] overflow-hidden flex flex-col relative">
+              <div className="w-full h-full bg-[#efeae2] rounded-[2.2rem] overflow-hidden flex flex-col relative border border-slate-850">
                 {/* Whatsapp Header */}
-                <div className="bg-[#075E54] text-white pt-7 px-4 pb-3 flex items-center gap-2.5 z-10 shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-sm shrink-0">
+                <div className="bg-[#075E54] text-white pt-8 px-4 pb-3 flex items-center gap-2.5 z-10 shrink-0 shadow-md">
+                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-extrabold text-sm shrink-0 border border-white/10">
                     R
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-xs flex items-center gap-1.5">
-                      Rombo Asistente <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      Rombo Asistente
+                      <span className="w-2 h-2 rounded-full bg-green-400 border border-[#075E54] animate-pulse" />
                     </h4>
-                    <p className="text-[10px] text-teal-100">En línea</p>
+                    <p className="text-[10px] text-teal-100/80 truncate">En línea • Chat corporativo</p>
                   </div>
                   <button
                     onClick={clearSimulation}
-                    className="ml-auto text-[10px] bg-teal-800/50 hover:bg-teal-800 px-2 py-1 rounded font-bold transition-all"
+                    className="text-[10px] bg-white/10 hover:bg-white/20 active:scale-95 px-2.5 py-1 rounded-md font-bold transition-all border border-white/10"
                   >
                     Limpiar
                   </button>
@@ -403,28 +460,33 @@ export const GuideModule: React.FC = () => {
                   {simulatedChat.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`max-w-[85%] rounded-lg p-2.5 text-xs shadow-sm relative group ${
+                      className={`max-w-[85%] rounded-lg p-2.5 text-xs shadow-sm relative flex flex-col ${
                         msg.sender === 'user'
-                          ? 'bg-[#DCF8C6] text-slate-800 self-end rounded-tr-none'
-                          : 'bg-white text-slate-800 self-start rounded-tl-none'
+                          ? 'bg-[#d9fdd3] text-slate-800 self-end rounded-tr-none border border-[#e1f3d8]'
+                          : 'bg-white text-slate-800 self-start rounded-tl-none border border-gray-100'
                       }`}
                     >
                       {msg.image && (
-                        <div className="mb-2 rounded overflow-hidden max-h-[120px]">
+                        <div className="mb-2 rounded overflow-hidden max-h-[120px] border border-gray-200/50">
                           <img src={msg.image} alt="Enviado" className="w-full object-cover" />
                         </div>
                       )}
-                      <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
-                      <div className="flex items-center justify-end gap-1 mt-1 text-[8px] text-gray-400 font-medium">
+                      
+                      {/* Formatted body text */}
+                      <div className="space-y-1">
+                        {formatMessageText(msg.text)}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-1 mt-1 text-[8px] text-gray-400 font-medium self-end">
                         <span>{msg.timestamp}</span>
-                        {msg.sender === 'user' && <CheckCheck size={10} className="text-blue-500" />}
+                        {msg.sender === 'user' && <CheckCheck size={11} className="text-[#53bdeb]" />}
                       </div>
                     </div>
                   ))}
 
                   {/* Typing Indicator */}
                   {isTyping && (
-                    <div className="bg-white text-slate-800 self-start rounded-lg rounded-tl-none p-2.5 text-xs shadow-sm flex items-center gap-1">
+                    <div className="bg-white text-slate-800 self-start rounded-lg rounded-tl-none p-2.5 text-xs shadow-sm flex items-center gap-1 border border-gray-100">
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -433,13 +495,13 @@ export const GuideModule: React.FC = () => {
                 </div>
 
                 {/* Input area */}
-                <div className="bg-[#F0F0F0] p-2 flex items-center gap-2 border-t border-gray-200/50 shrink-0">
-                  <div className="flex-1 bg-white rounded-full px-3 py-2 text-[10px] text-gray-400 flex items-center justify-between shadow-sm">
-                    <span>Escribí o seleccioná un prompt a la izquierda...</span>
-                    <Image size={13} className="text-gray-400" />
+                <div className="bg-[#f0f2f5] p-2 flex items-center gap-2 border-t border-gray-200 shrink-0">
+                  <div className="flex-1 bg-white rounded-full px-3.5 py-2 text-[10px] text-gray-400 flex items-center justify-between shadow-sm border border-gray-200/50">
+                    <span className="truncate">Preguntale a Rombo...</span>
+                    <Image size={14} className="text-slate-400" />
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-[#128C7E] flex items-center justify-center text-white shadow active:scale-95 transition-transform cursor-pointer">
-                    <Send size={12} />
+                  <div className="w-8 h-8 rounded-full bg-[#00a884] hover:bg-[#008f72] flex items-center justify-center text-white shadow-md active:scale-90 transition-all cursor-pointer">
+                    <Send size={13} className="ml-0.5" />
                   </div>
                 </div>
               </div>
@@ -471,7 +533,7 @@ export const GuideModule: React.FC = () => {
                   <h4 className="font-bold text-slate-800 text-sm">{module.name}</h4>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed mb-4">{module.description}</p>
-                <div className="space-y-1.5 border-t border-gray-50 pt-3">
+                <div className="space-y-1.5 border-t border-gray-100 pt-3">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Características Clave</span>
                   <ul className="space-y-1">
                     {module.features.map((feat, fi) => (
