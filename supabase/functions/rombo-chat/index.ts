@@ -140,6 +140,13 @@ const MODULE_CONTEXT: Record<string, string> = {
   monthly_report: `## CONTEXTO ACTUAL: El usuario está en Resumen Mensual
 - Informe financiero mensual: ingresos, egresos, desglose por categoría, desviaciones.
 - Ayudalo a: generar resúmenes, comparar meses, identificar tendencias de gasto.`,
+
+  guide: `## CONTEXTO ACTUAL: El usuario está en la Guía de Uso del Sistema
+- Este módulo es una guía interactiva y detallada de cómo usar el ERP de ECAR, incluyendo todas las secciones.
+- Destacá especialmente el uso del asistente por WhatsApp (número +54 9 11 3016-8646 o el canal configurado), explicando todo lo que se puede enviar por ahí (fotos de facturas/cheques, audios relatando partes de obra, novedades de empleados, etc.).
+- Ofrecé explicar al usuario cómo usar cualquiera de las herramientas o módulos.
+- Explicá que la IA puede interpretar texto natural en español argentino.
+- Sugerí: "Puedo darte ejemplos de mensajes que le podés mandar al bot de WhatsApp" o "Preguntame sobre qué podés hacer en cualquiera de los módulos de ECAR".`,
 }
 
 function buildSystemPrompt(activeModule?: string): string {
@@ -184,6 +191,13 @@ const tools = [
         },
         required: ['cheque_number', 'bank_name', 'amount_ars', 'direction', 'due_date']
       }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'delete_cheque',
+      description: 'Eliminar un cheque de la base de datos. Puede buscar por número de cheque o eliminar el último cargado.',
+      parameters: { type: 'object', properties: { cheque_number: { type: 'string', description: 'Número del cheque a eliminar' }, delete_last: { type: 'boolean', description: 'Si es true, elimina el último cheque cargado' } } }
     }
   },
   {
@@ -368,6 +382,20 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         
         if (error) return JSON.stringify({ error: error.message })
         return JSON.stringify({ success: true, message: `Cheque ${args.cheque_number} cargado correctamente.`, id: data.id })
+      }
+      case 'delete_cheque': {
+        let cheque = null
+        if (args.cheque_number) {
+          const { data } = await sb.from('cheques').select('id, cheque_number, bank_name, amount_ars, due_date').eq('cheque_number', args.cheque_number).limit(1).single()
+          cheque = data
+        } else if (args.delete_last) {
+          const { data } = await sb.from('cheques').select('id, cheque_number, bank_name, amount_ars, due_date').order('created_at', { ascending: false }).limit(1).single()
+          cheque = data
+        }
+        if (!cheque) return JSON.stringify({ error: 'No se encontró el cheque para eliminar' })
+        const { error: delErr } = await sb.from('cheques').delete().eq('id', cheque.id)
+        if (delErr) return JSON.stringify({ error: delErr.message })
+        return JSON.stringify({ success: true, message: `Cheque ${cheque.cheque_number} eliminado correctamente.`, deleted: { numero: cheque.cheque_number, banco: cheque.bank_name, monto: cheque.amount_ars, vencimiento: cheque.due_date } })
       }
       case 'query_obligations': {
         let q = sb.from('obligations').select('name, description, due_day_of_month, amount_ars, status, recurrence')

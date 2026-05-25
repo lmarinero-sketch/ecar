@@ -27,6 +27,7 @@ import { InspectionsModule } from './components/InspectionsModule';
 import { RFIModule } from './components/RFIModule';
 import { ExpensesModule } from './components/ExpensesModule';
 import { ProjectBudgetModule } from './components/ProjectBudgetModule';
+import { GuideModule } from './components/GuideModule';
 
 
 const queryClient = new QueryClient({
@@ -79,6 +80,7 @@ function AppContent() {
       case 'project_budget': return <ProjectBudgetModule />;
 
       case 'documents': return <DocumentsModule />;
+      case 'guide': return <GuideModule />;
       default: return <BiDashboard />;
     }
   };

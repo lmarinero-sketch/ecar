@@ -1044,6 +1044,7 @@ export const ALL_MODULES = [
   'documents',
   'project_budget',
   'fuel',
+  'guide',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1071,4 +1072,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   documents: 'Documentos & Correo',
   project_budget: 'Proyectos & Presupuestos',
   fuel: 'Combustible',
+  guide: 'Guía de Uso',
 };

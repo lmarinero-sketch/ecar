@@ -263,6 +263,21 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'delete_cheque',
+      description: 'Eliminar un cheque de la base de datos. Puede buscar por número de cheque o eliminar el último cargado. Úsalo cuando el usuario diga "eliminá el cheque" o "borrá el último cheque" o "eliminá el cheque 4585".',
+      parameters: {
+        type: 'object',
+        properties: {
+          cheque_number: { type: 'string', description: 'Número del cheque a eliminar (opcional si se quiere el último)' },
+          delete_last: { type: 'boolean', description: 'Si es true, elimina el último cheque cargado' },
+        },
+        required: []
+      }
+    }
+  },
 ];
 
 const SYSTEM_PROMPT = `Sos *Rombo* 🤖, el asistente IA de ECAR Constructora. Respondés por WhatsApp.
@@ -273,7 +288,7 @@ Sos el copiloto financiero y operativo de ECAR. Podés:
 - 💰 *Registrar pagos y cobros* → "Pagué 960 mil a Elio"
 - 📊 *Consultar liquidez* → "¿Cuánta plata tengo?"
 - 📈 *Resumen mensual* → "¿Cómo vamos en mayo?" o "Resumen de abril"
-- 🏦 *Gestionar cheques* → cargar, consultar pendientes, OCR de foto de cheque
+- 🏦 *Gestionar cheques* → cargar, consultar, eliminar, OCR de foto de cheque
 - 📋 *Cargar facturas* → foto de factura → OCR automático
 - 🏗️ *Registrar certificados de obra* → "Se aprobó cert 6 de San Martín por 5.4M"
 - 📦 *Consultar stock del pañol* → "¿Cuántas bolsas de cemento hay?"
@@ -345,7 +360,8 @@ Cuando falte información:
    - Después de liquidez: "¿Querés ver los cheques pendientes o registrar un movimiento? 📊"
    - Después de un certificado: "¿Querés cargar otro certificado o ver el estado de la obra? 🏗️"
    - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.
-13. SIEMPRE llamá a la herramienta correspondiente (create_cheque, register_payment, etc.) cuando el usuario solicite registrar o cargar información. NUNCA respondas diciendo que algo fue cargado o registrado con éxito si no ejecutaste la herramienta correspondiente primero y esta te devolvió éxito.`;
+13. SIEMPRE llamá a la herramienta correspondiente (create_cheque, register_payment, delete_cheque, etc.) cuando el usuario solicite registrar, cargar o eliminar información. NUNCA respondas diciendo que algo fue cargado, registrado o eliminado con éxito si no ejecutaste la herramienta correspondiente primero y esta te devolvió éxito.
+14. ELIMINAR CHEQUES: Si el usuario pide eliminar o borrar un cheque, usá la herramienta delete_cheque. Si dice "el último" o "el que acabo de cargar", usá delete_last=true. Si dice un número específico, usá cheque_number. NUNCA digas que no podés eliminar cheques — SÍ podés.`;
 
 // ==================== TOOL EXECUTION ====================
 async function executeTool(supabase: any, name: string, args: Record<string, any>): Promise<string> {
@@ -777,6 +793,26 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           fecha: chequeData.issue_date,
           vencimiento: chequeData.due_date,
           beneficiario: chequeData.beneficiary_or_issuer,
+        })
+      }
+      case 'delete_cheque': {
+        let cheque = null
+        if (args.cheque_number) {
+          // Search by cheque number
+          const { data } = await supabase.from('cheques').select('id, cheque_number, bank_name, amount_ars, due_date').eq('cheque_number', args.cheque_number).limit(1).single()
+          cheque = data
+        } else if (args.delete_last) {
+          // Get most recently created cheque
+          const { data } = await supabase.from('cheques').select('id, cheque_number, bank_name, amount_ars, due_date').order('created_at', { ascending: false }).limit(1).single()
+          cheque = data
+        }
+        if (!cheque) return JSON.stringify({ error: 'No encontré el cheque para eliminar' })
+        const { error: delErr } = await supabase.from('cheques').delete().eq('id', cheque.id)
+        if (delErr) return JSON.stringify({ error: delErr.message })
+        return JSON.stringify({
+          success: true,
+          message: `Cheque ${cheque.cheque_number} eliminado`,
+          deleted: { numero: cheque.cheque_number, banco: cheque.bank_name, monto: cheque.amount_ars, vencimiento: cheque.due_date }
         })
       }
       default:

@@ -56,6 +56,11 @@ const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; 
     { icon: Banknote, label: 'Montos retenidos', prompt: '¿Cuánto tengo en retenciones (IIBB, impuesto al cheque) de certificados?' },
     { icon: Zap, label: 'Redeterminaciones', prompt: '¿Cuál es el estado de redeterminaciones de precio en mis obras?' },
   ],
+  guide: [
+    { icon: Zap, label: 'Ejemplos de WhatsApp', prompt: '¿Qué ejemplos de mensajes le puedo enviar al bot de WhatsApp?' },
+    { icon: FileText, label: 'Módulos soportados', prompt: '¿Cuáles son los módulos del sistema y qué se puede hacer en cada uno?' },
+    { icon: Users, label: 'Cargar/borrar cheques', prompt: '¿Cómo hago para cargar y borrar cheques usando WhatsApp?' },
+  ],
 };
 
 const DEFAULT_QUICK_ACTIONS = [
@@ -85,6 +90,7 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   safety: ['🦺 Cero accidentes = objetivo...', '⚠️ Revisando observaciones...', '🔍 Chequeando seguridad...'],
   inspections: ['✅ Revisando inspecciones...', '📋 Mirando el punch list...', '🔍 Verificando calidad...'],
   rfi: ['📨 Chequeando consultas abiertas...', '🔍 Revisando RFIs pendientes...', '💡 Analizando impactos...'],
+  guide: ['📖 Leyendo el manual...', '💡 Aprendiendo trucos nuevos...', '❓ ¿Tenés alguna duda de cómo se usa algo?'],
 };
 
 function getIdlePhrases(moduleId: ModuleId): string[] {
@@ -380,6 +386,16 @@ export const RomboChat: React.FC = () => {
         '**Comparar meses**: ingresos, egresos, desvíos',
         'Identificar **tendencias de gasto** por categoría',
       ],
+    },
+    guide: {
+      where: 'Guía de Uso del Sistema',
+      capabilities: [
+        'Aprender a usar **cualquier módulo** del sistema',
+        'Ver cómo opera el **asistente inteligente por WhatsApp**',
+        'Obtener **ejemplos interactivos** de mensajes de texto y fotos para mandar por WhatsApp',
+        'Consultar qué **herramientas de IA** tenemos habilitadas',
+      ],
+      proTip: 'Podés mandarle mensajes de WhatsApp a Rombo desde tu celular para cargar cheques, facturas, partes diarios y más.',
     },
   }), []);
 
