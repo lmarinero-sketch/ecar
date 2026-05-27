@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Sparkles, Calendar, RefreshCw, Play, Pause, TrendingUp, Upload, Box } from 'lucide-react';
+import { X, Sparkles, Calendar, RefreshCw, Play, Pause, Upload, Box } from 'lucide-react';
 import type { WbsElement } from '../lib/types';
 import { IfcViewer } from './IfcViewer';
 
@@ -9,10 +9,6 @@ type ViewType = 'isometric' | 'bim';
 const PHASE_BG: Record<string, string> = {
   planificacion: 'bg-blue-500', programacion: 'bg-amber-500',
   ejecucion: 'bg-emerald-500', completado: 'bg-gray-400',
-};
-const PHASE_BORDER: Record<string, string> = {
-  planificacion: 'border-blue-300', programacion: 'border-amber-300',
-  ejecucion: 'border-emerald-300', completado: 'border-gray-300',
 };
 const PHASE_LABEL: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700', programacion: 'bg-amber-100 text-amber-700',

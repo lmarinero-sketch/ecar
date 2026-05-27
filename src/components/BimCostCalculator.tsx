@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calculator, DollarSign, Download, ChevronDown, ChevronUp, Ruler, Box, Layers, BarChart3, FileSpreadsheet } from 'lucide-react';
+import { Calculator, DollarSign, ChevronDown, ChevronUp, Ruler, Box, Layers, BarChart3, FileSpreadsheet } from 'lucide-react';
 
 /* ═══════ TYPES ═══════ */
 export interface BimElementMeasure {
