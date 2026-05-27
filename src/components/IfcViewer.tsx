@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as WebIFC from 'web-ifc';
-import { Upload, RotateCw, ZoomIn, ZoomOut, Maximize2, Eye, Layers, Box, X, Loader2, Calculator } from 'lucide-react';
+import { Upload, RotateCw, ZoomIn, ZoomOut, Maximize2, Eye, Layers, Box, X, Loader2, Calculator, HelpCircle } from 'lucide-react';
 import { BimCostCalculator, type BimElementMeasure } from './BimCostCalculator';
 
 interface IfcViewerProps {
@@ -56,6 +56,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
   const [error, setError] = useState<string | null>(null);
   const [elementMeasures, setElementMeasures] = useState<BimElementMeasure[]>([]);
   const [showCosts, setShowCosts] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Initialize Three.js scene
   useEffect(() => {
@@ -468,6 +469,14 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
               <Calculator size={14} className={`mx-auto ${showCosts ? 'text-emerald-600' : 'text-gray-500'}`} />
               <span className={`text-[9px] font-bold block mt-0.5 ${showCosts ? 'text-emerald-600' : 'text-gray-500'}`}>Costos</span>
             </button>
+
+            {/* Help toggle */}
+            <button onClick={() => setShowHelp(true)}
+              className="backdrop-blur border border-gray-200 bg-white/95 hover:bg-gray-50 rounded-xl shadow-md p-2 text-center transition-colors"
+              title="Ver Ayuda de Cómputo">
+              <HelpCircle size={14} className="mx-auto text-indigo-500" />
+              <span className="text-[9px] font-bold text-indigo-500 block mt-0.5">Ayuda</span>
+            </button>
           </div>
         )}
       </div>
@@ -504,6 +513,85 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
       {/* Cost Calculator Panel */}
       {showCosts && fileName && (
         <BimCostCalculator elements={elementMeasures} />
+      )}
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <HelpCircle className="text-indigo-600" size={20} /> ¿Cómo calcula las medidas el Visor BIM?
+              </h3>
+              <button onClick={() => setShowHelp(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm text-gray-600">
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                <p className="font-medium text-indigo-900 mb-1">Cómputo Métrico Real e Instantáneo</p>
+                <p className="text-xs text-indigo-700 leading-relaxed">
+                  Al subir un archivo IFC, el sistema no estima los valores ni usa placeholders. Lee directamente la geometría del modelo en 3D utilizando un motor WebAssembly de alto rendimiento y calcula las medidas reales en base a su representación física en el espacio tridimensional.
+                </p>
+              </div>
+
+              {/* Schematic Image */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50 flex flex-col items-center p-4">
+                <img src="/bim_help_diagram.png" alt="Esquema de cálculo de Bounding Box BIM" className="max-h-72 object-contain rounded-lg shadow-sm" />
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-2.5">Esquema tridimensional del Bounding Box (Caja contenedora)</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Metros Cúbicos (Volumen)</span>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Se calcula multiplicando las dimensiones tridimensionales (ancho, alto y profundidad) de la caja contenedora del objeto en base a su escala real en el modelo:
+                  </p>
+                  <p className="font-mono font-bold text-xs text-gray-800 bg-white border border-gray-200 p-1.5 rounded mt-2 text-center">
+                    Volumen = W × H × D
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                  <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-wider">Metros Cuadrados (Superficie)</span>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Corresponde al área superficial exterior de la caja contenedora calculada a partir de las caras del elemento:
+                  </p>
+                  <p className="font-mono font-bold text-xs text-gray-800 bg-white border border-gray-200 p-1.5 rounded mt-2 text-center">
+                    Área = 2 × (W·H + W·D + H·D)
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Metros Lineales (Perímetro)</span>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Corresponde al perímetro de la base del elemento tridimensional, ideal para calcular zócalos o molduras:
+                  </p>
+                  <p className="font-mono font-bold text-xs text-gray-800 bg-white border border-gray-200 p-1.5 rounded mt-2 text-center">
+                    Perímetro = 2 × (W + D)
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">Presupuestación e IVA</span>
+                <p className="text-xs leading-relaxed text-slate-600">
+                  Una vez computadas las cantidades físicas reales, podés ir al panel de <strong>Costos</strong> para modificar el costo unitario de cada categoría (ej: Muro, Losa, Viga) y definir qué magnitud física usar para el cálculo. El presupuesto final sumará todos los subtotales más el porcentaje de Gastos Generales (GG%) ingresado.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end border-t border-gray-100 pt-3">
+              <button
+                onClick={() => setShowHelp(false)}
+                className="bg-ecar-blue text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blueDark hover:shadow-md transition-all animate-pulse"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
