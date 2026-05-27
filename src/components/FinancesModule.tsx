@@ -66,10 +66,14 @@ export const FinancesModule: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    await createCheque.mutateAsync({ ...form, scan_url: scanUrl || undefined } as any);
-    setMode('idle');
-    setScanUrl('');
-    setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+    try {
+      await createCheque.mutateAsync({ ...form, scan_url: scanUrl || undefined } as any);
+      setMode('idle');
+      setScanUrl('');
+      setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+    } catch (err: any) {
+      alert(err.message || 'Error al registrar el cheque');
+    }
   };
 
   const statusColor: Record<string, string> = {
