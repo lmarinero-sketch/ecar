@@ -278,6 +278,39 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_gasto_items',
+      description: 'Consultar rubros o conceptos de gastos operativos configurados en la planilla mensual (ej: personal, seguros, servicios, impuestos, gremios, viandas, etc.). Úsalo para obtener el ID de un rubro antes de registrar un gasto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Nombre o parte de la descripción del rubro a buscar (ej: "sueldos", "osse", "liderar", "gas")' },
+          category: { type: 'string', description: 'Filtrar por categoría (personal, seguros, servicios, impuestos, gremios, combustibles, terceros, servicios_contratados, viandas, varios)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'register_gasto_monto',
+      description: 'Registrar o actualizar el monto mensual de un gasto operativo (planilla mensual). Es mandatorio obtener el item_id de query_gasto_items.',
+      parameters: {
+        type: 'object',
+        properties: {
+          item_id: { type: 'string', description: 'ID del rubro de gasto (uuid obtenido de query_gasto_items).' },
+          periodo: { type: 'string', description: 'Mes del gasto en formato YYYY-MM (ej: "2026-05"). Si no se especifica, se asume el mes actual.' },
+          amount: { type: 'number', description: 'Monto del gasto en pesos (ARS).' },
+          pagado: { type: 'boolean', description: 'Indica si el gasto ya está pagado.' },
+          metodo_pago: { type: 'string', description: 'Forma de pago (efectivo, transferencia, cheque, echeq, tarjeta) - opcional.' },
+          notas: { type: 'string', description: 'Comentarios adicionales - opcional.' }
+        },
+        required: ['item_id', 'amount']
+      }
+    }
+  },
 ];
 
 // Helper to get Argentina date/time
@@ -337,6 +370,7 @@ Sos el copiloto financiero y operativo de ECAR. Podés:
 - 🛒 *Crear pedidos de compra* → "Necesitamos 4 placas de yeso para la obra"
 - 📅 *Obligaciones fiscales* → consultar y marcar como pagadas
 - 👷 *Empleados y asistencia* → consultar personal activo
+- 📂 *Registrar gastos operativos* → Cargar montos mensuales de la planilla (personal, seguros, servicios, impuestos, etc.)
 
 ## FORMATO DE RESPUESTA (MUY IMPORTANTE)
 - Usá formato *WhatsApp nativo*: asteriscos simples para *negrita* (ej: *Cheque cargado*).
@@ -403,7 +437,14 @@ Cuando falte información:
    - Nunca repitas el mismo CTA dos veces seguidas, variá las opciones.
 13. SIEMPRE llamá a la herramienta correspondiente (create_cheque, register_payment, delete_cheque, etc.) cuando el usuario solicite registrar, cargar o eliminar información. NUNCA respondas diciendo que algo fue cargado, registrado o eliminado con éxito si no ejecutaste la herramienta correspondiente primero y esta te devolvió éxito.
 14. ELIMINAR CHEQUES: Si el usuario pide eliminar o borrar un cheque, usá la herramienta delete_cheque. Si dice "el último" o "el que acabo de cargar", usá delete_last=true. Si dice un número específico, usá cheque_number. NUNCA digas que no podés eliminar cheques — SÍ podés.
-15. FILTRO DE FECHAS EN CHEQUES: Cuando pregunten por cheques de "esta semana", SIEMPRE usá query_cheques con due_date_from=${monday} y due_date_to=${sunday}. Si no hay cheques en ese rango, respondé "No hay cheques a pagar esta semana" y mencioná cuándo es el próximo. NUNCA muestres cheques fuera del rango como si fueran de esta semana.`
+15. FILTRO DE FECHAS EN CHEQUES: Cuando pregunten por cheques de "esta semana", SIEMPRE usá query_cheques con due_date_from=${monday} y due_date_to=${sunday}. Si no hay cheques en ese rango, respondé "No hay cheques a pagar esta semana" y mencioná cuándo es el próximo. NUNCA muestres cheques fuera del rango como si fueran de esta semana.
+16. GASTOS OPERATIVOS (PLANILLA MENSUAL): Cuando el usuario quiera registrar o cargar un gasto operativo (de la planilla mensual, como "luz", "gas", "uocra", "seguros", "teléfonos", "sueldos obreros", etc.):
+    a. Primero usá query_gasto_items para ver si existe el rubro (buscá por término o categoría).
+    b. Si encontrás coincidencias, mostrale las opciones válidas numeradas al usuario y pedile que confirme cuál quiere actualizar (ej: "Encontré estos rubros: 1. NATURGY CORDOBA, 2. GAS ORO. ¿Cuál querés actualizar?"). ¡Esto es fundamental para que el usuario no se confunda!
+    c. Si falta el período (mes en formato YYYY-MM, ej: 2026-05) o el monto, solicitalos interactivamente de a uno o guialo de forma amigable.
+    d. Una vez confirmado el rubro (con su item_id), período y monto, ejecutá register_gasto_monto.
+    e. Confirmá el registro detallando el nombre del rubro, el período (mes y año en español) y el monto cargado.
+    f. Es muy importante que guíes y acompañes al usuario paso a paso de forma que no tenga dudas de qué concepto está registrando.`
 }
 
 // ==================== TOOL EXECUTION ====================
@@ -870,6 +911,59 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           success: true,
           message: `Cheque ${cheque.cheque_number} eliminado`,
           deleted: { numero: cheque.cheque_number, banco: cheque.bank_name, monto: cheque.amount_ars, vencimiento: cheque.due_date }
+        })
+      }
+      case 'query_gasto_items': {
+        let q = supabase.from('gastos_items').select('id, categoria, descripcion, orden, activo').eq('activo', true)
+        if (args.category) {
+          q = q.eq('categoria', args.category)
+        }
+        if (args.search) {
+          q = q.ilike('descripcion', `%${args.search}%`)
+        }
+        const { data, error } = await q.order('orden').order('descripcion')
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify(data || [])
+      }
+      case 'register_gasto_monto': {
+        const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
+        const now = new Date()
+        const defaultPeriod = args.periodo || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+        // Find the item details first to return a friendly confirmation name
+        const { data: itemData, error: itemErr } = await supabase.from('gastos_items').select('descripcion, categoria').eq('id', args.item_id).single()
+        if (itemErr || !itemData) {
+          return JSON.stringify({ error: `No encontré el rubro de gasto con ID: ${args.item_id}` })
+        }
+
+        const record = {
+          tenant_id: tenant?.id,
+          item_id: args.item_id,
+          periodo: defaultPeriod,
+          monto: args.amount,
+          pagado: args.pagado ?? false,
+          fecha_pago: args.pagado ? (args.fecha_pago || new Date().toISOString().split('T')[0]) : null,
+          metodo_pago: args.metodo_pago || null,
+          notas: args.notes || null,
+          updated_at: new Date().toISOString()
+        }
+
+        const { data, error } = await supabase
+          .from('gastos_registros')
+          .upsert(record, { onConflict: 'item_id,periodo' })
+          .select()
+          .single()
+
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          message: `Gasto de "${itemData.descripcion}" registrado para el período ${defaultPeriod}`,
+          id: data.id,
+          descripcion: itemData.descripcion,
+          categoria: itemData.categoria,
+          periodo: defaultPeriod,
+          monto: args.amount,
+          pagado: data.pagado
         })
       }
       default:
