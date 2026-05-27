@@ -198,6 +198,7 @@ export type PurchaseInvoice = {
   original_file_url: string | null;
   ocr_raw_data: Record<string, unknown> | null;
   ocr_validated: boolean;
+  gasto_item_id: string | null;
   created_at: string;
   supplier?: Supplier;
 };

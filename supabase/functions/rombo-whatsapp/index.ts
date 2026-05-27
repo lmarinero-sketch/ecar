@@ -117,7 +117,8 @@ const tools = [
           perceptions_iva_ars: { type: 'number', description: 'Percepciones IVA' },
           perceptions_iibb_ars: { type: 'number', description: 'Percepciones IIBB' },
           total_ars: { type: 'number', description: 'Total de la factura' },
-          cae_number: { type: 'string', description: 'Número de CAE' }
+          cae_number: { type: 'string', description: 'Número de CAE' },
+          gasto_item_id: { type: 'string', description: 'ID de rubro de gasto mensual asociado (opcional, uuid)' }
         },
         required: ['supplier_name', 'invoice_type', 'invoice_number', 'issue_date', 'total_ars']
       }
@@ -444,11 +445,12 @@ Cuando falte información:
     c. Si falta el período (mes en formato YYYY-MM, ej: 2026-05) o el monto, solicitalos interactivamente de a uno o guialo de forma amigable.
     d. Una vez confirmado el rubro (con su item_id), período y monto, ejecutá register_gasto_monto.
     e. Confirmá el registro detallando el nombre del rubro, el período (mes y año en español) y el monto cargado.
-    f. Es muy importante que guíes y acompañes al usuario paso a paso de forma que no tenga dudas de qué concepto está registrando.`
+    f. Es muy importante que guíes y acompañes al usuario paso a paso de forma que no tenga dudas de qué concepto está registrando.
+    g. Después de un registro exitoso de gasto mediante register_gasto_monto, SIEMPRE tenés que preguntarle textualmente: "¿Tenés factura de esto? Si tenés, subila." para guiarlo a enviar la foto de la factura.`
 }
 
 // ==================== TOOL EXECUTION ====================
-async function executeTool(supabase: any, name: string, args: Record<string, any>): Promise<string> {
+async function executeTool(supabase: any, name: string, args: Record<string, any>, phone?: string): Promise<string> {
   const todayStr = getArgentinaDateStr()
   const today = getArgentinaDate()
 
@@ -610,6 +612,27 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           }
         }
 
+        // Check if gasto_item_id is in args, otherwise try to retrieve from pending_data
+        let gastoItemId = args.gasto_item_id || null;
+        if (!gastoItemId && phone) {
+          const { data: conv } = await supabase.from('whatsapp_conversations').select('pending_data').eq('phone', phone).single();
+          if (conv?.pending_data) {
+            const currentPending = typeof conv.pending_data === 'string' ? JSON.parse(conv.pending_data) : conv.pending_data;
+            if (currentPending?.last_gasto_item_id) {
+              gastoItemId = currentPending.last_gasto_item_id;
+              console.log('Factura vinculada automáticamente al último gasto de WhatsApp:', gastoItemId);
+              
+              // Clear it so we don't reuse it for another invoice by mistake
+              delete currentPending.last_gasto_item_id;
+              await supabase.from('whatsapp_conversations').upsert({
+                phone,
+                pending_data: currentPending,
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'phone' });
+            }
+          }
+        }
+
         // Insert invoice
         const invoiceData: Record<string, any> = {
           supplier_id: supplierId,
@@ -629,6 +652,7 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           status: 'pending_review',
           ocr_validated: false,
           ocr_raw_data: args,
+          gasto_item_id: gastoItemId,
         }
         // Only include tenant_id if we found one
         if (tenantId) invoiceData.tenant_id = tenantId
@@ -955,10 +979,32 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           .single()
 
         if (error) return JSON.stringify({ error: error.message })
+
+        // Save this item_id as the last registered gasto in the conversation's pending_data
+        if (phone) {
+          try {
+            const { data: conv } = await supabase.from('whatsapp_conversations').select('pending_data').eq('phone', phone).single();
+            let currentPending: Record<string, any> = {};
+            if (conv?.pending_data) {
+              currentPending = typeof conv.pending_data === 'string' ? JSON.parse(conv.pending_data) : conv.pending_data;
+            }
+            currentPending.last_gasto_item_id = args.item_id;
+            await supabase.from('whatsapp_conversations').upsert({
+              phone,
+              pending_data: currentPending,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'phone' });
+            console.log('Saved last_gasto_item_id to pending_data:', args.item_id);
+          } catch (e: any) {
+            console.error('Error saving last_gasto_item_id to pending_data:', e.message);
+          }
+        }
+
         return JSON.stringify({
           success: true,
           message: `Gasto de "${itemData.descripcion}" registrado para el período ${defaultPeriod}`,
           id: data.id,
+          item_id: args.item_id,
           descripcion: itemData.descripcion,
           categoria: itemData.categoria,
           periodo: defaultPeriod,
@@ -1100,10 +1146,10 @@ serve(async (req) => {
     console.log("=== ROMBO IA: Procesando mensaje ===");
 
     try {
-      // ── Obtener historial de conversación (últimos 20 msgs) ──
+      // ── Obtener historial de conversación (últimos 20 msgs) y datos pendientes ──
       const { data: history } = await supabase
         .from('whatsapp_conversations')
-        .select('messages')
+        .select('messages, pending_data')
         .eq('phone', phone)
         .single();
 
@@ -1234,7 +1280,7 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
             const fnArgs = JSON.parse(tc.function.arguments || '{}');
             console.log(`Ejecutando tool: ${fnName}(${JSON.stringify(fnArgs)})`);
 
-            const result = await executeTool(supabase, fnName, fnArgs);
+            const result = await executeTool(supabase, fnName, fnArgs, phone);
             openaiMessages.push({
               role: 'tool',
               tool_call_id: tc.id,
@@ -1269,11 +1315,15 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
       // Keep only last 20
       const trimmed = chatMessages.slice(-20);
 
+      // Get current pending_data before saving to avoid overwriting what was set in tools
+      const { data: latestConv } = await supabase.from('whatsapp_conversations').select('pending_data').eq('phone', phone).single();
+      const finalPending = latestConv?.pending_data || {};
+
       await supabase.from('whatsapp_conversations').upsert({
         phone,
         messages: JSON.stringify(trimmed),
         last_intent: null,
-        pending_data: '{}',
+        pending_data: finalPending,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'phone' });
 

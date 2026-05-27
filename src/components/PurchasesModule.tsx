@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download } from 'lucide-react';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useGastosItems } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 
@@ -10,6 +10,7 @@ export const PurchasesModule: React.FC = () => {
   const { data: invoices = [], isLoading, refetch } = usePurchaseInvoices();
   const { data: suppliers = [] } = useSuppliers();
   const createSupplier = useCreateSupplier();
+  const { data: gastosItems = [] } = useGastosItems();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<any>(null);
@@ -257,6 +258,7 @@ export const PurchasesModule: React.FC = () => {
                   <th className="px-4 py-3 text-right">Neto</th>
                   <th className="px-4 py-3 text-right">IVA 21%</th>
                   <th className="px-4 py-3 text-right">Total</th>
+                  {activeTab === 'compras' && <th className="px-4 py-3">Rubro de Gasto</th>}
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-4 py-3 text-center">Acciones</th>
                 </tr>
@@ -271,6 +273,33 @@ export const PurchasesModule: React.FC = () => {
                     <td className="px-4 py-3 text-right font-mono">{formatARS(inv.net_amount_ars)}</td>
                     <td className="px-4 py-3 text-right font-mono text-gray-500">{formatARS(inv.iva_21_ars)}</td>
                     <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(inv.total_ars)}</td>
+                    {activeTab === 'compras' && (
+                      <td className="px-4 py-3">
+                        <select
+                          value={inv.gasto_item_id || ''}
+                          onChange={async (e) => {
+                            const val = e.target.value || null;
+                            const { error } = await supabase
+                              .from('purchase_invoices')
+                              .update({ gasto_item_id: val })
+                              .eq('id', inv.id);
+                            if (error) {
+                              console.error('Error al asociar rubro:', error.message);
+                              alert('Error al asociar rubro: ' + error.message);
+                            }
+                            refetch();
+                          }}
+                          className="px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[180px] truncate"
+                        >
+                          <option value="">-- Sin Vincular --</option>
+                          {gastosItems.map((item: any) => (
+                            <option key={item.id} value={item.id}>
+                              {item.categoria.toUpperCase()} - {item.descripcion}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[inv.status] || ''}`}>{statusLabel[inv.status] || inv.status}</span>
                     </td>
