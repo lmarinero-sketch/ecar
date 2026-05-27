@@ -27,7 +27,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
 
   const dateBounds = useMemo(() => {
     if (!wbs.length) return { start: new Date(), end: new Date(), totalDays: 1 };
-    const all = wbs.flatMap(t => [new Date(t.start_date).getTime(), new Date(t.end_date).getTime()]);
+    const all = wbs.flatMap(t => [new Date(t.start_date || '').getTime(), new Date(t.end_date || '').getTime()]);
     const start = new Date(Math.min(...all));
     const end = new Date(Math.max(...all));
     return { start, end, totalDays: Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000)) };
@@ -49,7 +49,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
 
   const getTaskVisualProgress = (task: WbsElement) => {
     if (!isPlaying) return task.progress_pct;
-    const ts = new Date(task.start_date).getTime(), te = new Date(task.end_date).getTime();
+    const ts = new Date(task.start_date || '').getTime(), te = new Date(task.end_date || '').getTime();
     const cur = dateBounds.start.getTime() + (timelineProgress / 100) * (dateBounds.end.getTime() - dateBounds.start.getTime());
     if (cur < ts) return 0;
     if (cur >= te) return 100;
@@ -338,7 +338,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
                 </div>
                 <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-2">
                   <span className="font-mono">
-                    {new Date(task.start_date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} al {new Date(task.end_date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}
+                    {new Date(task.start_date || '').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} al {new Date(task.end_date || '').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}
                   </span>
                   <span>•</span>
                   <span>{task.duration_days} días</span>
@@ -366,8 +366,8 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
             <div className="grid grid-cols-2 gap-2 text-xs border-t border-white/5 pt-3">
               <div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cronología</span>
-                <span className="font-mono text-slate-200 block mt-0.5">{new Date(selectedTask.start_date).toLocaleDateString('es-AR')}</span>
-                <span className="text-[10px] text-slate-400 font-mono">al {new Date(selectedTask.end_date).toLocaleDateString('es-AR')} ({selectedTask.duration_days} d)</span>
+                <span className="font-mono text-slate-200 block mt-0.5">{new Date(selectedTask.start_date || '').toLocaleDateString('es-AR')}</span>
+                <span className="text-[10px] text-slate-400 font-mono">al {new Date(selectedTask.end_date || '').toLocaleDateString('es-AR')} ({selectedTask.duration_days} d)</span>
               </div>
               <div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Presupuesto</span>
