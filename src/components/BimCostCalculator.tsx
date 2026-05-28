@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Calculator, DollarSign, ChevronDown, ChevronUp, Ruler, Box, Layers, BarChart3, FileSpreadsheet, RefreshCw, ArrowRightLeft } from 'lucide-react';
+import { Calculator, DollarSign, ChevronDown, ChevronUp, Ruler, Box, Layers, BarChart3, FileSpreadsheet, RefreshCw, ArrowRightLeft, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 /* ═══════ TYPES ═══════ */
 export interface BimElementMeasure {
@@ -388,6 +388,42 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
           </tfoot>
         </table>
       </div>
+
+      {/* Alcance del presupuesto */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+            <CheckCircle2 size={14} className="text-emerald-600" /> Incluye este presupuesto
+          </h4>
+          <ul className="text-xs text-emerald-700 space-y-1.5 leading-relaxed">
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Estructura de hormigón armado (columnas, vigas, losas)</li>
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Mampostería y muros (cerramientos exteriores e interiores)</li>
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Carpintería de aberturas (ventanas y puertas)</li>
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Cubierta / techo según modelo BIM</li>
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Fundaciones, pilotes y escaleras del modelo</li>
+            <li className="flex items-start gap-1.5"><span className="text-emerald-400 mt-0.5">•</span> Gastos generales (GG%) aplicados sobre costo directo</li>
+          </ul>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+            <AlertTriangle size={14} className="text-amber-600" /> No incluye este presupuesto
+          </h4>
+          <ul className="text-xs text-amber-700 space-y-1.5 leading-relaxed">
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Instalación eléctrica y tableros</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Instalación sanitaria, gas y pluviales</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Climatización (HVAC / aire acondicionado)</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Pintura, revoques y terminaciones</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Pisos, revestimientos y zócalos</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Movimiento de suelos y excavaciones</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Equipamiento, mobiliario y artefactos</li>
+            <li className="flex items-start gap-1.5"><span className="text-amber-400 mt-0.5">•</span> Honorarios profesionales, seguros e impuestos</li>
+          </ul>
+        </div>
+      </div>
+      <p className="text-[10px] text-gray-400 text-center mt-2">
+        Presupuesto estimativo basado en geometría BIM. Valores de referencia CAC / Apymeco Mayo 2026.
+        No reemplaza el cómputo métrico profesional. Categoría "Otro" agrupa elementos no clasificados del modelo.
+      </p>
     </div>
   );
 };
