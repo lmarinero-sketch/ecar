@@ -399,7 +399,7 @@ export const WbsModule: React.FC = () => {
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
-          {tab === 'avance3d' && <Wbs3dView wbs={wbs} />}
+          {tab === 'avance3d' && <Wbs3dView wbs={wbs} projectId={selectedProjectId!} />}
           {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
           {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}
           {tab === 'pedidos' && <PedidosTab projectId={selectedProjectId} />}

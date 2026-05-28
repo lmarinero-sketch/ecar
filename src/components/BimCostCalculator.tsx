@@ -54,15 +54,35 @@ const DEFAULT_USD_RATE = 1250; // Cotización USD blue/MEP referencia mayo 2026
 
 interface BimCostCalculatorProps {
   elements: BimElementMeasure[];
+  projectId: string;
 }
 
-export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements }) => {
-  const [costs, setCosts] = useState<Record<string, { cost: number; unit: 'm2' | 'm3' | 'ml' | 'u' }>>({});
+export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, projectId }) => {
+  const costsKey = `ecar-bim-costs-${projectId}`;
+
+  // Restore persisted cost settings
+  const getPersistedCosts = () => {
+    try {
+      const raw = localStorage.getItem(costsKey);
+      if (raw) return JSON.parse(raw);
+    } catch { /* corrupt */ }
+    return null;
+  };
+  const persistedCosts = getPersistedCosts();
+
+  const [costs, setCosts] = useState<Record<string, { cost: number; unit: 'm2' | 'm3' | 'ml' | 'u' }>>(persistedCosts?.costs || {});
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
-  const [markupPct, setMarkupPct] = useState(15);
-  const [currency, setCurrency] = useState<Currency>('USD');
-  const [usdRate, setUsdRate] = useState(DEFAULT_USD_RATE);
+  const [markupPct, setMarkupPct] = useState(persistedCosts?.markupPct ?? 15);
+  const [currency, setCurrency] = useState<Currency>(persistedCosts?.currency || 'USD');
+  const [usdRate, setUsdRate] = useState(persistedCosts?.usdRate || DEFAULT_USD_RATE);
   const [loadingRate, setLoadingRate] = useState(false);
+
+  // Persist cost settings whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(costsKey, JSON.stringify({ costs, markupPct, currency, usdRate }));
+    } catch { /* quota */ }
+  }, [costs, markupPct, currency, usdRate, costsKey]);
 
   // Intentar obtener cotización real del dólar blue al montar
   useEffect(() => {

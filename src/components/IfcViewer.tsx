@@ -6,6 +6,7 @@ import { Upload, RotateCw, ZoomIn, ZoomOut, Maximize2, Eye, Layers, Box, X, Load
 import { BimCostCalculator, type BimElementMeasure } from './BimCostCalculator';
 
 interface IfcViewerProps {
+  projectId: string;
   onElementSelect?: (elementId: number, properties: Record<string, any>) => void;
 }
 
@@ -36,7 +37,7 @@ const TYPE_COLORS: Record<string, number> = {
   'Pilote': 0x777060, 'default': 0xcccccc,
 };
 
-export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
+export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -47,15 +48,27 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
   const raycaster = useRef(new THREE.Raycaster());
   const mouse = useRef(new THREE.Vector2());
 
+  const storageKey = `ecar-bim-${projectId}`;
+
+  // Restore persisted data on mount
+  const getPersistedData = (): { measures: BimElementMeasure[]; fileName: string | null } | null => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return JSON.parse(raw);
+    } catch { /* corrupt data */ }
+    return null;
+  };
+  const persisted = getPersistedData();
+
   const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState('');
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [elementCount, setElementCount] = useState(0);
+  const [fileName, setFileName] = useState<string | null>(persisted?.fileName || null);
+  const [elementCount, setElementCount] = useState(persisted?.measures?.length || 0);
   const [selectedElement, setSelectedElement] = useState<{ id: number; type: string; name: string; props: Record<string, any> } | null>(null);
   const [viewMode, setViewMode] = useState<'solid' | 'wireframe' | 'xray'>('solid');
   const [error, setError] = useState<string | null>(null);
-  const [elementMeasures, setElementMeasures] = useState<BimElementMeasure[]>([]);
-  const [showCosts, setShowCosts] = useState(false);
+  const [elementMeasures, setElementMeasures] = useState<BimElementMeasure[]>(persisted?.measures || []);
+  const [showCosts, setShowCosts] = useState(persisted?.measures ? true : false);
   const [showHelp, setShowHelp] = useState(false);
 
   // Initialize Three.js scene
@@ -285,6 +298,11 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
       setElementCount(count);
       setElementMeasures(measures);
 
+      // Persist to localStorage
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ measures, fileName: fileName }));
+      } catch { /* quota exceeded */ }
+
       api.CloseModel(modelID);
       setLoadProgress('');
     } catch (err: any) {
@@ -302,8 +320,19 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
     }
     setFileName(file.name);
     const buffer = await file.arrayBuffer();
+    // Store filename for persistence (will be saved after model loads)
+    const currentFileName = file.name;
     await loadIfcModel(buffer);
-  }, [loadIfcModel]);
+    // Update localStorage with correct filename
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        data.fileName = currentFileName;
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      }
+    } catch { /* ignore */ }
+  }, [loadIfcModel, storageKey]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -512,7 +541,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ onElementSelect }) => {
 
       {/* Cost Calculator Panel */}
       {showCosts && fileName && (
-        <BimCostCalculator elements={elementMeasures} />
+        <BimCostCalculator elements={elementMeasures} projectId={projectId} />
       )}
 
       {/* Help Modal */}

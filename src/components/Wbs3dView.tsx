@@ -17,7 +17,7 @@ const PHASE_LABEL: Record<string, string> = {
 
 type RenderMode = 'realista' | 'fases' | 'estructural';
 
-export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
+export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ wbs, projectId }) => {
   const [selectedTask, setSelectedTask] = useState<WbsElement | null>(null);
   const [renderMode, setRenderMode] = useState<RenderMode>('realista');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -120,7 +120,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[] }> = ({ wbs }) => {
       </div>
 
       {/* BIM Viewer */}
-      {viewType === 'bim' && <IfcViewer />}
+      {viewType === 'bim' && <IfcViewer projectId={projectId} />}
 
       {/* Isometric CSS View */}
       {viewType === 'isometric' && !wbs.length && (
