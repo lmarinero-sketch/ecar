@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
-  LayoutGrid, MapPin, Trash2, Edit3, Save, Grid3X3
+  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -85,6 +85,8 @@ export const InventoryModule: React.FC = () => {
       min_stock: parseFloat(newItem.min_stock) || 0,
       unit_cost: parseFloat(newItem.unit_cost) || 0,
       qr_code: '',
+      shelf_id: null,
+      shelf_position: null,
       created_at: new Date().toISOString()
     });
   };
@@ -461,7 +463,7 @@ export const InventoryModule: React.FC = () => {
         const handleSaveShelf = async (e: React.FormEvent) => {
           e.preventDefault();
           const payload = {
-            code: shelfForm.code, name: shelfForm.name, shelf_type: shelfForm.shelf_type,
+            code: shelfForm.code, name: shelfForm.name, shelf_type: shelfForm.shelf_type as WarehouseShelf['shelf_type'],
             rows_count: parseInt(shelfForm.rows_count) || 4, columns_count: parseInt(shelfForm.columns_count) || 3,
             color: shelfForm.color, notes: shelfForm.notes || null,
           };
