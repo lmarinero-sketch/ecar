@@ -7,7 +7,7 @@ import type {
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
-  InventoryItem, InventoryMovement, ToolAssignment,
+  InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf,
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
   SeguridadIncidente, SeguridadObservacion,
@@ -686,12 +686,58 @@ export function useUpdateProjectCertificate() {
   });
 }
 
+// ========== WAREHOUSE SHELVES ==========
+export function useWarehouseShelves() {
+  return useQuery({
+    queryKey: ['warehouse_shelves'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('warehouse_shelves').select('*').order('code');
+      if (error) throw error;
+      return data as WarehouseShelf[];
+    },
+  });
+}
+
+export function useCreateWarehouseShelf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (shelf: Partial<WarehouseShelf>) => {
+      const { data, error } = await supabase.from('warehouse_shelves').insert({ ...shelf, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['warehouse_shelves'] }),
+  });
+}
+
+export function useUpdateWarehouseShelf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<WarehouseShelf> & { id: string }) => {
+      const { error } = await supabase.from('warehouse_shelves').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['warehouse_shelves'] }),
+  });
+}
+
+export function useDeleteWarehouseShelf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('warehouse_shelves').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['warehouse_shelves'] }),
+  });
+}
+
 // ========== INVENTORY ==========
 export function useInventoryItems() {
   return useQuery({
     queryKey: ['inventory_items'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('inventory_items').select('*').order('category').order('name');
+      const { data, error } = await supabase.from('inventory_items').select('*, shelf:warehouse_shelves(id, code, name, color, shelf_type)').order('category').order('name');
       if (error) throw error;
       return data as InventoryItem[];
     },

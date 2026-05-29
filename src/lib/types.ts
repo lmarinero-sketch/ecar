@@ -518,6 +518,24 @@ export type ProjectCertificate = {
 
 // ========== INVENTARIO / PAÑOL ==========
 
+export type WarehouseShelf = {
+  id: string;
+  tenant_id: string;
+  code: string;
+  name: string;
+  shelf_type: 'rack' | 'pallet' | 'cabinet' | 'floor' | 'wall';
+  rows_count: number;
+  columns_count: number;
+  color: string;
+  grid_row: number;
+  grid_col: number;
+  grid_width: number;
+  grid_height: number;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
 export type InventoryItem = {
   id: string;
   tenant_id: string;
@@ -531,7 +549,10 @@ export type InventoryItem = {
   barcode: string | null;
   unit_cost: number;
   is_tool: boolean;
+  shelf_id: string | null;
+  shelf_position: string | null;
   created_at: string;
+  shelf?: WarehouseShelf;
 };
 
 export type InventoryMovement = {

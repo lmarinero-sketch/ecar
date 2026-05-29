@@ -1,20 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
-  RotateCcw, AlertTriangle, Boxes, User, Barcode
+  RotateCcw, AlertTriangle, Boxes, User, Barcode,
+  LayoutGrid, MapPin, Trash2, Edit3, Save, Grid3X3
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
   useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
-  useUpdateToolAssignment, useProjects, useEmployees
+  useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
+  useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf
 } from '../hooks/useData';
-import type { InventoryItem } from '../lib/types';
+import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
-type Tab = 'stock' | 'tools' | 'movements';
+type Tab = 'stock' | 'tools' | 'movements' | 'shelves';
+
+const SHELF_TYPES: Record<string, { label: string; icon: string }> = {
+  rack: { label: 'Rack / Estantería', icon: '🗄️' },
+  pallet: { label: 'Zona Pallets', icon: '📦' },
+  cabinet: { label: 'Gabinete / Armario', icon: '🔒' },
+  floor: { label: 'Piso Abierto', icon: '⬜' },
+  wall: { label: 'Pared / Perchero', icon: '🪝' },
+};
+
+const SHELF_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
 
 export const InventoryModule: React.FC = () => {
   const { data: items, isLoading } = useInventoryItems();
@@ -22,10 +34,15 @@ export const InventoryModule: React.FC = () => {
   const { data: assignments } = useToolAssignments();
   const { data: projects } = useProjects();
   const { data: employees } = useEmployees();
+  const { data: shelves } = useWarehouseShelves();
   const createItem = useCreateInventoryItem();
   const createMovement = useCreateInventoryMovement();
   const createAssignment = useCreateToolAssignment();
   const updateAssignment = useUpdateToolAssignment();
+  const updateItem = useUpdateInventoryItem();
+  const createShelf = useCreateWarehouseShelf();
+  const updateShelf = useUpdateWarehouseShelf();
+  const deleteShelf = useDeleteWarehouseShelf();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -35,9 +52,14 @@ export const InventoryModule: React.FC = () => {
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '' });
+  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
+  const [showNewShelf, setShowNewShelf] = useState(false);
+  const [editingShelf, setEditingShelf] = useState<WarehouseShelf | null>(null);
+  const [shelfForm, setShelfForm] = useState({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' });
+  const [assignShelfItem, setAssignShelfItem] = useState<InventoryItem | null>(null);
+  const [shelfAssignForm, setShelfAssignForm] = useState({ shelf_id: '', shelf_position: '' });
 
   const generateRandomBarcode = () => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -91,9 +113,10 @@ export const InventoryModule: React.FC = () => {
       is_tool: newItem.is_tool || newItem.category === 'herramienta',
       barcode: newItem.barcode || null,
       location: newItem.location || 'Depósito',
+      shelf_id: newItem.shelf_id || null,
     });
     setShowNewItem(false);
-    setNewItem({ name: '', category: 'material', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '' });
+    setNewItem({ name: '', category: 'material', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
   };
 
   const handleMovement = async (e: React.FormEvent) => {
@@ -158,7 +181,7 @@ export const InventoryModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {([['stock', '📦 Stock', null], ['tools', '🔧 Herramientas', null], ['movements', '📋 Movimientos', null]] as [Tab, string, null][]).map(([id, label]) => (
+        {([['stock', '📦 Stock', null], ['tools', '🔧 Herramientas', null], ['movements', '📋 Movimientos', null], ['shelves', '🗄️ Estanterías', null]] as [Tab, string, null][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === id ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{label}</button>
         ))}
       </div>
@@ -189,6 +212,7 @@ export const InventoryModule: React.FC = () => {
               <tr>
                 <th className="px-4 py-3">Ítem</th>
                 <th className="px-4 py-3">Categoría</th>
+                <th className="px-4 py-3">Ubicación</th>
                 <th className="px-4 py-3 text-center">Stock</th>
                 <th className="px-4 py-3 text-center">Mínimo</th>
                 <th className="px-4 py-3 text-right">Costo Unit.</th>
@@ -204,6 +228,19 @@ export const InventoryModule: React.FC = () => {
                       {item.category}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    {item.shelf ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
+                        <span className="text-xs font-bold text-gray-700">{(item.shelf as any)?.code}</span>
+                        {item.shelf_position && <span className="text-[10px] font-mono text-gray-400">({item.shelf_position})</span>}
+                      </div>
+                    ) : (
+                      <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
+                        <MapPin size={12} /> Asignar
+                      </button>
+                    )}
+                  </td>
                   <td className={`px-4 py-3 text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
                     {item.current_stock} {item.unit}
                   </td>
@@ -213,6 +250,9 @@ export const InventoryModule: React.FC = () => {
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
                       {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-purple-600" /></button>}
+                      {item.shelf ? (
+                        <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
+                      ) : null}
                       <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
                     </div>
                   </td>
@@ -341,7 +381,7 @@ export const InventoryModule: React.FC = () => {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
-                <div><label className="text-xs font-bold text-gray-500">Ubicación</label><input value={newItem.location} onChange={e => setNewItem({ ...newItem, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm uppercase" placeholder="Ej: EST2-N1-A" /></div>
+                <div><label className="text-xs font-bold text-gray-500">Estantería</label><select value={newItem.shelf_id} onChange={e => setNewItem({ ...newItem, shelf_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Sin asignar</option>{(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}</select></div>
                 <div><label className="text-xs font-bold text-gray-500">Unidad</label><input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="unidad, kg, m3" /></div>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -404,6 +444,193 @@ export const InventoryModule: React.FC = () => {
       {/* Modal Código de Barras */}
       {showBarcode && (
         <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
+      )}
+
+      {/* Shelves Tab */}
+      {tab === 'shelves' && (() => {
+        const shelfList = shelves || [];
+        const maxRow = Math.max(0, ...shelfList.map(s => s.grid_row + s.grid_height));
+        const maxCol = Math.max(0, ...shelfList.map(s => s.grid_col + s.grid_width));
+        const gridRows = Math.max(3, maxRow + 1);
+        const gridCols = Math.max(4, maxCol + 1);
+        const itemsByShelf = (items || []).reduce((acc, it) => {
+          if (it.shelf_id) { acc[it.shelf_id] = (acc[it.shelf_id] || 0) + 1; }
+          return acc;
+        }, {} as Record<string, number>);
+
+        const handleSaveShelf = async (e: React.FormEvent) => {
+          e.preventDefault();
+          const payload = {
+            code: shelfForm.code, name: shelfForm.name, shelf_type: shelfForm.shelf_type,
+            rows_count: parseInt(shelfForm.rows_count) || 4, columns_count: parseInt(shelfForm.columns_count) || 3,
+            color: shelfForm.color, notes: shelfForm.notes || null,
+          };
+          if (editingShelf) {
+            await updateShelf.mutateAsync({ id: editingShelf.id, ...payload });
+          } else {
+            const nextRow = shelfList.length > 0 ? Math.max(...shelfList.map(s => s.grid_row + s.grid_height)) : 0;
+            await createShelf.mutateAsync({ ...payload, grid_row: nextRow, grid_col: 0, grid_width: 1, grid_height: 1 });
+          }
+          setShowNewShelf(false); setEditingShelf(null);
+          setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' });
+        };
+
+        return (
+          <div className="space-y-6">
+            {/* Diagrama Visual del Depósito */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2"><LayoutGrid size={16} /> Plano del Depósito</h3>
+                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' }); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+                  <Plus size={16} /> Nueva Estantería
+                </button>
+              </div>
+              <div className="p-6">
+                {shelfList.length === 0 ? (
+                  <div className="text-center py-16 text-gray-400">
+                    <Grid3X3 size={48} className="mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No hay estanterías configuradas</p>
+                    <p className="text-sm">Creá tu primera estantería para armar el plano del depósito.</p>
+                  </div>
+                ) : (
+                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50" style={{ minHeight: 200 }}>
+                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-300 uppercase tracking-wider">Plano depósito</div>
+                    <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gridTemplateRows: `repeat(${gridRows}, minmax(80px, auto))` }}>
+                      {shelfList.map(shelf => (
+                        <div key={shelf.id} className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden" style={{ borderColor: shelf.color, gridRow: `${shelf.grid_row + 1} / span ${shelf.grid_height}`, gridColumn: `${shelf.grid_col + 1} / span ${shelf.grid_width}`, background: `${shelf.color}08` }}
+                          onClick={() => { setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '' }); setShowNewShelf(true); }}>
+                          <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <button onClick={(e) => { e.stopPropagation(); if (confirm('¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
+                              <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                            </div>
+                            <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-[10px] text-gray-400">{shelf.rows_count}×{shelf.columns_count} posiciones</span>
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}20`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
+                          </div>
+                          {/* Mini grid visualization */}
+                          <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
+                            {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
+                              <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '40' : '15'}` }} />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Lista de estanterías */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 className="font-bold text-gray-800">Detalle de Estanterías</h3>
+              </div>
+              {shelfList.length > 0 ? (
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                    <tr><th className="px-4 py-3">Código</th><th className="px-4 py-3">Nombre</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3 text-center">Posiciones</th><th className="px-4 py-3 text-center">Ítems</th><th className="px-4 py-3">Notas</th><th className="px-4 py-3 text-center">Acciones</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {shelfList.map(s => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="font-bold font-mono">{s.code}</span></div></td>
+                        <td className="px-4 py-3 font-medium">{s.name}</td>
+                        <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
+                        <td className="px-4 py-3 text-center font-mono">{s.rows_count} × {s.columns_count}</td>
+                        <td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
+                        <td className="px-4 py-3 text-gray-400 text-xs">{s.notes || '—'}</td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '' }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
+                            <button onClick={() => { if (confirm('¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+            </div>
+
+            {/* Modal Nueva/Editar Estantería */}
+            {showNewShelf && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+                  <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingShelf ? 'Editar' : 'Nueva'} Estantería</h3><button onClick={() => { setShowNewShelf(false); setEditingShelf(null); }}><X size={20} className="text-gray-400" /></button></div>
+                  <form onSubmit={handleSaveShelf} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={shelfForm.code} onChange={e => setShelfForm({ ...shelfForm, code: e.target.value.toUpperCase() })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="EST-01" /></div>
+                      <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={shelfForm.name} onChange={e => setShelfForm({ ...shelfForm, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Estantería Principal" /></div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={shelfForm.shelf_type} onChange={e => setShelfForm({ ...shelfForm, shelf_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">{Object.entries(SHELF_TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}</select></div>
+                      <div><label className="text-xs font-bold text-gray-500">Niveles</label><input type="number" min="1" max="10" value={shelfForm.rows_count} onChange={e => setShelfForm({ ...shelfForm, rows_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+                      <div><label className="text-xs font-bold text-gray-500">Divisiones</label><input type="number" min="1" max="10" value={shelfForm.columns_count} onChange={e => setShelfForm({ ...shelfForm, columns_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500">Color</label>
+                      <div className="flex gap-2 mt-1">{SHELF_COLORS.map(c => <button key={c} type="button" onClick={() => setShelfForm({ ...shelfForm, color: c })} className={`w-7 h-7 rounded-full border-2 transition-all ${shelfForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />)}</div>
+                    </div>
+                    <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={shelfForm.notes} onChange={e => setShelfForm({ ...shelfForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción del contenido..." /></div>
+                    <button type="submit" disabled={createShelf.isPending || updateShelf.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+                      {(createShelf.isPending || updateShelf.isPending) ? 'Guardando...' : editingShelf ? '💾 Guardar Cambios' : '✅ Crear Estantería'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Modal Asignar Ubicación */}
+      {assignShelfItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">📍 Ubicación: {assignShelfItem.name}</h3><button onClick={() => setAssignShelfItem(null)}><X size={20} className="text-gray-400" /></button></div>
+            <form onSubmit={async (e) => { e.preventDefault(); await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: shelfAssignForm.shelf_id || null, shelf_position: shelfAssignForm.shelf_position || null } as any); setAssignShelfItem(null); }} className="space-y-3">
+              <div><label className="text-xs font-bold text-gray-500">Estantería *</label>
+                <select value={shelfAssignForm.shelf_id} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_id: e.target.value })} required className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccioná...</option>
+                  {(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs font-bold text-gray-500">Posición (Nivel-Columna)</label><input value={shelfAssignForm.shelf_position} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_position: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="Ej: N2-C1 (Nivel 2, Columna 1)" /></div>
+              {shelfAssignForm.shelf_id && (() => {
+                const sel = (shelves || []).find(s => s.id === shelfAssignForm.shelf_id);
+                if (!sel) return null;
+                return (
+                  <div className="bg-gray-50 rounded-xl p-3 border">
+                    <p className="text-xs font-bold text-gray-500 mb-2">Posiciones disponibles ({sel.rows_count} × {sel.columns_count})</p>
+                    <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${sel.columns_count}, 1fr)` }}>
+                      {Array.from({ length: sel.rows_count }).map((_, r) =>
+                        Array.from({ length: sel.columns_count }).map((_, c) => {
+                          const pos = `N${r + 1}-C${c + 1}`;
+                          const occupied = (items || []).some(it => it.shelf_id === sel.id && it.shelf_position === pos && it.id !== assignShelfItem.id);
+                          const isSelected = shelfAssignForm.shelf_position === pos;
+                          return <button key={pos} type="button" disabled={occupied} onClick={() => setShelfAssignForm({ ...shelfAssignForm, shelf_position: pos })} className={`py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all ${isSelected ? 'text-white shadow-sm' : occupied ? 'bg-red-100 text-red-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600'}`} style={isSelected ? { backgroundColor: sel.color } : undefined}>{pos}</button>;
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="flex gap-2">
+                {assignShelfItem.shelf_id && <button type="button" onClick={async () => { await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: null, shelf_position: null } as any); setAssignShelfItem(null); }} className="flex-1 bg-red-100 text-red-700 py-3 rounded-lg font-bold text-sm hover:bg-red-200 transition-all">Quitar ubicación</button>}
+                <button type="submit" disabled={updateItem.isPending} className="flex-1 bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+                  {updateItem.isPending ? 'Guardando...' : '📍 Asignar Ubicación'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {showScanner && (
