@@ -516,7 +516,19 @@ export type ProjectCertificate = {
   project?: Project;
 };
 
-// ========== CONFIGURACIÓN DEL SISTEMA ==========\r\n\r\nexport type SystemSetting = {\r\n  id: string;\r\n  tenant_id: string;\r\n  key: string;\r\n  value: string;\r\n  description: string | null;\r\n  updated_at: string;\r\n  created_at: string;\r\n};\r\n\r\n// ========== INVENTARIO / PAÑOL ==========
+// ========== CONFIGURACIÓN DEL SISTEMA ==========
+
+export type SystemSetting = {
+  id: string;
+  tenant_id: string;
+  key: string;
+  value: string;
+  description: string | null;
+  updated_at: string;
+  created_at: string;
+};
+
+// ========== INVENTARIO / PAÑOL ==========
 
 export type WarehouseShelf = {
   id: string;
