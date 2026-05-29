@@ -830,6 +830,18 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         })
       }
       case 'create_purchase_request': {
+        // === VALIDACIÓN DE NÚMERO AUTORIZADO ===
+        if (phone) {
+          const { data: setting } = await supabase.from('system_settings').select('value').eq('key', 'whatsapp_purchase_phone').limit(1).single()
+          const authorizedPhone = setting?.value?.replace(/\D/g, '')
+          const callerPhone = phone.replace(/\D/g, '')
+          if (authorizedPhone && authorizedPhone !== callerPhone) {
+            return JSON.stringify({ error: '🚫 Tu número no está autorizado para crear pedidos de compra. Pedile al administrador que te habilite desde el sistema ECAR → Pedidos de Compra → Configurar WhatsApp.' })
+          }
+          if (!authorizedPhone) {
+            return JSON.stringify({ error: '⚠️ Los pedidos por WhatsApp no están habilitados. El administrador debe configurar un número autorizado desde ECAR → Pedidos de Compra.' })
+          }
+        }
         const { data: tenant } = await supabase.from('tenants').select('id').limit(1).single()
         const { data: project } = await supabase.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
         if (!project) return JSON.stringify({ error: `No encontré el proyecto "${args.project_name}"` })
