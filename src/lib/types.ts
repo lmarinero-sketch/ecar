@@ -516,7 +516,7 @@ export type ProjectCertificate = {
   project?: Project;
 };
 
-// ========== INVENTARIO / PAÑOL ==========
+// ========== CONFIGURACIÓN DEL SISTEMA ==========\r\n\r\nexport type SystemSetting = {\r\n  id: string;\r\n  tenant_id: string;\r\n  key: string;\r\n  value: string;\r\n  description: string | null;\r\n  updated_at: string;\r\n  created_at: string;\r\n};\r\n\r\n// ========== INVENTARIO / PAÑOL ==========
 
 export type WarehouseShelf = {
   id: string;

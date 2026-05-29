@@ -6,7 +6,7 @@ import type {
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
-  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate,
+  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting,
   InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf,
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
@@ -729,6 +729,41 @@ export function useDeleteWarehouseShelf() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['warehouse_shelves'] }),
+  });
+}
+
+// ========== SYSTEM SETTINGS ==========
+export function useSystemSettings() {
+  return useQuery({
+    queryKey: ['system_settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('system_settings').select('*').order('key');
+      if (error) throw error;
+      return data as SystemSetting[];
+    },
+  });
+}
+
+export function useSystemSetting(key: string) {
+  return useQuery({
+    queryKey: ['system_settings', key],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('system_settings').select('*').eq('key', key).maybeSingle();
+      if (error) throw error;
+      return data as SystemSetting | null;
+    },
+  });
+}
+
+export function useUpsertSystemSetting() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ key, value, description }: { key: string; value: string; description?: string }) => {
+      const { data, error } = await supabase.from('system_settings').upsert({ tenant_id: ECAR_TENANT_ID, key, value, description: description || null, updated_at: new Date().toISOString() }, { onConflict: 'tenant_id,key' }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['system_settings'] }),
   });
 }
 
