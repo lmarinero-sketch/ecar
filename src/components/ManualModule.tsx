@@ -944,7 +944,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(t(item.label, ax + 13, ay + 7);
+        pdf.text(t(item.label), ax + 13, ay + 7);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(6.5);
         pdf.setFont('helvetica', 'normal');
