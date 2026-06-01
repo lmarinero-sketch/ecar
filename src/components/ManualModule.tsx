@@ -580,6 +580,22 @@ const ROLES = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════ */
+/*               HELPER: ASCII normalizer para jsPDF              */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/** Convierte caracteres con tildes y símbolos especiales a ASCII
+ *  para compatibilidad con la fuente Helvetica de jsPDF. */
+const t = (s: string): string =>
+  s
+    .replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ó/g, 'o').replace(/ú/g, 'u')
+    .replace(/Á/g, 'A').replace(/É/g, 'E').replace(/Í/g, 'I').replace(/Ó/g, 'O').replace(/Ú/g, 'U')
+    .replace(/à/g, 'a').replace(/è/g, 'e').replace(/ì/g, 'i').replace(/ò/g, 'o').replace(/ù/g, 'u')
+    .replace(/ñ/g, 'n').replace(/Ñ/g, 'N').replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/·/g, '-').replace(/—/g, '-').replace(/–/g, '-').replace(/→/g, '->').replace(/×/g, 'x')
+    .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+    .replace(/[^\x00-\xFF]/g, '?');
+
+/* ═══════════════════════════════════════════════════════════════ */
 /*                       COMPONENTE PRINCIPAL                      */
 /* ═══════════════════════════════════════════════════════════════ */
 
