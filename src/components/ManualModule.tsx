@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  BookOpen, Download, FileText, Shield, Users, Package, Truck,
+  BookOpen, Download, FileText, Shield, Users, Package,
   LayoutDashboard, Calculator, ShoppingCart, Landmark, Bell,
   Warehouse, FileSignature, Smartphone, ShieldAlert, ClipboardCheck,
   MessageSquareText, Wallet, FolderOpen, HardHat, Target, Fuel,
@@ -9,7 +9,6 @@ import {
   ChevronRight, Globe, Cpu, Server, Key
 } from 'lucide-react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 /* ═══════════════════════════════════════════════════════════════ */
 /*                        TIPOS Y DATOS                           */
@@ -813,22 +812,9 @@ export const ManualModule: React.FC = () => {
         y += 18;
       };
 
-      const infoBox = (label: string, value: string) => {
-        if (y > pageH - 25) { addNewPage(); y = 20; }
-        pdf.setFillColor(...LIGHT);
-        pdf.roundedRect(margin, y, contentW / 2 - 3, 10, 1, 1, 'F');
-        pdf.setTextColor(...GRAY);
-        pdf.setFontSize(6.5);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(label.toUpperCase(), margin + 3, y + 4);
-        pdf.setTextColor(...DARK);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(value, margin + 3, y + 8.5);
-        y += 12;
-      };
 
       sectionHeader('1. INTRODUCCIÓN Y ALCANCE DEL SISTEMA', 'Sección 1 de 12');
+
 
       pdf.setTextColor(...DARK);
       pdf.setFontSize(9);
