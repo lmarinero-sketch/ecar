@@ -638,21 +638,35 @@ export const ManualModule: React.FC = () => {
         pdf.circle(pageW - 20, 60 + i * 25, 15 + i * 8, 'S');
       }
 
-      // Logo area
-      pdf.setFillColor(255, 255, 255, 0.15);
-      pdf.roundedRect(margin, 30, 60, 20, 3, 3, 'F');
-      pdf.setTextColor(...WHITE);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('ECAR', margin + 8, 44);
-      pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('ERP SISTEMA', margin + 8, 50);
+      // Logo area — embed logoECAR.png
+      const logoImg = new Image();
+      logoImg.src = '/logoECAR.png';
+      await new Promise<void>((resolve) => {
+        logoImg.onload = () => {
+          pdf.setFillColor(255, 255, 255);
+          pdf.roundedRect(margin, 28, 70, 22, 3, 3, 'F');
+          pdf.addImage(logoImg, 'PNG', margin + 2, 30, 66, 18);
+          resolve();
+        };
+        logoImg.onerror = () => {
+          // Fallback text si no carga la imagen
+          pdf.setFillColor(255, 255, 255, 0.15);
+          pdf.roundedRect(margin, 30, 60, 20, 3, 3, 'F');
+          pdf.setTextColor(...WHITE);
+          pdf.setFontSize(18);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('ECAR', margin + 8, 44);
+          pdf.setFontSize(7);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text('EMPRESA CONSTRUCTORA', margin + 8, 50);
+          resolve();
+        };
+      });
 
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(180, 210, 240);
-      pdf.text('GROW LABS · SANATORIO ARGENTINO', pageW - margin, 44, { align: 'right' });
+      pdf.text('Sistema ERP · Gestión Integral de Obras', pageW - margin, 44, { align: 'right' });
 
       // Title
       pdf.setTextColor(...WHITE);
@@ -700,7 +714,7 @@ export const ManualModule: React.FC = () => {
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'italic');
       pdf.setTextColor(160, 190, 220);
-      pdf.text('Documento de uso interno. Propiedad de Grow Labs. Prohibida su reproducción sin autorización expresa.', pageW / 2, pageH - 12, { align: 'center' });
+      pdf.text('Documento de uso interno. ECAR Sistema ERP. Prohibida su reproducción sin autorización expresa.', pageW / 2, pageH - 12, { align: 'center' });
 
       setProgress(10);
 
@@ -824,7 +838,7 @@ export const ManualModule: React.FC = () => {
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...GRAY);
       const intro1 = pdf.splitTextToSize(
-        'El presente documento establece el Manual de Procedimientos del Sistema ERP ECAR, desarrollado por Grow Labs para la gestión integral de empresas constructoras. Su propósito es describir exhaustivamente los procesos, responsabilidades, registros e indicadores de cada módulo del sistema, en cumplimiento con los requisitos de la norma ISO 9001:2015 para Sistemas de Gestión de la Calidad.',
+        'El presente documento establece el Manual de Procedimientos del Sistema ERP ECAR para la gestión integral de empresas del sector construcción. Su propósito es describir exhaustivamente los procesos, responsabilidades, registros e indicadores de cada módulo del sistema, en cumplimiento con los requisitos de la norma ISO 9001:2015 para Sistemas de Gestión de la Calidad.',
         contentW
       );
       pdf.text(intro1, margin, y);
@@ -1276,7 +1290,7 @@ export const ManualModule: React.FC = () => {
         ['Título', 'Manual de Procedimientos del Sistema ERP ECAR'],
         ['Versión', '1.0'],
         ['Fecha de emisión', new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })],
-        ['Elaborado por', 'Grow Labs – Equipo de Desarrollo ECAR'],
+        ['Elaborado por', 'Equipo de Desarrollo ECAR'],
         ['Revisado por', 'Departamento de Calidad'],
         ['Aprobado por', 'Dirección General'],
         ['Próxima revisión', 'A los 6 meses de la fecha de emisión o ante cambios mayores del sistema'],
@@ -1320,7 +1334,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...DARK);
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
-      ['1.0', new Date().toLocaleDateString('es-AR'), 'Versión inicial del manual del sistema completo', 'Grow Labs'].forEach((col, ci) => {
+      ['1.0', new Date().toLocaleDateString('es-AR'), 'Versión inicial del manual del sistema completo', 'ECAR ERP'].forEach((col, ci) => {
         const cx = margin + ci * (contentW / 4);
         pdf.text(col, cx + 2, y + 5.5);
       });
@@ -1380,8 +1394,8 @@ export const ManualModule: React.FC = () => {
       pdf.text(`Generado el ${new Date().toLocaleString('es-AR')}`, pageW / 2, pageH / 2 + 8, { align: 'center' });
       pdf.setTextColor(100, 130, 160);
       pdf.setFontSize(8);
-      pdf.text('Desarrollado por Grow Labs', pageW / 2, pageH - 20, { align: 'center' });
-      pdf.text('grow-labs.com.ar', pageW / 2, pageH - 14, { align: 'center' });
+      pdf.text('ECAR — Sistema ERP para Empresas Constructoras', pageW / 2, pageH - 20, { align: 'center' });
+      pdf.text('Ing. Carlos A. Regalado', pageW / 2, pageH - 14, { align: 'center' });
 
       setProgress(98);
       pdf.save(`ECAR_Manual_Procedimientos_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`);
@@ -1563,7 +1577,7 @@ export const ManualModule: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  El presente Manual de Procedimientos describe exhaustivamente el Sistema ERP ECAR, desarrollado por <strong>Grow Labs</strong> para la gestión integral de empresas del sector construcción. Abarca la totalidad de los procesos operativos, administrativos, financieros y de gestión de personas implementados en el sistema.
+                  El presente Manual de Procedimientos describe exhaustivamente el Sistema ERP ECAR para la gestión integral de empresas del sector construcción. Abarca la totalidad de los procesos operativos, administrativos, financieros y de gestión de personas implementados en el sistema.
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="text-xs font-bold text-blue-700 mb-1">DECLARACIÓN DE ALCANCE</div>
