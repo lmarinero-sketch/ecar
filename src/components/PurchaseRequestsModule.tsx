@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
-  useSystemSetting, useUpsertSystemSetting
+  useSystemSetting, useUpsertSystemSetting, useInventoryItems
 } from '../hooks/useData';
 import type { PurchaseRequestItem } from '../lib/types';
 
@@ -38,6 +38,7 @@ const formatPhone = (phone: string) => {
 export const PurchaseRequestsModule: React.FC = () => {
   const { data: requests, isLoading } = usePurchaseRequests();
   const { data: projects } = useProjects();
+  const { data: inventoryItems = [] } = useInventoryItems();
   const { data: whatsappSetting } = useSystemSetting('whatsapp_purchase_phone');
   const createRequest = useCreatePurchaseRequest();
   const updateRequest = useUpdatePurchaseRequest();
@@ -47,7 +48,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [showWhatsappConfig, setShowWhatsappConfig] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [form, setForm] = useState({ project_id: '', urgency: 'normal', requested_by: '', notes: '' });
-  const [formItems, setFormItems] = useState<{ description: string; quantity: string; unit: string }[]>([{ description: '', quantity: '1', unit: 'unidad' }]);
+  const [formItems, setFormItems] = useState<{ description: string; quantity: string; unit: string; inventoryItemId: string; searchText: string; showDropdown: boolean }[]>([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [phoneSaved, setPhoneSaved] = useState(false);
 
@@ -65,9 +66,20 @@ export const PurchaseRequestsModule: React.FC = () => {
   const pendingCount = useMemo(() => (requests || []).filter(r => r.status === 'pending').length, [requests]);
   const urgentCount = useMemo(() => (requests || []).filter(r => r.urgency === 'urgent' && r.status === 'pending').length, [requests]);
 
-  const addItem = () => setFormItems([...formItems, { description: '', quantity: '1', unit: 'unidad' }]);
+  const addItem = () => setFormItems([...formItems, { description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   const removeItem = (i: number) => setFormItems(formItems.filter((_, idx) => idx !== i));
   const updateItemField = (i: number, field: string, value: string) => setFormItems(formItems.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+
+  const selectInventoryItem = (i: number, invItem: { id: string; name: string; unit: string; category?: string }) => {
+    setFormItems(formItems.map((item, idx) => idx === i ? {
+      ...item,
+      description: invItem.name,
+      unit: invItem.unit || 'unidad',
+      inventoryItemId: invItem.id,
+      searchText: invItem.name,
+      showDropdown: false,
+    } : item));
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +94,7 @@ export const PurchaseRequestsModule: React.FC = () => {
     } as any);
     setShowNew(false);
     setForm({ project_id: '', urgency: 'normal', requested_by: '', notes: '' });
-    setFormItems([{ description: '', quantity: '1', unit: 'unidad' }]);
+    setFormItems([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   };
 
   const handleSavePhone = async () => {
@@ -277,21 +289,100 @@ export const PurchaseRequestsModule: React.FC = () => {
               <div><label className="text-xs font-bold text-gray-500">Solicitado por</label><input value={form.requested_by} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Nombre del capataz" /></div>
 
               <div>
-                <label className="text-xs font-bold text-gray-500 mb-2 block">Materiales Solicitados</label>
-                {formItems.map((item, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <input value={item.description} onChange={e => updateItemField(i, 'description', e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción material" />
-                    <input type="number" value={item.quantity} onChange={e => updateItemField(i, 'quantity', e.target.value)} className="w-16 px-2 py-2 border border-gray-300 rounded-xl text-sm font-mono text-center" />
-                    <input value={item.unit} onChange={e => updateItemField(i, 'unit', e.target.value)} className="w-20 px-2 py-2 border border-gray-300 rounded-xl text-sm" />
-                    {formItems.length > 1 && <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600"><X size={16} /></button>}
-                  </div>
-                ))}
+                <label className="text-xs font-bold text-gray-500 mb-1 block">Materiales / Herramientas Solicitados</label>
+                <p className="text-[10px] text-gray-400 mb-2 flex items-center gap-1">
+                  <Package size={10} /> Solo se pueden solicitar ítems registrados en el inventario
+                </p>
+                {formItems.map((item, i) => {
+                  const q = (item.searchText || '').toLowerCase();
+                  const filtered = inventoryItems
+                    .filter(inv =>
+                      inv.name.toLowerCase().includes(q) ||
+                      (inv.category || '').toLowerCase().includes(q)
+                    )
+                    .sort((a, b) => {
+                      // Prioritize herramientas
+                      const aIsTool = (a.category || '').toLowerCase().includes('herramienta') ? 0 : 1;
+                      const bIsTool = (b.category || '').toLowerCase().includes('herramienta') ? 0 : 1;
+                      if (aIsTool !== bIsTool) return aIsTool - bIsTool;
+                      return a.name.localeCompare(b.name);
+                    });
+                  return (
+                    <div key={i} className="flex gap-2 mb-2 relative">
+                      <div className="flex-1 relative">
+                        <input
+                          value={item.searchText}
+                          onChange={e => {
+                            const newItems = [...formItems];
+                            newItems[i] = { ...newItems[i], searchText: e.target.value, showDropdown: true, description: '', inventoryItemId: '' };
+                            setFormItems(newItems);
+                          }}
+                          onFocus={() => {
+                            const newItems = [...formItems];
+                            newItems[i] = { ...newItems[i], showDropdown: true };
+                            setFormItems(newItems);
+                          }}
+                          onBlur={() => setTimeout(() => {
+                            const newItems = [...formItems];
+                            newItems[i] = { ...newItems[i], showDropdown: false };
+                            setFormItems(newItems);
+                          }, 200)}
+                          className={`w-full px-3 py-2 border rounded-xl text-sm transition-all ${
+                            item.inventoryItemId
+                              ? 'border-green-300 bg-green-50/50 focus:ring-green-500/30 focus:border-green-500'
+                              : 'border-gray-300 focus:ring-ecar-blue/30 focus:border-ecar-blue'
+                          } focus:outline-none focus:ring-2`}
+                          placeholder="Buscá en el inventario..."
+                        />
+                        {item.inventoryItemId && (
+                          <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+                        )}
+                        {item.showDropdown && !item.inventoryItemId && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                            {filtered.length === 0 ? (
+                              <div className="px-3 py-3 text-xs text-gray-400 text-center">
+                                {q ? `No se encontró "${item.searchText}" en inventario` : 'Escribí para buscar...'}
+                              </div>
+                            ) : (
+                              filtered.slice(0, 12).map(inv => {
+                                const isTool = (inv.category || '').toLowerCase().includes('herramienta');
+                                return (
+                                  <button
+                                    key={inv.id}
+                                    type="button"
+                                    onMouseDown={e => e.preventDefault()}
+                                    onClick={() => selectInventoryItem(i, inv)}
+                                    className="w-full text-left px-3 py-2 hover:bg-violet-50 flex items-center gap-2 text-sm transition-colors border-b border-gray-50 last:border-0"
+                                  >
+                                    <Package size={14} className={isTool ? 'text-amber-500' : 'text-violet-400'} />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="font-medium text-gray-800 truncate block">{inv.name}</span>
+                                      <span className="text-[10px] text-gray-400">
+                                        {isTool && '🔧 '}{inv.category || 'Sin categoría'} · {inv.unit}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-gray-400 shrink-0">
+                                      Stock: {inv.current_stock ?? '—'}
+                                    </span>
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <input type="number" value={item.quantity} onChange={e => updateItemField(i, 'quantity', e.target.value)} className="w-16 px-2 py-2 border border-gray-300 rounded-xl text-sm font-mono text-center" />
+                      <input value={item.unit} readOnly className="w-20 px-2 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed" title="Unidad del inventario" />
+                      {formItems.length > 1 && <button type="button" onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600"><X size={16} /></button>}
+                    </div>
+                  );
+                })}
                 <button type="button" onClick={addItem} className="text-xs text-ecar-blue font-bold hover:underline">+ Agregar otro material</button>
               </div>
 
               <div><label className="text-xs font-bold text-gray-500">Notas</label><textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" rows={2} placeholder="Notas adicionales" /></div>
 
-              <button type="submit" disabled={createRequest.isPending} className="w-full bg-violet-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-violet-700 transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createRequest.isPending || !formItems.some(fi => fi.inventoryItemId)} className="w-full bg-violet-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-violet-700 transition-all shadow-md disabled:opacity-50">
                 {createRequest.isPending ? 'Creando...' : '🛒 Crear Pedido de Compra'}
               </button>
             </form>

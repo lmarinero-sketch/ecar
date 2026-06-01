@@ -1677,6 +1677,17 @@ export function useCreateFuelVehicle() {
   });
 }
 
+export function useUpdateFuelVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<FuelVehicle> & { id: string }) => {
+      const { error } = await supabase.from('fuel_vehicles').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_vehicles'] }),
+  });
+}
+
 export function useFuelLoads() {
   return useQuery({
     queryKey: ['fuel_loads'],

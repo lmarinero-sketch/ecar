@@ -981,6 +981,13 @@ export type FuelVehicle = {
   area: string | null;
   default_driver: string | null;
   status: 'active' | 'inactive' | 'maintenance';
+  current_km: number | null;
+  next_maintenance_date: string | null;
+  next_maintenance_km: number | null;
+  maintenance_notes: string | null;
+  last_maintenance_date: string | null;
+  insurance_expiry: string | null;
+  vtv_expiry: string | null;
   created_at: string;
 };
 
@@ -1096,6 +1103,7 @@ export const ALL_MODULES = [
   'fuel',
   'guide',
   'manual',
+  'implementation',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1125,4 +1133,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   fuel: 'Combustible',
   guide: 'Guía de Uso',
   manual: 'Manual de Procedimientos',
+  implementation: 'Implementación',
 };
