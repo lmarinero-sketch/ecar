@@ -711,7 +711,6 @@ export const ManualModule: React.FC = () => {
         ['Código:', 'PRO-ECAR-SYS-001'],
         ['Versión:', '1.0'],
         ['Fecha de emisión:', new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })],
-        ['Norma de referencia:', 'ISO 9001:2015'],
         ['Estado:', 'VIGENTE'],
         ['Módulos documentados:', `${MODULES_DATA.length}`],
       ];
@@ -854,7 +853,7 @@ export const ManualModule: React.FC = () => {
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...GRAY);
       const intro1 = pdf.splitTextToSize(
-        'El presente documento establece el Manual de Procedimientos del Sistema ERP ECAR para la gestión integral de empresas del sector construcción. Su propósito es describir exhaustivamente los procesos, responsabilidades, registros e indicadores de cada módulo del sistema, en cumplimiento con los requisitos de la norma ISO 9001:2015 para Sistemas de Gestión de la Calidad.',
+        'El presente documento establece el Manual de Procedimientos del Sistema ERP ECAR para la gestion integral de empresas del sector construccion. Su proposito es describir exhaustivamente los procesos, responsabilidades, registros e indicadores de cada modulo del sistema.',
         contentW
       );
       pdf.text(intro1.map(t), margin, y);
@@ -910,7 +909,6 @@ export const ManualModule: React.FC = () => {
       pdf.text(t('1.3 Referencias Normativas'), margin, y);
       y += 6;
       const norms = [
-        'ISO 9001:2015 — Sistemas de Gestión de la Calidad',
         'ISO 27001:2022 — Seguridad de la Información',
         'Ley 25.506 — Firma Digital Argentina',
         'RG AFIP/ARCA vigente — Facturación electrónica y CAE',
@@ -1466,12 +1464,11 @@ export const ManualModule: React.FC = () => {
               </div>
             </div>
             <p className="text-blue-200 text-sm max-w-xl leading-relaxed">
-              Documentación técnica y procedimental completa del Sistema ERP ECAR. Diseñado para cumplir con los requisitos de la norma <strong className="text-white">ISO 9001:2015</strong>.
+              Documentación técnica y procedimental completa del Sistema ERP ECAR.
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-4">
               {[
                 { label: `${MODULES_DATA.length} Módulos`, icon: Activity },
-                { label: 'ISO 9001:2015', icon: Shield },
                 { label: 'Versión 1.0', icon: Star },
                 { label: new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }), icon: Calendar },
               ].map((badge, i) => {
@@ -1561,19 +1558,7 @@ export const ManualModule: React.FC = () => {
             })}
           </div>
 
-          {/* ISO Badge */}
-          <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl p-4 text-white text-center shadow-lg">
-            <Shield size={28} className="mx-auto mb-2 text-blue-300" />
-            <div className="font-black text-sm">ISO 9001:2015</div>
-            <div className="text-blue-300 text-xs mt-1">Certificación de Calidad</div>
-            <div className="mt-3 bg-white/10 rounded-lg p-2">
-              <div className="text-xs text-blue-200">Estado del documento</div>
-              <div className="flex items-center justify-center gap-1.5 mt-1">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs font-bold text-green-300">VIGENTE</span>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* ── MAIN CONTENT ── */}
@@ -1589,7 +1574,7 @@ export const ManualModule: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">1. Introducción y Alcance</h3>
-                    <div className="text-xs text-gray-400">ISO 9001:2015 — Cláusula 1</div>
+                    <div className="text-xs text-gray-400">Sistema ERP ECAR</div>
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed mb-4">
@@ -1609,7 +1594,6 @@ export const ManualModule: React.FC = () => {
                 </h4>
                 <div className="space-y-2">
                   {[
-                    { norm: 'ISO 9001:2015', desc: 'Sistemas de Gestión de la Calidad — Requisitos', badge: 'Principal' },
                     { norm: 'ISO 27001:2022', desc: 'Seguridad de la Información', badge: 'Referencia' },
                     { norm: 'Ley 25.506 AR', desc: 'Firma Digital Argentina', badge: 'Legal' },
                     { norm: 'RG ARCA vigente', desc: 'Facturación Electrónica y Obtención de CAE', badge: 'Fiscal' },
