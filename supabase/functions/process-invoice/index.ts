@@ -13,18 +13,19 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const SYSTEM_PROMPT = `Eres un experto contable argentino especializado en lectura de facturas. Tu trabajo es analizar imágenes de facturas y extraer todos los datos relevantes para el Libro IVA.
 
 REGLAS DE CLASIFICACIÓN COMPRA vs VENTA:
-- PRIMERO identificá quién EMITE la factura (aparece arriba, con CUIT, logo y datos del emisor)
-- LUEGO identificá quién RECIBE ("Señor(es)", "Destinatario", "Cliente", aparece más abajo)
-- Si el EMISOR es "ECAR", "REGALADO OSCAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de VENTA (ECAR vende)
-- Si el RECEPTOR es "ECAR", "REGALADO OSCAR", "REGALADO" o "ECAR CONSTRUCCIONES" → es factura de COMPRA (ECAR compra)
-- Si ECAR no aparece en ningún lado, clasifica como COMPRA por defecto
-- IMPORTANTE: La mayoría de las facturas que se suben son de COMPRA. Solo clasificá como venta si estás seguro que el EMISOR es ECAR.
+- ECAR posee el CUIT: "30-12345678-9" (también escrito "30123456789"). Sus denominaciones incluyen "ECAR", "ECAR CONSTRUCCIONES", "REGALADO OSCAR" o "REGALADO".
+- Identifica el CUIT y Razón Social del EMISOR (arriba, emite la factura) y del RECEPTOR (abajo, recibe la factura).
+- Si el EMISOR posee el CUIT de ECAR ("30-12345678-9" / "30123456789") o su nombre es ECAR → es factura de VENTA (ECAR vende/emite).
+- Si el RECEPTOR posee el CUIT de ECAR ("30-12345678-9" / "30123456789") o su nombre es ECAR → es factura de COMPRA (ECAR compra/recibe).
+- Si no encuentras el CUIT de ECAR en la factura pero es subida por el usuario, asume COMPRA por defecto, a menos que quede explícito que ECAR es el emisor.
+- La gran mayoría de los comprobantes cargados por los usuarios corresponden a compras de materiales o servicios a proveedores externos (COMPRAS).
 
-EXTRACCIÓN DE NOMBRE:
-- "proveedor_cliente" debe ser el nombre/razón social de la OTRA parte (NO ECAR)
-- Si es COMPRA: el proveedor_cliente es el EMISOR de la factura
-- Si es VENTA: el proveedor_cliente es el RECEPTOR de la factura
-- NUNCA dejes proveedor_cliente vacío. Si no lo podés leer, poné "No legible"
+EXTRACCIÓN DE NOMBRE DE LA CONTRAPARTE (proveedor_cliente) Y CUIT (cuit):
+- "proveedor_cliente" debe ser la Razón Social de la OTRA parte (NO ECAR).
+  - Si es COMPRA: el emisor externo es el "proveedor_cliente".
+  - Si es VENTA: el receptor externo es el "proveedor_cliente".
+- "cuit" es el CUIT de la OTRA parte (NO ECAR) en formato XX-XXXXXXXX-X.
+- NUNCA dejes proveedor_cliente vacío. Si no lo puedes leer, pon "No legible".`;
 
 Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin explicaciones:
 {
@@ -168,7 +169,54 @@ serve(async (req: Request) => {
     // Update DB record
     if (invoiceId && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
       const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      
+      // Fetch the purchase invoice record to find its tenant_id
+      const { data: invoiceRec } = await sb
+        .from("purchase_invoices")
+        .select("tenant_id")
+        .eq("id", invoiceId)
+        .single();
+        
+      const tenantId = invoiceRec?.tenant_id || 'a0000000-0000-0000-0000-000000000001';
+      
+      let supplierId = null;
+      if (extracted.cuit && extracted.tipo === 'compra') {
+        const cleanCuit = extracted.cuit.replace(/\D/g, '');
+        let formattedCuit = extracted.cuit;
+        if (cleanCuit.length === 11) {
+          formattedCuit = `${cleanCuit.slice(0, 2)}-${cleanCuit.slice(2, 10)}-${cleanCuit.slice(10)}`;
+        }
+        
+        const { data: existingSuppliers } = await sb
+          .from("suppliers")
+          .select("id")
+          .or(`cuit.eq."${extracted.cuit}",cuit.eq."${cleanCuit}",cuit.eq."${formattedCuit}"`);
+          
+        if (existingSuppliers && existingSuppliers.length > 0) {
+          supplierId = existingSuppliers[0].id;
+        } else {
+          // Create new supplier
+          const { data: newSupplier, error: supErr } = await sb
+            .from("suppliers")
+            .insert({
+              tenant_id: tenantId,
+              name: extracted.proveedor_cliente || 'Proveedor Nuevo',
+              cuit: formattedCuit,
+              tax_condition: 'RI'
+            })
+            .select("id")
+            .single();
+            
+          if (!supErr && newSupplier) {
+            supplierId = newSupplier.id;
+          } else {
+            console.error("[process-invoice] Error auto-creating supplier:", supErr);
+          }
+        }
+      }
+
       await sb.from("purchase_invoices").update({
+        supplier_id: supplierId,
         invoice_type: extracted.tipo_factura,
         point_of_sale: extracted.punto_venta,
         invoice_number: extracted.numero_factura,

@@ -5,20 +5,22 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const SYSTEM_PROMPT = `Sos un sistema OCR especializado en cheques bancarios argentinos.
-Extraé los datos del cheque de la imagen y devolvé SOLO un JSON válido, sin markdown.
-Campos: cheque_number (string), bank_name (string), amount (number CON decimales, ej: 150000.50),
-issue_date (YYYY-MM-DD), due_date (YYYY-MM-DD o null), beneficiary (string o null),
-issuer_name (string o null), branch (string o null), type ("physical" o "echeq").
+const SYSTEM_PROMPT = `Sos un sistema OCR de inteligencia artificial especializado en la extracción de datos de cheques argentinos (físicos y echeqs).
+Analiza detalladamente la imagen o PDF y responde ÚNICAMENTE con un objeto JSON estructurado que contenga los siguientes campos:
+- cheque_number (string): El número correlativo del cheque (generalmente impreso en tinta magnética o arriba a la derecha).
+- bank_name (string): El nombre de la entidad bancaria emisora (ej: Banco Galicia, Banco Nación, Banco Macro, etc.).
+- amount (number): El monto total expresado con centavos como decimal (ej: 250000.50). Si no tiene centavos, agrega .00 (ej: 180000.00).
+- issue_date (string, format YYYY-MM-DD): La fecha de emisión del cheque. En cheques argentinos suele encontrarse junto al lugar de emisión, ej: "San Juan, 15 de Mayo de 2026". Traduce a formato YYYY-MM-DD.
+- due_date (string o null, format YYYY-MM-DD): La fecha de cobro o pago diferido (ej: "Páguese el..." o "Páguese desde el..."). Si es un cheque corriente (donde solo figura la fecha de emisión) o el campo de pago diferido está vacío, pon null.
+- beneficiary (string o null): El nombre de la persona física o jurídica a favor de quien se emite ("Páguese a...", "Páguese a la orden de..."). 
+  REGLA CRÍTICA DE BENEFICIARIO: Si el cheque está al portador (ej: dice "Al Portador", "a la orden de: al portador", o la línea de beneficiario está en blanco, vacía, tiene líneas continuas o firmas encima sin aclarar), debes retornar estrictamente null. NUNCA uses el nombre del librador/firmante/emisor como beneficiario.
+- issuer_name (string o null): El nombre/razón social del librador/firmante (quien emite el cheque, dueño de la cuenta bancaria). Suele estar impreso en el cheque en la esquina inferior izquierda o superior, o aclarado bajo las firmas.
+- branch (string o null): Sucursal del banco.
+- type (string): "physical" (si es un cheque físico escaneado/fotografiado) o "echeq" (si es un comprobante digital de echeq).
 
-REGLAS IMPORTANTES:
-- AMOUNT: Siempre incluí los centavos/decimales. Si dice "$150.000,50" → 150000.50. Si dice "$200.000" → 200000.00
-- BENEFICIARY: Si el cheque dice "AL PORTADOR" o "NO A LA ORDEN" o no tiene nombre de beneficiario escrito, poné null. NO inventes nombres.
-- DATES: Leé las fechas con cuidado. En Argentina el formato es DD/MM/AAAA. Convertí a YYYY-MM-DD.
-  - "due_date" es la fecha de COBRO/PAGO DIFERIDO (si existe). NO es la fecha de emisión.
-  - "issue_date" es la fecha en que se EMITIÓ el cheque.
-  - Si solo hay una fecha, ponela como issue_date y due_date en null.
-- Si un campo no es legible, poné null. NUNCA inventes datos.`;
+REGLAS DE EXTRACCIÓN ADICIONALES:
+1. Las fechas manuscritas o impresas en Argentina son en formato DD/MM/AAAA. Por favor parsealas correctamente. Si el año es manuscrito e ilegible o ambiguo, asume el año actual (2026) a menos que la imagen muestre otra cosa con claridad.
+2. Si un campo no es legible o no está presente, devuelve null. No intentes adivinar ni inventar datos.`;
 
 // Supported image MIME types for OpenAI Vision image_url
 const IMAGE_MIME_TYPES = new Set([

@@ -6,7 +6,7 @@ import {
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
-  PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle,
+  PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -20,7 +20,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   fleet: Truck, certifications: FileSignature, field: Smartphone,
   safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
   expenses: Wallet, documents: FolderOpen, project_budget: HardHat,
-  fuel: Fuel, guide: HelpCircle,
+  fuel: Fuel, guide: HelpCircle, manual: BookMarked,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -32,7 +32,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   fleet: 'Flota', certifications: 'Cert. ICC', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
-  fuel: 'Combustible', guide: 'Guía',
+  fuel: 'Combustible', guide: 'Guía', manual: 'Manual ISO',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -46,7 +46,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   logistics: 'bg-slate-500', fleet: 'bg-sky-500', certifications: 'bg-lime-600',
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-cyan-600',
-  fuel: 'bg-sky-600', guide: 'bg-ecar-blue',
+  fuel: 'bg-sky-600', guide: 'bg-ecar-blue', manual: 'bg-blue-900',
 };
 
 /* ─── Sidebar sections ─── */
@@ -59,6 +59,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'bi', requires: true },
       { id: 'liquidity', requires: true },
       { id: 'guide' },
+      { id: 'manual' },
     ],
   },
   {

@@ -512,6 +512,7 @@ export type ProjectCertificate = {
   deposit_date: string | null;
   deposit_bank_account_id: string | null;
   status: 'pending' | 'approved' | 'deposited' | 'rejected';
+  photo_url?: string | null;
   created_at: string;
   project?: Project;
 };
@@ -525,6 +526,21 @@ export type SystemSetting = {
   value: string;
   description: string | null;
   updated_at: string;
+};
+
+export type PaymentRecord = {
+  id: string;
+  tenant_id: string;
+  entity_type: 'supplier' | 'employee' | 'obligation' | 'general' | 'other' | null;
+  entity_id: string | null;
+  payment_date: string;
+  amount_ars: number;
+  payment_method: string;
+  check_number: string | null;
+  bank_name: string | null;
+  receipt_url: string | null;
+  notes: string | null;
+  paid_by: string | null;
   created_at: string;
 };
 
@@ -1079,6 +1095,7 @@ export const ALL_MODULES = [
   'project_budget',
   'fuel',
   'guide',
+  'manual',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1107,4 +1124,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   project_budget: 'Proyectos & Presupuestos',
   fuel: 'Combustible',
   guide: 'Guía de Uso',
+  manual: 'Manual de Procedimientos',
 };

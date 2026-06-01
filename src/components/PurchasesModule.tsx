@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useGastosItems } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
@@ -7,6 +8,7 @@ import { generateLibroIVA } from '../lib/generateLibroIVA';
 type InvoiceTab = 'compras' | 'ventas';
 
 export const PurchasesModule: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data: invoices = [], isLoading, refetch } = usePurchaseInvoices();
   const { data: suppliers = [] } = useSuppliers();
   const createSupplier = useCreateSupplier();
@@ -63,6 +65,7 @@ export const PurchasesModule: React.FC = () => {
       } else if (fnData?.success) {
         setOcrResult(fnData.data);
         refetch();
+        queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       } else {
         setOcrError(fnData?.error || 'Error procesando factura');
         refetch();

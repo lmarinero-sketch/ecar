@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Plus, X, TrendingUp, Banknote,
-  ChevronDown, ChevronUp, Building2
+  ChevronDown, ChevronUp, Building2, Upload, Image
 } from 'lucide-react';
 import { useProjects, useProjectCertificates, useCreateProjectCertificate } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
+import { ImageViewer } from './ImageViewer';
+import { supabase } from '../lib/supabase';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const fmtM = (n: number) => n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : fmt(n);
@@ -17,6 +19,10 @@ export const CertificationsModule: React.FC = () => {
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [showNewCert, setShowNewCert] = useState<string | null>(null);
   const [form, setForm] = useState({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
+  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   // Only projects with contract_amount > 0
   const contractProjects = useMemo(() => (projects || []).filter((p: any) => p.contract_amount > 0), [projects]);
@@ -40,20 +46,57 @@ export const CertificationsModule: React.FC = () => {
     const retIibb = total * 0.025;
     const retCheque = total * 0.02;
     const netDeposit = total - retIibb - retCheque;
-    await createCert.mutateAsync({
-      project_id: showNewCert,
-      certificate_number: parseInt(form.certificate_number),
-      gross_amount: gross,
-      redetermination: redet,
-      total_certified: total,
-      retention_iibb: retIibb,
-      retention_imp_cheque: retCheque,
-      net_deposit: netDeposit,
-      period_description: form.period_description || null,
-      status: 'approved',
-    } as any);
-    setShowNewCert(null);
-    setForm({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
+    
+    let photoUrl = '';
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${showNewCert}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('project-certificates')
+          .upload(filePath, selectedFile);
+        
+        if (uploadError) {
+          alert('Error al subir el archivo: ' + uploadError.message);
+          setIsUploading(false);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('project-certificates')
+          .getPublicUrl(filePath);
+        photoUrl = urlData.publicUrl;
+      } catch (err: any) {
+        alert('Error en la subida del archivo: ' + err.message);
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    try {
+      await createCert.mutateAsync({
+        project_id: showNewCert,
+        certificate_number: parseInt(form.certificate_number),
+        gross_amount: gross,
+        redetermination: redet,
+        total_certified: total,
+        retention_iibb: retIibb,
+        retention_imp_cheque: retCheque,
+        net_deposit: netDeposit,
+        period_description: form.period_description || null,
+        photo_url: photoUrl || null,
+        status: 'approved',
+      } as any);
+      setShowNewCert(null);
+      setSelectedFile(null);
+      setForm({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
+    } catch (err: any) {
+      alert('Error al guardar el certificado: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (loadingProjects || loadingCerts) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-rose-500 rounded-full animate-spin" /></div>;
@@ -146,6 +189,7 @@ export const CertificationsModule: React.FC = () => {
                             <th className="px-4 py-3 text-right text-gray-400">Ret. Cheque</th>
                             <th className="px-4 py-3 text-right">🔵 Depósito</th>
                             <th className="px-4 py-3 text-center">Estado</th>
+                            <th className="px-4 py-3 text-center">Foto</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -163,6 +207,19 @@ export const CertificationsModule: React.FC = () => {
                                   {c.status === 'deposited' ? 'Depositado' : c.status === 'approved' ? 'Aprobado' : c.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
                                 </span>
                               </td>
+                              <td className="px-4 py-3 text-center">
+                                {c.photo_url ? (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setViewerUrl(c.photo_url || null); }}
+                                    className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-1 rounded transition-colors"
+                                    title="Ver foto de la certificación"
+                                  >
+                                    <Image size={16} />
+                                  </button>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                           {/* Totals row */}
@@ -173,6 +230,7 @@ export const CertificationsModule: React.FC = () => {
                             <td className="px-4 py-3 text-right font-mono text-green-700">{fmtM(totalCertified)}</td>
                             <td className="px-4 py-3" colSpan={2}></td>
                             <td className="px-4 py-3 text-right font-mono text-blue-700">{fmtM(totalDeposited)}</td>
+                            <td></td>
                             <td></td>
                           </tr>
                         </tbody>
@@ -195,7 +253,10 @@ export const CertificationsModule: React.FC = () => {
       {showNewCert && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Certificado</h3><button onClick={() => setShowNewCert(null)}><X size={20} className="text-gray-400" /></button></div>
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Nuevo Certificado</h3>
+              <button onClick={() => { setShowNewCert(null); setSelectedFile(null); }}><X size={20} className="text-gray-400" /></button>
+            </div>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Certificado N°</label><input type="number" value={form.certificate_number} onChange={e => setForm({ ...form, certificate_number: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" /></div>
@@ -205,6 +266,26 @@ export const CertificationsModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">🟡 Monto Bruto ($)</label><input type="number" value={form.gross_amount} onChange={e => setForm({ ...form, gross_amount: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-300/50" /></div>
                 <div><label className="text-xs font-bold text-gray-500">🟠 Redeterminación ($)</label><input type="number" value={form.redetermination} onChange={e => setForm({ ...form, redetermination: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-300/50" placeholder="0" /></div>
               </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 block">Foto de la Certificación (Opcional)</label>
+                <div className="border border-dashed border-gray-300 rounded-xl p-3 text-center relative hover:bg-gray-50 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) setSelectedFile(file);
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Upload className="mx-auto text-gray-400 mb-1" size={20} />
+                  <p className="text-xs text-gray-500 font-medium">
+                    {selectedFile ? `Seleccionado: ${selectedFile.name}` : 'Subir foto o PDF del certificado'}
+                  </p>
+                </div>
+              </div>
+
               {(form.gross_amount || form.redetermination) && (
                 <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-1">
                   <div className="flex justify-between"><span>🟢 Total:</span><span className="font-mono font-bold text-green-700">{fmt((parseFloat(form.gross_amount) || 0) + (parseFloat(form.redetermination) || 0))}</span></div>
@@ -213,12 +294,21 @@ export const CertificationsModule: React.FC = () => {
                   <div className="flex justify-between border-t pt-1 mt-1"><span>🔵 Depósito Neto:</span><span className="font-mono font-bold text-blue-700">{fmt(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.redetermination) || 0)) * 0.955)}</span></div>
                 </div>
               )}
-              <button type="submit" disabled={createCert.isPending} className="w-full bg-rose-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-rose-700 transition-all shadow-md disabled:opacity-50">
-                {createCert.isPending ? 'Guardando...' : '✅ Registrar Certificado'}
+              <button type="submit" disabled={createCert.isPending || isUploading} className="w-full bg-rose-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-rose-700 transition-all shadow-md disabled:opacity-50">
+                {isUploading ? 'Subiendo archivo...' : createCert.isPending ? 'Guardando...' : '✅ Registrar Certificado'}
               </button>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Image Viewer */}
+      {viewerUrl && (
+        <ImageViewer
+          src={viewerUrl}
+          alt="Foto de la certificación"
+          onClose={() => setViewerUrl(null)}
+        />
       )}
     </div>
   );

@@ -6,7 +6,7 @@ import type {
   PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
-  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting,
+  BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting, PaymentRecord,
   InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf,
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
@@ -686,6 +686,21 @@ export function useUpdateProjectCertificate() {
   });
 }
 
+// ========== PAYMENT RECORDS ==========
+export function usePaymentRecords() {
+  return useQuery({
+    queryKey: ['payment_records'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_records')
+        .select('*')
+        .order('payment_date', { ascending: false });
+      if (error) throw error;
+      return data as PaymentRecord[];
+    },
+  });
+}
+
 // ========== WAREHOUSE SHELVES ==========
 export function useWarehouseShelves() {
   return useQuery({
@@ -764,6 +779,22 @@ export function useUpsertSystemSetting() {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['system_settings'] }),
+  });
+}
+
+export function useCreatePaymentRecord() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (record: Partial<PaymentRecord>) => {
+      const { data, error } = await supabase
+        .from('payment_records')
+        .insert({ ...record, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['payment_records'] }),
   });
 }
 

@@ -305,7 +305,8 @@ const FILE_ACCEPT = [
   'text/csv',
 ].join(',');
 
-const getFileIcon = (url: string) => {
+const getFileIcon = (url: string | null | undefined) => {
+  if (!url) return '📎';
   const lower = url.toLowerCase();
   if (lower.includes('.pdf')) return '📄';
   if (lower.includes('.doc') || lower.includes('.docx')) return '📝';
@@ -529,14 +530,20 @@ const LegajoView: React.FC<{
                     </p>
                   </div>
                 </div>
-                <a
-                  href={d.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-ecar-blue hover:bg-blue-50 p-2 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
-                >
-                  <Download size={14} /> Descargar
-                </a>
+                {d.file_url ? (
+                  <a
+                    href={d.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-ecar-blue hover:bg-blue-50 p-2 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
+                  >
+                    <Download size={14} /> Descargar
+                  </a>
+                ) : (
+                  <span className="text-gray-300 p-2 text-xs font-bold flex items-center gap-1">
+                    Sin archivo
+                  </span>
+                )}
               </div>
             ))}
           </div>

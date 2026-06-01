@@ -7,6 +7,7 @@ export const AccountingModule: React.FC = () => {
   const { data: projects = [] } = useProjects();
   const createInvoice = useCreateInvoice();
   const [showForm, setShowForm] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [form, setForm] = useState({
     invoice_type: 'FA', issue_date: new Date().toISOString().split('T')[0],
     receptor_name: '', receptor_cuit: '', receptor_tax_condition: 'RI',
@@ -36,15 +37,26 @@ export const AccountingModule: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    const net = form.net_amount_ars;
-    const iva = Math.round(net * 0.21);
-    await createInvoice.mutateAsync({
-      ...form,
-      iva_21_ars: iva,
-      total_ars: net + iva,
-      project_id: form.project_id || null,
-    } as any);
-    setShowForm(false);
+    setErrorMsg(null);
+    try {
+      const net = form.net_amount_ars;
+      const iva = Math.round(net * 0.21);
+      await createInvoice.mutateAsync({
+        ...form,
+        iva_21_ars: iva,
+        total_ars: net + iva,
+        project_id: form.project_id || null,
+      } as any);
+      setShowForm(false);
+      setForm({
+        invoice_type: 'FA', issue_date: new Date().toISOString().split('T')[0],
+        receptor_name: '', receptor_cuit: '', receptor_tax_condition: 'RI',
+        project_id: '', net_amount_ars: 0, iva_21_ars: 0,
+      });
+    } catch (err: any) {
+      console.error('[AccountingModule] Error creating invoice:', err);
+      setErrorMsg(err.message || 'Error al guardar la factura. Verificá tu perfil/permisos.');
+    }
   };
 
   if (isLoading) return <div className="text-center py-12 text-gray-400">Cargando facturación...</div>;
@@ -60,7 +72,7 @@ export const AccountingModule: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+        <button onClick={() => { setErrorMsg(null); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
           <Plus size={16} /> Nueva Factura
         </button>
       </div>
@@ -69,6 +81,13 @@ export const AccountingModule: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nueva Factura</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
+            
+            {errorMsg && (
+              <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2 text-sm border border-red-200">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <select value={form.invoice_type} onChange={e => setForm({ ...form, invoice_type: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
                 {['FA','FB','FC','FE','NCA','NCB','NCC'].map(t => <option key={t} value={t}>{invoiceTypeLabel[t] || t}</option>)}
