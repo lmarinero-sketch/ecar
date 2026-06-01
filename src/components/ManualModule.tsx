@@ -621,9 +621,9 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('ECAR ERP — Manual de Procedimientos del Sistema', margin, pageH - 6);
+        pdf.text(t('ECAR ERP - Manual de Procedimientos del Sistema'), margin, pageH - 6);
         pdf.text(`PRO-ECAR-SYS-001 | Rev. 1.0 | ${new Date().toLocaleDateString('es-AR')}`, pageW - margin, pageH - 6, { align: 'right' });
-        pdf.text(`Pág. ${currentPage}`, pageW / 2, pageH - 6, { align: 'center' });
+        pdf.text(t(`Pag. ${currentPage}`), pageW / 2, pageH - 6, { align: 'center' });
       };
 
       // ════════════ PORTADA ════════════
@@ -655,10 +655,10 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...WHITE);
           pdf.setFontSize(18);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('ECAR', margin + 8, 44);
+          pdf.text(t('ECAR'), margin + 8, 44);
           pdf.setFontSize(7);
           pdf.setFont('helvetica', 'normal');
-          pdf.text('EMPRESA CONSTRUCTORA', margin + 8, 50);
+          pdf.text(t('EMPRESA CONSTRUCTORA'), margin + 8, 50);
           resolve();
         };
       });
@@ -666,21 +666,21 @@ export const ManualModule: React.FC = () => {
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(180, 210, 240);
-      pdf.text('Sistema ERP · Gestión Integral de Obras', pageW - margin, 44, { align: 'right' });
+      pdf.text(t('Sistema ERP - Gestion Integral de Obras'), pageW - margin, 44, { align: 'right' });
 
       // Title
       pdf.setTextColor(...WHITE);
       pdf.setFontSize(28);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('MANUAL DE', margin, 100);
-      pdf.text('PROCEDIMIENTOS', margin, 116);
-      pdf.text('DEL SISTEMA', margin, 132);
+      pdf.text(t('MANUAL DE'), margin, 100);
+      pdf.text(t('PROCEDIMIENTOS'), margin, 116);
+      pdf.text(t('DEL SISTEMA'), margin, 132);
 
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(180, 210, 240);
-      pdf.text('Sistema ERP ECAR — Gestión Integral', margin, 148);
-      pdf.text('de Empresas Constructoras', margin, 158);
+      pdf.text(t('Sistema ERP ECAR - Gestion Integral'), margin, 148);
+      pdf.text(t('de Empresas Constructoras'), margin, 158);
 
       // Divider
       pdf.setDrawColor(255, 255, 255, 0.3);
@@ -704,17 +704,17 @@ export const ManualModule: React.FC = () => {
         const y = 178 + i * 10;
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(180, 210, 240);
-        pdf.text(label, margin, y);
+        pdf.text(t(label), margin, y);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...WHITE);
-        pdf.text(value, margin + 55, y);
+        pdf.text(t(value), margin + 55, y);
       });
 
       // Bottom disclaimer
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'italic');
       pdf.setTextColor(160, 190, 220);
-      pdf.text('Documento de uso interno. ECAR Sistema ERP. Prohibida su reproducción sin autorización expresa.', pageW / 2, pageH - 12, { align: 'center' });
+      pdf.text(t('Documento de uso interno. ECAR Sistema ERP. Prohibida su reproduccion sin autorizacion expresa.'), pageW / 2, pageH - 12, { align: 'center' });
 
       setProgress(10);
 
@@ -727,7 +727,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...BLUE);
       pdf.setFontSize(13);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('ÍNDICE DE CONTENIDOS', margin + 5, y + 8);
+      pdf.text(t('INDICE DE CONTENIDOS'), margin + 5, y + 8);
       y += 18;
 
       const tocSections = [
@@ -777,7 +777,7 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...WHITE);
           pdf.setFontSize(8);
           pdf.setFont('helvetica', 'bold');
-          pdf.text(`${item.num}  ${item.title}`, margin + 3, y + 1);
+          pdf.text(t(`${item.num}  ${item.title}`), margin + 3, y + 1);
           y += 8;
         } else if (isSection && item.pg !== '') {
           pdf.setFillColor(230, 237, 245);
@@ -785,14 +785,14 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...DARK);
           pdf.setFontSize(8);
           pdf.setFont('helvetica', 'bold');
-          pdf.text(`${item.num}  ${item.title}`, margin + 3, y + 0.5);
+          pdf.text(t(`${item.num}  ${item.title}`), margin + 3, y + 0.5);
           pdf.text(item.pg, pageW - margin - 2, y + 0.5, { align: 'right' });
           y += 7;
         } else if (item.pg !== '') {
           pdf.setTextColor(...GRAY);
           pdf.setFontSize(7.5);
           pdf.setFont('helvetica', 'normal');
-          pdf.text(`    ${item.num}  ${item.title}`, margin + 3, y);
+          pdf.text(t(`    ${item.num}  ${item.title}`), margin + 3, y);
           pdf.setTextColor(...BLUE);
           pdf.text(item.pg, pageW - margin - 2, y, { align: 'right' });
           // Dots
@@ -817,23 +817,23 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...WHITE);
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(title, margin + 5, y + 9);
+        pdf.text(t(title), margin + 5, y + 9);
         if (subtitle) {
           pdf.setFontSize(7);
           pdf.setFont('helvetica', 'normal');
-          pdf.text(subtitle, pageW - margin - 3, y + 9, { align: 'right' });
+          pdf.text(t(subtitle), pageW - margin - 3, y + 9, { align: 'right' });
         }
         y += 18;
       };
 
 
-      sectionHeader('1. INTRODUCCIÓN Y ALCANCE DEL SISTEMA', 'Sección 1 de 12');
+      sectionHeader(t('1. INTRODUCCION Y ALCANCE DEL SISTEMA'), t('Seccion 1 de 12'));
 
 
       pdf.setTextColor(...DARK);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('1.1 Propósito del Documento', margin, y);
+      pdf.text(t('1.1 Proposito del Documento'), margin, y);
       y += 6;
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...GRAY);
@@ -841,13 +841,13 @@ export const ManualModule: React.FC = () => {
         'El presente documento establece el Manual de Procedimientos del Sistema ERP ECAR para la gestión integral de empresas del sector construcción. Su propósito es describir exhaustivamente los procesos, responsabilidades, registros e indicadores de cada módulo del sistema, en cumplimiento con los requisitos de la norma ISO 9001:2015 para Sistemas de Gestión de la Calidad.',
         contentW
       );
-      pdf.text(intro1, margin, y);
+      pdf.text(intro1.map(t), margin, y);
       y += intro1.length * 4.5 + 4;
 
       pdf.setTextColor(...DARK);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
-      pdf.text('1.2 Alcance', margin, y);
+      pdf.text(t('1.2 Alcance'), margin, y);
       y += 6;
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...GRAY);
@@ -855,7 +855,7 @@ export const ManualModule: React.FC = () => {
         `Este manual aplica a la totalidad del sistema ERP ECAR compuesto por ${MODULES_DATA.length} módulos funcionales organizados en cinco áreas: Tableros Ejecutivos, Administración, Personal, Logística y Operaciones. Cubre también la integración con la Inteligencia Artificial (Rombo), las Edge Functions de procesamiento automático y la infraestructura tecnológica de soporte.`,
         contentW
       );
-      pdf.text(intro2, margin, y);
+      pdf.text(intro2.map(t), margin, y);
       y += intro2.length * 4.5 + 6;
 
       // KPI cards del sistema
@@ -864,7 +864,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...BLUE);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('MÉTRICAS DEL SISTEMA', margin + 5, y + 7);
+      pdf.text(t('METRICAS DEL SISTEMA'), margin + 5, y + 7);
 
       const sysKpis = [
         { label: 'Módulos', value: `${MODULES_DATA.length}` },
@@ -879,11 +879,11 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(kpi.value, kx + 4, y + 20);
+        pdf.text(t(kpi.value), kx + 4, y + 20);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(6.5);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(kpi.label, kx + 4, y + 23);
+        pdf.text(t(kpi.label), kx + 4, y + 23);
       });
       y += 34;
 
@@ -891,7 +891,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...DARK);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
-      pdf.text('1.3 Referencias Normativas', margin, y);
+      pdf.text(t('1.3 Referencias Normativas'), margin, y);
       y += 6;
       const norms = [
         'ISO 9001:2015 — Sistemas de Gestión de la Calidad',
@@ -907,7 +907,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`▸  ${norm}`, margin + 3, y + 4.5);
+        pdf.text(t(`>  ${norm}`), margin + 3, y + 4.5);
         y += 9;
       });
 
@@ -916,7 +916,7 @@ export const ManualModule: React.FC = () => {
       // ════════════ PÁGINA: ARQUITECTURA ════════════
       addNewPage();
       y = 20;
-      sectionHeader('2. ARQUITECTURA TÉCNICA DEL SISTEMA', 'Sección 2 de 12');
+      sectionHeader(t('2. ARQUITECTURA TECNICA DEL SISTEMA'), t('Seccion 2 de 12'));
 
       pdf.setTextColor(...DARK);
       pdf.setFontSize(8);
@@ -925,7 +925,7 @@ export const ManualModule: React.FC = () => {
         'ECAR es un sistema web progresivo (PWA) basado en React 18 + Vite con TypeScript, respaldado por Supabase como plataforma Backend-as-a-Service. La arquitectura garantiza disponibilidad 99.9%, encriptación en tránsito (TLS 1.3) y en reposo, Row Level Security en todas las tablas y autenticación JWT con tokens de sesión gestionados por Supabase Auth.',
         contentW
       );
-      pdf.text(archDesc, margin, y);
+      pdf.text(archDesc.map(t), margin, y);
       y += archDesc.length * 4.5 + 6;
 
       // Architecture diagram
@@ -944,12 +944,12 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(item.label, ax + 13, ay + 7);
+        pdf.text(t(item.label, ax + 13, ay + 7);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(6.5);
         pdf.setFont('helvetica', 'normal');
         const descLines = pdf.splitTextToSize(item.desc, archW - 15);
-        pdf.text(descLines, ax + 13, ay + 12);
+        pdf.text(descLines.map(t), ax + 13, ay + 12);
       });
       y += Math.ceil(ARCH_ITEMS.length / archCols) * 22 + 6;
 
@@ -957,7 +957,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...DARK);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('2.1 Edge Functions (Serverless)', margin, y);
+      pdf.text(t('2.1 Edge Functions (Serverless)'), margin, y);
       y += 6;
 
       const edgeFns = [
@@ -977,12 +977,12 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(fn.name, margin + 8, y + 7);
+        pdf.text(t(fn.name), margin + 8, y + 7);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
         const fnDesc = pdf.splitTextToSize(fn.desc, contentW - 10);
-        pdf.text(fnDesc, margin + 8, y + 11);
+        pdf.text(fnDesc.map(t), margin + 8, y + 11);
         y += 16;
       });
 
@@ -991,7 +991,7 @@ export const ManualModule: React.FC = () => {
       // ════════════ PÁGINA: ROLES ════════════
       addNewPage();
       y = 20;
-      sectionHeader('3. GESTIÓN DE ACCESOS Y ROLES', 'Sección 3 de 12');
+      sectionHeader(t('3. GESTION DE ACCESOS Y ROLES'), t('Seccion 3 de 12'));
 
       pdf.setTextColor(...DARK);
       pdf.setFontSize(8);
@@ -1000,7 +1000,7 @@ export const ManualModule: React.FC = () => {
         'El sistema implementa control de acceso basado en roles (RBAC) con dos perfiles predefinidos. La gestión de usuarios es realizada exclusivamente por usuarios con rol Administrador desde el panel de perfiles. Cada usuario tiene asignada una lista de módulos permitidos que restringe la navegación y el acceso a datos.',
         contentW
       );
-      pdf.text(rolesDesc, margin, y);
+      pdf.text(rolesDesc.map(t), margin, y);
       y += rolesDesc.length * 4.5 + 6;
 
       ROLES.forEach((roleItem) => {
@@ -1014,7 +1014,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...WHITE);
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(roleItem.role, margin + 5, y + 8);
+        pdf.text(t(roleItem.role), margin + 5, y + 8);
         let py = y + 17;
         roleItem.perms.forEach((perm) => {
           pdf.setFillColor(...GREEN);
@@ -1022,7 +1022,7 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...DARK);
           pdf.setFontSize(7.5);
           pdf.setFont('helvetica', 'normal');
-          pdf.text(perm, margin + 10, py);
+          pdf.text(t(perm), margin + 10, py);
           py += 7;
         });
         y += roleH + 6;
@@ -1032,7 +1032,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...DARK);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('3.1 Características de Seguridad', margin, y);
+      pdf.text(t('3.1 Caracteristicas de Seguridad'), margin, y);
       y += 6;
       const secFeats = [
         'Row Level Security (RLS) habilitada en todas las tablas de la base de datos',
@@ -1049,7 +1049,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`✓  ${feat}`, margin + 3, y + 4.5);
+        pdf.text(t(`-  ${feat}`), margin + 3, y + 4.5);
         y += 9;
       });
 
@@ -1058,7 +1058,7 @@ export const ManualModule: React.FC = () => {
       // ════════════ PÁGINAS: IA ════════════
       addNewPage();
       y = 20;
-      sectionHeader('4. INTEGRACIÓN CON INTELIGENCIA ARTIFICIAL', 'Sección 4 de 12');
+      sectionHeader(t('4. INTEGRACION CON INTELIGENCIA ARTIFICIAL'), t('Seccion 4 de 12'));
 
       AI_INTEGRATIONS.forEach((ai) => {
         if (y > pageH - 80) { addNewPage(); y = 20; }
@@ -1071,7 +1071,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...WHITE);
         pdf.setFontSize(9.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(ai.name, margin + 5, y + 8.5);
+        pdf.text(t(ai.name), margin + 5, y + 8.5);
 
         const aiDesc = pdf.splitTextToSize(ai.description, contentW - 6);
         pdf.setTextColor(...GRAY);
@@ -1107,12 +1107,12 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...WHITE);
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`${mod.code} — ${mod.name}`, margin + 5, y + 7);
+        pdf.text(t(`${mod.code} - ${mod.name}`), margin + 5, y + 7);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(180, 210, 240);
-        pdf.text(`Sección: ${mod.section}`, margin + 5, y + 13);
-        pdf.text(`Responsable: ${mod.responsible}`, pageW - margin - 3, y + 13, { align: 'right' });
+        pdf.text(t(`Seccion: ${mod.section}`), margin + 5, y + 13);
+        pdf.text(t(`Responsable: ${mod.responsible}`), pageW - margin - 3, y + 13, { align: 'right' });
         y += 20;
 
         // Purpose & Scope box
@@ -1121,17 +1121,17 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('PROPÓSITO', margin + 4, y + 5);
+        pdf.text(t('PROPOSITO'), margin + 4, y + 5);
         const purpText = pdf.splitTextToSize(mod.purpose, contentW - 8);
         pdf.setTextColor(...DARK);
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(purpText, margin + 4, y + 10);
+        pdf.text(purpText.map(t), margin + 4, y + 10);
 
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('ALCANCE', margin + 4, y + 22);
+        pdf.text(t('ALCANCE'), margin + 4, y + 22);
         const scopeText = pdf.splitTextToSize(mod.scope, contentW - 8);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7.5);
@@ -1144,7 +1144,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('DESCRIPCIÓN DEL PROCESO', margin, y);
+        pdf.text(t('DESCRIPCION DEL PROCESO'), margin, y);
         y += 6;
 
         mod.process.forEach((step, si) => {
@@ -1163,7 +1163,7 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...DARK);
           pdf.setFontSize(7.5);
           pdf.setFont('helvetica', 'normal');
-          pdf.text(stepText, margin + 13, y + 4.5);
+          pdf.text(stepText.map(t), margin + 13, y + 4.5);
           y += stepH + 2;
         });
 
@@ -1179,7 +1179,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('📋  REGISTROS QUE GENERA', margin + 3, y + 5);
+        pdf.text(t('REGISTROS QUE GENERA'), margin + 3, y + 5);
         y += 9;
         let recordY = y;
         mod.records.forEach((rec) => {
@@ -1190,7 +1190,7 @@ export const ManualModule: React.FC = () => {
           pdf.setFontSize(7);
           pdf.setFont('helvetica', 'normal');
           const recLines = pdf.splitTextToSize(rec, colW - 8);
-          pdf.text(recLines, margin + 5, recordY + 5);
+          pdf.text(recLines.map(t), margin + 5, recordY + 5);
           recordY += 10;
         });
 
@@ -1201,7 +1201,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('📊  INDICADORES CLAVE (KPIs)', margin + colW + 7, kpiStartY + 5);
+        pdf.text(t('INDICADORES CLAVE (KPIs)'), margin + colW + 7, kpiStartY + 5);
         let kpiY = kpiStartY + 9;
         mod.kpis.forEach((kpi) => {
           if (kpiY > pageH - 20) return;
@@ -1213,7 +1213,7 @@ export const ManualModule: React.FC = () => {
           pdf.setFontSize(7);
           pdf.setFont('helvetica', 'normal');
           const kpiLines = pdf.splitTextToSize(kpi, colW - 8);
-          pdf.text(kpiLines, margin + colW + 10, kpiY + 5);
+          pdf.text(kpiLines.map(t), margin + colW + 10, kpiY + 5);
           kpiY += 10;
         });
 
@@ -1227,7 +1227,7 @@ export const ManualModule: React.FC = () => {
           pdf.setTextColor(...BLUE);
           pdf.setFontSize(7.5);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('✨  CARACTERÍSTICAS PRINCIPALES:', margin + 3, y + 5.5);
+          pdf.text(t('CARACTERISTICAS PRINCIPALES:'), margin + 3, y + 5.5);
           y += 10;
           const chipW = (contentW - 6) / 2;
           mod.features.forEach((feat, fi) => {
@@ -1241,7 +1241,7 @@ export const ManualModule: React.FC = () => {
             pdf.setTextColor(17, 70, 130);
             pdf.setFontSize(6.5);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`◆ ${feat}`, fx + 3, fy + 4.5);
+            pdf.text(t(`- ${feat}`), fx + 3, fy + 4.5);
           });
         }
       }
@@ -1251,7 +1251,7 @@ export const ManualModule: React.FC = () => {
       // ════════════ PÁGINA: SEGURIDAD ════════════
       addNewPage();
       y = 20;
-      sectionHeader('10. SEGURIDAD DE LA INFORMACIÓN', 'Sección 10 de 12');
+      sectionHeader(t('10. SEGURIDAD DE LA INFORMACION'), t('Seccion 10 de 12'));
 
       const secItems = [
         { title: 'Autenticación', desc: 'Supabase Auth con JWT. Sesiones con expiración configurable. No se almacenan contraseñas en texto plano (bcrypt).' },
@@ -1271,7 +1271,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...DARK);
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(sec.title, margin + 8, y + 7);
+        pdf.text(t(sec.title), margin + 8, y + 7);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'normal');
@@ -1283,7 +1283,7 @@ export const ManualModule: React.FC = () => {
       // ════════════ PÁGINA: CONTROL DE DOCUMENTOS ════════════
       addNewPage();
       y = 20;
-      sectionHeader('11. CONTROL DE DOCUMENTOS', 'Sección 11 de 12');
+      sectionHeader(t('11. CONTROL DE DOCUMENTOS'), t('Seccion 11 de 12'));
 
       const docControlItems = [
         ['Código del documento', 'PRO-ECAR-SYS-001'],
@@ -1304,10 +1304,10 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(label, margin + 3, y + 5.5);
+        pdf.text(t(label), margin + 3, y + 5.5);
         pdf.setTextColor(...DARK);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(val, margin + 70, y + 5.5);
+        pdf.text(t(val), margin + 70, y + 5.5);
         y += 10;
       });
 
@@ -1315,7 +1315,7 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...DARK);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('11.1 Historial de Revisiones', margin, y);
+      pdf.text(t('11.1 Historial de Revisiones'), margin, y);
       y += 6;
 
       // Revision table header
@@ -1326,7 +1326,7 @@ export const ManualModule: React.FC = () => {
       pdf.setFont('helvetica', 'bold');
       ['Versión', 'Fecha', 'Descripción del Cambio', 'Autor'].forEach((col, ci) => {
         const cx = margin + ci * (contentW / 4);
-        pdf.text(col, cx + 2, y + 5.5);
+        pdf.text(t(col), cx + 2, y + 5.5);
       });
       y += 10;
       pdf.setFillColor(...LIGHT);
@@ -1336,14 +1336,14 @@ export const ManualModule: React.FC = () => {
       pdf.setFont('helvetica', 'normal');
       ['1.0', new Date().toLocaleDateString('es-AR'), 'Versión inicial del manual del sistema completo', 'ECAR ERP'].forEach((col, ci) => {
         const cx = margin + ci * (contentW / 4);
-        pdf.text(col, cx + 2, y + 5.5);
+        pdf.text(t(col), cx + 2, y + 5.5);
       });
       y += 12;
 
       // ════════════ PÁGINA: GLOSARIO ════════════
       addNewPage();
       y = 20;
-      sectionHeader('12. GLOSARIO Y REFERENCIAS', 'Sección 12 de 12');
+      sectionHeader(t('12. GLOSARIO Y REFERENCIAS'), t('Seccion 12 de 12'));
 
       const glossary = [
         { term: 'API', def: 'Application Programming Interface. Interfaz de programación que permite la comunicación entre sistemas.' },
@@ -1369,7 +1369,7 @@ export const ManualModule: React.FC = () => {
         pdf.setTextColor(...BLUE);
         pdf.setFontSize(8.5);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(item.term, margin + 4, y + 6);
+        pdf.text(t(item.term), margin + 4, y + 6);
         pdf.setTextColor(...GRAY);
         pdf.setFontSize(7.5);
         pdf.setFont('helvetica', 'normal');
@@ -1385,17 +1385,17 @@ export const ManualModule: React.FC = () => {
       pdf.setTextColor(...WHITE);
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('ECAR ERP', pageW / 2, pageH / 2 - 20, { align: 'center' });
+      pdf.text(t('ECAR ERP'), pageW / 2, pageH / 2 - 20, { align: 'center' });
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(180, 200, 220);
-      pdf.text('Manual de Procedimientos del Sistema', pageW / 2, pageH / 2 - 8, { align: 'center' });
-      pdf.text('PRO-ECAR-SYS-001 | Versión 1.0', pageW / 2, pageH / 2, { align: 'center' });
-      pdf.text(`Generado el ${new Date().toLocaleString('es-AR')}`, pageW / 2, pageH / 2 + 8, { align: 'center' });
+      pdf.text(t('Manual de Procedimientos del Sistema'), pageW / 2, pageH / 2 - 8, { align: 'center' });
+      pdf.text(t('PRO-ECAR-SYS-001 | Version 1.0'), pageW / 2, pageH / 2, { align: 'center' });
+      pdf.text(t(`Generado el ${new Date().toLocaleString('es-AR')}`), pageW / 2, pageH / 2 + 8, { align: 'center' });
       pdf.setTextColor(100, 130, 160);
       pdf.setFontSize(8);
-      pdf.text('ECAR — Sistema ERP para Empresas Constructoras', pageW / 2, pageH - 20, { align: 'center' });
-      pdf.text('Ing. Carlos A. Regalado', pageW / 2, pageH - 14, { align: 'center' });
+      pdf.text(t('ECAR - Sistema ERP para Empresas Constructoras'), pageW / 2, pageH - 20, { align: 'center' });
+      pdf.text(t('Ing. Carlos A. Regalado'), pageW / 2, pageH - 14, { align: 'center' });
 
       setProgress(98);
       pdf.save(`ECAR_Manual_Procedimientos_${new Date().toLocaleDateString('es-AR').replace(/\//g, '-')}.pdf`);
