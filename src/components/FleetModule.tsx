@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Calendar, Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2
 } from 'lucide-react';
 import { FuelModule } from './FuelModule';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle } from '../hooks/useData';

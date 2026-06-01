@@ -3,7 +3,7 @@ import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
-  FileSignature, LayoutDashboard, DollarSign, ShoppingBag, Package,
+  FileSignature, LayoutDashboard, ShoppingBag, Package,
   Warehouse, Truck, Fuel, FolderOpen, ShieldAlert, ClipboardCheck,
   MessageSquareText, HardHat,
 } from 'lucide-react';
