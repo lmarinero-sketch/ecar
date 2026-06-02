@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './components/LoginPage';
+import { CheckInPage } from './components/CheckInPage';
+import { VehicleCheckInPage } from './components/VehicleCheckInPage';
 import { useAppStore } from './store/useStore';
 
 // Module imports
@@ -40,9 +42,33 @@ const queryClient = new QueryClient({
   },
 });
 
+// Detect public QR routes before auth
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | null {
+  const path = window.location.pathname;
+  // /checkin/{uuid} → Vehicle daily report (QR scan)
+  const vehicleMatch = path.match(/^\/checkin\/([0-9a-f-]{36})$/i);
+  if (vehicleMatch) {
+    return { type: 'checkin_vehicle', vehicleId: vehicleMatch[1] };
+  }
+  // /checkin?token=... → Attendance check-in
+  if (path === '/checkin' || path === '/checkin/') {
+    return { type: 'checkin_attendance' };
+  }
+  return null;
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
   const { activeModule } = useAppStore();
+
+  // Public routes (no auth required)
+  const publicRoute = getPublicRoute();
+  if (publicRoute) {
+    if (publicRoute.type === 'checkin_vehicle') {
+      return <VehicleCheckInPage vehicleId={publicRoute.vehicleId} />;
+    }
+    return <CheckInPage />;
+  }
 
   if (loading) {
     return (
