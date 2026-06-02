@@ -93,6 +93,8 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   };
 
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
+  const kmValue = odometerKm ? parseInt(odometerKm) : null;
+  const kmInvalid = kmValue !== null && vehicle?.current_km != null && kmValue < vehicle.current_km;
   const computedCondition: VehicleCondition = hasDamage || faultsCount >= 3
     ? 'fuera_de_servicio'
     : faultsCount > 0
@@ -108,7 +110,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   };
 
   const handleSubmit = async () => {
-    if (!driverName.trim()) return;
+    if (!driverName.trim() || kmInvalid) return;
     setSaving(true);
 
     try {
@@ -278,9 +280,25 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                   inputMode="numeric"
                   value={odometerKm}
                   onChange={e => setOdometerKm(e.target.value)}
-                  placeholder={vehicle.current_km ? `Último: ${vehicle.current_km.toLocaleString()} km` : 'Km actuales'}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm font-mono"
+                  min={vehicle.current_km || 0}
+                  placeholder={vehicle.current_km ? `Mínimo: ${vehicle.current_km.toLocaleString()} km` : 'Km actuales'}
+                  className={`w-full px-4 py-3 border rounded-xl text-sm font-mono ${
+                    kmInvalid
+                      ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-300 focus:border-red-400'
+                      : 'border-gray-300 focus:ring-indigo-300 focus:border-indigo-400'
+                  }`}
                 />
+                {kmInvalid && (
+                  <div className="flex items-center gap-1.5 mt-1.5 px-1">
+                    <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                    <p className="text-xs text-red-600 font-medium">
+                      No puede ser menor a {vehicle.current_km!.toLocaleString()} km (último registro)
+                    </p>
+                  </div>
+                )}
+                {vehicle.current_km && !kmInvalid && odometerKm && (
+                  <p className="text-[11px] text-green-600 mt-1 px-1">✓ +{(parseInt(odometerKm) - vehicle.current_km).toLocaleString()} km desde último registro</p>
+                )}
               </div>
             </div>
 
@@ -439,7 +457,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
             {/* Submit */}
             <button
               onClick={handleSubmit}
-              disabled={saving || !driverName.trim()}
+              disabled={saving || !driverName.trim() || kmInvalid}
               className="w-full bg-gradient-to-r from-indigo-700 to-violet-600 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {saving ? (

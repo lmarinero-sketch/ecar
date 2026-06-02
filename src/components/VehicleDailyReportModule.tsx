@@ -138,6 +138,8 @@ const ReportForm: React.FC<{
   }, [selectedVehicle]);
 
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
+  const kmValue = odometerKm ? parseInt(odometerKm) : null;
+  const kmInvalid = kmValue !== null && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
   const computedCondition: VehicleCondition = hasDamage || faultsCount >= 3
     ? 'fuera_de_servicio'
     : faultsCount > 0
@@ -154,7 +156,7 @@ const ReportForm: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicleId || !driverName.trim()) return;
+    if (!vehicleId || !driverName.trim() || kmInvalid) return;
 
     await createReport.mutateAsync({
       vehicle_id: vehicleId,
@@ -230,11 +232,21 @@ const ReportForm: React.FC<{
             type="number"
             value={odometerKm}
             onChange={e => setOdometerKm(e.target.value)}
-            placeholder={selectedVehicle?.current_km ? `Último: ${selectedVehicle.current_km.toLocaleString()} km` : '0'}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue"
+            min={selectedVehicle?.current_km || 0}
+            placeholder={selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0'}
+            className={`w-full px-3 py-2.5 rounded-xl text-sm font-mono focus:ring-2 border ${
+              kmInvalid
+                ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-200 focus:border-red-400'
+                : 'border-gray-300 focus:ring-ecar-blue/30 focus:border-ecar-blue'
+            }`}
           />
-          {selectedVehicle?.current_km && odometerKm && parseInt(odometerKm) < selectedVehicle.current_km && (
-            <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertTriangle size={10} /> Km menor al último registro ({selectedVehicle.current_km.toLocaleString()})</p>
+          {kmInvalid && (
+            <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1 font-medium">
+              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle!.current_km!.toLocaleString()} km (último registro)
+            </p>
+          )}
+          {selectedVehicle?.current_km && !kmInvalid && odometerKm && (
+            <p className="text-[10px] text-green-600 mt-1">✓ +{(parseInt(odometerKm) - selectedVehicle.current_km).toLocaleString()} km desde último registro</p>
           )}
         </div>
         <div>
@@ -412,7 +424,7 @@ const ReportForm: React.FC<{
       {/* Submit */}
       <button
         type="submit"
-        disabled={createReport.isPending || !vehicleId || !driverName.trim()}
+        disabled={createReport.isPending || !vehicleId || !driverName.trim() || kmInvalid}
         className="w-full bg-gradient-to-r from-slate-700 to-slate-800 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:from-slate-800 hover:to-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {createReport.isPending ? (
