@@ -1,13 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck
 } from 'lucide-react';
 import { FuelModule } from './FuelModule';
+import { VehicleDailyReportModule } from './VehicleDailyReportModule';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle } from '../hooks/useData';
 import type { FuelVehicle } from '../lib/types';
 
-type FleetView = 'overview' | 'fuel' | 'maintenance';
+type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report';
+
+const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
+  operativo: { icon: '🟢', cls: 'bg-green-100 text-green-700' },
+  con_observaciones: { icon: '🟡', cls: 'bg-yellow-100 text-yellow-700' },
+  fuera_de_servicio: { icon: '🔴', cls: 'bg-red-100 text-red-700' },
+};
 
 const VEHICLE_ICON: Record<string, string> = {
   camion: '🚛', camioneta: '🛻', auto: '🚗', maquinaria: '🏗️', moto: '🏍️', otro: '🚐',
@@ -110,6 +117,10 @@ export const FleetModule: React.FC = () => {
       maintenance_notes: null,
     });
   };
+
+  if (view === 'daily_report') {
+    return <VehicleDailyReportModule onBack={() => setView('overview')} />;
+  }
 
   if (view === 'fuel') {
     return (
@@ -245,7 +256,7 @@ export const FleetModule: React.FC = () => {
       </div>
 
       {/* Sub-modules */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button onClick={() => setView('maintenance')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-amber-300 hover:shadow-md hover:bg-amber-50/30 transition-all group cursor-pointer relative">
           {maintenanceDue.length > 0 && (
             <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold animate-pulse">
@@ -260,6 +271,11 @@ export const FleetModule: React.FC = () => {
           <Fuel size={48} className="mx-auto mb-3 text-sky-400 group-hover:text-sky-500 group-hover:scale-110 transition-all" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-sky-700 transition-colors">Combustible</h4>
           <p className="text-sm text-gray-500">Registro de cargas y consumo por km.</p>
+        </button>
+        <button onClick={() => setView('daily_report')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-indigo-300 hover:shadow-md hover:bg-indigo-50/30 transition-all group cursor-pointer">
+          <ClipboardCheck size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors">Parte Diario</h4>
+          <p className="text-sm text-gray-500">Inspección diaria con QR y checklist.</p>
         </button>
       </div>
 
@@ -289,6 +305,11 @@ export const FleetModule: React.FC = () => {
                       {v.plate && <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.plate}</span>}
                       {overdue && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
                       {!overdue && soon && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700">Service próximo</span>}
+                      {v.vehicle_condition && CONDITION_BADGE[v.vehicle_condition] && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${CONDITION_BADGE[v.vehicle_condition].cls}`}>
+                          {CONDITION_BADGE[v.vehicle_condition].icon} {v.vehicle_condition === 'operativo' ? '' : v.vehicle_condition === 'con_observaciones' ? 'Observado' : 'Fuera de servicio'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
                       {v.brand && <span>{v.brand} {v.model || ''}</span>}

@@ -964,6 +964,41 @@ export type BudgetAPUComponent = {
   resource?: BudgetResource | null;
 };
 
+// ========== PARTE DIARIO VEHICULAR ==========
+
+export type VehicleChecklistItem = {
+  item: string;
+  estado: 'ok' | 'falla';
+  nota?: string;
+};
+
+export type VehicleFuelLevel = 'vacio' | 'cuarto' | 'medio' | 'tres_cuartos' | 'lleno';
+export type VehicleCondition = 'operativo' | 'con_observaciones' | 'fuera_de_servicio';
+
+export type VehicleDailyReport = {
+  id: string;
+  tenant_id: string;
+  vehicle_id: string;
+  report_date: string;
+  report_time: string | null;
+  driver_name: string;
+  project_id: string | null;
+  odometer_km: number | null;
+  fuel_level: VehicleFuelLevel;
+  checklist: VehicleChecklistItem[];
+  has_damage: boolean;
+  damage_description: string | null;
+  damage_photos: string[];
+  observations: string | null;
+  signed_by: string | null;
+  vehicle_condition_after: VehicleCondition;
+  source: 'qr' | 'web' | 'mobile';
+  created_at: string;
+  // Joined
+  vehicle?: FuelVehicle | null;
+  project?: Project | null;
+};
+
 // ========== COMBUSTIBLE ==========
 
 export type FuelVehicle = {
@@ -981,6 +1016,7 @@ export type FuelVehicle = {
   area: string | null;
   default_driver: string | null;
   status: 'active' | 'inactive' | 'maintenance';
+  vehicle_condition: VehicleCondition;
   current_km: number | null;
   next_maintenance_date: string | null;
   next_maintenance_km: number | null;

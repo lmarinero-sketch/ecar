@@ -15,7 +15,8 @@ import type {
   GastoItem, GastoRegistro,
   EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
   BudgetResource, Budget, BudgetSection, BudgetItem,
-  FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation
+  FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation,
+  VehicleDailyReport
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -1764,6 +1765,62 @@ export function useUpdateFuelReconciliation() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_reconciliation'] }),
+  });
+}
+
+// ========== VEHICLE DAILY REPORTS ==========
+export function useVehicleDailyReports(vehicleId?: string) {
+  return useQuery({
+    queryKey: ['vehicle_daily_reports', vehicleId],
+    queryFn: async () => {
+      let q = supabase
+        .from('vehicle_daily_reports')
+        .select('*, vehicle:fuel_vehicles(id, code, description, plate, vehicle_type), project:projects(id, name)')
+        .order('report_date', { ascending: false })
+        .limit(100);
+      if (vehicleId) q = q.eq('vehicle_id', vehicleId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as VehicleDailyReport[];
+    },
+  });
+}
+
+export function useCreateVehicleDailyReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (report: Partial<VehicleDailyReport>) => {
+      // 1. Insert the report
+      const { data, error } = await supabase
+        .from('vehicle_daily_reports')
+        .insert({ ...report, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+
+      // 2. Update vehicle: km + condition
+      if (report.vehicle_id) {
+        const vehicleUpdates: Record<string, unknown> = {
+          vehicle_condition: report.vehicle_condition_after || 'operativo',
+        };
+        if (report.odometer_km) {
+          vehicleUpdates.current_km = report.odometer_km;
+        }
+        // 3. If damage → set maintenance
+        if (report.has_damage && report.damage_description) {
+          const today = new Date().toISOString().slice(0, 10);
+          vehicleUpdates.next_maintenance_date = today;
+          vehicleUpdates.maintenance_notes = `[REPORTE] ${report.damage_description.substring(0, 200)}`;
+        }
+        await supabase.from('fuel_vehicles').update(vehicleUpdates).eq('id', report.vehicle_id);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vehicle_daily_reports'] });
+      qc.invalidateQueries({ queryKey: ['fuel_vehicles'] });
+    },
   });
 }
 
