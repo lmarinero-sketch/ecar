@@ -12,7 +12,7 @@ const corsHeaders = {
 
 const BASE_SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablás en español argentino. Sos experto en el ERP de ECAR.
 
-## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Acopios & Logística, Flota y Maquinaria, Certificaciones/ICC, Parte Diario de Obra (registro diario, clima, avance), Seguridad & Incidentes (accidentes, observaciones, matriz riesgo 5×5), Inspecciones & Calidad (checklists, punch list, no conformidades), Consultas de Obra RFI (consultas técnicas formales con impacto costo/cronograma), Documentos & Correo.
+## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP — aún no emite con AFIP, próximo a implementación), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Inventario & Pañol (materiales + herramientas con stock), Flota & Mantenimiento (vehículos, km, service programado, seguro, VTV), Combustible (cargas por vehículo, rendimiento km/litro), Pedidos de Compra (vinculados al inventario — solo ítems registrados), Certificaciones/ICC, Parte Diario de Obra, Seguridad & Incidentes (accidentes, observaciones, matriz riesgo 5×5), Inspecciones & Calidad (checklists, punch list, no conformidades), Consultas de Obra RFI (consultas técnicas formales con impacto costo/cronograma), Documentos & Correo, Presupuestos de Obra, Implementación (tracking de progreso), Modo Tutorial (ayuda contextual por módulo).
 
 ## REGLAS CRÍTICAS
 1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Si el usuario pregunta algo, PRIMERO usá las herramientas para obtener los datos actuales de la base de datos y después respondé con números y hechos concretos.
@@ -141,12 +141,53 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Informe financiero mensual: ingresos, egresos, desglose por categoría, desviaciones.
 - Ayudalo a: generar resúmenes, comparar meses, identificar tendencias de gasto.`,
 
+  fleet: `## CONTEXTO ACTUAL: El usuario está en Flota & Mantenimiento
+- Registro completo de vehículos y maquinaria: código, tipo, marca, modelo, año, patente, combustible, capacidad tanque, área, chofer.
+- Control de kilometraje actual y mantenimiento programado (fecha y km del próximo service).
+- Vencimientos de seguro y VTV con alertas automáticas.
+- Alertas ROJAS cuando el service está vencido o toca hoy. AMARILLAS para próximos 7 días.
+- Badge rojo en la card de Mantenimiento cuando hay services vencidos.
+- Botón "Completado" que reinicia el ciclo de mantenimiento del vehículo.
+- Los vehículos se comparten con el módulo de Combustible.
+- Ayudalo a: consultar estado de la flota, ver mantenimientos pendientes, registrar un nuevo vehículo.
+- Sugerí: "¿Querés que revise qué vehículos tienen service vencido?" o "Puedo mostrarte el estado de mantenimiento de toda la flota".`,
+
+  fuel: `## CONTEXTO ACTUAL: El usuario está en Combustible
+- Registro de cargas de combustible por vehículo: litros, monto, tipo, km odómetro.
+- Cálculo automático de rendimiento (km/litro) al cargar km.
+- Los vehículos se comparten con el módulo de Flota.
+- Ayudalo a: ver historial de cargas, analizar consumo por vehículo, identificar vehículos con alto consumo.
+- Sugerí: "¿Querés que analice el consumo de combustible por vehículo?"`,
+
+  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Pedidos de Compra
+- Solicitudes internas de compra de materiales y herramientas para obra.
+- IMPORTANTE: Los materiales y herramientas están VINCULADOS AL INVENTARIO. Solo se pueden pedir ítems que estén registrados en el pañol.
+- Las herramientas (🔧) aparecen primero en el selector por prioridad.
+- Cada pedido muestra el stock actual del ítem y la unidad de medida se autocompleta.
+- Estados: pendiente, aprobado, consolidado, recibido.
+- Ayudalo a: ver pedidos pendientes, consultar qué materiales se pueden pedir, verificar stock disponible.
+- Sugerí: "¿Querés que revise los pedidos pendientes?" o "Puedo mostrarte qué herramientas hay disponibles para pedir".
+- Si el usuario quiere pedir algo que no está en inventario, decile que primero lo cargue en Inventario.`,
+
+  implementation: `## CONTEXTO ACTUAL: El usuario está en Implementación
+- Panel de seguimiento del progreso de implementación del sistema ECAR.
+- Muestra cada módulo con su estado: completado, en progreso, pendiente.
+- Porcentaje general de avance del sistema.
+- Ayudalo a: entender qué módulos ya están activos, cuáles están en desarrollo, y cuáles están pendientes.`,
+
+  project_budget: `## CONTEXTO ACTUAL: El usuario está en Presupuestos de Obra
+- Gestión de presupuestos por proyecto: rubros, sub-rubros, costos unitarios y totales.
+- Comparación presupuesto original vs costo real.
+- Integración con WBS para control de avance + costo.
+- Ayudalo a: consultar presupuestos, comparar costos, identificar desvíos.`,
+
   guide: `## CONTEXTO ACTUAL: El usuario está en la Guía de Uso del Sistema
 - Este módulo es una guía interactiva y detallada de cómo usar el ERP de ECAR, incluyendo todas las secciones.
 - Destacá especialmente el uso del asistente por WhatsApp (número +54 9 2643 22-9503 o el canal configurado), explicando todo lo que se puede enviar por ahí (fotos de facturas/cheques, audios relatando partes de obra, novedades de empleados, etc.).
+- Mencioná que existe un MODO TUTORIAL: al activarlo desde el header, aparece un panel lateral con ayuda contextual de cada módulo.
 - Ofrecé explicar al usuario cómo usar cualquiera de las herramientas o módulos.
 - Explicá que la IA puede interpretar texto natural en español argentino.
-- Sugerí: "Puedo darte ejemplos de mensajes que le podés mandar al bot de WhatsApp" o "Preguntame sobre qué podés hacer en cualquiera de los módulos de ECAR".`,
+- Sugerí: "Puedo darte ejemplos de mensajes que le podés mandar al bot de WhatsApp" o "Preguntame sobre qué podés hacer en cualquiera de los módulos de ECAR" o "Probá activar el Modo Tutorial desde el header para obtener ayuda paso a paso".`,
 }
 
 function buildSystemPrompt(activeModule?: string): string {
@@ -339,6 +380,21 @@ const tools = [
       name: 'get_obra_health_score',
       description: 'Calcular el "health score" integral de una obra: combina partes diarios, seguridad, inspecciones, RFI, y certificaciones para dar un diagnóstico general.',
       parameters: { type: 'object', properties: { obra_name: { type: 'string', description: 'Nombre de la obra (parcial)' } } }
+    }
+  },
+  // ─── TOOLS NUEVOS: FLOTA & INVENTARIO ───
+  {
+    type: 'function', function: {
+      name: 'query_fleet_vehicles',
+      description: 'Consultar vehículos de la flota. Muestra datos técnicos, km actuales, mantenimiento programado, vencimientos de seguro y VTV.',
+      parameters: { type: 'object', properties: { search: { type: 'string', description: 'Buscar por código, descripción o patente (opcional)' } } }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_inventory',
+      description: 'Consultar inventario de materiales y herramientas. Muestra stock actual, unidad, categoría y si es herramienta.',
+      parameters: { type: 'object', properties: { search: { type: 'string', description: 'Buscar por nombre (opcional)' }, category: { type: 'string', description: 'Filtrar por categoría (opcional)' }, low_stock: { type: 'boolean', description: 'Si true, solo muestra items con stock bajo mínimo' } } }
     }
   },
 ]
@@ -726,6 +782,52 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
             ...(punchCriticos.length ? [`🔴 ${punchCriticos.length} items críticos en punch list`] : []),
             ...(rfiAbiertas.length > 3 ? [`📋 ${rfiAbiertas.length} RFIs abiertas pendientes de respuesta`] : []),
           ],
+        })
+      }
+      // ─── FLOTA ───
+      case 'query_fleet_vehicles': {
+        let q = sb.from('fuel_vehicles').select('code, description, type, license_plate, brand, model, year, fuel_type, tank_capacity, area, driver, current_km, next_maintenance_date, next_maintenance_km, maintenance_notes, last_maintenance_date, insurance_expiry, vtv_expiry')
+        if (args.search) {
+          q = q.or(`code.ilike.%${args.search}%,description.ilike.%${args.search}%,license_plate.ilike.%${args.search}%`)
+        }
+        const { data } = await q.order('code')
+        if (!data?.length) return JSON.stringify({ vehicles: [], count: 0, message: 'No se encontraron vehículos' })
+        
+        const todayDate = new Date(todayStr)
+        const weekAhead = new Date(todayDate.getTime() + 7 * 86400000)
+        const overdue = data.filter(v => v.next_maintenance_date && new Date(v.next_maintenance_date) <= todayDate)
+        const upcoming = data.filter(v => v.next_maintenance_date && new Date(v.next_maintenance_date) > todayDate && new Date(v.next_maintenance_date) <= weekAhead)
+        
+        return JSON.stringify({
+          vehicles: data,
+          count: data.length,
+          mantenimiento: {
+            vencidos: overdue.length,
+            proximos_7_dias: upcoming.length,
+            vehiculos_vencidos: overdue.map(v => ({ code: v.code, description: v.description, fecha_service: v.next_maintenance_date })),
+            vehiculos_proximos: upcoming.map(v => ({ code: v.code, description: v.description, fecha_service: v.next_maintenance_date })),
+          }
+        })
+      }
+      // ─── INVENTARIO ───
+      case 'query_inventory': {
+        let q = sb.from('inventory_items').select('name, category, unit, quantity, min_stock, is_tool, location')
+        if (args.search) q = q.ilike('name', `%${args.search}%`)
+        if (args.category) q = q.eq('category', args.category)
+        const { data } = await q.order('name')
+        if (!data?.length) return JSON.stringify({ items: [], count: 0 })
+        
+        let items = data
+        if (args.low_stock) {
+          items = data.filter(i => i.quantity !== null && i.min_stock !== null && i.quantity <= i.min_stock)
+        }
+        
+        return JSON.stringify({
+          items,
+          count: items.length,
+          herramientas: items.filter(i => i.is_tool).length,
+          materiales: items.filter(i => !i.is_tool).length,
+          bajo_stock: data.filter(i => i.quantity !== null && i.min_stock !== null && i.quantity <= i.min_stock).length,
         })
       }
       default:

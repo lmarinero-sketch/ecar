@@ -7,9 +7,11 @@ import {
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked, Rocket,
+  GraduationCap,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
+import { TutorialPanel } from './TutorialPanel';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
@@ -110,7 +112,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
 /*                          LAYOUT                             */
 /* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen } = useAppStore();
+  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode } = useAppStore();
   const { profile, signOut, hasModule, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
@@ -304,6 +306,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <kbd className="ml-auto text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200/80 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
             </div>
 
+            {/* Tutorial toggle */}
+            <button
+              onClick={() => setTutorialMode(!tutorialMode)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-all ${
+                tutorialMode
+                  ? 'bg-ecar-blue text-white border-ecar-blue shadow-md'
+                  : 'bg-blue-50 text-blue-600 border-blue-100/80 hover:bg-blue-100'
+              }`}
+              title="Modo Tutorial"
+            >
+              <GraduationCap size={13} />
+              <span className="hidden sm:inline">Tutorial</span>
+            </button>
+
             {/* Connection status */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100/80">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
@@ -317,6 +333,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {children}
         </div>
       </main>
+
+      {/* Tutorial Panel */}
+      <TutorialPanel />
     </div>
   );
 };

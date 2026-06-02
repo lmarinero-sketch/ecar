@@ -7,6 +7,8 @@ type AppState = {
   setActiveModule: (module: ModuleId) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  tutorialMode: boolean;
+  setTutorialMode: (on: boolean) => void;
 };
 
 export const useAppStore = create<AppState>()(
@@ -16,6 +18,8 @@ export const useAppStore = create<AppState>()(
       setActiveModule: (module) => set({ activeModule: module }),
       sidebarOpen: false,
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      tutorialMode: false,
+      setTutorialMode: (on) => set({ tutorialMode: on }),
     }),
     {
       name: 'ecar-nav',
