@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Plus, Upload, CheckCircle, Clock, AlertTriangle, X, MessageSquare, Pencil, Trash2, Calendar, DollarSign, Eye } from 'lucide-react';
+import { Bell, Plus, Upload, CheckCircle, X, MessageSquare, Pencil, Trash2, DollarSign, Eye } from 'lucide-react';
 import { useObligations, useCreateObligation, useUpdateObligation, useDeleteObligation } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { NotificationPanel } from './NotificationPanel';
@@ -25,14 +25,7 @@ export const ObligationsModule: React.FC = () => {
 
   const today = new Date().getDate();
 
-  const statusIcon = (status: string) => {
-    switch (status) {
-      case 'paid': return <CheckCircle size={16} className="text-green-500" />;
-      case 'overdue': return <AlertTriangle size={16} className="text-red-500" />;
-      case 'notified': return <Bell size={16} className="text-yellow-500" />;
-      default: return <Clock size={16} className="text-gray-400" />;
-    }
-  };
+
 
   const statusLabel: Record<string, string> = { pending: 'Pendiente', notified: 'Notificado', paid: 'Pagado', overdue: 'Vencido' };
   const statusColor: Record<string, string> = {

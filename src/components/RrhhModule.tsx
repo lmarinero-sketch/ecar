@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Plus, TrendingUp, History, Tag } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Tag } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';

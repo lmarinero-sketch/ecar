@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag, Plus, X, TrendingUp, History, Pencil, Trash2, DollarSign, Clock } from 'lucide-react';
+import { Tag, Plus, X, TrendingUp, History, Pencil, Trash2, Clock } from 'lucide-react';
 import type { UnionCategory } from '../lib/types';
 
 interface Props {
