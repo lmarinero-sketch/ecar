@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
 import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
@@ -401,8 +402,10 @@ const PHASES: Phase[] = [
 ];
 
 const STORAGE_KEY = 'ecar_implementation_state';
+const SUPABASE_SETTING_KEY = 'implementation_state';
+const DEBOUNCE_MS = 1000;
 
-function loadState(): ImplState {
+function loadLocalState(): ImplState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -410,7 +413,7 @@ function loadState(): ImplState {
   return { checked: {}, notes: {} };
 }
 
-function saveState(state: ImplState) {
+function saveLocalState(state: ImplState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -539,11 +542,54 @@ const SectionBlock: React.FC<{
 /* ═══════════════════════════════════════════════════════════════ */
 
 export const ImplementationModule: React.FC = () => {
-  const [state, setState] = useState<ImplState>(loadState);
+  const [state, setState] = useState<ImplState>(loadLocalState);
   const [activePhase, setActivePhase] = useState<string>('enrico');
+  const [syncing, setSyncing] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadDone = useRef(false);
 
-  // Auto-save
-  useEffect(() => { saveState(state); }, [state]);
+  // Supabase hooks
+  const { data: remoteSetting, isLoading: remoteLoading } = useSystemSetting(SUPABASE_SETTING_KEY);
+  const upsertSetting = useUpsertSystemSetting();
+
+  // Load from Supabase on mount (takes priority over localStorage)
+  useEffect(() => {
+    if (!remoteLoading && remoteSetting?.value && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      try {
+        const remote: ImplState = JSON.parse(remoteSetting.value);
+        // Merge: Supabase wins, only if it has data
+        if (Object.keys(remote.checked).length > 0 || Object.keys(remote.notes).length > 0) {
+          setState(remote);
+          saveLocalState(remote);
+        }
+      } catch { /* ignore bad JSON */ }
+    } else if (!remoteLoading && !remoteSetting?.value) {
+      initialLoadDone.current = true;
+    }
+  }, [remoteLoading, remoteSetting]);
+
+  // Debounced save to Supabase + instant localStorage
+  const persistState = useCallback((newState: ImplState) => {
+    // Instant local save
+    saveLocalState(newState);
+    // Debounced remote save
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSyncing(true);
+      upsertSetting.mutate(
+        { key: SUPABASE_SETTING_KEY, value: JSON.stringify(newState), description: 'Estado del checklist de implementación' },
+        { onSettled: () => setSyncing(false) }
+      );
+    }, DEBOUNCE_MS);
+  }, [upsertSetting]);
+
+  // Auto-save on state change
+  useEffect(() => {
+    if (initialLoadDone.current) {
+      persistState(state);
+    }
+  }, [state]);
 
   const toggleCheck = (id: string) => {
     setState(prev => ({
@@ -561,7 +607,10 @@ export const ImplementationModule: React.FC = () => {
 
   const resetAll = () => {
     if (confirm('¿Estás seguro de reiniciar todo el progreso?')) {
-      setState({ checked: {}, notes: {} });
+      const empty: ImplState = { checked: {}, notes: {} };
+      setState(empty);
+      // Force immediate save to Supabase
+      upsertSetting.mutate({ key: SUPABASE_SETTING_KEY, value: JSON.stringify(empty), description: 'Estado del checklist de implementación' });
     }
   };
 
@@ -724,7 +773,22 @@ export const ImplementationModule: React.FC = () => {
 
       {/* Auto-save indicator */}
       <div className="flex items-center justify-center gap-2 text-xs text-gray-300 py-2">
-        <Save size={12} /> Progreso guardado automáticamente
+        {syncing ? (
+          <>
+            <div className="w-3 h-3 border-2 border-gray-300 border-t-ecar-blue rounded-full animate-spin" />
+            Sincronizando...
+          </>
+        ) : remoteLoading ? (
+          <>
+            <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-400 rounded-full animate-spin" />
+            Cargando...
+          </>
+        ) : (
+          <>
+            <Save size={12} className="text-emerald-400" />
+            <span className="text-emerald-400">Guardado en la nube</span>
+          </>
+        )}
       </div>
     </div>
   );
