@@ -257,6 +257,64 @@ export function useCreateCheque() {
   });
 }
 
+export function useUpdateCheque() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Cheque> & { id: string }) => {
+      const { data, error } = await supabase.from('cheques').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cheques'] }),
+  });
+}
+
+export function useDeleteCheque() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('cheques').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cheques'] }),
+  });
+}
+
+export function useCreateChequeAuditLog() {
+  return useMutation({
+    mutationFn: async (log: {
+      cheque_id: string | null;
+      action: 'created' | 'updated' | 'deleted' | 'status_changed';
+      user_id: string | null;
+      user_name: string;
+      changes?: Record<string, { old: unknown; new: unknown }>;
+      snapshot?: Record<string, unknown>;
+    }) => {
+      const { error } = await supabase.from('cheque_audit_log').insert({
+        tenant_id: ECAR_TENANT_ID,
+        ...log,
+      });
+      if (error) throw error;
+    },
+  });
+}
+
+export function useChequeAuditLog(chequeId: string | null) {
+  return useQuery({
+    queryKey: ['cheque_audit_log', chequeId],
+    enabled: !!chequeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cheque_audit_log')
+        .select('*')
+        .eq('cheque_id', chequeId!)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 // ========== PAYROLL ==========
 export function usePayrollPeriods() {
   return useQuery({

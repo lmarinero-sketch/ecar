@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
-import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText } from 'lucide-react';
-import { useCheques, useCreateCheque, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts } from '../hooks/useData';
+import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil } from 'lucide-react';
+import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
+import type { Cheque } from '../lib/types';
 
 export const FinancesModule: React.FC = () => {
+  const { profile } = useAuth();
   const { data: cheques = [], isLoading } = useCheques();
   const { data: expenses = [] } = useFixedExpenses();
   const createCheque = useCreateCheque();
+  const updateCheque = useUpdateCheque();
+  const deleteCheque = useDeleteCheque();
+  const auditLog = useCreateChequeAuditLog();
+
+  // Edit/Delete state
+  const [editingCheque, setEditingCheque] = useState<Cheque | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [deleteTarget, setDeleteTarget] = useState<Cheque | null>(null);
+  const [auditChequeId, setAuditChequeId] = useState<string | null>(null);
   
   const { data: paymentRecords = [], isLoading: isLoadingPayments } = usePaymentRecords();
   const createPaymentRecord = useCreatePaymentRecord();
@@ -88,13 +100,83 @@ export const FinancesModule: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      await createCheque.mutateAsync({ ...form, scan_url: scanUrl || undefined } as any);
+      const result = await createCheque.mutateAsync({ ...form, scan_url: scanUrl || undefined } as any);
+      // Audit: created
+      auditLog.mutate({
+        cheque_id: (result as any)?.id || null,
+        action: 'created',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        snapshot: { ...form, scan_url: scanUrl },
+      });
       setMode('idle');
       setOcrData(null);
       setScanUrl('');
       setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
     } catch (err: any) {
       alert(err.message || 'Error al registrar el cheque');
+    }
+  };
+
+  const handleEdit = (ch: Cheque) => {
+    setEditingCheque(ch);
+    setEditForm({
+      cheque_number: ch.cheque_number,
+      bank_name: ch.bank_name,
+      type: ch.type,
+      direction: ch.direction,
+      beneficiary_or_issuer: ch.beneficiary_or_issuer || '',
+      amount_ars: ch.amount_ars,
+      due_date: ch.due_date || '',
+      issue_date: ch.issue_date || '',
+      status: ch.status,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingCheque) return;
+    try {
+      // Calculate changes for audit
+      const changes: Record<string, { old: unknown; new: unknown }> = {};
+      const fields = ['cheque_number','bank_name','type','direction','beneficiary_or_issuer','amount_ars','due_date','issue_date','status'] as const;
+      for (const f of fields) {
+        const oldVal = (editingCheque as any)[f];
+        const newVal = (editForm as any)[f];
+        if (String(oldVal ?? '') !== String(newVal ?? '')) {
+          changes[f] = { old: oldVal, new: newVal };
+        }
+      }
+      await updateCheque.mutateAsync({ id: editingCheque.id, ...editForm });
+      // Audit: updated
+      auditLog.mutate({
+        cheque_id: editingCheque.id,
+        action: Object.keys(changes).includes('status') ? 'status_changed' : 'updated',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        changes,
+        snapshot: { ...editingCheque, ...editForm },
+      });
+      setEditingCheque(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      // Audit BEFORE delete
+      await auditLog.mutateAsync({
+        cheque_id: deleteTarget.id,
+        action: 'deleted',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        snapshot: deleteTarget as any,
+      });
+      await deleteCheque.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar');
     }
   };
 
@@ -279,6 +361,7 @@ export const FinancesModule: React.FC = () => {
                       <th className="px-4 py-3">Vto</th>
                       <th className="px-4 py-3 text-center">Estado</th>
                       <th className="px-4 py-3 text-center">Scan</th>
+                      <th className="px-4 py-3 text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -319,6 +402,13 @@ export const FinancesModule: React.FC = () => {
                           {(ch as any).scan_url ? (
                             <button onClick={() => setViewerUrl((ch as any).scan_url)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors" title="Ver imagen"><Camera size={14} /></button>
                           ) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => handleEdit(ch)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                            <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="Historial"><History size={14} /></button>
+                            <button onClick={() => setDeleteTarget(ch)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -579,8 +669,151 @@ export const FinancesModule: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Cheque Modal */}
+      {editingCheque && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Editar Cheque #{editForm.cheque_number}</h3>
+              <button onClick={() => setEditingCheque(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <select value={editForm.direction} onChange={e => setEditForm({ ...editForm, direction: e.target.value })} className="px-3 py-2 border rounded-lg text-sm col-span-2 font-medium">
+                <option value="receivable">↓ A Cobrar</option>
+                <option value="payable">↑ A Pagar</option>
+              </select>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Nro. Cheque</label>
+                <input value={editForm.cheque_number} onChange={e => setEditForm({ ...editForm, cheque_number: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Banco</label>
+                <input value={editForm.bank_name} onChange={e => setEditForm({ ...editForm, bank_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-bold text-gray-500">{editForm.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'}</label>
+                <input value={editForm.beneficiary_or_issuer} onChange={e => setEditForm({ ...editForm, beneficiary_or_issuer: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Monto ARS</label>
+                <input type="number" value={editForm.amount_ars || ''} onChange={e => setEditForm({ ...editForm, amount_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono font-bold" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Tipo</label>
+                <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                  <option value="physical">Físico</option>
+                  <option value="echeq">eCheq</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Fecha Emisión</label>
+                <input type="date" value={editForm.issue_date} onChange={e => setEditForm({ ...editForm, issue_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Vencimiento</label>
+                <input type="date" value={editForm.due_date} onChange={e => setEditForm({ ...editForm, due_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-bold text-gray-500">Estado</label>
+                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                  <option value="pending">Pendiente</option>
+                  <option value="deposited">Depositado</option>
+                  <option value="cashed">Cobrado</option>
+                  <option value="bounced">Rechazado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+            </div>
+            <button onClick={handleSaveEdit} disabled={updateCheque.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors">
+              {updateCheque.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-red-600">Eliminar Cheque</h3>
+            <p className="text-sm text-gray-600">
+              ¿Estás seguro de eliminar el cheque <span className="font-mono font-bold">#{deleteTarget.cheque_number}</span> de <span className="font-bold">{deleteTarget.bank_name}</span> por <span className="font-mono font-bold">{formatARS(deleteTarget.amount_ars)}</span>?
+            </p>
+            <p className="text-xs text-gray-400">Esta acción quedará registrada en el historial de auditoría.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={handleDelete} disabled={deleteCheque.isPending} className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit Log Modal */}
+      {auditChequeId && <ChequeAuditModal chequeId={auditChequeId} onClose={() => setAuditChequeId(null)} />}
+
       {/* Image Viewer */}
       {viewerUrl && <ImageViewer src={viewerUrl} alt="Cheque escaneado" onClose={() => setViewerUrl(null)} />}
+    </div>
+  );
+};
+
+// ─── Audit Log Sub-Component ───
+const ChequeAuditModal: React.FC<{ chequeId: string; onClose: () => void }> = ({ chequeId, onClose }) => {
+  const { data: logs = [], isLoading } = useChequeAuditLog(chequeId);
+  const actionLabels: Record<string, { label: string; color: string }> = {
+    created: { label: 'Creado', color: 'bg-green-100 text-green-700' },
+    updated: { label: 'Editado', color: 'bg-blue-100 text-blue-700' },
+    deleted: { label: 'Eliminado', color: 'bg-red-100 text-red-700' },
+    status_changed: { label: 'Estado cambiado', color: 'bg-yellow-100 text-yellow-700' },
+  };
+
+  const fieldLabels: Record<string, string> = {
+    cheque_number: 'Nro. Cheque', bank_name: 'Banco', type: 'Tipo', direction: 'Dirección',
+    beneficiary_or_issuer: 'Beneficiario/Emisor', amount_ars: 'Monto', due_date: 'Vencimiento',
+    issue_date: 'Fecha emisión', status: 'Estado',
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-lg flex items-center gap-2"><History size={18} className="text-purple-500" /> Historial de Cambios</h3>
+          <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+        </div>
+        {isLoading ? (
+          <div className="text-center py-8"><div className="w-6 h-6 border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin mx-auto" /></div>
+        ) : logs.length === 0 ? (
+          <p className="text-center text-gray-400 text-sm py-8">Sin registros de auditoría</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log: any) => {
+              const act = actionLabels[log.action] || { label: log.action, color: 'bg-gray-100 text-gray-600' };
+              return (
+                <div key={log.id} className="border border-gray-100 rounded-lg p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${act.color}`}>{act.label}</span>
+                    <span className="text-[10px] text-gray-400 font-mono">{new Date(log.created_at).toLocaleString('es-AR')}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium">
+                    por <span className="font-bold text-gray-800">{log.user_name}</span>
+                  </p>
+                  {log.changes && Object.keys(log.changes).length > 0 && (
+                    <div className="bg-gray-50 rounded p-2 space-y-1">
+                      {Object.entries(log.changes).map(([field, vals]: [string, any]) => (
+                        <div key={field} className="text-[11px]">
+                          <span className="font-bold text-gray-500">{fieldLabels[field] || field}:</span>{' '}
+                          <span className="text-red-500 line-through">{String(vals.old || '—')}</span>{' → '}
+                          <span className="text-green-600 font-bold">{String(vals.new || '—')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
