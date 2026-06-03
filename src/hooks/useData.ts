@@ -230,6 +230,28 @@ export function useCreateObligation() {
   });
 }
 
+export function useUpdateObligation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Obligation> & { id: string }) => {
+      const { error } = await supabase.from('obligations').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['obligations'] }),
+  });
+}
+
+export function useDeleteObligation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('obligations').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['obligations'] }),
+  });
+}
+
 // ========== INVOICES ==========
 export function useInvoices() {
   return useQuery({
