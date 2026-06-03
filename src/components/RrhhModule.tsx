@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2 } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
-import { useEmployees, useCreateEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
+import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 import { EmployeeCostPanel } from './EmployeeCostPanel';
 import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
@@ -16,10 +16,15 @@ export const RrhhModule: React.FC = () => {
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useLetterTemplates();
   const createEmployee = useCreateEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const deleteEmployee = useDeleteEmployee();
 
   const [tab, setTab] = useState<Tab>('roster');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [form, setForm] = useState({
     full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '',
@@ -132,9 +137,11 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 text-xs font-bold text-indigo-600">{calcAntiguedad(emp.hire_date)}</td>
                       <td className="px-4 py-3 text-xs text-gray-500">{emp.bank_alias_cbu || emp.bank_name || '—'}</td>
                       <td className="px-4 py-3 text-center">
-                        <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">
-                          Ver legajo
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
+                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', shift_id: emp.shift_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -278,6 +285,150 @@ export const RrhhModule: React.FC = () => {
       {/* TAB: Novedades al Contador */}
       {tab === 'novedades' && (
         <AccountantNovedadesPanel />
+      )}
+
+      {/* Edit Employee Modal */}
+      {editingEmployee && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Editar Empleado</h3>
+              <button onClick={() => setEditingEmployee(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Datos Personales</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
+                <input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">CUIL</label>
+                <input value={editForm.cuil} onChange={e => setEditForm({ ...editForm, cuil: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">DNI</label>
+                <input value={editForm.dni} onChange={e => setEditForm({ ...editForm, dni: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Nacimiento</label>
+                <input type="date" value={editForm.birth_date} onChange={e => setEditForm({ ...editForm, birth_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Teléfono</label>
+                <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 block mb-1">Dirección</label>
+                <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Contacto Emergencia</label>
+                <input value={editForm.emergency_contact} onChange={e => setEditForm({ ...editForm, emergency_contact: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+            </div>
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Datos Laborales</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso</label>
+                <input type="date" value={editForm.hire_date} onChange={e => setEditForm({ ...editForm, hire_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Inicio Período Prueba</label>
+                <input type="date" value={editForm.trial_start_date} onChange={e => setEditForm({ ...editForm, trial_start_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Categoría UOCRA</label>
+                <select value={editForm.category_id} onChange={e => setEditForm({ ...editForm, category_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccionar</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name} ($ {c.hourly_rate_ars}/h)</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Obra Actual</label>
+                <select value={editForm.current_project_id} onChange={e => setEditForm({ ...editForm, current_project_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Sin asignar</option>
+                  {projects.filter((p: any) => p.status === 'active').map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Turno</label>
+                <select value={editForm.shift_id} onChange={e => setEditForm({ ...editForm, shift_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccionar</option>
+                  {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time} - {s.end_time})</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
+                <select value={editForm.modo_liquidacion} onChange={e => setEditForm({ ...editForm, modo_liquidacion: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="mensual">Mensual</option>
+                  <option value="quincenal">Quincenal</option>
+                  <option value="jornalizado">Jornalizado</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Retribución Pactada ($)</label>
+                <input type="number" value={editForm.retribucion_pactada} onChange={e => setEditForm({ ...editForm, retribucion_pactada: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+            </div>
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Banco y Cobertura</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Banco</label>
+                <input value={editForm.bank_name} onChange={e => setEditForm({ ...editForm, bank_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Alias / CBU</label>
+                <input value={editForm.bank_alias_cbu} onChange={e => setEditForm({ ...editForm, bank_alias_cbu: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Obra Social</label>
+                <input value={editForm.obra_social} onChange={e => setEditForm({ ...editForm, obra_social: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">ART</label>
+                <input value={editForm.art_provider} onChange={e => setEditForm({ ...editForm, art_provider: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                try {
+                  await updateEmployee.mutateAsync({ id: editingEmployee.id, ...editForm, category_id: editForm.category_id || null, current_project_id: editForm.current_project_id || null, shift_id: editForm.shift_id || null, retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null });
+                  setEditingEmployee(null);
+                } catch (err: any) { alert(err.message); }
+              }}
+              disabled={updateEmployee.isPending || !editForm.full_name}
+              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
+            >
+              {updateEmployee.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Employee Confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-red-600">Dar de Baja</h3>
+            <p className="text-sm text-gray-600">
+              ¿Dás de baja a <span className="font-bold">{deleteTarget.full_name}</span>? El empleado pasará a estado "Desvinculado" y no se eliminará del sistema.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button
+                onClick={async () => {
+                  try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                }}
+                disabled={deleteEmployee.isPending}
+                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
+              >Dar de Baja</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

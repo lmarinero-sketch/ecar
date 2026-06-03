@@ -81,6 +81,17 @@ export function useUpdateEmployee() {
   });
 }
 
+export function useDeleteEmployee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('employees').update({ employment_status: 'terminated', termination_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+  });
+}
+
 // ========== UNION CATEGORIES ==========
 export function useCategories() {
   return useQuery({
