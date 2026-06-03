@@ -42,6 +42,10 @@ export const ExpensesModule: React.FC = () => {
   const [editCell, setEditCell] = useState<{ itemId: string; periodo: string; monto: string } | null>(null);
   const [showAddItem, setShowAddItem] = useState<GastoItemCategoria | null>(null);
   const [newItemDesc, setNewItemDesc] = useState('');
+  const [showGlobalAdd, setShowGlobalAdd] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [globalCat, setGlobalCat] = useState<GastoItemCategoria | null>(null);
+  const [globalDesc, setGlobalDesc] = useState('');
 
   const visibleMonths = useMemo(() => {
     const months: number[] = [];
@@ -132,6 +136,16 @@ export const ExpensesModule: React.FC = () => {
     setShowAddItem(null);
   };
 
+  const handleGlobalAdd = async () => {
+    if (!globalCat || !globalDesc.trim()) return;
+    const catItems = grouped[globalCat] || [];
+    await createItem.mutateAsync({ categoria: globalCat, descripcion: globalDesc.trim().toUpperCase(), orden: catItems.length + 1 });
+    setGlobalDesc('');
+    setGlobalCat(null);
+    setGlobalSearch('');
+    setShowGlobalAdd(false);
+  };
+
   const shiftRange = (dir: -1 | 1) => {
     setVisibleRange(([a, b]) => {
       const newA = Math.max(0, Math.min(11, a + dir));
@@ -152,6 +166,13 @@ export const ExpensesModule: React.FC = () => {
           <h3 className="font-bold text-2xl flex items-center gap-2"><Wallet size={24} /> Gastos Operativos</h3>
           <p className="text-emerald-100 text-sm mt-1">Estructura de gastos mensuales — control por categoría y período</p>
         </div>
+      </div>
+
+      {/* Nuevo Gasto Button */}
+      <div className="flex justify-end">
+        <button onClick={() => setShowGlobalAdd(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+          <Plus size={16} /> Nuevo Gasto
+        </button>
       </div>
 
       {/* KPIs */}
@@ -402,6 +423,77 @@ export const ExpensesModule: React.FC = () => {
         <span>Click en un monto para editarlo</span>
         <span>Enter para guardar, Esc para cancelar</span>
       </div>
+
+      {/* Global Add Gasto Modal */}
+      {showGlobalAdd && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Nuevo Gasto</h3>
+              <button onClick={() => { setShowGlobalAdd(false); setGlobalSearch(''); setGlobalCat(null); setGlobalDesc(''); }}><X size={20} className="text-gray-400" /></button>
+            </div>
+
+            {/* Category Search */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Categoría</label>
+              {globalCat ? (
+                <div className="flex items-center gap-2">
+                  {(() => { const cfg = CATEGORIA_CONFIG[globalCat]; const Icon = cfg.icon; return <span className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${cfg.bgColor} ${cfg.color}`}><Icon size={16} />{cfg.label}</span>; })()}
+                  <button onClick={() => { setGlobalCat(null); setGlobalSearch(''); }} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    autoFocus
+                    value={globalSearch}
+                    onChange={e => setGlobalSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                    placeholder="Buscá una categoría..."
+                  />
+                  <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                    {Object.entries(CATEGORIA_CONFIG)
+                      .filter(([_, cfg]) => !globalSearch || cfg.label.toLowerCase().includes(globalSearch.toLowerCase()))
+                      .map(([key, cfg]) => {
+                        const Icon = cfg.icon;
+                        const count = (grouped[key as GastoItemCategoria] || []).length;
+                        return (
+                          <button key={key} onClick={() => setGlobalCat(key as GastoItemCategoria)} className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors ${cfg.color}`}>
+                            <Icon size={16} />
+                            <span className="font-medium">{cfg.label}</span>
+                            <span className="text-xs text-gray-400 ml-auto">{count} items</span>
+                          </button>
+                        );
+                      })}
+                    {globalSearch && !Object.values(CATEGORIA_CONFIG).some(c => c.label.toLowerCase().includes(globalSearch.toLowerCase())) && (
+                      <p className="text-xs text-gray-400 text-center py-2">No se encontró "{globalSearch}". Seleccioná una categoría existente.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            {globalCat && (
+              <>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Descripción del Gasto</label>
+                  <input
+                    autoFocus
+                    value={globalDesc}
+                    onChange={e => setGlobalDesc(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleGlobalAdd(); }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                    placeholder="Ej: SEGURO AUTOMOTOR TOYOTA"
+                  />
+                </div>
+                <button onClick={handleGlobalAdd} disabled={!globalDesc.trim() || createItem.isPending} className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                  {createItem.isPending ? 'Creando...' : '✓ Crear Gasto'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
