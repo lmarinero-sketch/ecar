@@ -6,7 +6,7 @@ import {
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
   FileSignature, LayoutDashboard, ShoppingBag, Package,
   Warehouse, Truck, Fuel, FolderOpen, ShieldAlert, ClipboardCheck,
-  MessageSquareText, HardHat,
+  MessageSquareText, HardHat, Plus, Trash2, Edit, X, FileText, ChevronUp
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -42,6 +42,15 @@ type Phase = {
 type ImplState = {
   checked: Record<string, boolean>;
   notes: Record<string, string>;
+};
+
+type Meeting = {
+  id: string;
+  date: string;
+  responsibles: string;
+  objective: string;
+  development: string;
+  createdAt: string;
 };
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -548,17 +557,33 @@ export const ImplementationModule: React.FC = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadDone = useRef(false);
 
+  // Main navigation tab
+  const [activeTab, setActiveTab] = useState<'checklist' | 'meetings'>('checklist');
+
+  // Meetings state
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
+  const [isAddingMeeting, setIsAddingMeeting] = useState(false);
+  const [expandedMeetings, setExpandedMeetings] = useState<Record<string, boolean>>({});
+  const [syncingMeetings, setSyncingMeetings] = useState(false);
+
+  // Form states
+  const [formDate, setFormDate] = useState('');
+  const [formResponsibles, setFormResponsibles] = useState('');
+  const [formObjective, setFormObjective] = useState('');
+  const [formDevelopment, setFormDevelopment] = useState('');
+
   // Supabase hooks
   const { data: remoteSetting, isLoading: remoteLoading } = useSystemSetting(SUPABASE_SETTING_KEY);
+  const { data: remoteMeetings, isLoading: remoteMeetingsLoading } = useSystemSetting('implementation_meetings');
   const upsertSetting = useUpsertSystemSetting();
 
-  // Load from Supabase on mount (takes priority over localStorage)
+  // Load checklist from Supabase on mount
   useEffect(() => {
     if (!remoteLoading && remoteSetting?.value && !initialLoadDone.current) {
       initialLoadDone.current = true;
       try {
         const remote: ImplState = JSON.parse(remoteSetting.value);
-        // Merge: Supabase wins, only if it has data
         if (Object.keys(remote.checked).length > 0 || Object.keys(remote.notes).length > 0) {
           setState(remote);
           saveLocalState(remote);
@@ -569,11 +594,19 @@ export const ImplementationModule: React.FC = () => {
     }
   }, [remoteLoading, remoteSetting]);
 
-  // Debounced save to Supabase + instant localStorage
+  // Load meetings from Supabase on mount
+  useEffect(() => {
+    if (!remoteMeetingsLoading && remoteMeetings?.value) {
+      try {
+        const loaded: Meeting[] = JSON.parse(remoteMeetings.value);
+        setMeetings(loaded);
+      } catch { /* ignore bad JSON */ }
+    }
+  }, [remoteMeetingsLoading, remoteMeetings]);
+
+  // Debounced save for checklist
   const persistState = useCallback((newState: ImplState) => {
-    // Instant local save
     saveLocalState(newState);
-    // Debounced remote save
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setSyncing(true);
@@ -584,7 +617,17 @@ export const ImplementationModule: React.FC = () => {
     }, DEBOUNCE_MS);
   }, [upsertSetting]);
 
-  // Auto-save on state change
+  // Save meetings list
+  const persistMeetings = (newMeetings: Meeting[]) => {
+    setMeetings(newMeetings);
+    setSyncingMeetings(true);
+    upsertSetting.mutate(
+      { key: 'implementation_meetings', value: JSON.stringify(newMeetings), description: 'Registro de reuniones de implementación' },
+      { onSettled: () => setSyncingMeetings(false) }
+    );
+  };
+
+  // Auto-save checklist on state change
   useEffect(() => {
     if (initialLoadDone.current) {
       persistState(state);
@@ -609,10 +652,82 @@ export const ImplementationModule: React.FC = () => {
     if (confirm('¿Estás seguro de reiniciar todo el progreso?')) {
       const empty: ImplState = { checked: {}, notes: {} };
       setState(empty);
-      // Force immediate save to Supabase
       upsertSetting.mutate({ key: SUPABASE_SETTING_KEY, value: JSON.stringify(empty), description: 'Estado del checklist de implementación' });
     }
   };
+
+  // Meetings handlers
+  const handleStartAdd = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setFormDate(today);
+    setFormResponsibles('');
+    setFormObjective('');
+    setFormDevelopment('');
+    setIsAddingMeeting(true);
+    setEditingMeeting(null);
+  };
+
+  const handleStartEdit = (meeting: Meeting) => {
+    setFormDate(meeting.date);
+    setFormResponsibles(meeting.responsibles);
+    setFormObjective(meeting.objective);
+    setFormDevelopment(meeting.development);
+    setEditingMeeting(meeting);
+    setIsAddingMeeting(false);
+  };
+
+  const handleSaveMeeting = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formDate || !formResponsibles || !formObjective || !formDevelopment) {
+      alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    let updatedMeetings: Meeting[];
+    if (editingMeeting) {
+      updatedMeetings = meetings.map(m =>
+        m.id === editingMeeting.id
+          ? {
+              ...m,
+              date: formDate,
+              responsibles: formResponsibles,
+              objective: formObjective,
+              development: formDevelopment,
+            }
+          : m
+      );
+    } else {
+      const randomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const newMeeting: Meeting = {
+        id: randomId,
+        date: formDate,
+        responsibles: formResponsibles,
+        objective: formObjective,
+        development: formDevelopment,
+        createdAt: new Date().toISOString(),
+      };
+      updatedMeetings = [newMeeting, ...meetings];
+    }
+
+    persistMeetings(updatedMeetings);
+    setIsAddingMeeting(false);
+    setEditingMeeting(null);
+  };
+
+  const handleDeleteMeeting = (id: string) => {
+    if (confirm('¿Estás seguro de eliminar este registro de reunión?')) {
+      const updated = meetings.filter(m => m.id !== id);
+      persistMeetings(updated);
+    }
+  };
+
+  const sortedMeetings = useMemo(() => {
+    return [...meetings].sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [meetings]);
 
   // Stats
   const stats = useMemo(() => {
@@ -657,139 +772,390 @@ export const ImplementationModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Progress overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Total */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-            <Trophy size={16} className="text-amber-500" /> Progreso Total
-          </div>
-          <div className="flex items-end gap-2">
-            <p className="text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
-            <p className="text-xs text-gray-400 mb-1">{stats['_total'].done} de {stats['_total'].total} tareas</p>
-          </div>
-          <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${totalPct === 100 ? 'bg-emerald-500' : 'bg-ecar-blue'}`}
-              style={{ width: `${totalPct}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Per person */}
-        {PHASES.map(p => {
-          const s = stats[p.id];
-          const pPct = s.total > 0 ? Math.round((s.done / s.total) * 100) : 0;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setActivePhase(p.id)}
-              className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'} />
-                {p.person}
-                <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
-                  <p.deviceIcon size={12} /> {p.device}
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <p className="text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
-                <p className="text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
-              </div>
-              <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${pPct}%` }}
-                />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Phase tabs */}
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1">
-          {PHASES.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setActivePhase(p.id)}
-              className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                activePhase === p.id
-                  ? 'bg-white text-gray-800 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <p.deviceIcon size={16} />
-              {p.person}
-            </button>
-          ))}
-        </div>
+      {/* Selector de Pestañas Principal */}
+      <div className="flex border-b border-gray-200">
         <button
-          onClick={resetAll}
-          className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-          title="Reiniciar progreso"
+          onClick={() => setActiveTab('checklist')}
+          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'checklist'
+              ? 'border-rose-600 text-rose-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
         >
-          <RotateCcw size={16} />
+          <ClipboardCheck size={16} />
+          Plan de Capacitación
+        </button>
+        <button
+          onClick={() => setActiveTab('meetings')}
+          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+            activeTab === 'meetings'
+              ? 'border-rose-600 text-rose-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Users size={16} />
+          Registro de Reuniones
         </button>
       </div>
 
-      {/* Phase header */}
-      <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-5 text-white shadow-md relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <DeviceIcon size={80} />
-        </div>
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
-            {phase.person.charAt(0)}
-          </div>
-          <div>
-            <h4 className="font-bold text-lg">{phase.person}</h4>
-            <p className={`text-sm ${phase.textColor} flex items-center gap-1`}>
-              <DeviceIcon size={14} /> {phase.device}
-              <span className="mx-1">·</span>
-              <Clock size={14} />
-              {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
-            </p>
-          </div>
-        </div>
-      </div>
+      {activeTab === 'checklist' ? (
+        <>
+          {/* Progress overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Total */}
+            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
+                <Trophy size={16} className="text-amber-500" /> Progreso Total
+              </div>
+              <div className="flex items-end gap-2">
+                <p className="text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
+                <p className="text-xs text-gray-400 mb-1">{stats['_total'].done} de {stats['_total'].total} tareas</p>
+              </div>
+              <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${totalPct === 100 ? 'bg-emerald-500' : 'bg-ecar-blue'}`}
+                  style={{ width: `${totalPct}%` }}
+                />
+              </div>
+            </div>
 
-      {/* Sections checklist */}
-      <div className="space-y-4">
-        {phase.sections.map(section => (
-          <SectionBlock
-            key={section.id}
-            section={section}
-            checked={state.checked}
-            notes={state.notes}
-            onToggle={toggleCheck}
-            onNote={setNote}
-            accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'}
-          />
-        ))}
-      </div>
+            {/* Per person */}
+            {PHASES.map(p => {
+              const s = stats[p.id];
+              const pPct = s.total > 0 ? Math.round((s.done / s.total) * 100) : 0;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setActivePhase(p.id)}
+                  className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
+                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'} />
+                    {p.person}
+                    <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
+                      <p.deviceIcon size={12} /> {p.device}
+                    </span>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <p className="text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
+                    <p className="text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
+                  </div>
+                  <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${pPct}%` }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Auto-save indicator */}
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-300 py-2">
-        {syncing ? (
-          <>
-            <div className="w-3 h-3 border-2 border-gray-300 border-t-ecar-blue rounded-full animate-spin" />
-            Sincronizando...
-          </>
-        ) : remoteLoading ? (
-          <>
-            <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-400 rounded-full animate-spin" />
-            Cargando...
-          </>
-        ) : (
-          <>
-            <Save size={12} className="text-emerald-400" />
-            <span className="text-emerald-400">Guardado en la nube</span>
-          </>
-        )}
-      </div>
+          {/* Phase tabs */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1">
+              {PHASES.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setActivePhase(p.id)}
+                  className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                    activePhase === p.id
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <p.deviceIcon size={16} />
+                  {p.person}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={resetAll}
+              className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+              title="Reiniciar progreso"
+            >
+              <RotateCcw size={16} />
+            </button>
+          </div>
+
+          {/* Phase header */}
+          <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-5 text-white shadow-md relative overflow-hidden`}>
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <DeviceIcon size={80} />
+            </div>
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
+                {phase.person.charAt(0)}
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">{phase.person}</h4>
+                <p className={`text-sm ${phase.textColor} flex items-center gap-1`}>
+                  <DeviceIcon size={14} /> {phase.device}
+                  <span className="mx-1">·</span>
+                  <Clock size={14} />
+                  {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sections checklist */}
+          <div className="space-y-4">
+            {phase.sections.map(section => (
+              <SectionBlock
+                key={section.id}
+                section={section}
+                checked={state.checked}
+                notes={state.notes}
+                onToggle={toggleCheck}
+                onNote={setNote}
+                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'}
+              />
+            ))}
+          </div>
+
+          {/* Auto-save indicator */}
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-300 py-2">
+            {syncing ? (
+              <>
+                <div className="w-3 h-3 border-2 border-gray-300 border-t-ecar-blue rounded-full animate-spin" />
+                Sincronizando...
+              </>
+            ) : remoteLoading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-400 rounded-full animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              <>
+                <Save size={12} className="text-emerald-400" />
+                <span className="text-emerald-400">Guardado en la nube</span>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-lg font-bold text-gray-800">Minutas y Registro de Reuniones</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Historial de reuniones, acuerdos y desarrollo del proceso de implementación</p>
+            </div>
+            {!isAddingMeeting && !editingMeeting && (
+              <button
+                onClick={handleStartAdd}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold shadow-sm hover:shadow transition-all"
+              >
+                <Plus size={16} />
+                Registrar Reunión
+              </button>
+            )}
+          </div>
+
+          {/* Formulario de Carga / Edición */}
+          {(isAddingMeeting || editingMeeting) && (
+            <form onSubmit={handleSaveMeeting} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h5 className="font-bold text-gray-800 text-sm">
+                  {editingMeeting ? 'Editar Registro de Reunión' : 'Registrar Nueva Reunión'}
+                </h5>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingMeeting(false);
+                    setEditingMeeting(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 block">Fecha de la Reunión</label>
+                  <input
+                    type="date"
+                    required
+                    value={formDate}
+                    onChange={e => setFormDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-bold text-gray-600 block">Responsables / Participantes</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Enrico, Carlos, Gustavo, Ing. Gomez"
+                    value={formResponsibles}
+                    onChange={e => setFormResponsibles(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-600 block">Objetivo de la Reunión</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Definir prioridades de desarrollo y fecha de capacitación de parte diario"
+                  value={formObjective}
+                  onChange={e => setFormObjective(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-600 block">Desarrollo y Acuerdos</label>
+                <textarea
+                  required
+                  rows={6}
+                  placeholder="Detalla aquí los temas tratados, compromisos asumidos, plazos y cualquier nota importante de la reunión..."
+                  value={formDevelopment}
+                  onChange={e => setFormDevelopment(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all font-sans resize-y"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingMeeting(false);
+                    setEditingMeeting(null);
+                  }}
+                  className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg text-sm font-bold transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold shadow-sm hover:shadow transition-all flex items-center gap-1.5"
+                >
+                  <Save size={16} />
+                  Guardar Registro
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Listado de Reuniones */}
+          {remoteMeetingsLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-rose-600 rounded-full animate-spin mb-2" />
+              <p className="text-sm">Cargando registros de reuniones...</p>
+            </div>
+          ) : sortedMeetings.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm text-gray-400 flex flex-col items-center justify-center">
+              <Calendar size={48} className="text-gray-300 mb-3" />
+              <h5 className="font-bold text-gray-700 text-sm">No hay reuniones registradas</h5>
+              <p className="text-xs text-gray-400 max-w-sm mt-1">Registra las reuniones llevadas a cabo con el equipo para llevar un historial ordenado del proceso de implementación.</p>
+              <button
+                onClick={handleStartAdd}
+                className="mt-4 flex items-center gap-2 px-4 py-2 border border-rose-200 hover:bg-rose-50 text-rose-600 rounded-lg text-xs font-bold transition-all"
+              >
+                <Plus size={14} />
+                Registrar Primera Reunión
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedMeetings.map(meeting => {
+                const isExpanded = !!expandedMeetings[meeting.id];
+                const displayDate = meeting.date.split('-').reverse().join('/'); // DD/MM/YYYY
+
+                return (
+                  <div key={meeting.id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:border-gray-300 transition-all">
+                    {/* Header de la tarjeta */}
+                    <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                          <span className="flex items-center gap-1.5 text-sm font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-md shrink-0">
+                            <Calendar size={14} />
+                            {displayDate}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <Users size={14} className="text-gray-400" />
+                            <strong className="text-gray-600">Participantes:</strong> {meeting.responsibles}
+                          </span>
+                        </div>
+                        <div>
+                          <h5 className="text-base font-bold text-gray-800 flex items-start gap-1.5">
+                            <FileText size={18} className="text-gray-400 shrink-0 mt-0.5" />
+                            {meeting.objective}
+                          </h5>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                        <button
+                          onClick={() => handleStartEdit(meeting)}
+                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeeting(meeting.id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => setExpandedMeetings(prev => ({ ...prev, [meeting.id]: !prev[meeting.id] }))}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg border border-gray-200 transition-all ml-1"
+                        >
+                          {isExpanded ? (
+                            <>
+                              Ocultar desarrollo
+                              <ChevronUp size={14} />
+                            </>
+                          ) : (
+                            <>
+                              Ver desarrollo
+                              <ChevronDown size={14} />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Desarrollo expandido */}
+                    {isExpanded && (
+                      <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50">
+                        <div className="bg-white border border-gray-150 rounded-lg p-4 shadow-inner">
+                          <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Desarrollo y Acuerdos</h6>
+                          <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed font-sans">
+                            {meeting.development}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Auto-save indicator for meetings */}
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-300 py-2">
+            {syncingMeetings ? (
+              <>
+                <div className="w-3 h-3 border-2 border-gray-300 border-t-rose-600 rounded-full animate-spin" />
+                Sincronizando reuniones...
+              </>
+            ) : (
+              <>
+                <Save size={12} className="text-emerald-400" />
+                <span className="text-emerald-400 font-medium">Reuniones guardadas en la nube</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
