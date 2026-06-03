@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Plus, X, TrendingUp, Banknote,
-  ChevronDown, ChevronUp, Building2, Upload, Image
+  ChevronDown, ChevronUp, Building2, Upload, Image, Pencil, Trash2
 } from 'lucide-react';
-import { useProjects, useProjectCertificates, useCreateProjectCertificate } from '../hooks/useData';
+import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
@@ -15,6 +15,8 @@ export const CertificationsModule: React.FC = () => {
   const { data: projects, isLoading: loadingProjects } = useProjects();
   const { data: certificates, isLoading: loadingCerts } = useProjectCertificates();
   const createCert = useCreateProjectCertificate();
+  const updateCert = useUpdateProjectCertificate();
+  const deleteCert = useDeleteProjectCertificate();
 
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [showNewCert, setShowNewCert] = useState<string | null>(null);
@@ -23,6 +25,9 @@ export const CertificationsModule: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [editingCert, setEditingCert] = useState<ProjectCertificate | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [deleteTarget, setDeleteTarget] = useState<ProjectCertificate | null>(null);
 
   // Only projects with contract_amount > 0
   const contractProjects = useMemo(() => (projects || []).filter((p: any) => p.contract_amount > 0), [projects]);
@@ -190,6 +195,7 @@ export const CertificationsModule: React.FC = () => {
                             <th className="px-4 py-3 text-right">🔵 Depósito</th>
                             <th className="px-4 py-3 text-center">Estado</th>
                             <th className="px-4 py-3 text-center">Foto</th>
+                            <th className="px-4 py-3 text-center">Acciones</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -220,6 +226,12 @@ export const CertificationsModule: React.FC = () => {
                                   <span className="text-gray-400 text-xs">—</span>
                                 )}
                               </td>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button onClick={(e) => { e.stopPropagation(); setEditingCert(c); setEditForm({ certificate_number: c.certificate_number, gross_amount: c.gross_amount, redetermination: c.redetermination || 0, period_description: c.period_description || '', retention_iibb: c.retention_iibb || 0, retention_imp_cheque: c.retention_imp_cheque || 0, other_retentions: c.other_retentions || 0, status: c.status, deposit_date: c.deposit_date || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(c); }} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                           {/* Totals row */}
@@ -230,6 +242,7 @@ export const CertificationsModule: React.FC = () => {
                             <td className="px-4 py-3 text-right font-mono text-green-700">{fmtM(totalCertified)}</td>
                             <td className="px-4 py-3" colSpan={2}></td>
                             <td className="px-4 py-3 text-right font-mono text-blue-700">{fmtM(totalDeposited)}</td>
+                            <td></td>
                             <td></td>
                             <td></td>
                           </tr>
@@ -298,6 +311,102 @@ export const CertificationsModule: React.FC = () => {
                 {isUploading ? 'Subiendo archivo...' : createCert.isPending ? 'Guardando...' : '✅ Registrar Certificado'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Certificate Modal */}
+      {editingCert && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Editar Certificado #{editForm.certificate_number}</h3>
+              <button onClick={() => setEditingCert(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Certificado N°</label>
+                <input type="number" value={editForm.certificate_number} onChange={e => setEditForm({ ...editForm, certificate_number: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Período</label>
+                <input value={editForm.period_description} onChange={e => setEditForm({ ...editForm, period_description: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">🟡 Monto Bruto</label>
+                <input type="number" value={editForm.gross_amount} onChange={e => setEditForm({ ...editForm, gross_amount: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">🟠 Redeterminación</label>
+                <input type="number" value={editForm.redetermination} onChange={e => setEditForm({ ...editForm, redetermination: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Ret. IIBB</label>
+                <input type="number" value={editForm.retention_iibb} onChange={e => setEditForm({ ...editForm, retention_iibb: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Ret. Imp. Cheque</label>
+                <input type="number" value={editForm.retention_imp_cheque} onChange={e => setEditForm({ ...editForm, retention_imp_cheque: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Otras Retenciones</label>
+                <input type="number" value={editForm.other_retentions} onChange={e => setEditForm({ ...editForm, other_retentions: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Fecha Depósito</label>
+                <input type="date" value={editForm.deposit_date} onChange={e => setEditForm({ ...editForm, deposit_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-bold text-gray-500">Estado</label>
+                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="pending">Pendiente</option>
+                  <option value="approved">Aprobado</option>
+                  <option value="deposited">Depositado</option>
+                  <option value="rejected">Rechazado</option>
+                </select>
+              </div>
+            </div>
+            {/* Auto-calc preview */}
+            <div className="bg-gray-50 rounded-lg p-3 text-xs space-y-1">
+              <div className="flex justify-between"><span>🟢 Total:</span><span className="font-mono font-bold text-green-700">{fmt((editForm.gross_amount || 0) + (editForm.redetermination || 0))}</span></div>
+              <div className="flex justify-between border-t pt-1 mt-1"><span>🔵 Depósito Neto:</span><span className="font-mono font-bold text-blue-700">{fmt((editForm.gross_amount || 0) + (editForm.redetermination || 0) - (editForm.retention_iibb || 0) - (editForm.retention_imp_cheque || 0) - (editForm.other_retentions || 0))}</span></div>
+            </div>
+            <button
+              onClick={async () => {
+                const total = (editForm.gross_amount || 0) + (editForm.redetermination || 0);
+                const netDep = total - (editForm.retention_iibb || 0) - (editForm.retention_imp_cheque || 0) - (editForm.other_retentions || 0);
+                try {
+                  await updateCert.mutateAsync({ id: editingCert.id, ...editForm, total_certified: total, net_deposit: netDep, deposit_date: editForm.deposit_date || null });
+                  setEditingCert(null);
+                } catch (err: any) { alert(err.message); }
+              }}
+              disabled={updateCert.isPending}
+              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
+            >
+              {updateCert.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-red-600">Eliminar Certificado</h3>
+            <p className="text-sm text-gray-600">
+              ¿Eliminás el certificado <span className="font-bold">#{deleteTarget.certificate_number}</span> por <span className="font-mono font-bold">{fmtM(deleteTarget.total_certified)}</span>?
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button
+                onClick={async () => {
+                  try { await deleteCert.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                }}
+                disabled={deleteCert.isPending}
+                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
+              >Eliminar</button>
+            </div>
           </div>
         </div>
       )}

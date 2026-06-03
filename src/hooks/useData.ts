@@ -745,6 +745,17 @@ export function useUpdateProjectCertificate() {
   });
 }
 
+export function useDeleteProjectCertificate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('project_certificates').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_certificates'] }),
+  });
+}
+
 // ========== PAYMENT RECORDS ==========
 export function usePaymentRecords() {
   return useQuery({
