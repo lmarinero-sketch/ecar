@@ -51,24 +51,6 @@ export const CartaDocumentoPDF: React.FC<Props> = ({ data, onClose }) => {
     pdf.save(`carta_documento_${data.destinatario.replace(/\s+/g, '_')}.pdf`);
   };
 
-  /*
-   * Coordenadas de datos en el formulario Correo Argentino (papel oficio)
-   *
-   * SECCIÓN A.R. (0-95mm):
-   *   Header logo+titulo: 0-13mm
-   *   Remitente/Dest nombres: ~17mm
-   *   Domicilios: ~31mm
-   *   CP/Loc/Prov: ~44mm
-   *   Recibí conforme: ~55-95mm
-   *
-   * SECCIÓN CARTA DOCUMENTO (100mm+):
-   *   Header: 100-113mm
-   *   Rem/Dest nombres: ~117mm
-   *   Domicilios: ~131mm
-   *   CP/Loc/Prov: ~143mm
-   *   Texto: ~157mm en adelante
-   */
-
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex flex-col items-center overflow-y-auto">
       {/* Toolbar */}
@@ -141,56 +123,278 @@ export const CartaDocumentoPDF: React.FC<Props> = ({ data, onClose }) => {
   );
 };
 
-/* Demo overlay: visual representation of the pre-printed form (not printed) */
-const DemoOverlay: React.FC<{ data: CartaDocumentoData }> = ({ data: _data }) => {
-  const hdr = (title: string) => (
-    <div style={{ display: 'flex', borderBottom: '2px solid #003399', height: '13mm' }}>
-      <div style={{ backgroundColor: '#FFD700', width: '28mm', padding: '2mm 3mm', borderRight: '2px solid #003399', display: 'flex', alignItems: 'center' }}>
-        <div><div style={{ fontSize: '9pt', fontWeight: 900, color: '#003399' }}>CORREO</div><div style={{ fontSize: '5pt', color: '#003399', fontStyle: 'italic' }}>ARGENTINO</div></div>
+/* ══════════════════════════════════════════════════════════════════════
+   DemoOverlay — Visual replica of the official Correo Argentino form
+   ══════════════════════════════════════════════════════════════════════ */
+const DemoOverlay: React.FC<{ data: CartaDocumentoData }> = ({ data }) => {
+  // Watermark pattern for the background
+  const watermarkStyle: React.CSSProperties = {
+    backgroundImage: `
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 8px,
+        rgba(0, 120, 200, 0.03) 8px,
+        rgba(0, 120, 200, 0.03) 16px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 8px,
+        rgba(0, 120, 200, 0.03) 8px,
+        rgba(0, 120, 200, 0.03) 16px
+      )
+    `,
+  };
+
+  // Correo Argentino logo block
+  const CorreoLogo = () => (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '3mm',
+    }}>
+      <div style={{
+        width: '10mm', height: '10mm', borderRadius: '50%',
+        background: 'linear-gradient(135deg, #0057A0 0%, #003D7A 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+      }}>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
       </div>
-      <div style={{ backgroundColor: '#003399', color: '#fff', flex: 1, padding: '2mm 4mm', fontWeight: 700, fontSize: '9pt', display: 'flex', alignItems: 'center' }}>{title}</div>
+      <div>
+        <div style={{ fontSize: '10pt', fontWeight: 900, color: '#0057A0', letterSpacing: '0.5px', lineHeight: 1.1 }}>CORREO</div>
+        <div style={{ fontSize: '7pt', color: '#0057A0', fontWeight: 600, letterSpacing: '1.5px', lineHeight: 1 }}>ARGENTINO</div>
+        <div style={{ fontSize: '4.5pt', color: '#666', fontStyle: 'italic', marginTop: '0.5mm' }}>CORREO OFICIAL</div>
+      </div>
     </div>
   );
 
-  const row = (label: string) => (
-    <div style={{ display: 'flex', height: '14mm', borderBottom: '1px solid #003399' }}>
-      <div style={{ flex: 1, padding: '1mm 3mm', borderRight: '2px solid #003399' }}><div style={{ fontSize: '6pt', color: '#999' }}>{label}</div></div>
-      <div style={{ flex: 1, padding: '1mm 3mm' }}><div style={{ fontSize: '6pt', color: '#999' }}>{label}</div></div>
-    </div>
-  );
-
-  const cpRow = () => (
-    <div style={{ display: 'flex', height: '12mm' }}>
-      {[0, 1].map(i => (
-        <div key={i} style={{ flex: 1, display: 'flex', borderRight: i === 0 ? '2px solid #003399' : 'none' }}>
-          <div style={{ flex: 1, padding: '1mm 2mm', borderRight: '1px solid #ccc' }}><div style={{ fontSize: '5pt', color: '#999' }}>C.P.</div></div>
-          <div style={{ flex: 2, padding: '1mm 2mm', borderRight: '1px solid #ccc' }}><div style={{ fontSize: '5pt', color: '#999' }}>LOCALIDAD</div></div>
-          <div style={{ flex: 1, padding: '1mm 2mm' }}><div style={{ fontSize: '5pt', color: '#999' }}>PROV.</div></div>
+  // Header bar
+  const SectionHeader = ({ title, showCodigo }: { title: string; showCodigo?: boolean }) => (
+    <div style={{
+      display: 'flex', height: '10mm', marginBottom: '0',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', padding: '0 4mm',
+        backgroundColor: '#0057A0', borderRadius: '0',
+      }}>
+        <CorreoLogo />
+      </div>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(90deg, #0057A0 0%, #0070C0 100%)',
+        padding: '0 4mm',
+      }}>
+        <span style={{ color: '#fff', fontWeight: 800, fontSize: '10pt', letterSpacing: '1.5px', textTransform: 'uppercase' }}>{title}</span>
+      </div>
+      {showCodigo && (
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 3mm',
+          backgroundColor: '#f0f4f8', borderLeft: '1px solid #ccd6e0',
+          minWidth: '30mm',
+        }}>
+          <div style={{ fontSize: '5pt', color: '#999', textAlign: 'center', width: '100%' }}>CÓDIGO DE CUENTA<br />CLIENTE</div>
         </div>
-      ))}
+      )}
+    </div>
+  );
+
+  // Labeled field
+  const LabeledField = ({ label, value, flex, borderRight, mono }: {
+    label: string; value?: string; flex?: number; borderRight?: boolean; mono?: boolean;
+  }) => (
+    <div style={{
+      flex: flex || 1, padding: '1.5mm 3mm', display: 'flex', flexDirection: 'column',
+      borderRight: borderRight ? '1px solid #b8c9d9' : 'none',
+      minHeight: '10mm',
+    }}>
+      <div style={{ fontSize: '5pt', color: '#6b7f93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1mm' }}>{label}</div>
+      <div style={{
+        fontSize: '9pt', fontWeight: value ? 600 : 400, color: value ? '#1a2b3c' : '#ccc',
+        fontFamily: mono ? "'Courier New', monospace" : "'Arial', sans-serif",
+        flex: 1, display: 'flex', alignItems: 'center',
+      }}>
+        {value || '—'}
+      </div>
+    </div>
+  );
+
+  // Two-column row for remitente/destinatario
+  const TwoColRow = ({ label, leftValue, rightValue }: {
+    label: string; leftValue?: string; rightValue?: string;
+  }) => (
+    <div style={{ display: 'flex', borderBottom: '1px solid #d4dfe8' }}>
+      <div style={{ flex: 1, borderRight: '2px solid #0057A0', padding: '1.5mm 3mm', display: 'flex', flexDirection: 'column', minHeight: '11mm' }}>
+        <div style={{ fontSize: '5pt', color: '#6b7f93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5mm' }}>
+          REMITENTE {label && `— ${label}`}
+        </div>
+        <div style={{ fontSize: '9pt', fontWeight: leftValue ? 600 : 400, color: leftValue ? '#1a2b3c' : '#ccc', flex: 1, display: 'flex', alignItems: 'center' }}>
+          {leftValue || ''}
+        </div>
+      </div>
+      <div style={{ flex: 1, padding: '1.5mm 3mm', display: 'flex', flexDirection: 'column', minHeight: '11mm' }}>
+        <div style={{ fontSize: '5pt', color: '#6b7f93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5mm' }}>
+          DESTINATARIO {label && `— ${label}`}
+        </div>
+        <div style={{ fontSize: '9pt', fontWeight: rightValue ? 600 : 400, color: rightValue ? '#1a2b3c' : '#ccc', flex: 1, display: 'flex', alignItems: 'center' }}>
+          {rightValue || ''}
+        </div>
+      </div>
+    </div>
+  );
+
+  // CP / Localidad / Provincia row
+  const CpRow = ({ cpLeft, locLeft, provLeft, cpRight, locRight, provRight }: {
+    cpLeft: string; locLeft: string; provLeft: string;
+    cpRight: string; locRight: string; provRight: string;
+  }) => (
+    <div style={{ display: 'flex', borderBottom: '1px solid #d4dfe8' }}>
+      {/* Left side (Remitente) */}
+      <div style={{ flex: 1, display: 'flex', borderRight: '2px solid #0057A0' }}>
+        <LabeledField label="Código Postal" value={cpLeft} flex={1} borderRight mono />
+        <LabeledField label="Localidad" value={locLeft} flex={2} borderRight />
+        <LabeledField label="Provincia" value={provLeft} flex={1} />
+      </div>
+      {/* Right side (Destinatario) */}
+      <div style={{ flex: 1, display: 'flex' }}>
+        <LabeledField label="Código Postal" value={cpRight} flex={1} borderRight mono />
+        <LabeledField label="Localidad" value={locRight} flex={2} borderRight />
+        <LabeledField label="Provincia" value={provRight} flex={1} />
+      </div>
     </div>
   );
 
   return (
     <div className="no-print absolute inset-0 pointer-events-none z-10" style={{ width: `${PW}mm`, height: `${PH}mm` }}>
-      {/* A.R. section */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '55mm', border: '2px solid #003399', opacity: 0.3 }}>
-        {hdr('A.R. - CARTA DOCUMENTO')}
-        {row('REMITENTE / DESTINATARIO')}
-        {row('DOMICILIO')}
-        {cpRow()}
+      {/* ═══ SECTION 1: A.R. - CARTA DOCUMENTO (Acuse de Recibo) ═══ */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '95mm',
+        border: '2px solid #0057A0', borderRadius: '1mm',
+        backgroundColor: '#fff', overflow: 'hidden',
+        ...watermarkStyle,
+      }}>
+        <SectionHeader title="A.R. - CARTA DOCUMENTO" showCodigo />
+
+        <TwoColRow label="" leftValue={data.remitente} rightValue={data.destinatario} />
+
+        {/* N° A.R. (Troquel T&T) */}
+        <div style={{
+          position: 'absolute', top: '10mm', right: '0', width: '30mm',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+        }}>
+        </div>
+
+        <TwoColRow label="DOMICILIO" leftValue={data.remitenteDomicilio} rightValue={data.destinatarioDomicilio} />
+
+        <CpRow
+          cpLeft={data.remitenteCp} locLeft={data.remitenteLocalidad} provLeft={data.remitenteProvincia}
+          cpRight={data.destinatarioCp} locRight={data.destinatarioLocalidad} provRight={data.destinatarioProvincia}
+        />
+
+        {/* Recibí Conforme Section */}
+        <div style={{ margin: '2mm 0 0 0' }}>
+          <div style={{
+            backgroundColor: '#E8F0FA', padding: '2mm 3mm',
+            borderTop: '1px solid #0057A0', borderBottom: '1px solid #d4dfe8',
+          }}>
+            <span style={{ fontSize: '5.5pt', fontWeight: 800, color: '#0057A0', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              RECIBÍ CONFORME EL ENVÍO REFERENTE A ESTE AVISO
+            </span>
+          </div>
+          <div style={{ display: 'flex', borderBottom: '1px solid #d4dfe8', padding: '0' }}>
+            <LabeledField label="Fecha" flex={1} borderRight />
+            <LabeledField label="Firma del Destinatario" flex={3} />
+          </div>
+          <div style={{ display: 'flex', borderBottom: '1px solid #d4dfe8' }}>
+            <LabeledField label="Hora" flex={1} borderRight />
+            <LabeledField label="Aclaración Firma Destinatario" flex={3} />
+          </div>
+          <div style={{ padding: '1.5mm 3mm' }}>
+            <div style={{ fontSize: '5pt', color: '#6b7f93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Firma Empleado que Entrega y N° de Legajo
+            </div>
+          </div>
+        </div>
       </div>
-      {/* Fold */}
-      <div style={{ position: 'absolute', top: '97mm', left: 0, right: 0, borderTop: '1px dashed rgba(0,0,0,0.2)' }} />
-      {/* Carta Documento section */}
-      <div style={{ position: 'absolute', top: '100mm', left: 0, right: 0, height: '55mm', border: '2px solid #003399', opacity: 0.3 }}>
-        {hdr('CARTA DOCUMENTO')}
-        {row('REMITENTE / DESTINATARIO')}
-        {row('DOMICILIO')}
-        {cpRow()}
+
+      {/* ═══ Fold line ═══ */}
+      <div style={{
+        position: 'absolute', top: '97mm', left: 0, right: 0,
+        borderTop: '2px dashed rgba(0,87,160,0.25)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{
+          position: 'relative', top: '-3mm',
+          fontSize: '5pt', color: 'rgba(0,87,160,0.3)', fontWeight: 700,
+          letterSpacing: '2px', textTransform: 'uppercase',
+          backgroundColor: '#fff', padding: '0 3mm',
+        }}>
+          ✂ DOBLE POR AQUÍ
+        </div>
       </div>
-      {/* Text area */}
-      <div style={{ position: 'absolute', top: '158mm', left: '20mm', width: '176mm', height: '168mm', border: '1px dashed rgba(0,100,255,0.12)' }} />
+
+      {/* ═══ SECTION 2: CARTA DOCUMENTO (body) ═══ */}
+      <div style={{
+        position: 'absolute', top: '100mm', left: 0, right: 0, height: '55mm',
+        border: '2px solid #0057A0', borderRadius: '1mm',
+        backgroundColor: '#fff', overflow: 'hidden',
+        ...watermarkStyle,
+      }}>
+        <SectionHeader title="CARTA DOCUMENTO" />
+
+        <TwoColRow label="" leftValue={data.remitente} rightValue={data.destinatario} />
+        <TwoColRow label="DOMICILIO" leftValue={data.remitenteDomicilio} rightValue={data.destinatarioDomicilio} />
+        <CpRow
+          cpLeft={data.remitenteCp} locLeft={data.remitenteLocalidad} provLeft={data.remitenteProvincia}
+          cpRight={data.destinatarioCp} locRight={data.destinatarioLocalidad} provRight={data.destinatarioProvincia}
+        />
+      </div>
+
+      {/* ═══ BODY TEXT AREA ═══ */}
+      <div style={{
+        position: 'absolute', top: '158mm', left: '8mm', right: '8mm', bottom: '20mm',
+        border: '1px solid rgba(0,87,160,0.08)',
+        borderRadius: '1mm',
+        backgroundColor: 'rgba(0,87,160,0.01)',
+        padding: '12mm',
+      }}>
+        {/* Fecha alineada derecha */}
+        <div style={{
+          position: 'absolute', top: '2mm', right: '4mm',
+          fontSize: '6pt', color: 'rgba(0,87,160,0.2)', fontWeight: 600,
+        }}>
+          {data.fecha}
+        </div>
+      </div>
+
+      {/* ═══ Fold marks on sides ═══ */}
+      <div style={{
+        position: 'absolute', top: '157mm', left: '3mm',
+        fontSize: '5pt', color: 'rgba(0,87,160,0.15)', fontWeight: 600,
+        writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+        letterSpacing: '1px',
+      }}>
+        Doble por aquí
+      </div>
+      <div style={{
+        position: 'absolute', top: '157mm', right: '3mm',
+        fontSize: '5pt', color: 'rgba(0,87,160,0.15)', fontWeight: 600,
+        writingMode: 'vertical-rl',
+        letterSpacing: '1px',
+      }}>
+        Doble por aquí
+      </div>
+
+      {/* ═══ Footer ═══ */}
+      <div style={{
+        position: 'absolute', bottom: '5mm', left: '50%', transform: 'translateX(-50%)',
+        fontSize: '5pt', color: 'rgba(0,0,0,0.1)', fontWeight: 600,
+        letterSpacing: '1.5px', textTransform: 'uppercase',
+      }}>
+        Formato Oficial · Correo Argentino
+      </div>
     </div>
   );
 };

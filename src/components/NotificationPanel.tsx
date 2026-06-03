@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
   Bell, Plus, Send, Clock, CheckCircle2, XCircle, X, MessageSquare,
-  Calendar, Banknote, AlertTriangle, Trash2, History
+  Calendar, Banknote, AlertTriangle, Trash2, History, Pencil
 } from 'lucide-react';
 import {
   useNotificationReminders, useCreateNotificationReminder, useDeleteNotificationReminder,
+  useUpdateNotificationReminder,
   useNotificationContacts, useNotificationLog, useCreateNotificationLog,
   useCheques
 } from '../hooks/useData';
@@ -25,6 +26,8 @@ const TRIGGER_TYPES = [
 export const NotificationPanel: React.FC = () => {
   const [tab, setTab] = useState<Tab>('reminders');
   const [showNew, setShowNew] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -55,6 +58,7 @@ export const NotificationPanel: React.FC = () => {
   const { data: cheques = [] } = useCheques();
   const createReminder = useCreateNotificationReminder();
   const deleteReminder = useDeleteNotificationReminder();
+  const updateReminder = useUpdateNotificationReminder();
   const createLog = useCreateNotificationLog();
 
   // Upcoming cheques (next 30 days)
@@ -67,14 +71,37 @@ export const NotificationPanel: React.FC = () => {
     ).sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''));
   }, [cheques]);
 
-  const handleCreate = async () => {
+  const resetForm = () => {
+    setForm({ title: '', description: '', trigger_type: 'manual', trigger_days_before: 3, trigger_date: '', recurrence: 'once', contact_ids: [], message_template: '', schedule_days: [], schedule_time: '09:00', date_from: '', date_until: '' });
+    setEditingId(null);
+  };
+
+  const handleEdit = (r: NotificationReminder) => {
+    setForm({
+      title: r.title,
+      description: r.description || '',
+      trigger_type: r.trigger_type,
+      trigger_days_before: r.trigger_days_before || 3,
+      trigger_date: r.trigger_date || '',
+      recurrence: r.recurrence,
+      contact_ids: r.contact_ids || [],
+      message_template: r.message_template,
+      schedule_days: (r.schedule_days as number[]) || [],
+      schedule_time: r.schedule_time || '09:00',
+      date_from: r.date_from || '',
+      date_until: r.date_until || '',
+    });
+    setEditingId(r.id);
+    setShowNew(true);
+  };
+
+  const handleSave = async () => {
     if (!form.title || !form.message_template || form.contact_ids.length === 0) return;
     // Calculate next_run_at based on schedule
     let next_run_at: string | null = null;
     if (form.recurrence !== 'once' && form.schedule_days.length > 0 && form.schedule_time) {
       const now = new Date();
       const [hours, minutes] = form.schedule_time.split(':').map(Number);
-      // Find next occurrence
       for (let d = 0; d < 7; d++) {
         const candidate = new Date(now.getTime() + d * 86400000);
         if (form.schedule_days.includes(candidate.getDay())) {
@@ -86,7 +113,7 @@ export const NotificationPanel: React.FC = () => {
         }
       }
     }
-    await createReminder.mutateAsync({
+    const payload = {
       ...form,
       trigger_date: form.trigger_date || null,
       schedule_days: form.schedule_days.length > 0 ? form.schedule_days : null,
@@ -95,8 +122,13 @@ export const NotificationPanel: React.FC = () => {
       date_until: form.date_until || null,
       next_run_at,
       is_active: true,
-    });
-    setForm({ title: '', description: '', trigger_type: 'manual', trigger_days_before: 3, trigger_date: '', recurrence: 'once', contact_ids: [], message_template: '', schedule_days: [], schedule_time: '09:00', date_from: '', date_until: '' });
+    };
+    if (editingId) {
+      await updateReminder.mutateAsync({ id: editingId, ...payload });
+    } else {
+      await createReminder.mutateAsync(payload);
+    }
+    resetForm();
     setShowNew(false);
   };
 
@@ -263,7 +295,10 @@ export const NotificationPanel: React.FC = () => {
                         >
                           <Send size={12} /> {sending === r.id ? 'Enviando...' : 'Enviar Ahora'}
                         </button>
-                        <button onClick={() => { if(confirm('¿Eliminar?')) deleteReminder.mutate(r.id) }} className="text-gray-300 hover:text-red-500 transition-colors">
+                        <button onClick={() => handleEdit(r)} className="text-gray-300 hover:text-ecar-blue transition-colors" title="Editar">
+                          <Pencil size={16} />
+                        </button>
+                        <button onClick={() => setDeleteConfirm({ id: r.id, title: r.title })} className="text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -317,13 +352,32 @@ export const NotificationPanel: React.FC = () => {
         </div>
       )}
 
-      {/* NEW REMINDER MODAL */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <h3 className="font-bold text-lg text-gray-900">¿Eliminar recordatorio?</h3>
+              <p className="text-sm text-gray-500 mt-1">Se eliminará <span className="font-bold">"{deleteConfirm.title}"</span>. Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">Cancelar</button>
+              <button onClick={() => { deleteReminder.mutate(deleteConfirm.id); setDeleteConfirm(null); }} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-all shadow-md">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW/EDIT REMINDER MODAL */}
       {showNew && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Nuevo Recordatorio</h3>
-              <button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button>
+              <h3 className="font-bold text-lg">{editingId ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}</h3>
+              <button onClick={() => { setShowNew(false); resetForm(); }}><X size={20} className="text-gray-400" /></button>
             </div>
 
             <div className="space-y-3">
@@ -507,11 +561,11 @@ export const NotificationPanel: React.FC = () => {
                 <Send size={14} /> {testSending ? 'Enviando...' : 'Probar Envío'}
               </button>
               <button
-                onClick={handleCreate}
-                disabled={!form.title || !form.message_template || form.contact_ids.length === 0 || createReminder.isPending}
+                onClick={handleSave}
+                disabled={!form.title || !form.message_template || form.contact_ids.length === 0 || createReminder.isPending || updateReminder.isPending}
                 className="flex-1 py-2.5 bg-ecar-blue text-white rounded-xl font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50"
               >
-                {createReminder.isPending ? 'Guardando...' : 'Crear Recordatorio'}
+                {(createReminder.isPending || updateReminder.isPending) ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Recordatorio'}
               </button>
             </div>
           </div>

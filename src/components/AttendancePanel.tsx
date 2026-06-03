@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Clock, Users, QrCode, Monitor, CheckCircle2, XCircle, AlertTriangle,
@@ -60,8 +61,8 @@ export const AttendancePanel: React.FC = () => {
 
   // ---------- FULLSCREEN QR MODE ----------
   if (viewMode === 'qr_display') {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-ecar-blueDark flex flex-col items-center justify-center overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] bg-ecar-blueDark flex flex-col items-center justify-center overflow-hidden">
         {/* Exit button */}
         <button
           onClick={() => setViewMode('dashboard')}
@@ -128,7 +129,8 @@ export const AttendancePanel: React.FC = () => {
         <div className="absolute bottom-6 text-center">
           <p className="text-xs text-blue-300/40 font-medium tracking-[0.2em]">ECAR · SISTEMA CREADO POR GROW LABS</p>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 

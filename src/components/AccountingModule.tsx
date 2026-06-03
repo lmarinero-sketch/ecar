@@ -71,6 +71,17 @@ export const AccountingModule: React.FC = () => {
         </div>
       </div>
 
+      {/* AFIP integration disclaimer */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+        <AlertCircle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-bold text-amber-800">Módulo en preparación — Sin emisión AFIP</p>
+          <p className="text-xs text-amber-600 mt-0.5">
+            Actualmente este módulo permite registrar facturas como borradores internos. La integración con los webservices de ARCA/AFIP para emisión electrónica con CAE está próxima a implementarse.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-end">
         <button onClick={() => { setErrorMsg(null); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
           <Plus size={16} /> Nueva Factura
