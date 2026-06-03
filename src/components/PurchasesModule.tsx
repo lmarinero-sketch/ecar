@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useGastosItems } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
@@ -20,6 +20,10 @@ export const PurchasesModule: React.FC = () => {
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [supplierForm, setSupplierForm] = useState({ name: '', cuit: '', tax_condition: 'RI' });
   const [activeTab, setActiveTab] = useState<InvoiceTab>('compras');
+  const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
 
   // Periodo for Libro IVA export
   const now = new Date();
@@ -54,7 +58,7 @@ export const PurchasesModule: React.FC = () => {
 
       // 3. Call Edge Function for OCR
       const { data: fnData, error: fnError } = await supabase.functions.invoke('process-invoice', {
-        body: { fileUrl: publicUrl, invoiceId: record.id },
+        body: { fileUrl: publicUrl, invoiceId: record.id, tipo: uploadTipo },
       });
 
       if (fnError) {
@@ -126,7 +130,17 @@ export const PurchasesModule: React.FC = () => {
 
       {/* Upload + Suppliers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${uploading || processing ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-ecar-blue hover:bg-blue-50/50'}`}>
+        <div className="space-y-3">
+          {/* Tipo selector */}
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            <button onClick={() => setUploadTipo('compra')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'compra' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <TrendingDown size={14} /> Compra
+            </button>
+            <button onClick={() => setUploadTipo('venta')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'venta' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <TrendingUp size={14} /> Venta
+            </button>
+          </div>
+          <label className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all block ${uploading || processing ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-ecar-blue hover:bg-blue-50/50'}`}>
           {processing ? (
             <>
               <Loader2 size={36} className="mx-auto mb-3 text-blue-500 animate-spin" />
@@ -146,7 +160,9 @@ export const PurchasesModule: React.FC = () => {
             </>
           )}
           <input type="file" className="hidden" accept="image/*,.pdf" disabled={uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
-        </label>
+          </label>
+          <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-violet-600' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
+        </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-center mb-3">
@@ -317,6 +333,8 @@ export const PurchasesModule: React.FC = () => {
                             <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
                           </>
                         )}
+                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => setDeleteTarget(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -326,6 +344,105 @@ export const PurchasesModule: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Invoice Modal */}
+      {editingInvoice && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Editar Factura</h3>
+              <button onClick={() => setEditingInvoice(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-xs font-bold text-gray-500">Proveedor / Cliente</label>
+                <input value={editForm.supplier_name} onChange={e => setEditForm({ ...editForm, supplier_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">CUIT</label>
+                <input value={editForm.supplier_cuit} onChange={e => setEditForm({ ...editForm, supplier_cuit: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Tipo Factura</label>
+                <input value={editForm.invoice_type} onChange={e => setEditForm({ ...editForm, invoice_type: e.target.value })} placeholder="A, B, C..." className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Punto de Venta</label>
+                <input value={editForm.point_of_sale} onChange={e => setEditForm({ ...editForm, point_of_sale: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">N° Factura</label>
+                <input value={editForm.invoice_number} onChange={e => setEditForm({ ...editForm, invoice_number: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Fecha Emisión</label>
+                <input type="date" value={editForm.issue_date} onChange={e => setEditForm({ ...editForm, issue_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Neto Gravado ($)</label>
+                <input type="number" value={editForm.net_amount_ars} onChange={e => { const net = parseFloat(e.target.value) || 0; setEditForm({ ...editForm, net_amount_ars: net, iva_21_ars: Math.round(net * 0.21 * 100) / 100, total_ars: Math.round((net + net * 0.21) * 100) / 100 }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">IVA 21% ($)</label>
+                <input type="number" value={editForm.iva_21_ars} onChange={e => { const iva = parseFloat(e.target.value) || 0; setEditForm({ ...editForm, iva_21_ars: iva, total_ars: Math.round(((editForm.net_amount_ars || 0) + iva) * 100) / 100 }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Total ($)</label>
+                <input type="number" value={editForm.total_ars} onChange={e => setEditForm({ ...editForm, total_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Estado</label>
+                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="pending_review">Revisar</option>
+                  <option value="validated">Validado</option>
+                  <option value="rejected">Rechazado</option>
+                  <option value="exported">Exportado</option>
+                </select>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number };
+                  const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr }).eq('id', editingInvoice.id);
+                  if (error) throw error;
+                  setEditingInvoice(null);
+                  refetch();
+                } catch (err: any) { alert(err.message); }
+              }}
+              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-colors"
+            >
+              ✓ Guardar Cambios
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Invoice Confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-red-600">Eliminar Factura</h3>
+            <p className="text-sm text-gray-600">
+              ¿Eliminás la factura de <span className="font-bold">{deleteTarget.ocr_raw_data?.proveedor_cliente || deleteTarget.supplier?.name || 'Sin datos'}</span> por <span className="font-mono font-bold">{formatARS(deleteTarget.total_ars)}</span>?
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase.from('purchase_invoices').delete().eq('id', deleteTarget.id);
+                    if (error) throw error;
+                    setDeleteTarget(null);
+                    refetch();
+                  } catch (err: any) { alert(err.message); }
+                }}
+                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600"
+              >Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

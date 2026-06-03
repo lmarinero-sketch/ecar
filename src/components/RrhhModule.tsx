@@ -290,15 +290,15 @@ export const RrhhModule: React.FC = () => {
       {/* Edit Employee Modal */}
       {editingEmployee && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg">Editar Empleado</h3>
               <button onClick={() => setEditingEmployee(null)}><X size={20} className="text-gray-400" /></button>
             </div>
 
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Datos Personales</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-3">
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
                 <input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
               </div>
@@ -329,7 +329,7 @@ export const RrhhModule: React.FC = () => {
             </div>
 
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Datos Laborales</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso</label>
                 <input type="date" value={editForm.hire_date} onChange={e => setEditForm({ ...editForm, hire_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
