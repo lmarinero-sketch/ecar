@@ -7,6 +7,7 @@ import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
   useSystemSetting, useUpsertSystemSetting, useInventoryItems
 } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequestItem } from '../lib/types';
 
 const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
@@ -36,6 +37,7 @@ const formatPhone = (phone: string) => {
 };
 
 export const PurchaseRequestsModule: React.FC = () => {
+  const { user } = useAuth();
   const { data: requests, isLoading } = usePurchaseRequests();
   const { data: projects } = useProjects();
   const { data: inventoryItems = [] } = useInventoryItems();
@@ -43,6 +45,8 @@ export const PurchaseRequestsModule: React.FC = () => {
   const createRequest = useCreatePurchaseRequest();
   const updateRequest = useUpdatePurchaseRequest();
   const upsertSetting = useUpsertSystemSetting();
+
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
 
   const [showNew, setShowNew] = useState(false);
   const [showWhatsappConfig, setShowWhatsappConfig] = useState(false);
@@ -286,7 +290,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
                 <div><label className="text-xs font-bold text-gray-500">Urgencia</label><select value={form.urgency} onChange={e => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="low">Baja</option><option value="normal">Normal</option><option value="urgent">Urgente</option></select></div>
               </div>
-              <div><label className="text-xs font-bold text-gray-500">Solicitado por</label><input value={form.requested_by} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Nombre del capataz" /></div>
+              <div><label className="text-xs font-bold text-gray-500">Solicitado por</label><input value={form.requested_by || userName} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" readOnly /></div>
 
               <div>
                 <label className="text-xs font-bold text-gray-500 mb-1 block">Materiales / Herramientas Solicitados</label>

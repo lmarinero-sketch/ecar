@@ -104,6 +104,66 @@ export function useCategories() {
   });
 }
 
+export function useAllCategoriesHistory() {
+  return useQuery({
+    queryKey: ['categories_history'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('union_categories').select('*').order('name').order('effective_from', { ascending: false });
+      if (error) throw error;
+      return data as UnionCategory[];
+    },
+  });
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cat: { name: string; hourly_rate_ars: number; daily_rate_ars: number }) => {
+      const { data, error } = await supabase.from('union_categories').insert({
+        ...cat, tenant_id: ECAR_TENANT_ID, is_current: true,
+        effective_from: new Date().toISOString().split('T')[0],
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['categories'] }); qc.invalidateQueries({ queryKey: ['categories_history'] }); },
+  });
+}
+
+export function useUpdateCategoryRate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, hourly_rate_ars, daily_rate_ars }: { id: string; hourly_rate_ars: number; daily_rate_ars: number }) => {
+      // 1. Get old category
+      const { data: old, error: fetchErr } = await supabase.from('union_categories').select('*').eq('id', id).single();
+      if (fetchErr) throw fetchErr;
+      const today = new Date().toISOString().split('T')[0];
+      // 2. Archive old (set effective_to, is_current=false)
+      const { error: archiveErr } = await supabase.from('union_categories').update({ is_current: false, effective_to: today, updated_at: new Date().toISOString() }).eq('id', id);
+      if (archiveErr) throw archiveErr;
+      // 3. Create new version
+      const { error: createErr } = await supabase.from('union_categories').insert({
+        tenant_id: old.tenant_id, name: old.name,
+        hourly_rate_ars, daily_rate_ars,
+        effective_from: today, is_current: true,
+      });
+      if (createErr) throw createErr;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['categories'] }); qc.invalidateQueries({ queryKey: ['categories_history'] }); },
+  });
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('union_categories').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['categories'] }); qc.invalidateQueries({ queryKey: ['categories_history'] }); },
+  });
+}
+
 // ========== SHIFTS ==========
 export function useShifts() {
   return useQuery({

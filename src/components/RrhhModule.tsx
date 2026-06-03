@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2 } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Plus, TrendingUp, History, Tag } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
-import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
+import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 import { EmployeeCostPanel } from './EmployeeCostPanel';
 import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
+import { CategoriesPanel } from './CategoriesPanel';
 
-type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades';
+type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades' | 'categorias';
 
 export const RrhhModule: React.FC = () => {
   const { data: employees = [], isLoading } = useEmployees();
   const { data: categories = [] } = useCategories();
+  const { data: allCatHistory = [] } = useAllCategoriesHistory();
   const { data: shifts = [] } = useShifts();
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useLetterTemplates();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
+  const createCategory = useCreateCategory();
+  const updateCategoryRate = useUpdateCategoryRate();
+  const deleteCategory = useDeleteCategory();
 
   const [tab, setTab] = useState<Tab>('roster');
   const [search, setSearch] = useState('');
@@ -83,8 +88,9 @@ export const RrhhModule: React.FC = () => {
           { id: 'roster', label: 'Nómina', icon: Users },
           { id: 'add', label: 'Nuevo Empleado', icon: UserPlus },
           { id: 'legajo', label: 'Legajo Digital', icon: FileText },
+          { id: 'categorias', label: 'Categorías UOCRA', icon: Tag },
           { id: 'attendance', label: 'Asistencia', icon: Calendar },
-          { id: 'novedades', label: 'Novedades al Contador', icon: FileSpreadsheet },
+          { id: 'novedades', label: 'Novedades', icon: FileSpreadsheet },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === t.id ? 'bg-ecar-blue text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
             <t.icon size={16} /> {t.label}
@@ -274,6 +280,17 @@ export const RrhhModule: React.FC = () => {
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
           calcAntiguedad={calcAntiguedad}
+        />
+      )}
+
+      {/* TAB: Categorías UOCRA */}
+      {tab === 'categorias' && (
+        <CategoriesPanel
+          categories={categories}
+          allHistory={allCatHistory}
+          createCategory={createCategory}
+          updateCategoryRate={updateCategoryRate}
+          deleteCategory={deleteCategory}
         />
       )}
 
