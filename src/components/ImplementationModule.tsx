@@ -1327,16 +1327,52 @@ export const ImplementationModule: React.FC = () => {
                           <h5 className="text-base font-bold text-gray-800 flex items-start gap-1.5">
                             <FileText size={18} className="text-gray-400 shrink-0 mt-0.5" />
                             {meeting.objective}
-                            {meeting.attachments && meeting.attachments.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
-                                <Paperclip size={10} /> {meeting.attachments.length}
-                              </span>
-                            )}
                           </h5>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                        {/* Quick view attachments */}
+                        {meeting.attachments && meeting.attachments.length > 0 && (
+                          meeting.attachments.length === 1 ? (
+                            <button
+                              onClick={() => setViewingFile(meeting.attachments![0])}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-gray-200 transition-all"
+                              title={`Ver: ${meeting.attachments[0].name}`}
+                            >
+                              <Paperclip size={12} />
+                              <span className="max-w-[100px] truncate">{meeting.attachments[0].name}</span>
+                              <Eye size={12} />
+                            </button>
+                          ) : (
+                            <div className="relative group">
+                              <button
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-gray-200 transition-all"
+                                title="Ver archivos adjuntos"
+                              >
+                                <Paperclip size={12} />
+                                {meeting.attachments.length} archivos
+                                <Eye size={12} />
+                              </button>
+                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 w-64 py-1 hidden group-hover:block">
+                                {meeting.attachments.map((att, idx) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => setViewingFile(att)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-rose-50 transition-colors"
+                                  >
+                                    <span className="text-sm">{getFileIcon(att.type)}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-medium text-gray-700 truncate">{att.name}</p>
+                                      <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                                    </div>
+                                    <Eye size={12} className="text-gray-400 shrink-0" />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        )}
                         <button
                           onClick={() => handleStartEdit(meeting)}
                           className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
