@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
+import { supabase } from '../lib/supabase';
 import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
   LayoutDashboard, ShoppingBag,
-  Truck, Fuel, ShieldAlert, ClipboardCheck,
+  Truck, Fuel, ShieldAlert, ClipboardCheck, Upload, Paperclip, Download, ExternalLink,
   MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp
 } from 'lucide-react';
 
@@ -46,6 +47,14 @@ type ImplState = {
   notes: Record<string, string>;
 };
 
+type MeetingAttachment = {
+  name: string;
+  url: string;
+  type: string;  // mime type
+  size: number;  // bytes
+  uploadedAt: string;
+};
+
 type Meeting = {
   id: string;
   date: string;
@@ -53,6 +62,7 @@ type Meeting = {
   objective: string;
   development: string;
   createdAt: string;
+  attachments?: MeetingAttachment[];
 };
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -550,6 +560,8 @@ export const ImplementationModule: React.FC = () => {
   const [formResponsibles, setFormResponsibles] = useState('');
   const [formObjective, setFormObjective] = useState('');
   const [formDevelopment, setFormDevelopment] = useState('');
+  const [formAttachments, setFormAttachments] = useState<MeetingAttachment[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // Supabase hooks
   const { data: remoteSetting, isLoading: remoteLoading } = useSystemSetting(SUPABASE_SETTING_KEY);
@@ -641,6 +653,7 @@ export const ImplementationModule: React.FC = () => {
     setFormResponsibles('');
     setFormObjective('');
     setFormDevelopment('');
+    setFormAttachments([]);
     setIsAddingMeeting(true);
     setEditingMeeting(null);
   };
@@ -650,8 +663,58 @@ export const ImplementationModule: React.FC = () => {
     setFormResponsibles(meeting.responsibles);
     setFormObjective(meeting.objective);
     setFormDevelopment(meeting.development);
+    setFormAttachments(meeting.attachments || []);
     setEditingMeeting(meeting);
     setIsAddingMeeting(false);
+  };
+
+  // File upload handler
+  const handleUploadFiles = async (files: FileList) => {
+    setUploadingFiles(true);
+    const newAttachments: MeetingAttachment[] = [...formAttachments];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `meetings/${Date.now()}_${safeName}`;
+      try {
+        const { error } = await supabase.storage.from('meeting-files').upload(path, file);
+        if (error) {
+          console.error('Upload error:', error.message);
+          continue;
+        }
+        const { data: { publicUrl } } = supabase.storage.from('meeting-files').getPublicUrl(path);
+        newAttachments.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type || 'application/octet-stream',
+          size: file.size,
+          uploadedAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error('Upload failed:', err);
+      }
+    }
+    setFormAttachments(newAttachments);
+    setUploadingFiles(false);
+  };
+
+  const removeFormAttachment = (idx: number) => {
+    setFormAttachments(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return '🖼️';
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('spreadsheet') || type.includes('excel') || type.includes('.sheet')) return '📊';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    if (type.includes('text/plain')) return '📃';
+    return '📎';
   };
 
   const handleSaveMeeting = (e: React.FormEvent) => {
@@ -671,6 +734,7 @@ export const ImplementationModule: React.FC = () => {
               responsibles: formResponsibles,
               objective: formObjective,
               development: formDevelopment,
+              attachments: formAttachments,
             }
           : m
       );
@@ -683,6 +747,7 @@ export const ImplementationModule: React.FC = () => {
         objective: formObjective,
         development: formDevelopment,
         createdAt: new Date().toISOString(),
+        attachments: formAttachments,
       };
       updatedMeetings = [newMeeting, ...meetings];
     }
@@ -1006,6 +1071,56 @@ export const ImplementationModule: React.FC = () => {
                 />
               </div>
 
+              {/* Archivos Adjuntos */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600 block">Archivos Adjuntos</label>
+                <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer transition-all ${uploadingFiles ? 'border-rose-300 bg-rose-50' : 'border-gray-300 hover:border-rose-400 hover:bg-rose-50/30'}`}>
+                  <div className="flex flex-col items-center justify-center pt-2 pb-2">
+                    {uploadingFiles ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-rose-400 border-t-rose-600 rounded-full animate-spin mb-1" />
+                        <p className="text-xs text-rose-500 font-medium">Subiendo archivos...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={20} className="text-gray-400 mb-1" />
+                        <p className="text-xs text-gray-500"><span className="font-bold text-rose-500">Hacé click</span> o arrastrá archivos aquí</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Fotos, PDF, Excel, Word, Bloc de notas y más</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    disabled={uploadingFiles}
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.ppt,.pptx,.zip,.rar"
+                    onChange={e => e.target.files && e.target.files.length > 0 && handleUploadFiles(e.target.files)}
+                  />
+                </label>
+
+                {/* Lista de archivos cargados */}
+                {formAttachments.length > 0 && (
+                  <div className="space-y-1.5 mt-2">
+                    {formAttachments.map((att, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 group">
+                        <span className="text-sm">{getFileIcon(att.type)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-700 truncate">{att.name}</p>
+                          <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                        </div>
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-rose-500 transition-colors shrink-0" title="Ver archivo">
+                          <ExternalLink size={14} />
+                        </a>
+                        <button type="button" onClick={() => removeFormAttachment(idx)} className="text-gray-300 hover:text-red-500 transition-colors shrink-0" title="Quitar archivo">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -1072,6 +1187,11 @@ export const ImplementationModule: React.FC = () => {
                           <h5 className="text-base font-bold text-gray-800 flex items-start gap-1.5">
                             <FileText size={18} className="text-gray-400 shrink-0 mt-0.5" />
                             {meeting.objective}
+                            {meeting.attachments && meeting.attachments.length > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full ml-2 shrink-0">
+                                <Paperclip size={10} /> {meeting.attachments.length}
+                              </span>
+                            )}
                           </h5>
                         </div>
                       </div>
@@ -1112,13 +1232,40 @@ export const ImplementationModule: React.FC = () => {
 
                     {/* Desarrollo expandido */}
                     {isExpanded && (
-                      <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50">
+                      <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50 space-y-4">
                         <div className="bg-white border border-gray-150 rounded-lg p-4 shadow-inner">
                           <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Desarrollo y Acuerdos</h6>
                           <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed font-sans">
                             {meeting.development}
                           </p>
                         </div>
+
+                        {/* Archivos adjuntos */}
+                        {meeting.attachments && meeting.attachments.length > 0 && (
+                          <div className="bg-white border border-gray-150 rounded-lg p-4 shadow-inner">
+                            <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                              <Paperclip size={12} /> Archivos Adjuntos ({meeting.attachments.length})
+                            </h6>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {meeting.attachments.map((att, idx) => (
+                                <a
+                                  key={idx}
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-3 bg-gray-50 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-lg px-3 py-2.5 transition-all group"
+                                >
+                                  <span className="text-lg">{getFileIcon(att.type)}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-700 group-hover:text-rose-600 truncate transition-colors">{att.name}</p>
+                                    <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                                  </div>
+                                  <Download size={14} className="text-gray-300 group-hover:text-rose-500 transition-colors shrink-0" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
