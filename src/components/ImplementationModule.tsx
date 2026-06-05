@@ -7,7 +7,7 @@ import {
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
   LayoutDashboard, ShoppingBag,
   Truck, Fuel, ShieldAlert, ClipboardCheck, Upload, Paperclip, Download, ExternalLink,
-  MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp
+  MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp, Eye, Maximize2
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -415,6 +415,146 @@ function saveLocalState(state: ImplState) {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
+/*  FILE VIEWER COMPONENT                                         */
+/* ═══════════════════════════════════════════════════════════════ */
+
+const FileViewer: React.FC<{
+  file: MeetingAttachment | null;
+  onClose: () => void;
+}> = ({ file, onClose }) => {
+  if (!file) return null;
+
+  const isImage = file.type.startsWith('image/');
+  const isPdf = file.type.includes('pdf');
+  const isText = file.type.includes('text/plain') || file.type.includes('text/csv');
+  const isOffice = file.type.includes('word') || file.type.includes('document') ||
+    file.type.includes('excel') || file.type.includes('spreadsheet') || file.type.includes('.sheet') ||
+    file.type.includes('powerpoint') || file.type.includes('presentation');
+
+  const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`;
+  const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(file.url)}&embedded=true`;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+              <Eye size={16} className="text-rose-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-gray-800 truncate">{file.name}</p>
+              <p className="text-[10px] text-gray-400">{file.type}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+              title="Abrir en nueva pestaña"
+            >
+              <Maximize2 size={16} />
+            </a>
+            <a
+              href={file.url}
+              download={file.name}
+              className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+              title="Descargar"
+            >
+              <Download size={16} />
+            </a>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center min-h-0">
+          {isImage && (
+            <img
+              src={file.url}
+              alt={file.name}
+              className="max-w-full max-h-full object-contain p-4"
+            />
+          )}
+          {isPdf && (
+            <iframe
+              src={file.url}
+              className="w-full h-full min-h-[70vh] border-0"
+              title={file.name}
+            />
+          )}
+          {isText && (
+            <TextFileViewer url={file.url} />
+          )}
+          {isOffice && (
+            <iframe
+              src={officeViewerUrl}
+              className="w-full h-full min-h-[70vh] border-0"
+              title={file.name}
+              onError={() => {
+                // Fallback: try Google viewer
+              }}
+            />
+          )}
+          {!isImage && !isPdf && !isText && !isOffice && (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <FileText size={64} className="text-gray-300 mb-4" />
+              <p className="text-sm font-bold text-gray-600 mb-1">Vista previa no disponible</p>
+              <p className="text-xs text-gray-400 mb-4">Este tipo de archivo no se puede previsualizar directamente</p>
+              <a
+                href={file.url}
+                download={file.name}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold shadow-sm transition-all"
+              >
+                <Download size={16} /> Descargar Archivo
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* Text File Viewer sub-component */
+const TextFileViewer: React.FC<{ url: string }> = ({ url }) => {
+  const [content, setContent] = useState<string>('Cargando...');
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch');
+        return res.text();
+      })
+      .then(text => setContent(text))
+      .catch(() => {
+        setError(true);
+        setContent('No se pudo cargar el archivo de texto.');
+      });
+  }, [url]);
+
+  return (
+    <div className="w-full h-full min-h-[60vh] overflow-auto p-6">
+      <pre className={`text-sm font-mono leading-relaxed whitespace-pre-wrap break-words ${error ? 'text-red-500' : 'text-gray-700'} bg-white rounded-lg border border-gray-200 p-4 shadow-inner`}>
+        {content}
+      </pre>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════ */
 /*  COMPONENTS                                                    */
 /* ═══════════════════════════════════════════════════════════════ */
 
@@ -554,6 +694,7 @@ export const ImplementationModule: React.FC = () => {
   const [isAddingMeeting, setIsAddingMeeting] = useState(false);
   const [expandedMeetings, setExpandedMeetings] = useState<Record<string, boolean>>({});
   const [syncingMeetings, setSyncingMeetings] = useState(false);
+  const [viewingFile, setViewingFile] = useState<MeetingAttachment | null>(null);
 
   // Form states
   const [formDate, setFormDate] = useState('');
@@ -1109,9 +1250,9 @@ export const ImplementationModule: React.FC = () => {
                           <p className="text-xs font-medium text-gray-700 truncate">{att.name}</p>
                           <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
                         </div>
-                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-rose-500 transition-colors shrink-0" title="Ver archivo">
-                          <ExternalLink size={14} />
-                        </a>
+                        <button type="button" onClick={() => setViewingFile(att)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0" title="Ver archivo">
+                          <Eye size={14} />
+                        </button>
                         <button type="button" onClick={() => removeFormAttachment(idx)} className="text-gray-300 hover:text-red-500 transition-colors shrink-0" title="Quitar archivo">
                           <X size={14} />
                         </button>
@@ -1248,20 +1389,18 @@ export const ImplementationModule: React.FC = () => {
                             </h6>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {meeting.attachments.map((att, idx) => (
-                                <a
+                                <button
                                   key={idx}
-                                  href={att.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 bg-gray-50 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-lg px-3 py-2.5 transition-all group"
+                                  onClick={() => setViewingFile(att)}
+                                  className="flex items-center gap-3 bg-gray-50 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-lg px-3 py-2.5 transition-all group text-left"
                                 >
                                   <span className="text-lg">{getFileIcon(att.type)}</span>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-xs font-medium text-gray-700 group-hover:text-rose-600 truncate transition-colors">{att.name}</p>
                                     <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
                                   </div>
-                                  <Download size={14} className="text-gray-300 group-hover:text-rose-500 transition-colors shrink-0" />
-                                </a>
+                                  <Eye size={14} className="text-gray-300 group-hover:text-rose-500 transition-colors shrink-0" />
+                                </button>
                               ))}
                             </div>
                           </div>
@@ -1290,6 +1429,8 @@ export const ImplementationModule: React.FC = () => {
           </div>
         </div>
       )}
+      {/* File Viewer Modal */}
+      <FileViewer file={viewingFile} onClose={() => setViewingFile(null)} />
     </div>
   );
 };
