@@ -7,7 +7,7 @@ import {
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked, Rocket,
-  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle,
+  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, UserCog,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -23,7 +23,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
   expenses: Wallet, documents: FolderOpen, project_budget: HardHat,
   fuel: Fuel, guide: HelpCircle, manual: BookMarked,
-  implementation: Rocket,
+  implementation: Rocket, user_management: UserCog,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -36,7 +36,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
   fuel: 'Combustible', guide: 'Guía', manual: 'Manual ISO',
-  implementation: 'Implementación',
+  implementation: 'Implementación', user_management: 'Usuarios',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -51,7 +51,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-cyan-600',
   fuel: 'bg-sky-600', guide: 'bg-ecar-blue', manual: 'bg-blue-900',
-  implementation: 'bg-rose-500',
+  implementation: 'bg-rose-500', user_management: 'bg-slate-600',
 };
 
 /* ─── Sidebar sections ─── */
@@ -104,6 +104,12 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'inspections', requires: true },
       { id: 'rfi', requires: true },
       { id: 'documents', requires: true },
+    ],
+  },
+  {
+    label: 'Sistema', emoji: '⚙️',
+    items: [
+      { id: 'user_management' as ModuleId, requires: false },
     ],
   },
 ];
@@ -196,7 +202,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="flex-1 overflow-y-auto py-2 sidebar-scrollbar">
           {SIDEBAR_SECTIONS.map((section, si) => {
             const visibleItems = section.items.filter(
-              item => !item.requires || hasModule(item.id)
+              item => {
+                // user_management is admin-only
+                if (item.id === 'user_management') return isAdmin;
+                return !item.requires || hasModule(item.id);
+              }
             );
             if (!visibleItems.length) return null;
 

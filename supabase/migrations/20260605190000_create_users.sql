@@ -71,12 +71,18 @@ VALUES (
   '', '', ''
 );
 
--- Vincular al tenant ECAR
-INSERT INTO public.tenant_users (tenant_id, user_id, role)
-SELECT 'a0000000-0000-0000-0000-000000000001', id, 'admin'
+-- Crear perfil vinculado al tenant ECAR para cada usuario
+INSERT INTO public.profiles (auth_user_id, tenant_id, full_name, email, role, allowed_modules)
+SELECT
+  id,
+  'a0000000-0000-0000-0000-000000000001',
+  raw_user_meta_data->>'full_name',
+  email,
+  'admin',
+  '["bi","liquidity","monthly_report","wbs","invoicing","purchases","purchase_requests","finances","obligations","rrhh","inventory","logistics","fleet","certifications","field","safety","inspections","rfi","expenses","documents","project_budget","fuel","guide","manual","implementation"]'::jsonb
 FROM auth.users
 WHERE email IN ('carlos@growlabs.lat', 'enrico@growlabs.lat', 'gustavo@growlabs.lat')
-ON CONFLICT DO NOTHING;
+  AND id NOT IN (SELECT auth_user_id FROM public.profiles WHERE auth_user_id IS NOT NULL);
 
 -- Verificación
 SELECT id, email, raw_user_meta_data->>'full_name' AS nombre, created_at
