@@ -11,6 +11,7 @@ type AuthState = {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  changePassword: (newPassword: string) => Promise<{ error: string | null }>;
   hasModule: (moduleId: ModuleId) => boolean;
   isAdmin: boolean;
 };
@@ -74,6 +75,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   };
 
+  const changePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  };
+
   const isAdmin = profile?.role === 'admin';
 
   const hasModule = (moduleId: ModuleId): boolean => {
@@ -83,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, hasModule, isAdmin }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, changePassword, hasModule, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,7 +7,7 @@ import {
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked, Rocket,
-  GraduationCap,
+  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -113,10 +113,15 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
 /* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode } = useAppStore();
-  const { profile, signOut, hasModule, isAdmin } = useAuth();
+  const { profile, signOut, changePassword, hasModule, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
   const prevModule = useRef(activeModule);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Trigger content animation on module change
   useEffect(() => {
@@ -257,6 +262,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           </div>
 
+          {/* Change Password */}
+          <button
+            onClick={() => { setShowPasswordModal(true); setNewPassword(''); setConfirmPassword(''); setPasswordMsg(null); }}
+            className={`flex items-center ${expanded ? 'gap-2 px-2.5 w-full' : 'justify-center w-full'} py-2 rounded-lg text-slate-400 hover:text-ecar-blue hover:bg-blue-50 transition-all text-xs font-medium mb-0.5`}
+            title="Cambiar contraseña"
+          >
+            <KeyRound size={15} />
+            {expanded && <span>Cambiar Contraseña</span>}
+          </button>
+
           {/* Logout */}
           <button
             onClick={signOut}
@@ -336,6 +351,89 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Tutorial Panel */}
       <TutorialPanel />
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <KeyRound size={18} className="text-ecar-blue" />
+                </div>
+                <h3 className="font-bold text-gray-800">Cambiar Contraseña</h3>
+              </div>
+              <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-all">
+                <X size={18} />
+              </button>
+            </div>
+
+            {passwordMsg && (
+              <div className={`rounded-lg p-3 flex items-center gap-2 text-sm ${passwordMsg.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                {passwordMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                {passwordMsg.text}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-600 block">Nueva Contraseña</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue transition-all"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-600 block">Confirmar Contraseña</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Repetí la contraseña"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue transition-all"
+              />
+            </div>
+
+            <button
+              disabled={passwordLoading || newPassword.length < 6 || newPassword !== confirmPassword}
+              onClick={async () => {
+                setPasswordLoading(true);
+                setPasswordMsg(null);
+                const result = await changePassword(newPassword);
+                if (result.error) {
+                  setPasswordMsg({ type: 'error', text: result.error });
+                } else {
+                  setPasswordMsg({ type: 'success', text: '¡Contraseña actualizada exitosamente!' });
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setTimeout(() => setShowPasswordModal(false), 1500);
+                }
+                setPasswordLoading(false);
+              }}
+              className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm hover:bg-ecar-blueDark transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {passwordLoading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Save size={16} /> Guardar Contraseña
+                </>
+              )}
+            </button>
+
+            {newPassword.length > 0 && newPassword.length < 6 && (
+              <p className="text-[10px] text-amber-600">La contraseña debe tener al menos 6 caracteres</p>
+            )}
+            {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+              <p className="text-[10px] text-red-500">Las contraseñas no coinciden</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
