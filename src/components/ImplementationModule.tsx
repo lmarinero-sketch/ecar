@@ -6,7 +6,7 @@ import {
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
   LayoutDashboard, ShoppingBag,
-  Truck, Fuel, ShieldAlert, ClipboardCheck, Upload, Paperclip, Download, ExternalLink,
+  Truck, Fuel, ShieldAlert, ClipboardCheck, Upload, Paperclip, Download,
   MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp, Eye, Maximize2
 } from 'lucide-react';
 
@@ -432,7 +432,6 @@ const FileViewer: React.FC<{
     file.type.includes('powerpoint') || file.type.includes('presentation');
 
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`;
-  const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(file.url)}&embedded=true`;
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
