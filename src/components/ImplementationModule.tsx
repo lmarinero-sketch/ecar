@@ -36,6 +36,8 @@ type Phase = {
   color: string;       // gradient from
   colorTo: string;     // gradient to
   textColor: string;
+  meetingDate?: string;  // e.g. '03/06'
+  meetingTime?: string;  // e.g. '16:00 hs'
   sections: TaskSection[];
 };
 
@@ -67,16 +69,8 @@ const PHASES: Phase[] = [
     color: 'from-indigo-800',
     colorTo: 'to-indigo-600',
     textColor: 'text-indigo-100',
+    meetingDate: '03/06',
     sections: [
-      {
-        id: 'e-dash', title: 'Dashboard BI y Liquidez', icon: LayoutDashboard, duration: '10 min',
-        items: [
-          { id: 'e1', label: 'Mostrar Dashboard BI — KPIs generales', description: 'Explicar cada tarjeta KPI y qué datos alimentan' },
-          { id: 'e2', label: 'Mostrar Tablero de Liquidez — proyección de caja', description: 'Movimientos, saldos bancarios, proyección mensual' },
-          { id: 'e3', label: 'Validar: ¿Los KPIs cubren tu día a día?' },
-          { id: 'e4', label: 'Validar: ¿Falta algún indicador financiero clave?' },
-        ],
-      },
       {
         id: 'e-fin', title: 'Finanzas — Cheques y Pagos', icon: Landmark, duration: '15 min',
         items: [
@@ -124,23 +118,6 @@ const PHASES: Phase[] = [
         ],
       },
       {
-        id: 'e-ped', title: 'Pedidos de Compra', icon: ShoppingBag, duration: '10 min',
-        items: [
-          { id: 'e26', label: 'Mostrar flujo solicitud → aprobación → compra' },
-          { id: 'e27', label: 'Explicar integración con WhatsApp (Carlos pide desde celular)' },
-          { id: 'e28', label: 'Validar: ¿Quiénes deberían poder crear solicitudes?' },
-          { id: 'e29', label: 'Validar: ¿Qué niveles de aprobación necesitás?' },
-        ],
-      },
-      {
-        id: 'e-cert', title: 'Certificaciones ICC', icon: FileSignature, duration: '5 min',
-        items: [
-          { id: 'e30', label: 'Mostrar carga de certificaciones y fotos' },
-          { id: 'e31', label: 'Validar: ¿Quién carga las certificaciones?' },
-          { id: 'e32', label: 'Validar: ¿Se vinculan a una obra específica?' },
-        ],
-      },
-      {
         id: 'e-rrhh', title: 'RRHH — Legajos y Asistencia', icon: Users, duration: '15 min',
         items: [
           { id: 'e33', label: 'Mostrar gestión de legajos (alta, documentación, vencimientos)' },
@@ -149,35 +126,6 @@ const PHASES: Phase[] = [
           { id: 'e36', label: 'Validar: ¿Cómo gestionan hoy vencimientos de ART, psicofísico, etc.?' },
           { id: 'e37', label: 'Validar: ¿El sistema de asistencia con QR es viable para la obra?' },
           { id: 'e38', label: 'Validar: ¿Cuántos empleados tendrían que estar cargados?' },
-        ],
-      },
-      {
-        id: 'e-rep', title: 'Reporte Mensual', icon: Calendar, duration: '10 min',
-        items: [
-          { id: 'e39', label: 'Mostrar generación de reporte consolidado' },
-          { id: 'e40', label: 'Mostrar exportación a Excel/PDF' },
-          { id: 'e41', label: 'Validar: ¿Qué datos necesitás en el reporte sí o sí?' },
-          { id: 'e42', label: 'Validar: ¿A quién le entregás este reporte?' },
-        ],
-      },
-      {
-        id: 'e-inv', title: 'Inventario & Pañol', icon: Package, duration: '10 min',
-        items: [
-          { id: 'e46', label: 'Mostrar gestión de ítems (materiales, herramientas, consumibles)' },
-          { id: 'e47', label: 'Mostrar movimientos de stock (entrada, salida, devolución)' },
-          { id: 'e48', label: 'Mostrar asignación de herramientas a empleados' },
-          { id: 'e49', label: 'Mostrar layout de estanterías del pañol' },
-          { id: 'e50', label: 'Validar: ¿Qué materiales manejan en pañol?' },
-          { id: 'e51', label: 'Validar: ¿Necesitan control de stock mínimo y alertas?' },
-        ],
-      },
-      {
-        id: 'e-log', title: 'Acopios & Entregas', icon: Warehouse, duration: '10 min',
-        items: [
-          { id: 'e52', label: 'Mostrar gestión de acopios por obra' },
-          { id: 'e53', label: 'Mostrar registro de entregas y remitos' },
-          { id: 'e54', label: 'Validar: ¿Cómo registran entregas de material hoy?' },
-          { id: 'e55', label: 'Validar: ¿Necesitan trazabilidad remito → factura?' },
         ],
       },
       {
@@ -200,38 +148,6 @@ const PHASES: Phase[] = [
         ],
       },
       {
-        id: 'e-budget', title: 'Proyectos & Presupuestos', icon: HardHat, duration: '15 min',
-        items: [
-          { id: 'e65', label: 'Mostrar listado de obras/proyectos activos' },
-          { id: 'e66', label: 'Mostrar creación de presupuesto con secciones e ítems' },
-          { id: 'e67', label: 'Mostrar APU (Análisis de Precios Unitarios)' },
-          { id: 'e68', label: 'Mostrar cálculo de costos indirectos (gastos generales, beneficio, impuestos)' },
-          { id: 'e69', label: 'Validar: ¿Cómo arman presupuestos hoy?' },
-          { id: 'e70', label: 'Validar: ¿Necesitan versionado de presupuestos?' },
-        ],
-      },
-      {
-        id: 'e-wbs', title: 'Planificación WBS', icon: Target, duration: '15 min',
-        items: [
-          { id: 'e71', label: 'Mostrar estructura WBS (tareas jerárquicas por obra)' },
-          { id: 'e72', label: 'Mostrar diagrama Gantt con dependencias' },
-          { id: 'e73', label: 'Mostrar seguimiento de avance por fase' },
-          { id: 'e74', label: 'Mostrar retroalimentación de proyecto (desviaciones, lecciones, riesgos)' },
-          { id: 'e75', label: 'Validar: ¿Usan planificación de obra actualmente?' },
-          { id: 'e76', label: 'Validar: ¿Quién carga el avance de las tareas?' },
-        ],
-      },
-      {
-        id: 'e-field', title: 'Parte Diario de Obra', icon: Smartphone, duration: '10 min',
-        items: [
-          { id: 'e77', label: 'Mostrar carga de parte diario (clima, personal, equipos, materiales)' },
-          { id: 'e78', label: 'Mostrar fotos de avance vinculadas al parte' },
-          { id: 'e79', label: 'Mostrar solicitudes de material desde el parte' },
-          { id: 'e80', label: 'Validar: ¿Quién completa el parte diario en la obra?' },
-          { id: 'e81', label: 'Validar: ¿Lo completan desde celular o PC?' },
-        ],
-      },
-      {
         id: 'e-safety', title: 'Seguridad & Incidentes', icon: ShieldAlert, duration: '10 min',
         items: [
           { id: 'e82', label: 'Mostrar registro de incidentes (accidente, cuasi-accidente, enfermedad)' },
@@ -239,33 +155,6 @@ const PHASES: Phase[] = [
           { id: 'e84', label: 'Mostrar seguimiento de acciones correctivas' },
           { id: 'e85', label: 'Validar: ¿Tienen responsable de seguridad e higiene?' },
           { id: 'e86', label: 'Validar: ¿Cómo reportan incidentes hoy?' },
-        ],
-      },
-      {
-        id: 'e-insp', title: 'Inspecciones & Calidad', icon: ClipboardCheck, duration: '10 min',
-        items: [
-          { id: 'e87', label: 'Mostrar carga de inspecciones con checklist' },
-          { id: 'e88', label: 'Mostrar punch list (ítems a corregir)' },
-          { id: 'e89', label: 'Mostrar flujo: falla detectada → corrección → verificación' },
-          { id: 'e90', label: 'Validar: ¿Qué tipos de inspección hacen? (estructura, eléctrica, etc.)' },
-          { id: 'e91', label: 'Validar: ¿Quién inspecciona y quién corrige?' },
-        ],
-      },
-      {
-        id: 'e-rfi', title: 'Consultas de Obra (RFI)', icon: MessageSquareText, duration: '10 min',
-        items: [
-          { id: 'e92', label: 'Mostrar sistema de consultas formales (RFI)' },
-          { id: 'e93', label: 'Mostrar impacto en costo y cronograma por consulta' },
-          { id: 'e94', label: 'Validar: ¿Cómo manejan consultas técnicas hoy? (WhatsApp, mail, verbal)' },
-          { id: 'e95', label: 'Validar: ¿Necesitan trazabilidad de quién pidió y quién respondió?' },
-        ],
-      },
-      {
-        id: 'e-docs', title: 'Documentos & Correo', icon: FolderOpen, duration: '5 min',
-        items: [
-          { id: 'e96', label: 'Mostrar repositorio de documentos por obra' },
-          { id: 'e97', label: 'Mostrar solicitudes de documentación' },
-          { id: 'e98', label: 'Validar: ¿Dónde guardan documentos hoy? (Drive, mail, papel)' },
         ],
       },
       {
@@ -287,6 +176,7 @@ const PHASES: Phase[] = [
     color: 'from-emerald-800',
     colorTo: 'to-emerald-600',
     textColor: 'text-emerald-100',
+    meetingDate: '05/06',
     sections: [
       {
         id: 'c-ctx', title: 'Contexto y Explicación', icon: MessageSquare, duration: '5 min',
@@ -325,6 +215,94 @@ const PHASES: Phase[] = [
           { id: 'c17', label: 'Preguntar: ¿En qué momentos del día usarías esto?' },
           { id: 'c18', label: 'Preguntar: ¿Qué pasa si te equivocás en un pedido?' },
           { id: 'c19', label: 'Registrar puntuación: facilidad, velocidad, precisión, utilidad (1-5)' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'carlos2',
+    title: 'Implementación Carlos — Puesta en Marcha del Sistema',
+    person: 'Carlos',
+    device: 'PC (Navegador)',
+    deviceIcon: Monitor,
+    color: 'from-teal-800',
+    colorTo: 'to-teal-600',
+    textColor: 'text-teal-100',
+    meetingDate: '10/06',
+    meetingTime: '16:00 hs',
+    sections: [
+      {
+        id: 'c2-cheques', title: 'Cheques — Carga y Gestión en Vivo', icon: Landmark, duration: '20 min',
+        items: [
+          { id: 'c2-1', label: 'Carlos carga un cheque real en el sistema', description: 'Verificar que los datos coincidan con el cheque físico o escaneado' },
+          { id: 'c2-2', label: 'Verificar estados del cheque (en cartera, depositado, endosado, rechazado)' },
+          { id: 'c2-3', label: 'Comprobar que la capacidad de sacar cheques se refleja correctamente' },
+          { id: 'c2-4', label: 'Validar: ¿Los datos del sistema coinciden con tu Excel de cheques?' },
+        ],
+      },
+      {
+        id: 'c2-compras', title: 'Compras & Libro IVA — Carga Real', icon: ShoppingCart, duration: '20 min',
+        items: [
+          { id: 'c2-5', label: 'Carlos carga una factura de compra real en el sistema', description: 'Usar OCR o carga manual, verificar proveedor, monto, IVA' },
+          { id: 'c2-6', label: 'Verificar que la factura se refleje en el Libro IVA Compras' },
+          { id: 'c2-7', label: 'Verificar cruce factura → proveedor → pago' },
+          { id: 'c2-8', label: 'Validar: ¿El flujo de carga es más rápido que el Excel?' },
+        ],
+      },
+      {
+        id: 'c2-pedidos', title: 'Pedidos de Compra — Flujo Completo', icon: ShoppingBag, duration: '15 min',
+        items: [
+          { id: 'c2-9', label: 'Carlos crea un pedido de compra desde el sistema' },
+          { id: 'c2-10', label: 'Verificar flujo solicitud → aprobación → compra' },
+          { id: 'c2-11', label: 'Validar: ¿Los pedidos pendientes se ven claros?' },
+          { id: 'c2-12', label: 'Validar: ¿El sistema refleja lo que tenés en tu Excel de pedidos?' },
+        ],
+      },
+      {
+        id: 'c2-servicios', title: 'Servicios & Obligaciones', icon: Bell, duration: '15 min',
+        items: [
+          { id: 'c2-13', label: 'Carlos carga un servicio/obligación real (luz, gas, seguros, etc.)' },
+          { id: 'c2-14', label: 'Verificar calendario de vencimientos y alertas' },
+          { id: 'c2-15', label: 'Validar: ¿Están todos los servicios que manejás actualmente?' },
+          { id: 'c2-16', label: 'Validar: ¿Las fechas de vencimiento son correctas?' },
+        ],
+      },
+      {
+        id: 'c2-gastos', title: 'Gastos Operativos — Registro Real', icon: Wallet, duration: '15 min',
+        items: [
+          { id: 'c2-17', label: 'Carlos carga gastos reales del mes en curso' },
+          { id: 'c2-18', label: 'Verificar categorización automática vs manual' },
+          { id: 'c2-19', label: 'Revisar reporte de gastos por período y categoría' },
+          { id: 'c2-20', label: 'Validar: ¿Los totales coinciden con tu control en Excel?' },
+        ],
+      },
+      {
+        id: 'c2-disp', title: 'Disponibilidades & Liquidez', icon: LayoutDashboard, duration: '15 min',
+        items: [
+          { id: 'c2-21', label: 'Revisar tablero de liquidez — saldos bancarios y caja' },
+          { id: 'c2-22', label: 'Verificar proyección de disponibilidad a 30/60/90 días' },
+          { id: 'c2-23', label: 'Comprobar previsiones de ingresos y egresos cargadas' },
+          { id: 'c2-24', label: 'Validar: ¿Los saldos del sistema reflejan la realidad?' },
+        ],
+      },
+      {
+        id: 'c2-metricas', title: 'Métricas & Dashboard BI', icon: Target, duration: '15 min',
+        items: [
+          { id: 'c2-25', label: 'Revisar Dashboard BI — KPIs financieros y operativos' },
+          { id: 'c2-26', label: 'Verificar métricas de rentabilidad, costos y flujo de caja' },
+          { id: 'c2-27', label: 'Revisar reportes exportables (Excel/PDF)' },
+          { id: 'c2-28', label: 'Validar: ¿Las métricas que ves acá cubren lo que hacés en Excel?' },
+        ],
+      },
+      {
+        id: 'c2-cruce', title: 'Cruce Final — Sistema vs Excel', icon: ClipboardCheck, duration: '20 min',
+        items: [
+          { id: 'c2-29', label: 'Carlos abre su Excel y compara punto por punto con el sistema' },
+          { id: 'c2-30', label: 'Identificar datos que están en el Excel pero no en el sistema' },
+          { id: 'c2-31', label: 'Identificar datos que el sistema tiene y el Excel no' },
+          { id: 'c2-32', label: 'Registrar ajustes necesarios para migración completa' },
+          { id: 'c2-33', label: 'Definir fecha de corte: cuándo se deja de usar el Excel' },
+          { id: 'c2-34', label: 'Validar: ¿Estás cómodo para operar solo con el sistema?' },
         ],
       },
     ],
@@ -801,7 +779,7 @@ export const ImplementationModule: React.FC = () => {
       {activeTab === 'checklist' ? (
         <>
           {/* Progress overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Total */}
             <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
@@ -830,8 +808,11 @@ export const ImplementationModule: React.FC = () => {
                   className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
                   <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'} />
+                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos2' ? 'text-teal-500' : 'text-emerald-500'} />
                     {p.person}
+                    {p.meetingDate && (
+                      <span className="text-[10px] text-gray-400 font-medium">({p.meetingDate})</span>
+                    )}
                     <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
                       <p.deviceIcon size={12} /> {p.device}
                     </span>
@@ -842,7 +823,7 @@ export const ImplementationModule: React.FC = () => {
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : p.id === 'carlos2' ? 'bg-teal-500' : 'bg-emerald-500'}`}
                       style={{ width: `${pPct}%` }}
                     />
                   </div>
@@ -889,11 +870,17 @@ export const ImplementationModule: React.FC = () => {
               </div>
               <div>
                 <h4 className="font-bold text-lg">{phase.person}</h4>
-                <p className={`text-sm ${phase.textColor} flex items-center gap-1`}>
+                <p className={`text-sm ${phase.textColor} flex items-center gap-1 flex-wrap`}>
                   <DeviceIcon size={14} /> {phase.device}
+                  {phase.meetingDate && (
+                    <>
+                      <span className="mx-1">·</span>
+                      <Calendar size={14} /> {phase.meetingDate}{phase.meetingTime ? ` — ${phase.meetingTime}` : ''}
+                    </>
+                  )}
                   <span className="mx-1">·</span>
                   <Clock size={14} />
-                  {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
+                  {phase.id === 'enrico' ? '~2 hs' : phase.id === 'carlos2' ? '~2:15 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
                 </p>
               </div>
             </div>
@@ -909,7 +896,7 @@ export const ImplementationModule: React.FC = () => {
                 notes={state.notes}
                 onToggle={toggleCheck}
                 onNote={setNote}
-                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'}
+                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : phase.id === 'carlos2' ? 'text-teal-500' : 'text-emerald-500'}
               />
             ))}
           </div>
