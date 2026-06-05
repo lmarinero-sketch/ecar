@@ -4,9 +4,9 @@ import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
-  FileSignature, LayoutDashboard, ShoppingBag, Package,
-  Warehouse, Truck, Fuel, FolderOpen, ShieldAlert, ClipboardCheck,
-  MessageSquareText, HardHat, Plus, Trash2, Edit, X, FileText, ChevronUp
+  LayoutDashboard, ShoppingBag,
+  Truck, Fuel, ShieldAlert, ClipboardCheck,
+  MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════ */
