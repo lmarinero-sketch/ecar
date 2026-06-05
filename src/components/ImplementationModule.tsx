@@ -434,13 +434,13 @@ const FileViewer: React.FC<{
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`;
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white md:rounded-2xl shadow-2xl w-full h-full md:h-auto md:max-w-5xl md:max-h-[90vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50 shrink-0">
+        <div className="flex items-center justify-between px-3 md:px-5 py-2.5 md:py-3 border-b border-gray-200 bg-gray-50 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
               <Eye size={16} className="text-rose-600" />
@@ -939,18 +939,18 @@ export const ImplementationModule: React.FC = () => {
   const DeviceIcon = phase.deviceIcon;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rose-800 to-rose-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10">
-          <Rocket size={120} />
+      <div className="bg-gradient-to-r from-rose-800 to-rose-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
+          <Rocket size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2">
-            <Rocket size={24} /> Implementación
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
+            <Rocket size={20} className="md:w-6 md:h-6" /> Implementación
           </h3>
-          <p className="text-rose-100 text-sm mt-1">
-            Checklist de capacitación y puesta en marcha del sistema con los encargados
+          <p className="text-rose-100 text-xs md:text-sm mt-1">
+            Checklist de capacitación y puesta en marcha del sistema
           </p>
         </div>
       </div>
@@ -959,42 +959,44 @@ export const ImplementationModule: React.FC = () => {
       <div className="flex border-b border-gray-200">
         <button
           onClick={() => setActiveTab('checklist')}
-          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+          className={`py-2.5 md:py-3 px-3 md:px-6 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-1.5 md:gap-2 flex-1 md:flex-none justify-center md:justify-start ${
             activeTab === 'checklist'
               ? 'border-rose-600 text-rose-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <ClipboardCheck size={16} />
-          Plan de Capacitación
+          <span className="hidden sm:inline">Plan de Capacitación</span>
+          <span className="sm:hidden">Capacitación</span>
         </button>
         <button
           onClick={() => setActiveTab('meetings')}
-          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+          className={`py-2.5 md:py-3 px-3 md:px-6 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-1.5 md:gap-2 flex-1 md:flex-none justify-center md:justify-start ${
             activeTab === 'meetings'
               ? 'border-rose-600 text-rose-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <Users size={16} />
-          Registro de Reuniones
+          <span className="hidden sm:inline">Registro de Reuniones</span>
+          <span className="sm:hidden">Reuniones</span>
         </button>
       </div>
 
       {activeTab === 'checklist' ? (
         <>
           {/* Progress overview */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
             {/* Total */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                <Trophy size={16} className="text-amber-500" /> Progreso Total
+            <div className="bg-white border border-gray-200 rounded-xl p-3 md:p-5 shadow-sm col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
+                <Trophy size={14} className="text-amber-500 md:w-4 md:h-4" /> Progreso Total
               </div>
               <div className="flex items-end gap-2">
-                <p className="text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
-                <p className="text-xs text-gray-400 mb-1">{stats['_total'].done} de {stats['_total'].total} tareas</p>
+                <p className="text-2xl md:text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
+                <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">{stats['_total'].done} de {stats['_total'].total}</p>
               </div>
-              <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="mt-1.5 md:mt-2 h-1.5 md:h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${totalPct === 100 ? 'bg-emerald-500' : 'bg-ecar-blue'}`}
                   style={{ width: `${totalPct}%` }}
@@ -1010,21 +1012,21 @@ export const ImplementationModule: React.FC = () => {
                 <button
                   key={p.id}
                   onClick={() => setActivePhase(p.id)}
-                  className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
+                  className={`bg-white border rounded-xl p-3 md:p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
-                  <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos2' ? 'text-teal-500' : 'text-emerald-500'} />
+                  <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
+                    <User size={14} className={`md:w-4 md:h-4 ${p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos2' ? 'text-teal-500' : 'text-emerald-500'}`} />
                     {p.person}
                     {p.meetingDate && (
-                      <span className="text-[10px] text-gray-400 font-medium">({p.meetingDate})</span>
+                      <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">({p.meetingDate})</span>
                     )}
-                    <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
+                    <span className="ml-auto hidden md:flex items-center gap-1 text-[10px] text-gray-400">
                       <p.deviceIcon size={12} /> {p.device}
                     </span>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <p className="text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
-                    <p className="text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
+                  <div className="flex items-end gap-1.5 md:gap-2">
+                    <p className="text-xl md:text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
+                    <p className="text-[10px] md:text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -1039,25 +1041,25 @@ export const ImplementationModule: React.FC = () => {
 
           {/* Phase tabs */}
           <div className="flex items-center gap-2">
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1 overflow-x-auto">
               {PHASES.map(p => (
                 <button
                   key={p.id}
                   onClick={() => setActivePhase(p.id)}
-                  className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 min-w-[70px] py-2 md:py-2.5 rounded-md text-xs md:text-sm font-bold flex items-center justify-center gap-1 md:gap-2 transition-all whitespace-nowrap ${
                     activePhase === p.id
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  <p.deviceIcon size={16} />
-                  {p.person}
+                  <p.deviceIcon size={14} className="md:w-4 md:h-4 shrink-0" />
+                  <span className="truncate">{p.person}</span>
                 </button>
               ))}
             </div>
             <button
               onClick={resetAll}
-              className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+              className="p-2 md:p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
               title="Reiniciar progreso"
             >
               <RotateCcw size={16} />
@@ -1065,26 +1067,26 @@ export const ImplementationModule: React.FC = () => {
           </div>
 
           {/* Phase header */}
-          <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-5 text-white shadow-md relative overflow-hidden`}>
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <DeviceIcon size={80} />
+          <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-4 md:p-5 text-white shadow-md relative overflow-hidden`}>
+            <div className="absolute top-0 right-0 p-3 md:p-4 opacity-10">
+              <DeviceIcon size={60} className="md:w-[80px] md:h-[80px]" />
             </div>
             <div className="relative z-10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-base md:text-lg shrink-0">
                 {phase.person.charAt(0)}
               </div>
-              <div>
-                <h4 className="font-bold text-lg">{phase.person}</h4>
-                <p className={`text-sm ${phase.textColor} flex items-center gap-1 flex-wrap`}>
-                  <DeviceIcon size={14} /> {phase.device}
+              <div className="min-w-0">
+                <h4 className="font-bold text-base md:text-lg">{phase.person}</h4>
+                <p className={`text-xs md:text-sm ${phase.textColor} flex items-center gap-1 flex-wrap`}>
+                  <DeviceIcon size={12} className="md:w-[14px] md:h-[14px] shrink-0" /> {phase.device}
                   {phase.meetingDate && (
                     <>
-                      <span className="mx-1">·</span>
-                      <Calendar size={14} /> {phase.meetingDate}{phase.meetingTime ? ` — ${phase.meetingTime}` : ''}
+                      <span className="mx-0.5 md:mx-1">·</span>
+                      <Calendar size={12} className="md:w-[14px] md:h-[14px] shrink-0" /> {phase.meetingDate}{phase.meetingTime ? ` — ${phase.meetingTime}` : ''}
                     </>
                   )}
-                  <span className="mx-1">·</span>
-                  <Clock size={14} />
+                  <span className="mx-0.5 md:mx-1">·</span>
+                  <Clock size={12} className="md:w-[14px] md:h-[14px] shrink-0" />
                   {phase.id === 'enrico' ? '~2 hs' : phase.id === 'carlos2' ? '~2:15 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
                 </p>
               </div>
@@ -1331,7 +1333,7 @@ export const ImplementationModule: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                      <div className="flex flex-wrap items-center justify-end gap-1.5 md:gap-2 shrink-0 border-t md:border-t-0 pt-2 md:pt-0">
                         {/* Quick view attachments */}
                         {meeting.attachments && meeting.attachments.length > 0 && (
                           meeting.attachments.length === 1 ? (
