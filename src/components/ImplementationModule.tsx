@@ -408,6 +408,122 @@ const PHASES: Phase[] = [
       },
     ],
   },
+  {
+    id: 'carlos-0608',
+    title: 'Visita Carlos — 08/06/2026 — Pruebas WhatsApp',
+    person: 'Carlos (08/06)',
+    device: 'Celular (WhatsApp)',
+    deviceIcon: Smartphone,
+    color: 'from-teal-800',
+    colorTo: 'to-teal-600',
+    textColor: 'text-teal-100',
+    sections: [
+      {
+        id: 'c2-cheque', title: 'Cargar Cheque — WhatsApp', icon: Landmark, duration: '15 min',
+        items: [
+          { id: 'c2-1', label: 'Enviar foto de cheque por WhatsApp al bot Rombo', description: 'Carlos saca foto del cheque y la manda al chat' },
+          { id: 'c2-2', label: 'Verificar que el bot detecta los datos del cheque (OCR)', description: 'Número, banco, monto, fecha, beneficiario' },
+          { id: 'c2-3', label: 'Confirmar que el cheque se registra en el módulo Finanzas' },
+          { id: 'c2-4', label: 'Verificar estado del cheque en el sistema (pendiente/emitido)' },
+          { id: 'c2-5', label: 'Validar: ¿La extracción de datos fue precisa?' },
+          { id: 'c2-6', label: 'Registrar observaciones y errores encontrados' },
+        ],
+      },
+      {
+        id: 'c2-factura', title: 'Cargar Factura — WhatsApp', icon: FileText, duration: '15 min',
+        items: [
+          { id: 'c2-7', label: 'Enviar foto de factura de proveedor por WhatsApp', description: 'Factura A o B, con datos fiscales visibles' },
+          { id: 'c2-8', label: 'Verificar que el bot extrae datos de la factura (OCR)', description: 'CUIT, razón social, monto, IVA, fecha, tipo' },
+          { id: 'c2-9', label: 'Confirmar que la factura se registra en Compras' },
+          { id: 'c2-10', label: 'Verificar cruce con Libro IVA Compras' },
+          { id: 'c2-11', label: 'Validar: ¿Los datos extraídos son correctos?' },
+          { id: 'c2-12', label: 'Registrar observaciones y errores encontrados' },
+        ],
+      },
+      {
+        id: 'c2-gasto', title: 'Cargar Gasto — WhatsApp', icon: Wallet, duration: '15 min',
+        items: [
+          { id: 'c2-13', label: 'Enviar mensaje con gasto operativo por WhatsApp', description: 'Ej: "Gasté $15.000 en ferretería para obra centro"' },
+          { id: 'c2-14', label: 'Verificar que el bot registra el gasto correctamente' },
+          { id: 'c2-15', label: 'Enviar foto de ticket/comprobante del gasto' },
+          { id: 'c2-16', label: 'Verificar categorización automática del gasto' },
+          { id: 'c2-17', label: 'Confirmar que el gasto aparece en el módulo Gastos' },
+          { id: 'c2-18', label: 'Validar: ¿El flujo es intuitivo para Carlos?' },
+          { id: 'c2-19', label: 'Registrar observaciones y mejoras sugeridas' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'enrico-0608',
+    title: 'Visita Enrico — 08/06/2026 — Pruebas en Sistema',
+    person: 'Enrico (08/06)',
+    device: 'PC (Navegador)',
+    deviceIcon: Monitor,
+    color: 'from-violet-800',
+    colorTo: 'to-violet-600',
+    textColor: 'text-violet-100',
+    sections: [
+      {
+        id: 'e2-cheque', title: 'Cargar Cheque — Sistema', icon: Landmark, duration: '15 min',
+        items: [
+          { id: 'e2-1', label: 'Abrir módulo Finanzas → Cheques' },
+          { id: 'e2-2', label: 'Cargar cheque manualmente con todos los datos' },
+          { id: 'e2-3', label: 'Probar carga con foto/escaneo (OCR desde PC)' },
+          { id: 'e2-4', label: 'Verificar estados del cheque (emitido, depositado, cobrado, rechazado)' },
+          { id: 'e2-5', label: 'Validar: ¿El flujo de carga es claro y rápido?' },
+          { id: 'e2-6', label: 'Registrar observaciones y errores encontrados' },
+        ],
+      },
+      {
+        id: 'e2-factura', title: 'Cargar Factura — Sistema', icon: FileText, duration: '15 min',
+        items: [
+          { id: 'e2-7', label: 'Abrir módulo Compras → Cargar Factura' },
+          { id: 'e2-8', label: 'Cargar factura manualmente con datos fiscales' },
+          { id: 'e2-9', label: 'Probar carga con archivo PDF/imagen (OCR)' },
+          { id: 'e2-10', label: 'Verificar datos extraídos vs datos reales de la factura' },
+          { id: 'e2-11', label: 'Verificar reflejo en Libro IVA Compras' },
+          { id: 'e2-12', label: 'Validar: ¿La interfaz es intuitiva para Enrico?' },
+          { id: 'e2-13', label: 'Registrar observaciones y errores encontrados' },
+        ],
+      },
+      {
+        id: 'e2-gasto', title: 'Cargar Gasto — Sistema', icon: Wallet, duration: '15 min',
+        items: [
+          { id: 'e2-14', label: 'Abrir módulo Gastos → Nuevo Gasto' },
+          { id: 'e2-15', label: 'Cargar gasto operativo con categoría, monto, descripción' },
+          { id: 'e2-16', label: 'Probar búsqueda y selección de categorías' },
+          { id: 'e2-17', label: 'Verificar que el gasto aparece en reportes' },
+          { id: 'e2-18', label: 'Validar: ¿Las categorías disponibles son suficientes?' },
+          { id: 'e2-19', label: 'Registrar observaciones y mejoras sugeridas' },
+        ],
+      },
+      {
+        id: 'e2-empleados', title: 'Cargar Empleados — Sistema', icon: Users, duration: '15 min',
+        items: [
+          { id: 'e2-20', label: 'Abrir módulo RRHH → Legajos' },
+          { id: 'e2-21', label: 'Cargar un nuevo empleado con datos personales', description: 'Nombre, CUIL, categoría, fecha de ingreso, obra asignada' },
+          { id: 'e2-22', label: 'Cargar documentación del empleado (DNI, ART, psicofísico)' },
+          { id: 'e2-23', label: 'Verificar vencimientos de documentación' },
+          { id: 'e2-24', label: 'Probar edición de datos de un empleado existente' },
+          { id: 'e2-25', label: 'Validar: ¿Los campos cubren lo necesario para el legajo?' },
+          { id: 'e2-26', label: 'Registrar observaciones y datos faltantes' },
+        ],
+      },
+      {
+        id: 'e2-asistencia', title: 'Cargar Asistencia — Sistema', icon: Calendar, duration: '15 min',
+        items: [
+          { id: 'e2-27', label: 'Abrir módulo RRHH → Asistencia' },
+          { id: 'e2-28', label: 'Registrar asistencia manual para empleados' },
+          { id: 'e2-29', label: 'Probar sistema de QR para fichaje', description: 'Generar QR y simular escaneo desde celular' },
+          { id: 'e2-30', label: 'Verificar registro de entrada/salida con hora y ubicación' },
+          { id: 'e2-31', label: 'Verificar parte diario de asistencia' },
+          { id: 'e2-32', label: 'Validar: ¿El flujo de asistencia es viable para la obra?' },
+          { id: 'e2-33', label: 'Registrar observaciones y sugerencias de Enrico' },
+        ],
+      },
+    ],
+  },
 ];
 
 const STORAGE_KEY = 'ecar_implementation_state';
@@ -801,7 +917,7 @@ export const ImplementationModule: React.FC = () => {
       {activeTab === 'checklist' ? (
         <>
           {/* Progress overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {/* Total */}
             <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
@@ -830,7 +946,7 @@ export const ImplementationModule: React.FC = () => {
                   className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
                   <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'} />
+                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-teal-500' : p.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'} />
                     {p.person}
                     <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
                       <p.deviceIcon size={12} /> {p.device}
@@ -842,7 +958,7 @@ export const ImplementationModule: React.FC = () => {
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : p.id === 'carlos-0608' ? 'bg-teal-500' : p.id === 'enrico-0608' ? 'bg-violet-500' : 'bg-emerald-500'}`}
                       style={{ width: `${pPct}%` }}
                     />
                   </div>
@@ -893,7 +1009,7 @@ export const ImplementationModule: React.FC = () => {
                   <DeviceIcon size={14} /> {phase.device}
                   <span className="mx-1">·</span>
                   <Clock size={14} />
-                  {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : '~35 min'}
+                  {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : phase.id === 'carlos-0608' ? '~45 min' : phase.id === 'enrico-0608' ? '~1:15 hs' : '~35 min'}
                 </p>
               </div>
             </div>
@@ -909,7 +1025,7 @@ export const ImplementationModule: React.FC = () => {
                 notes={state.notes}
                 onToggle={toggleCheck}
                 onNote={setNote}
-                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : 'text-emerald-500'}
+                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : phase.id === 'carlos-0608' ? 'text-teal-500' : phase.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}
               />
             ))}
           </div>
