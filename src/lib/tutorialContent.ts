@@ -344,4 +344,18 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Este módulo está en desarrollo.',
     ],
   },
+  user_management: {
+    title: 'Gestión de Usuarios',
+    description: 'Administración de usuarios del sistema. Creá cuentas, asigná roles y permisos, y controlá el acceso a cada módulo.',
+    steps: [
+      'Accedé al panel de usuarios desde el menú de administración.',
+      'Creá nuevos usuarios con email, nombre y rol asignado.',
+      'Configurá los permisos de acceso por módulo para cada rol.',
+      'Desactivá usuarios que ya no necesiten acceso al sistema.',
+    ],
+    tips: [
+      'Solo los administradores pueden gestionar usuarios y permisos.',
+      'Los cambios de permisos se aplican inmediatamente al próximo inicio de sesión del usuario.',
+    ],
+  },
 };
