@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
+import { supabase } from '../lib/supabase';
 import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
   Landmark, ShoppingCart, Bell, Calculator, Users, Calendar, Wallet,
-  FileSignature, LayoutDashboard, ShoppingBag, Package,
-  Warehouse, Truck, Fuel, FolderOpen, ShieldAlert, ClipboardCheck,
-  MessageSquareText, HardHat, Plus, Trash2, Edit, X, FileText, ChevronUp
+  LayoutDashboard, ShoppingBag,
+  Truck, Fuel, ShieldAlert, ClipboardCheck, Upload, Paperclip, Download,
+  MessageSquareText, Plus, Trash2, Edit, X, FileText, ChevronUp, Eye, Maximize2
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -36,12 +37,22 @@ type Phase = {
   color: string;       // gradient from
   colorTo: string;     // gradient to
   textColor: string;
+  meetingDate?: string;  // e.g. '03/06'
+  meetingTime?: string;  // e.g. '16:00 hs'
   sections: TaskSection[];
 };
 
 type ImplState = {
   checked: Record<string, boolean>;
   notes: Record<string, string>;
+};
+
+type MeetingAttachment = {
+  name: string;
+  url: string;
+  type: string;  // mime type
+  size: number;  // bytes
+  uploadedAt: string;
 };
 
 type Meeting = {
@@ -51,6 +62,7 @@ type Meeting = {
   objective: string;
   development: string;
   createdAt: string;
+  attachments?: MeetingAttachment[];
 };
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -67,16 +79,8 @@ const PHASES: Phase[] = [
     color: 'from-indigo-800',
     colorTo: 'to-indigo-600',
     textColor: 'text-indigo-100',
+    meetingDate: '03/06',
     sections: [
-      {
-        id: 'e-dash', title: 'Dashboard BI y Liquidez', icon: LayoutDashboard, duration: '10 min',
-        items: [
-          { id: 'e1', label: 'Mostrar Dashboard BI — KPIs generales', description: 'Explicar cada tarjeta KPI y qué datos alimentan' },
-          { id: 'e2', label: 'Mostrar Tablero de Liquidez — proyección de caja', description: 'Movimientos, saldos bancarios, proyección mensual' },
-          { id: 'e3', label: 'Validar: ¿Los KPIs cubren tu día a día?' },
-          { id: 'e4', label: 'Validar: ¿Falta algún indicador financiero clave?' },
-        ],
-      },
       {
         id: 'e-fin', title: 'Finanzas — Cheques y Pagos', icon: Landmark, duration: '15 min',
         items: [
@@ -124,23 +128,6 @@ const PHASES: Phase[] = [
         ],
       },
       {
-        id: 'e-ped', title: 'Pedidos de Compra', icon: ShoppingBag, duration: '10 min',
-        items: [
-          { id: 'e26', label: 'Mostrar flujo solicitud → aprobación → compra' },
-          { id: 'e27', label: 'Explicar integración con WhatsApp (Carlos pide desde celular)' },
-          { id: 'e28', label: 'Validar: ¿Quiénes deberían poder crear solicitudes?' },
-          { id: 'e29', label: 'Validar: ¿Qué niveles de aprobación necesitás?' },
-        ],
-      },
-      {
-        id: 'e-cert', title: 'Certificaciones ICC', icon: FileSignature, duration: '5 min',
-        items: [
-          { id: 'e30', label: 'Mostrar carga de certificaciones y fotos' },
-          { id: 'e31', label: 'Validar: ¿Quién carga las certificaciones?' },
-          { id: 'e32', label: 'Validar: ¿Se vinculan a una obra específica?' },
-        ],
-      },
-      {
         id: 'e-rrhh', title: 'RRHH — Legajos y Asistencia', icon: Users, duration: '15 min',
         items: [
           { id: 'e33', label: 'Mostrar gestión de legajos (alta, documentación, vencimientos)' },
@@ -149,35 +136,6 @@ const PHASES: Phase[] = [
           { id: 'e36', label: 'Validar: ¿Cómo gestionan hoy vencimientos de ART, psicofísico, etc.?' },
           { id: 'e37', label: 'Validar: ¿El sistema de asistencia con QR es viable para la obra?' },
           { id: 'e38', label: 'Validar: ¿Cuántos empleados tendrían que estar cargados?' },
-        ],
-      },
-      {
-        id: 'e-rep', title: 'Reporte Mensual', icon: Calendar, duration: '10 min',
-        items: [
-          { id: 'e39', label: 'Mostrar generación de reporte consolidado' },
-          { id: 'e40', label: 'Mostrar exportación a Excel/PDF' },
-          { id: 'e41', label: 'Validar: ¿Qué datos necesitás en el reporte sí o sí?' },
-          { id: 'e42', label: 'Validar: ¿A quién le entregás este reporte?' },
-        ],
-      },
-      {
-        id: 'e-inv', title: 'Inventario & Pañol', icon: Package, duration: '10 min',
-        items: [
-          { id: 'e46', label: 'Mostrar gestión de ítems (materiales, herramientas, consumibles)' },
-          { id: 'e47', label: 'Mostrar movimientos de stock (entrada, salida, devolución)' },
-          { id: 'e48', label: 'Mostrar asignación de herramientas a empleados' },
-          { id: 'e49', label: 'Mostrar layout de estanterías del pañol' },
-          { id: 'e50', label: 'Validar: ¿Qué materiales manejan en pañol?' },
-          { id: 'e51', label: 'Validar: ¿Necesitan control de stock mínimo y alertas?' },
-        ],
-      },
-      {
-        id: 'e-log', title: 'Acopios & Entregas', icon: Warehouse, duration: '10 min',
-        items: [
-          { id: 'e52', label: 'Mostrar gestión de acopios por obra' },
-          { id: 'e53', label: 'Mostrar registro de entregas y remitos' },
-          { id: 'e54', label: 'Validar: ¿Cómo registran entregas de material hoy?' },
-          { id: 'e55', label: 'Validar: ¿Necesitan trazabilidad remito → factura?' },
         ],
       },
       {
@@ -200,38 +158,6 @@ const PHASES: Phase[] = [
         ],
       },
       {
-        id: 'e-budget', title: 'Proyectos & Presupuestos', icon: HardHat, duration: '15 min',
-        items: [
-          { id: 'e65', label: 'Mostrar listado de obras/proyectos activos' },
-          { id: 'e66', label: 'Mostrar creación de presupuesto con secciones e ítems' },
-          { id: 'e67', label: 'Mostrar APU (Análisis de Precios Unitarios)' },
-          { id: 'e68', label: 'Mostrar cálculo de costos indirectos (gastos generales, beneficio, impuestos)' },
-          { id: 'e69', label: 'Validar: ¿Cómo arman presupuestos hoy?' },
-          { id: 'e70', label: 'Validar: ¿Necesitan versionado de presupuestos?' },
-        ],
-      },
-      {
-        id: 'e-wbs', title: 'Planificación WBS', icon: Target, duration: '15 min',
-        items: [
-          { id: 'e71', label: 'Mostrar estructura WBS (tareas jerárquicas por obra)' },
-          { id: 'e72', label: 'Mostrar diagrama Gantt con dependencias' },
-          { id: 'e73', label: 'Mostrar seguimiento de avance por fase' },
-          { id: 'e74', label: 'Mostrar retroalimentación de proyecto (desviaciones, lecciones, riesgos)' },
-          { id: 'e75', label: 'Validar: ¿Usan planificación de obra actualmente?' },
-          { id: 'e76', label: 'Validar: ¿Quién carga el avance de las tareas?' },
-        ],
-      },
-      {
-        id: 'e-field', title: 'Parte Diario de Obra', icon: Smartphone, duration: '10 min',
-        items: [
-          { id: 'e77', label: 'Mostrar carga de parte diario (clima, personal, equipos, materiales)' },
-          { id: 'e78', label: 'Mostrar fotos de avance vinculadas al parte' },
-          { id: 'e79', label: 'Mostrar solicitudes de material desde el parte' },
-          { id: 'e80', label: 'Validar: ¿Quién completa el parte diario en la obra?' },
-          { id: 'e81', label: 'Validar: ¿Lo completan desde celular o PC?' },
-        ],
-      },
-      {
         id: 'e-safety', title: 'Seguridad & Incidentes', icon: ShieldAlert, duration: '10 min',
         items: [
           { id: 'e82', label: 'Mostrar registro de incidentes (accidente, cuasi-accidente, enfermedad)' },
@@ -239,33 +165,6 @@ const PHASES: Phase[] = [
           { id: 'e84', label: 'Mostrar seguimiento de acciones correctivas' },
           { id: 'e85', label: 'Validar: ¿Tienen responsable de seguridad e higiene?' },
           { id: 'e86', label: 'Validar: ¿Cómo reportan incidentes hoy?' },
-        ],
-      },
-      {
-        id: 'e-insp', title: 'Inspecciones & Calidad', icon: ClipboardCheck, duration: '10 min',
-        items: [
-          { id: 'e87', label: 'Mostrar carga de inspecciones con checklist' },
-          { id: 'e88', label: 'Mostrar punch list (ítems a corregir)' },
-          { id: 'e89', label: 'Mostrar flujo: falla detectada → corrección → verificación' },
-          { id: 'e90', label: 'Validar: ¿Qué tipos de inspección hacen? (estructura, eléctrica, etc.)' },
-          { id: 'e91', label: 'Validar: ¿Quién inspecciona y quién corrige?' },
-        ],
-      },
-      {
-        id: 'e-rfi', title: 'Consultas de Obra (RFI)', icon: MessageSquareText, duration: '10 min',
-        items: [
-          { id: 'e92', label: 'Mostrar sistema de consultas formales (RFI)' },
-          { id: 'e93', label: 'Mostrar impacto en costo y cronograma por consulta' },
-          { id: 'e94', label: 'Validar: ¿Cómo manejan consultas técnicas hoy? (WhatsApp, mail, verbal)' },
-          { id: 'e95', label: 'Validar: ¿Necesitan trazabilidad de quién pidió y quién respondió?' },
-        ],
-      },
-      {
-        id: 'e-docs', title: 'Documentos & Correo', icon: FolderOpen, duration: '5 min',
-        items: [
-          { id: 'e96', label: 'Mostrar repositorio de documentos por obra' },
-          { id: 'e97', label: 'Mostrar solicitudes de documentación' },
-          { id: 'e98', label: 'Validar: ¿Dónde guardan documentos hoy? (Drive, mail, papel)' },
         ],
       },
       {
@@ -287,6 +186,7 @@ const PHASES: Phase[] = [
     color: 'from-emerald-800',
     colorTo: 'to-emerald-600',
     textColor: 'text-emerald-100',
+    meetingDate: '05/06',
     sections: [
       {
         id: 'c-ctx', title: 'Contexto y Explicación', icon: MessageSquare, duration: '5 min',
@@ -325,6 +225,94 @@ const PHASES: Phase[] = [
           { id: 'c17', label: 'Preguntar: ¿En qué momentos del día usarías esto?' },
           { id: 'c18', label: 'Preguntar: ¿Qué pasa si te equivocás en un pedido?' },
           { id: 'c19', label: 'Registrar puntuación: facilidad, velocidad, precisión, utilidad (1-5)' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'carlos2',
+    title: 'Implementación Carlos — Puesta en Marcha del Sistema',
+    person: 'Carlos',
+    device: 'PC (Navegador)',
+    deviceIcon: Monitor,
+    color: 'from-teal-800',
+    colorTo: 'to-teal-600',
+    textColor: 'text-teal-100',
+    meetingDate: '10/06',
+    meetingTime: '16:00 hs',
+    sections: [
+      {
+        id: 'c2-cheques', title: 'Cheques — Carga y Gestión en Vivo', icon: Landmark, duration: '20 min',
+        items: [
+          { id: 'c2-1', label: 'Carlos carga un cheque real en el sistema', description: 'Verificar que los datos coincidan con el cheque físico o escaneado' },
+          { id: 'c2-2', label: 'Verificar estados del cheque (en cartera, depositado, endosado, rechazado)' },
+          { id: 'c2-3', label: 'Comprobar que la capacidad de sacar cheques se refleja correctamente' },
+          { id: 'c2-4', label: 'Validar: ¿Los datos del sistema coinciden con tu Excel de cheques?' },
+        ],
+      },
+      {
+        id: 'c2-compras', title: 'Compras & Libro IVA — Carga Real', icon: ShoppingCart, duration: '20 min',
+        items: [
+          { id: 'c2-5', label: 'Carlos carga una factura de compra real en el sistema', description: 'Usar OCR o carga manual, verificar proveedor, monto, IVA' },
+          { id: 'c2-6', label: 'Verificar que la factura se refleje en el Libro IVA Compras' },
+          { id: 'c2-7', label: 'Verificar cruce factura → proveedor → pago' },
+          { id: 'c2-8', label: 'Validar: ¿El flujo de carga es más rápido que el Excel?' },
+        ],
+      },
+      {
+        id: 'c2-pedidos', title: 'Pedidos de Compra — Flujo Completo', icon: ShoppingBag, duration: '15 min',
+        items: [
+          { id: 'c2-9', label: 'Carlos crea un pedido de compra desde el sistema' },
+          { id: 'c2-10', label: 'Verificar flujo solicitud → aprobación → compra' },
+          { id: 'c2-11', label: 'Validar: ¿Los pedidos pendientes se ven claros?' },
+          { id: 'c2-12', label: 'Validar: ¿El sistema refleja lo que tenés en tu Excel de pedidos?' },
+        ],
+      },
+      {
+        id: 'c2-servicios', title: 'Servicios & Obligaciones', icon: Bell, duration: '15 min',
+        items: [
+          { id: 'c2-13', label: 'Carlos carga un servicio/obligación real (luz, gas, seguros, etc.)' },
+          { id: 'c2-14', label: 'Verificar calendario de vencimientos y alertas' },
+          { id: 'c2-15', label: 'Validar: ¿Están todos los servicios que manejás actualmente?' },
+          { id: 'c2-16', label: 'Validar: ¿Las fechas de vencimiento son correctas?' },
+        ],
+      },
+      {
+        id: 'c2-gastos', title: 'Gastos Operativos — Registro Real', icon: Wallet, duration: '15 min',
+        items: [
+          { id: 'c2-17', label: 'Carlos carga gastos reales del mes en curso' },
+          { id: 'c2-18', label: 'Verificar categorización automática vs manual' },
+          { id: 'c2-19', label: 'Revisar reporte de gastos por período y categoría' },
+          { id: 'c2-20', label: 'Validar: ¿Los totales coinciden con tu control en Excel?' },
+        ],
+      },
+      {
+        id: 'c2-disp', title: 'Disponibilidades & Liquidez', icon: LayoutDashboard, duration: '15 min',
+        items: [
+          { id: 'c2-21', label: 'Revisar tablero de liquidez — saldos bancarios y caja' },
+          { id: 'c2-22', label: 'Verificar proyección de disponibilidad a 30/60/90 días' },
+          { id: 'c2-23', label: 'Comprobar previsiones de ingresos y egresos cargadas' },
+          { id: 'c2-24', label: 'Validar: ¿Los saldos del sistema reflejan la realidad?' },
+        ],
+      },
+      {
+        id: 'c2-metricas', title: 'Métricas & Dashboard BI', icon: Target, duration: '15 min',
+        items: [
+          { id: 'c2-25', label: 'Revisar Dashboard BI — KPIs financieros y operativos' },
+          { id: 'c2-26', label: 'Verificar métricas de rentabilidad, costos y flujo de caja' },
+          { id: 'c2-27', label: 'Revisar reportes exportables (Excel/PDF)' },
+          { id: 'c2-28', label: 'Validar: ¿Las métricas que ves acá cubren lo que hacés en Excel?' },
+        ],
+      },
+      {
+        id: 'c2-cruce', title: 'Cruce Final — Sistema vs Excel', icon: ClipboardCheck, duration: '20 min',
+        items: [
+          { id: 'c2-29', label: 'Carlos abre su Excel y compara punto por punto con el sistema' },
+          { id: 'c2-30', label: 'Identificar datos que están en el Excel pero no en el sistema' },
+          { id: 'c2-31', label: 'Identificar datos que el sistema tiene y el Excel no' },
+          { id: 'c2-32', label: 'Registrar ajustes necesarios para migración completa' },
+          { id: 'c2-33', label: 'Definir fecha de corte: cuándo se deja de usar el Excel' },
+          { id: 'c2-34', label: 'Validar: ¿Estás cómodo para operar solo con el sistema?' },
         ],
       },
     ],
@@ -543,6 +531,145 @@ function saveLocalState(state: ImplState) {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
+/*  FILE VIEWER COMPONENT                                         */
+/* ═══════════════════════════════════════════════════════════════ */
+
+const FileViewer: React.FC<{
+  file: MeetingAttachment | null;
+  onClose: () => void;
+}> = ({ file, onClose }) => {
+  if (!file) return null;
+
+  const isImage = file.type.startsWith('image/');
+  const isPdf = file.type.includes('pdf');
+  const isText = file.type.includes('text/plain') || file.type.includes('text/csv');
+  const isOffice = file.type.includes('word') || file.type.includes('document') ||
+    file.type.includes('excel') || file.type.includes('spreadsheet') || file.type.includes('.sheet') ||
+    file.type.includes('powerpoint') || file.type.includes('presentation');
+
+  const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(file.url)}`;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+      <div
+        className="bg-white md:rounded-2xl shadow-2xl w-full h-full md:h-auto md:max-w-5xl md:max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 md:px-5 py-2.5 md:py-3 border-b border-gray-200 bg-gray-50 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+              <Eye size={16} className="text-rose-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-gray-800 truncate">{file.name}</p>
+              <p className="text-[10px] text-gray-400">{file.type}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+              title="Abrir en nueva pestaña"
+            >
+              <Maximize2 size={16} />
+            </a>
+            <a
+              href={file.url}
+              download={file.name}
+              className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+              title="Descargar"
+            >
+              <Download size={16} />
+            </a>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center min-h-0">
+          {isImage && (
+            <img
+              src={file.url}
+              alt={file.name}
+              className="max-w-full max-h-full object-contain p-4"
+            />
+          )}
+          {isPdf && (
+            <iframe
+              src={file.url}
+              className="w-full h-full min-h-[70vh] border-0"
+              title={file.name}
+            />
+          )}
+          {isText && (
+            <TextFileViewer url={file.url} />
+          )}
+          {isOffice && (
+            <iframe
+              src={officeViewerUrl}
+              className="w-full h-full min-h-[70vh] border-0"
+              title={file.name}
+              onError={() => {
+                // Fallback: try Google viewer
+              }}
+            />
+          )}
+          {!isImage && !isPdf && !isText && !isOffice && (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <FileText size={64} className="text-gray-300 mb-4" />
+              <p className="text-sm font-bold text-gray-600 mb-1">Vista previa no disponible</p>
+              <p className="text-xs text-gray-400 mb-4">Este tipo de archivo no se puede previsualizar directamente</p>
+              <a
+                href={file.url}
+                download={file.name}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold shadow-sm transition-all"
+              >
+                <Download size={16} /> Descargar Archivo
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* Text File Viewer sub-component */
+const TextFileViewer: React.FC<{ url: string }> = ({ url }) => {
+  const [content, setContent] = useState<string>('Cargando...');
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch');
+        return res.text();
+      })
+      .then(text => setContent(text))
+      .catch(() => {
+        setError(true);
+        setContent('No se pudo cargar el archivo de texto.');
+      });
+  }, [url]);
+
+  return (
+    <div className="w-full h-full min-h-[60vh] overflow-auto p-6">
+      <pre className={`text-sm font-mono leading-relaxed whitespace-pre-wrap break-words ${error ? 'text-red-500' : 'text-gray-700'} bg-white rounded-lg border border-gray-200 p-4 shadow-inner`}>
+        {content}
+      </pre>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════ */
 /*  COMPONENTS                                                    */
 /* ═══════════════════════════════════════════════════════════════ */
 
@@ -682,12 +809,15 @@ export const ImplementationModule: React.FC = () => {
   const [isAddingMeeting, setIsAddingMeeting] = useState(false);
   const [expandedMeetings, setExpandedMeetings] = useState<Record<string, boolean>>({});
   const [syncingMeetings, setSyncingMeetings] = useState(false);
+  const [viewingFile, setViewingFile] = useState<MeetingAttachment | null>(null);
 
   // Form states
   const [formDate, setFormDate] = useState('');
   const [formResponsibles, setFormResponsibles] = useState('');
   const [formObjective, setFormObjective] = useState('');
   const [formDevelopment, setFormDevelopment] = useState('');
+  const [formAttachments, setFormAttachments] = useState<MeetingAttachment[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // Supabase hooks
   const { data: remoteSetting, isLoading: remoteLoading } = useSystemSetting(SUPABASE_SETTING_KEY);
@@ -779,6 +909,7 @@ export const ImplementationModule: React.FC = () => {
     setFormResponsibles('');
     setFormObjective('');
     setFormDevelopment('');
+    setFormAttachments([]);
     setIsAddingMeeting(true);
     setEditingMeeting(null);
   };
@@ -788,8 +919,58 @@ export const ImplementationModule: React.FC = () => {
     setFormResponsibles(meeting.responsibles);
     setFormObjective(meeting.objective);
     setFormDevelopment(meeting.development);
+    setFormAttachments(meeting.attachments || []);
     setEditingMeeting(meeting);
     setIsAddingMeeting(false);
+  };
+
+  // File upload handler
+  const handleUploadFiles = async (files: FileList) => {
+    setUploadingFiles(true);
+    const newAttachments: MeetingAttachment[] = [...formAttachments];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `meetings/${Date.now()}_${safeName}`;
+      try {
+        const { error } = await supabase.storage.from('meeting-files').upload(path, file);
+        if (error) {
+          console.error('Upload error:', error.message);
+          continue;
+        }
+        const { data: { publicUrl } } = supabase.storage.from('meeting-files').getPublicUrl(path);
+        newAttachments.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type || 'application/octet-stream',
+          size: file.size,
+          uploadedAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error('Upload failed:', err);
+      }
+    }
+    setFormAttachments(newAttachments);
+    setUploadingFiles(false);
+  };
+
+  const removeFormAttachment = (idx: number) => {
+    setFormAttachments(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return '🖼️';
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('spreadsheet') || type.includes('excel') || type.includes('.sheet')) return '📊';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    if (type.includes('text/plain')) return '📃';
+    return '📎';
   };
 
   const handleSaveMeeting = (e: React.FormEvent) => {
@@ -809,6 +990,7 @@ export const ImplementationModule: React.FC = () => {
               responsibles: formResponsibles,
               objective: formObjective,
               development: formDevelopment,
+              attachments: formAttachments,
             }
           : m
       );
@@ -821,6 +1003,7 @@ export const ImplementationModule: React.FC = () => {
         objective: formObjective,
         development: formDevelopment,
         createdAt: new Date().toISOString(),
+        attachments: formAttachments,
       };
       updatedMeetings = [newMeeting, ...meetings];
     }
@@ -872,18 +1055,18 @@ export const ImplementationModule: React.FC = () => {
   const DeviceIcon = phase.deviceIcon;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rose-800 to-rose-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10">
-          <Rocket size={120} />
+      <div className="bg-gradient-to-r from-rose-800 to-rose-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
+          <Rocket size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2">
-            <Rocket size={24} /> Implementación
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
+            <Rocket size={20} className="md:w-6 md:h-6" /> Implementación
           </h3>
-          <p className="text-rose-100 text-sm mt-1">
-            Checklist de capacitación y puesta en marcha del sistema con los encargados
+          <p className="text-rose-100 text-xs md:text-sm mt-1">
+            Checklist de capacitación y puesta en marcha del sistema
           </p>
         </div>
       </div>
@@ -892,42 +1075,44 @@ export const ImplementationModule: React.FC = () => {
       <div className="flex border-b border-gray-200">
         <button
           onClick={() => setActiveTab('checklist')}
-          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+          className={`py-2.5 md:py-3 px-3 md:px-6 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-1.5 md:gap-2 flex-1 md:flex-none justify-center md:justify-start ${
             activeTab === 'checklist'
               ? 'border-rose-600 text-rose-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <ClipboardCheck size={16} />
-          Plan de Capacitación
+          <span className="hidden sm:inline">Plan de Capacitación</span>
+          <span className="sm:hidden">Capacitación</span>
         </button>
         <button
           onClick={() => setActiveTab('meetings')}
-          className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
+          className={`py-2.5 md:py-3 px-3 md:px-6 font-bold text-xs md:text-sm border-b-2 transition-all flex items-center gap-1.5 md:gap-2 flex-1 md:flex-none justify-center md:justify-start ${
             activeTab === 'meetings'
               ? 'border-rose-600 text-rose-600'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <Users size={16} />
-          Registro de Reuniones
+          <span className="hidden sm:inline">Registro de Reuniones</span>
+          <span className="sm:hidden">Reuniones</span>
         </button>
       </div>
 
       {activeTab === 'checklist' ? (
         <>
           {/* Progress overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
             {/* Total */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                <Trophy size={16} className="text-amber-500" /> Progreso Total
+            <div className="bg-white border border-gray-200 rounded-xl p-3 md:p-5 shadow-sm col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
+                <Trophy size={14} className="text-amber-500 md:w-4 md:h-4" /> Progreso Total
               </div>
               <div className="flex items-end gap-2">
-                <p className="text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
-                <p className="text-xs text-gray-400 mb-1">{stats['_total'].done} de {stats['_total'].total} tareas</p>
+                <p className="text-2xl md:text-3xl font-black text-gray-800 font-mono">{totalPct}%</p>
+                <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 md:mb-1">{stats['_total'].done} de {stats['_total'].total}</p>
               </div>
-              <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="mt-1.5 md:mt-2 h-1.5 md:h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${totalPct === 100 ? 'bg-emerald-500' : 'bg-ecar-blue'}`}
                   style={{ width: `${totalPct}%` }}
@@ -943,18 +1128,21 @@ export const ImplementationModule: React.FC = () => {
                 <button
                   key={p.id}
                   onClick={() => setActivePhase(p.id)}
-                  className={`bg-white border rounded-xl p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
+                  className={`bg-white border rounded-xl p-3 md:p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
-                  <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
-                    <User size={16} className={p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-teal-500' : p.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'} />
+                  <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
+                    <User size={14} className={`md:w-4 md:h-4 ${p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-teal-500' : p.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}`} />
                     {p.person}
-                    <span className="ml-auto flex items-center gap-1 text-[10px] text-gray-400">
+                    {p.meetingDate && (
+                      <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">({p.meetingDate})</span>
+                    )}
+                    <span className="ml-auto hidden md:flex items-center gap-1 text-[10px] text-gray-400">
                       <p.deviceIcon size={12} /> {p.device}
                     </span>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <p className="text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
-                    <p className="text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
+                  <div className="flex items-end gap-1.5 md:gap-2">
+                    <p className="text-xl md:text-2xl font-black text-gray-800 font-mono">{pPct}%</p>
+                    <p className="text-[10px] md:text-xs text-gray-400 mb-0.5">{s.done}/{s.total}</p>
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -969,25 +1157,25 @@ export const ImplementationModule: React.FC = () => {
 
           {/* Phase tabs */}
           <div className="flex items-center gap-2">
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 flex-1 overflow-x-auto">
               {PHASES.map(p => (
                 <button
                   key={p.id}
                   onClick={() => setActivePhase(p.id)}
-                  className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 min-w-[70px] py-2 md:py-2.5 rounded-md text-xs md:text-sm font-bold flex items-center justify-center gap-1 md:gap-2 transition-all whitespace-nowrap ${
                     activePhase === p.id
                       ? 'bg-white text-gray-800 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  <p.deviceIcon size={16} />
-                  {p.person}
+                  <p.deviceIcon size={14} className="md:w-4 md:h-4 shrink-0" />
+                  <span className="truncate">{p.person}</span>
                 </button>
               ))}
             </div>
             <button
               onClick={resetAll}
-              className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+              className="p-2 md:p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
               title="Reiniciar progreso"
             >
               <RotateCcw size={16} />
@@ -995,20 +1183,26 @@ export const ImplementationModule: React.FC = () => {
           </div>
 
           {/* Phase header */}
-          <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-5 text-white shadow-md relative overflow-hidden`}>
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <DeviceIcon size={80} />
+          <div className={`bg-gradient-to-r ${phase.color} ${phase.colorTo} rounded-xl p-4 md:p-5 text-white shadow-md relative overflow-hidden`}>
+            <div className="absolute top-0 right-0 p-3 md:p-4 opacity-10">
+              <DeviceIcon size={60} className="md:w-[80px] md:h-[80px]" />
             </div>
             <div className="relative z-10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-base md:text-lg shrink-0">
                 {phase.person.charAt(0)}
               </div>
-              <div>
-                <h4 className="font-bold text-lg">{phase.person}</h4>
-                <p className={`text-sm ${phase.textColor} flex items-center gap-1`}>
-                  <DeviceIcon size={14} /> {phase.device}
-                  <span className="mx-1">·</span>
-                  <Clock size={14} />
+              <div className="min-w-0">
+                <h4 className="font-bold text-base md:text-lg">{phase.person}</h4>
+                <p className={`text-xs md:text-sm ${phase.textColor} flex items-center gap-1 flex-wrap`}>
+                  <DeviceIcon size={12} className="md:w-[14px] md:h-[14px] shrink-0" /> {phase.device}
+                  {phase.meetingDate && (
+                    <>
+                      <span className="mx-0.5 md:mx-1">·</span>
+                      <Calendar size={12} className="md:w-[14px] md:h-[14px] shrink-0" /> {phase.meetingDate}{phase.meetingTime ? ` — ${phase.meetingTime}` : ''}
+                    </>
+                  )}
+                  <span className="mx-0.5 md:mx-1">·</span>
+                  <Clock size={12} className="md:w-[14px] md:h-[14px] shrink-0" />
                   {phase.id === 'enrico' ? '~4 hs' : phase.id === 'gustavo' ? '~1:45 hs' : phase.id === 'carlos-0608' ? '~45 min' : phase.id === 'enrico-0608' ? '~1:15 hs' : '~35 min'}
                 </p>
               </div>
@@ -1135,6 +1329,56 @@ export const ImplementationModule: React.FC = () => {
                 />
               </div>
 
+              {/* Archivos Adjuntos */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-600 block">Archivos Adjuntos</label>
+                <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer transition-all ${uploadingFiles ? 'border-rose-300 bg-rose-50' : 'border-gray-300 hover:border-rose-400 hover:bg-rose-50/30'}`}>
+                  <div className="flex flex-col items-center justify-center pt-2 pb-2">
+                    {uploadingFiles ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-rose-400 border-t-rose-600 rounded-full animate-spin mb-1" />
+                        <p className="text-xs text-rose-500 font-medium">Subiendo archivos...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={20} className="text-gray-400 mb-1" />
+                        <p className="text-xs text-gray-500"><span className="font-bold text-rose-500">Hacé click</span> o arrastrá archivos aquí</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Fotos, PDF, Excel, Word, Bloc de notas y más</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    disabled={uploadingFiles}
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.ppt,.pptx,.zip,.rar"
+                    onChange={e => e.target.files && e.target.files.length > 0 && handleUploadFiles(e.target.files)}
+                  />
+                </label>
+
+                {/* Lista de archivos cargados */}
+                {formAttachments.length > 0 && (
+                  <div className="space-y-1.5 mt-2">
+                    {formAttachments.map((att, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 group">
+                        <span className="text-sm">{getFileIcon(att.type)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-700 truncate">{att.name}</p>
+                          <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                        </div>
+                        <button type="button" onClick={() => setViewingFile(att)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0" title="Ver archivo">
+                          <Eye size={14} />
+                        </button>
+                        <button type="button" onClick={() => removeFormAttachment(idx)} className="text-gray-300 hover:text-red-500 transition-colors shrink-0" title="Quitar archivo">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -1205,7 +1449,48 @@ export const ImplementationModule: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
+                      <div className="flex flex-wrap items-center justify-end gap-1.5 md:gap-2 shrink-0 border-t md:border-t-0 pt-2 md:pt-0">
+                        {/* Quick view attachments */}
+                        {meeting.attachments && meeting.attachments.length > 0 && (
+                          meeting.attachments.length === 1 ? (
+                            <button
+                              onClick={() => setViewingFile(meeting.attachments![0])}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-gray-200 transition-all"
+                              title={`Ver: ${meeting.attachments[0].name}`}
+                            >
+                              <Paperclip size={12} />
+                              <span className="max-w-[100px] truncate">{meeting.attachments[0].name}</span>
+                              <Eye size={12} />
+                            </button>
+                          ) : (
+                            <div className="relative group">
+                              <button
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-gray-200 transition-all"
+                                title="Ver archivos adjuntos"
+                              >
+                                <Paperclip size={12} />
+                                {meeting.attachments.length} archivos
+                                <Eye size={12} />
+                              </button>
+                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 w-64 py-1 hidden group-hover:block">
+                                {meeting.attachments.map((att, idx) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => setViewingFile(att)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-rose-50 transition-colors"
+                                  >
+                                    <span className="text-sm">{getFileIcon(att.type)}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-medium text-gray-700 truncate">{att.name}</p>
+                                      <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                                    </div>
+                                    <Eye size={12} className="text-gray-400 shrink-0" />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        )}
                         <button
                           onClick={() => handleStartEdit(meeting)}
                           className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
@@ -1241,13 +1526,38 @@ export const ImplementationModule: React.FC = () => {
 
                     {/* Desarrollo expandido */}
                     {isExpanded && (
-                      <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50">
+                      <div className="px-5 pb-5 pt-3 border-t border-gray-100 bg-gray-50/50 space-y-4">
                         <div className="bg-white border border-gray-150 rounded-lg p-4 shadow-inner">
                           <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Desarrollo y Acuerdos</h6>
                           <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed font-sans">
                             {meeting.development}
                           </p>
                         </div>
+
+                        {/* Archivos adjuntos */}
+                        {meeting.attachments && meeting.attachments.length > 0 && (
+                          <div className="bg-white border border-gray-150 rounded-lg p-4 shadow-inner">
+                            <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                              <Paperclip size={12} /> Archivos Adjuntos ({meeting.attachments.length})
+                            </h6>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {meeting.attachments.map((att, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => setViewingFile(att)}
+                                  className="flex items-center gap-3 bg-gray-50 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-lg px-3 py-2.5 transition-all group text-left"
+                                >
+                                  <span className="text-lg">{getFileIcon(att.type)}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-700 group-hover:text-rose-600 truncate transition-colors">{att.name}</p>
+                                    <p className="text-[10px] text-gray-400">{formatFileSize(att.size)}</p>
+                                  </div>
+                                  <Eye size={14} className="text-gray-300 group-hover:text-rose-500 transition-colors shrink-0" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1272,6 +1582,8 @@ export const ImplementationModule: React.FC = () => {
           </div>
         </div>
       )}
+      {/* File Viewer Modal */}
+      <FileViewer file={viewingFile} onClose={() => setViewingFile(null)} />
     </div>
   );
 };

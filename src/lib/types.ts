@@ -1140,6 +1140,7 @@ export const ALL_MODULES = [
   'guide',
   'manual',
   'implementation',
+  'user_management',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1170,4 +1171,5 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   guide: 'Guía de Uso',
   manual: 'Manual de Procedimientos',
   implementation: 'Implementación',
+  user_management: 'Gestión de Usuarios',
 };
