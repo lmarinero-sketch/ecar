@@ -346,16 +346,19 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
   },
   user_management: {
     title: 'Gestión de Usuarios',
-    description: 'Administración de usuarios del sistema. Creá cuentas, asigná roles y permisos, y controlá el acceso a cada módulo.',
+    description: 'Administración de cuentas de usuario del sistema ECAR. Creá, editá y eliminá usuarios, asigná roles (Admin/Operario) y controlá qué módulos puede ver cada persona.',
     steps: [
-      'Accedé al panel de usuarios desde el menú de administración.',
-      'Creá nuevos usuarios con email, nombre y rol asignado.',
-      'Configurá los permisos de acceso por módulo para cada rol.',
-      'Desactivá usuarios que ya no necesiten acceso al sistema.',
+      'Accedé al módulo desde el menú lateral (solo visible para Administradores).',
+      'Hacé clic en "Nuevo Usuario" para crear una cuenta con email y contraseña.',
+      'Asigná el rol: Admin (acceso total) u Operario (acceso restringido).',
+      'Seleccioná los módulos habilitados para usuarios con rol Operario.',
+      'Editá permisos de usuarios existentes desde el ícono de edición.',
     ],
     tips: [
-      'Solo los administradores pueden gestionar usuarios y permisos.',
-      'Los cambios de permisos se aplican inmediatamente al próximo inicio de sesión del usuario.',
+      'Solo los usuarios con rol Admin pueden acceder a este módulo.',
+      'Un Admin tiene acceso a todos los módulos automáticamente, sin importar la lista de módulos asignados.',
+      'No podés eliminar tu propia cuenta desde este panel.',
+      'Los cambios de permisos se aplican en el próximo inicio de sesión del usuario.',
     ],
   },
 };

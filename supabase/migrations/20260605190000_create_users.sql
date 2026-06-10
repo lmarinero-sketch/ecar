@@ -71,7 +71,7 @@ VALUES (
   '', '', ''
 );
 
--- Crear perfil vinculado al tenant ECAR para cada usuario
+-- Crear perfil vinculado al tenant ECAR para cada usuario (growlabs.lat)
 INSERT INTO public.profiles (auth_user_id, tenant_id, full_name, email, role, allowed_modules)
 SELECT
   id,
@@ -79,13 +79,76 @@ SELECT
   raw_user_meta_data->>'full_name',
   email,
   'admin',
-  '["bi","liquidity","monthly_report","wbs","invoicing","purchases","purchase_requests","finances","obligations","rrhh","inventory","logistics","fleet","certifications","field","safety","inspections","rfi","expenses","documents","project_budget","fuel","guide","manual","implementation"]'::jsonb
+  '["bi","liquidity","monthly_report","wbs","invoicing","purchases","purchase_requests","finances","obligations","rrhh","inventory","logistics","fleet","certifications","field","safety","inspections","rfi","expenses","documents","project_budget","fuel","guide","manual","implementation","user_management"]'::jsonb
 FROM auth.users
 WHERE email IN ('carlos@growlabs.lat', 'enrico@growlabs.lat', 'gustavo@growlabs.lat')
+  AND id NOT IN (SELECT auth_user_id FROM public.profiles WHERE auth_user_id IS NOT NULL);
+
+-- ═══════════════════════════════════════════════════════════════
+-- Crear usuarios administradores adicionales (Grow Labs)
+-- carlos@growlabs.com y lucasmmarinero@gmail.com
+-- ═══════════════════════════════════════════════════════════════
+
+-- 4) Carlos (growlabs.com)
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new
+)
+VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(),
+  'authenticated',
+  'authenticated',
+  'carlos@growlabs.com',
+  crypt('123456', gen_salt('bf')),
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"full_name":"Carlos (Grow Labs)"}',
+  '', '', ''
+);
+
+-- 5) Lucas Marinero
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new
+)
+VALUES (
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(),
+  'authenticated',
+  'authenticated',
+  'lucasmmarinero@gmail.com',
+  crypt('123456', gen_salt('bf')),
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"full_name":"Lucas Marinero"}',
+  '', '', ''
+);
+
+-- Crear perfil admin para carlos@growlabs.com y lucasmmarinero@gmail.com
+INSERT INTO public.profiles (auth_user_id, tenant_id, full_name, email, role, allowed_modules)
+SELECT
+  id,
+  'a0000000-0000-0000-0000-000000000001',
+  raw_user_meta_data->>'full_name',
+  email,
+  'admin',
+  '["bi","liquidity","monthly_report","wbs","invoicing","purchases","purchase_requests","finances","obligations","rrhh","inventory","logistics","fleet","certifications","field","safety","inspections","rfi","expenses","documents","project_budget","fuel","guide","manual","implementation","user_management"]'::jsonb
+FROM auth.users
+WHERE email IN ('carlos@growlabs.com', 'lucasmmarinero@gmail.com')
   AND id NOT IN (SELECT auth_user_id FROM public.profiles WHERE auth_user_id IS NOT NULL);
 
 -- Verificación
 SELECT id, email, raw_user_meta_data->>'full_name' AS nombre, created_at
 FROM auth.users
-WHERE email IN ('carlos@growlabs.lat', 'enrico@growlabs.lat', 'gustavo@growlabs.lat')
+WHERE email IN ('carlos@growlabs.lat', 'enrico@growlabs.lat', 'gustavo@growlabs.lat', 'carlos@growlabs.com', 'lucasmmarinero@gmail.com')
 ORDER BY email;
+
