@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ChevronDown, ChevronRight, Plus, X, Save, TrendingUp, TrendingDown,
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
   Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem } from '../hooks/useData';
+import { useImplementationStore } from '../store/useImplementationStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
 
 // ─── Category config ───
@@ -33,6 +34,10 @@ function formatARS(v: number) {
 
 export const ExpensesModule: React.FC = () => {
   const now = new Date();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('e2-14');
+  }, []);
   const [year, setYear] = useState(now.getFullYear());
   const [visibleRange, setVisibleRange] = useState<[number, number]>(() => {
     const curr = now.getMonth();
@@ -119,6 +124,8 @@ export const ExpensesModule: React.FC = () => {
   const handleSave = async (itemId: string, periodo: string, montoStr: string) => {
     const monto = parseFloat(montoStr.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     await upsertRegistro.mutateAsync({ item_id: itemId, periodo, monto });
+    useImplementationStore.getState().completeItem('e2-15');
+    useImplementationStore.getState().completeItem('c2-17');
     setEditCell(null);
   };
 
@@ -132,6 +139,8 @@ export const ExpensesModule: React.FC = () => {
     if (!showAddItem || !newItemDesc.trim()) return;
     const catItems = grouped[showAddItem] || [];
     await createItem.mutateAsync({ categoria: showAddItem, descripcion: newItemDesc.trim().toUpperCase(), orden: catItems.length + 1 });
+    useImplementationStore.getState().completeItem('e2-15');
+    useImplementationStore.getState().completeItem('c2-17');
     setNewItemDesc('');
     setShowAddItem(null);
   };
@@ -140,6 +149,8 @@ export const ExpensesModule: React.FC = () => {
     if (!globalCat || !globalDesc.trim()) return;
     const catItems = grouped[globalCat] || [];
     await createItem.mutateAsync({ categoria: globalCat, descripcion: globalDesc.trim().toUpperCase(), orden: catItems.length + 1 });
+    useImplementationStore.getState().completeItem('e2-15');
+    useImplementationStore.getState().completeItem('c2-17');
     setGlobalDesc('');
     setGlobalCat(null);
     setGlobalSearch('');
@@ -457,7 +468,7 @@ export const ExpensesModule: React.FC = () => {
                         const Icon = cfg.icon;
                         const count = (grouped[key as GastoItemCategoria] || []).length;
                         return (
-                          <button key={key} onClick={() => setGlobalCat(key as GastoItemCategoria)} className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors ${cfg.color}`}>
+                          <button key={key} onClick={() => { setGlobalCat(key as GastoItemCategoria); useImplementationStore.getState().completeItem('e2-16'); }} className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors ${cfg.color}`}>
                             <Icon size={16} />
                             <span className="font-medium">{cfg.label}</span>
                             <span className="text-xs text-gray-400 ml-auto">{count} items</span>

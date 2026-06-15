@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useGastosItems } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 type InvoiceTab = 'compras' | 'ventas';
 
 export const PurchasesModule: React.FC = () => {
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('e2-7');
+  }, []);
   const { data: invoices = [], isLoading, refetch } = usePurchaseInvoices();
   const { data: suppliers = [] } = useSuppliers();
   const createSupplier = useCreateSupplier();
@@ -70,6 +75,8 @@ export const PurchasesModule: React.FC = () => {
         setOcrResult(fnData.data);
         refetch();
         queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+        useImplementationStore.getState().completeItem('e2-9');
+        useImplementationStore.getState().completeItem('c2-5');
       } else {
         setOcrError(fnData?.error || 'Error procesando factura');
         refetch();
@@ -85,6 +92,7 @@ export const PurchasesModule: React.FC = () => {
 
   const handleValidate = async (id: string) => {
     await supabase.from('purchase_invoices').update({ status: 'validated', ocr_validated: true }).eq('id', id);
+    useImplementationStore.getState().completeItem('e2-10');
     refetch();
   };
 
@@ -252,7 +260,11 @@ export const PurchasesModule: React.FC = () => {
               <input type="date" value={periodoHasta} onChange={e => setPeriodoHasta(e.target.value)} className="border rounded px-2 py-1 text-xs" />
             </div>
             <button
-              onClick={() => generateLibroIVA(invoices as any, periodoDesde, periodoHasta)}
+              onClick={() => {
+                generateLibroIVA(invoices as any, periodoDesde, periodoHasta);
+                useImplementationStore.getState().completeItem('e2-11');
+                useImplementationStore.getState().completeItem('c2-6');
+              }}
               disabled={invoices.length === 0}
               className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >

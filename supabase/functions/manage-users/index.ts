@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
-      .select("role")
+      .select("role, tenant_id")
       .eq("auth_user_id", caller.id)
       .single();
 
@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
     // ── CREATE USER ──
     if (action === "create") {
-      const { email, password, fullName, role, allowedModules } = body;
+      const { email, password, fullName, role, allowedModules, permissions } = body;
 
       if (!email || !password || !fullName) {
         return new Response(JSON.stringify({ error: "email, password y fullName son requeridos" }), {
@@ -84,24 +84,19 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // Get caller's tenant
-      const { data: callerFull } = await supabaseAdmin
-        .from("profiles")
-        .select("tenant_id")
-        .eq("auth_user_id", caller.id)
-        .single();
-
       // Create profile
-      const { error: profileError } = await supabaseAdmin
+      const { data: newProfile, error: profileError } = await supabaseAdmin
         .from("profiles")
         .insert({
           auth_user_id: newUser.user.id,
-          tenant_id: callerFull?.tenant_id || "a0000000-0000-0000-0000-000000000001",
+          tenant_id: callerProfile.tenant_id || "a0000000-0000-0000-0000-000000000001",
           full_name: fullName,
           email,
-          role: role || "operario",
+          role: role || "colaborador",
           allowed_modules: allowedModules || [],
-        });
+        })
+        .select('id')
+        .single();
 
       if (profileError) {
         return new Response(JSON.stringify({ error: profileError.message }), {
@@ -110,14 +105,29 @@ Deno.serve(async (req: Request) => {
         });
       }
 
+      // Insert granular permissions (only for colaborador)
+      if (role === "colaborador" && permissions && newProfile) {
+        const permRows = Object.entries(permissions).map(([moduleId, p]: [string, any]) => ({
+          profile_id: newProfile.id,
+          module_id: moduleId,
+          can_read: p.read ?? true,
+          can_write: p.write ?? false,
+          can_delete: p.delete ?? false,
+        }));
+
+        if (permRows.length > 0) {
+          await supabaseAdmin.from("user_module_permissions").insert(permRows);
+        }
+      }
+
       return new Response(JSON.stringify({ success: true, user_id: newUser.user.id }), {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // ── UPDATE USER ROLE / MODULES ──
+    // ── UPDATE USER ROLE / MODULES / PERMISSIONS ──
     if (action === "update") {
-      const { profileId, role, allowedModules, fullName } = body;
+      const { profileId, role, allowedModules, fullName, permissions } = body;
 
       if (!profileId) {
         return new Response(JSON.stringify({ error: "profileId requerido" }), {
@@ -141,6 +151,34 @@ Deno.serve(async (req: Request) => {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
+      }
+
+      // Update granular permissions
+      if (role === "colaborador" && permissions) {
+        // Delete existing permissions
+        await supabaseAdmin
+          .from("user_module_permissions")
+          .delete()
+          .eq("profile_id", profileId);
+
+        // Insert new permissions
+        const permRows = Object.entries(permissions).map(([moduleId, p]: [string, any]) => ({
+          profile_id: profileId,
+          module_id: moduleId,
+          can_read: p.read ?? true,
+          can_write: p.write ?? false,
+          can_delete: p.delete ?? false,
+        }));
+
+        if (permRows.length > 0) {
+          await supabaseAdmin.from("user_module_permissions").insert(permRows);
+        }
+      } else if (role === "admin") {
+        // Admin doesn't need granular permissions, clean up
+        await supabaseAdmin
+          .from("user_module_permissions")
+          .delete()
+          .eq("profile_id", profileId);
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -167,6 +205,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
+      // Permissions are deleted by CASCADE
       await supabaseAdmin.from("profiles").delete().eq("id", profileId);
       await supabaseAdmin.auth.admin.deleteUser(authUserId);
 

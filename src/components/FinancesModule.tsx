@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil } from 'lucide-react';
 import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,9 +6,16 @@ import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
 import type { Cheque } from '../lib/types';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 export const FinancesModule: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, hasPermission } = useAuth();
+  const canWrite = hasPermission('finances', 'write');
+  const canDelete = hasPermission('finances', 'delete');
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('e2-1');
+  }, []);
   const { data: cheques = [], isLoading } = useCheques();
   const { data: expenses = [] } = useFixedExpenses();
   const createCheque = useCreateCheque();
@@ -109,6 +116,15 @@ export const FinancesModule: React.FC = () => {
         user_name: profile?.full_name || 'Sistema',
         snapshot: { ...form, scan_url: scanUrl },
       });
+
+      // Complete checklist items
+      if (scanUrl || form.scan_url) {
+        useImplementationStore.getState().completeItem('e2-3');
+      } else {
+        useImplementationStore.getState().completeItem('e2-2');
+      }
+      useImplementationStore.getState().completeItem('c2-1');
+
       setMode('idle');
       setOcrData(null);
       setScanUrl('');
@@ -148,14 +164,21 @@ export const FinancesModule: React.FC = () => {
       }
       await updateCheque.mutateAsync({ id: editingCheque.id, ...editForm });
       // Audit: updated
+      const statusChanged = Object.keys(changes).includes('status');
       auditLog.mutate({
         cheque_id: editingCheque.id,
-        action: Object.keys(changes).includes('status') ? 'status_changed' : 'updated',
+        action: statusChanged ? 'status_changed' : 'updated',
         user_id: profile?.id || null,
         user_name: profile?.full_name || 'Sistema',
         changes,
         snapshot: { ...editingCheque, ...editForm },
       });
+
+      if (statusChanged) {
+        useImplementationStore.getState().completeItem('e2-4');
+        useImplementationStore.getState().completeItem('c2-2');
+      }
+
       setEditingCheque(null);
     } catch (err: any) {
       alert(err.message || 'Error al actualizar');
@@ -252,10 +275,10 @@ export const FinancesModule: React.FC = () => {
         <div className="space-y-6">
           {/* Action buttons */}
           <div className="flex justify-end gap-3">
-            <button onClick={() => { setScanUrl(''); setMode('form'); }} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 border hover:bg-gray-200">
+            <button onClick={() => { setScanUrl(''); setMode('form'); }} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 border hover:bg-gray-200 ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Edit3 size={16} /> Carga Manual
             </button>
-            <button onClick={() => setMode('scan')} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+            <button onClick={() => setMode('scan')} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Camera size={16} /> Escanear Cheque
             </button>
           </div>
@@ -405,9 +428,9 @@ export const FinancesModule: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => handleEdit(ch)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                            <button onClick={() => handleEdit(ch)} disabled={!canWrite} className={`p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canWrite ? 'Sin permisos de edición' : 'Editar'}><Pencil size={14} /></button>
                             <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="Historial"><History size={14} /></button>
-                            <button onClick={() => setDeleteTarget(ch)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                            <button onClick={() => setDeleteTarget(ch)} disabled={!canDelete} className={`p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar'}><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>

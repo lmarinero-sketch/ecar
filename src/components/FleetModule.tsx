@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
   Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck
 } from 'lucide-react';
+import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
 import { VehicleDailyReportModule } from './VehicleDailyReportModule';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle } from '../hooks/useData';
@@ -40,6 +41,16 @@ export const FleetModule: React.FC = () => {
   const { data: vehicles = [], isLoading } = useFuelVehicles();
   const updateVehicle = useUpdateFuelVehicle();
   const createVehicle = useCreateFuelVehicle();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('e56');
+  }, []);
+
+  useEffect(() => {
+    if (view === 'maintenance') {
+      useImplementationStore.getState().completeItem('e57');
+    }
+  }, [view]);
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
   const [showNew, setShowNew] = useState(false);

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, Landmark, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight,
   Calendar, AlertTriangle, Plus, X, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const fmtShort = (n: number) => {
@@ -22,6 +23,10 @@ const CATEGORIES = [
 
 export const LiquidityDashboard: React.FC = () => {
   const { data: accounts, isLoading: loadingAccounts } = useBankAccounts();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('c2-21');
+  }, []);
   const { data: movements, isLoading: loadingMovements } = useCashMovements();
   const { data: snapshots } = useMonthlySnapshots();
   const { data: cheques } = useCheques();

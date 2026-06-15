@@ -1,18 +1,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Profile, ModuleId } from '../lib/types';
+import type { Profile, ModuleId, ModulePermission, PermissionLevel } from '../lib/types';
 import type { User, Session } from '@supabase/supabase-js';
 
 type AuthState = {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  permissions: ModulePermission[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<{ error: string | null }>;
   hasModule: (moduleId: ModuleId) => boolean;
+  hasPermission: (moduleId: ModuleId, level: PermissionLevel) => boolean;
   isAdmin: boolean;
 };
 
@@ -22,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [permissions, setPermissions] = useState<ModulePermission[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -30,7 +33,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .select('*')
       .eq('auth_user_id', userId)
       .single();
-    if (data) setProfile(data as Profile);
+    if (data) {
+      const p = data as Profile;
+      setProfile(p);
+      // Fetch granular permissions for non-admin users
+      if (p.role !== 'admin') {
+        const { data: perms } = await supabase
+          .from('user_module_permissions')
+          .select('*')
+          .eq('profile_id', p.id);
+        setPermissions((perms || []) as ModulePermission[]);
+      } else {
+        setPermissions([]);
+      }
+    }
   };
 
   useEffect(() => {
@@ -48,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchProfile(s.user.id);
       } else {
         setProfile(null);
+        setPermissions([]);
       }
       setLoading(false);
     });
@@ -73,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setPermissions([]);
   };
 
   const changePassword = async (newPassword: string) => {
@@ -88,8 +106,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return (profile.allowed_modules as string[]).includes(moduleId);
   };
 
+  const hasPermission = (moduleId: ModuleId, level: PermissionLevel): boolean => {
+    if (!profile) return false;
+    if (isAdmin) return true; // Admin has full permissions on everything
+    // First check if user has the module at all
+    if (!(profile.allowed_modules as string[]).includes(moduleId)) return false;
+    // Find granular permission for this module
+    const perm = permissions.find(p => p.module_id === moduleId);
+    if (!perm) return level === 'read'; // Default: read-only if module is allowed
+    switch (level) {
+      case 'read': return perm.can_read;
+      case 'write': return perm.can_write;
+      case 'delete': return perm.can_delete;
+      default: return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, changePassword, hasModule, isAdmin }}>
+    <AuthContext.Provider value={{ user, session, profile, permissions, loading, signIn, signUp, signOut, changePassword, hasModule, hasPermission, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

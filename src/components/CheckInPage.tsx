@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { validateQRToken } from '../lib/qrToken';
 import { supabase } from '../lib/supabase';
 import { CheckCircle2, XCircle, Clock, HardHat, Loader2, ShieldCheck, UserCheck } from 'lucide-react';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 type CheckInStatus = 'validating' | 'select_employee' | 'confirming' | 'success' | 'error' | 'already_checked';
 
@@ -108,6 +109,7 @@ export const CheckInPage: React.FC = () => {
         if (insertErr) throw insertErr;
       }
 
+      useImplementationStore.getState().completeItem('e2-30');
       setCheckInTime(currentTime);
       setStatus('success');
     } catch (err: any) {

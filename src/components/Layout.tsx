@@ -266,7 +266,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <p className="text-slate-800 text-xs font-semibold truncate">{profile?.full_name}</p>
                 <p className="text-slate-400 text-[10px] flex items-center gap-1 font-medium">
                   {isAdmin && <Shield size={9} className="text-amber-500" />}
-                  {isAdmin ? 'Admin' : 'Operario'}
+                  {isAdmin ? 'Admin' : 'Colaborador'}
                 </p>
               </div>
             )}

@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LayoutDashboard, TrendingUp, Users, Truck, DollarSign, BarChart3 } from 'lucide-react';
 import { useProjects, useEmployees, useCheques, useInvoices } from '../hooks/useData';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 export const BiDashboard: React.FC = () => {
   const { data: projects = [] } = useProjects();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('c2-25');
+  }, []);
   const { data: employees = [] } = useEmployees();
   const { data: cheques = [] } = useCheques();
   const { data: invoices = [] } = useInvoices();

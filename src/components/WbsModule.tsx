@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Target, Plus, X, FolderTree, Calendar, BarChart3, RefreshCw,
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
@@ -6,6 +6,7 @@ import {
   ShoppingCart, FileCheck, DollarSign, Truck, Sparkles
 } from 'lucide-react';
 import { Wbs3dView } from './Wbs3dView';
+import { useImplementationStore } from '../store/useImplementationStore';
 import {
   useProjects, useCreateProject, useWbsElements, useCreateWbsElement,
   useUpdateWbsElement, useDeleteWbsElement, useEmployees,
@@ -39,6 +40,10 @@ const GANTT_BAR_COLORS: Record<string, string> = {
 
 export const WbsModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('g18');
+  }, []);
   const createProject = useCreateProject();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { data: wbs = [] } = useWbsElements(selectedProjectId || undefined);

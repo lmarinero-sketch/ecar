@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Tag } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
+import { useImplementationStore } from '../store/useImplementationStore';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
@@ -25,6 +26,17 @@ export const RrhhModule: React.FC = () => {
   const deleteCategory = useDeleteCategory();
 
   const [tab, setTab] = useState<Tab>('roster');
+
+  useEffect(() => {
+    useImplementationStore.getState().completeItem('e2-20');
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'attendance') {
+      useImplementationStore.getState().completeItem('e2-27');
+    }
+  }, [tab]);
+
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
@@ -61,6 +73,7 @@ export const RrhhModule: React.FC = () => {
       shift_id: form.shift_id || null,
       retribucion_pactada: form.retribucion_pactada ? parseFloat(form.retribucion_pactada) : null,
     });
+    useImplementationStore.getState().completeItem('e2-21');
     setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '' });
     setTab('roster');
   };
@@ -414,6 +427,7 @@ export const RrhhModule: React.FC = () => {
               onClick={async () => {
                 try {
                   await updateEmployee.mutateAsync({ id: editingEmployee.id, ...editForm, category_id: editForm.category_id || null, current_project_id: editForm.current_project_id || null, shift_id: editForm.shift_id || null, retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null });
+                  useImplementationStore.getState().completeItem('e2-24');
                   setEditingEmployee(null);
                 } catch (err: any) { alert(err.message); }
               }}
@@ -550,6 +564,7 @@ const LegajoView: React.FC<{
         docType,
         title: docTitle.trim(),
       });
+      useImplementationStore.getState().completeItem('e2-22');
       // Reset form
       setSelectedFile(null);
       setDocTitle('');

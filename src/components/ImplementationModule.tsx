@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
+import { useImplementationStore } from '../store/useImplementationStore';
+import { useAppStore } from '../store/useStore';
 import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
@@ -45,6 +47,7 @@ type Phase = {
 type ImplState = {
   checked: Record<string, boolean>;
   notes: Record<string, string>;
+  completionDates?: Record<string, string>;
 };
 
 type MeetingAttachment = {
@@ -518,14 +521,6 @@ const STORAGE_KEY = 'ecar_implementation_state';
 const SUPABASE_SETTING_KEY = 'implementation_state';
 const DEBOUNCE_MS = 1000;
 
-function loadLocalState(): ImplState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return { checked: {}, notes: {} };
-}
-
 function saveLocalState(state: ImplState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -673,14 +668,51 @@ const TextFileViewer: React.FC<{ url: string }> = ({ url }) => {
 /*  COMPONENTS                                                    */
 /* ═══════════════════════════════════════════════════════════════ */
 
+const mapItemToModule = (itemId: string, sectionId: string): string | null => {
+  if (sectionId === 'e2-cheque' || sectionId === 'c2-cheques') return 'finances';
+  if (sectionId === 'e2-factura' || sectionId === 'c2-compras') return 'purchases';
+  if (sectionId === 'e2-gasto' || sectionId === 'c2-gastos') return 'expenses';
+  if (sectionId === 'e2-empleados' || sectionId === 'e2-asistencia') return 'rrhh';
+  if (sectionId === 'c2-pedidos') return 'purchase_requests';
+  if (sectionId === 'c2-servicios') return 'obligations';
+  if (sectionId === 'c2-disp') return 'liquidity';
+  if (sectionId === 'c2-metricas' || sectionId === 'c2-cruce') return 'bi';
+  if (sectionId === 'g-wbs') return 'wbs';
+  if (sectionId === 'g-match') return 'bi';
+
+  if (itemId.startsWith('e2-')) {
+    const num = parseInt(itemId.replace('e2-', ''));
+    if (num >= 1 && num <= 6) return 'finances';
+    if (num >= 7 && num <= 13) return 'purchases';
+    if (num >= 14 && num <= 19) return 'expenses';
+    if (num >= 20 && num <= 33) return 'rrhh';
+  }
+  
+  if (sectionId.startsWith('e-')) {
+    if (sectionId === 'e-fin') return 'finances';
+    if (sectionId === 'e-gas') return 'expenses';
+    if (sectionId === 'e-obl') return 'obligations';
+    if (sectionId === 'e-arca') return 'invoicing';
+    if (sectionId === 'e-comp') return 'purchases';
+    if (sectionId === 'e-rrhh') return 'rrhh';
+    if (sectionId === 'e-fleet') return 'fleet';
+    if (sectionId === 'e-fuel') return 'logistics';
+    if (sectionId === 'e-safety') return 'safety';
+  }
+
+  return null;
+};
+
 const SectionBlock: React.FC<{
   section: TaskSection;
   checked: Record<string, boolean>;
   notes: Record<string, string>;
+  completionDates: Record<string, string>;
   onToggle: (id: string) => void;
   onNote: (id: string, val: string) => void;
+  onGoToModule: (itemId: string, sectionId: string) => void;
   accentColor: string;
-}> = ({ section, checked, notes, onToggle, onNote, accentColor }) => {
+}> = ({ section, checked, notes, completionDates, onToggle, onNote, onGoToModule, accentColor }) => {
   const [open, setOpen] = useState(true);
   const [editingNote, setEditingNote] = useState<string | null>(null);
 
@@ -728,6 +760,8 @@ const SectionBlock: React.FC<{
             const isDone = !!checked[item.id];
             const hasNote = !!notes[item.id];
             const isEditing = editingNote === item.id;
+            const completionDate = completionDates[item.id];
+            const targetModule = mapItemToModule(item.id, section.id);
 
             return (
               <div key={item.id} className={`px-5 py-3 ${isDone ? 'bg-emerald-50/40' : 'hover:bg-gray-50/50'} transition-colors`}>
@@ -739,11 +773,30 @@ const SectionBlock: React.FC<{
                     }
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${isDone ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                      {item.label}
-                    </p>
+                    <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
+                      <p className={`text-sm ${isDone ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                        {item.label}
+                      </p>
+                      {isDone && completionDate && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded font-mono shrink-0">
+                          ✓ Hecho el {completionDate}
+                        </span>
+                      )}
+                    </div>
                     {item.description && (
                       <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                    )}
+                    {/* Navigation button */}
+                    {!isDone && targetModule && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGoToModule(item.id, section.id);
+                        }}
+                        className="text-[11px] text-rose-600 hover:text-rose-800 hover:underline font-bold flex items-center gap-1 mt-1 transition-colors animate-pulse"
+                      >
+                        🚀 Ir a Probar
+                      </button>
                     )}
                     {/* Note */}
                     {(hasNote || isEditing) && (
@@ -794,7 +847,7 @@ const SectionBlock: React.FC<{
 /* ═══════════════════════════════════════════════════════════════ */
 
 export const ImplementationModule: React.FC = () => {
-  const [state, setState] = useState<ImplState>(loadLocalState);
+  const { checked, notes, completionDates, initializeState, toggleCheck, setNote, resetAll: storeResetAll } = useImplementationStore();
   const [activePhase, setActivePhase] = useState<string>('enrico');
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -830,15 +883,14 @@ export const ImplementationModule: React.FC = () => {
       initialLoadDone.current = true;
       try {
         const remote: ImplState = JSON.parse(remoteSetting.value);
-        if (Object.keys(remote.checked).length > 0 || Object.keys(remote.notes).length > 0) {
-          setState(remote);
-          saveLocalState(remote);
+        if (remote && (remote.checked || remote.notes)) {
+          initializeState(remote.checked || {}, remote.notes || {}, remote.completionDates || {});
         }
       } catch { /* ignore bad JSON */ }
     } else if (!remoteLoading && !remoteSetting?.value) {
       initialLoadDone.current = true;
     }
-  }, [remoteLoading, remoteSetting]);
+  }, [remoteLoading, remoteSetting, initializeState]);
 
   // Load meetings from Supabase on mount
   useEffect(() => {
@@ -876,29 +928,22 @@ export const ImplementationModule: React.FC = () => {
   // Auto-save checklist on state change
   useEffect(() => {
     if (initialLoadDone.current) {
-      persistState(state);
+      persistState({ checked, notes, completionDates });
     }
-  }, [state]);
-
-  const toggleCheck = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      checked: { ...prev.checked, [id]: !prev.checked[id] },
-    }));
-  };
-
-  const setNote = (id: string, val: string) => {
-    setState(prev => ({
-      ...prev,
-      notes: { ...prev.notes, [id]: val },
-    }));
-  };
+  }, [checked, notes, completionDates, persistState]);
 
   const resetAll = () => {
     if (confirm('¿Estás seguro de reiniciar todo el progreso?')) {
-      const empty: ImplState = { checked: {}, notes: {} };
-      setState(empty);
+      storeResetAll();
+      const empty: ImplState = { checked: {}, notes: {}, completionDates: {} };
       upsertSetting.mutate({ key: SUPABASE_SETTING_KEY, value: JSON.stringify(empty), description: 'Estado del checklist de implementación' });
+    }
+  };
+
+  const handleGoToModule = (itemId: string, sectionId: string) => {
+    const targetModule = mapItemToModule(itemId, sectionId);
+    if (targetModule) {
+      useAppStore.getState().setActiveModule(targetModule as any);
     }
   };
 
@@ -1037,7 +1082,7 @@ export const ImplementationModule: React.FC = () => {
       for (const section of phase.sections) {
         for (const item of section.items) {
           pTotal++;
-          if (state.checked[item.id]) pDone++;
+          if (checked[item.id]) pDone++;
         }
       }
       result[phase.id] = { done: pDone, total: pTotal };
@@ -1046,7 +1091,7 @@ export const ImplementationModule: React.FC = () => {
     }
     result['_total'] = { done: totalDone, total: totalAll };
     return result;
-  }, [state.checked]);
+  }, [checked]);
 
   const totalPct = stats['_total'].total > 0
     ? Math.round((stats['_total'].done / stats['_total'].total) * 100) : 0;
@@ -1215,10 +1260,12 @@ export const ImplementationModule: React.FC = () => {
               <SectionBlock
                 key={section.id}
                 section={section}
-                checked={state.checked}
-                notes={state.notes}
+                checked={checked}
+                notes={notes}
+                completionDates={completionDates}
                 onToggle={toggleCheck}
                 onNote={setNote}
+                onGoToModule={handleGoToModule}
                 accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : phase.id === 'carlos-0608' ? 'text-teal-500' : phase.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}
               />
             ))}

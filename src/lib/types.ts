@@ -5,11 +5,22 @@ export type Profile = {
   tenant_id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'operario';
+  role: 'admin' | 'colaborador';
   allowed_modules: string[];
   avatar_url: string | null;
   created_at: string;
 };
+
+export type ModulePermission = {
+  id: string;
+  profile_id: string;
+  module_id: string;
+  can_read: boolean;
+  can_write: boolean;
+  can_delete: boolean;
+};
+
+export type PermissionLevel = 'read' | 'write' | 'delete';
 
 export type Project = {
   id: string;

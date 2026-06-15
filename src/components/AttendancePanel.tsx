@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { useImplementationStore } from '../store/useImplementationStore';
 import {
   Clock, Users, QrCode, Monitor, CheckCircle2, XCircle, AlertTriangle,
   Calendar, ChevronLeft, ChevronRight, Maximize2, Minimize2, RefreshCw,
@@ -167,7 +168,10 @@ export const AttendancePanel: React.FC = () => {
         {/* QR Button */}
         {isToday && (
           <button
-            onClick={() => setViewMode('qr_display')}
+            onClick={() => {
+              setViewMode('qr_display');
+              useImplementationStore.getState().completeItem('e2-29');
+            }}
             className="flex items-center gap-2 px-5 py-2.5 bg-ecar-blue text-white rounded-lg font-bold text-sm shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all"
           >
             <Monitor size={18} />
@@ -214,7 +218,10 @@ export const AttendancePanel: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setViewMode('qr_display')}
+            onClick={() => {
+              setViewMode('qr_display');
+              useImplementationStore.getState().completeItem('e2-29');
+            }}
             className="shrink-0 p-3 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all text-blue-200 hover:text-white"
             title="Pantalla completa"
           >

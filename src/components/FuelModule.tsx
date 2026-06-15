@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
+import { useImplementationStore } from '../store/useImplementationStore';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -16,6 +17,17 @@ type Tab = 'loads' | 'batan' | 'reconciliation' | 'fleet';
 
 export const FuelModule: React.FC = () => {
   const [tab, setTab] = useState<Tab>('loads');
+
+  useEffect(() => {
+    if (tab === 'loads') {
+      useImplementationStore.getState().completeItem('e60');
+    } else if (tab === 'batan') {
+      useImplementationStore.getState().completeItem('e61');
+    } else if (tab === 'reconciliation') {
+      useImplementationStore.getState().completeItem('e62');
+    }
+  }, [tab]);
+
   const [showForm, setShowForm] = useState(false);
   const { data: vehicles = [] } = useFuelVehicles();
   const { data: loads = [] } = useFuelLoads();
