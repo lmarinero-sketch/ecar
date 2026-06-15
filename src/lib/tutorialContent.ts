@@ -458,4 +458,19 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Los pedidos de compra por WhatsApp quedan registrados tanto aquí como en Pedidos de Compra.',
     ],
   },
+  weekly_report: {
+    title: 'Reporte Semanal a GG',
+    description: 'Resumen ejecutivo consolidado para Gerencia General con avance por obra, pedidos de compra, no conformidades, cambios de alcance, pipeline y decisiones requeridas.',
+    steps: [
+      'Revisá los KPIs de la semana: obras activas, horas trabajadas, avance promedio.',
+      'Navegá semanas anteriores con los botones de navegación.',
+      'Revisá la sección de "Decisiones Requeridas" para priorizar acciones.',
+      'Imprimí el reporte con el botón de imprimir.',
+    ],
+    tips: [
+      'Los datos se consolidan automáticamente de todos los módulos.',
+      'Los incidentes reportados en partes diarios aparecen en el detalle de cada obra.',
+      'El reporte se puede usar como base para la reunión semanal de GG.',
+    ],
+  },
 };

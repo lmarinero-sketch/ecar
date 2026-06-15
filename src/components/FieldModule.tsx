@@ -150,10 +150,33 @@ export const FieldModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Entregas / Recepciones</label><textarea value={form.entregas} onChange={e => setForm({...form, entregas: e.target.value})} rows={2} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Materiales recibidos, entregas..." /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Incidentes / Novedades</label><textarea value={form.incidentes} onChange={e => setForm({...form, incidentes: e.target.value})} rows={2} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Incidentes, paradas..." /></div>
           </div>
+
+          {/* 📋 Registro de Desvíos (PR-GO-01 §20) */}
+          <div className="border border-orange-200 rounded-xl p-4 space-y-3 bg-orange-50/30">
+            <h4 className="text-sm font-bold text-orange-700 flex items-center gap-2">⚠️ Registro de Desvíos</h4>
+            <p className="text-[10px] text-gray-500">Si hubo desvíos de plazo, costo, calidad o seguridad, registralo aquí. Esto alimenta el Reporte Semanal a GG.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Descripción del Desvío</label><textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} rows={2} className="w-full px-3 py-2 border border-orange-200 rounded-xl text-sm bg-white" placeholder="Ej: Retraso por falta de material, problema con subcontratista..." /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Acción Inmediata / Decisión Requerida</label><textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} rows={2} className="w-full px-3 py-2 border border-orange-200 rounded-xl text-sm bg-white" placeholder="Ej: Se reprogramó tarea, se pidió material urgente..." /></div>
+            </div>
+          </div>
+
+          {/* 📅 Planificación para el día siguiente */}
+          <div className="border border-blue-200 rounded-xl p-4 space-y-3 bg-blue-50/30">
+            <h4 className="text-sm font-bold text-blue-700 flex items-center gap-2">📅 Planificación Siguiente Jornada</h4>
+            <p className="text-[10px] text-gray-500">Anticipá las tareas, recursos y restricciones para mañana. (PR-GO-01 §8 Planificación Semanal)</p>
+            <div><label className="text-xs font-bold text-gray-500 uppercase">Tareas planificadas para mañana</label><textarea value={form.firmado_por ? '' : ''} onChange={() => {}} rows={2} className="w-full px-3 py-2 border border-blue-200 rounded-xl text-sm bg-white" placeholder="1. Hormigonado de losa 2do piso&#10;2. Instalación eléctrica bloque A&#10;3. Replanteo sector estacionamiento" /></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Materiales necesarios</label><input className="w-full px-3 py-2 border border-blue-200 rounded-xl text-sm bg-white" placeholder="Cemento, hierro, cables..." /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Equipos necesarios</label><input className="w-full px-3 py-2 border border-blue-200 rounded-xl text-sm bg-white" placeholder="Mixer, autoelevador..." /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase">Restricciones / Riesgos</label><input className="w-full px-3 py-2 border border-blue-200 rounded-xl text-sm bg-white" placeholder="Pronóstico lluvia, faltante..." /></div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Avance del día (%)</label><input type="number" min="0" max="100" value={form.avance_porcentual} onChange={e => setForm({...form, avance_porcentual: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Firmado por</label><input type="text" value={form.firmado_por} onChange={e => setForm({...form, firmado_por: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Nombre del encargado" /></div>
-            <div><label className="text-xs font-bold text-gray-500 uppercase">Notas</label><input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones" /></div>
+            <div><label className="text-xs font-bold text-gray-500 uppercase">Notas Adicionales</label><input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones" /></div>
           </div>
 
           {/* 📸 Fotos del Parte */}

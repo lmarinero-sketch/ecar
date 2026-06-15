@@ -29,6 +29,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   guide: HelpCircle, manual: BookMarked,
   implementation: Rocket, user_management: UserCog,
   communications: MessageSquareText,
+  weekly_report: FileSignature,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -47,6 +48,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   guide: 'Guía', manual: 'Manual ISO',
   implementation: 'Implementación', user_management: 'Usuarios',
   communications: 'Comunicaciones',
+  weekly_report: 'Reporte GG',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -67,6 +69,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   guide: 'bg-ecar-blue', manual: 'bg-blue-900',
   implementation: 'bg-rose-500', user_management: 'bg-slate-600',
   communications: 'bg-green-600',
+  weekly_report: 'bg-indigo-600',
 };
 
 /* ─── Sidebar sections ─── */
@@ -81,6 +84,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'guide' },
       { id: 'manual' },
       { id: 'implementation' },
+      { id: 'weekly_report' },
     ],
   },
   {

@@ -39,6 +39,7 @@ import { ManualModule } from './components/ManualModule';
 import { ImplementationModule } from './components/ImplementationModule';
 import { UserManagementModule } from './components/UserManagementModule';
 import { CommunicationsModule } from './components/CommunicationsModule';
+import { WeeklyReportModule } from './components/WeeklyReportModule';
 
 
 const queryClient = new QueryClient({
@@ -125,6 +126,7 @@ function AppContent() {
       case 'implementation': return <ImplementationModule />;
       case 'user_management': return <UserManagementModule />;
       case 'communications': return <CommunicationsModule />;
+      case 'weekly_report': return <WeeklyReportModule />;
       default: return <BiDashboard />;
     }
   };

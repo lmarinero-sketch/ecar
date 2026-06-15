@@ -1348,6 +1348,7 @@ export const ALL_MODULES = [
   'implementation',
   'user_management',
   'communications',
+  'weekly_report',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1385,5 +1386,6 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   implementation: 'Implementación',
   user_management: 'Gestión de Usuarios',
   communications: 'Comunicaciones',
+  weekly_report: 'Reporte Semanal GG',
 };
 
