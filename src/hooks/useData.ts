@@ -16,8 +16,10 @@ import type {
   EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
   BudgetResource, Budget, BudgetSection, BudgetItem,
   FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation,
-  VehicleDailyReport
+  VehicleDailyReport,
+  Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange
 } from '../lib/types';
+
 
 // ========== PROJECTS ==========
 export function useProjects() {
@@ -2084,5 +2086,183 @@ export function useProjectBudgets(projectId?: string) {
       return data as Budget[];
     },
     enabled: !!projectId,
+  });
+}
+
+// ========== PIPELINE DE OPORTUNIDADES ==========
+export function useOpportunities() {
+  return useQuery({
+    queryKey: ['opportunities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*, project:projects(id, name)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Opportunity[];
+    },
+  });
+}
+
+export function useCreateOpportunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (opp: Partial<Opportunity>) => {
+      const { data, error } = await supabase.from('opportunities').insert({ ...opp, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
+  });
+}
+
+export function useUpdateOpportunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Opportunity> & { id: string }) => {
+      const { error } = await supabase.from('opportunities').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
+  });
+}
+
+// ========== ÓRDENES DE COMPRA ==========
+export function usePurchaseOrders() {
+  return useQuery({
+    queryKey: ['purchase_orders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('purchase_orders')
+        .select('*, project:projects(id, name), supplier:suppliers(id, name)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as PurchaseOrder[];
+    },
+  });
+}
+
+export function useCreatePurchaseOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (po: Partial<PurchaseOrder>) => {
+      const { data, error } = await supabase.from('purchase_orders').insert({ ...po, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_orders'] }),
+  });
+}
+
+export function useUpdatePurchaseOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<PurchaseOrder> & { id: string }) => {
+      const { error } = await supabase.from('purchase_orders').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_orders'] }),
+  });
+}
+
+// ========== NO CONFORMIDADES ==========
+export function useNonConformities() {
+  return useQuery({
+    queryKey: ['nonconformities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('nonconformities')
+        .select('*, project:projects(id, name)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as NonConformity[];
+    },
+  });
+}
+
+export function useCreateNonConformity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (nc: Partial<NonConformity>) => {
+      const { data, error } = await supabase.from('nonconformities').insert({ ...nc, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['nonconformities'] }),
+  });
+}
+
+export function useUpdateNonConformity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<NonConformity> & { id: string }) => {
+      const { error } = await supabase.from('nonconformities').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['nonconformities'] }),
+  });
+}
+
+// ========== CAMBIOS DE ALCANCE Y ADICIONALES ==========
+export function useScopeChanges(projectId?: string) {
+  return useQuery({
+    queryKey: ['scope_changes', projectId],
+    queryFn: async () => {
+      let q = supabase.from('scope_changes').select('*, project:projects(id, name)').order('created_at', { ascending: false });
+      if (projectId) q = q.eq('project_id', projectId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ScopeChange[];
+    },
+  });
+}
+
+export function useCreateScopeChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sc: Partial<ScopeChange>) => {
+      const { data, error } = await supabase.from('scope_changes').insert({ ...sc, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scope_changes'] }),
+  });
+}
+
+export function useUpdateScopeChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ScopeChange> & { id: string }) => {
+      const { error } = await supabase.from('scope_changes').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['scope_changes'] }),
+  });
+}
+
+// ========== SUPPLIER EVALUATION ==========
+export function useSupplierEvaluations() {
+  return useQuery({
+    queryKey: ['supplier_evaluations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('supplier_evaluations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as SupplierEvaluation[];
+    },
+  });
+}
+
+export function useCreateSupplierEvaluation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ev: Partial<SupplierEvaluation>) => {
+      const { data, error } = await supabase.from('supplier_evaluations').insert({ ...ev, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['supplier_evaluations'] }),
   });
 }

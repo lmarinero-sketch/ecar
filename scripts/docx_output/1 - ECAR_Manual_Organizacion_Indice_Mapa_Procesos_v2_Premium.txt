@@ -1,0 +1,1002 @@
+
+
+
+
+1. Control documental
+
+Campo
+
+Definición
+
+Documento
+
+Manual de Organización, Procedimientos y Comunicación entre Gerencias
+
+Código
+
+ECAR-MAN-GG-001
+
+Versión
+
+v2.0 · Normalizado
+
+Fecha
+
+11/06/2026
+
+Empresa
+
+ECAR Construcciones / ECAR Constructora
+
+Elaborado para
+
+Gerencia General ECAR
+
+Estado
+
+Borrador mejorado para revisión interna
+
+Alcance
+
+Gerencia General, Proyectos y Presupuestos, Compras, Logística, Obras y áreas de apoyo
+
+Tipo de documento
+
+Documento interno de conducción, control operativo y mejora continua
+
+Criterio normativo
+
+Compatible con criterios de gestión de calidad tipo ISO 9001. No implica certificación formal.
+
+Uso previsto
+
+Ordenar la arquitectura documental, el mapa de procesos, la comunicación entre gerencias, las responsabilidades y la lógica de mejora continua.
+
+Próxima revisión
+
+Al incorporar nuevos procedimientos, perfiles de puesto, matrices RACI o formularios operativos.
+
+
+
+
+
+Contenido
+
+1. Control documental	2
+
+3. Presentación institucional	4
+
+4. Objetivo del manual	4
+
+5. Alcance general	4
+
+6. Criterio rector del sistema de gestión	4
+
+7. Principios compatibles con ISO 9001	5
+
+8. Índice completo propuesto del manual	5
+
+9. Mapa general de procesos entre gerencias	6
+
+10. Matriz del mapa general de procesos	6
+
+11. Registros, riesgos y comunicación mínima por etapa	7
+
+12. Clasificación de procesos	8
+
+13. Lógica general de comunicación entre gerencias	8
+
+14. Comunicación con Gerencia General	8
+
+15. Perfiles, alcances y herramientas por gerencia	9
+
+Gerencia de Proyectos y Presupuestos	9
+
+Gerencia de Compras	9
+
+Gerencia de Logística	10
+
+Gerencia de Obras	10
+
+15.1 Criterio común para el alcance de cada responsable	10
+
+16. Recomendación de avance para la siguiente etapa	10
+
+17. Cierre institucional y nota normativa	11
+
+
+
+
+
+3. Presentación institucional
+
+Este documento desarrolla la arquitectura inicial del Manual Interno de Organización, Procedimientos y Comunicación entre Gerencias de ECAR. Su finalidad es definir el índice completo del manual, el mapa general de procesos, la clasificación de procesos, la lógica de comunicación entre áreas y los criterios mínimos para que cada procedimiento posterior tenga una estructura homogénea, exigible y útil para la conducción.
+
+La mejora de esta versión no busca desarmar lo ya realizado. Busca normalizar la presentación, fortalecer el enfoque de procesos, mejorar la lectura del documento y preparar una base común para los procedimientos de Proyectos y Presupuestos, Compras, Logística, Obras y futuras áreas de apoyo.
+
+Los apuntes previos de Logística y Obras se consideran antecedentes conceptuales. Los documentos definitivos deberán integrarse dentro de este sistema, respetando la misma estética, la misma lógica de trazabilidad, el mismo tamaño de letra y el mismo enfoque compatible con criterios de gestión de calidad tipo ISO 9001.
+
+4. Objetivo del manual
+
+Instalar en ECAR una forma de trabajo más ordenada, trazable y medible, reduciendo la gestión por urgencias, memoria, mensajes aislados o decisiones improvisadas. El manual debe ayudar a que cada gerencia conozca qué recibe, qué debe transformar, qué debe entregar, con qué evidencia, a quién debe comunicar y bajo qué indicadores será revisada.
+
+Ordenar el funcionamiento entre gerencias y reducir superposiciones.
+
+Definir procesos, responsabilidades, registros, indicadores y criterios de escalamiento.
+
+Convertir la comunicación interna en un sistema de trabajo con evidencia, no sólo en mensajes de WhatsApp.
+
+Mejorar la toma de decisiones de Gerencia General mediante reportes, indicadores y registros mínimos.
+
+Preparar a ECAR para crecer con mayor estructura, control operativo y mejora continua.
+
+5. Alcance general
+
+Área / gerencia
+
+Alcance dentro del manual
+
+Gerencia General
+
+Conducción, aprobación, seguimiento, revisión de indicadores, resolución de escalamiento, gestión de riesgos críticos y mejora continua.
+
+Proyectos y Presupuestos
+
+Relevamiento, análisis técnico, cómputos, presupuestos, cambios de alcance, adicionales, versiones y entrega formal a Obras.
+
+Compras
+
+Pedidos internos, cotizaciones, comparativas, órdenes de compra, proveedores, condiciones de pago, control documental y tratamiento de no conformidades.
+
+Logística
+
+Depósito, pañol, stock crítico, herramientas, cajas de herramientas, vehículos, equipos, recepción, distribución, trazabilidad y mantenimiento.
+
+Obras
+
+Planificación operativa, inicio, ejecución, control de avance, partes diarios, reportes, desvíos, calidad, seguridad, cierres de etapa y cierre de obra.
+
+Áreas de apoyo
+
+Administración y Finanzas, RRHH, documentación, proveedores, activos, herramientas, vehículos, mantenimiento y soporte interno.
+
+6. Criterio rector del sistema de gestión
+
+Cada gerencia debe saber qué recibe, qué transforma, qué entrega, a quién se lo entrega, con qué evidencia y bajo qué criterio será evaluada.
+
+El manual no debe ser una carpeta decorativa. Debe convertirse en una herramienta de conducción: sirve para ordenar, exigir, medir, corregir y mejorar. La empresa debe poder revisar sus procesos con evidencia y no depender solamente de la memoria de las personas o de conversaciones informales.
+
+7. Principios compatibles con ISO 9001
+
+El documento utiliza criterios compatibles con gestión de calidad tipo ISO 9001. Esto no significa declarar certificación formal, sino adoptar una lógica práctica de procesos, información documentada, control operativo, riesgos, indicadores y mejora continua aplicada a la realidad de ECAR.
+
+Principio
+
+Aplicación práctica en ECAR
+
+Enfoque a procesos
+
+Cada área se define por entradas, actividades, salidas, responsables, evidencias y medición.
+
+Liderazgo
+
+Gerencia General conduce el sistema, define prioridades y evita absorber todas las decisiones operativas.
+
+Planificación
+
+Las obras, compras y recursos deben anticiparse; la urgencia no puede ser el modo normal de trabajo.
+
+Pensamiento basado en riesgos
+
+Cada etapa identifica riesgos de plazo, costo, calidad, seguridad, abastecimiento y cliente.
+
+Información documentada
+
+Lo importante debe quedar registrado: pedido, aprobación, entrega, desvío, decisión y cierre.
+
+Control operativo
+
+Los procesos deben tener criterios mínimos antes de avanzar: datos completos, aprobación, recepción, ejecución y cierre.
+
+Evaluación del desempeño
+
+Cada gerencia debe tener indicadores simples, útiles y revisables por Gerencia General.
+
+No conformidad y acción correctiva
+
+Los desvíos se registran para corregir causas, no para acumular culpas.
+
+Mejora continua
+
+Cada cierre de obra o etapa debe dejar aprendizajes que actualicen procesos, plantillas y decisiones.
+
+8. Índice completo propuesto del manual
+
+El siguiente índice funciona como estructura madre. Cada capítulo podrá transformarse luego en un procedimiento formal con objetivo, alcance, responsables, entradas, actividades, salidas, registros, indicadores, riesgos, perfil del puesto, herramientas y comunicación obligatoria.
+
+Cap.
+
+Sección
+
+Contenido esperado
+
+0
+
+Portada institucional
+
+Título, subtítulo, versión, fecha, estado, código y leyenda de uso interno.
+
+1
+
+Control documental
+
+Código, versión, responsables, revisión, aprobación e historial de cambios.
+
+2
+
+Introducción institucional
+
+Necesidad de ordenar la empresa, finalidad del manual y criterio de uso interno.
+
+3
+
+Objetivo del manual
+
+Objetivo general, objetivos específicos y resultados esperados.
+
+4
+
+Alcance
+
+Gerencias incluidas, procesos incluidos, límites y responsabilidades.
+
+5
+
+Criterio rector del sistema
+
+Qué recibe, transforma, entrega, registra y mide cada gerencia.
+
+6
+
+Principios compatibles con ISO 9001
+
+Procesos, liderazgo, planificación, riesgos, información documentada, evaluación y mejora.
+
+7
+
+Definiciones básicas
+
+Proceso, procedimiento, registro, evidencia, no conformidad, acción correctiva, cliente interno y escalamiento.
+
+8
+
+Organigrama funcional y roles
+
+Gerencia General, Compras, Logística, Proyectos y Presupuestos, Obras y áreas de apoyo.
+
+9
+
+Mapa general de procesos ECAR
+
+Flujo macro, entradas, salidas, responsables, puntos de control y registros mínimos.
+
+10
+
+Procesos estratégicos
+
+Dirección, planificación, revisión gerencial, indicadores, riesgos críticos y mejora continua.
+
+11
+
+Procesos operativos
+
+Relevamiento, presupuesto, compras, logística, ejecución, control y cierre.
+
+12
+
+Procesos de apoyo
+
+Administración, Finanzas, RRHH, documentación, proveedores, activos y soporte interno.
+
+13
+
+Comunicación entre gerencias
+
+Reglas de comunicación, medios válidos, tiempos mínimos, responsables y registros.
+
+14
+
+Comunicación con Gerencia General
+
+Información diaria, reportes semanales, reportes mensuales y escalamientos inmediatos.
+
+15
+
+Procedimientos por gerencia
+
+Proyectos y Presupuestos, Compras, Logística, Obras y futuras áreas.
+
+16
+
+Perfiles de puesto
+
+Perfil, alcance de decisión, competencias, errores no admitidos y escalamiento.
+
+17
+
+Herramientas necesarias
+
+Herramientas físicas, tecnológicas, documentales y de gestión por puesto.
+
+18
+
+Matrices y anexos
+
+RACI, comunicación, riesgos, formularios, reportes, NC, acciones correctivas y cierres.
+
+9. Mapa general de procesos entre gerencias
+
+El mapa general permite entender el recorrido completo de la gestión: desde la oportunidad o necesidad inicial hasta el cierre, evaluación y mejora. La empresa debe funcionar como un sistema encadenado, no como áreas aisladas. Una falla de información en Proyectos puede generar una mala compra; una mala compra puede generar un problema logístico; una falla logística puede frenar Obras; una mala ejecución puede afectar costos, cliente e imagen institucional.
+
+
+
+10. Matriz del mapa general de procesos
+
+Etapa
+
+Responsable
+
+Intervienen
+
+Entrada
+
+Salida esperada
+
+Oportunidad / necesidad / pedido
+
+GG / Proy. y Pres.
+
+Cliente, Obras, GG
+
+Consulta, licitación, necesidad interna o pedido del cliente
+
+Necesidad registrada y oportunidad calificada.
+
+Relevamiento técnico
+
+Proy. y Pres.
+
+Obras, Cliente, GG
+
+Pedido u oportunidad definida
+
+Informe de relevamiento y base técnica.
+
+Proyecto / cómputo / presupuesto
+
+Proy. y Pres.
+
+Compras, Obras, GG
+
+Relevamiento y documentación analizada
+
+Presupuesto técnico-económico con supuestos y riesgos.
+
+Revisión interna
+
+GG
+
+Proy. y Pres., Obras, Adm.
+
+Presupuesto preparado
+
+Presupuesto validado, corregido o rechazado.
+
+Planificación de obra
+
+Obras
+
+GG, GPP, Logística
+
+Obra aprobada, alcance y presupuesto
+
+Plan operativo base, frentes, recursos e hitos.
+
+Pedido anticipado de recursos
+
+Obras
+
+Compras, Logística
+
+Plan operativo
+
+Pedidos internos completos y planificados.
+
+Compras
+
+Compras
+
+Adm., GG, proveedores, Obras
+
+Pedido interno completo
+
+Cotización, comparativa, aprobación y OC/OT.
+
+Recepción de materiales / equipos / servicios
+
+Logística / Compras
+
+Obras, proveedor, Adm.
+
+OC/OT y entrega del proveedor
+
+Recepción conforme o no conformidad.
+
+Logística y distribución a obra
+
+Logística
+
+Obras, Compras
+
+Material o recurso disponible
+
+Salida registrada, entrega a obra y trazabilidad.
+
+Ejecución de obra
+
+Obras
+
+Logística, Compras, GPP
+
+Plan operativo y recursos disponibles
+
+Avance físico verificable, partes y controles.
+
+Control de avance y calidad
+
+Obras
+
+GG, Adm., GPP
+
+Ejecución en curso
+
+Desvíos detectados, acciones y conformidad técnica.
+
+Cambios de alcance / adicionales
+
+GPP / Obras
+
+GG, Cliente, Adm.
+
+Solicitud o necesidad de cambio
+
+Adicional aprobado, rechazado o registrado.
+
+Cierre técnico y económico
+
+Obras / Adm. / GG
+
+GPP, Compras, Logística
+
+Obra finalizada y datos de costos
+
+Resultado técnico, documental y económico.
+
+Lecciones aprendidas y mejora continua
+
+GG / Gerencias
+
+Todas
+
+Evaluación de resultados
+
+Acciones correctivas, mejoras y actualización documental.
+
+11. Registros, riesgos y comunicación mínima por etapa
+
+Etapa
+
+Registro mínimo
+
+Riesgo si falla
+
+Comunicación obligatoria
+
+Oportunidad / pedido
+
+Alta de oportunidad o solicitud interna
+
+Cotizar sin datos suficientes
+
+Avisar a GG y área que deberá relevar.
+
+Relevamiento técnico
+
+Fotos, acta, planos, notas y observaciones
+
+Presupuestar con supuestos incorrectos
+
+Informar restricciones a GG y Obras.
+
+Presupuesto
+
+Cómputo, APU, cotizaciones y propuesta
+
+Subestimar costos o plazos
+
+Enviar versión controlada a GG.
+
+Planificación de obra
+
+Cronograma, plan operativo y pedidos anticipados
+
+Arrancar sin orden ni recursos
+
+Compartir plan con Compras y Logística.
+
+Compras
+
+Comparativa, aprobación y OC/OT
+
+Comprar caro, tarde o incorrecto
+
+Informar estado a Obras, Logística y Administración.
+
+Recepción
+
+Remito, fotos, recepción conforme o NC
+
+Aceptar materiales incorrectos
+
+Avisar recepción, faltante o rechazo.
+
+Logística
+
+Registro de salida y entrega
+
+Pérdidas, faltantes o freno de obra
+
+Confirmar entrega y pendientes a Obras.
+
+Ejecución
+
+Parte diario, fotos, controles
+
+Retrabajos, demoras o accidentes
+
+Reportar avance y novedades.
+
+Desvíos y adicionales
+
+Registro de desvío, cambio o adicional
+
+Ejecutar sin respaldo o sin recupero
+
+Escalar según impacto en costo, plazo o cliente.
+
+Cierre
+
+Acta, documentación final e informe económico
+
+No saber dónde se ganó o perdió
+
+Presentar análisis a GG y áreas involucradas.
+
+Mejora continua
+
+Lecciones aprendidas y acciones correctivas
+
+Repetir errores
+
+Comunicar cambios y verificar eficacia.
+
+12. Clasificación de procesos
+
+Tipo de proceso
+
+Función
+
+Responsable predominante
+
+Ejemplos en ECAR
+
+Procesos estratégicos
+
+Definen rumbo, prioridades, riesgos, aprobaciones, indicadores y mejora.
+
+Gerencia General / Dirección
+
+Planificación gerencial, revisión de indicadores, aprobación de criterios, gestión de riesgos críticos, revisión mensual y mejora continua.
+
+Procesos operativos
+
+Transforman una oportunidad o pedido en una obra presupuestada, abastecida, ejecutada, controlada y cerrada.
+
+GPP, Compras, Logística, Obras
+
+Relevamiento, cómputo, presupuesto, compras, recepción, distribución, ejecución, control de avance, calidad y cierre.
+
+Procesos de apoyo
+
+Sostienen la operación con recursos administrativos, financieros, humanos, documentales y físicos.
+
+Administración, Finanzas, RRHH, Logística, Compras
+
+Pagos, cobros, documentación, personal, proveedores, activos, herramientas, vehículos, mantenimiento y soporte interno.
+
+13. Lógica general de comunicación entre gerencias
+
+La comunicación interna debe funcionar como un sistema de trabajo, no como una cadena informal de mensajes. WhatsApp puede servir para avisar, pero no debe reemplazar el registro de pedidos, decisiones, aprobaciones, entregas, desvíos o cierres.
+
+Emisor
+
+Receptor
+
+Qué comunica
+
+Cuándo
+
+Riesgo de no comunicar
+
+Proyectos y Presupuestos
+
+Obras
+
+Alcance aprobado, cómputo, supuestos, restricciones, metodología prevista y riesgos técnicos.
+
+Antes del inicio y ante cada cambio de alcance.
+
+Obras arranca sin entender el presupuesto y aparecen desvíos.
+
+Obras
+
+Proyectos y Presupuestos
+
+Cambios de campo, interferencias, diferencias entre plano y realidad, adicionales y consultas técnicas.
+
+Al detectar el evento y antes de ejecutar si impacta costo o plazo.
+
+Se ejecutan cambios sin respaldo técnico-económico.
+
+Obras
+
+Compras
+
+Pedido de materiales con obra, cantidad, especificación, fecha requerida, prioridad y responsable.
+
+Con anticipación según planificación semanal.
+
+Compras compra tarde, mal o sin datos suficientes.
+
+Obras
+
+Logística
+
+Necesidad de herramientas, equipos, vehículos, entregas, retiros y devoluciones.
+
+Antes de necesitar el recurso en obra.
+
+Logística actúa por urgencia y frena la operación.
+
+Compras
+
+Logística
+
+OC/OT emitida, proveedor, fecha de entrega, lugar, cantidades y documentación esperada.
+
+Al confirmar compra y antes de la recepción.
+
+Logística recibe sin saber qué controlar.
+
+Logística
+
+Obras
+
+Estado de entrega, faltantes, herramientas disponibles, demoras, roturas, devoluciones y mantenimiento.
+
+Diario para urgencias y semanal para planificación.
+
+Obras planifica con recursos inexistentes.
+
+Compras
+
+Administración y Finanzas
+
+Condiciones de pago, proveedor, monto, vencimiento, comprobantes y aprobaciones.
+
+Antes de comprometer pagos o confirmar proveedor crítico.
+
+Se compromete dinero sin validación financiera.
+
+Todas las gerencias
+
+Gerencia General
+
+Desvíos relevantes, riesgos, decisiones requeridas, indicadores, conflictos y situaciones que afecten cliente, plazo, costo o seguridad.
+
+Según criticidad: inmediato, semanal o mensual.
+
+GG se entera tarde o queda atrapada en urgencias operativas.
+
+
+
+14. Comunicación con Gerencia General
+
+Tipo
+
+Frecuencia
+
+Contenido mínimo
+
+Formato sugerido
+
+Decisión esperada de GG
+
+Información crítica
+
+Inmediata
+
+Riesgo de seguridad, cliente, plazo, costo, proveedor crítico, conflicto grave o freno de obra.
+
+Mensaje + registro formal posterior
+
+Definir prioridad, responsable y acción inmediata.
+
+Información operativa
+
+Diaria o según obra
+
+Novedades relevantes, faltantes, incidentes o avances sensibles.
+
+Parte diario / novedad registrada
+
+Tomar conocimiento y destrabar si corresponde.
+
+Reporte semanal
+
+Semanal
+
+Avance, compras pendientes, situación logística, desvíos y decisiones requeridas.
+
+Reporte por gerencia
+
+Revisar cumplimiento y exigir correcciones.
+
+Reporte mensual
+
+Mensual
+
+Indicadores, cierres, desvíos repetidos, no conformidades, acciones correctivas y mejoras.
+
+Informe mensual de gestión
+
+Tomar decisiones de conducción y mejora.
+
+15. Perfiles, alcances y herramientas por gerencia
+
+A partir de esta versión, cada procedimiento deberá incorporar el perfil del responsable del puesto, el alcance de la persona que ocupa el puesto y las herramientas necesarias para cumplir la función. El procedimiento define cómo debe funcionar el área; el perfil define qué capacidades debe tener la persona responsable para sostener ese funcionamiento.
+
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios físicos, tecnológicos, documentales y de gestión necesarios para cumplir su función con orden, evidencia y trazabilidad.
+
+Gerencia de Proyectos y Presupuestos
+
+Campo
+
+Definición operativa
+
+Puesto responsable
+
+Responsable de Gerencia de Proyectos y Presupuestos
+
+Reporta a
+
+Gerencia General
+
+Alcance de la persona responsable
+
+Preparar cómputos, presupuestos y propuestas; consultar a Obras sobre metodología, a Compras sobre precios críticos y a Logística sobre recursos disponibles; escalar a GG presupuestos relevantes, riesgosos, con margen bajo o información incompleta.
+
+Competencias principales
+
+Capacidad técnica, cómputo, análisis de precios, lectura de planos, redacción de propuestas, evaluación de riesgos y comunicación con Obras, Compras, Logística y GG.
+
+Herramientas necesarias
+
+PC o notebook, software de cómputo/presupuesto, Excel avanzado, acceso a planos, banco de precios, registro de versiones, matriz de riesgos, plantillas de propuesta y base histórica de cierres.
+
+Gerencia de Compras
+
+Campo
+
+Definición operativa
+
+Puesto responsable
+
+Responsable de Gerencia de Compras
+
+Reporta a
+
+Gerencia General
+
+Alcance de la persona responsable
+
+Cotizar, comparar, recomendar y emitir pedidos según matriz de aprobación; consultar a Obras ante especificaciones técnicas, a Logística antes de comprar si puede existir stock y a Administración por fondos; escalar compras críticas, urgentes o fuera de presupuesto.
+
+Competencias principales
+
+Orden documental, comparación de proveedores, negociación, seguimiento de pedidos, criterio económico, comunicación clara y capacidad de no comprar sin datos mínimos.
+
+Herramientas necesarias
+
+PC o notebook, celular corporativo, correo corporativo, planilla de pedidos, base de proveedores, comparativas, registro de OC/OT, acceso a información de stock y validación financiera.
+
+Gerencia de Logística
+
+Campo
+
+Definición operativa
+
+Puesto responsable
+
+Responsable de Gerencia de Logística
+
+Reporta a
+
+Gerencia General
+
+Alcance de la persona responsable
+
+Organizar depósito, registrar recursos, entregar herramientas con registro y controlar devoluciones; consultar a Compras por reposición y a Obras por prioridad; escalar faltantes críticos, pérdidas, roturas graves, vehículos fuera de servicio o situaciones que frenen obra.
+
+Competencias principales
+
+Orden físico y documental, control de depósito y pañol, stock crítico, herramientas, flota, máquinas, trazabilidad de entradas y salidas, anticipación de faltantes y firmeza para exigir devoluciones.
+
+Herramientas necesarias
+
+Puesto de trabajo definido, PC o notebook, celular corporativo, impresora/rotuladora, etiquetas, estanterías, sectores identificados, planilla o software logístico, inventario, registros de salida/devolución, fichas de máquinas, QR/código de barras y tablero de stock/flota.
+
+Gerencia de Obras
+
+Campo
+
+Definición operativa
+
+Puesto responsable
+
+Responsable de Gerencia de Obras
+
+Reporta a
+
+Gerencia General
+
+Alcance de la persona responsable
+
+Organizar tareas de obra, distribuir cuadrillas, reportar avance y solicitar recursos; consultar a GPP ante cambios de alcance o dudas técnicas; coordinar con Compras y Logística con anticipación; escalar desvíos de plazo, costo, seguridad, cliente o inspección.
+
+Competencias principales
+
+Planificación operativa, dirección de equipos, control de avance, calidad y seguridad, comunicación con cliente, inspección y GG, registro de partes diarios, desvíos y adicionales.
+
+Herramientas necesarias
+
+Teléfono corporativo, acceso a planos, planificación semanal, parte diario, checklist de inicio y calidad, registro fotográfico, cronograma, registro de avances, adicionales y desvíos, carpeta de obra y elementos de seguridad.
+
+15.1 Criterio común para el alcance de cada responsable
+
+Categoría
+
+Criterio común
+
+Puede decidir directamente
+
+Organización diaria del área, distribución de tareas internas, priorización de pedidos habituales, registro y seguimiento de pendientes, comunicación operativa, propuesta de mejoras y reporte de desvíos.
+
+Debe consultar antes de decidir
+
+Cambios que impacten costo, plazo, cliente, calidad, alcance, proveedor, compromisos económicos, recursos críticos, prioridades definidas por GG o aceptación de riesgos no previstos.
+
+Debe escalar obligatoriamente a GG
+
+Riesgo económico relevante, plazo, seguridad, cliente, contrato, conflicto entre gerencias, desvíos repetidos, falta de recursos críticos, decisión fuera del procedimiento, necesidad de inversión o situación que afecte la imagen de ECAR.
+
+16. Recomendación de avance para la siguiente etapa
+
+Antes de continuar con nuevos procedimientos, conviene validar esta arquitectura con Gerencia General y responsables de área. Una vez aprobada la estructura, el manual debe avanzar por módulos para que cada procedimiento quede claro, aplicable y exigible.
+
+Paso
+
+Acción
+
+Responsable
+
+Resultado esperado
+
+Paso 1
+
+Validar índice y mapa de procesos
+
+Gerencia General
+
+Aprobación de estructura base.
+
+Paso 2
+
+Definir organigrama funcional y responsables reales
+
+GG + RRHH
+
+Matriz de roles y responsables.
+
+Paso 3
+
+Normalizar procedimiento de Proyectos y Presupuestos
+
+GG + GPP + Obras
+
+Documento con portada, perfil, alcance, herramientas y estética común.
+
+Paso 4
+
+Normalizar procedimiento de Compras
+
+GG + Compras + Adm. + Logística
+
+Documento con perfil, herramientas, matrices y comunicación común.
+
+Paso 5
+
+Finalizar procedimiento de Logística
+
+GG + Logística + Obras + Compras
+
+Documento validado con gestión de depósito, flota, stock y digitalización.
+
+Paso 6
+
+Redactar procedimiento de Obras
+
+GG + Obras + GPP + Logística
+
+Procedimiento v1 con planificación, ejecución, reportes, calidad y cierres.
+
+Paso 7
+
+Crear matrices RACI y comunicación
+
+GG + todas las gerencias
+
+Matrices listas para aplicar.
+
+Paso 8
+
+Diseñar formularios y registros
+
+GG + áreas usuarias
+
+Anexos operativos del manual.
+
+Paso 9
+
+Implementar rutina de reuniones e indicadores
+
+GG + gerencias
+
+Sistema de seguimiento activo.
+
+Paso 10
+
+Revisión mensual y mejora continua
+
+GG + gerencias
+
+Correcciones, aprendizajes y actualización documental.
+
+17. Cierre institucional y nota normativa
+
+Este primer documento define la columna vertebral del futuro manual. El objetivo no es agregar papeles, sino instalar una forma de trabajar: procesos claros, responsabilidades visibles, comunicación ordenada, registros mínimos, indicadores útiles, tratamiento de desvíos y mejora continua.
+
+ECAR crecerá con mayor solidez cuando cada gerencia pueda responder con claridad: qué debe hacer, qué debe entregar, qué debe registrar, cuándo debe comunicar, qué herramientas necesita y cómo debe corregir sus desvíos.
+
+Nota normativa de referencia: este documento utiliza criterios compatibles con gestión de calidad tipo ISO 9001, sin declarar certificación formal. La referencia se emplea como marco de ordenamiento documental, trazabilidad, control operativo y mejora continua. Toda actualización normativa futura deberá revisarse para ajustar el manual si corresponde.
+

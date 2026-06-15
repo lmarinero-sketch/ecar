@@ -895,6 +895,196 @@ export type BudgetResource = {
   created_at: string;
 };
 
+// ========== PIPELINE DE OPORTUNIDADES (Doc 2 – GPP) ==========
+
+export type OpportunityStage =
+  | 'oportunidad'
+  | 'relevamiento'
+  | 'en_presupuesto'
+  | 'propuesta_enviada'
+  | 'negociacion'
+  | 'adjudicada'
+  | 'rechazada';
+
+export type Opportunity = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  client_name: string;
+  client_contact: string | null;
+  description: string;
+  work_type: 'obra_nueva' | 'adicional' | 'servicio' | 'mantenimiento' | 'licitacion' | 'cambio_alcance' | 'consulta';
+  estimated_amount: number;
+  stage: OpportunityStage;
+  priority: 'baja' | 'media' | 'alta' | 'critica';
+  risk_level: 'bajo' | 'medio' | 'alto';
+  location: string | null;
+  estimated_deadline: string | null;
+  documentation_checklist: {
+    planos: boolean;
+    pliego: boolean;
+    memoria_tecnica: boolean;
+    visita_obra: boolean;
+    fotos: boolean;
+    mediciones: boolean;
+    condiciones_pago: boolean;
+  };
+  assumptions: string | null;
+  exclusions: string | null;
+  assigned_to: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  project?: Project | null;
+  versions?: BudgetVersion[];
+};
+
+export type BudgetVersion = {
+  id: string;
+  opportunity_id: string;
+  version_number: number;
+  amount: number;
+  margin_pct: number;
+  sent_to: string | null;
+  sent_date: string | null;
+  status: 'borrador' | 'enviada' | 'aprobada_interna' | 'aprobada_cliente' | 'rechazada';
+  conditions: string | null;
+  validity_days: number | null;
+  file_url: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+// ========== ÓRDENES DE COMPRA / TRABAJO (Doc 3 – Compras) ==========
+
+export type PurchaseOrder = {
+  id: string;
+  tenant_id: string;
+  po_number: string;
+  request_id: string | null;
+  project_id: string | null;
+  supplier_id: string | null;
+  supplier_name: string;
+  order_type: 'compra' | 'servicio' | 'alquiler';
+  items: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+    subtotal: number;
+  }>;
+  total_amount: number;
+  payment_condition: string | null;
+  delivery_date: string | null;
+  delivery_location: string | null;
+  status: 'borrador' | 'pendiente_aprobacion' | 'aprobada' | 'emitida' | 'entregada_parcial' | 'entregada' | 'cerrada' | 'cancelada';
+  approval_status: 'no_requerida' | 'pendiente' | 'aprobada' | 'rechazada';
+  approved_by: string | null;
+  approved_at: string | null;
+  notes: string | null;
+  urgency: boolean;
+  urgency_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  project?: Project | null;
+  supplier?: Supplier | null;
+  request?: PurchaseRequest | null;
+};
+
+export type QuotationComparison = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  request_id: string | null;
+  description: string;
+  quotations: Array<{
+    supplier_name: string;
+    price: number;
+    delivery_days: number;
+    validity_days: number;
+    payment_condition: string;
+    quality_notes: string;
+    recommended: boolean;
+  }>;
+  selected_supplier: string | null;
+  selection_reason: string | null;
+  status: 'en_curso' | 'definida' | 'cancelada';
+  created_by: string | null;
+  created_at: string;
+};
+
+export type SupplierEvaluation = {
+  id: string;
+  tenant_id: string;
+  supplier_id: string | null;
+  supplier_name: string;
+  period: string; // YYYY-MM
+  score_delivery: number; // 1-5
+  score_quality: number;
+  score_price: number;
+  score_documentation: number;
+  score_response: number;
+  overall_score: number;
+  recommendation: 'recomendado' | 'condicional' | 'no_recomendado' | 'bloquear';
+  nc_count: number;
+  notes: string | null;
+  evaluated_by: string | null;
+  created_at: string;
+};
+
+// ========== NO CONFORMIDADES (Docs 1-5, Transversal) ==========
+
+export type NonConformity = {
+  id: string;
+  tenant_id: string;
+  nc_number: string;
+  project_id: string | null;
+  category: 'compra' | 'obra' | 'logistica' | 'proveedor' | 'documental' | 'seguridad';
+  area: string;
+  description: string;
+  evidence_urls: string[];
+  impact: 'bajo' | 'medio' | 'alto' | 'critico';
+  root_cause: string | null;
+  immediate_action: string | null;
+  corrective_action: string | null;
+  responsible: string | null;
+  status: 'abierta' | 'en_analisis' | 'accion_correctiva' | 'verificacion' | 'cerrada';
+  detected_by: string | null;
+  detected_at: string;
+  closed_at: string | null;
+  lesson_learned: string | null;
+  created_at: string;
+  // Joined
+  project?: Project | null;
+};
+
+// ========== CAMBIOS DE ALCANCE Y ADICIONALES (Docs 2/5) ==========
+
+export type ScopeChange = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  opportunity_id: string | null;
+  change_type: 'adicional' | 'cambio_alcance' | 'desvio' | 'interferencia';
+  origin: 'cliente' | 'inspeccion' | 'obra' | 'interno';
+  description: string;
+  technical_impact: string | null;
+  economic_impact: number | null;
+  deadline_impact_days: number | null;
+  status: 'detectado' | 'en_evaluacion' | 'aprobado' | 'rechazado' | 'ejecutado';
+  approved_by: string | null;
+  approved_at: string | null;
+  evidence_urls: string[];
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  // Joined
+  project?: Project | null;
+};
+
 export type Budget = {
   id: string;
   tenant_id: string;
@@ -1133,6 +1323,7 @@ export const ALL_MODULES = [
   'invoicing',
   'purchases',
   'purchase_requests',
+  'purchase_orders',
   'finances',
   'obligations',
   'rrhh',
@@ -1147,7 +1338,11 @@ export const ALL_MODULES = [
   'expenses',
   'documents',
   'project_budget',
+  'opportunities',
   'fuel',
+  'nonconformities',
+  'scope_changes',
+  'supplier_eval',
   'guide',
   'manual',
   'implementation',
@@ -1164,6 +1359,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',
   purchase_requests: 'Pedidos de Compra',
+  purchase_orders: 'Órdenes de Compra / OT',
   finances: 'Finanzas & Tesorería',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'RRHH & Legajos',
@@ -1177,10 +1373,15 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   rfi: 'Consultas de Obra',
   expenses: 'Gastos Operativos',
   documents: 'Documentos & Correo',
-  project_budget: 'Proyectos & Presupuestos',
+  project_budget: 'Presupuestos de Obra',
+  opportunities: 'Pipeline Oportunidades',
   fuel: 'Combustible',
+  nonconformities: 'No Conformidades',
+  scope_changes: 'Adicionales & Cambios',
+  supplier_eval: 'Evaluación de Proveedores',
   guide: 'Guía de Uso',
   manual: 'Manual de Procedimientos',
   implementation: 'Implementación',
   user_management: 'Gestión de Usuarios',
 };
+

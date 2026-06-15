@@ -246,6 +246,41 @@ export const GuideModule: React.FC = () => {
       icon: '🦺',
       description: 'Matriz de riesgo de incidentes, checklists de control de calidad en obra y punch list de no conformidades con plazos de resolución.',
       features: ['Matriz 5x5 de evaluación de severidad', 'Fichas de incidentes con causa raíz', 'Auditorías de calidad fotográficas', 'Asignación de plazos y responsables']
+    },
+    {
+      name: 'Pipeline Comercial',
+      color: 'border-l-blue-500',
+      icon: '🎯',
+      description: 'Embudo de oportunidades comerciales con 7 etapas, desde la detección hasta la adjudicación. Checklist de documentación y versiones de presupuesto.',
+      features: ['Vista Kanban y Lista', 'Checklist de documentación', 'KPIs de conversión', 'Quick move entre etapas']
+    },
+    {
+      name: 'Órdenes de Compra / OT',
+      color: 'border-l-violet-500',
+      icon: '📋',
+      description: 'OC/OT formales con numeración automática, ítems detallados, flujo de aprobación por monto y seguimiento de entregas.',
+      features: ['Numeración automática (OC-0001)', 'Aprobación por umbral $5M', 'Flag de urgencia', 'Integración con proveedores']
+    },
+    {
+      name: 'No Conformidades',
+      color: 'border-l-red-500',
+      icon: '🛡️',
+      description: 'Sistema transversal de desvíos con ciclo PDCA: detección, causa raíz, acción correctiva, verificación y lección aprendida. Compatible ISO 9001.',
+      features: ['Ciclo PDCA completo', 'Numeración automática (NC-001)', 'Categorización por área', 'Lecciones aprendidas']
+    },
+    {
+      name: 'Adicionales & Alcance',
+      color: 'border-l-amber-500',
+      icon: '📝',
+      description: 'Registro de adicionales, cambios de alcance, desvíos e interferencias con evaluación de impacto técnico, económico y de plazo.',
+      features: ['Clasificación por tipo y origen', 'Triple impacto', 'Flujo de aprobación', 'Warning de ejecución sin registro']
+    },
+    {
+      name: 'Evaluación de Proveedores',
+      color: 'border-l-teal-500',
+      icon: '⭐',
+      description: 'Calificación periódica de proveedores con 5 criterios estandarizados y recomendación automática basada en puntaje.',
+      features: ['Rating con estrellas 1-5', 'Recomendación automática', 'Historial por proveedor', 'Vinculación con NC']
     }
   ];
 
@@ -305,7 +340,7 @@ export const GuideModule: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Layers size={15} className="text-emerald-500" /> Cobertura del ERP
             </div>
-            <p className="text-lg font-bold text-slate-800">22 Módulos Integrados</p>
+            <p className="text-lg font-bold text-slate-800">27 Módulos Integrados</p>
             <p className="text-xs text-gray-400 mt-2">Operaciones, Finanzas y RRHH</p>
           </div>
           <div className="bg-emerald-50 p-2.5 rounded-lg">

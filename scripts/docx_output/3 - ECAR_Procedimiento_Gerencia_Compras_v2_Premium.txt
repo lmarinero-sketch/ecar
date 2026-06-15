@@ -1,0 +1,1526 @@
+
+
+
+
+1. Control documental
+
+Campo
+
+Definición
+
+Nombre del procedimiento
+
+Procedimiento de Gerencia de Compras
+
+Código
+
+PR-GC-01
+
+Versión
+
+v2.0 – Normalizado
+
+Empresa
+
+ECAR Construcciones / ECAR Constructora
+
+Área responsable
+
+Gerencia de Compras
+
+Responsable del procedimiento
+
+Responsable de Gerencia de Compras, con revisión de Gerencia General
+
+Revisión
+
+Gerencia General
+
+Aprobación
+
+Gerencia General / Dirección
+
+Fecha
+
+Junio 2026
+
+Estado
+
+Documento interno de trabajo
+
+Tipo de documento
+
+Documento interno de conducción, abastecimiento, proveedores, control documental y mejora continua
+
+Criterio normativo
+
+Compatible con criterios de gestión de calidad tipo ISO 9001. No implica certificación formal.
+
+Uso previsto
+
+Ordenar el proceso desde la solicitud interna de compra hasta la coordinación de entrega, registro documental, control de proveedor y cierre de compra.
+
+Próxima revisión
+
+Al validar matriz de aprobación por monto, responsables reales y formularios definitivos.
+
+2. Índice operativo
+
+Este documento normaliza el Procedimiento de Gerencia de Compras bajo una línea visual y metodológica común para ECAR. Mantiene el contenido operativo ya desarrollado, mejora su presentación institucional y agrega perfil del responsable, alcance de la persona en el puesto y herramientas necesarias para cumplir la función con trazabilidad.
+
+Objetivo, propósito, alcance, exclusiones y criterio rector.
+
+Entradas, actividades, salidas, responsables, registros, indicadores y riesgos.
+
+Comunicación entre gerencias, escalamiento a Gerencia General y tratamiento de urgencias.
+
+Tratamiento de proveedores y no conformidades de compra.
+
+Perfil del responsable, alcance del puesto, herramientas necesarias y rutinas de seguimiento.
+
+Casos ejemplo, esquema visual, anexos operativos y cierre institucional.
+
+3. Introducción institucional
+
+La Gerencia de Compras cumple una función crítica dentro del sistema operativo de ECAR: transforma necesidades internas en abastecimiento concreto, documentado y coordinado con la obra, la logística, la administración y la conducción general. Cuando Compras trabaja con método, la empresa gana control; cuando trabaja sólo por urgencia, los errores se trasladan a obra, depósito, caja, proveedores y rentabilidad.
+
+Este procedimiento busca que cada compra pueda ser explicada, respaldada y trazada: quién la pidió, para qué obra, con qué especificación, bajo qué comparación, con qué aprobación, a qué proveedor, con qué condición de entrega y con qué documentación de cierre.
+
+4. Objetivo del procedimiento
+
+Establecer el método de trabajo de la Gerencia de Compras de ECAR para transformar necesidades internas, pedidos de obra, requerimientos de Logística y solicitudes de Proyectos y Presupuestos en compras concretas, comparadas, aprobadas, documentadas y coordinadas con Administración y Finanzas, Logística, Obras y Gerencia General.
+
+El procedimiento busca evitar compras improvisadas, compras sin especificación, compras duplicadas, compras fuera de presupuesto, compras sin aprobación y compras que generen desvíos operativos o económicos. Comprar bien no significa comprar únicamente barato: significa comprar lo correcto, en el momento correcto, con respaldo, trazabilidad, control de proveedor y criterio financiero.
+
+5. Propósito del área
+
+La Gerencia de Compras tiene como propósito asegurar que ECAR adquiera materiales, herramientas, equipos, repuestos, servicios y contrataciones externas de manera ordenada, oportuna, documentada y conveniente para la operación. Su función no es sólo resolver pedidos, sino proteger la continuidad de obra, la rentabilidad de la empresa y la calidad de los recursos que ingresan al sistema.
+
+Compras debe evitar que la urgencia se convierta en la forma normal de trabajo. Una compra sin datos completos puede terminar en un material equivocado, una entrega tardía, un sobrecosto, una discusión con proveedores o una obra frenada. Por eso, el área debe trabajar con información mínima, comparación, autorización y comunicación clara.
+
+6. Alcance del procedimiento
+
+Este procedimiento aplica desde que ingresa una solicitud de compra, cotización, reparación, reposición, servicio externo o compra urgente, hasta que la compra queda emitida, documentada, comunicada a las áreas involucradas y disponible para su recepción, retiro, entrega o cierre administrativo.
+
+Recepción de pedidos internos y validación de datos mínimos.
+
+Clasificación de la compra y consulta técnica cuando corresponda.
+
+Búsqueda y evaluación de proveedores.
+
+Solicitud y comparación de cotizaciones.
+
+Validación de fondos y condiciones con Administración y Finanzas.
+
+Aplicación de matriz de aprobación por monto, riesgo o urgencia.
+
+Emisión de orden de compra u orden de trabajo.
+
+Seguimiento de entrega, comunicación a Logística y Obras, control documental y tratamiento de no conformidades.
+
+7. Exclusiones y límites
+
+No reemplaza la planificación de Obras: Compras compra sobre pedidos validados, no define por sí sola prioridades de obra.
+
+No reemplaza a Logística: Compras coordina la adquisición, pero la recepción física, almacenamiento, trazabilidad de depósito y entrega a obra deben coordinarse con Logística.
+
+No reemplaza a Administración y Finanzas: Compras informa condiciones y documentación, pero fondos, pagos, cheques, transferencias y cuentas corrientes son responsabilidad administrativa-financiera.
+
+No debe comprar sin datos técnicos completos, sin validación de fondos o sin aprobación cuando el monto, riesgo o urgencia lo requiera.
+
+8. Criterio rector del área
+
+Toda compra debe poder responder: quién la pidió, para qué obra o necesidad, qué se compró, con qué especificación, a qué proveedor, bajo qué comparación, con qué aprobación, cuándo debe entregarse, quién recibe, qué documento respalda la operación y qué impacto tiene sobre el costo de obra o de empresa.
+
+9. Definiciones básicas
+
+Término
+
+Definición operativa para ECAR
+
+Solicitud interna de compra
+
+Pedido formal realizado por una gerencia o responsable autorizado para adquirir un material, herramienta, servicio, repuesto o equipo.
+
+Datos mínimos
+
+Información obligatoria para comprar sin ambigüedad: obra, solicitante, descripción, cantidad, unidad, especificación, fecha requerida, prioridad y destino.
+
+Cotización
+
+Oferta de proveedor que indica precio, plazo, validez, condición de pago, entrega y especificación.
+
+Comparativa
+
+Documento donde se contrastan proveedores, precios, plazos, calidad, condiciones y riesgos.
+
+Orden de compra
+
+Autorización formal para comprar a un proveedor según condiciones aprobadas.
+
+Orden de trabajo
+
+Autorización para contratar o ejecutar un servicio externo.
+
+Proveedor crítico
+
+Proveedor cuya falla puede afectar plazo, calidad, seguridad, costo o continuidad de obra.
+
+Compra urgente
+
+Compra necesaria para evitar frenar obra o resolver una situación crítica. Debe registrarse y revisarse su causa.
+
+No conformidad de compra
+
+Diferencia entre lo solicitado, comprado, recibido, facturado o acordado con proveedor.
+
+10. Entradas del proceso
+
+Entrada posible
+
+Origen habitual
+
+Uso dentro del proceso
+
+Pedido de Gerencia de Obras
+
+Obras / encargado / responsable operativo
+
+Activa compra de materiales, insumos, servicios o recursos necesarios para ejecutar.
+
+Pedido de Logística
+
+Logística
+
+Activa reposición de stock crítico, herramientas, repuestos, mantenimiento o recursos físicos.
+
+Pedido de Proyectos y Presupuestos
+
+GPP
+
+Activa cotización para presupuesto, licitación o análisis de precio.
+
+Pedido de Gerencia General
+
+GG
+
+Activa compra estratégica, inversión, decisión especial o prioridad directiva.
+
+Pedido de Administración y Finanzas
+
+Adm. y Finanzas
+
+Activa compras internas, servicios administrativos o insumos de gestión.
+
+Pedido urgente
+
+Obras / Logística / GG
+
+Activa flujo acelerado con registro de urgencia y validación mínima.
+
+Remito o factura pendiente
+
+Proveedor / Logística / Administración
+
+Requiere control documental, validación o resolución de diferencias.
+
+Reclamo o no conformidad
+
+Logística / Obras / Administración
+
+Activa reclamo a proveedor, devolución, nota de crédito o reemplazo.
+
+Necesidad de proveedor nuevo
+
+Compras / área solicitante
+
+Requiere alta, revisión, evaluación y aprobación cuando corresponda.
+
+11. Actividades principales
+
+Recepción del pedido interno.
+
+Registro inicial del pedido con obra, solicitante, prioridad, fecha requerida y destino.
+
+Verificación de datos mínimos.
+
+Devolución del pedido si falta información crítica.
+
+Clasificación del tipo de compra: obra, logística, herramienta, equipo, repuesto, servicio externo, urgencia, inversión o compra administrativa.
+
+Validación técnica con el área solicitante cuando corresponda.
+
+Verificación de stock, disponibilidad o recurso existente con Logística.
+
+Solicitud de cotizaciones a proveedores.
+
+Comparación de precios, plazos, calidad, disponibilidad, garantía, validez y condiciones de pago.
+
+Revisión de proveedor: antecedentes, cumplimiento, documentación, respuesta y confiabilidad.
+
+Validación financiera con Administración y Finanzas.
+
+Aplicación de matriz de aprobación por monto, riesgo, urgencia o proveedor.
+
+Escalamiento a Gerencia General cuando corresponda.
+
+Emisión de orden de compra u orden de trabajo.
+
+Confirmación al proveedor.
+
+Comunicación a Logística para recepción, retiro o entrega.
+
+Comunicación a Obras sobre fecha probable de entrega o sustitución autorizada.
+
+Seguimiento de entrega.
+
+Control de remito, factura o comprobante contra lo solicitado y aprobado.
+
+Tratamiento de diferencias o no conformidades.
+
+Registro de cierre de compra.
+
+Evaluación del proveedor.
+
+Archivo documental.
+
+Reporte de compras relevantes a Gerencia General.
+
+12. Salidas del proceso
+
+Salida
+
+Destinatario
+
+Utilidad
+
+Pedido validado
+
+Solicitante / Compras
+
+Permite avanzar a cotización o compra.
+
+Pedido devuelto por falta de información
+
+Solicitante
+
+Evita comprar mal por datos incompletos.
+
+Comparativa de cotizaciones
+
+Compras / GG / Adm. y Finanzas
+
+Sustenta la decisión y permite comparar precio, plazo y calidad.
+
+Proveedor seleccionado
+
+Compras / solicitante
+
+Define con quién se comprará y bajo qué condiciones.
+
+Orden de compra u orden de trabajo
+
+Proveedor / Administración / archivo
+
+Formaliza la operación y respalda la obligación.
+
+Fecha estimada de entrega
+
+Obras / Logística / solicitante
+
+Permite planificar recepción, retiro o continuidad de obra.
+
+Comunicación a Logística
+
+Logística
+
+Permite preparar recepción, control, depósito o distribución.
+
+Documentación para Administración
+
+Adm. y Finanzas
+
+Permite validar pago, factura, cuenta corriente y cierre económico.
+
+Registro de no conformidad
+
+Compras / Logística / GG
+
+Permite reclamar y corregir diferencias.
+
+Reporte de compras
+
+GG / Administración
+
+Permite seguimiento, control por obra, proveedores y desvíos.
+
+13. Responsables y matriz de responsabilidades
+
+Compras es responsable de gestionar el proceso de adquisición, pero no debe asumir sola información técnica, logística o financiera. Cada área solicitante debe aportar datos completos y validar lo que corresponde a su campo de responsabilidad.
+
+Rol / Área
+
+Responsabilidad principal dentro del procedimiento
+
+Responsable de Compras
+
+Recibir, registrar, validar, cotizar, comparar, gestionar aprobaciones, emitir OC/OT, hacer seguimiento y archivar documentación.
+
+Gerencia General
+
+Aprobar compras relevantes, estratégicas, riesgosas, fuera de presupuesto o superiores al umbral definido.
+
+Gerencia de Obras
+
+Solicitar con información completa, validar especificaciones, cantidades, fecha de necesidad y destino de obra.
+
+Gerencia de Logística
+
+Informar stock, disponibilidad, recepción, no conformidades físicas y coordinación de entrega.
+
+Proyectos y Presupuestos
+
+Solicitar cotizaciones para presupuestos, validar precios críticos y advertir impacto de cambios de precio.
+
+Administración y Finanzas
+
+Validar fondos, condiciones de pago, facturas, cuentas corrientes, anticipos y cierre económico.
+
+Proveedor
+
+Cotizar, cumplir condiciones, entregar conforme, facturar correctamente y responder reclamos.
+
+Solicitante interno
+
+Aportar datos mínimos, responder consultas y validar sustituciones o urgencias.
+
+Actividad
+
+Compras
+
+Solicitante
+
+Logística
+
+Adm. y Finanzas
+
+GG
+
+Solicitud de compra
+
+I
+
+R
+
+C
+
+I
+
+I
+
+Validación de datos mínimos
+
+R
+
+C
+
+C
+
+I
+
+I
+
+Cotización y comparativa
+
+R
+
+C
+
+I
+
+C
+
+I
+
+Validación de fondos
+
+C
+
+I
+
+I
+
+R
+
+I
+
+Aprobación por monto/riesgo
+
+C
+
+I
+
+I
+
+C
+
+A
+
+Emisión OC/OT
+
+R
+
+I
+
+I
+
+C
+
+I
+
+Recepción / entrega
+
+I
+
+I
+
+R
+
+I
+
+I
+
+Cierre documental
+
+R
+
+I
+
+C
+
+C
+
+I
+
+No conformidad grave
+
+R
+
+C
+
+C
+
+C
+
+A
+
+Referencias: R = Responsable de ejecutar | A = Aprueba o responsable final | C = Consultado | I = Informado.
+
+14. Registros obligatorios
+
+Registro
+
+Responsable
+
+Momento
+
+Destinatario
+
+Utilidad
+
+Solicitud interna de compra
+
+Solicitante
+
+Al iniciar pedido
+
+Compras
+
+Define qué se pide y por qué.
+
+Checklist de datos mínimos
+
+Compras
+
+Antes de cotizar
+
+Solicitante / archivo
+
+Evita compras ambiguas.
+
+Pedido devuelto por información incompleta
+
+Compras
+
+Cuando faltan datos
+
+Solicitante
+
+Deja evidencia de bloqueo por falta de datos.
+
+Solicitud de cotización
+
+Compras
+
+Antes de recibir ofertas
+
+Proveedor / archivo
+
+Formaliza pedido al proveedor.
+
+Cotizaciones recibidas
+
+Proveedor / Compras
+
+Durante evaluación
+
+Compras / GG si aplica
+
+Sustenta comparación.
+
+Comparativa de compras
+
+Compras
+
+Antes de decidir
+
+GG / Adm. si aplica
+
+Permite elegir con criterio.
+
+Orden de compra
+
+Compras
+
+Después de aprobación
+
+Proveedor / Administración
+
+Formaliza compra.
+
+Orden de trabajo
+
+Compras
+
+Después de aprobación
+
+Proveedor / Administración
+
+Formaliza servicio externo.
+
+Aprobación interna
+
+Compras / GG / Adm.
+
+Según monto o riesgo
+
+Archivo
+
+Respalda decisión.
+
+Validación financiera
+
+Adm. y Finanzas
+
+Antes de confirmar
+
+Compras
+
+Confirma fondos o condición de pago.
+
+Remito
+
+Proveedor / Logística
+
+Al recibir
+
+Compras / Administración
+
+Respalda entrega física.
+
+Factura
+
+Proveedor
+
+Después de compra
+
+Administración
+
+Respalda obligación de pago.
+
+Registro de no conformidad
+
+Compras / Logística
+
+Ante diferencia
+
+Proveedor / GG si grave
+
+Permite reclamo y corrección.
+
+Evaluación de proveedor
+
+Compras
+
+Mensual / cierre
+
+GG / archivo
+
+Mide desempeño y continuidad.
+
+Reporte semanal de compras
+
+Compras
+
+Semanal
+
+GG
+
+Muestra pendientes, urgencias y riesgos.
+
+Registro de compra urgente
+
+Compras
+
+En toda urgencia
+
+GG / archivo
+
+Permite analizar causa y evitar repetición.
+
+15. Indicadores de gestión
+
+Indicador
+
+Objetivo
+
+Fórmula simple
+
+Frecuencia
+
+Responsable
+
+Cantidad de compras realizadas
+
+Medir volumen operativo
+
+N° compras del mes
+
+Mensual
+
+Compras / GG
+
+Tiempo promedio de ciclo de compra
+
+Medir agilidad y cuellos de botella
+
+Promedio fecha solicitud a fecha OC
+
+Semanal / mensual
+
+Compras
+
+Compras entregadas en plazo
+
+Medir cumplimiento de proveedor
+
+Compras en plazo / compras totales
+
+Mensual
+
+Compras / Logística
+
+Compras urgentes vs planificadas
+
+Detectar improvisación
+
+Compras urgentes / compras totales
+
+Semanal / mensual
+
+Compras / GG
+
+Pedidos devueltos por falta de información
+
+Medir calidad de solicitud interna
+
+Pedidos devueltos / pedidos recibidos
+
+Semanal
+
+Compras
+
+Ahorro por comparativa
+
+Medir valor de negociación
+
+Diferencia entre mejor oferta y referencia
+
+Mensual
+
+Compras / GG
+
+Compras con 2 o más cotizaciones
+
+Medir disciplina de comparación
+
+Compras con 2+ cotizaciones / total aplicable
+
+Mensual
+
+Compras
+
+Compras sin orden de compra
+
+Detectar descontrol documental
+
+N° compras sin OC
+
+Mensual
+
+Compras / GG
+
+No conformidades de proveedor
+
+Medir calidad externa
+
+N° NC proveedor
+
+Mensual
+
+Compras / Logística
+
+Diferencia precio cotizado vs final
+
+Detectar desvíos de precio
+
+Precio final - precio cotizado
+
+Mensual
+
+Compras / Administración
+
+Compras fuera de presupuesto
+
+Medir impacto económico
+
+Monto fuera de presupuesto
+
+Mensual
+
+Compras / GPP / GG
+
+Compras escaladas a GG
+
+Medir decisiones críticas
+
+N° compras elevadas
+
+Mensual
+
+GG
+
+16. Riesgos principales y controles preventivos
+
+Riesgo
+
+Consecuencia
+
+Control preventivo
+
+Comprar sin especificación técnica
+
+Material equivocado, retrabajo o devolución
+
+Checklist de datos mínimos y validación técnica con solicitante.
+
+Comprar tarde
+
+Frente de obra detenido o pérdida de productividad
+
+Pedido anticipado y revisión semanal Obras-Compras-Logística.
+
+Comprar por urgencia permanente
+
+Sobrecostos, desgaste interno y pérdida de control
+
+Registro de urgencia y análisis de causa.
+
+Comprar sin comparar
+
+Pérdida de oportunidad económica
+
+Comparativa mínima salvo urgencia justificada.
+
+Comprar al proveedor equivocado
+
+Incumplimiento de calidad o plazo
+
+Evaluación de proveedor y revisión de antecedentes.
+
+Comprar mala calidad
+
+Retrabajo, reclamo o riesgo de seguridad
+
+Validación técnica y control de recepción.
+
+Comprar sin validar stock existente
+
+Duplicación y exceso de inventario
+
+Consulta obligatoria a Logística cuando aplique.
+
+Comprar sin validar fondos
+
+Compromiso financiero no planificado
+
+Validación de Administración y Finanzas.
+
+Comprar sin autorización
+
+Riesgo económico y falta de control
+
+Matriz de aprobación por monto y riesgo.
+
+Comprar con precio vencido
+
+Sobrecosto o conflicto con proveedor
+
+Control de validez de cotización.
+
+No informar a Logística
+
+Material sin recepción ni trazabilidad
+
+Comunicación obligatoria de OC y fecha de entrega.
+
+No controlar remito/factura
+
+Pago incorrecto o documentación incompleta
+
+Cruce OC-remito-factura.
+
+No reclamar no conformidades
+
+Pérdida económica y repetición de errores
+
+Registro de NC y reclamo a proveedor.
+
+No evaluar proveedores
+
+Repetición de incumplimientos
+
+Evaluación mensual y clasificación de proveedor.
+
+17. Comunicación con otras gerencias
+
+Área vinculada
+
+Qué debe comunicarse
+
+Cuándo
+
+Registro mínimo
+
+Gerencia General
+
+Compras superiores a umbral, críticas, estratégicas, fuera de presupuesto, proveedores nuevos relevantes, aumentos fuertes y conflictos graves.
+
+Antes de comprometer la compra o inmediatamente ante riesgo.
+
+Solicitud de aprobación / informe de compra crítica.
+
+Obras
+
+Validación de material, cantidad, especificación, fecha de necesidad, destino, sustituciones, faltantes y pedidos urgentes.
+
+Antes de cotizar y durante seguimiento.
+
+Solicitud interna y respuesta técnica.
+
+Logística
+
+Stock existente, recepción, retiro, entrega a obra, remitos, no conformidades, herramientas, equipos y depósito.
+
+Antes de comprar si puede haber stock y antes de entregar/recibir.
+
+Registro de coordinación logística.
+
+Proyectos y Presupuestos
+
+Cotizaciones para presupuesto, precios críticos, validez, proveedores sugeridos, alternativas y cambios de precio.
+
+Durante presupuestación y cuando cambien precios relevantes.
+
+Solicitud de cotización y comparativa.
+
+Administración y Finanzas
+
+Validación de fondos, condición de pago, facturas, cuenta corriente, anticipos, cheques, transferencias y cierre económico.
+
+Antes de confirmar la compra y al recibir documentación.
+
+Validación financiera y documentación de pago.
+
+18. Comunicación con Gerencia General y criterios de escalamiento
+
+Compras debe elevar a Gerencia General cuando la decisión excede la gestión operativa normal, afecta el margen, compromete fondos relevantes o implica riesgo técnico, financiero, contractual o reputacional.
+
+Compra superior al monto definido por Gerencia General.
+
+Compra fuera de presupuesto o no prevista en la obra.
+
+Compra urgente que pueda frenar obra.
+
+Proveedor nuevo crítico o pago anticipado.
+
+Cambio fuerte de precio respecto de presupuesto o cotización previa.
+
+Compra de maquinaria, equipo o herramienta relevante.
+
+Compra con riesgo técnico, financiero o documental.
+
+Compra sin documentación completa pero necesaria por urgencia.
+
+Material alternativo al especificado originalmente.
+
+Diferencia importante entre cotizaciones.
+
+Conflicto con proveedor o no conformidad grave.
+
+Repetición de compras urgentes en una misma obra.
+
+19. Tratamiento de urgencias
+
+Una urgencia puede atenderse cuando la continuidad de obra, seguridad, cumplimiento o servicio lo justifica. Pero no debe naturalizarse. Toda compra urgente debe dejar registro y aprendizaje.
+
+Registrar la urgencia y la obra afectada.
+
+Indicar motivo y consecuencia si no se compra.
+
+Identificar responsable que solicita.
+
+Realizar validación mínima de datos técnicos.
+
+Consultar stock o alternativa con Logística.
+
+Solicitar cotización rápida o precio de referencia.
+
+Validar fondos o forma de pago con Administración.
+
+Solicitar aprobación rápida según monto/riesgo.
+
+Ejecutar compra y coordinar entrega.
+
+Registrar documentación posterior.
+
+Revisar causa de la urgencia para evitar repetición.
+
+20. Tratamiento de proveedores
+
+Criterio
+
+Qué se evalúa
+
+Resultado esperado
+
+Alta de proveedor
+
+Datos fiscales, contacto, rubro, capacidad de entrega, referencias y condiciones.
+
+Proveedor registrado con información mínima.
+
+Evaluación inicial
+
+Precio, disponibilidad, experiencia, forma de pago y respuesta.
+
+Proveedor apto, condicionado o no recomendado.
+
+Cumplimiento de plazo
+
+Entrega según fecha comprometida.
+
+Medición de confiabilidad.
+
+Calidad
+
+Material o servicio conforme a lo solicitado.
+
+Reducción de reclamos y retrabajos.
+
+Documentación fiscal
+
+Factura, remito, CUIT, condición impositiva y documentación pertinente.
+
+Pago y archivo sin observaciones.
+
+Respuesta ante reclamos
+
+Capacidad de resolver NC, cambios, notas de crédito o devoluciones.
+
+Proveedor confiable o sujeto a bloqueo.
+
+Historial de no conformidades
+
+Cantidad y gravedad de incumplimientos.
+
+Decisión de continuidad, alerta o baja.
+
+21. No conformidades vinculadas a compras
+
+No conformidad
+
+Acción inmediata
+
+Responsable
+
+Registro obligatorio
+
+Material recibido distinto al solicitado
+
+Retener entrega, comparar con OC y reclamar al proveedor.
+
+Logística + Compras
+
+NC de compra + remito/fotos
+
+Cantidad incompleta
+
+Registrar diferencia y reclamar saldo o nota de crédito.
+
+Logística + Compras
+
+NC + remito observado
+
+Entrega fuera de plazo
+
+Informar a Obras y GG si afecta continuidad.
+
+Compras
+
+Registro de proveedor + informe de impacto
+
+Precio distinto al cotizado
+
+No validar pago hasta aclaración.
+
+Compras + Administración
+
+Reclamo proveedor + cotización
+
+Factura mal emitida
+
+Solicitar corrección.
+
+Administración + Compras
+
+Registro de observación
+
+Material defectuoso
+
+Bloquear uso y reclamar reemplazo.
+
+Logística + Obras + Compras
+
+NC con evidencia
+
+Proveedor incumple condición de pago
+
+Elevar a Administración y GG si afecta caja.
+
+Compras + Administración
+
+Registro de desvío financiero
+
+Compra sin aprobación
+
+Registrar desvío y elevar para revisión.
+
+Compras + GG
+
+No conformidad interna
+
+Compra sin remito
+
+Solicitar respaldo y no cerrar compra.
+
+Compras + Logística
+
+Observación documental
+
+Compra duplicada
+
+Identificar causa y definir devolución o stock.
+
+Compras + Logística
+
+Registro de desvío
+
+Pedido interno incompleto
+
+Devolver al solicitante.
+
+Compras
+
+Pedido devuelto por falta de datos
+
+22. Perfil del responsable de Gerencia de Compras
+
+Corresponde incorporar el perfil del puesto como sección específica del procedimiento. El procedimiento define cómo debe funcionar el área; el perfil del puesto define qué capacidades debe tener la persona responsable para sostener ese funcionamiento.
+
+Elemento
+
+Definición para ECAR
+
+Nombre del puesto
+
+Responsable de Gerencia de Compras
+
+Reporta a
+
+Gerencia General
+
+Áreas con las que se vincula
+
+Obras, Logística, Proyectos y Presupuestos, Administración y Finanzas, RRHH, proveedores y Gerencia General.
+
+Propósito del puesto
+
+Asegurar que ECAR compre materiales, herramientas, repuestos, equipos y servicios con datos mínimos, comparación, autorización, trazabilidad y coordinación con las áreas vinculadas.
+
+Responsabilidades principales
+
+Recibir y registrar pedidos; validar datos mínimos; cotizar; comparar; negociar; coordinar aprobaciones; emitir OC/OT; hacer seguimiento; informar a Logística/Obras/Administración; controlar documentación; tratar no conformidades y evaluar proveedores.
+
+Competencias técnicas
+
+Comparación de proveedores, lectura de remitos/facturas, manejo de Excel o software de compras, control documental, seguimiento de pedidos, negociación, criterio económico y conocimiento básico de materiales de obra.
+
+Competencias personales
+
+Orden, responsabilidad, comunicación clara, capacidad de seguimiento, firmeza para devolver pedidos incompletos, proactividad, criterio operativo, atención al detalle y orientación a mejora continua.
+
+Indicadores de evaluación
+
+Tiempo de ciclo de compra, compras en plazo, compras urgentes vs planificadas, pedidos devueltos por falta de información, compras con comparativa, compras sin OC, NC de proveedor y reportes cumplidos.
+
+Errores que no debe cometer
+
+Comprar sin datos mínimos, comprar sin verificar stock, comprar sin validar fondos, no comparar cuando corresponde, no informar a Logística, no dejar evidencia, naturalizar urgencias y cerrar compras sin documentación.
+
+23. Alcance de la persona responsable del área
+
+Nivel de alcance
+
+Criterio
+
+Puede decidir directamente sobre
+
+Organización diaria del área; seguimiento de pedidos; pedido de cotizaciones; armado de comparativas; devolución de solicitudes incompletas; coordinación operativa con áreas; clasificación de proveedores; registro y archivo documental; propuesta de mejoras.
+
+Debe consultar antes de decidir sobre
+
+Compras con impacto económico relevante; materiales alternativos; cambios que afecten obra, costo, plazo, calidad o cliente; condiciones de pago especiales; proveedores nuevos críticos; compras no previstas o fuera de presupuesto.
+
+Debe escalar obligatoriamente a Gerencia General cuando exista
+
+Riesgo económico relevante; compra urgente que pueda frenar obra; falta de fondos; proveedor crítico; pago anticipado; compra de equipo/herramienta relevante; conflicto con proveedor; NC grave; compra sin información completa pero necesaria por urgencia; situación que pueda afectar la imagen de ECAR.
+
+Límites del puesto
+
+No aprueba fondos por sí solo; no reemplaza la validación técnica de Obras/GPP; no reemplaza la recepción física de Logística; no modifica prioridades definidas por GG; no compromete compras fuera de matriz de aprobación.
+
+24. Herramientas necesarias para el puesto
+
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios físicos, tecnológicos, documentales y de gestión necesarios para cumplir su función con orden, evidencia y trazabilidad.
+
+Grupo
+
+Herramientas necesarias
+
+Herramientas físicas
+
+Puesto de trabajo definido, escritorio, silla, archivo físico mínimo, sector para cotizaciones activas, carpetas por proveedor/obra, espacio para revisión de documentación y elementos básicos de oficina.
+
+Herramientas tecnológicas
+
+Computadora o notebook, celular corporativo, internet, correo corporativo, Excel o planilla maestra, acceso a carpetas digitales, impresora, scanner o aplicación de escaneo, acceso a información de stock y acceso a validación financiera.
+
+Herramientas documentales
+
+Procedimiento de Compras, solicitud interna de compra, checklist de datos mínimos, base de proveedores, formato de comparativa, registro de OC/OT, registro de urgencias, evaluación de proveedor, registro de NC, reporte semanal y archivo de cotizaciones.
+
+Herramientas de gestión
+
+Agenda diaria de pedidos, tablero de pendientes, semáforo de urgencias, matriz de aprobación, matriz RACI, matriz de comunicación, reunión semanal con Obras y Logística, revisión con Administración y reporte semanal a Gerencia General.
+
+25. Rutina diaria, semanal y mensual
+
+Frecuencia
+
+Rutina mínima
+
+Diaria
+
+Revisar pedidos recibidos, datos faltantes, cotizaciones pendientes, urgencias, entregas próximas, aprobación de compras y documentación bloqueada.
+
+Semanal
+
+Reunión con Obras y Logística para anticipar necesidades; revisión con Administración por fondos, pagos y facturas; reporte a GG sobre compras críticas, urgencias y desvíos.
+
+Mensual
+
+Evaluar proveedores, revisar compras por obra, analizar compras urgentes, compras sin OC, NC, diferencias de precio y oportunidades de mejora en el proceso.
+
+26. Reuniones y reportes
+
+Rutina
+
+Frecuencia
+
+Participantes
+
+Objetivo
+
+Registro
+
+Revisión de pedidos pendientes
+
+Diaria
+
+Compras
+
+Ordenar prioridades, bloqueos y compras urgentes.
+
+Lista de pendientes
+
+Reunión Compras + Obras + Logística
+
+Semanal
+
+Compras, Obras, Logística
+
+Anticipar necesidades, entregas, faltantes y urgencias.
+
+Minuta breve
+
+Revisión con Administración
+
+Semanal
+
+Compras, Adm. y Finanzas
+
+Validar fondos, pagos, facturas y cuentas proveedor.
+
+Reporte de pagos/pendientes
+
+Reporte a Gerencia General
+
+Semanal
+
+Compras, GG
+
+Informar compras críticas, urgencias, desvíos y decisiones requeridas.
+
+Reporte semanal
+
+Cierre mensual por obra
+
+Mensual
+
+Compras, Administración, GPP, GG
+
+Analizar compras por obra y desvíos.
+
+Informe mensual
+
+Revisión de proveedores
+
+Mensual
+
+Compras, Logística, GG si aplica
+
+Evaluar desempeño y continuidad.
+
+Matriz de proveedores
+
+27. Casos ejemplo aplicables a ECAR
+
+Los siguientes casos buscan transformar situaciones habituales en criterios de actuación. Sirven como guía para que el área responda con sistema y no sólo con urgencia.
+
+Caso
+
+Riesgo
+
+Forma de resolución
+
+Comunicación / registro / escalamiento
+
+Obras pide materiales sin especificación completa
+
+Comprar mal o tarde por falta de datos.
+
+Devolver pedido con checklist de datos mínimos y pedir aclaración técnica.
+
+Áreas: Obras, Logística si hay stock.Registro: Pedido devuelto / checklist.Escalamiento: Si la falta de datos puede frenar obra.
+
+Logística informa faltante crítico de stock
+
+Freno de operación o compras repetidas por urgencia.
+
+Validar stock mínimo, cotizar reposición y priorizar compra.
+
+Áreas: Logística, Administración, GG si monto/riesgo.Registro: Pedido de reposición / OC.Escalamiento: Si afecta varias obras o supera umbral.
+
+GPP pide cotización para licitación urgente
+
+Presupuesto con precio débil o vencido.
+
+Pedir cotización con validez, plazo y condición clara.
+
+Áreas: GPP, proveedor, Administración si hay impacto financiero.Registro: Solicitud y cotización.Escalamiento: Si la oportunidad es estratégica.
+
+Proveedor aumenta precio antes de entregar
+
+Desvío económico y conflicto con presupuesto.
+
+Revisar validez, negociar, comparar alternativa y avisar.
+
+Áreas: Administración, GPP, GG si impacto.Registro: Registro de cambio de precio.Escalamiento: Si afecta margen o compra relevante.
+
+Proveedor no cumple plazo prometido
+
+Obra frenada o reprogramación.
+
+Reclamar, buscar alternativa y comunicar nueva fecha.
+
+Áreas: Obras, Logística, GG si crítico.Registro: Reclamo proveedor.Escalamiento: Si impacta plazo contractual.
+
+Se recibe material distinto al solicitado
+
+Riesgo técnico, devolución o retrabajo.
+
+Abrir NC y bloquear uso hasta validación.
+
+Áreas: Logística, Obras, proveedor.Registro: NC con fotos/remito.Escalamiento: Si afecta seguridad/calidad.
+
+Se detecta stock existente en depósito
+
+Compra duplicada y capital inmovilizado.
+
+Suspender compra o ajustar cantidad.
+
+Áreas: Logística, solicitante.Registro: Consulta de stock.Escalamiento: Si ya se había comprometido proveedor.
+
+Administración informa falta de fondos
+
+Compromiso financiero no viable.
+
+Revisar prioridad, negociar plazo o escalar.
+
+Áreas: Adm. y Finanzas, solicitante, GG.Registro: Validación financiera.Escalamiento: Siempre que afecte obra o proveedor crítico.
+
+GG pide comparar alternativas
+
+Decisión sin suficiente respaldo.
+
+Armar comparativa técnica-económica.
+
+Áreas: Proveedor, área técnica, GG.Registro: Comparativa de compras.Escalamiento: Cuando la alternativa cambie calidad, plazo o costo.
+
+Obra pide compra urgente para no frenar frente
+
+Sobrecosto por urgencia y descontrol.
+
+Aplicar flujo de compra urgente y registrar causa.
+
+Áreas: Obras, Logística, Administración, GG si aplica.Registro: Registro de compra urgente.Escalamiento: Si el monto/riesgo supera umbral.
+
+Proveedor nuevo para material especial
+
+Riesgo de incumplimiento o mala calidad.
+
+Evaluar proveedor y pedir respaldo técnico.
+
+Áreas: GPP, Obras, Administración, GG si crítico.Registro: Alta/evaluación proveedor.Escalamiento: Si es proveedor crítico o pago anticipado.
+
+Dos cotizaciones con precios muy distintos
+
+Elegir mal por precio sin criterio.
+
+Comparar alcance, calidad, plazo y condiciones.
+
+Áreas: Solicitante, GPP/Obras si técnico.Registro: Comparativa justificada.Escalamiento: Si la diferencia es relevante.
+
+Logística recibe material incompleto
+
+Falta parcial y posible pago incorrecto.
+
+Abrir NC, reclamar saldo y avisar a Obras.
+
+Áreas: Logística, proveedor, Administración.Registro: Remito observado / NC.Escalamiento: Si afecta continuidad de obra.
+
+Proveedor exige pago anticipado
+
+Riesgo financiero y de cumplimiento.
+
+Validar antecedentes, negociar condiciones y elevar.
+
+Áreas: Administración, GG, solicitante.Registro: Aprobación especial.Escalamiento: Siempre si no es proveedor habitual.
+
+Compra genera desvío contra presupuesto
+
+Pérdida de margen o reclamo interno.
+
+Informar a GPP y GG, identificar causa y registrar aprendizaje.
+
+Áreas: GPP, Administración, GG.Registro: Registro de desvío presupuesto vs real.Escalamiento: Si supera tolerancia definida.
+
+28. Esquema visual de caso
+
+Caso: Obras solicita compra urgente sin información completa. El flujo resume cómo debe actuar Compras para no transformar una urgencia real en una compra desordenada.
+
+
+
+29. Anexos operativos sugeridos
+
+Formulario / anexo
+
+Campos mínimos sugeridos
+
+Solicitud interna de compra
+
+Obra, solicitante, fecha, material/servicio, cantidad, unidad, especificación, fecha requerida, prioridad, destino, impacto si no se compra y adjuntos.
+
+Checklist de datos mínimos
+
+Descripción clara, cantidad, unidad, especificación, obra, fecha requerida, responsable, validación técnica, destino y prioridad.
+
+Comparativa de compras
+
+Proveedor, precio, plazo, validez, condición de pago, entrega, calidad, observaciones, recomendado y motivo.
+
+Registro de compra urgente
+
+Obra, motivo, impacto, responsable, validación mínima, proveedor, monto, aprobación, entrega, causa raíz y acción preventiva.
+
+Evaluación de proveedor
+
+Rubro, calidad, plazo, precio, respuesta, documentación, reclamos, calificación y recomendación.
+
+Registro de no conformidad de compra
+
+Descripción del desvío, proveedor, obra, evidencia, acción inmediata, responsable, fecha compromiso y cierre.
+
+Reporte semanal de compras
+
+Pendientes, compras críticas, urgencias, proveedores con problema, decisiones requeridas y próximos vencimientos.
+
+30. Cierre institucional
+
+La Gerencia de Compras debe ser un área de control, servicio interno y anticipación. Su valor no se mide solamente por conseguir precio, sino por comprar con criterio, proteger el flujo de obra, sostener la trazabilidad, cuidar la caja, reducir urgencias repetidas y aportar información útil para que ECAR tome mejores decisiones.
+
+Comprar bien no es comprar rápido ni comprar barato. Comprar bien es abastecer a ECAR con criterio, respaldo, trazabilidad y oportunidad.
+
+El siguiente procedimiento recomendado es Gerencia de Obras, porque una vez definido el presupuesto, realizada la compra y ordenada la logística, la obra es el lugar donde ECAR demuestra el cumplimiento real de su sistema de gestión.
+

@@ -1,0 +1,1192 @@
+
+
+
+
+
+
+Campo
+
+Detalle
+
+Documento
+
+Procedimiento de Gerencia de Logística
+
+Código sugerido
+
+ECAR-GL-PR-01
+
+Versión
+
+v3.0 - versión mejorada
+
+Área responsable
+
+Gerencia de Logística
+
+Reporta a
+
+Gerencia General
+
+Alcance
+
+Depósito, pañol, stock crítico, herramientas, flota, máquinas, equipos, recepción, despacho, devoluciones, mantenimiento y trazabilidad.
+
+Criterio de calidad
+
+Compatible con criterios de gestión de calidad tipo ISO 9001, sin constituir certificación.
+
+
+
+Actualizar en Word
+
+Nota: la tabla de contenidos puede actualizarse en Word con clic derecho sobre el índice y “Actualizar campo”.
+
+
+
+
+
+El presente procedimiento establece la forma de funcionamiento de la Gerencia de Logística de ECAR Constructora. Su finalidad es ordenar la administración de depósito, pañol, herramientas, máquinas, equipos, vehículos, stock crítico, recepción de materiales, despacho a obra, devoluciones, mantenimiento preventivo y trazabilidad operativa.
+
+La logística de ECAR debe dejar de funcionar como un área puramente reactiva y convertirse en un sistema de anticipación, control y soporte real para Obras, Compras, Proyectos y Presupuestos, Administración y Finanzas, y Gerencia General. El objetivo no es burocratizar el trabajo, sino reducir pérdidas, evitar faltantes, anticipar mantenimiento, mejorar la disponibilidad de recursos y proteger la continuidad operativa de la empresa.
+
+Este documento incorpora además el aporte operativo de Ezequiel, nuevo integrante de la Gerencia de Logística, quien propuso fortalecer el control de flota y almacén mediante fichas digitales de máquinas, repuestos asociados, fotos, búsqueda por palabras clave, carga de horas o kilómetros, alertas de mantenimiento, stock mínimo y códigos de barras o QR para agilizar el despacho.
+
+
+
+La Gerencia de Logística tiene como propósito asegurar que ECAR disponga en tiempo y forma de materiales, herramientas, equipos, vehículos, máquinas y recursos físicos necesarios para ejecutar obras sin interrupciones evitables, con orden, trazabilidad, mantenimiento, control y comunicación.
+
+Logística no es solamente el área que “lleva y trae cosas”. Es el área que debe conocer qué tiene la empresa, dónde está, quién lo usa, en qué estado se encuentra, cuándo debe volver, qué stock está bajo mínimo, qué máquina necesita mantenimiento y qué recurso puede frenar una obra si no se anticipa.
+
+
+
+Establecer un método claro, documentado y repetible para recibir pedidos logísticos, verificar información mínima, controlar disponibilidad, preparar recursos, registrar salidas, coordinar entregas, controlar devoluciones, mantener inventarios actualizados, gestionar stock crítico, administrar flota y máquinas, detectar no conformidades y reportar desvíos a Gerencia General.
+
+
+
+Este procedimiento aplica a todos los procesos logísticos internos de ECAR vinculados con depósito, pañol, herramientas, cajas de herramientas, equipos, vehículos, máquinas, insumos, repuestos, stock crítico, recepción de materiales, entrega a obra, devoluciones, mantenimiento preventivo, carga de horas o kilómetros, combustible, códigos internos, códigos de barras o QR y tablero logístico.
+
+Administración de depósito y pañol.
+
+Control de stock crítico y alertas de reposición.
+
+Recepción de materiales y control de remitos.
+
+Entrega de materiales, herramientas y equipos a obra.
+
+Registro de salidas, responsables y devoluciones.
+
+Administración de flota, máquinas y equipos.
+
+Carga de horas, kilómetros y mantenimiento.
+
+Gestión de no conformidades logísticas.
+
+Reporte a Gerencia General y comunicación con áreas vinculadas.
+
+
+
+Logística no puede ser el lugar donde se descubre el problema tarde. Debe ser el área que permite anticiparlo, registrarlo, resolverlo y evitar que vuelva a repetirse.
+
+La digitalización logística no reemplaza el criterio del responsable; lo fortalece. El sistema debe permitir que ECAR sepa qué tiene, dónde está, quién lo usa, en qué estado se encuentra y qué debe anticiparse antes de que se convierta en urgencia.
+
+
+
+Concepto
+
+Definición operativa
+
+Activo logístico
+
+Máquina, vehículo, equipo, herramienta o recurso físico administrado por Logística.
+
+Stock crítico
+
+Material, insumo o repuesto cuya falta puede frenar una obra, servicio o equipo.
+
+Pañol
+
+Sector de guarda y control de herramientas, equipos menores y elementos de uso operativo.
+
+Despacho
+
+Entrega documentada de materiales o herramientas a obra, frente de trabajo o responsable interno.
+
+Devolución
+
+Retorno documentado de herramientas, equipos o materiales sobrantes desde obra.
+
+No conformidad logística
+
+Desvío respecto del procedimiento: falta de registro, material incorrecto, herramienta no devuelta, stock agotado, rotura no informada, etc.
+
+PIN o identificación técnica
+
+Dato identificatorio propio de una máquina, equipo o componente que permite diferenciarlo y vincularlo con repuestos, mantenimiento e historial.
+
+
+
+Las entradas del proceso son todos los pedidos, datos, documentos o eventos que activan una acción logística.
+
+Pedido de materiales desde Obras.
+
+Pedido de herramientas, caja de herramientas, equipo o vehículo.
+
+Orden de compra emitida por Compras.
+
+Material recibido en depósito o directamente en obra.
+
+Remito de proveedor.
+
+Devolución de herramientas o materiales sobrantes.
+
+Rotura, pérdida, faltante o reclamo interno.
+
+Pedido urgente o solicitud de traslado.
+
+Solicitud de combustible, mantenimiento o service.
+
+Inventario periódico, stock mínimo alcanzado o alerta de reposición.
+
+Carga de horas, kilómetros o falla reportada por operario.
+
+Solicitud de Proyectos y Presupuestos para verificar disponibilidad de recursos.
+
+
+
+Recepción del pedido logístico o evento operativo.
+
+Registro inicial del pedido en planilla, software o formulario definido.
+
+Verificación de datos mínimos: obra, responsable, recurso solicitado, cantidad, fecha de necesidad, destino y prioridad.
+
+Clasificación del requerimiento: material, herramienta, equipo, vehículo, máquina, repuesto, combustible, mantenimiento o traslado.
+
+Validación de prioridad y urgencia.
+
+Verificación de disponibilidad real en depósito, pañol, obra o flota.
+
+Comunicación con Compras cuando se requiera reposición, compra o reclamo a proveedor.
+
+Comunicación con Obras cuando falten datos, fechas, cantidades o responsables.
+
+Preparación del recurso y control de estado antes de la entrega.
+
+Registro de salida, responsable, destino y fecha esperada de devolución cuando corresponda.
+
+Coordinación del traslado o retiro.
+
+Entrega del recurso y confirmación de recepción.
+
+Seguimiento de uso, permanencia o vencimiento de devolución.
+
+Control de devolución y verificación de estado.
+
+Registro de rotura, pérdida, faltante o no conformidad si corresponde.
+
+Actualización de inventario, stock o ficha de activo.
+
+Cierre del pedido y reporte según rutina diaria, semanal o mensual.
+
+
+
+Pedido logístico validado o devuelto por falta de información.
+
+Recurso preparado y entregado a obra.
+
+Material, herramienta, equipo, vehículo o máquina asignada a responsable.
+
+Registro de salida, entrega, devolución y cierre.
+
+Stock actualizado.
+
+Pedido de reposición a Compras.
+
+Recepción conforme o no conforme.
+
+Registro de mantenimiento, horas, kilómetros o combustible.
+
+No conformidad logística registrada.
+
+Reporte diario, semanal o mensual.
+
+Informe extraordinario a Gerencia General cuando exista riesgo operativo, económico o de seguridad.
+
+
+
+Rol
+
+Responsabilidad principal
+
+Responsable de Logística
+
+Conducir el sistema logístico, validar pedidos, controlar registros, coordinar depósito/pañol/flota y reportar desvíos.
+
+Encargado de depósito / pañol
+
+Preparar recursos, registrar salidas y devoluciones, controlar stock, orden y ubicación.
+
+Gerencia de Obras
+
+Solicitar recursos con información completa, responsable definido y fecha de necesidad.
+
+Gerencia de Compras
+
+Comprar, reponer o reclamar a proveedores según información enviada por Logística.
+
+Proyectos y Presupuestos
+
+Consultar disponibilidad de recursos y datos logísticos para presupuestos.
+
+Administración y Finanzas
+
+Controlar gastos logísticos, combustible, reparaciones, documentación y costos por obra.
+
+Gerencia General
+
+Revisar indicadores, resolver escalamiento y aprobar inversiones o decisiones críticas.
+
+Responsable que retira
+
+Recibir, cuidar, usar correctamente y devolver el recurso asignado.
+
+
+
+Actividad
+
+Logística
+
+Obras
+
+Compras
+
+Adm./Finanzas
+
+Gerencia General
+
+Pedido logístico
+
+Valida y registra
+
+Solicita con datos completos
+
+Informada si requiere compra
+
+Informada si impacta costo
+
+Informada si es crítico
+
+Control de stock
+
+Responsable
+
+Informa consumo previsto
+
+Repone según pedido
+
+Valida pago
+
+Controla KPI
+
+Recepción de materiales
+
+Controla y registra
+
+Recibe información si afecta obra
+
+Reclama proveedor
+
+Controla factura/remito
+
+Interviene en desvío grave
+
+Salida de herramientas
+
+Registra y asigna responsable
+
+Define uso y devolución
+
+No aplica
+
+Informa pérdidas si impactan costo
+
+Interviene ante pérdida relevante
+
+Mantenimiento de flota/equipos
+
+Controla alertas
+
+Reporta fallas de uso
+
+Gestiona repuestos/servicios
+
+Valida fondos
+
+Aprueba inversión crítica
+
+No conformidades
+
+Registra y propone acción
+
+Aporta información
+
+Gestiona proveedor si corresponde
+
+Evalúa impacto económico
+
+Decide si es grave
+
+
+
+Registro
+
+Responsable
+
+Momento
+
+Utilidad
+
+Solicitud logística
+
+Área solicitante / Logística
+
+Al iniciar pedido
+
+Dejar evidencia de necesidad y datos mínimos.
+
+Checklist de datos mínimos
+
+Logística
+
+Antes de preparar recurso
+
+Evitar entregas o compras con información incompleta.
+
+Registro de salida de materiales/herramientas
+
+Logística
+
+Al despacho
+
+Trazabilidad de qué salió, a dónde y con quién.
+
+Registro de devolución
+
+Logística
+
+Al regreso de obra
+
+Controlar cantidad, estado y responsable.
+
+Inventario de stock crítico
+
+Logística
+
+Semanal/mensual
+
+Detectar faltantes antes de llegar a cero.
+
+Ficha digital de activo
+
+Logística
+
+Alta y actualizaciones
+
+Controlar PIN, fotos, repuestos, ubicación, horas, km y mantenimiento.
+
+Registro de mantenimiento
+
+Logística
+
+Cada service/reparación
+
+Historial técnico y prevención de fallas.
+
+Registro de combustible
+
+Operario / Logística
+
+Cada carga
+
+Control de consumo por máquina, vehículo u obra.
+
+Recepción conforme / no conforme
+
+Logística
+
+Al recibir proveedor
+
+Controlar cantidades, estado, especificación y remitos.
+
+No conformidad logística
+
+Logística
+
+Al detectar desvío
+
+Corregir causa, asignar responsable y evitar repetición.
+
+Reporte semanal logístico
+
+Logística
+
+Semanal
+
+Informar pedidos, urgencias, faltantes, mantenimiento y desvíos.
+
+
+
+Indicador
+
+Objetivo
+
+Fórmula / criterio
+
+Frecuencia
+
+Pedidos atendidos en tiempo y forma
+
+Medir respuesta operativa
+
+Pedidos cumplidos / pedidos totales
+
+Semanal
+
+Pedidos urgentes vs planificados
+
+Reducir improvisación
+
+Urgentes / totales
+
+Semanal
+
+Faltantes críticos detectados
+
+Anticipar reposición
+
+Cantidad de ítems bajo mínimo
+
+Semanal
+
+Stock crítico que llegó a cero
+
+Evitar quiebre de stock
+
+Cantidad de ítems en cero
+
+Semanal
+
+Herramientas no devueltas
+
+Controlar trazabilidad
+
+Herramientas vencidas sin devolución
+
+Semanal
+
+Herramientas rotas o perdidas
+
+Medir pérdidas
+
+Cantidad y valor estimado
+
+Mensual
+
+Máquinas/vehículos con mantenimiento al día
+
+Prevenir roturas
+
+Activos al día / activos totales
+
+Mensual
+
+Recepciones no conformes
+
+Controlar proveedores
+
+No conformes / recepciones totales
+
+Mensual
+
+Cumplimiento de carga de horas/km
+
+Sostener alertas
+
+Cargas realizadas / cargas esperadas
+
+Semanal
+
+Nivel de orden de depósito
+
+Mantener estándar visual y operativo
+
+Checklist 5S interno
+
+Mensual
+
+
+
+Riesgo
+
+Consecuencia
+
+Control preventivo
+
+Entregar herramientas sin registro
+
+Pérdida, conflicto y falta de responsable
+
+Registro obligatorio con responsable y fecha de devolución.
+
+Confirmar stock sin verificar
+
+Obra planifica con información falsa
+
+Verificación física o digital antes de confirmar.
+
+Stock crítico agotado
+
+Obra frenada y compra urgente
+
+Stock mínimo, alerta y reposición anticipada.
+
+Máquina sin mantenimiento
+
+Rotura, costo alto y riesgo de seguridad
+
+Carga de horas/km y alertas de service.
+
+Repuesto no vinculado a máquina
+
+Demora para reparar
+
+Ficha de activo con repuestos asociados y proveedor habitual.
+
+Material recibido distinto al pedido
+
+Retrabajo y demoras
+
+Control contra OC/remito y recepción no conforme.
+
+Devoluciones sin control
+
+Herramientas rotas o incompletas sin detectar
+
+Checklist al recibir devolución.
+
+Depósito desordenado
+
+Pérdida de tiempo y compras duplicadas
+
+Ubicaciones definidas, etiquetas, codificación y auditoría.
+
+Trabajar solo por WhatsApp
+
+Pérdida de evidencia
+
+Registrar todo pedido relevante en planilla o sistema.
+
+
+
+
+
+Obras debe informar con anticipación qué necesita, para qué obra, en qué frente, en qué cantidad, con qué fecha de necesidad, quién recibe y cuándo se devuelve. Logística debe confirmar disponibilidad real, fecha de entrega, faltantes, recursos no disponibles y restricciones de traslado.
+
+
+
+Logística debe comunicar necesidades de reposición, stock mínimo comprometido, materiales recibidos, no conformidades, diferencias de cantidad, remitos pendientes, incumplimientos de proveedor y compras urgentes derivadas de faltantes.
+
+
+
+Proyectos y Presupuestos debe poder consultar disponibilidad de equipos, herramientas especiales, vehículos, recursos existentes, costos logísticos posibles y restricciones operativas que puedan afectar un presupuesto o planificación de obra.
+
+
+
+Administración y Finanzas debe recibir información de gastos logísticos, combustible, reparaciones, mantenimiento, remitos, documentación respaldatoria y pérdidas o roturas con impacto económico por obra.
+
+
+
+Gerencia General debe recibir información clara y oportuna sobre faltantes críticos, pérdidas relevantes, roturas graves, vehículos o equipos fuera de servicio, necesidades de inversión, incumplimientos repetidos, desorden estructural del depósito o situaciones que puedan frenar obra.
+
+
+
+Faltante que pueda frenar obra.
+
+Pérdida de herramienta o equipo relevante.
+
+Rotura importante o equipo crítico fuera de servicio.
+
+Vehículo fuera de servicio o sin documentación vigente.
+
+Pedido urgente sin información completa.
+
+Material recibido no conforme con impacto operativo.
+
+Diferencia importante entre remito y recibido.
+
+Repetición de pedidos urgentes o falta de devolución de herramientas.
+
+Necesidad de compra extraordinaria o inversión en depósito, software, etiquetas, lector o flota.
+
+Riesgo de seguridad asociado a herramienta, vehículo o equipo.
+
+
+
+Una urgencia puede atenderse, pero no debe naturalizarse. Cada urgencia repetida debe convertirse en aprendizaje y mejora del sistema.
+
+Registrar la urgencia.
+
+Identificar obra o sector afectado.
+
+Definir recurso requerido e impacto si no se resuelve.
+
+Identificar responsable solicitante.
+
+Aplicar validación mínima de datos.
+
+Verificar disponibilidad real.
+
+Resolver con recurso disponible, alternativa o pedido a Compras.
+
+Comunicar a áreas involucradas.
+
+Registrar cierre y análisis de causa.
+
+Definir acción preventiva para evitar repetición.
+
+
+
+Toda herramienta, caja de herramientas, equipo, máquina o vehículo deberá contar con identificación, ubicación, responsable asignado, estado inicial, historial de salida, devolución, rotura, reparación, mantenimiento y baja cuando corresponda.
+
+Alta del activo con código interno.
+
+Registro de fotografía y estado inicial.
+
+Asignación de ubicación o responsable.
+
+Registro de salida con obra, frente y fecha de devolución.
+
+Control de estado al regreso.
+
+Registro de roturas, pérdidas o reparación.
+
+Actualización de ficha digital y tablero logístico.
+
+
+
+Recepción física del material.
+
+Verificación contra orden de compra o pedido.
+
+Verificación contra remito.
+
+Control de cantidad, estado y especificación.
+
+Registro fotográfico si corresponde.
+
+Clasificación como recepción conforme o no conforme.
+
+Comunicación a Compras ante diferencias.
+
+Comunicación a Obras si afecta entrega o planificación.
+
+Almacenamiento, identificación o despacho directo.
+
+Archivo documental del remito y registros asociados.
+
+
+
+Recepción de devolución.
+
+Identificación de obra de origen y responsable que devuelve.
+
+Verificación de cantidad y estado.
+
+Clasificación: reutilizable, reparar, descartar o revisar.
+
+Registro de diferencias, roturas, pérdidas o faltantes.
+
+Comunicación del desvío al área correspondiente.
+
+Reubicación en depósito o sector de reparación.
+
+Actualización del inventario.
+
+Cierre documental de la devolución.
+
+
+
+No conformidad
+
+Acción inmediata
+
+Acción correctiva posible
+
+Material recibido distinto al solicitado
+
+Separar, registrar y avisar a Compras
+
+Reclamo a proveedor y mejora del checklist de recepción.
+
+Cantidad incompleta
+
+Registrar diferencia y frenar despacho si afecta obra
+
+Ajuste de proveedor o reposición urgente.
+
+Herramienta no devuelta
+
+Reclamar al responsable y registrar vencimiento
+
+Aplicar control de responsables y alertas de devolución.
+
+Herramienta rota
+
+Registrar estado, foto y responsable
+
+Reparar, capacitar uso o revisar calidad.
+
+Stock crítico agotado
+
+Informar a Compras y Gerencia General si frena obra
+
+Definir mínimo, ideal y alerta.
+
+Remito no registrado
+
+Regularizar documento
+
+Reforzar recepción con checklist.
+
+Pedido entregado a obra equivocada
+
+Recuperar y redireccionar
+
+Validar destino antes de despacho.
+
+
+
+Cada ítem crítico deberá tener código, descripción, rubro, unidad, stock actual, stock mínimo, stock ideal, ubicación, proveedor habitual, tiempo estimado de reposición, responsable de control y alerta de reposición. El objetivo no es comprar de más, sino evitar que una obra se frene por no anticipar faltantes.
+
+Campo de control
+
+Finalidad
+
+Stock mínimo
+
+Cantidad que dispara alerta antes de llegar a cero.
+
+Stock ideal
+
+Cantidad recomendada para operar con seguridad.
+
+Tiempo de reposición
+
+Días estimados desde pedido hasta disponibilidad.
+
+Proveedor habitual
+
+Contacto rápido para reposición.
+
+Ubicación
+
+Lugar físico exacto para reducir búsqueda y pérdidas.
+
+Rubro
+
+Clasificación: gas, agua, cloaca, eléctrico, herramientas, equipos, EPP, consumibles u otros.
+
+
+
+El depósito y el pañol deben organizarse por rubros, ubicación, rotulado, stock mínimo, sectores definidos y control visual. El orden físico es parte de la productividad: si el material existe pero no se encuentra, para la operación equivale a no tenerlo.
+
+Sector de recepción.
+
+Sector de despacho.
+
+Sector de devoluciones.
+
+Sector de herramientas disponibles.
+
+Sector de herramientas a reparar.
+
+Sector de materiales por rubro.
+
+Sector de stock crítico.
+
+Sector de material no conforme.
+
+Cartelería interna y codificación.
+
+
+
+La flota, las máquinas y los equipos deberán administrarse mediante fichas digitales o planillas maestras que permitan conocer disponibilidad, ubicación, responsable, PIN, documentación, mantenimiento, horas, kilómetros, combustible, repuestos asociados y estado operativo.
+
+Cada operario o responsable deberá cargar las horas de uso, kilómetros recorridos, combustible cargado, fallas detectadas y observaciones relevantes. Esta información permite anticipar mantenimientos, controlar costos por obra, evitar roturas y tomar decisiones con datos.
+
+
+
+A partir de la revisión de flota y almacén realizada por Ezequiel, se incorpora al procedimiento una línea de mejora operativa y digitalización logística. Esta propuesta busca que ECAR trabaje más cómoda, rápida y ordenadamente, reduciendo búsquedas, pérdidas, faltantes, roturas evitables y compras urgentes.
+
+
+
+Cada activo deberá contar con una ficha digital que incluya como mínimo: código interno, nombre del activo, tipo, marca, modelo, año, número de serie, PIN o identificación técnica, dominio o patente, obra o ubicación actual, responsable asignado, estado operativo, fotografías, repuestos asociados, historial de mantenimiento, horas de uso, kilómetros recorridos, consumo de combustible, próximo mantenimiento, documentación vinculada y observaciones.
+
+
+
+El sistema deberá permitir vincular cada activo con sus repuestos críticos: filtros, aceites, correas, mangueras, cubiertas, baterías, elementos hidráulicos, elementos eléctricos, accesorios específicos, proveedores habituales, stock disponible, stock mínimo y tiempo estimado de reposición.
+
+
+
+El software o planilla deberá permitir búsquedas por nombre de máquina, código interno, PIN, marca, modelo, obra, responsable, repuesto, proveedor, tipo de herramienta y rubro. La búsqueda rápida evita perder tiempo y reduce decisiones basadas en memoria.
+
+
+
+Los operarios o responsables deberán cargar fecha, obra, máquina o vehículo, responsable, horas de uso, kilómetros recorridos, combustible cargado, observaciones, falla detectada y necesidad de mantenimiento. Esta carga debe ser simple, rápida y posible desde celular o formulario básico.
+
+
+
+Se deberán definir alertas automáticas o manuales para cambio de aceite, cambio de filtros, revisión de cubiertas, service preventivo, vencimiento de documentación, seguro, VTV/RTO si corresponde, mantenimiento por horas, mantenimiento por kilómetros, revisión por falla reportada y equipo fuera de servicio.
+
+
+
+La implementación de códigos de barras o QR permitirá identificar herramientas, cajas, máquinas y repuestos; registrar salidas y devoluciones; agilizar despacho; reducir errores; mejorar inventario; y conocer ubicación y responsable. La implementación se hará por etapas: codificación interna simple, etiquetas físicas, lectura manual en planilla o software, lector de código de barras o QR y tablero de control logístico.
+
+
+
+El tablero deberá mostrar pedidos pendientes, pedidos urgentes, stock crítico, herramientas entregadas, herramientas vencidas en devolución, máquinas operativas, máquinas fuera de servicio, vehículos disponibles, mantenimientos próximos, repuestos bajo mínimo, no conformidades logísticas, pérdidas, roturas y faltantes.
+
+
+
+Sí, corresponde incluir el perfil del puesto, pero como sección específica o anexo del procedimiento. El procedimiento define cómo debe funcionar el área; el perfil define qué capacidades debe tener la persona responsable para sostener ese funcionamiento.
+
+Aspecto
+
+Definición
+
+Nombre del puesto
+
+Responsable de Gerencia de Logística
+
+Reporta a
+
+Gerencia General
+
+Áreas vinculadas
+
+Obras, Compras, Proyectos y Presupuestos, Administración y Finanzas, RRHH y proveedores.
+
+Propósito del puesto
+
+Asegurar que ECAR disponga en tiempo y forma de materiales, herramientas, equipos, vehículos y recursos físicos necesarios para ejecutar obras sin interrupciones evitables, con orden, trazabilidad, mantenimiento y control.
+
+
+
+Ordenar depósito y pañol.
+
+Controlar stock y stock crítico.
+
+Administrar herramientas, cajas, flota, máquinas y equipos.
+
+Controlar entradas, salidas, entregas y devoluciones.
+
+Coordinar con Obras y Compras.
+
+Informar faltantes y no conformidades.
+
+Controlar remitos, mantenimiento y documentación.
+
+Reportar desvíos e impulsar mejoras logísticas.
+
+
+
+Manejo de inventarios.
+
+Conocimiento básico de materiales de obra.
+
+Conocimiento básico de herramientas, máquinas y equipos.
+
+Control de stock y lectura de remitos.
+
+Uso de Excel o software de gestión.
+
+Carga de datos, registros y reportes.
+
+Organización de depósito y seguimiento de mantenimiento.
+
+
+
+Orden y responsabilidad.
+
+Proactividad y criterio operativo.
+
+Comunicación clara.
+
+Capacidad de seguimiento.
+
+Atención al detalle.
+
+Firmeza para exigir devoluciones.
+
+Capacidad para anticipar problemas.
+
+Actitud de mejora continua.
+
+
+
+Entregar herramientas sin registro.
+
+Confirmar stock sin verificar.
+
+Recibir material sin controlar.
+
+No informar faltantes.
+
+No reclamar devoluciones.
+
+No registrar roturas.
+
+Trabajar sólo por memoria o WhatsApp.
+
+Naturalizar pérdidas.
+
+Permitir que el depósito vuelva al desorden.
+
+
+
+Tipo
+
+Herramientas necesarias
+
+Físicas
+
+Puesto de trabajo definido, escritorio, silla, estanterías, sectores de recepción/despacho/devolución/reparación, cartelería interna, etiquetas, rotuladora o impresora de etiquetas, cajas o contenedores clasificados y EPP.
+
+Tecnológicas
+
+Computadora o notebook, celular corporativo, acceso a internet, impresora, scanner o app de escaneo, software de gestión logística o planilla maestra, lector de código de barras/QR en etapa futura, cámara o celular, carpetas digitales, tablero de control y correo corporativo.
+
+Documentales
+
+Procedimiento de Logística, inventario, registros de salida/devolución, stock crítico, mantenimiento, recepción, no conformidades, combustible, reporte diario, semanal y mensual.
+
+Gestión
+
+Agenda diaria de pedidos, lista de prioridades, tablero de pendientes, semáforo de urgencias, indicadores semanales, reunión semanal con Obras y Compras, revisión mensual con Gerencia General.
+
+
+
+Frecuencia
+
+Rutina mínima
+
+Diaria
+
+Revisar pedidos pendientes, urgencias, salidas, devoluciones, recepción de materiales, herramientas vencidas y novedades de flota/equipos.
+
+Semanal
+
+Reunión Logística + Obras + Compras; revisión de stock crítico; reporte de urgencias; mantenimiento próximo; herramientas no devueltas.
+
+Mensual
+
+Inventario parcial, revisión de KPIs, cierre de pérdidas/roturas/faltantes, revisión de flota, necesidades de inversión y mejoras del depósito.
+
+
+
+Los siguientes casos permiten aplicar el procedimiento en situaciones reales que pueden ocurrir en ECAR. La resolución debe priorizar registro, comunicación, trazabilidad y acción preventiva.
+
+
+
+Riesgo: Entrega sin responsable, pérdida o no devolución.
+
+Forma de resolución: Logística registra pedido, aplica checklist, pide datos faltantes a Obras, verifica disponibilidad y entrega solo con responsable y fecha. Registro: solicitud logística y salida de herramienta. Escala si la urgencia puede frenar obra. Acción preventiva: pedido estándar obligatorio.
+
+
+
+Riesgo: Pérdida económica y conflicto por responsabilidad.
+
+Forma de resolución: Comparar devolución contra checklist de salida, registrar faltantes, informar a Obras y responsable. Escalar si el valor es relevante o se repite. Acción preventiva: checklist por caja y firma de entrega/devolución.
+
+
+
+Riesgo: Frente parado y compra duplicada.
+
+Forma de resolución: Buscar por registro de ubicación/responsable, revisar tablero de herramientas entregadas y coordinar recuperación. Escalar si la herramienta es crítica. Acción preventiva: código QR y vencimiento de devolución.
+
+
+
+Riesgo: Pérdida de trazabilidad.
+
+Forma de resolución: Regularizar salida, identificar responsable, registrar no conformidad y comunicar al área. Escalar si hay reiteración. Acción preventiva: no entregar sin registro y control de acceso al pañol.
+
+
+
+Riesgo: Freno de obra y compra urgente.
+
+Forma de resolución: Registrar faltante, comunicar a Compras, informar plazo a Obras y revisar si el ítem debía tener stock mínimo. Escalar si frena obra. Acción preventiva: definir mínimo e ideal.
+
+
+
+Riesgo: Desorden, daño o pérdida de material.
+
+Forma de resolución: Definir ubicación antes de recepción, preparar sector, rotular y registrar ingreso. Acción preventiva: mapa de ubicación por rubro y recepción programada.
+
+
+
+Riesgo: Pago incorrecto y faltante en obra.
+
+Forma de resolución: Registrar recepción no conforme, fotografiar, informar a Compras y no cerrar recepción hasta aclarar. Escalar si afecta obra. Acción preventiva: control contra OC y remito.
+
+
+
+Riesgo: Uso de material defectuoso y reclamo posterior difícil.
+
+Forma de resolución: Separar material, fotografiar, registrar no conformidad, avisar a Compras y Obras si impacta plazo. Acción preventiva: recepción con checklist visual.
+
+
+
+Riesgo: Retrabajo, devolución y demora.
+
+Forma de resolución: No despachar, registrar diferencia, informar a Compras para reclamo y esperar validación técnica si se propone alternativa. Escalar si la obra se detiene.
+
+
+
+Riesgo: Compra urgente y sobrecosto.
+
+Forma de resolución: Registrar urgencia, evaluar disponibilidad, informar alternativa y analizar causa. Escalar si el frente se frena. Acción preventiva: plazo mínimo de solicitud y reunión semanal de previsión.
+
+
+
+Riesgo: Compra duplicada e inmovilización de dinero.
+
+Forma de resolución: Actualizar inventario, informar a Compras y revisar falla de búsqueda. Acción preventiva: búsqueda por palabra clave, códigos y ubicación visible.
+
+
+
+Riesgo: Demora de traslado y frente operativo afectado.
+
+Forma de resolución: Registrar falla, informar a Obras y Gerencia General si afecta obra, buscar vehículo alternativo y activar mantenimiento. Acción preventiva: checklist diario y service preventivo.
+
+
+
+Riesgo: Riesgo de rotura, seguridad y costo mayor.
+
+Forma de resolución: Bloquear uso si corresponde, registrar mantenimiento vencido, coordinar service y avisar a GG si afecta disponibilidad. Acción preventiva: alertas por kilómetros/fecha.
+
+
+
+Riesgo: No se conoce causa ni responsable.
+
+Forma de resolución: Registrar rotura, solicitar informe al responsable, fotografiar, evaluar reparación y comunicar a Obras/GG. Acción preventiva: checklist de devolución y carga de novedades por operario.
+
+
+
+Riesgo: Pérdida económica y falta de responsable.
+
+Forma de resolución: Revisar registro de salida, responsable y última ubicación; registrar pérdida; informar a Obras y GG. Acción preventiva: etiqueta QR, devolución programada y control semanal.
+
+
+
+Riesgo: Demoras, compras duplicadas y pérdida de control.
+
+Forma de resolución: Pausar, clasificar por rubro, rotular, actualizar inventario y definir responsables de orden. Escalar si el desorden es estructural. Acción preventiva: rutina 5S mensual.
+
+
+
+Riesgo: Errores de despacho y pérdidas de tiempo.
+
+Forma de resolución: Separar por rubro, etiquetar, cargar ubicación y definir colores/sectores. Acción preventiva: mapa de almacén y cartelería.
+
+
+
+Riesgo: Obra frenada y compra urgente.
+
+Forma de resolución: Registrar quiebre, pedir reposición a Compras, informar a Obras y analizar causa. Escalar si frena obra. Acción preventiva: stock mínimo y alerta antes de cero.
+
+
+
+Riesgo: Confusión y falta de evidencia.
+
+Forma de resolución: Responder solicitando datos mínimos y registrar el pedido en sistema antes de actuar. Acción preventiva: formulario simple de pedido logístico.
+
+
+
+Riesgo: Inventario impreciso y costos por obra incorrectos.
+
+Forma de resolución: Solicitar obra de origen, responsable, cantidad y estado; registrar devolución. Acción preventiva: remito interno de devolución.
+
+
+
+Riesgo: Material sin trazabilidad ni control de remito.
+
+Forma de resolución: Solicitar remito/foto a obra, registrar recepción directa y avisar a Compras. Acción preventiva: regla de recepción directa comunicada a proveedores y encargados.
+
+
+
+Riesgo: Desvío económico y operativo.
+
+Forma de resolución: Cruzar OC, remito, recepción y despacho; registrar diferencia; informar a Compras, Obras y Adm./Finanzas. Escalar si el monto es relevante. Acción preventiva: trazabilidad en cuatro pasos.
+
+
+
+Riesgo: Conflicto de prioridades.
+
+Forma de resolución: Revisar planificación, impacto y alternativas; comunicar a Obras y elevar a GG si hay conflicto entre frentes. Acción preventiva: tablero de asignación de equipos.
+
+
+
+Riesgo: Gasto sin control y costos por obra imprecisos.
+
+Forma de resolución: Registrar carga con fecha, obra, equipo, litros, responsable y km/horas. Escalar si hay consumos anormales. Acción preventiva: planilla de combustible por activo.
+
+
+
+Riesgo: La empresa no puede decidir con datos.
+
+Forma de resolución: Consultar tablero logístico, inventario y fichas de activos; entregar reporte de disponibilidad. Acción preventiva: tablero actualizado diariamente.
+
+
+
+Riesgo: Dificultad para identificar repuestos y mantenimiento correcto.
+
+Forma de resolución: Crear ficha digital, cargar PIN, fotos, modelo y datos técnicos. Comunicar a Compras si se requieren repuestos. Acción preventiva: alta obligatoria de activo antes de asignar a obra.
+
+
+
+Riesgo: Demora en reparación.
+
+Forma de resolución: Buscar por rubro/proveedor, vincular repuesto al activo y definir stock mínimo si es crítico. Acción preventiva: ficha de repuestos asociados.
+
+
+
+Riesgo: No se activan alertas de mantenimiento.
+
+Forma de resolución: Reclamar carga, registrar incumplimiento y actualizar horas estimadas. Escalar si se repite. Acción preventiva: formulario simple desde celular y revisión semanal.
+
+
+
+Riesgo: Riesgo de rotura y costo mayor.
+
+Forma de resolución: Registrar vencimiento, coordinar service y revisar falla de alerta. Acción preventiva: tablero de mantenimiento por kilómetros y fecha.
+
+
+
+Riesgo: Dificultad para registrar salida/devolución.
+
+Forma de resolución: Identificar manualmente, reimprimir etiqueta y registrar reposición de código. Acción preventiva: etiquetas resistentes y revisión mensual.
+
+
+
+Caso visual: “Obra solicita herramienta urgente sin datos completos”. Este flujo resume cómo debe actuar Logística para no transformar una urgencia en desorden.
+
+
+
+
+
+La Gerencia de Logística es una de las bases de la continuidad operativa de ECAR. Cuando Logística funciona con orden, Obras trabaja mejor, Compras compra con más criterio, Administración puede controlar mejor los costos y Gerencia General puede tomar decisiones con información real.
+
+El crecimiento de ECAR exige una logística capaz de anticipar, registrar, responder y mejorar. No alcanza con resolver el problema del día: hay que dejar evidencia, aprender de la causa y evitar que el mismo desvío se repita.
+
+Logística no debe ser el lugar donde se descubre el problema tarde. Debe ser el área que permite anticiparlo, registrarlo, resolverlo y evitar que vuelva a repetirse.
+

@@ -29,6 +29,11 @@ import { InspectionsModule } from './components/InspectionsModule';
 import { RFIModule } from './components/RFIModule';
 import { ExpensesModule } from './components/ExpensesModule';
 import { ProjectBudgetModule } from './components/ProjectBudgetModule';
+import { OpportunitiesModule } from './components/OpportunitiesModule';
+import { NonConformitiesModule } from './components/NonConformitiesModule';
+import { ScopeChangesModule } from './components/ScopeChangesModule';
+import { PurchaseOrdersModule } from './components/PurchaseOrdersModule';
+import { SupplierEvalModule } from './components/SupplierEvalModule';
 import { GuideModule } from './components/GuideModule';
 import { ManualModule } from './components/ManualModule';
 import { ImplementationModule } from './components/ImplementationModule';
@@ -107,6 +112,11 @@ function AppContent() {
       case 'rfi': return <RFIModule />;
       case 'expenses': return <ExpensesModule />;
       case 'project_budget': return <ProjectBudgetModule />;
+      case 'opportunities': return <OpportunitiesModule />;
+      case 'nonconformities': return <NonConformitiesModule />;
+      case 'scope_changes': return <ScopeChangesModule />;
+      case 'purchase_orders': return <PurchaseOrdersModule />;
+      case 'supplier_eval': return <SupplierEvalModule />;
 
       case 'documents': return <DocumentsModule />;
       case 'guide': return <GuideModule />;

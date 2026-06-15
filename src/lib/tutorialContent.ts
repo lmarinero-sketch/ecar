@@ -361,4 +361,81 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Los cambios de permisos se aplican en el próximo inicio de sesión del usuario.',
     ],
   },
+  purchase_orders: {
+    title: 'Órdenes de Compra / OT',
+    description: 'Emisión y seguimiento de Órdenes de Compra y Órdenes de Trabajo formales. Vinculación con pedidos internos, proveedores y proyectos.',
+    steps: [
+      'Creá una nueva OC desde "Nueva Orden" seleccionando proveedor y proyecto.',
+      'Agregá los ítems con cantidad, unidad y precio unitario.',
+      'Si el monto supera el umbral, la OC requiere aprobación de GG.',
+      'Hacé seguimiento del estado: emitida → entregada → cerrada.',
+    ],
+    tips: [
+      'Las OC se numeran automáticamente de forma secuencial.',
+      'Vinculá cada OC con un pedido de compra interno para trazabilidad.',
+      'Las OC urgentes quedan marcadas con bandera roja.',
+    ],
+  },
+  opportunities: {
+    title: 'Pipeline de Oportunidades',
+    description: 'Gestión del funnel comercial de ECAR. Registrá oportunidades, llevá el pipeline por etapas, controlá documentación recibida y versiones de presupuesto.',
+    steps: [
+      'Registrá una nueva oportunidad con cliente, descripción y monto estimado.',
+      'Completá el checklist de documentación recibida.',
+      'Mové la oportunidad por las etapas: Oportunidad → Relevamiento → Presupuesto → Propuesta → Negociación → Adjudicada.',
+      'Registrá supuestos y exclusiones para cada presupuesto.',
+      'Al adjudicar, generá la Carpeta de Inicio de Obra.',
+    ],
+    tips: [
+      'Usá la vista Pipeline (Kanban) para una visión rápida del embudo comercial.',
+      'La tasa de conversión se calcula automáticamente con las oportunidades cerradas.',
+      'Las oportunidades rechazadas quedan en un historial separado para análisis.',
+    ],
+  },
+  nonconformities: {
+    title: 'No Conformidades',
+    description: 'Registro de desvíos respecto de los procedimientos. Acciones inmediatas, análisis de causa raíz, acciones correctivas y lecciones aprendidas.',
+    steps: [
+      'Registrá una NC indicando categoría (compra, obra, logística, proveedor, documental, seguridad).',
+      'Describí el desvío y adjuntá evidencia fotográfica.',
+      'Definí acción inmediata y responsable.',
+      'Completá el análisis de causa raíz y acción correctiva.',
+      'Verificá eficacia y cerrá la NC con lección aprendida.',
+    ],
+    tips: [
+      'Las NC se numeran automáticamente para trazabilidad.',
+      'Las NC abiertas aparecen en el Dashboard de indicadores por gerencia.',
+      'Las lecciones aprendidas se incorporan a la mejora continua del sistema.',
+    ],
+  },
+  scope_changes: {
+    title: 'Adicionales y Cambios de Alcance',
+    description: 'Registro de adicionales, cambios de alcance, desvíos e interferencias. Evaluación de impacto técnico y económico con flujo de aprobación.',
+    steps: [
+      'Detectá un cambio y registralo indicando origen (cliente, inspección, obra, interno).',
+      'Evaluá el impacto técnico, económico y en plazo.',
+      'Enviá a aprobación de GG cuando corresponda.',
+      'Ejecutá solo después de la aprobación formal.',
+    ],
+    tips: [
+      'Nunca ejecutes un adicional sin registro previo.',
+      'Vinculá cada cambio con el presupuesto original para defensa de reclamos.',
+      'Los cambios rechazados quedan documentados para referencia futura.',
+    ],
+  },
+  supplier_eval: {
+    title: 'Evaluación de Proveedores',
+    description: 'Calificación periódica de proveedores según criterios de plazo, calidad, precio, documentación y respuesta a reclamos.',
+    steps: [
+      'Seleccioná el proveedor y período a evaluar.',
+      'Calificá cada criterio del 1 al 5.',
+      'El sistema calcula el puntaje general automáticamente.',
+      'Indicá la recomendación: recomendado, condicional, no recomendado o bloquear.',
+    ],
+    tips: [
+      'Evaluá proveedores mensualmente para mantener un historial útil.',
+      'Los proveedores bloqueados no aparecen como opción en nuevas OC.',
+      'La cantidad de NC se vincula automáticamente con la evaluación.',
+    ],
+  },
 };

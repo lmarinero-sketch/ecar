@@ -17,12 +17,16 @@ import { TutorialPanel } from './TutorialPanel';
 const iconMap: Record<ModuleId, React.ElementType> = {
   bi: LayoutDashboard, liquidity: DollarSign, monthly_report: Calendar,
   wbs: Target, invoicing: Calculator, purchases: ShoppingCart,
-  purchase_requests: ShoppingBag, finances: Landmark, obligations: Bell,
+  purchase_requests: ShoppingBag, purchase_orders: FileSignature,
+  finances: Landmark, obligations: Bell,
   rrhh: Users, inventory: Package, logistics: Warehouse,
   fleet: Truck, certifications: FileSignature, field: Smartphone,
   safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
   expenses: Wallet, documents: FolderOpen, project_budget: HardHat,
-  fuel: Fuel, guide: HelpCircle, manual: BookMarked,
+  opportunities: Target, fuel: Fuel,
+  nonconformities: ShieldAlert, scope_changes: FileSignature,
+  supplier_eval: ClipboardCheck,
+  guide: HelpCircle, manual: BookMarked,
   implementation: Rocket, user_management: UserCog,
 };
 
@@ -30,12 +34,16 @@ const iconMap: Record<ModuleId, React.ElementType> = {
 const SHORT_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard', liquidity: 'Liquidez', monthly_report: 'Mensual',
   wbs: 'WBS', invoicing: 'ARCA', purchases: 'Compras',
-  purchase_requests: 'Pedidos', finances: 'Finanzas', obligations: 'Alertas',
+  purchase_requests: 'Pedidos', purchase_orders: 'OC / OT',
+  finances: 'Finanzas', obligations: 'Alertas',
   rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Acopios',
   fleet: 'Flota', certifications: 'Cert. ICC', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
-  fuel: 'Combustible', guide: 'Guía', manual: 'Manual ISO',
+  opportunities: 'Pipeline', fuel: 'Combustible',
+  nonconformities: 'No Conf.', scope_changes: 'Adicionales',
+  supplier_eval: 'Eval. Prov.',
+  guide: 'Guía', manual: 'Manual ISO',
   implementation: 'Implementación', user_management: 'Usuarios',
 };
 
@@ -43,14 +51,18 @@ const SHORT_LABELS: Record<ModuleId, string> = {
 const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   bi: 'bg-ecar-blue',
   liquidity: 'bg-emerald-500',
-  purchases: 'bg-violet-500', finances: 'bg-emerald-500', obligations: 'bg-amber-500',
+  purchases: 'bg-violet-500', purchase_orders: 'bg-violet-600',
+  finances: 'bg-emerald-500', obligations: 'bg-amber-500',
   invoicing: 'bg-blue-500', monthly_report: 'bg-indigo-500', expenses: 'bg-orange-500',
   rrhh: 'bg-indigo-500',
   wbs: 'bg-cyan-500', inventory: 'bg-teal-500', purchase_requests: 'bg-purple-500',
   logistics: 'bg-slate-500', fleet: 'bg-sky-500', certifications: 'bg-lime-600',
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-cyan-600',
-  fuel: 'bg-sky-600', guide: 'bg-ecar-blue', manual: 'bg-blue-900',
+  opportunities: 'bg-blue-600', fuel: 'bg-sky-600',
+  nonconformities: 'bg-red-600', scope_changes: 'bg-amber-600',
+  supplier_eval: 'bg-teal-600',
+  guide: 'bg-ecar-blue', manual: 'bg-blue-900',
   implementation: 'bg-rose-500', user_management: 'bg-slate-600',
 };
 
@@ -72,12 +84,14 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Administración', emoji: '💼',
     items: [
       { id: 'purchases', requires: true },
+      { id: 'purchase_orders', requires: true },
       { id: 'finances', requires: true },
       { id: 'obligations', requires: true },
       { id: 'invoicing', requires: true },
       { id: 'monthly_report' },
       { id: 'expenses', requires: true },
       { id: 'certifications', requires: true },
+      { id: 'supplier_eval', requires: true },
     ],
   },
   {
@@ -97,12 +111,15 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Operaciones', emoji: '🏗️',
     items: [
+      { id: 'opportunities', requires: true },
       { id: 'project_budget', requires: true },
       { id: 'wbs', requires: true },
       { id: 'field', requires: true },
+      { id: 'scope_changes', requires: true },
       { id: 'safety', requires: true },
       { id: 'inspections', requires: true },
       { id: 'rfi', requires: true },
+      { id: 'nonconformities', requires: true },
       { id: 'documents', requires: true },
     ],
   },

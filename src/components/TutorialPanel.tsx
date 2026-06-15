@@ -30,6 +30,11 @@ const MODULE_COLOR: Partial<Record<ModuleId, string>> = {
   manual: 'from-blue-900 to-blue-700',
   implementation: 'from-rose-700 to-rose-500',
   logistics: 'from-slate-700 to-slate-500',
+  opportunities: 'from-blue-700 to-cyan-500',
+  purchase_orders: 'from-violet-800 to-purple-600',
+  nonconformities: 'from-red-800 to-rose-600',
+  scope_changes: 'from-amber-800 to-orange-600',
+  supplier_eval: 'from-teal-800 to-emerald-600',
 };
 
 export const TutorialPanel: React.FC = () => {

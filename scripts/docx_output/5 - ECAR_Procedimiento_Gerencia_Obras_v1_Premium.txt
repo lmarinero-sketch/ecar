@@ -1,0 +1,1696 @@
+
+
+
+
+1. Control documental
+
+Campo
+
+Definición
+
+Nombre del procedimiento
+
+Procedimiento de Gerencia de Obras
+
+Código
+
+PR-GO-01
+
+Versión
+
+v1.0 – Premium
+
+Empresa
+
+ECAR Construcciones / ECAR Constructora
+
+Área responsable
+
+Gerencia de Obras
+
+Responsable del procedimiento
+
+Responsable de Gerencia de Obras, con revisión de Gerencia General
+
+Revisión
+
+Gerencia General
+
+Aprobación
+
+Gerencia General / Dirección
+
+Fecha
+
+Junio 2026
+
+Estado
+
+Documento interno de trabajo
+
+Tipo de documento
+
+Documento interno de conducción, planificación, ejecución, control operativo y mejora continua
+
+Criterio normativo
+
+Compatible con criterios de gestión de calidad tipo ISO 9001. No implica certificación formal.
+
+Uso previsto
+
+Ordenar el proceso desde la planificación de obra hasta la ejecución, control de avance, órdenes de trabajo, comunicación con áreas, cierre de etapa y aprendizaje posterior.
+
+Próxima revisión
+
+Al validar responsables reales, formularios definitivos, frecuencia de reportes y rutina de planificación semanal.
+
+2. Índice ejecutivo del procedimiento
+
+Sección
+
+Contenido
+
+1
+
+Control documental
+
+2
+
+Índice ejecutivo
+
+3
+
+Introducción
+
+4
+
+Objetivo
+
+5
+
+Propósito de la Gerencia de Obras
+
+6
+
+Alcance, límites y criterio rector
+
+7
+
+Definiciones básicas
+
+8
+
+Entradas, actividades y salidas
+
+9
+
+Responsables y matriz RACI
+
+10
+
+Registros obligatorios
+
+11
+
+Indicadores
+
+12
+
+Riesgos y controles preventivos
+
+13
+
+Comunicación con gerencias y Gerencia General
+
+14
+
+Tratamiento de planificación, órdenes de trabajo y urgencias
+
+15
+
+No conformidades de obra
+
+16
+
+Reuniones, rutina y reportes
+
+17
+
+Perfil, alcance y herramientas del responsable
+
+18
+
+10 casos ejemplo aplicables a ECAR
+
+19
+
+Esquema visual de caso
+
+20
+
+Anexos operativos sugeridos
+
+21
+
+Cierre institucional
+
+3. Introducción
+
+Este procedimiento desarrolla el funcionamiento operativo de la Gerencia de Obras dentro del sistema interno de organización, procedimientos y comunicación entre gerencias de ECAR. Su finalidad es transformar la ejecución en obra en un proceso planificado, medible, documentado y coordinado con Proyectos y Presupuestos, Compras, Logística, Administración y Finanzas y Gerencia General.
+
+La Gerencia de Obras es el lugar donde la empresa demuestra en terreno lo que prometió en el presupuesto y lo que planificó internamente. Por eso, no puede trabajar solamente por urgencia, mensajes aislados o memoria de encargados. Debe planificar, conducir, registrar, controlar, comunicar desvíos y cerrar cada etapa con evidencia.
+
+El enfoque del procedimiento es compatible con criterios de gestión de calidad tipo ISO 9001: enfoque a procesos, información documentada, trazabilidad, control operativo, pensamiento basado en riesgos, indicadores, no conformidades, acciones correctivas y mejora continua. No implica certificación formal.
+
+4. Objetivo del procedimiento
+
+Establecer el método de trabajo de la Gerencia de Obras de ECAR para planificar, ejecutar, controlar y cerrar obras, servicios o frentes de trabajo con orden, seguridad, calidad, productividad, trazabilidad y comunicación efectiva entre áreas.
+
+El procedimiento busca evitar inicios sin planificación, pedidos tardíos de materiales, órdenes de trabajo ambiguas, falta de partes diarios, ejecución de adicionales sin respaldo, errores de calidad, desvíos no comunicados, dependencia excesiva de WhatsApp y ausencia de cierre documental.
+
+5. Propósito de la Gerencia de Obras
+
+La Gerencia de Obras tiene como propósito asegurar que ECAR ejecute los trabajos comprometidos con planificación, coordinación de recursos, control de avance, control de calidad, seguridad, comunicación y registro. Su función no es sólo “hacer obra”, sino conducir el proceso real de ejecución para que la empresa cumpla, cobre, aprenda y mejore.
+
+Obras debe ser el puente entre el presupuesto aprobado y la realidad del terreno. Si Obras no planifica, Compras compra tarde; si Obras no comunica faltantes, Logística actúa por urgencia; si Obras no registra avances, Administración no puede certificar; si Obras ejecuta cambios sin aviso, Proyectos y Presupuestos no puede defender adicionales.
+
+6. Alcance, exclusiones y criterio rector
+
+6.1 Alcance
+
+Este procedimiento aplica desde la recepción de una obra aprobada o frente de trabajo autorizado hasta la planificación, inicio, ejecución, control de avance, comunicación de pedidos, tratamiento de desvíos, cierre de etapa, devolución de recursos y cierre final de obra.
+
+Planificación operativa semanal y mensual.
+
+Revisión de alcance, presupuesto, cómputos, supuestos y restricciones recibidos desde Proyectos y Presupuestos.
+
+Elaboración y emisión de órdenes de trabajo internas.
+
+Pedido anticipado de materiales, herramientas, equipos, vehículos y recursos.
+
+Comunicación formal con Compras y Logística.
+
+Control de avance físico, productividad, calidad y seguridad.
+
+Elaboración de partes diarios y reportes semanales.
+
+Registro de desvíos, interferencias, adicionales y no conformidades.
+
+Entrega de planificación, novedades críticas y reportes a Gerencia General.
+
+Cierre de etapa, cierre de obra y lecciones aprendidas.
+
+6.2 Exclusiones y límites
+
+No reemplaza el procedimiento de Proyectos y Presupuestos: Obras no debe modificar alcance técnico-económico sin consulta cuando impacte costo, plazo o cliente.
+
+No reemplaza el procedimiento de Compras: Obras solicita recursos con datos mínimos, pero no define por sí sola condiciones comerciales ni emite órdenes de compra.
+
+No reemplaza el procedimiento de Logística: Obras pide herramientas, equipos y materiales, pero Logística controla disponibilidad, entrega, devolución y trazabilidad física.
+
+No reemplaza el control financiero: Obras aporta avance, mediciones y respaldos, pero facturación, pagos, cobranzas y cierre económico corresponden a Administración y Finanzas.
+
+No debe ejecutar adicionales relevantes sin registrar, consultar y escalar cuando corresponda.
+
+6.3 Criterio rector del área
+
+Toda obra debe poder explicar qué se va a hacer, quién lo hará, cuándo, con qué recursos, con qué materiales, bajo qué estándar, qué avance tiene, qué desvíos existen, qué decisiones necesita y qué evidencia respalda lo ejecutado.
+
+7. Definiciones básicas
+
+Término
+
+Definición operativa para ECAR
+
+Planificación de obra
+
+Documento operativo donde Obras define frentes, tareas, responsables, recursos, fechas, restricciones, riesgos y necesidades de materiales o equipos.
+
+Orden de trabajo interna
+
+Instrucción formal de ejecución para una tarea, frente o servicio, indicando alcance, responsable, fecha, recursos, condición de seguridad, registro y criterio de cierre.
+
+Parte diario
+
+Registro mínimo de lo ocurrido en obra: personal, tareas, avance, recursos usados, novedades, fotos, desvíos, clima, seguridad y pendientes.
+
+Frente de obra
+
+Sector físico o funcional donde se ejecuta una parte del trabajo.
+
+Desvío
+
+Diferencia entre lo planificado y lo ocurrido en plazo, costo, calidad, seguridad, recursos o alcance.
+
+Adicional
+
+Trabajo no incluido en el alcance original que requiere evaluación técnica, económica y aprobación.
+
+No conformidad de obra
+
+Incumplimiento técnico, documental, operativo o de seguridad respecto del procedimiento, presupuesto, plano, estándar o requisito aplicable.
+
+Cierre de etapa
+
+Registro que evidencia que una tarea o hito fue ejecutado, controlado y respaldado para continuar, certificar o cerrar.
+
+8. Entradas, actividades y salidas del proceso
+
+8.1 Entradas del proceso
+
+Entrada
+
+Origen habitual
+
+Uso dentro del proceso
+
+Obra adjudicada o aprobada
+
+GG / Cliente / GPP
+
+Activa planificación operativa y carpeta de inicio.
+
+Carpeta de inicio de obra
+
+GPP
+
+Base técnica y económica para ejecutar con alcance claro.
+
+Planos, cómputos, presupuesto y supuestos
+
+GPP / Cliente
+
+Permiten definir tareas, materiales, rendimientos y restricciones.
+
+Pedido de cliente o inspección
+
+Cliente / Inspección
+
+Puede generar coordinación, cambio de alcance o adicional.
+
+Disponibilidad de materiales, herramientas y equipos
+
+Logística
+
+Condiciona arranque, continuidad y planificación.
+
+Estado de compras pendientes
+
+Compras
+
+Permite prever entregas, faltantes y alternativas.
+
+Personal disponible
+
+RRHH / Obras
+
+Permite asignar cuadrillas y responsables.
+
+Novedad de campo o interferencia
+
+Encargado / Obra
+
+Activa análisis, registro de desvío y comunicación.
+
+Necesidad de orden de trabajo
+
+Obras / GG
+
+Formaliza una tarea o frente específico de ejecución.
+
+Requerimiento de planificación a GG
+
+Gerencia General
+
+Activa reporte de programación y decisiones requeridas.
+
+8.2 Actividades principales
+
+Recepción de carpeta de inicio o alcance aprobado.
+
+Revisión de presupuesto, cómputo, planos, supuestos, exclusiones y restricciones.
+
+Definición de frentes de obra, secuencia, responsables y prioridades.
+
+Elaboración de planificación semanal y mensual.
+
+Identificación de necesidades de materiales, herramientas, equipos, vehículos, personal y subcontratos.
+
+Comunicación anticipada con Compras y Logística.
+
+Entrega de planificación a Gerencia General con decisiones requeridas.
+
+Elaboración de órdenes de trabajo internas para tareas, frentes o servicios definidos.
+
+Inicio de obra o frente con condiciones mínimas verificadas.
+
+Control diario de avance, calidad, seguridad, recursos y novedades.
+
+Elaboración de parte diario con registro fotográfico cuando corresponda.
+
+Comunicación inmediata de faltantes, interferencias, accidentes, desvíos o cambios de alcance.
+
+Registro de adicionales o cambios antes de ejecutar cuando impacten costo o plazo.
+
+Seguimiento semanal de avance real vs planificado.
+
+Cierre de etapa, devolución de recursos y registro de lecciones aprendidas.
+
+8.3 Salidas del proceso
+
+Salida
+
+Destinatario
+
+Utilidad
+
+Planificación semanal / mensual
+
+GG, Compras, Logística
+
+Permite anticipar recursos y decisiones.
+
+Orden de trabajo interna
+
+Encargado, cuadrilla, archivo de obra
+
+Define qué se ejecuta, quién responde y con qué criterio.
+
+Pedido de materiales / herramientas / equipos
+
+Compras / Logística
+
+Activa abastecimiento y entrega con datos mínimos.
+
+Parte diario
+
+GG / Obras / Administración si aplica
+
+Deja evidencia de avance, personal, tareas y desvíos.
+
+Reporte semanal de obra
+
+GG
+
+Muestra avance, riesgos, necesidades y decisiones pendientes.
+
+Registro de desvío
+
+GG / GPP / área afectada
+
+Permite analizar causa, impacto y acción correctiva.
+
+Registro de adicional
+
+GPP / GG / Administración
+
+Sustenta recupero económico o ajuste de alcance.
+
+Checklist de calidad o seguridad
+
+Obras / GG / Cliente si aplica
+
+Verifica cumplimiento antes de avanzar o tapar.
+
+Cierre de etapa
+
+GG / Administración / Cliente si aplica
+
+Permite certificar, continuar o cerrar técnicamente.
+
+Lección aprendida
+
+GG / Manual interno
+
+Evita repetir errores y mejora el procedimiento.
+
+9. Responsables y matriz RACI
+
+Rol / área
+
+Responsabilidad principal dentro del procedimiento
+
+Responsable de Gerencia de Obras
+
+Planificar, conducir ejecución, ordenar frentes, emitir órdenes de trabajo internas, controlar avance, calidad, seguridad y reportar a GG.
+
+Gerencia General
+
+Validar prioridades, destrabar decisiones críticas, revisar planificación, controlar indicadores y escalamientos.
+
+Proyectos y Presupuestos
+
+Entregar carpeta de inicio, aclarar alcance, evaluar adicionales, cambios y desvíos contra presupuesto.
+
+Compras
+
+Gestionar adquisición de materiales, servicios y recursos solicitados con datos completos.
+
+Logística
+
+Informar disponibilidad, entregar materiales/herramientas/equipos y controlar devoluciones y trazabilidad.
+
+Administración y Finanzas
+
+Recibir avances, cierres, certificados y datos para control económico, facturación y pagos.
+
+RRHH
+
+Aportar información de personal, asistencia, altas, documentación y necesidades de capacitación.
+
+Encargado / Responsable de frente
+
+Ejecutar la planificación, informar novedades, completar parte diario y cuidar seguridad/calidad.
+
+Actividad clave
+
+Obras
+
+GG
+
+GPP
+
+Compras
+
+Logística
+
+Adm./Fin.
+
+Recepción de carpeta de inicio
+
+R
+
+A/I
+
+R
+
+I
+
+I
+
+I
+
+Planificación semanal/mensual
+
+R
+
+A/C
+
+C
+
+C
+
+C
+
+I
+
+Pedido de materiales
+
+R
+
+I
+
+I
+
+C/R
+
+C
+
+I
+
+Pedido logístico de herramientas/equipos
+
+R
+
+I
+
+I
+
+I
+
+R/C
+
+I
+
+Orden de trabajo interna
+
+R
+
+I
+
+C
+
+I
+
+C
+
+I
+
+Control diario y parte diario
+
+R
+
+I
+
+I
+
+I
+
+I
+
+I
+
+Cambio de alcance/adicional
+
+C/R
+
+A
+
+R/C
+
+C
+
+C
+
+C
+
+Cierre de etapa / certificación
+
+R
+
+A/C
+
+C
+
+I
+
+C
+
+R/C
+
+Desvío grave
+
+R
+
+A
+
+C
+
+C
+
+C
+
+C
+
+Referencias: R = Responsable de ejecutar | A = Aprueba o responsable final | C = Consultado | I = Informado.
+
+10. Registros obligatorios
+
+Registro
+
+Responsable
+
+Momento
+
+Destinatario
+
+Utilidad
+
+Carpeta de inicio de obra
+
+GPP / Obras
+
+Antes de iniciar
+
+Obras / GG
+
+Transfiere alcance, cómputo, supuestos y restricciones.
+
+Planificación semanal de obra
+
+Obras
+
+Semanal
+
+GG / Compras / Logística
+
+Anticipa tareas, recursos y decisiones.
+
+Planificación mensual base
+
+Obras
+
+Mensual
+
+GG
+
+Permite mirar hitos, recursos críticos y capacidad.
+
+Orden de trabajo interna
+
+Obras
+
+Antes de ejecutar tarea/frente
+
+Encargado / archivo
+
+Define alcance, responsable, recursos, fecha y cierre.
+
+Pedido de materiales
+
+Obras
+
+Con anticipación
+
+Compras
+
+Activa compra con datos mínimos.
+
+Pedido logístico
+
+Obras
+
+Con anticipación
+
+Logística
+
+Activa entrega de herramientas, equipos o materiales disponibles.
+
+Parte diario
+
+Encargado / Obras
+
+Diario
+
+Obras / GG
+
+Registra avance, personal, fotos, novedades y desvíos.
+
+Reporte semanal de obra
+
+Obras
+
+Semanal
+
+GG
+
+Resume avance, riesgos, faltantes y decisiones.
+
+Registro de desvío
+
+Obras
+
+Ante desvío
+
+GG / área afectada
+
+Permite acción correctiva.
+
+Registro de adicional
+
+Obras / GPP
+
+Cuando surge
+
+GG / Administración
+
+Respalda reclamo o ajuste económico.
+
+Checklist de calidad
+
+Obras
+
+Antes de cerrar etapa
+
+Obras / GG
+
+Evita retrabajos y entrega deficiente.
+
+Checklist de seguridad
+
+Obras
+
+Inicio y controles
+
+Obras / RRHH / GG
+
+Previene incidentes y evidencia control.
+
+Cierre de etapa
+
+Obras
+
+Al finalizar hito
+
+GG / Adm.
+
+Permite certificar, continuar o cerrar.
+
+Cierre de obra
+
+Obras
+
+Final
+
+GG / Adm. / Logística
+
+Cierra pendientes, documentación y devoluciones.
+
+Lección aprendida
+
+Obras / GG
+
+Cierre
+
+Sistema interno
+
+Mejora procesos futuros.
+
+11. Indicadores de gestión
+
+Indicador
+
+Objetivo
+
+Fórmula simple
+
+Frecuencia
+
+Responsable
+
+Avance real vs planificado
+
+Medir cumplimiento de programación
+
+% avance real / % avance planificado
+
+Semanal
+
+Obras / GG
+
+Partes diarios completos
+
+Medir disciplina documental
+
+Partes completos / días de obra x 100
+
+Semanal
+
+Obras
+
+Planificaciones entregadas a GG
+
+Medir anticipación y conducción
+
+Planificaciones entregadas / planificaciones requeridas
+
+Semanal / mensual
+
+Obras / GG
+
+Órdenes de trabajo emitidas correctamente
+
+Medir claridad operativa
+
+OT completas / OT emitidas x 100
+
+Semanal
+
+Obras
+
+Pedidos urgentes vs planificados
+
+Detectar improvisación
+
+Pedidos urgentes / pedidos totales
+
+Semanal
+
+Obras / Compras / Logística
+
+Faltantes de materiales que frenan obra
+
+Medir impacto de abastecimiento
+
+N° faltantes críticos
+
+Semanal
+
+Obras / Logística / GG
+
+No conformidades de obra
+
+Medir desvíos técnicos/operativos
+
+N° NC registradas
+
+Mensual
+
+Obras / GG
+
+Adicionales registrados antes de ejecutar
+
+Proteger recupero económico
+
+Adicionales registrados / adicionales detectados
+
+Mensual
+
+Obras / GPP / GG
+
+Incidentes o desvíos de seguridad
+
+Medir control preventivo
+
+N° incidentes/desvíos
+
+Mensual
+
+Obras / RRHH / GG
+
+Cierres de etapa con respaldo
+
+Medir cierre documental
+
+Cierres respaldados / cierres realizados
+
+Mensual
+
+Obras / Adm. / GG
+
+12. Riesgos principales y controles preventivos
+
+Riesgo
+
+Consecuencia
+
+Control preventivo
+
+Iniciar obra sin planificación
+
+Demoras, urgencias y pérdida de control
+
+Planificación semanal/mensual aprobada o informada a GG.
+
+Pedir materiales tarde
+
+Frente detenido y sobrecostos
+
+Pedido anticipado según planificación y confirmación con Compras.
+
+No comunicar falta de materiales a Logística
+
+Obra planifica con recursos inexistentes
+
+Consulta diaria/semanal de disponibilidad y pedido logístico formal.
+
+Elaborar órdenes de trabajo ambiguas
+
+Trabajo mal ejecutado o sin responsable
+
+Formato de OT con alcance, responsable, recursos, fecha y criterio de cierre.
+
+No registrar parte diario
+
+No hay evidencia de avance ni desvíos
+
+Parte diario obligatorio con fotos cuando corresponda.
+
+Ejecutar adicionales sin registro
+
+Pérdida económica o conflicto con cliente
+
+Registro de cambio y validación con GPP/GG antes de ejecutar si aplica.
+
+No controlar calidad antes de tapar/cerrar
+
+Retrabajos, reclamos o fallas
+
+Checklist de calidad por etapa.
+
+No controlar seguridad
+
+Accidentes, sanciones o daño reputacional
+
+Checklist de seguridad y observación diaria.
+
+No informar desvíos a GG
+
+Decisiones tardías y desgaste interno
+
+Criterios de escalamiento inmediato.
+
+No cerrar etapa formalmente
+
+No se certifica o quedan pendientes ocultos
+
+Cierre de etapa con evidencia y responsables.
+
+13. Comunicación con gerencias y Gerencia General
+
+Área vinculada
+
+Qué debe comunicarse
+
+Cuándo
+
+Registro mínimo
+
+Gerencia General
+
+Planificación semanal/mensual, avance, desvíos, riesgos, decisiones requeridas, problemas de cliente/inspección, seguridad y faltantes críticos.
+
+Semanal y de inmediato ante riesgo.
+
+Planificación, reporte semanal, registro de desvío.
+
+Proyectos y Presupuestos
+
+Dudas de alcance, adicionales, cambios de especificación, interferencias, omisiones y comparación presupuesto vs real.
+
+Antes de ejecutar cambios que impacten costo/plazo y en cierre.
+
+Consulta técnica, registro de adicional, lección aprendida.
+
+Compras
+
+Materiales, servicios o recursos a comprar con obra, cantidad, especificación, fecha requerida, prioridad y responsable.
+
+Con anticipación según planificación.
+
+Pedido interno de compra.
+
+Logística
+
+Materiales disponibles, herramientas, equipos, vehículos, entregas, retiros, devoluciones, faltantes y urgencias.
+
+Antes de necesitar recurso y de inmediato ante faltante crítico.
+
+Pedido logístico, registro de entrega, novedad de faltante.
+
+Administración y Finanzas
+
+Avances, cierres de etapa, mediciones, certificados, recursos usados y datos para cierre económico.
+
+Cierre de etapa, semanal/mensual según obra.
+
+Parte, certificado, cierre de etapa.
+
+RRHH
+
+Necesidad de personal, asistencia, ausencias, desempeño, seguridad, capacitación y novedades de cuadrillas.
+
+Según necesidad y en reportes.
+
+Novedad de personal, parte diario, pedido de capacitación.
+
+13.1 Criterios de escalamiento a Gerencia General
+
+Desvío de plazo que pueda afectar compromiso con cliente, inspección o certificación.
+
+Faltante de materiales, herramientas o equipos que frene obra.
+
+Riesgo de seguridad, incidente o condición insegura relevante.
+
+Cambio de alcance o adicional de impacto económico.
+
+Conflicto con cliente, inspección, proveedor, subcontrato o entre áreas.
+
+Falta de personal crítico o baja productividad sostenida.
+
+Obra sin planificación posible por falta de información o recursos.
+
+No conformidad grave de calidad.
+
+Necesidad de compra o alquiler extraordinario.
+
+Situación que pueda afectar la imagen de ECAR.
+
+14. Tratamiento de planificación, órdenes de trabajo y urgencias
+
+14.1 Entrega de planificación a Gerencia General
+
+La planificación debe entregarse a Gerencia General como herramienta de conducción, no como una formalidad. Debe mostrar qué se hará, qué recursos se necesitan, qué riesgos existen y qué decisiones están pendientes.
+
+Planificación mensual base: hitos, frentes, recursos críticos, restricciones y objetivos de avance.
+
+Planificación semanal: tareas por frente, responsables, materiales, herramientas, equipos, vehículos, personal, fechas y prioridades.
+
+Reporte a GG: avance previsto, decisiones requeridas, faltantes críticos, riesgos y pedidos de apoyo.
+
+Toda planificación debe cruzarse con Compras y Logística para evitar programar recursos inexistentes.
+
+14.2 Elaboración de órdenes de trabajo internas
+
+La orden de trabajo interna es el instrumento que traduce la planificación en una instrucción concreta para un frente, tarea o servicio. No reemplaza la orden de compra ni la orden de trabajo externa de Compras; sirve para ordenar la ejecución interna de obra.
+
+Debe indicar obra, frente, tarea, alcance, responsable, cuadrilla, fecha de inicio, fecha objetivo, materiales, herramientas, equipos, condiciones de seguridad, criterio de calidad y registro de cierre.
+
+Debe emitirse antes de iniciar tareas relevantes, repetitivas, críticas o que involucren varios recursos.
+
+Debe quedar asociada al parte diario y al cierre de etapa correspondiente.
+
+Si la OT implica compra, alquiler, contratación externa o costo no previsto, debe comunicarse a Compras/GPP/GG según corresponda antes de comprometer la ejecución.
+
+14.3 Comunicación con Logística ante falta de materiales
+
+Cuando Obras detecte falta de materiales, herramientas, equipos o vehículos, debe evitar resolver únicamente por llamada o WhatsApp. El aviso puede ser inmediato, pero debe existir registro que permita analizar causa, responsable, impacto y acción preventiva.
+
+Registrar obra, frente, material/recurso faltante, cantidad, fecha requerida, impacto si no se entrega y responsable solicitante.
+
+Consultar disponibilidad real con Logística y alternativas posibles.
+
+Si no hay stock, coordinar con Compras la reposición o compra urgente.
+
+Si el faltante frena obra, escalar a Gerencia General indicando impacto, causa probable y decisión requerida.
+
+Al cierre semanal, analizar si el faltante fue por falta de planificación, compra tardía, stock mínimo inexistente o error de comunicación.
+
+14.4 Tratamiento de urgencias de obra
+
+La urgencia puede atenderse cuando hay riesgo de frenar obra, afectar seguridad, incumplir con cliente o perder productividad. Pero cada urgencia repetida debe registrarse como desvío del sistema para corregir la causa.
+
+Registrar la urgencia y el frente afectado.
+
+Definir impacto si no se resuelve.
+
+Identificar responsable que solicita y responsable que resuelve.
+
+Verificar alternativa interna con Logística.
+
+Pedir compra o recurso con datos mínimos.
+
+Escalar a GG si afecta plazo, costo, seguridad o cliente.
+
+Resolver y registrar evidencia.
+
+Analizar causa raíz en la revisión semanal.
+
+15. No conformidades de obra
+
+No conformidad
+
+Acción inmediata
+
+Responsable
+
+Registro obligatorio
+
+Tarea ejecutada sin orden o planificación mínima
+
+Detener o reordenar tarea, emitir OT retroactiva si corresponde y registrar desvío.
+
+Obras
+
+NC interna / parte diario
+
+Material utilizado no coincide con especificación
+
+Bloquear continuidad, consultar a GPP/inspección y corregir.
+
+Obras + GPP
+
+NC técnica + fotos
+
+Faltante de material frena frente
+
+Registrar faltante, consultar Logística, activar Compras y escalar si afecta plazo.
+
+Obras + Logística
+
+Registro de faltante / desvío
+
+Parte diario incompleto
+
+Completar información faltante y reforzar rutina con encargado.
+
+Obras
+
+Observación documental
+
+Adicional ejecutado sin aprobación
+
+Registrar causa, cuantificar impacto y elevar a GG/GPP.
+
+Obras + GPP
+
+Registro de adicional / NC
+
+Trabajo con defecto de calidad
+
+Corregir, analizar causa y verificar antes de cerrar etapa.
+
+Obras
+
+Checklist / NC calidad
+
+Incumplimiento de seguridad
+
+Detener condición insegura y registrar acción inmediata.
+
+Obras + RRHH
+
+Registro seguridad
+
+Recurso no devuelto a Logística
+
+Solicitar devolución o justificar permanencia.
+
+Obras + Logística
+
+Registro de devolución pendiente
+
+16. Reuniones, rutina y reportes
+
+Rutina
+
+Frecuencia
+
+Participantes
+
+Objetivo
+
+Registro
+
+Revisión diaria de obra
+
+Diaria
+
+Obras / encargado
+
+Ordenar tareas, seguridad, recursos y novedades del día.
+
+Parte diario / lista de prioridades
+
+Control de pedidos a Compras y Logística
+
+Diaria o según frente
+
+Obras + Compras/Logística
+
+Verificar faltantes, entregas y recursos críticos.
+
+Listado de pedidos y estado
+
+Entrega de planificación semanal a GG
+
+Semanal
+
+Obras + GG
+
+Informar plan, riesgos, decisiones y recursos necesarios.
+
+Planificación semanal
+
+Reunión Obras + Compras + Logística
+
+Semanal
+
+Obras, Compras, Logística
+
+Anticipar materiales, herramientas, equipos y evitar urgencias.
+
+Minuta breve
+
+Revisión de avance y desvíos
+
+Semanal
+
+Obras + GG
+
+Comparar avance real vs planificado y definir correcciones.
+
+Reporte semanal
+
+Cierre mensual de obra
+
+Mensual
+
+Obras, GG, Adm., GPP
+
+Revisar avance, costos, adicionales, certificación y lecciones.
+
+Informe mensual / acta
+
+Cierre de etapa
+
+Según hito
+
+Obras + GG/Adm. si aplica
+
+Validar calidad, medición, fotos, pendientes y devolución de recursos.
+
+Cierre de etapa
+
+17. Perfil, alcance y herramientas del responsable
+
+17.1 Perfil del responsable de Gerencia de Obras
+
+Aspecto
+
+Definición
+
+Nombre del puesto
+
+Responsable de Gerencia de Obras
+
+Reporta a
+
+Gerencia General
+
+Áreas con las que se vincula
+
+Proyectos y Presupuestos, Compras, Logística, Administración y Finanzas, RRHH, clientes, inspección y proveedores cuando corresponda.
+
+Propósito del puesto
+
+Asegurar que las obras de ECAR se ejecuten con planificación, control de avance, calidad, seguridad, productividad, comunicación y documentación suficiente para cumplir compromisos y proteger la rentabilidad.
+
+Responsabilidades principales
+
+Planificar frentes, emitir órdenes de trabajo, coordinar cuadrillas, solicitar recursos, controlar avance, completar partes diarios, comunicar desvíos, registrar adicionales, controlar calidad/seguridad y cerrar etapas.
+
+Competencias técnicas
+
+Lectura de planos, criterio constructivo, planificación de obra, control de avance, mediciones, partes diarios, seguridad, coordinación de recursos, comunicación con inspección y manejo básico de costos.
+
+Competencias personales
+
+Liderazgo, orden, firmeza, comunicación clara, criterio operativo, anticipación, responsabilidad, capacidad de decisión, seguimiento y orientación a resultados.
+
+Indicadores de evaluación
+
+Cumplimiento de planificación, partes diarios completos, avance real vs planificado, urgencias evitables, no conformidades, adicionales registrados, seguridad y cierres de etapa.
+
+Errores que no debe cometer
+
+Iniciar sin planificar, pedir tarde, no registrar partes, ejecutar adicionales sin avisar, no comunicar faltantes, no controlar calidad, no elevar riesgos y naturalizar urgencias.
+
+Límites del puesto
+
+No debe comprometer costos extraordinarios, cambios de alcance, compras relevantes ni acuerdos con cliente sin validar con GG/GPP/Compras según corresponda.
+
+17.2 Alcance de la persona responsable del área
+
+Alcance
+
+Criterio
+
+Puede decidir directamente
+
+Organización diaria de frentes, distribución de tareas, asignación operativa de cuadrillas disponibles, emisión de órdenes de trabajo internas, priorización de tareas habituales, parte diario, comunicación operativa y propuesta de mejoras.
+
+Debe consultar antes de decidir
+
+Cambios que impacten costo, plazo, cliente, calidad o seguridad; adicionales; modificaciones de alcance; compras o alquileres; uso de recursos críticos; cambios de proveedor o subcontrato; alteración de prioridades definidas por GG.
+
+Debe escalar obligatoriamente a GG
+
+Desvíos relevantes de plazo/costo, faltante crítico, riesgo de seguridad, conflicto con cliente/inspección, adicional importante, compra extraordinaria, falta de personal crítico, obra detenida, conflicto entre áreas o situación que afecte imagen de ECAR.
+
+17.3 Herramientas necesarias para el puesto
+
+Grupo
+
+Herramientas necesarias
+
+Herramientas físicas
+
+Puesto de trabajo definido, espacio de reunión breve, carpeta física de obra, planos impresos cuando corresponda, elementos de seguridad, equipo de medición básico, tablero de obra y archivo de documentación.
+
+Herramientas tecnológicas
+
+Computadora o notebook, celular corporativo, acceso a internet, correo corporativo, Excel o software de gestión, acceso a carpetas digitales, cámara/celular para fotos, aplicaciones de planificación y acceso a tablero de control.
+
+Herramientas documentales
+
+Procedimiento de Obras, carpeta de inicio, planificación semanal/mensual, orden de trabajo interna, parte diario, registro de avance, registro de adicionales, checklist de calidad, checklist de seguridad, registro de desvíos y cierre de etapa.
+
+Herramientas de gestión
+
+Agenda diaria, lista de prioridades, semáforo de urgencias, tablero de pendientes, reunión semanal con GG, reunión con Compras y Logística, indicadores de avance, matriz de riesgos y plan de mejora continua.
+
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios físicos, tecnológicos, documentales y de gestión necesarios para cumplir su función con orden, evidencia y trazabilidad.
+
+18. 10 casos ejemplo aplicables a ECAR
+
+1. Elaboración de órdenes de trabajo internas
+
+Ítem
+
+Contenido
+
+Situación
+
+Se necesita ordenar una tarea específica de obra para una cuadrilla o frente.
+
+Riesgo
+
+Trabajo mal interpretado, falta de responsable, ejecución sin recursos o sin criterio de cierre.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe emitir OT interna con obra, frente, tarea, alcance, responsable, recursos, fecha, seguridad, calidad y registro de cierre. Si la OT implica gasto o cambio de alcance, debe consultar antes.
+
+Registro obligatorio
+
+Orden de trabajo interna + parte diario + cierre de etapa.
+
+Comunicación necesaria / escalamiento
+
+Encargado, Logística si requiere equipos, Compras si requiere materiales, GG si hay impacto de plazo/costo.
+
+Acción preventiva o correctiva
+
+Estandarizar formato de OT y usarlo en tareas críticas o repetitivas.
+
+2. Comunicación con Logística ante falta de materiales
+
+Ítem
+
+Contenido
+
+Situación
+
+En obra se detecta que falta material para continuar un frente.
+
+Riesgo
+
+Frente detenido, pérdida de productividad, compra urgente y discusión interna.
+
+Forma de resolución siguiendo el procedimiento
+
+Registrar el faltante con obra, frente, cantidad, fecha requerida e impacto. Consultar stock con Logística; si no hay disponibilidad, activar Compras. Escalar a GG si frena obra.
+
+Registro obligatorio
+
+Registro de faltante / pedido logístico / pedido de compra si aplica.
+
+Comunicación necesaria / escalamiento
+
+Logística, Compras, GG si el impacto es crítico.
+
+Acción preventiva o correctiva
+
+Revisar planificación semanal y definir stock mínimo o pedido anticipado.
+
+3. Entrega de planificación a Gerencia General
+
+Ítem
+
+Contenido
+
+Situación
+
+Obras debe informar qué hará la semana o el mes y qué necesita para cumplir.
+
+Riesgo
+
+GG se entera tarde, Compras/Logística no anticipan recursos y la obra trabaja por urgencias.
+
+Forma de resolución siguiendo el procedimiento
+
+Preparar planificación con frentes, tareas, responsables, recursos, materiales, herramientas, fechas, riesgos y decisiones requeridas. Entregarla semanalmente a GG y compartir necesidades con Compras/Logística.
+
+Registro obligatorio
+
+Planificación semanal/mensual + reporte a GG.
+
+Comunicación necesaria / escalamiento
+
+GG, Compras, Logística, GPP si hay alcance técnico.
+
+Acción preventiva o correctiva
+
+Instalar rutina fija de entrega y revisión de planificación.
+
+4. Obra pide materiales sin especificación completa
+
+Ítem
+
+Contenido
+
+Situación
+
+El encargado pide “caños” o “accesorios” sin cantidad, unidad, diámetro, obra o fecha.
+
+Riesgo
+
+Compra incorrecta, demora, material equivocado y pérdida de tiempo.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe completar pedido con datos mínimos antes de enviarlo. Compras puede devolver el pedido si falta información crítica.
+
+Registro obligatorio
+
+Solicitud interna de materiales con checklist de datos mínimos.
+
+Comunicación necesaria / escalamiento
+
+Compras y Logística si existe stock.
+
+Acción preventiva o correctiva
+
+Capacitar encargados y usar formato único de pedido.
+
+5. Cambio de alcance o adicional en campo
+
+Ítem
+
+Contenido
+
+Situación
+
+Cliente o inspección pide una tarea no prevista o modifica una condición técnica.
+
+Riesgo
+
+Trabajo ejecutado sin reconocimiento económico o conflicto posterior.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe pausar la definición económica, registrar el pedido, consultar con GPP, cuantificar impacto y elevar a GG si corresponde antes de ejecutar.
+
+Registro obligatorio
+
+Registro de cambio de alcance / adicional + fotos + respaldo técnico.
+
+Comunicación necesaria / escalamiento
+
+GPP, GG, Administración y cliente/inspección según corresponda.
+
+Acción preventiva o correctiva
+
+Reforzar regla: si cambia el alcance, cambia la documentación.
+
+6. Interferencia no prevista
+
+Ítem
+
+Contenido
+
+Situación
+
+Durante excavación o ejecución aparece una interferencia no indicada en planos.
+
+Riesgo
+
+Demora, daño, retrabajo, riesgo de seguridad y sobrecosto.
+
+Forma de resolución siguiendo el procedimiento
+
+Detener o adecuar tarea, registrar con fotos, informar a GG/GPP, evaluar impacto y definir alternativa técnica antes de continuar.
+
+Registro obligatorio
+
+Registro de interferencia + parte diario + fotos.
+
+Comunicación necesaria / escalamiento
+
+GG, GPP, cliente/inspección, Logística si requiere equipo.
+
+Acción preventiva o correctiva
+
+Mejorar relevamientos previos y checklist de interferencias.
+
+7. Desvío de avance frente al cronograma
+
+Ítem
+
+Contenido
+
+Situación
+
+El avance real de la obra queda por debajo de lo planificado.
+
+Riesgo
+
+Incumplimiento de plazo, presión sobre cuadrillas y pérdida de confianza del cliente.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe comparar avance real vs planificado, identificar causa, definir acción correctiva, reprogramar y comunicar a GG.
+
+Registro obligatorio
+
+Reporte semanal de avance + registro de desvío.
+
+Comunicación necesaria / escalamiento
+
+GG, Compras/Logística si la causa es recurso, RRHH si es personal.
+
+Acción preventiva o correctiva
+
+Revisar rendimientos reales, mejorar planificación y anticipar restricciones.
+
+8. Falta de personal o cuadrilla incompleta
+
+Ítem
+
+Contenido
+
+Situación
+
+Un frente queda sin personal suficiente por ausencia, baja productividad o reasignación.
+
+Riesgo
+
+Demora, incumplimiento de plan y sobrecarga del equipo.
+
+Forma de resolución siguiendo el procedimiento
+
+Registrar novedad, informar a RRHH/GG, reprogramar tareas y priorizar frentes críticos.
+
+Registro obligatorio
+
+Parte diario + novedad de personal + planificación ajustada.
+
+Comunicación necesaria / escalamiento
+
+RRHH, GG y encargados afectados.
+
+Acción preventiva o correctiva
+
+Definir dotación mínima por frente y reporte temprano de ausencias.
+
+9. Control de calidad antes de tapada o cierre de etapa
+
+Ítem
+
+Contenido
+
+Situación
+
+Se está por tapar, cerrar o avanzar sobre una tarea que después será difícil de revisar.
+
+Riesgo
+
+Retrabajo, reclamos, fallas ocultas y costo de reparación.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe aplicar checklist, tomar fotos, validar medidas/pruebas si aplica y cerrar etapa antes de continuar.
+
+Registro obligatorio
+
+Checklist de calidad + fotos + cierre de etapa.
+
+Comunicación necesaria / escalamiento
+
+GG, GPP o cliente/inspección si corresponde.
+
+Acción preventiva o correctiva
+
+Incluir puntos de control obligatorios por tipo de obra.
+
+10. Cierre de obra o etapa con devolución de recursos
+
+Ítem
+
+Contenido
+
+Situación
+
+La obra o etapa finaliza pero quedan herramientas, materiales sobrantes, pendientes o documentación dispersa.
+
+Riesgo
+
+Pérdidas, faltantes, no certificación y cierre económico incompleto.
+
+Forma de resolución siguiendo el procedimiento
+
+Obras debe cerrar pendientes, devolver recursos a Logística, entregar documentación a Administración/GG y registrar lecciones aprendidas.
+
+Registro obligatorio
+
+Acta o checklist de cierre + devolución logística + reporte final.
+
+Comunicación necesaria / escalamiento
+
+GG, Logística, Administración, GPP.
+
+Acción preventiva o correctiva
+
+Usar checklist de cierre y reunión corta de lecciones aprendidas.
+
+19. Esquema visual de caso
+
+Caso seleccionado: entrega de planificación de obra a Gerencia General. Este esquema resume cómo Obras debe convertir la información técnica y operativa en una planificación comunicada, revisada, ejecutable y controlable.
+
+
+
+20. Anexos operativos sugeridos
+
+Formulario / anexo
+
+Campos mínimos sugeridos
+
+Formulario de planificación semanal
+
+Obra, semana, frente, tarea, responsable, fecha, cuadrilla, materiales, herramientas, equipos, restricciones, riesgo, decisión requerida y estado.
+
+Orden de trabajo interna
+
+N° OT, obra, frente, tarea, alcance, responsable, cuadrilla, fecha, recursos, seguridad, calidad, evidencia, cierre y firma.
+
+Parte diario de obra
+
+Fecha, obra, clima, personal, tareas, avance, materiales usados, equipos, fotos, novedades, desvíos, seguridad y pendientes.
+
+Pedido de materiales
+
+Obra, frente, solicitante, descripción, cantidad, unidad, especificación, fecha requerida, prioridad e impacto.
+
+Pedido logístico
+
+Obra, frente, herramienta/equipo/material, cantidad, fecha, responsable, devolución estimada y observaciones.
+
+Registro de desvío
+
+Descripción, causa, impacto en plazo/costo/calidad/seguridad, acción inmediata, responsable y fecha compromiso.
+
+Registro de adicional
+
+Origen, descripción, respaldo, fotos, impacto técnico, costo estimado, aprobación y estado.
+
+Checklist de calidad
+
+Tarea, criterio técnico, mediciones, prueba, fotos, conformidad y responsable.
+
+Checklist de cierre de etapa
+
+Hito, tareas terminadas, pendientes, fotos, medición, devolución de recursos, aprobación y observaciones.
+
+Reporte semanal a GG
+
+Avance, planificación siguiente, faltantes, riesgos, decisiones requeridas, fotos, desvíos y acciones correctivas.
+
+21. Cierre institucional
+
+La Gerencia de Obras es una pieza central del orden empresarial de ECAR. Cuando Obras planifica, comunica y registra, toda la empresa trabaja mejor: Proyectos y Presupuestos puede defender alcances, Compras puede anticipar proveedores, Logística puede preparar recursos, Administración puede certificar y Gerencia General puede conducir con información real.
+
+La obra no debe funcionar como una sucesión de urgencias. Debe funcionar como un proceso: planificar, ordenar, ejecutar, controlar, registrar, comunicar, corregir y cerrar.
+
+La obra es donde ECAR demuestra lo que promete. Por eso debe ejecutarse con planificación, control, seguridad, comunicación y registro.
+
