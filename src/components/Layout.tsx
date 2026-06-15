@@ -81,46 +81,57 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: 'Administración', emoji: '💼',
+    label: 'Ger. Presupuestos', emoji: '📐',
+    items: [
+      { id: 'opportunities', requires: true },
+      { id: 'project_budget', requires: true },
+      { id: 'wbs', requires: true },
+      { id: 'certifications', requires: true },
+      { id: 'scope_changes', requires: true },
+    ],
+  },
+  {
+    label: 'Ger. Compras', emoji: '🛒',
     items: [
       { id: 'purchases', requires: true },
+      { id: 'purchase_requests' },
       { id: 'purchase_orders', requires: true },
+      { id: 'supplier_eval', requires: true },
+      { id: 'inventory', requires: true },
+    ],
+  },
+  {
+    label: 'Ger. Logística', emoji: '📦',
+    items: [
+      { id: 'logistics', requires: true },
+      { id: 'fleet', requires: true },
+    ],
+  },
+  {
+    label: 'Ger. Obra', emoji: '🏗️',
+    items: [
+      { id: 'field', requires: true },
+      { id: 'safety', requires: true },
+      { id: 'inspections', requires: true },
+      { id: 'rfi', requires: true },
+      { id: 'nonconformities', requires: true },
+      { id: 'documents', requires: true },
+    ],
+  },
+  {
+    label: 'Finanzas', emoji: '💼',
+    items: [
       { id: 'finances', requires: true },
       { id: 'obligations', requires: true },
       { id: 'invoicing', requires: true },
       { id: 'monthly_report' },
       { id: 'expenses', requires: true },
-      { id: 'certifications', requires: true },
-      { id: 'supplier_eval', requires: true },
     ],
   },
   {
     label: 'Personal', emoji: '👥',
     items: [
       { id: 'rrhh', requires: true },
-    ],
-  },
-  {
-    label: 'Logística', emoji: '📦',
-    items: [
-      { id: 'inventory', requires: true },
-      { id: 'fleet', requires: true },
-      { id: 'purchase_requests' },
-    ],
-  },
-  {
-    label: 'Operaciones', emoji: '🏗️',
-    items: [
-      { id: 'opportunities', requires: true },
-      { id: 'project_budget', requires: true },
-      { id: 'wbs', requires: true },
-      { id: 'field', requires: true },
-      { id: 'scope_changes', requires: true },
-      { id: 'safety', requires: true },
-      { id: 'inspections', requires: true },
-      { id: 'rfi', requires: true },
-      { id: 'nonconformities', requires: true },
-      { id: 'documents', requires: true },
     ],
   },
   {
