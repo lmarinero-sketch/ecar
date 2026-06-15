@@ -443,4 +443,19 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'La cantidad de NC se vincula automáticamente con la evaluación.',
     ],
   },
+  communications: {
+    title: 'Comunicaciones WhatsApp',
+    description: 'CRM de WhatsApp con registro completo de todas las conversaciones con Rombo. Visualizá el historial de mensajes por número de teléfono con interfaz tipo WhatsApp Web.',
+    steps: [
+      'Seleccioná una conversación de la lista lateral.',
+      'Revisá el historial completo de mensajes: los verdes son del usuario, los blancos de Rombo.',
+      'Usá el buscador para filtrar conversaciones por número o contenido.',
+      'Los datos se actualizan automáticamente cada 15 segundos.',
+    ],
+    tips: [
+      'Este módulo es de solo lectura — los mensajes se envían desde WhatsApp.',
+      'Las conversaciones muestran la intención detectada (intent) en la cabecera.',
+      'Los pedidos de compra por WhatsApp quedan registrados tanto aquí como en Pedidos de Compra.',
+    ],
+  },
 };

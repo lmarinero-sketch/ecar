@@ -28,6 +28,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   supplier_eval: ClipboardCheck,
   guide: HelpCircle, manual: BookMarked,
   implementation: Rocket, user_management: UserCog,
+  communications: MessageSquareText,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -45,6 +46,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   supplier_eval: 'Eval. Prov.',
   guide: 'Guía', manual: 'Manual ISO',
   implementation: 'Implementación', user_management: 'Usuarios',
+  communications: 'Comunicaciones',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -64,6 +66,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   supplier_eval: 'bg-teal-600',
   guide: 'bg-ecar-blue', manual: 'bg-blue-900',
   implementation: 'bg-rose-500', user_management: 'bg-slate-600',
+  communications: 'bg-green-600',
 };
 
 /* ─── Sidebar sections ─── */
@@ -132,6 +135,12 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Personal', emoji: '👥',
     items: [
       { id: 'rrhh', requires: true },
+    ],
+  },
+  {
+    label: 'Comunicaciones', emoji: '💬',
+    items: [
+      { id: 'communications' },
     ],
   },
   {

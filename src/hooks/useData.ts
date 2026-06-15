@@ -2277,3 +2277,19 @@ export function useCreateSupplierEvaluation() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['supplier_evaluations'] }),
   });
 }
+
+/* ── WhatsApp Conversations (CRM) ── */
+export function useWhatsappConversations() {
+  return useQuery({
+    queryKey: ['whatsapp_conversations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_conversations')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data as { id: string; phone: string; messages: { role: string; content: string; timestamp?: string }[]; last_intent: string | null; pending_data: any; updated_at: string; created_at: string }[];
+    },
+    refetchInterval: 15000, // Auto-refresh every 15s
+  });
+}

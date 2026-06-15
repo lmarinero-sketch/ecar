@@ -38,6 +38,7 @@ import { GuideModule } from './components/GuideModule';
 import { ManualModule } from './components/ManualModule';
 import { ImplementationModule } from './components/ImplementationModule';
 import { UserManagementModule } from './components/UserManagementModule';
+import { CommunicationsModule } from './components/CommunicationsModule';
 
 
 const queryClient = new QueryClient({
@@ -123,6 +124,7 @@ function AppContent() {
       case 'manual': return <ManualModule />;
       case 'implementation': return <ImplementationModule />;
       case 'user_management': return <UserManagementModule />;
+      case 'communications': return <CommunicationsModule />;
       default: return <BiDashboard />;
     }
   };
