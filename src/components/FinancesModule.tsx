@@ -333,9 +333,9 @@ export const FinancesModule: React.FC = () => {
                   </div>
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-gray-500">
-                      {form.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'}
+                      {form.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'} <span className="text-gray-300 font-normal">(opcional)</span>
                     </label>
-                    <input value={form.beneficiary_or_issuer} onChange={e => setForm({ ...form, beneficiary_or_issuer: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    <input value={form.beneficiary_or_issuer} onChange={e => setForm({ ...form, beneficiary_or_issuer: e.target.value })} placeholder="Podés dejarlo vacío" className="w-full px-3 py-2 border rounded-lg text-sm" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-500">Monto ARS</label>
@@ -714,8 +714,8 @@ export const FinancesModule: React.FC = () => {
                 <input value={editForm.bank_name} onChange={e => setEditForm({ ...editForm, bank_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
               <div className="col-span-2">
-                <label className="text-xs font-bold text-gray-500">{editForm.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'}</label>
-                <input value={editForm.beneficiary_or_issuer} onChange={e => setEditForm({ ...editForm, beneficiary_or_issuer: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                <label className="text-xs font-bold text-gray-500">{editForm.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'} <span className="text-gray-300 font-normal">(opcional)</span></label>
+                <input value={editForm.beneficiary_or_issuer} onChange={e => setEditForm({ ...editForm, beneficiary_or_issuer: e.target.value })} placeholder="Podés dejarlo vacío" className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500">Monto ARS</label>

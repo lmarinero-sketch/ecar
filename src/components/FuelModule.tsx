@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check } from 'lucide-react';
-import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil } from 'lucide-react';
+import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -107,6 +107,9 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad }) => {
   const [form, setForm] = useState<Partial<FuelLoad>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ liters: number; price_per_liter: number; total_amount: number }>({ liters: 0, price_per_liter: 0, total_amount: 0 });
+  const updateLoad = useUpdateFuelLoad();
 
   const handleVehicleCode = (code: string) => {
     const v = vehicles.find(x => x.code === code);
@@ -128,6 +131,17 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     await createLoad.mutateAsync({ ...form, load_number: `CARGA-${String(nextNum).padStart(4, '0')}`, validation_status: 'pending', load_source: 'station', created_by: 'web' });
     setForm({});
     setShowForm(false);
+  };
+
+  const startEdit = (l: FuelLoad) => {
+    setEditingId(l.id);
+    setEditForm({ liters: l.liters || 0, price_per_liter: l.price_per_liter || 0, total_amount: l.total_amount || 0 });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    await updateLoad.mutateAsync({ id: editingId, liters: editForm.liters, price_per_liter: editForm.price_per_liter, total_amount: editForm.total_amount });
+    setEditingId(null);
   };
 
   return (
@@ -247,27 +261,48 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>
               <th className="px-4 py-3">ID</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Vehículo</th>
-              <th className="px-4 py-3">Patente</th><th className="px-4 py-3">Responsable</th><th className="px-4 py-3">Obra</th>
-              <th className="px-4 py-3">Litros</th><th className="px-4 py-3">Vale</th><th className="px-4 py-3">Estado</th>
+              <th className="px-4 py-3">Patente</th><th className="px-4 py-3">Litros</th><th className="px-4 py-3">$/L</th>
+              <th className="px-4 py-3">Importe</th><th className="px-4 py-3">Vale</th><th className="px-4 py-3">Estado</th>
+              <th className="px-4 py-3 text-center">Editar</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loads.length === 0 ? (
-              <tr><td colSpan={9} className="text-center py-12 text-gray-400"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
+              <tr><td colSpan={10} className="text-center py-12 text-gray-400"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
             ) : loads.map(l => (
-              <tr key={l.id} className="hover:bg-gray-50">
+              <tr key={l.id} className={`hover:bg-gray-50 ${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">{l.load_number}</td>
                 <td className="px-4 py-3">{l.load_date}</td>
                 <td className="px-4 py-3 font-medium">{l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span></td>
                 <td className="px-4 py-3 font-mono text-xs">{l.plate}</td>
-                <td className="px-4 py-3">{l.driver_name}</td>
-                <td className="px-4 py-3 text-xs">{l.project_name}</td>
-                <td className="px-4 py-3 font-mono font-bold">{l.liters} L</td>
+                {editingId === l.id ? (
+                  <>
+                    <td className="px-4 py-2"><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
+                    <td className="px-4 py-2"><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
+                    <td className="px-4 py-2 font-mono font-bold text-sm">$ {fmt(editForm.total_amount)}</td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-4 py-3 font-mono font-bold">{l.liters} L</td>
+                    <td className="px-4 py-3 font-mono text-xs">{l.price_per_liter ? `$ ${fmt(l.price_per_liter)}` : <span className="text-gray-300">—</span>}</td>
+                    <td className="px-4 py-3 font-mono font-bold">{l.total_amount ? `$ ${fmt(l.total_amount)}` : <span className="text-gray-300">Sin precio</span>}</td>
+                  </>
+                )}
                 <td className="px-4 py-3 text-xs">{l.voucher_number}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${l.validation_status === 'ok' ? 'bg-green-100 text-green-700' : l.validation_status === 'observed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                     {l.validation_status === 'ok' ? 'OK' : l.validation_status === 'observed' ? 'Observado' : 'Pendiente'}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {editingId === l.id ? (
+                    <div className="flex items-center justify-center gap-1">
+                      <button onClick={saveEdit} disabled={updateLoad.isPending} className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-all" title="Guardar"><Check size={14} /></button>
+                      <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all" title="Cancelar"><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar precio retroactivo"><Pencil size={14} /></button>
+                  )}
                 </td>
               </tr>
             ))}

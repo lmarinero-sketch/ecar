@@ -1853,6 +1853,17 @@ export function useUpdateFuelVehicle() {
   });
 }
 
+export function useDeleteFuelVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('fuel_vehicles').update({ status: 'inactive' }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_vehicles'] }),
+  });
+}
+
 export function useFuelLoads() {
   return useQuery({
     queryKey: ['fuel_loads'],

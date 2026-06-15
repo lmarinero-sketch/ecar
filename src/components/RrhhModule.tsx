@@ -42,6 +42,7 @@ export const RrhhModule: React.FC = () => {
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [showInactive, setShowInactive] = useState(false);
   const [form, setForm] = useState({
     full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '',
@@ -50,7 +51,9 @@ export const RrhhModule: React.FC = () => {
   });
 
   const activeEmployees = employees.filter(e => e.employment_status === 'active');
-  const filtered = activeEmployees.filter(e =>
+  const inactiveEmployees = employees.filter(e => e.employment_status !== 'active');
+  const displayEmployees = showInactive ? employees : activeEmployees;
+  const filtered = displayEmployees.filter(e =>
     e.full_name.toLowerCase().includes(search.toLowerCase()) ||
     (e.cuil || '').includes(search) ||
     (e.dni || '').includes(search)
@@ -114,9 +117,17 @@ export const RrhhModule: React.FC = () => {
       {/* TAB: Roster */}
       {tab === 'roster' && (
         <div className="space-y-4">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, CUIL o DNI..." className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
+          <div className="flex gap-3 items-center">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, CUIL o DNI..." className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
+            </div>
+            <button
+              onClick={() => setShowInactive(!showInactive)}
+              className={`px-4 py-3 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${showInactive ? 'bg-red-50 border-red-200 text-red-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
+            >
+              {showInactive ? `✕ Ocultar bajas (${inactiveEmployees.length})` : `👤 Ver bajas (${inactiveEmployees.length})`}
+            </button>
           </div>
 
           {filtered.length === 0 ? (
@@ -144,10 +155,15 @@ export const RrhhModule: React.FC = () => {
                     <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${emp.employment_status === 'active' ? 'bg-indigo-100 text-indigo-700' : 'bg-red-100 text-red-600'}`}>
                             {emp.full_name.charAt(0)}
                           </div>
-                          <span className="font-bold text-gray-900">{emp.full_name}</span>
+                          <div>
+                            <span className="font-bold text-gray-900">{emp.full_name}</span>
+                            {emp.employment_status !== 'active' && (
+                              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">BAJA</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
@@ -288,7 +304,7 @@ export const RrhhModule: React.FC = () => {
       {tab === 'legajo' && (
         <LegajoView
           employee={selectedEmployee}
-          employees={employees.filter(e => e.employment_status === 'active')}
+          employees={employees}
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
@@ -524,17 +540,37 @@ const LegajoView: React.FC<{
   const [motivoText, setMotivoText] = useState('');
 
   if (!employee) {
+    const activeEmps = employees.filter(e => e.employment_status === 'active');
+    const inactiveEmps = employees.filter(e => e.employment_status !== 'active');
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-bold text-lg mb-4">Seleccionar Empleado</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {employees.map(e => (
-            <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all">
-              <p className="font-bold text-sm text-gray-900">{e.full_name}</p>
-              <p className="text-xs text-gray-400 font-mono">{e.cuil || 'Sin CUIL'}</p>
-            </button>
-          ))}
-        </div>
+        {activeEmps.length > 0 && (
+          <>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Activos ({activeEmps.length})</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              {activeEmps.map(e => (
+                <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all">
+                  <p className="font-bold text-sm text-gray-900">{e.full_name}</p>
+                  <p className="text-xs text-gray-400 font-mono">{e.cuil || 'Sin CUIL'}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {inactiveEmps.length > 0 && (
+          <>
+            <p className="text-xs font-bold text-red-400 uppercase tracking-wider mb-2">Dados de Baja ({inactiveEmps.length})</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {inactiveEmps.map(e => (
+                <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border border-red-100 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all bg-red-50/30">
+                  <p className="font-bold text-sm text-gray-700 flex items-center gap-1">{e.full_name} <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-red-100 text-red-600">BAJA</span></p>
+                  <p className="text-xs text-gray-400 font-mono">{e.cuil || 'Sin CUIL'}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     );
   }

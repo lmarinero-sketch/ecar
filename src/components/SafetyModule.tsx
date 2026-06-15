@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search } from 'lucide-react';
+import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search, Upload, Phone, Mail, MessageSquare } from 'lucide-react';
 import * as THREE from 'three';
 import { useSeguridadIncidentes, useCreateSeguridadIncidente, useUpdateSeguridadIncidente, useSeguridadObservaciones, useCreateSeguridadObservacion, useProjects, useEmployees } from '../hooks/useData';
 import type { Employee } from '../lib/types';
@@ -61,22 +61,54 @@ const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) =
 
     // Head
     createPart(new THREE.SphereGeometry(0.24, 16, 16), 'Cabeza', [0, 1.8, 0]);
+    // Ojos (Eyes)
+    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Ojo Derecho', [0.08, 1.82, 0.2]);
+    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Ojo Izquierdo', [-0.08, 1.82, 0.2]);
     // Neck
     createPart(new THREE.CylinderGeometry(0.08, 0.09, 0.15, 12), 'Cuello', [0, 1.55, 0]);
-    // Torso
-    createPart(new THREE.CylinderGeometry(0.3, 0.22, 0.8, 16), 'Torso', [0, 1.1, 0]);
+    // Torso - split into chest and abdomen
+    createPart(new THREE.CylinderGeometry(0.3, 0.28, 0.4, 16), 'Pecho', [0, 1.25, 0]);
+    createPart(new THREE.CylinderGeometry(0.28, 0.22, 0.4, 16), 'Abdomen', [0, 0.85, 0]);
+    // Espalda (back) - behind torso
+    createPart(new THREE.BoxGeometry(0.35, 0.7, 0.1), 'Espalda', [0, 1.05, -0.2]);
     
-    // Arms & Hands
-    createPart(new THREE.CylinderGeometry(0.08, 0.07, 0.55, 12), 'Brazo Derecho', [0.45, 1.15, 0]);
-    createPart(new THREE.CylinderGeometry(0.08, 0.07, 0.55, 12), 'Brazo Izquierdo', [-0.45, 1.15, 0]);
-    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Derecha', [0.45, 0.8, 0]);
-    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Izquierda', [-0.45, 0.8, 0]);
+    // Shoulders
+    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Hombro Derecho', [0.38, 1.42, 0]);
+    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Hombro Izquierdo', [-0.38, 1.42, 0]);
+    // Arms
+    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.35, 12), 'Brazo Derecho', [0.45, 1.2, 0]);
+    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.35, 12), 'Brazo Izquierdo', [-0.45, 1.2, 0]);
+    // Elbows
+    createPart(new THREE.SphereGeometry(0.07, 10, 10), 'Codo Derecho', [0.45, 1.0, 0]);
+    createPart(new THREE.SphereGeometry(0.07, 10, 10), 'Codo Izquierdo', [-0.45, 1.0, 0]);
+    // Forearms
+    createPart(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 12), 'Antebrazo Derecho', [0.45, 0.88, 0]);
+    createPart(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 12), 'Antebrazo Izquierdo', [-0.45, 0.88, 0]);
+    // Hands
+    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Derecha', [0.45, 0.68, 0]);
+    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Izquierda', [-0.45, 0.68, 0]);
+    // Dedos
+    createPart(new THREE.BoxGeometry(0.1, 0.06, 0.04), 'Dedos Mano Derecha', [0.45, 0.58, 0]);
+    createPart(new THREE.BoxGeometry(0.1, 0.06, 0.04), 'Dedos Mano Izquierda', [-0.45, 0.58, 0]);
 
-    // Legs & Feet
-    createPart(new THREE.CylinderGeometry(0.11, 0.08, 0.75, 12), 'Pierna Derecha', [0.18, 0.45, 0]);
-    createPart(new THREE.CylinderGeometry(0.11, 0.08, 0.75, 12), 'Pierna Izquierda', [-0.18, 0.45, 0]);
+    // Hips
+    createPart(new THREE.SphereGeometry(0.09, 10, 10), 'Cadera Derecha', [0.16, 0.65, 0]);
+    createPart(new THREE.SphereGeometry(0.09, 10, 10), 'Cadera Izquierda', [-0.16, 0.65, 0]);
+    // Thighs
+    createPart(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 12), 'Muslo Derecho', [0.18, 0.5, 0]);
+    createPart(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 12), 'Muslo Izquierdo', [-0.18, 0.5, 0]);
+    // Knees
+    createPart(new THREE.SphereGeometry(0.08, 10, 10), 'Rodilla Derecha', [0.18, 0.32, 0]);
+    createPart(new THREE.SphereGeometry(0.08, 10, 10), 'Rodilla Izquierda', [-0.18, 0.32, 0]);
+    // Lower Legs
+    createPart(new THREE.CylinderGeometry(0.08, 0.06, 0.35, 12), 'Pierna Derecha', [0.18, 0.18, 0]);
+    createPart(new THREE.CylinderGeometry(0.08, 0.06, 0.35, 12), 'Pierna Izquierda', [-0.18, 0.18, 0]);
+    // Feet
     createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Derecho', [0.18, 0.04, 0.08]);
     createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Izquierdo', [-0.18, 0.04, 0.08]);
+    // Tobillos
+    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Tobillo Derecho', [0.18, 0.05, -0.04]);
+    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Tobillo Izquierdo', [-0.18, 0.05, -0.04]);
 
     // Floor Grid
     const grid = new THREE.GridHelper(4, 8, 0xe5e7eb, 0xf3f4f6);
@@ -294,7 +326,7 @@ export const SafetyModule: React.FC = () => {
   const createIncidente = useCreateSeguridadIncidente();
   const updateIncidente = useUpdateSeguridadIncidente();
   const createObservacion = useCreateSeguridadObservacion();
-  const [tab, setTab] = useState<'incidentes' | 'observaciones'>('incidentes');
+  const [tab, setTab] = useState<'incidentes' | 'observaciones' | 'comunicar'>('incidentes');
   const [showForm, setShowForm] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string>('');
 
@@ -361,16 +393,18 @@ export const SafetyModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {(['incidentes', 'observaciones'] as const).map(t => (
+        {(['incidentes', 'observaciones', 'comunicar'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === t ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            {t === 'incidentes' ? <><AlertTriangle size={16} /> Incidentes ({incidentes.length})</> : <><Eye size={16} /> Observaciones ({observaciones.length})</>}
+            {t === 'incidentes' ? <><AlertTriangle size={16} /> Incidentes ({incidentes.length})</> : t === 'observaciones' ? <><Eye size={16} /> Observaciones ({observaciones.length})</> : <><MessageSquare size={16} /> Comunicar Siniestro</>}
           </button>
         ))}
       </div>
 
-      <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
-        {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'incidentes' ? 'Registrar Incidente' : 'Nueva Observación'}</>}
-      </button>
+      {tab !== 'comunicar' && (
+        <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+          {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'incidentes' ? 'Registrar Incidente' : 'Nueva Observación'}</>}
+        </button>
+      )}
 
       {/* Forms */}
       {showForm && tab === 'incidentes' && (
@@ -471,6 +505,53 @@ export const SafetyModule: React.FC = () => {
               );
             })}</div>
           }
+        </div>
+      )}
+
+      {/* Comunicar Siniestro tab */}
+      {tab === 'comunicar' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="font-bold text-lg text-gray-800 mb-2 flex items-center gap-2"><MessageSquare size={20} /> Canal de Comunicación de Siniestros</h3>
+            <p className="text-sm text-gray-500 mb-6">Cuando ocurra un siniestro, la comunicación debe ser inmediata. Usá estos canales para reportar:</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto"><Phone size={28} className="text-red-600" /></div>
+                <h4 className="font-bold text-red-700">Emergencia Inmediata</h4>
+                <p className="text-sm text-gray-600">Llamá al responsable de SyH o al 911.</p>
+                <p className="text-lg font-black text-red-600 font-mono">Débora — Resp. SyH</p>
+                <p className="text-xs text-gray-400">Disponible 24/7 en horario de obra</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto"><Mail size={28} className="text-amber-600" /></div>
+                <h4 className="font-bold text-amber-700">Reporte Formal</h4>
+                <p className="text-sm text-gray-600">Para registrar oficialmente el siniestro.</p>
+                <p className="text-sm font-bold text-amber-700">1. Registrá el incidente en esta sección</p>
+                <p className="text-sm font-bold text-amber-700">2. Adjuntá fotos y documentos</p>
+                <p className="text-sm font-bold text-amber-700">3. Notificá a la ART</p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mx-auto"><Upload size={28} className="text-blue-600" /></div>
+                <h4 className="font-bold text-blue-700">Documentación</h4>
+                <p className="text-sm text-gray-600">Subí fotos del lugar, del accidente, y documentos relevantes.</p>
+                <p className="text-sm font-bold text-blue-700">Fotos del lugar</p>
+                <p className="text-sm font-bold text-blue-700">Declaración de testigos</p>
+                <p className="text-sm font-bold text-blue-700">Informe médico / ART</p>
+              </div>
+            </div>
+            <div className="mt-6 bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <h4 className="font-bold text-sm text-gray-700 mb-2">📋 Protocolo de Comunicación</h4>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                <li><span className="font-bold">Asegurar la zona</span> — Evitar que ocurran más lesiones</li>
+                <li><span className="font-bold">Asistir al afectado</span> — Primeros auxilios y derivación médica</li>
+                <li><span className="font-bold">Notificar a Débora (Resp. SyH)</span> — Comunicación inmediata</li>
+                <li><span className="font-bold">Registrar en el sistema</span> — Tab "Incidentes" + Mapa 3D corporal</li>
+                <li><span className="font-bold">Documentar con fotos</span> — Lugar, condiciones, EPP usado</li>
+                <li><span className="font-bold">Investigar causa raíz</span> — Completar el formulario de investigación</li>
+                <li><span className="font-bold">Definir acciones correctivas</span> — Prevenir recurrencia</li>
+              </ol>
+            </div>
+          </div>
         </div>
       )}
     </div>

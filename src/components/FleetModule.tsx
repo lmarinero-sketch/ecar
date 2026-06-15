@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2
 } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
 import { VehicleDailyReportModule } from './VehicleDailyReportModule';
-import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle } from '../hooks/useData';
+import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle } from '../hooks/useData';
 import type { FuelVehicle } from '../lib/types';
 
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report';
@@ -41,6 +41,7 @@ export const FleetModule: React.FC = () => {
   const { data: vehicles = [], isLoading } = useFuelVehicles();
   const updateVehicle = useUpdateFuelVehicle();
   const createVehicle = useCreateFuelVehicle();
+  const deleteVehicle = useDeleteFuelVehicle();
 
   useEffect(() => {
     useImplementationStore.getState().completeItem('e56');
@@ -54,6 +55,7 @@ export const FleetModule: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
   const [showNew, setShowNew] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FuelVehicle | null>(null);
   const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
 
   const maintenanceDue = useMemo(() =>
@@ -332,9 +334,14 @@ export const FleetModule: React.FC = () => {
                       {v.vtv_expiry && <span className="flex items-center gap-1"><FileText size={10} /> VTV: {v.vtv_expiry}</span>}
                     </div>
                   </div>
-                  <button onClick={() => isEditing ? setEditId(null) : startEdit(v)} className={`p-2 rounded-lg transition-all ${isEditing ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}>
-                    {isEditing ? <X size={16} /> : <Edit2 size={16} />}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => isEditing ? setEditId(null) : startEdit(v)} className={`p-2 rounded-lg transition-all ${isEditing ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}>
+                      {isEditing ? <X size={16} /> : <Edit2 size={16} />}
+                    </button>
+                    <button onClick={() => setDeleteTarget(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all" title="Eliminar vehículo">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Edit inline */}
@@ -460,6 +467,28 @@ export const FleetModule: React.FC = () => {
                 {createVehicle.isPending ? 'Creando...' : '🚛 Registrar Vehículo'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="font-bold text-lg text-red-600">Eliminar Vehículo</h3>
+            <p className="text-sm text-gray-600">
+              ¿Eliminás <span className="font-bold">{deleteTarget.code} — {deleteTarget.description}</span>? El vehículo se desactivará y no aparecerá más en el listado.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button
+                onClick={async () => {
+                  try { await deleteVehicle.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                }}
+                disabled={deleteVehicle.isPending}
+                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
+              >Eliminar</button>
+            </div>
           </div>
         </div>
       )}
