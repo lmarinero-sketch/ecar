@@ -238,11 +238,12 @@ export const FleetModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Truck size={120} /></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-slate-400" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Truck size={24} /> Flota y Maquinaria</h3>
-          <p className="text-slate-100 text-sm mt-1">Registro de vehículos, mantenimiento preventivo y consumo de combustible.</p>
+          <p className="text-slate-300 text-sm mt-1">Doc PR-GL-01 §4.5 — Registro de vehículos, mantenimiento preventivo y consumo de combustible</p>
         </div>
       </div>
 

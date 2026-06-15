@@ -330,11 +330,12 @@ export const SafetyModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-800 to-red-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-red-800 via-red-700 to-rose-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ShieldAlert size={120} /></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 to-orange-400" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ShieldAlert size={24} /> Seguridad e Incidentes</h3>
-          <p className="text-red-100 text-sm mt-1">Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
+          <p className="text-red-200 text-sm mt-1">Doc PR-GO-01 §4.6 — Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
         </div>
       </div>
 

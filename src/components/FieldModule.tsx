@@ -84,11 +84,12 @@ export const FieldModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-800 to-cyan-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-cyan-800 via-cyan-700 to-teal-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList size={120} /></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-300 to-teal-300" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardList size={24} /> Parte Diario de Obra</h3>
-          <p className="text-cyan-100 text-sm mt-1">Registro diario de actividades, personal, fotos y solicitudes de materiales</p>
+          <p className="text-cyan-200 text-sm mt-1">Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales</p>
         </div>
       </div>
 

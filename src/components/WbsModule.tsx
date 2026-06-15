@@ -353,11 +353,12 @@ export const WbsModule: React.FC = () => {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-800 via-indigo-700 to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-cyan-400" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gestión de Proyectos</h3>
-          <p className="text-indigo-200 text-sm mt-1">Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
+          <p className="text-indigo-200 text-sm mt-1">Doc PR-GPP-01 — Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
         </div>
       </div>
 
