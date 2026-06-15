@@ -153,11 +153,12 @@ export const InventoryModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-700 to-orange-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-amber-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Boxes size={120} /></div>
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-orange-300" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Package size={24} /> Depósito & Inventario</h3>
-          <p className="text-orange-100 text-sm mt-1">Control de materiales, herramientas y asignaciones</p>
+          <p className="text-orange-100 text-sm mt-1">Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad</p>
         </div>
       </div>
 
