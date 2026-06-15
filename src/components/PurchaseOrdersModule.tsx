@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Search, Plus, X, Save, Eye, Trash2,
-  Clock, DollarSign, AlertTriangle, Package,
+  Clock, DollarSign, AlertTriangle, Package, BarChart3,
 } from 'lucide-react';
 import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useProjects, useSuppliers } from '../hooks/useData';
 import type { PurchaseOrder } from '../lib/types';
@@ -384,6 +384,25 @@ export const PurchaseOrdersModule: React.FC = () => {
                 <label className="block text-xs font-bold text-gray-600 mb-1">Notas</label>
                 <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Observaciones..." />
+              </div>
+
+              {/* Cuadro Comparativo (PR-GC-01 §4.5) */}
+              <div className="border-t border-gray-200 pt-4">
+                <h4 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                  <BarChart3 size={16} className="text-violet-500" /> Cuadro Comparativo de Cotizaciones
+                </h4>
+                <p className="text-[10px] text-gray-400 mb-3">Documentar al menos 3 cotizaciones para compras {'>'} $500.000 (PR-GC-01 §4.5)</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[1, 2, 3].map(n => (
+                    <div key={n} className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
+                      <p className="text-xs font-bold text-gray-600">Cotización #{n}</p>
+                      <input className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs" placeholder={`Proveedor ${n}`} />
+                      <input type="number" className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs font-mono" placeholder="Monto $" />
+                      <input className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs" placeholder="Plazo / Condiciones" />
+                    </div>
+                  ))}
+                </div>
+                <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs mt-2" rows={2} placeholder="Justificación de elección: precio, calidad, plazo, experiencia previa..." />
               </div>
 
               {form.total_amount > 5000000 && (
