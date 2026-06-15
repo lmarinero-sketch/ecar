@@ -42,19 +42,19 @@ const MODULES_DATA: ModuleDoc[] = [
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-400',
-    purpose: 'Proveer una vista ejecutiva consolidada del estado financiero, operativo y de personal de la empresa en tiempo real.',
-    scope: 'Todos los usuarios con acceso al sistema. Datos actualizados automáticamente cada 2 minutos.',
-    responsible: 'Administrador / Gerencia',
+    purpose: 'Centro de control ejecutivo con KPIs organizados por Gerencia (Proyectos, Compras, Obras, Logística, Financiero) según el Manual de Organización ECAR.',
+    scope: 'Todos los usuarios con acceso al sistema. KPIs agrupados por las 4 gerencias definidas en el Manual de Organización.',
+    responsible: 'Gerencia General / Administración',
     process: [
       'El sistema recolecta datos de todos los módulos activos en tiempo real vía Supabase.',
-      'Los indicadores se calculan y muestran automáticamente al ingresar al módulo.',
-      'El usuario puede seleccionar el período de visualización (mes, trimestre, año).',
-      'Los gráficos de recharts muestran tendencias y comparativas.',
-      'Alertas críticas se destacan con color rojo para acción inmediata.'
+      'Los KPIs se agrupan por gerencia: Proyectos (pipeline, conversión), Compras (OC, proveedores), Obras (NC, cambios), Logística (inventario, flota).',
+      'Indicadores financieros muestran cheques a cobrar, facturación del mes y gastos.',
+      'Las alertas de riesgo se destacan en la sección superior para acción inmediata.',
+      'Los proyectos activos se listan con su estado, avance y presupuesto.'
     ],
-    records: ['KPIs financieros en tiempo real', 'Métricas de producción', 'Indicadores de RRHH', 'Alertas automáticas del sistema'],
-    kpis: ['Facturación del mes vs. objetivo', 'Gastos acumulados', 'Ausentismo de personal', 'Cheques por vencer en 7 días'],
-    features: ['Vista consolidada multi-módulo', 'Gráficos interactivos Recharts', 'Alertas visuales de riesgo', 'Actualización automática cada 2 min']
+    records: ['KPIs por Gerencia en tiempo real', 'Alertas de riesgo consolidadas', 'Lista de proyectos activos con progreso', 'Indicadores financieros'],
+    kpis: ['Pipeline activo y tasa conversión', 'OC abiertas y score proveedores', 'NC abiertas y cambios pendientes', 'Stock bajo y flota operativa'],
+    features: ['KPIs por Gerencia según Manual ECAR', 'Alertas de riesgo consolidadas', 'Navegación directa a módulos', 'Actualización en tiempo real']
   },
   {
     id: 'liquidity',

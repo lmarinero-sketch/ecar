@@ -91,6 +91,13 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   inspections: ['✅ Revisando inspecciones...', '📋 Mirando el punch list...', '🔍 Verificando calidad...'],
   rfi: ['📨 Chequeando consultas abiertas...', '🔍 Revisando RFIs pendientes...', '💡 Analizando impactos...'],
   guide: ['📖 Leyendo el manual...', '💡 Aprendiendo trucos nuevos...', '❓ ¿Tenés alguna duda de cómo se usa algo?'],
+  logistics: ['📦 Controlando acopios...', '🚛 Revisando la logística...', '📊 KPIs de stock actualizados'],
+  fleet: ['🚗 Chequeando la flota...', '🔧 Revisando mantenimientos...', '⛽ Controlando combustible...'],
+  opportunities: ['🎯 Analizando el pipeline...', '📊 Revisando oportunidades...', '💰 Calculando conversión...'],
+  purchase_orders: ['📋 Revisando OC pendientes...', '🛒 Controlando entregas...', '📦 Chequeando órdenes...'],
+  nonconformities: ['⚠️ Revisando NC abiertas...', '🔍 Analizando desvíos...', '✅ Verificando correctivas...'],
+  scope_changes: ['📐 Analizando adicionales...', '💰 Calculando impacto...', '📋 Revisando cambios...'],
+  supplier_eval: ['⭐ Evaluando proveedores...', '📊 Analizando rankings...', '🏆 Revisando calificaciones...'],
 };
 
 function getIdlePhrases(moduleId: ModuleId): string[] {
@@ -309,18 +316,24 @@ export const RomboChat: React.FC = () => {
       ],
     },
     logistics: {
-      where: 'Acopios & Logística',
+      where: 'Gerencia de Logística (PR-GL-01)',
       capabilities: [
-        'Revisar la **logística de materiales** por obra',
-        'Consultar **acopios activos** y su estado',
+        'Consultar **KPIs consolidados**: stock, flota, OC pendientes',
+        'Ver **alertas de stock bajo** y materiales a reponer',
+        'Navegar a **sub-módulos**: Depósito, Flota, OC, Pedidos',
+        'Revisar los **últimos movimientos** de inventario',
       ],
+      proTip: 'Este hub te da la visión 360° de toda la logística. Hacé clic en las tarjetas para ir al detalle.',
     },
     fleet: {
-      where: 'Flota y Maquinaria',
+      where: 'Flota y Maquinaria (PR-GL-01 §4.5)',
       capabilities: [
-        'Consultar el **estado de vehículos** y maquinaria',
-        'Revisar **asignaciones** y disponibilidad',
+        'Consultar el **estado de vehículos** y condición operativa',
+        'Revisar **mantenimientos vencidos** y próximos',
+        'Ver **cargas de combustible** y rendimiento por vehículo',
+        'Generar **parte diario vehicular** con checklist',
       ],
+      proTip: 'Los vehículos con mantenimiento vencido aparecen en rojo en la lista.',
     },
     field: {
       where: 'Parte Diario de Obra',
@@ -396,6 +409,56 @@ export const RomboChat: React.FC = () => {
         'Consultar qué **herramientas de IA** tenemos habilitadas',
       ],
       proTip: 'Podés mandarle mensajes de WhatsApp a Rombo desde tu celular para cargar cheques, facturas, partes diarios y más.',
+    },
+    opportunities: {
+      where: 'Pipeline de Oportunidades (PR-GPP-01 §4.1)',
+      capabilities: [
+        'Consultar el **funnel comercial** por etapas',
+        'Ver la **tasa de conversión** de oportunidades',
+        'Revisar el **monto total del pipeline** activo',
+        'Mover oportunidades entre **etapas del Kanban**',
+      ],
+      proTip: 'Usá la vista Pipeline (Kanban) para arrastrar oportunidades entre etapas.',
+    },
+    purchase_orders: {
+      where: 'Órdenes de Compra (PR-GC-01 §4.2-4.3)',
+      capabilities: [
+        'Ver **OC abiertas** y su estado',
+        'Consultar **OC urgentes** pendientes',
+        'Revisar el **monto comprometido** en compras',
+        'Hacer seguimiento de **entregas parciales**',
+      ],
+      proTip: 'Las OC por encima de cierto umbral requieren aprobación de Gerencia General.',
+    },
+    nonconformities: {
+      where: 'No Conformidades (PR-GC-01 §4.6)',
+      capabilities: [
+        'Ver **NC abiertas** por categoría y gravedad',
+        'Consultar **acciones correctivas** pendientes',
+        'Revisar el **historial de NC** por proyecto/proveedor',
+        'Registrar una nueva NC con evidencia',
+      ],
+      proTip: 'Las NC se integran con la evaluación de proveedores automáticamente.',
+    },
+    scope_changes: {
+      where: 'Adicionales y Cambios (PR-GO-01 §4.5)',
+      capabilities: [
+        'Ver **cambios detectados** pendientes de evaluación',
+        'Consultar el **impacto económico** acumulado de adicionales',
+        'Revisar **impacto en plazos** de cada cambio',
+        'Hacer seguimiento del **flujo de aprobación**',
+      ],
+      proTip: 'Nunca ejecutes un adicional sin registro y aprobación previa.',
+    },
+    supplier_eval: {
+      where: 'Evaluación de Proveedores (PR-GC-01 §4.7)',
+      capabilities: [
+        'Ver el **ranking de proveedores** por puntaje',
+        'Consultar **evaluaciones históricas** por período',
+        'Identificar proveedores **bloqueados o condicionales**',
+        'Relacionar evaluaciones con **NC registradas**',
+      ],
+      proTip: 'Los proveedores bloqueados no aparecen como opción en nuevas OC.',
     },
   }), []);
 

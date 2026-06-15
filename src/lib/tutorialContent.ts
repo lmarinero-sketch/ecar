@@ -9,17 +9,18 @@ export type TutorialEntry = {
 
 export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
   bi: {
-    title: 'Dashboard Principal',
-    description: 'Vista general del estado de la empresa. Muestra KPIs financieros, alertas activas, resumen de módulos y actividad reciente en tiempo real.',
+    title: 'Dashboard Ejecutivo',
+    description: 'Centro de control ejecutivo con KPIs organizados por Gerencia (Proyectos, Compras, Obras, Logística, Financiero). Vista integral del estado de la empresa en tiempo real.',
     steps: [
-      'Revisá los indicadores principales: facturación, cheques, obligaciones pendientes.',
-      'Hacé clic en las tarjetas de KPI para ir al módulo correspondiente.',
-      'Revisá la sección de alertas para ver vencimientos próximos.',
-      'Usá el gráfico de actividad para entender la tendencia del mes.',
+      'Revisá los KPIs de cada Gerencia: Proyectos (pipeline, conversión), Compras (OC, proveedores), Obras (NC, cambios), Logística (inventario, flota).',
+      'Consultá los indicadores financieros: cheques a cobrar, facturación del mes.',
+      'Revisá la sección de alertas de riesgo para acciones urgentes.',
+      'Hacé clic en "Ver Detalle" para navegar al módulo correspondiente.',
     ],
     tips: [
-      'Los datos se actualizan automáticamente cada vez que ingresás al Dashboard.',
+      'Los KPIs se agrupan por Gerencia según el Manual de Organización ECAR.',
       'Las tarjetas con borde rojo indican situaciones que requieren atención urgente.',
+      'El dashboard se actualiza automáticamente con datos en tiempo real de todos los módulos.',
     ],
   },
   liquidity: {
@@ -334,14 +335,18 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
     ],
   },
   logistics: {
-    title: 'Logística',
-    description: 'Gestión de acopios y distribución de materiales entre obras y depósitos.',
+    title: 'Gerencia de Logística',
+    description: 'Hub centralizado de logística (Doc PR-GL-01). Control de acopios, transporte, inventario, flota y abastecimiento con KPIs consolidados y alertas de stock.',
     steps: [
-      'Consultá el stock por ubicación.',
-      'Registrá movimientos entre depósitos.',
+      'Revisá los KPIs consolidados: ítems en stock, stock bajo, valor inventario, OC pendientes, flota operativa.',
+      'Hacé clic en las tarjetas de Depósito, Flota, OC o Pedidos para acceder al sub-módulo.',
+      'Revisá las alertas de stock bajo para identificar materiales que necesitan reposición urgente.',
+      'Consultá los últimos movimientos de inventario en la tabla inferior.',
     ],
     tips: [
-      'Este módulo está en desarrollo.',
+      'Las alertas rojas indican ítems por debajo del stock mínimo configurado.',
+      'Desde este hub podés navegar a todos los sub-módulos de logística.',
+      'Los KPIs se actualizan en tiempo real con datos de Inventario, Flota y Compras.',
     ],
   },
   user_management: {
