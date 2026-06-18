@@ -1085,6 +1085,8 @@ export type ScopeChange = {
   project?: Project | null;
 };
 
+export type BudgetWorkType = 'obra_nueva' | 'adicional' | 'servicio' | 'mantenimiento' | 'instalacion' | 'licitacion' | 'cambio_alcance' | 'consulta';
+
 export type Budget = {
   id: string;
   tenant_id: string;
@@ -1101,6 +1103,13 @@ export type Budget = {
   total_direct_ars: number;
   total_indirect_ars: number;
   total_final_ars: number;
+  assumptions: string | null;
+  exclusions: string | null;
+  validity_days: number;
+  work_type: BudgetWorkType;
+  approved_by: string | null;
+  approved_at: string | null;
+  parent_version_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -1339,6 +1348,7 @@ export const ALL_MODULES = [
   'documents',
   'project_budget',
   'opportunities',
+  'budget_landing',
   'fuel',
   'nonconformities',
   'scope_changes',
@@ -1349,6 +1359,7 @@ export const ALL_MODULES = [
   'user_management',
   'communications',
   'weekly_report',
+  'payments',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1357,7 +1368,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard BI',
   liquidity: 'Tablero de Liquidez',
   monthly_report: 'Resumen Mensual',
-  wbs: 'Planificación WBS',
+  wbs: 'Planificación de Obra',
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',
   purchase_requests: 'Pedidos de Compra',
@@ -1377,6 +1388,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   documents: 'Documentos & Correo',
   project_budget: 'Presupuestos de Obra',
   opportunities: 'Pipeline Oportunidades',
+  budget_landing: 'Ger. Proyectos y Presupuestos',
   fuel: 'Combustible',
   nonconformities: 'No Conformidades',
   scope_changes: 'Adicionales & Cambios',
@@ -1387,5 +1399,6 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   user_management: 'Gestión de Usuarios',
   communications: 'Comunicaciones',
   weekly_report: 'Reporte Semanal GG',
+  payments: 'Control de Pagos',
 };
 

@@ -7,7 +7,7 @@ import {
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked, Rocket,
-  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, UserCog,
+  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, UserCog, Banknote,
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -23,7 +23,8 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   fleet: Truck, certifications: FileSignature, field: Smartphone,
   safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
   expenses: Wallet, documents: FolderOpen, project_budget: HardHat,
-  opportunities: Target, fuel: Fuel,
+  opportunities: Target, fuel: Fuel, budget_landing: HardHat,
+  payments: Banknote,
   nonconformities: ShieldAlert, scope_changes: FileSignature,
   supplier_eval: ClipboardCheck,
   guide: HelpCircle, manual: BookMarked,
@@ -35,14 +36,15 @@ const iconMap: Record<ModuleId, React.ElementType> = {
 /* ─── Short labels for collapsed tooltips ─── */
 const SHORT_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard', liquidity: 'Liquidez', monthly_report: 'Mensual',
-  wbs: 'WBS', invoicing: 'ARCA', purchases: 'Compras',
+  wbs: 'Planificación', invoicing: 'ARCA', purchases: 'Compras',
   purchase_requests: 'Pedidos', purchase_orders: 'OC / OT',
   finances: 'Finanzas', obligations: 'Alertas',
   rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Acopios',
   fleet: 'Flota', certifications: 'Cert. ICC', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
-  opportunities: 'Pipeline', fuel: 'Combustible',
+  opportunities: 'Pipeline', fuel: 'Combustible', budget_landing: 'Introducción GPP',
+  payments: 'Pagos',
   nonconformities: 'No Conf.', scope_changes: 'Adicionales',
   supplier_eval: 'Eval. Prov.',
   guide: 'Guía', manual: 'Manual ISO',
@@ -63,7 +65,8 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   logistics: 'bg-slate-500', fleet: 'bg-sky-500', certifications: 'bg-lime-600',
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-cyan-600',
-  opportunities: 'bg-blue-600', fuel: 'bg-sky-600',
+  opportunities: 'bg-blue-600', fuel: 'bg-sky-600', budget_landing: 'bg-slate-700',
+  payments: 'bg-indigo-700',
   nonconformities: 'bg-red-600', scope_changes: 'bg-amber-600',
   supplier_eval: 'bg-teal-600',
   guide: 'bg-ecar-blue', manual: 'bg-blue-900',
@@ -90,11 +93,10 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Presupuestos', emoji: '📐',
     items: [
+      { id: 'budget_landing' },
       { id: 'opportunities', requires: true },
       { id: 'project_budget', requires: true },
-      { id: 'wbs', requires: true },
       { id: 'certifications', requires: true },
-      { id: 'scope_changes', requires: true },
     ],
   },
   {
@@ -117,11 +119,13 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Obra', emoji: '🏗️',
     items: [
+      { id: 'wbs', requires: true },
       { id: 'field', requires: true },
       { id: 'safety', requires: true },
       { id: 'inspections', requires: true },
       { id: 'rfi', requires: true },
       { id: 'nonconformities', requires: true },
+      { id: 'scope_changes', requires: true },
       { id: 'documents', requires: true },
     ],
   },
@@ -133,6 +137,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'invoicing', requires: true },
       { id: 'monthly_report' },
       { id: 'expenses', requires: true },
+      { id: 'payments', requires: true },
     ],
   },
   {

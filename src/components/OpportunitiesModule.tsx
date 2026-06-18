@@ -360,8 +360,9 @@ export const OpportunitiesModule: React.FC = () => {
 
       {/* FORM MODAL */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40" onClick={() => setShowForm(false)}>
+          <div className="flex min-h-full items-start justify-center py-8 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <Target size={20} className="text-cyan-600" />
@@ -502,6 +503,7 @@ export const OpportunitiesModule: React.FC = () => {
                 className="bg-cyan-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 disabled:opacity-50 transition-all">
                 <Save size={16} /> {selectedOpp ? 'Guardar Cambios' : 'Crear Oportunidad'}
               </button>
+            </div>
             </div>
           </div>
         </div>

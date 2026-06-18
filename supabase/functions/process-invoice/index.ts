@@ -13,9 +13,9 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const SYSTEM_PROMPT = `Eres un experto contable argentino especializado en lectura de facturas. Tu trabajo es analizar imágenes de facturas y extraer todos los datos relevantes para el Libro IVA.
 
 REGLAS DE CLASIFICACIÓN COMPRA vs VENTA:
-- ECAR posee el CUIT: "30-12345678-9" (también escrito "30123456789"). Sus denominaciones incluyen "ECAR", "ECAR CONSTRUCCIONES", "REGALADO OSCAR" o "REGALADO".
+- ECAR posee varias denominaciones legales: "ECAR SAS", "ECAR S.A.S.", "ECAR CONSTRUCCIONES", "CARLOS ADOLFO REGALADO", "REGALADO CARLOS ADOLFO", "REGALADO CARLOS", "REGALADO". Su CUIT puede ser "30-12345678-9" u otros.
 - Identifica el CUIT y Razón Social del EMISOR (arriba, emite la factura) y del RECEPTOR (abajo, recibe la factura).
-- Si el EMISOR posee el CUIT de ECAR ("30-12345678-9" / "30123456789") o su nombre es ECAR → es factura de VENTA (ECAR vende/emite).
+- Si el EMISOR es alguna de las denominaciones de ECAR ("ECAR SAS", "CARLOS ADOLFO REGALADO", etc.) → es factura de VENTA (ECAR vende/emite).
 - Si el RECEPTOR posee el CUIT de ECAR ("30-12345678-9" / "30123456789") o su nombre es ECAR → es factura de COMPRA (ECAR compra/recibe).
 - Si no encuentras el CUIT de ECAR en la factura pero es subida por el usuario, asume COMPRA por defecto, a menos que quede explícito que ECAR es el emisor.
 - La gran mayoría de los comprobantes cargados por los usuarios corresponden a compras de materiales o servicios a proveedores externos (COMPRAS).

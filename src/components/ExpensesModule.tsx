@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ChevronDown, ChevronRight, Plus, X, Save, TrendingUp, TrendingDown,
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
-  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon
+  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Edit2
 } from 'lucide-react';
-import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem } from '../hooks/useData';
+import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
 
@@ -65,6 +65,8 @@ export const ExpensesModule: React.FC = () => {
   const upsertRegistro = useUpsertGastoRegistro();
   const createItem = useCreateGastoItem();
   const deleteItem = useDeleteGastoItem();
+  const updateGastoItem = useUpdateGastoItem();
+  const [editingItem, setEditingItem] = useState<{ id: string; alias_cbu: string; titular_cuenta: string } | null>(null);
 
   const isLoading = itemsLoading || regLoading;
 
@@ -314,15 +316,32 @@ export const ExpensesModule: React.FC = () => {
                       {/* Item rows (if not collapsed) */}
                       {!isCollapsed && catItems.map(item => (
                         <tr key={item.id} className="hover:bg-gray-50 border-b border-gray-100 group">
-                          <td className="px-4 py-2 text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10 flex items-center gap-2">
-                            <span className="truncate">{item.descripcion}</span>
-                            <button
-                              onClick={() => { if (confirm(`¿Eliminar "${item.descripcion}"?`)) deleteItem.mutate(item.id); }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all ml-auto flex-shrink-0"
-                              title="Eliminar"
-                            >
-                              <X size={12} />
-                            </button>
+                          <td className="px-4 py-2 text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 min-w-0">
+                                <span className="truncate block">{item.descripcion}</span>
+                                {((item as any).alias_cbu || (item as any).titular_cuenta) && (
+                                  <span className="text-[9px] text-gray-400 font-mono truncate block">
+                                    {(item as any).alias_cbu && `📎 ${(item as any).alias_cbu}`}
+                                    {(item as any).titular_cuenta && ` · ${(item as any).titular_cuenta}`}
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => setEditingItem({ id: item.id, alias_cbu: (item as any).alias_cbu || '', titular_cuenta: (item as any).titular_cuenta || '' })}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-50 text-gray-300 hover:text-blue-500 transition-all flex-shrink-0"
+                                title="Editar alias/CBU"
+                              >
+                                <Edit2 size={11} />
+                              </button>
+                              <button
+                                onClick={() => { if (confirm(`¿Eliminar "${item.descripcion}"?`)) deleteItem.mutate(item.id); }}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all flex-shrink-0"
+                                title="Eliminar"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
                           </td>
                           {visibleMonths.map(m => {
                             const p = getPeriodo(year, m);
@@ -342,10 +361,12 @@ export const ExpensesModule: React.FC = () => {
                                         if (e.key === 'Enter') handleSave(item.id, p, editCell.monto);
                                         if (e.key === 'Escape') setEditCell(null);
                                       }}
-                                      className="w-24 px-2 py-1 border border-emerald-300 rounded text-xs font-mono text-right focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                      onBlur={() => { if (editCell.monto) handleSave(item.id, p, editCell.monto); else setEditCell(null); }}
+                                      placeholder="0.00"
+                                      className="w-full px-2 py-1.5 border-2 border-emerald-400 rounded-lg text-sm font-mono text-right focus:outline-none focus:ring-2 focus:ring-emerald-500/30 bg-emerald-50"
                                     />
-                                    <button onClick={() => handleSave(item.id, p, editCell.monto)} className="p-0.5 rounded bg-emerald-500 text-white hover:bg-emerald-600">
-                                      <Save size={12} />
+                                    <button onClick={() => handleSave(item.id, p, editCell.monto)} className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 flex-shrink-0">
+                                      <Save size={14} />
                                     </button>
                                   </div>
                                 ) : (
@@ -353,7 +374,7 @@ export const ExpensesModule: React.FC = () => {
                                     {monto > 0 && (
                                       <button
                                         onClick={e => { e.stopPropagation(); handleTogglePagado(item.id, p); }}
-                                        className={`p-0.5 rounded transition-colors ${pagado ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100'}`}
+                                        className={`p-0.5 rounded transition-colors flex-shrink-0 ${pagado ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100'}`}
                                         title={pagado ? 'Pagado ✓' : 'Marcar como pagado'}
                                       >
                                         <Check size={12} />
@@ -361,13 +382,14 @@ export const ExpensesModule: React.FC = () => {
                                     )}
                                     <button
                                       onClick={() => setEditCell({ itemId: item.id, periodo: p, monto: monto > 0 ? monto.toString() : '' })}
-                                      className={`px-2 py-1 rounded text-xs font-mono transition-colors min-w-[80px] text-right ${
+                                      className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono transition-all min-w-[100px] text-right border ${
                                         monto > 0
-                                          ? `font-bold text-gray-800 hover:bg-emerald-50 ${pagado ? 'line-through text-gray-400' : ''}`
-                                          : 'text-gray-300 hover:bg-gray-50 hover:text-gray-500'
+                                          ? `font-bold text-gray-800 border-transparent hover:border-emerald-300 hover:bg-emerald-50 ${pagado ? 'line-through text-gray-400' : ''}`
+                                          : 'text-gray-300 border-dashed border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600'
                                       }`}
+                                      title="Click para cargar importe"
                                     >
-                                      {monto > 0 ? formatARS(monto) : '—'}
+                                      {monto > 0 ? formatARS(monto) : 'Cargar $'}
                                     </button>
                                   </div>
                                 )}
@@ -502,6 +524,54 @@ export const ExpensesModule: React.FC = () => {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Alias/CBU Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">Datos de Pago del Gasto</h3>
+              <button onClick={() => setEditingItem(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <p className="text-xs text-gray-500">Estos datos se usan al importar este gasto en la planilla de pagos semanal.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Alias / CBU</label>
+                <input
+                  autoFocus
+                  value={editingItem.alias_cbu}
+                  onChange={e => setEditingItem({ ...editingItem, alias_cbu: e.target.value })}
+                  placeholder="Ej: EMPRESA.ALIAS.MP"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Titular de la Cuenta</label>
+                <input
+                  value={editingItem.titular_cuenta}
+                  onChange={e => setEditingItem({ ...editingItem, titular_cuenta: e.target.value })}
+                  placeholder="Ej: JUAN PÉREZ S.A."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                />
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                await updateGastoItem.mutateAsync({
+                  id: editingItem.id,
+                  alias_cbu: editingItem.alias_cbu,
+                  titular_cuenta: editingItem.titular_cuenta,
+                } as any);
+                setEditingItem(null);
+              }}
+              disabled={updateGastoItem.isPending}
+              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              {updateGastoItem.isPending ? 'Guardando...' : '✓ Guardar Datos de Pago'}
+            </button>
           </div>
         </div>
       )}

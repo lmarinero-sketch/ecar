@@ -1818,7 +1818,173 @@ export function useCreateBudgetResource() {
   });
 }
 
-// ========== FUEL MODULE ==========
+export function useUpdateBudgetItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<BudgetItem> & { id: string }) => {
+      const { error } = await supabase.from('budget_items').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+      qc.invalidateQueries({ queryKey: ['budgets'] });
+    },
+  });
+}
+
+export function useUpdateBudgetSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<BudgetSection> & { id: string }) => {
+      const { error } = await supabase.from('budget_sections').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_sections'] }),
+  });
+}
+
+export function useDeleteBudgetSection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // First reassign items in this section to no section
+      await supabase.from('budget_items').update({ section_id: null }).eq('section_id', id);
+      const { error } = await supabase.from('budget_sections').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['budget_sections'] });
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+    },
+  });
+}
+
+export function useDuplicateBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sourceBudgetId: string) => {
+      // 1. Fetch source budget
+      const { data: source, error: e1 } = await supabase.from('budgets').select('*').eq('id', sourceBudgetId).single();
+      if (e1 || !source) throw e1 || new Error('Budget not found');
+
+      // 2. Count existing versions with same name or parent chain
+      const { count } = await supabase.from('budgets').select('id', { count: 'exact', head: true })
+        .or(`id.eq.${sourceBudgetId},parent_version_id.eq.${sourceBudgetId},parent_version_id.eq.${source.parent_version_id || sourceBudgetId}`);
+      const nextVersion = (count || source.version) + 1;
+
+      // 3. Create new budget
+      const { id: _id, created_at: _ca, updated_at: _ua, ...rest } = source;
+      const { data: newBudget, error: e2 } = await supabase.from('budgets').insert({
+        ...rest,
+        version: nextVersion,
+        status: 'draft',
+        parent_version_id: sourceBudgetId,
+        approved_by: null,
+        approved_at: null,
+      }).select().single();
+      if (e2 || !newBudget) throw e2 || new Error('Failed to create budget');
+
+      // 4. Duplicate sections
+      const { data: srcSections } = await supabase.from('budget_sections').select('*').eq('budget_id', sourceBudgetId).order('sort_order');
+      const sectionMap: Record<string, string> = {};
+      if (srcSections) {
+        for (const sec of srcSections) {
+          const { id: _sid, created_at: _sca, budget_id: _sbid, ...secRest } = sec;
+          const { data: newSec } = await supabase.from('budget_sections').insert({ ...secRest, budget_id: newBudget.id }).select().single();
+          if (newSec) sectionMap[sec.id] = newSec.id;
+        }
+      }
+
+      // 5. Duplicate items
+      const { data: srcItems } = await supabase.from('budget_items').select('*').eq('budget_id', sourceBudgetId).order('sort_order');
+      if (srcItems) {
+        for (const item of srcItems) {
+          const { id: _iid, created_at: _ica, budget_id: _ibid, ...itemRest } = item;
+          await supabase.from('budget_items').insert({
+            ...itemRest,
+            budget_id: newBudget.id,
+            section_id: item.section_id ? (sectionMap[item.section_id] || null) : null,
+          });
+        }
+      }
+
+      return newBudget;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['budgets'] });
+      qc.invalidateQueries({ queryKey: ['budget_sections'] });
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+    },
+  });
+}
+
+export function useUpdateBudgetResource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<BudgetResource> & { id: string }) => {
+      const { error } = await supabase.from('budget_resources').update({ ...updates, last_price_update: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_resources'] }),
+  });
+}
+
+export function useDeleteBudgetResource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('budget_resources').update({ is_active: false }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_resources'] }),
+  });
+}
+
+// ========== BUDGET DICTIONARIES (autocomplete) ==========
+export function useItemDictionary() {
+  return useQuery({
+    queryKey: ['budget_item_dictionary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budget_items')
+        .select('description, unit, unit_price_ars, cost_type')
+        .order('description');
+      if (error) throw error;
+      // Deduplicate by description (keep latest price)
+      const map = new Map<string, { description: string; unit: string; unit_price_ars: number; cost_type: string }>();
+      (data || []).forEach((item: any) => {
+        if (item.description && !map.has(item.description)) {
+          map.set(item.description, item);
+        }
+      });
+      return Array.from(map.values());
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useSectionDictionary() {
+  return useQuery({
+    queryKey: ['budget_section_dictionary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budget_sections')
+        .select('name, ordinal')
+        .order('name');
+      if (error) throw error;
+      // Deduplicate by name
+      const map = new Map<string, { name: string; ordinal: string }>();
+      (data || []).forEach((s: any) => {
+        if (s.name && !map.has(s.name)) {
+          map.set(s.name, s);
+        }
+      });
+      return Array.from(map.values());
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function useFuelVehicles() {
   return useQuery({
     queryKey: ['fuel_vehicles'],
@@ -2291,5 +2457,104 @@ export function useWhatsappConversations() {
       return data as { id: string; phone: string; messages: { role: string; content: string; timestamp?: string }[]; last_intent: string | null; pending_data: any; updated_at: string; created_at: string }[];
     },
     refetchInterval: 15000, // Auto-refresh every 15s
+  });
+}
+
+// ─── Weekly Payments ───
+export function useWeeklyPayments() {
+  return useQuery({
+    queryKey: ['weekly_payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_payments')
+        .select('*')
+        .order('payment_date', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useCreateWeeklyPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { payment_date: string; responsible: string; notes?: string }) => {
+      const { data, error } = await supabase.from('weekly_payments').insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['weekly_payments'] }),
+  });
+}
+
+export function useUpdateWeeklyPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; [key: string]: any }) => {
+      const { error } = await supabase.from('weekly_payments').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['weekly_payments'] }),
+  });
+}
+
+export function useDeleteWeeklyPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('weekly_payments').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['weekly_payments'] }),
+  });
+}
+
+export function useWeeklyPaymentItems(paymentId: string | null) {
+  return useQuery({
+    queryKey: ['weekly_payment_items', paymentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_payment_items')
+        .select('*')
+        .eq('payment_id', paymentId!)
+        .order('orden', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!paymentId,
+  });
+}
+
+export function useCreateWeeklyPaymentItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data, error } = await supabase.from('weekly_payment_items').insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['weekly_payment_items', v.payment_id] }),
+  });
+}
+
+export function useUpdateWeeklyPaymentItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; payment_id: string; [key: string]: any }) => {
+      const { error } = await supabase.from('weekly_payment_items').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['weekly_payment_items', v.payment_id] }),
+  });
+}
+
+export function useDeleteWeeklyPaymentItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payment_id }: { id: string; payment_id: string }) => {
+      const { error } = await supabase.from('weekly_payment_items').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ['weekly_payment_items', v.payment_id] }),
   });
 }

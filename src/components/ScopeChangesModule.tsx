@@ -204,8 +204,9 @@ export const ScopeChangesModule: React.FC = () => {
 
       {/* FORM MODAL */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40" onClick={() => setShowForm(false)}>
+          <div className="flex min-h-full items-start justify-center py-8 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <FileSignature size={20} className="text-amber-600" />
@@ -298,6 +299,7 @@ export const ScopeChangesModule: React.FC = () => {
                 <Save size={16} /> {selectedSC ? 'Guardar Cambios' : 'Registrar Cambio'}
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}
