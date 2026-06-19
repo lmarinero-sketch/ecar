@@ -51,12 +51,13 @@ serve(async (req) => {
     if (action === 'clock_in') {
       const now = new Date()
       const today = now.toISOString().split('T')[0]
-      const currentTime = now.toTimeString().slice(0, 8)
+      const isoNow = now.toISOString()
+      const displayTime = now.toTimeString().slice(0, 8)
 
       const { error } = await sb.from('attendance_records').insert({
         employee_id,
         record_date: today,
-        clock_in: currentTime,
+        clock_in: isoNow,
         status: 'present',
         source: 'mobile',
         worked_hours: 0,
@@ -66,7 +67,7 @@ serve(async (req) => {
       })
 
       if (error) throw error
-      return new Response(JSON.stringify({ success: true, time: currentTime }), {
+      return new Response(JSON.stringify({ success: true, time: displayTime }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -75,12 +76,13 @@ serve(async (req) => {
     if (action === 'clock_out') {
       const now = new Date()
       const today = now.toISOString().split('T')[0]
-      const currentTime = now.toTimeString().slice(0, 8)
+      const isoNow = now.toISOString()
+      const displayTime = now.toTimeString().slice(0, 8)
 
       const { error } = await sb
         .from('attendance_records')
         .update({
-          clock_out: currentTime,
+          clock_out: isoNow,
           status: 'present',
           metadata: metadata ? { device_out: metadata } : null,
         })
@@ -89,7 +91,7 @@ serve(async (req) => {
         .is('clock_out', null)
 
       if (error) throw error
-      return new Response(JSON.stringify({ success: true, time: currentTime }), {
+      return new Response(JSON.stringify({ success: true, time: displayTime }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
