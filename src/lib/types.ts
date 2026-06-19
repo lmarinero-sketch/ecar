@@ -64,6 +64,17 @@ export type Employee = {
   art_provider: string | null;
   modo_liquidacion: string | null;
   retribucion_pactada: number | null;
+  // RRHH extended fields
+  gender: 'masculino' | 'femenino' | 'otro' | null;
+  marital_status: 'soltero' | 'casado' | 'divorciado' | 'viudo' | 'conviviente' | null;
+  children_info: Array<{ edad: number }> | null;
+  education_level: string | null;
+  union_name: string | null;
+  observations: string | null;
+  debt_to_employee: number | null;
+  debt_notes: string | null;
+  does_overtime: boolean;
+  overtime_rate: '50' | '100' | null;
   created_at: string;
   // Joined
   category?: UnionCategory | null;

@@ -3,7 +3,7 @@ import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Print
 import { AttendancePanel } from './AttendancePanel';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
-import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useShifts, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
+import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 import { EmployeeCostPanel } from './EmployeeCostPanel';
 import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
@@ -15,7 +15,6 @@ export const RrhhModule: React.FC = () => {
   const { data: employees = [], isLoading } = useEmployees();
   const { data: categories = [] } = useCategories();
   const { data: allCatHistory = [] } = useAllCategoriesHistory();
-  const { data: shifts = [] } = useShifts();
   const { data: projects = [] } = useProjects();
   const { data: templates = [] } = useLetterTemplates();
   const createEmployee = useCreateEmployee();
@@ -45,9 +44,12 @@ export const RrhhModule: React.FC = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [form, setForm] = useState({
     full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
-    emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '',
+    emergency_contact: '', category_id: '', current_project_id: '', hire_date: '',
     bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '',
     modo_liquidacion: 'mensual', retribucion_pactada: '',
+    gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA',
+    observations: '', debt_to_employee: '', debt_notes: '',
+    does_overtime: false, overtime_rate: '50',
   });
 
   const activeEmployees = employees.filter(e => e.employment_status === 'active');
@@ -73,11 +75,20 @@ export const RrhhModule: React.FC = () => {
       ...form,
       category_id: form.category_id || null,
       current_project_id: form.current_project_id || null,
-      shift_id: form.shift_id || null,
       retribucion_pactada: form.retribucion_pactada ? parseFloat(form.retribucion_pactada) : null,
+      gender: form.gender || null,
+      marital_status: form.marital_status || null,
+      children_info: form.children_info ? JSON.parse(form.children_info) : [],
+      education_level: form.education_level || null,
+      union_name: form.union_name || null,
+      observations: form.observations || null,
+      debt_to_employee: form.debt_to_employee ? parseFloat(form.debt_to_employee) : 0,
+      debt_notes: form.debt_notes || null,
+      does_overtime: form.does_overtime,
+      overtime_rate: form.does_overtime ? form.overtime_rate : null,
     });
     useImplementationStore.getState().completeItem('e2-21');
-    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', shift_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '' });
+    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50' });
     setTab('roster');
   };
 
@@ -174,7 +185,7 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
-                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', shift_id: emp.shift_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
                           <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
                         </div>
                       </td>
@@ -189,13 +200,13 @@ export const RrhhModule: React.FC = () => {
 
       {/* TAB: Add Employee */}
       {tab === 'add' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-3xl">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-4xl">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} /> Nuevo Empleado</h3>
           
           {/* Datos personales */}
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Personales</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="md:col-span-3">
               <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
               <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
@@ -206,10 +217,44 @@ export const RrhhModule: React.FC = () => {
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">DNI</label>
               <input value={form.dni} onChange={e => setForm({ ...form, dni: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              <DniCuilWarning dni={form.dni} cuil={form.cuil} />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Nacimiento</label>
               <input type="date" value={form.birth_date} onChange={e => setForm({ ...form, birth_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Sexo</label>
+              <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="">Seleccionar</option>
+                <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Estado Civil</label>
+              <select value={form.marital_status} onChange={e => setForm({ ...form, marital_status: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="">Seleccionar</option>
+                <option value="soltero">Soltero/a</option>
+                <option value="casado">Casado/a</option>
+                <option value="divorciado">Divorciado/a</option>
+                <option value="viudo">Viudo/a</option>
+                <option value="conviviente">Conviviente</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Nivel de Estudios</label>
+              <select value={form.education_level} onChange={e => setForm({ ...form, education_level: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="">Seleccionar</option>
+                <option value="primario_incompleto">Primario Incompleto</option>
+                <option value="primario">Primario Completo</option>
+                <option value="secundario_incompleto">Secundario Incompleto</option>
+                <option value="secundario">Secundario Completo</option>
+                <option value="terciario">Terciario</option>
+                <option value="universitario">Universitario</option>
+                <option value="posgrado">Posgrado</option>
+              </select>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Teléfono</label>
@@ -223,11 +268,14 @@ export const RrhhModule: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 block mb-1">Contacto Emergencia</label>
               <input value={form.emergency_contact} onChange={e => setForm({ ...form, emergency_contact: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
+            <div className="md:col-span-3">
+              <ChildrenInput value={form.children_info} onChange={(v) => setForm({ ...form, children_info: v })} />
+            </div>
           </div>
 
           {/* Datos laborales */}
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Laborales</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso (Alta ARCA)</label>
               <input type="date" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
@@ -251,11 +299,8 @@ export const RrhhModule: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Turno</label>
-              <select value={form.shift_id} onChange={e => setForm({ ...form, shift_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
-                <option value="">Seleccionar</option>
-                {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time} - {s.end_time})</option>)}
-              </select>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Convenio / Sindicato</label>
+              <input value={form.union_name} onChange={e => setForm({ ...form, union_name: e.target.value })} placeholder="UOCRA" className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
@@ -269,9 +314,24 @@ export const RrhhModule: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 block mb-1">Retribución Pactada ($)</label>
               <input type="number" value={form.retribucion_pactada} onChange={e => setForm({ ...form, retribucion_pactada: e.target.value })} placeholder="0.00" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
             </div>
+            <div className="md:col-span-2">
+              <label className="text-xs font-bold text-gray-500 block mb-1">Horas Extras</label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.does_overtime} onChange={e => setForm({ ...form, does_overtime: e.target.checked })} className="accent-indigo-600 w-4 h-4" />
+                  <span className="text-sm text-gray-700 font-medium">Realiza horas extras</span>
+                </label>
+                {form.does_overtime && (
+                  <select value={form.overtime_rate} onChange={e => setForm({ ...form, overtime_rate: e.target.value })} className="px-3 py-1.5 border rounded-lg text-sm">
+                    <option value="50">Al 50%</option>
+                    <option value="100">Al 100%</option>
+                  </select>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Datos bancarios y cobertura */}
+          {/* Banco y Cobertura */}
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Banco y Cobertura</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
@@ -289,6 +349,23 @@ export const RrhhModule: React.FC = () => {
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">ART</label>
               <input value={form.art_provider} onChange={e => setForm({ ...form, art_provider: e.target.value })} placeholder="Ej: Experta ART" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+          </div>
+
+          {/* Deuda y Observaciones */}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Deuda y Observaciones</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Se le debe ($)</label>
+              <input type="number" value={form.debt_to_employee} onChange={e => setForm({ ...form, debt_to_employee: e.target.value })} placeholder="0" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Detalle de deuda</label>
+              <input value={form.debt_notes} onChange={e => setForm({ ...form, debt_notes: e.target.value })} placeholder="Motivo de la deuda..." className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div className="md:col-span-3">
+              <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones Generales</label>
+              <textarea value={form.observations} onChange={e => setForm({ ...form, observations: e.target.value })} placeholder="Notas importantes del empleado..." rows={2} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
             </div>
           </div>
 
@@ -355,10 +432,44 @@ export const RrhhModule: React.FC = () => {
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">DNI</label>
                 <input value={editForm.dni} onChange={e => setEditForm({ ...editForm, dni: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+                <DniCuilWarning dni={editForm.dni} cuil={editForm.cuil} />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Nacimiento</label>
                 <input type="date" value={editForm.birth_date} onChange={e => setEditForm({ ...editForm, birth_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Sexo</label>
+                <select value={editForm.gender} onChange={e => setEditForm({ ...editForm, gender: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccionar</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Estado Civil</label>
+                <select value={editForm.marital_status} onChange={e => setEditForm({ ...editForm, marital_status: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccionar</option>
+                  <option value="soltero">Soltero/a</option>
+                  <option value="casado">Casado/a</option>
+                  <option value="divorciado">Divorciado/a</option>
+                  <option value="viudo">Viudo/a</option>
+                  <option value="conviviente">Conviviente</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Nivel de Estudios</label>
+                <select value={editForm.education_level} onChange={e => setEditForm({ ...editForm, education_level: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="">Seleccionar</option>
+                  <option value="primario_incompleto">Primario Incompleto</option>
+                  <option value="primario">Primario Completo</option>
+                  <option value="secundario_incompleto">Secundario Incompleto</option>
+                  <option value="secundario">Secundario Completo</option>
+                  <option value="terciario">Terciario</option>
+                  <option value="universitario">Universitario</option>
+                  <option value="posgrado">Posgrado</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Teléfono</label>
@@ -371,6 +482,9 @@ export const RrhhModule: React.FC = () => {
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Contacto Emergencia</label>
                 <input value={editForm.emergency_contact} onChange={e => setEditForm({ ...editForm, emergency_contact: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div className="md:col-span-3">
+                <ChildrenInput value={editForm.children_info} onChange={(v) => setEditForm({ ...editForm, children_info: v })} />
               </div>
             </div>
 
@@ -399,11 +513,8 @@ export const RrhhModule: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Turno</label>
-                <select value={editForm.shift_id} onChange={e => setEditForm({ ...editForm, shift_id: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
-                  <option value="">Seleccionar</option>
-                  {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time} - {s.end_time})</option>)}
-                </select>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Convenio / Sindicato</label>
+                <input value={editForm.union_name} onChange={e => setEditForm({ ...editForm, union_name: e.target.value })} placeholder="UOCRA" className="w-full px-3 py-2 border rounded-xl text-sm" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
@@ -416,6 +527,21 @@ export const RrhhModule: React.FC = () => {
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Retribución Pactada ($)</label>
                 <input type="number" value={editForm.retribucion_pactada} onChange={e => setEditForm({ ...editForm, retribucion_pactada: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 block mb-1">Horas Extras</label>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={editForm.does_overtime || false} onChange={e => setEditForm({ ...editForm, does_overtime: e.target.checked })} className="accent-indigo-600 w-4 h-4" />
+                    <span className="text-sm text-gray-700 font-medium">Realiza horas extras</span>
+                  </label>
+                  {editForm.does_overtime && (
+                    <select value={editForm.overtime_rate} onChange={e => setEditForm({ ...editForm, overtime_rate: e.target.value })} className="px-3 py-1.5 border rounded-lg text-sm">
+                      <option value="50">Al 50%</option>
+                      <option value="100">Al 100%</option>
+                    </select>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -439,10 +565,41 @@ export const RrhhModule: React.FC = () => {
               </div>
             </div>
 
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Deuda y Observaciones</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Se le debe ($)</label>
+                <input type="number" value={editForm.debt_to_employee} onChange={e => setEditForm({ ...editForm, debt_to_employee: e.target.value })} placeholder="0" className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Detalle de deuda</label>
+                <input value={editForm.debt_notes} onChange={e => setEditForm({ ...editForm, debt_notes: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div className="md:col-span-3">
+                <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones Generales</label>
+                <textarea value={editForm.observations} onChange={e => setEditForm({ ...editForm, observations: e.target.value })} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm resize-none" />
+              </div>
+            </div>
+
             <button
               onClick={async () => {
                 try {
-                  await updateEmployee.mutateAsync({ id: editingEmployee.id, ...editForm, category_id: editForm.category_id || null, current_project_id: editForm.current_project_id || null, shift_id: editForm.shift_id || null, retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null });
+                  await updateEmployee.mutateAsync({
+                    id: editingEmployee.id, ...editForm,
+                    category_id: editForm.category_id || null,
+                    current_project_id: editForm.current_project_id || null,
+                    retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null,
+                    gender: editForm.gender || null,
+                    marital_status: editForm.marital_status || null,
+                    children_info: editForm.children_info ? JSON.parse(editForm.children_info) : [],
+                    education_level: editForm.education_level || null,
+                    union_name: editForm.union_name || null,
+                    observations: editForm.observations || null,
+                    debt_to_employee: editForm.debt_to_employee ? parseFloat(editForm.debt_to_employee) : 0,
+                    debt_notes: editForm.debt_notes || null,
+                    does_overtime: editForm.does_overtime || false,
+                    overtime_rate: editForm.does_overtime ? editForm.overtime_rate : null,
+                  });
                   useImplementationStore.getState().completeItem('e2-24');
                   setEditingEmployee(null);
                 } catch (err: any) { alert(err.message); }
@@ -628,6 +785,18 @@ const LegajoView: React.FC<{
           </div>
         </div>
         <div className="p-6 space-y-4">
+          {/* Datos para Alta */}
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Datos para Alta</p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+            <div><span className="text-xs font-bold text-gray-400 block">Edad</span><span className="font-bold">{employee.birth_date ? `${Math.floor((Date.now() - new Date(employee.birth_date).getTime()) / (365.25 * 86400000))} años` : '—'}</span></div>
+            <div><span className="text-xs font-bold text-gray-400 block">Sexo</span>{employee.gender ? employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1) : '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Estado Civil</span>{employee.marital_status ? employee.marital_status.charAt(0).toUpperCase() + employee.marital_status.slice(1) : '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Hijos</span>{employee.children_info && (employee.children_info as any[]).length > 0 ? `${(employee.children_info as any[]).length} (${(employee.children_info as any[]).map((c: any) => `${c.edad}a`).join(', ')})` : 'Sin hijos'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Nivel Estudios</span>{employee.education_level ? employee.education_level.replace(/_/g, ' ').replace(/^\w/, (c: string) => c.toUpperCase()) : '—'}</div>
+          </div>
+
+          {/* Datos laborales */}
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pt-2">Datos Laborales</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div><span className="text-xs font-bold text-gray-400 block">Teléfono</span>{employee.phone || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Dirección</span>{employee.address || '—'}</div>
@@ -635,15 +804,38 @@ const LegajoView: React.FC<{
             <div><span className="text-xs font-bold text-gray-400 block">Período Prueba</span>{employee.trial_start_date || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Emergencia</span>{employee.emergency_contact || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Antigüedad</span><span className="text-indigo-600 font-bold">{calcAntiguedad(employee.hire_date)}</span></div>
+            <div><span className="text-xs font-bold text-gray-400 block">Convenio / Sindicato</span><span className="font-bold">{employee.union_name || '—'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Modo Liquidación</span>{employee.modo_liquidacion || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Retribución</span>{employee.retribucion_pactada ? `$ ${Number(employee.retribucion_pactada).toLocaleString('es-AR')}` : '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Horas Extras</span>{employee.does_overtime ? <span className="font-bold text-indigo-600">Sí — al {employee.overtime_rate || '50'}%</span> : <span className="text-gray-400">No</span>}</div>
           </div>
+
+          {/* Banco y Cobertura */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-100 pt-4">
             <div><span className="text-xs font-bold text-gray-400 block">🏦 Banco</span>{employee.bank_name || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">🔗 Alias/CBU</span><span className="font-mono text-xs">{employee.bank_alias_cbu || '—'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">🏥 Obra Social</span>{employee.obra_social || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">🛡️ ART</span>{employee.art_provider || '—'}</div>
           </div>
+
+          {/* Deuda */}
+          {Number(employee.debt_to_employee) > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3">
+              <span className="text-lg">💰</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">Se le debe: $ {Number(employee.debt_to_employee).toLocaleString('es-AR')}</p>
+                {employee.debt_notes && <p className="text-xs text-amber-600">{employee.debt_notes}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Observaciones */}
+          {employee.observations && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Observaciones</p>
+              <p className="text-sm text-gray-700">{employee.observations}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -876,3 +1068,61 @@ const LegajoView: React.FC<{
   );
 };
 
+// ─── DNI/CUIL Validation Warning ───
+const DniCuilWarning: React.FC<{ dni: string; cuil: string }> = ({ dni, cuil }) => {
+  if (!dni || !cuil) return null;
+  const cuilDigits = cuil.replace(/\D/g, '');
+  const dniDigits = dni.replace(/\D/g, '');
+  if (cuilDigits.length < 10 || dniDigits.length < 7) return null;
+  const cuilCenter = cuilDigits.slice(2, 10);
+  if (cuilCenter === dniDigits) return null;
+  return (
+    <p className="text-[11px] text-red-500 font-bold mt-1 flex items-center gap-1">
+      ⚠️ El DNI no coincide con los dígitos del CUIL
+    </p>
+  );
+};
+
+// ─── Children Input (dynamic list) ───
+const ChildrenInput: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
+  let children: { edad: number }[] = [];
+  try { children = JSON.parse(value || '[]'); } catch { children = []; }
+
+  const addChild = () => {
+    const updated = [...children, { edad: 0 }];
+    onChange(JSON.stringify(updated));
+  };
+  const removeChild = (idx: number) => {
+    const updated = children.filter((_, i) => i !== idx);
+    onChange(JSON.stringify(updated));
+  };
+  const updateAge = (idx: number, age: number) => {
+    const updated = children.map((c, i) => i === idx ? { edad: age } : c);
+    onChange(JSON.stringify(updated));
+  };
+
+  return (
+    <div>
+      <label className="text-xs font-bold text-gray-500 block mb-1">Hijos ({children.length})</label>
+      <div className="flex flex-wrap items-center gap-2">
+        {children.map((child, idx) => (
+          <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+            <input
+              type="number"
+              min={0}
+              max={99}
+              value={child.edad}
+              onChange={e => updateAge(idx, parseInt(e.target.value) || 0)}
+              className="w-12 px-1 py-0.5 text-sm text-center border rounded bg-white"
+            />
+            <span className="text-xs text-gray-500">años</span>
+            <button onClick={() => removeChild(idx)} className="text-red-400 hover:text-red-600 ml-1" type="button">×</button>
+          </div>
+        ))}
+        <button onClick={addChild} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-2 py-1 border border-dashed border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors" type="button">
+          + Agregar hijo
+        </button>
+      </div>
+    </div>
+  );
+};

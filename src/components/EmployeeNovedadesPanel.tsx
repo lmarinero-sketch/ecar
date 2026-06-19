@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { CalendarDays, Thermometer, AlertTriangle, Shield, Plus, X, Banknote } from 'lucide-react';
-import { useEmployeeAbsences, useCreateEmployeeAbsence, useEmployeeAdvances, useCreateEmployeeAdvance } from '../hooks/useData';
+import { CalendarDays, Thermometer, AlertTriangle, Shield, Plus, X, Banknote, Trash2, Clock } from 'lucide-react';
+import { useEmployeeAbsences, useCreateEmployeeAbsence, useDeleteEmployeeAbsence, useEmployeeAdvances, useCreateEmployeeAdvance, useDeleteEmployeeAdvance } from '../hooks/useData';
 
 const ABSENCE_TYPES = [
   { value: 'vacation', label: 'Vacaciones', icon: CalendarDays, color: 'text-blue-600 bg-blue-50' },
   { value: 'medical', label: 'Enfermedad', icon: Thermometer, color: 'text-red-600 bg-red-50' },
   { value: 'suspension', label: 'Suspensión', icon: AlertTriangle, color: 'text-amber-600 bg-amber-50' },
   { value: 'art_leave', label: 'ART', icon: Shield, color: 'text-purple-600 bg-purple-50' },
+  { value: 'half_day', label: 'Medio Día', icon: Clock, color: 'text-teal-600 bg-teal-50' },
 ] as const;
 
 interface Props {
@@ -18,12 +19,16 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
   const { data: absences = [] } = useEmployeeAbsences(employeeId);
   const { data: advances = [] } = useEmployeeAdvances(employeeId);
   const createAbsence = useCreateEmployeeAbsence();
+  const deleteAbsence = useDeleteEmployeeAbsence();
   const createAdvance = useCreateEmployeeAdvance();
+  const deleteAdvance = useDeleteEmployeeAdvance();
 
   const [showAbsForm, setShowAbsForm] = useState(false);
   const [showAdvForm, setShowAdvForm] = useState(false);
   const [absForm, setAbsForm] = useState({ type: 'vacation' as string, start_date: '', end_date: '', reason: '', art_case_number: '' });
   const [advForm, setAdvForm] = useState({ amount_ars: '', advance_date: '', reason: '' });
+  const [confirmDeleteAbs, setConfirmDeleteAbs] = useState<string | null>(null);
+  const [confirmDeleteAdv, setConfirmDeleteAdv] = useState<string | null>(null);
 
   const handleCreateAbsence = async () => {
     if (!absForm.start_date) return;
@@ -122,11 +127,23 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
                       <p className="text-xs text-gray-400">{a.start_date} → {a.end_date || a.start_date} · {a.days || 1} día(s)</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    {a.reason && <p className="text-xs text-gray-500">{a.reason}</p>}
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.status === 'active' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                      {a.status === 'active' ? 'En curso' : 'Cerrada'}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      {a.reason && <p className="text-xs text-gray-500">{a.reason}</p>}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.status === 'active' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                        {a.status === 'active' ? 'En curso' : 'Cerrada'}
+                      </span>
+                    </div>
+                    {confirmDeleteAbs === a.id ? (
+                      <div className="flex items-center gap-1">
+                        <button onClick={async () => { await deleteAbsence.mutateAsync(a.id); setConfirmDeleteAbs(null); }} className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded-lg">Sí, eliminar</button>
+                        <button onClick={() => setConfirmDeleteAbs(null)} className="px-2 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-lg">No</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDeleteAbs(a.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -183,9 +200,21 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
                   <p className="text-sm font-bold font-mono text-gray-800">$ {a.amount_ars.toLocaleString('es-AR')}</p>
                   <p className="text-xs text-gray-400">{a.advance_date}{a.reason ? ` · ${a.reason}` : ''}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.deducted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                  {a.deducted ? 'Descontado' : 'Pendiente'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${a.deducted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {a.deducted ? 'Descontado' : 'Pendiente'}
+                  </span>
+                  {confirmDeleteAdv === a.id ? (
+                    <div className="flex items-center gap-1">
+                      <button onClick={async () => { await deleteAdvance.mutateAsync(a.id); setConfirmDeleteAdv(null); }} className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded-lg">Sí, eliminar</button>
+                      <button onClick={() => setConfirmDeleteAdv(null)} className="px-2 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-lg">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDeleteAdv(a.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" title="Eliminar">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

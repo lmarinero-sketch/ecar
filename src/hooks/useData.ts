@@ -460,9 +460,9 @@ export function useUploadDocument() {
       });
       if (uploadError) throw uploadError;
 
-      // 2. Get public URL
-      const { data: urlData } = supabase.storage.from('legajos').getPublicUrl(filePath);
-      const fileUrl = urlData.publicUrl;
+      // 2. Get signed URL (works even if bucket is not public)
+      const { data: signedData, error: signedError } = await supabase.storage.from('legajos').createSignedUrl(filePath, 31536000); // 1 year
+      const fileUrl = signedError ? supabase.storage.from('legajos').getPublicUrl(filePath).data.publicUrl : signedData.signedUrl;
 
       // 3. Create document record
       const { error: dbError } = await supabase.from('employee_documents').insert({
@@ -1584,6 +1584,17 @@ export function useUpdateEmployeeAbsence() {
   });
 }
 
+export function useDeleteEmployeeAbsence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('employee_absences').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_absences'] }),
+  });
+}
+
 // ========== EMPLOYEE ADVANCES ==========
 export function useEmployeeAdvances(employeeId?: string) {
   return useQuery({
@@ -1604,6 +1615,17 @@ export function useCreateEmployeeAdvance() {
   return useMutation({
     mutationFn: async (advance: Partial<EmployeeAdvance>) => {
       const { error } = await supabase.from('employee_advances').insert({ ...advance, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_advances'] }),
+  });
+}
+
+export function useDeleteEmployeeAdvance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('employee_advances').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_advances'] }),
