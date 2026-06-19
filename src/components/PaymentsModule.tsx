@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Banknote, Plus, X, Save, Trash2, Check, Download, Calendar,
-  FileText, Edit2, ChevronDown, ChevronRight, ArrowLeft, Building2
+  Edit2, ChevronRight, ArrowLeft, Building2
 } from 'lucide-react';
 import {
   useWeeklyPayments, useCreateWeeklyPayment, useDeleteWeeklyPayment,
@@ -365,7 +365,7 @@ export const PaymentsModule: React.FC = () => {
   const { profile } = useAuth();
   const { data: payments = [], isLoading } = useWeeklyPayments();
   const createPayment = useCreateWeeklyPayment();
-  const deletePayment = useDeleteWeeklyPayment();
+  const _deletePayment = useDeleteWeeklyPayment();
 
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);

@@ -5,7 +5,7 @@ import { useImplementationStore } from '../store/useImplementationStore';
 import {
   Clock, Users, QrCode, Monitor, CheckCircle2, XCircle, AlertTriangle,
   Calendar, ChevronLeft, ChevronRight, Maximize2, Minimize2, RefreshCw,
-  ArrowDownRight, ArrowUpRight, Coffee, UserCheck, Timer
+  ArrowDownRight, ArrowUpRight, Coffee, UserCheck, Timer, Smartphone, Globe, ScreenShare
 } from 'lucide-react';
 import { generateQRToken, getTimeRemaining, buildCheckInUrl } from '../lib/qrToken';
 import { useEmployees, useAttendance } from '../hooks/useData';
@@ -262,6 +262,7 @@ export const AttendancePanel: React.FC = () => {
                   <th className="px-4 py-3 text-center">Hs. Trabajadas</th>
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-4 py-3 text-center">Fuente</th>
+                  <th className="px-4 py-3 text-center">Dispositivo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -271,6 +272,12 @@ export const AttendancePanel: React.FC = () => {
                   const workedStr = record.clock_in && record.clock_out
                     ? calculateWorkedHours(record.clock_in, record.clock_out)
                     : record.clock_in ? 'En obra...' : '—';
+
+                  // Extract device info from metadata
+                  const meta = record.metadata as Record<string, any> | null;
+                  const deviceIn = meta?.device_in as Record<string, any> | undefined;
+                  const deviceOut = meta?.device_out as Record<string, any> | undefined;
+                  const deviceInfo = deviceOut || deviceIn;
 
                   return (
                     <tr key={record.id} className="hover:bg-gray-50 transition-colors">
@@ -321,6 +328,13 @@ export const AttendancePanel: React.FC = () => {
                         <span className="text-xs text-gray-400 font-medium">
                           {record.source === 'mobile' ? '📱 QR' : record.source === 'biometric' ? '🔐 Bio' : '✋ Manual'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {record.source === 'mobile' && deviceInfo ? (
+                          <DeviceInfoCell deviceIn={deviceIn} deviceOut={deviceOut} />
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -403,3 +417,77 @@ const StatCard: React.FC<{
     </div>
   );
 };
+
+// ─── Device Info Cell ───
+const DeviceInfoCell: React.FC<{
+  deviceIn?: Record<string, any>;
+  deviceOut?: Record<string, any>;
+}> = ({ deviceIn, deviceOut }) => {
+  const [expanded, setExpanded] = useState(false);
+  const device = deviceOut || deviceIn;
+  if (!device) return <span className="text-xs text-gray-300">—</span>;
+
+  const osEmoji = device.os === 'Android' ? '🤖' : device.os === 'iOS' ? '🍎' : device.os === 'Windows' ? '🪟' : '💻';
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100 transition-all"
+        title="Ver detalles del dispositivo"
+      >
+        <Smartphone size={11} />
+        <span>{osEmoji} {device.os || '?'}</span>
+        <span className="text-indigo-400">·</span>
+        <span>{device.browser || '?'}</span>
+      </button>
+
+      {expanded && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white border border-gray-200 rounded-xl shadow-xl p-4 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Smartphone size={12} className="text-indigo-500" />
+              Dispositivo
+            </h5>
+            <button onClick={() => setExpanded(false)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+          </div>
+
+          {deviceIn && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">📥 Entrada</p>
+              <DeviceDetailRows device={deviceIn} />
+            </div>
+          )}
+
+          {deviceOut && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">📤 Salida</p>
+              <DeviceDetailRows device={deviceOut} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DeviceDetailRows: React.FC<{ device: Record<string, any> }> = ({ device }) => (
+  <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+    <span className="text-gray-400 flex items-center gap-1"><Globe size={10} /> OS</span>
+    <span className="font-bold text-gray-800">{device.os || 'Desconocido'}</span>
+    <span className="text-gray-400 flex items-center gap-1"><Globe size={10} /> Navegador</span>
+    <span className="font-bold text-gray-800">{device.browser || 'Desconocido'}</span>
+    <span className="text-gray-400 flex items-center gap-1"><ScreenShare size={10} /> Pantalla</span>
+    <span className="font-bold text-gray-800">{device.screen_resolution || '—'}</span>
+    <span className="text-gray-400 flex items-center gap-1"><Clock size={10} /> Hora</span>
+    <span className="font-bold text-gray-800 font-mono">
+      {device.timestamp ? new Date(device.timestamp).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+    </span>
+    {device.platform && (
+      <>
+        <span className="text-gray-400">Plataforma</span>
+        <span className="font-bold text-gray-800 truncate">{device.platform}</span>
+      </>
+    )}
+  </div>
+);

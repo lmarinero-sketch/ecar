@@ -473,4 +473,34 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'El reporte se puede usar como base para la reunión semanal de GG.',
     ],
   },
+  budget_landing: {
+    title: 'Gerencia de Proyectos y Presupuestos',
+    description: 'Hub del área de presupuestos. Flujo del proceso desde la oportunidad hasta la entrega a obra, con documentos a cada gerencia y matriz de responsabilidades.',
+    steps: [
+      'Revisá el flujo del proceso de presupuestación en 6 pasos.',
+      'Accedé a los sub-módulos: Pipeline de Oportunidades, Presupuestos de Obra, Certificaciones.',
+      'Consultá los documentos que se entregan a cada gerencia (Obras, Compras, Logística, Administración).',
+      'Revisá la matriz RACI para entender responsabilidades.',
+    ],
+    tips: [
+      'Este módulo es informativo y de navegación — los datos se cargan en los sub-módulos.',
+      'El criterio rector: todo presupuesto debe explicar qué se entendió, midió, incluyó y excluyó.',
+    ],
+  },
+  payments: {
+    title: 'Control de Pagos Semanales',
+    description: 'Planilla de pagos semanales con alias/CBU, titulares de cuenta y exportación PDF. Similar a la planilla de Adolfo para control de transferencias.',
+    steps: [
+      'Creá una nueva planilla de pagos indicando fecha y responsable.',
+      'Agregá pagos manualmente o importá desde Gastos Operativos.',
+      'Completá alias/CBU, titular de cuenta y nro. de factura para cada ítem.',
+      'Marcá cada pago como realizado con el ícono ✓.',
+      'Exportá la planilla a PDF para impresión o archivo.',
+    ],
+    tips: [
+      'Los gastos operativos no pagados del período aparecen como importables.',
+      'La columna "Resto" permite registrar pagos parciales.',
+      'El PDF se genera con formato de tabla formal listo para imprimir.',
+    ],
+  },
 };

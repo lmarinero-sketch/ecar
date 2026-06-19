@@ -106,6 +106,7 @@ export type AttendanceRecord = {
   notes: string | null;
   approved: boolean;
   approved_by: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
   employee?: Employee;
 };

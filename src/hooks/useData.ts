@@ -2551,7 +2551,7 @@ export function useUpdateWeeklyPaymentItem() {
 export function useDeleteWeeklyPaymentItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, payment_id }: { id: string; payment_id: string }) => {
+    mutationFn: async ({ id, payment_id: _payment_id }: { id: string; payment_id: string }) => {
       const { error } = await supabase.from('weekly_payment_items').delete().eq('id', id);
       if (error) throw error;
     },

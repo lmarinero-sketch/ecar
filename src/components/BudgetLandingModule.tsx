@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Target, HardHat, FileSignature, ArrowRight, Building2,
   ShoppingCart, Truck, Landmark, ClipboardCheck,
-  FileText, Package, Users, AlertTriangle, CheckCircle2,
+  FileText, Users, AlertTriangle, CheckCircle2,
   TrendingUp, Layers, BookOpen, ArrowDown,
 } from 'lucide-react';
 import { useAppStore } from '../store/useStore';
