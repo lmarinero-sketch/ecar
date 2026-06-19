@@ -13,7 +13,7 @@ const tools = [
     type: 'function' as const,
     function: {
       name: 'query_employees',
-      description: 'Buscar empleados activos.',
+      description: 'Buscar empleados activos. Devuelve datos completos: nombre, CUIL, DNI, sexo, estado civil, hijos, estudios, convenio, horas extras, deuda, observaciones.',
       parameters: { type: 'object', properties: { search: { type: 'string' } } }
     }
   },
@@ -312,6 +312,22 @@ const tools = [
       }
     }
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_employee_absences',
+      description: 'Consultar ausencias/licencias de un empleado (vacaciones, enfermedad, suspensión, ART, medio día).',
+      parameters: { type: 'object', properties: { employee_name: { type: 'string' }, status: { type: 'string' } }, required: ['employee_name'] }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_employee_advances',
+      description: 'Consultar adelantos de un empleado. Muestra monto, fecha, motivo y si fue descontado.',
+      parameters: { type: 'object', properties: { employee_name: { type: 'string' }, pending_only: { type: 'boolean' } }, required: ['employee_name'] }
+    }
+  },
 ];
 
 // Helper to get Argentina date/time
@@ -457,7 +473,7 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
   try {
     switch (name) {
       case 'query_employees': {
-        let q = supabase.from('employees').select('full_name, cuil, employment_status, hire_date, category').eq('employment_status', 'active')
+        let q = supabase.from('employees').select('full_name, cuil, dni, employment_status, hire_date, birth_date, gender, marital_status, children_info, education_level, union_name, observations, debt_to_employee, debt_notes, does_overtime, overtime_rate, phone, address, modo_liquidacion, retribucion_pactada').eq('employment_status', 'active')
         if (args.search) q = q.ilike('full_name', `%${args.search}%`)
         const { data } = await q.order('full_name').limit(20)
         return JSON.stringify(data || [])
@@ -1023,6 +1039,26 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           monto: args.amount,
           pagado: data.pagado
         })
+      }
+      // ─── RRHH: AUSENCIAS & ADELANTOS ───
+      case 'query_employee_absences': {
+        const { data: emp } = await supabase.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró empleado "${args.employee_name}"` })
+        let q = supabase.from('employee_absences').select('type, start_date, end_date, days, reason, status, art_case_number').eq('employee_id', emp.id)
+        if (args.status) q = q.eq('status', args.status)
+        const { data } = await q.order('start_date', { ascending: false }).limit(30)
+        const typeLabels: Record<string, string> = { vacation: 'Vacaciones', medical: 'Enfermedad', suspension: 'Suspensión', art_leave: 'ART', half_day: 'Medio Día' }
+        const mapped = (data || []).map((a: any) => ({ ...a, tipo_label: typeLabels[a.type] || a.type }))
+        return JSON.stringify({ empleado: emp.full_name, ausencias: mapped, total: mapped.length })
+      }
+      case 'query_employee_advances': {
+        const { data: emp } = await supabase.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró empleado "${args.employee_name}"` })
+        let q = supabase.from('employee_advances').select('amount_ars, advance_date, reason, deducted').eq('employee_id', emp.id)
+        if (args.pending_only) q = q.eq('deducted', false)
+        const { data } = await q.order('advance_date', { ascending: false }).limit(30)
+        const totalPendiente = (data || []).filter((a: any) => !a.deducted).reduce((s: number, a: any) => s + (a.amount_ars || 0), 0)
+        return JSON.stringify({ empleado: emp.full_name, adelantos: data || [], total_pendiente_ars: totalPendiente })
       }
       default:
         return JSON.stringify({ error: `Herramienta desconocida: ${name}` })

@@ -56,11 +56,18 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Sugerí: "¿Querés que configure un recordatorio WhatsApp para cheques próximos a vencer?" o "Puedo marcar esta obligación como pagada".`,
   
   rrhh: `## CONTEXTO ACTUAL: El usuario está en RRHH & Legajos
-- Gestiona la nómina de personal: datos personales, CUIL, categoría, proyecto asignado.
-- Legajo digital con documentos (DNI, ART, recibos, contratos).
-- Asistencia con QR (clock-in/clock-out), novedades al contador.
-- Ayudalo a: consultar empleados activos, revisar asistencia, solicitar documentos faltantes, detectar anomalías de presentismo.
-- Sugerí: "¿Querés que revise quién faltó hoy?" o "Puedo solicitar el DNI actualizado a un empleado".`,
+- Gestiona la nómina de personal con datos completos para alta: nombre, CUIL, DNI, fecha nacimiento, sexo, estado civil, cantidad de hijos con edades, nivel de estudios.
+- Cada empleado puede tener: convenio/sindicato (default UOCRA), categoría UOCRA, obra asignada, modo liquidación (mensual/quincenal/jornalizado), retribución pactada.
+- Registro de horas extras: si hace o no, y al 50% o 100%.
+- Casilla de observaciones generales y registro de deuda al empleado (monto + detalle).
+- Legajo digital con documentos (DNI, ART, recibos, contratos). Descarga con URLs firmadas.
+- Asistencia con QR (clock-in/clock-out) con tracking de dispositivo (browser, OS, plataforma).
+- Ausencias y licencias: vacaciones, enfermedad, suspensión, ART, medio día. Se pueden eliminar.
+- Adelantos: monto, fecha, motivo. Se pueden eliminar. Se marca si fue descontado o no.
+- Novedades al contador: resumen de ausencias, adelantos y horas para liquidación.
+- Validación DNI↔CUIL: warning si los 8 dígitos centrales del CUIL no coinciden con el DNI.
+- Ayudalo a: consultar empleados activos con sus datos completos, revisar asistencia, solicitar documentos faltantes, detectar anomalías de presentismo, consultar ausencias y adelantos.
+- Sugerí: "¿Querés que revise quién faltó hoy?" o "Puedo mostrar los datos de alta de un empleado" o "¿Querés ver los adelantos pendientes de descuento?".`,
   
   inventory: `## CONTEXTO ACTUAL: El usuario está en Pañol & Inventario
 - Gestiona materiales, herramientas y consumibles. Control de stock con mínimos.
@@ -397,6 +404,21 @@ const tools = [
       parameters: { type: 'object', properties: { search: { type: 'string', description: 'Buscar por nombre (opcional)' }, category: { type: 'string', description: 'Filtrar por categoría (opcional)' }, low_stock: { type: 'boolean', description: 'Si true, solo muestra items con stock bajo mínimo' } } }
     }
   },
+  // ─── TOOLS NUEVOS: RRHH AUSENCIAS & ADELANTOS ───
+  {
+    type: 'function', function: {
+      name: 'query_employee_absences',
+      description: 'Consultar ausencias/licencias de un empleado. Tipos: vacation, medical, suspension, art_leave, half_day.',
+      parameters: { type: 'object', properties: { employee_name: { type: 'string', description: 'Nombre del empleado (parcial)' }, status: { type: 'string', description: 'active/closed' } }, required: ['employee_name'] }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_employee_advances',
+      description: 'Consultar adelantos de un empleado. Muestra monto, fecha, motivo y si fue descontado.',
+      parameters: { type: 'object', properties: { employee_name: { type: 'string', description: 'Nombre del empleado (parcial)' }, pending_only: { type: 'boolean', description: 'Si true, solo muestra adelantos no descontados' } }, required: ['employee_name'] }
+    }
+  },
 ]
 
 // Helper to get Argentina date/time
@@ -432,7 +454,7 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
   try {
     switch (name) {
       case 'query_employees': {
-        let q = sb.from('employees').select('full_name, cuil, employment_status, hire_date, category, project_id').eq('employment_status', 'active')
+        let q = sb.from('employees').select('full_name, cuil, dni, employment_status, hire_date, birth_date, gender, marital_status, children_info, education_level, union_name, observations, debt_to_employee, debt_notes, does_overtime, overtime_rate, category_id, current_project_id, phone, address, emergency_contact, bank_name, bank_alias_cbu, obra_social, art_provider, modo_liquidacion, retribucion_pactada, trial_start_date').eq('employment_status', 'active')
         if (args.search) q = q.ilike('full_name', `%${args.search}%`)
         const { data } = await q.order('full_name').limit(30)
         return JSON.stringify(data || [])
@@ -829,6 +851,27 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
           materiales: items.filter(i => !i.is_tool).length,
           bajo_stock: data.filter(i => i.quantity !== null && i.min_stock !== null && i.quantity <= i.min_stock).length,
         })
+      }
+      // ─── RRHH: AUSENCIAS & ADELANTOS ───
+      case 'query_employee_absences': {
+        const { data: emp } = await sb.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró empleado "${args.employee_name}"` })
+        let q = sb.from('employee_absences').select('type, start_date, end_date, days, reason, status, art_case_number').eq('employee_id', emp.id)
+        if (args.status) q = q.eq('status', args.status)
+        const { data } = await q.order('start_date', { ascending: false }).limit(30)
+        const typeLabels: Record<string, string> = { vacation: 'Vacaciones', medical: 'Enfermedad', suspension: 'Suspensión', art_leave: 'ART', half_day: 'Medio Día' }
+        const mapped = (data || []).map(a => ({ ...a, tipo_label: typeLabels[a.type] || a.type }))
+        const totalDias = mapped.reduce((s, a) => s + (a.days || 0), 0)
+        return JSON.stringify({ empleado: emp.full_name, ausencias: mapped, total: mapped.length, total_dias: totalDias })
+      }
+      case 'query_employee_advances': {
+        const { data: emp } = await sb.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró empleado "${args.employee_name}"` })
+        let q = sb.from('employee_advances').select('amount_ars, advance_date, reason, deducted').eq('employee_id', emp.id)
+        if (args.pending_only) q = q.eq('deducted', false)
+        const { data } = await q.order('advance_date', { ascending: false }).limit(30)
+        const totalPendiente = (data || []).filter(a => !a.deducted).reduce((s, a) => s + (a.amount_ars || 0), 0)
+        return JSON.stringify({ empleado: emp.full_name, adelantos: data || [], total: (data || []).length, total_pendiente_ars: totalPendiente })
       }
       default:
         return JSON.stringify({ error: `Herramienta desconocida: ${name}` })
