@@ -61,8 +61,8 @@ function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_veh
   if (vehicleMatch) {
     return { type: 'checkin_vehicle', vehicleId: vehicleMatch[1] };
   }
-  // /checkin?token=... → Attendance check-in
-  if (path === '/checkin' || path === '/checkin/') {
+  // /checkin?token=... or /fichar?token=... → Attendance check-in
+  if (path === '/checkin' || path === '/checkin/' || path === '/fichar' || path === '/fichar/') {
     return { type: 'checkin_attendance' };
   }
   return null;
