@@ -76,8 +76,8 @@ export const RrhhModule: React.FC = () => {
       category_id: form.category_id || null,
       current_project_id: form.current_project_id || null,
       retribucion_pactada: form.retribucion_pactada ? parseFloat(form.retribucion_pactada) : null,
-      gender: form.gender || null,
-      marital_status: form.marital_status || null,
+      gender: (form.gender || null) as any,
+      marital_status: (form.marital_status || null) as any,
       children_info: form.children_info ? JSON.parse(form.children_info) : [],
       education_level: form.education_level || null,
       union_name: form.union_name || null,
@@ -85,7 +85,7 @@ export const RrhhModule: React.FC = () => {
       debt_to_employee: form.debt_to_employee ? parseFloat(form.debt_to_employee) : 0,
       debt_notes: form.debt_notes || null,
       does_overtime: form.does_overtime,
-      overtime_rate: form.does_overtime ? form.overtime_rate : null,
+      overtime_rate: (form.does_overtime ? form.overtime_rate : null) as any,
     });
     useImplementationStore.getState().completeItem('e2-21');
     setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50' });

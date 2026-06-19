@@ -4,7 +4,7 @@ import {
   Edit2, ChevronRight, ArrowLeft, Building2
 } from 'lucide-react';
 import {
-  useWeeklyPayments, useCreateWeeklyPayment, useDeleteWeeklyPayment,
+  useWeeklyPayments, useCreateWeeklyPayment,
   useWeeklyPaymentItems, useCreateWeeklyPaymentItem, useUpdateWeeklyPaymentItem, useDeleteWeeklyPaymentItem,
   useGastosItems, useGastosRegistrosByRange,
 } from '../hooks/useData';
@@ -365,7 +365,6 @@ export const PaymentsModule: React.FC = () => {
   const { profile } = useAuth();
   const { data: payments = [], isLoading } = useWeeklyPayments();
   const createPayment = useCreateWeeklyPayment();
-  const _deletePayment = useDeleteWeeklyPayment();
 
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
