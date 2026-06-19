@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { validateQRToken } from '../lib/qrToken';
-import { supabase } from '../lib/supabase';
 import { CheckCircle2, XCircle, Clock, HardHat, Loader2, ShieldCheck, UserCheck, Smartphone, Search } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -60,6 +59,25 @@ export const CheckInPage: React.FC = () => {
     validateToken();
   }, []);
 
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const callEdge = async (body: Record<string, any>) => {
+    const res = await fetch(`${supabaseUrl}/functions/v1/attendance-checkin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Error de red' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  };
+
   const validateToken = async () => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
@@ -77,13 +95,7 @@ export const CheckInPage: React.FC = () => {
     }
 
     try {
-      const { data, error: dbError } = await supabase
-        .from('employees')
-        .select('id, full_name, cuil, dni, category:union_categories(name)')
-        .eq('employment_status', 'active')
-        .order('full_name');
-
-      if (dbError) throw dbError;
+      const { employees: data } = await callEdge({ action: 'get_employees' });
       setEmployees(data || []);
       setStatus('select_employee');
     } catch (err: any) {
@@ -95,26 +107,25 @@ export const CheckInPage: React.FC = () => {
   const handleSelectEmployee = async (emp: any) => {
     setSelectedEmployee(emp);
 
-    const today = new Date().toISOString().split('T')[0];
-    const { data: existing } = await supabase
-      .from('attendance_records')
-      .select('*')
-      .eq('employee_id', emp.id)
-      .eq('record_date', today)
-      .maybeSingle();
+    try {
+      const { record: existing } = await callEdge({ action: 'check_status', employee_id: emp.id });
 
-    if (existing && existing.clock_in && existing.clock_out) {
-      setStatus('already_checked');
-      return;
+      if (existing && existing.clock_in && existing.clock_out) {
+        setStatus('already_checked');
+        return;
+      }
+
+      if (existing && existing.clock_in && !existing.clock_out) {
+        setIsClockOut(true);
+      } else {
+        setIsClockOut(false);
+      }
+
+      setStatus('confirming');
+    } catch (err: any) {
+      setStatus('error');
+      setError('Error al verificar estado: ' + (err?.message || 'Intente de nuevo'));
     }
-
-    if (existing && existing.clock_in && !existing.clock_out) {
-      setIsClockOut(true);
-    } else {
-      setIsClockOut(false);
-    }
-
-    setStatus('confirming');
   };
 
   const handleConfirm = async () => {
@@ -122,42 +133,17 @@ export const CheckInPage: React.FC = () => {
     setStatus('validating');
 
     try {
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const currentTimeStr = now.toTimeString().slice(0, 8);
       const deviceInfo = getDeviceInfo();
+      const action = isClockOut ? 'clock_out' : 'clock_in';
 
-      if (isClockOut) {
-        const { error: updateErr } = await supabase
-          .from('attendance_records')
-          .update({
-            clock_out: currentTimeStr,
-            status: 'present',
-            metadata: { device_out: deviceInfo },
-          })
-          .eq('employee_id', selectedEmployee.id)
-          .eq('record_date', today)
-          .is('clock_out', null);
-        if (updateErr) throw updateErr;
-      } else {
-        const { error: insertErr } = await supabase
-          .from('attendance_records')
-          .insert({
-            employee_id: selectedEmployee.id,
-            record_date: today,
-            clock_in: currentTimeStr,
-            status: 'present',
-            source: 'mobile',
-            worked_hours: 0,
-            overtime_hours: 0,
-            approved: false,
-            metadata: { device_in: deviceInfo },
-          });
-        if (insertErr) throw insertErr;
-      }
+      const result = await callEdge({
+        action,
+        employee_id: selectedEmployee.id,
+        metadata: deviceInfo,
+      });
 
       useImplementationStore.getState().completeItem('e2-30');
-      setCheckInTime(currentTimeStr);
+      setCheckInTime(result.time);
       setStatus('success');
     } catch (err: any) {
       setStatus('error');
