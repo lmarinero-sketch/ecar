@@ -385,6 +385,7 @@ export const RrhhModule: React.FC = () => {
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
+          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }}
           calcAntiguedad={calcAntiguedad}
         />
       )}
@@ -682,8 +683,9 @@ const LegajoView: React.FC<{
   templates: any[];
   onSelect: (id: string) => void;
   onBack: () => void;
+  onEdit: (emp: any) => void;
   calcAntiguedad: (d: string | null) => string;
-}> = ({ employee, employees, templates, onSelect, onBack, calcAntiguedad }) => {
+}> = ({ employee, employees, templates, onSelect, onBack, onEdit, calcAntiguedad }) => {
   const { data: docs = [] } = useEmployeeDocuments(employee?.id || '');
   const uploadDoc = useUploadDocument();
   const [showUpload, setShowUpload] = useState(false);
@@ -773,15 +775,23 @@ const LegajoView: React.FC<{
       <button onClick={onBack} className="text-ecar-blue text-sm font-bold hover:underline">← Volver a nómina</button>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="bg-indigo-50 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-xl">
-              {employee.full_name.charAt(0)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-xl">
+                {employee.full_name.charAt(0)}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{employee.full_name}</h3>
+                <p className="text-sm text-gray-500">CUIL: {employee.cuil || '—'} · DNI: {employee.dni || '—'}</p>
+                <p className="text-xs text-indigo-600 font-bold mt-1">{employee.category?.name || 'Sin categoría'} · {employee.project?.name || 'Sin obra asignada'}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">{employee.full_name}</h3>
-              <p className="text-sm text-gray-500">CUIL: {employee.cuil || '—'} · DNI: {employee.dni || '—'}</p>
-              <p className="text-xs text-indigo-600 font-bold mt-1">{employee.category?.name || 'Sin categoría'} · {employee.project?.name || 'Sin obra asignada'}</p>
-            </div>
+            <button
+              onClick={() => onEdit(employee)}
+              className="flex items-center gap-2 bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity shadow-sm"
+            >
+              <Pencil size={14} /> Editar Empleado
+            </button>
           </div>
         </div>
         <div className="p-6 space-y-4">
