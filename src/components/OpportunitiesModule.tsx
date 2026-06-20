@@ -173,7 +173,7 @@ export const OpportunitiesModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full space-y-4 md:space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-cyan-800 via-blue-700 to-indigo-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
@@ -227,10 +227,10 @@ export const OpportunitiesModule: React.FC = () => {
 
       {/* Pipeline View */}
       {viewMode === 'pipeline' ? (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-3 min-w-max">
+        <div className="overflow-x-auto overflow-y-hidden pb-4 flex-1 min-h-0">
+          <div className="flex gap-3 min-w-max h-full">
             {pipelineData.map(stage => (
-              <div key={stage.id} className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col`}>
+              <div key={stage.id} className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col h-full`}>
                 {/* Column Header */}
                 <div className="p-3 border-b border-gray-200/60">
                   <div className="flex items-center justify-between">
@@ -240,7 +240,7 @@ export const OpportunitiesModule: React.FC = () => {
                   <div className="text-xs text-gray-500 mt-0.5">{fmt(stage.total)}</div>
                 </div>
                 {/* Cards */}
-                <div className="p-2 space-y-2 flex-1 min-h-[120px]">
+                <div className="p-2 space-y-2 flex-1 min-h-[120px] overflow-y-auto ecar-scrollbar">
                   {stage.items.map(opp => (
                     <div key={opp.id} onClick={() => openEdit(opp)}
                       className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group">

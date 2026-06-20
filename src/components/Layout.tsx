@@ -400,7 +400,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </header>
 
         {/* Content with entrance animation */}
-        <div key={contentKey} className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in-up">
+        <div key={contentKey} className="p-4 md:p-6 w-full h-full animate-fade-in flex flex-col">
           {children}
         </div>
       </main>
