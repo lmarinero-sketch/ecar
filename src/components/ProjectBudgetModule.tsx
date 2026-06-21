@@ -17,6 +17,7 @@ import {
   useItemDictionary, useSectionDictionary,
   useOpportunities
 } from '../hooks/useData';
+import { exportBudgetPdf } from '../lib/pdfExport';
 
 /* ━━━ Formatters ━━━ */
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -695,9 +696,14 @@ const BudgetDetailView: React.FC<{
       {/* Header Card */}
       <div className="bg-gradient-to-br from-cyan-800 via-cyan-700 to-teal-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute -top-6 -right-6 opacity-[0.07]"><HardHat size={160} strokeWidth={1} /></div>
-        {isLocked && <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full p-2"><Lock size={16} /></div>}
+        <div className="absolute top-3 right-3 flex gap-2">
+          {isLocked && <div className="bg-white/20 backdrop-blur-sm rounded-full p-2"><Lock size={16} /></div>}
+          <button onClick={() => exportBudgetPdf(budget, sections, items)} className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm border border-white/10">
+            <FileText size={14} /> PDF
+          </button>
+        </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap pr-20">
             <h3 className="font-black text-xl">{budget.name}</h3>
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${stat.bg} ${stat.color}`}>{stat.label}</span>
             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white font-mono">v{budget.version}</span>
@@ -984,9 +990,17 @@ const BudgetDetailView: React.FC<{
                 {itemDict.map((d: any, i: number) => <option key={i} value={d.description} />)}
               </datalist>
             </div>
-            <select value={newItem.section_id} onChange={e => setNewItem({ ...newItem, section_id: e.target.value })}
+            <select value={newItem.section_id} onChange={e => {
+              if (e.target.value === 'NEW_RUBRO') {
+                setShowNewSection(true);
+                setNewItem({ ...newItem, section_id: '' });
+              } else {
+                setNewItem({ ...newItem, section_id: e.target.value });
+              }
+            }}
               className="px-3 py-2 border border-gray-300 rounded-xl text-sm">
               <option value="">Rubro...</option>
+              <option value="NEW_RUBRO" className="font-bold text-cyan-700 bg-cyan-50">+ Crear nuevo rubro...</option>
               {sections.map((s: any) => <option key={s.id} value={s.id}>{s.ordinal} — {s.name}</option>)}
             </select>
             <select value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })}

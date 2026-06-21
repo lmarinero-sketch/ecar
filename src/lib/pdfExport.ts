@@ -245,3 +245,150 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
     doc.save(filename);
   }
 };
+
+export const exportBudgetPdf = async (budget: any, sections: any[], items: any[]) => {
+  const doc = new jsPDF({ format: 'a4', unit: 'pt' });
+  const PAGE_WIDTH = doc.internal.pageSize.width;
+
+  // Logo
+  try {
+    const response = await fetch('/logoECAR.png');
+    if (response.ok) {
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      doc.addImage(base64, 'PNG', 40, 40, 100, 35);
+    }
+  } catch (e) {
+    console.warn('Logo no se pudo cargar', e);
+  }
+
+  doc.setFont(FONT_TITLE, 'bold');
+  doc.setTextColor(COLOR_BLUE);
+  doc.setFontSize(22);
+  doc.text('Presupuesto de Obra', 170, 60);
+
+  doc.setFont(FONT_TITLE, 'normal');
+  doc.setTextColor('#666666');
+  doc.setFontSize(10);
+  doc.text(`Presupuesto: ${budget.name}`, 170, 80);
+  doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-AR')}`, 170, 95);
+
+  let currentY = 130;
+
+  // Items grouped by section
+  const itemsBySection: Record<string, any[]> = { _nosection: [] };
+  sections.forEach(s => { itemsBySection[s.id] = []; });
+  items.forEach(item => {
+    const key = item.section_id || '_nosection';
+    if (!itemsBySection[key]) itemsBySection[key] = [];
+    itemsBySection[key].push(item);
+  });
+
+  const tableBody: any[] = [];
+  const sortedSections = [...sections].sort((a, b) => a.sort_order - b.sort_order);
+
+  const addSectionToTable = (secId: string, secName: string) => {
+    const secItems = itemsBySection[secId] || [];
+    if (secItems.length === 0) return;
+
+    // Header row for section
+    tableBody.push([
+      { content: secName, colSpan: 5, styles: { fillColor: '#e0f2fe', textColor: '#0369a1', fontStyle: 'bold' } }
+    ]);
+
+    let secTotal = 0;
+    secItems.forEach(item => {
+      const lineTotal = item.quantity * item.unit_price_ars;
+      secTotal += lineTotal;
+      tableBody.push([
+        item.description,
+        item.unit,
+        item.quantity.toLocaleString('es-AR'),
+        `$${item.unit_price_ars.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`,
+        `$${lineTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+      ]);
+    });
+
+    // Subtotal row for section
+    tableBody.push([
+      { content: `Subtotal ${secName}`, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', textColor: '#4b5563' } },
+      { content: `$${secTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`, styles: { fontStyle: 'bold', textColor: '#111827' } }
+    ]);
+  };
+
+  sortedSections.forEach(s => addSectionToTable(s.id, `${s.ordinal} - ${s.name}`));
+  addSectionToTable('_nosection', 'Ítems sin rubro');
+
+  if (tableBody.length === 0) {
+    tableBody.push([{ content: 'No hay ítems cargados en este presupuesto', colSpan: 5, styles: { halign: 'center' } }]);
+  }
+
+  autoTable(doc, {
+    startY: currentY,
+    head: [['Descripción', 'Unidad', 'Cantidad', 'P. Unitario', 'Subtotal']],
+    body: tableBody,
+    theme: 'grid',
+    styles: { font: FONT_TITLE, fontSize: 9, cellPadding: 5 },
+    headStyles: { fillColor: COLOR_BLUE, textColor: '#ffffff', fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 'auto' },
+      1: { halign: 'center', cellWidth: 50 },
+      2: { halign: 'right', cellWidth: 60 },
+      3: { halign: 'right', cellWidth: 80 },
+      4: { halign: 'right', fontStyle: 'bold', cellWidth: 90 }
+    }
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 30;
+
+  // Breakdown
+  const directTotal = items.reduce((s, i) => s + (i.quantity * i.unit_price_ars), 0);
+  const gg = directTotal * (budget.gastos_generales_pct / 100);
+  const beneficio = directTotal * (budget.beneficio_pct / 100);
+  const subtotal = directTotal + gg + beneficio;
+  const financiero = subtotal * (budget.financieros_pct / 100);
+  const iva = subtotal * (budget.impuestos_pct / 100);
+  const iibb = subtotal * (budget.iibb_pct / 100);
+  const totalFinal = subtotal + financiero + iva + iibb;
+
+  const breakdownBody = [
+    ['Costo Directo', `$${directTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    [`Gastos Generales (${budget.gastos_generales_pct}%)`, `$${gg.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    [`Beneficio (${budget.beneficio_pct}%)`, `$${beneficio.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    ['Subtotal', `$${subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    [`Costos Financieros (${budget.financieros_pct}%)`, `$${financiero.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    [`Impuestos IVA (${budget.impuestos_pct}%) + IIBB (${budget.iibb_pct}%)`, `$${(iva + iibb).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`],
+    ['TOTAL FINAL', `$${totalFinal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`]
+  ];
+
+  autoTable(doc, {
+    startY: currentY,
+    body: breakdownBody,
+    theme: 'plain',
+    styles: { font: FONT_TITLE, fontSize: 10, cellPadding: 4, halign: 'right' },
+    columnStyles: {
+      0: { fontStyle: 'bold', textColor: '#4b5563' },
+      1: { fontStyle: 'bold', textColor: '#111827', cellWidth: 100 }
+    },
+    margin: { left: PAGE_WIDTH - 280 },
+    didParseCell: (data) => {
+      if (data.row.index === breakdownBody.length - 1) {
+        data.cell.styles.fontSize = 12;
+        data.cell.styles.textColor = COLOR_BLUE;
+      }
+    }
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY + 40;
+  doc.setFont(FONT_TITLE, 'normal');
+  doc.setTextColor('#888888');
+  doc.setFontSize(8);
+  doc.text('Presupuesto válido por ' + (budget.validity_days || 15) + ' días. Precios expresados en ARS.', 40, finalY);
+
+  const filename = `ECAR_Presupuesto_${budget.name.replace(/\s+/g, '_')}.pdf`;
+  doc.save(filename);
+};
