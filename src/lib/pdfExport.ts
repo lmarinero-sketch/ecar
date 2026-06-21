@@ -20,10 +20,9 @@ const WORK_TYPES: Record<string, string> = {
 export const exportOpportunityPdf = async (opportunity: Opportunity, projectName?: string) => {
   const doc = new jsPDF('p', 'pt', 'a4');
   
-  // Attempt to load logo
+  // Attempt to load ECAR logo
   try {
-    // We use the available logo (logogrow.png or ecar logo if changed later)
-    const imgUrl = '/logogrow.png';
+    const imgUrl = '/logoECAR.png';
     const response = await fetch(imgUrl);
     if (response.ok) {
       const blob = await response.blob();
@@ -33,7 +32,8 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
         reader.readAsDataURL(blob);
       });
       // (base64, format, x, y, width, height)
-      doc.addImage(base64, 'PNG', 40, 40, 70, 70);
+      // logoECAR.png has different proportions, let's make it a bit wider if it's rectangular
+      doc.addImage(base64, 'PNG', 40, 40, 100, 35);
     }
   } catch (e) {
     console.warn("No se pudo cargar el logo para el PDF", e);
@@ -43,68 +43,63 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
   doc.setFont(FONT_TITLE, 'bold');
   doc.setTextColor(COLOR_BLUE);
   doc.setFontSize(16);
-  doc.text('ECAR | RESPUESTAS AL', 140, 60);
-  doc.text('CUESTIONARIO DE', 140, 80);
-  doc.text('RELEVAMIENTO', 140, 100);
+  doc.text('RESUMEN DE OPORTUNIDAD', 250, 55);
+  doc.text('COMERCIAL (CRM)', 250, 75);
 
   doc.setFont(FONT_TITLE, 'normal');
   doc.setTextColor('#666666');
-  doc.setFontSize(11);
-  doc.text('Módulo Proyectos y Presupuestos (PR-GPP-01)', 140, 130);
+  doc.setFontSize(10);
+  doc.text('Cód: OPP-CRM-01', 250, 100);
+  doc.text(`Generado: ${new Date().toLocaleDateString('es-AR')}`, 250, 115);
 
   // Horizontal Color Bar
-  const barY = 160;
-  const barHeight = 24;
-  // Red part (approx half)
+  const barY = 140;
+  const barHeight = 12;
+  // Red part
   doc.setFillColor(COLOR_RED);
-  doc.rect(40, barY, 250, barHeight, 'F');
-  // Blue part (remaining half)
+  doc.rect(40, barY, 150, barHeight, 'F');
+  // Blue part
   doc.setFillColor(COLOR_BLUE);
-  doc.rect(290, barY, 265, barHeight, 'F');
+  doc.rect(190, barY, 365, barHeight, 'F');
 
   // Main Title
   doc.setFont(FONT_TITLE, 'bold');
   doc.setTextColor(COLOR_RED);
   doc.setFontSize(14);
-  doc.text(`Respuesta institucional para ${opportunity.client_name}`, 40, 230);
+  doc.text(`Ficha de oportunidad: ${opportunity.client_name.toUpperCase()}`, 40, 190);
 
   // Subtitle
   doc.setFont(FONT_TITLE, 'normal');
   doc.setTextColor('#333333');
   doc.setFontSize(10);
-  doc.text('Situación actual de ECAR, criterios de implementación y prioridades funcionales para el ERP', 40, 255);
+  doc.text('Detalles comerciales, alcance estimado y estado actual de la oportunidad en el Pipeline.', 40, 210);
 
   // Helper formatting functions
   const fmtMoney = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
   const fmtDate = (d: string) => d ? d.split('-').reverse().join('/') : '-';
   const fmtStage = (s: string) => s.replace(/_/g, ' ').toUpperCase();
 
-  // Table Data mapping
-  const tableData = [
-    ['Empresa', 'ECAR Construcciones / ECAR Constructora'],
-    ['Destinatario', opportunity.client_name],
-    ['Contacto', opportunity.client_contact || '-'],
-    ['Proyecto', projectName || 'Sin proyecto vinculado'],
+  // General Table Data mapping
+  const generalData = [
+    ['Cliente / Prospecto', opportunity.client_name],
+    ['Contacto Comercial', opportunity.client_contact || 'No registrado'],
+    ['Proyecto Vinculado', projectName || 'Sin proyecto asociado'],
     ['Tipo de Trabajo', WORK_TYPES[opportunity.work_type] || opportunity.work_type],
-    ['Etapa Actual', fmtStage(opportunity.stage)],
+    ['Etapa en Pipeline', fmtStage(opportunity.stage)],
     ['Monto Estimado', fmtMoney(opportunity.estimated_amount)],
-    ['Plazo Estimado', fmtDate(opportunity.estimated_deadline || '')],
-    ['Prioridad / Riesgo', `${opportunity.priority.toUpperCase()} / ${opportunity.risk_level.toUpperCase()}`],
-    ['Ubicación', opportunity.location || '-'],
-    ['Descripción', opportunity.description || '-']
+    ['Plazo de Ejecución Estimado', fmtDate(opportunity.estimated_deadline || '')],
+    ['Prioridad Operativa', opportunity.priority.toUpperCase()],
+    ['Nivel de Riesgo', opportunity.risk_level.toUpperCase()],
+    ['Ubicación de la Obra', opportunity.location || 'No especificada'],
+    ['Descripción del Alcance', opportunity.description || 'Sin descripción']
   ];
 
-  if (opportunity.assumptions) {
-    tableData.push(['Supuestos', opportunity.assumptions]);
-  }
-  if (opportunity.exclusions) {
-    tableData.push(['Exclusiones', opportunity.exclusions]);
-  }
+  let currentY = 230;
 
-  // Draw Table
+  // Draw General Table
   autoTable(doc, {
-    startY: 280,
-    body: tableData,
+    startY: currentY,
+    body: generalData,
     theme: 'grid',
     styles: {
       font: FONT_TITLE,
@@ -121,16 +116,62 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
     margin: { left: 40, right: 40 }
   });
 
+  currentY = (doc as any).lastAutoTable.finalY + 20;
+
+  // Extra Details Table (Checklist, Assumptions, Exclusions)
+  const extraData = [];
+  
+  if (opportunity.documentation_checklist) {
+    const checks = opportunity.documentation_checklist;
+    const checklistItems = [
+      checks.planos ? 'Planos (Sí)' : 'Planos (No)',
+      checks.pliego ? 'Pliego (Sí)' : 'Pliego (No)',
+      checks.memoria_tecnica ? 'Memoria T. (Sí)' : 'Memoria T. (No)',
+      checks.visita_obra ? 'Visita (Sí)' : 'Visita (No)',
+      checks.fotos ? 'Fotos (Sí)' : 'Fotos (No)'
+    ].join(' | ');
+    extraData.push(['Checklist de Documentación', checklistItems]);
+  }
+
+  if (opportunity.assumptions) {
+    extraData.push(['Supuestos de Cotización', opportunity.assumptions]);
+  }
+  if (opportunity.exclusions) {
+    extraData.push(['Exclusiones Técnicas', opportunity.exclusions]);
+  }
+
+  if (extraData.length > 0) {
+    autoTable(doc, {
+      startY: currentY,
+      body: extraData,
+      theme: 'grid',
+      styles: {
+        font: FONT_TITLE,
+        fontSize: 9,
+        cellPadding: 6,
+        textColor: '#333333',
+        lineColor: '#e5e7eb',
+        lineWidth: 0.5,
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: COLOR_RED, cellWidth: 140, fillColor: '#fff1f2' },
+        1: { cellWidth: 'auto' }
+      },
+      margin: { left: 40, right: 40 }
+    });
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+  }
+
   // Footer Text
-  const finalY = (doc as any).lastAutoTable.finalY + 40;
+  const finalY = currentY + 20;
   
   doc.setFont(FONT_TITLE, 'normal');
-  doc.setTextColor('#333333');
-  doc.setFontSize(9);
+  doc.setTextColor('#888888');
+  doc.setFontSize(8);
   
-  const footerText = 'Documento interno de respuesta para ordenar el relevamiento funcional del módulo. La respuesta describe la realidad actual de ECAR y propone el criterio deseado de implementación, evitando sobredimensionar el sistema y priorizando trazabilidad, control operativo y mejora continua.';
+  const footerText = 'Este documento es de uso exclusivamente interno y comercial de ECAR Construcciones. Contiene información confidencial sobre presupuestos, plazos e información estratégica del prospecto comercial.';
   
-  // Wrap text to fit page width (A4 width is approx 595, margins 40+40=80, usable width ~515)
+  // Wrap text to fit page width
   const wrappedFooter = doc.splitTextToSize(footerText, 515);
   doc.text(wrappedFooter, 40, finalY);
 
