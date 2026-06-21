@@ -1712,7 +1712,7 @@ export function useBudgets() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('budgets')
-        .select('*, project:projects(id, name)')
+        .select('*, project:projects(id, name), opportunity:opportunities(id, client_name, description)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Budget[];
@@ -1720,11 +1720,27 @@ export function useBudgets() {
   });
 }
 
+export function useOpportunityBudgets(opportunityId?: string) {
+  return useQuery({
+    queryKey: ['budgets', 'opportunity', opportunityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*, project:projects(id, name), opportunity:opportunities(id, client_name, description)')
+        .eq('opportunity_id', opportunityId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Budget[];
+    },
+    enabled: !!opportunityId,
+  });
+}
+
 export function useCreateBudget() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (budget: Partial<Budget>) => {
-      const { data, error } = await supabase.from('budgets').insert({ ...budget, tenant_id: ECAR_TENANT_ID }).select().single();
+      const { data, error } = await supabase.from('budgets').insert({ ...budget, tenant_id: ECAR_TENANT_ID, created_by: budget.created_by || 'Colaborador' }).select().single();
       if (error) throw error;
       return data;
     },
@@ -2295,7 +2311,7 @@ export function useOpportunities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('*, project:projects(id, name)')
+        .select('*, project:projects(id, name), files:opportunity_files(*)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Opportunity[];
@@ -2320,6 +2336,52 @@ export function useUpdateOpportunity() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Opportunity> & { id: string }) => {
       const { error } = await supabase.from('opportunities').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
+  });
+}
+
+export function useUploadOpportunityFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ opportunityId, file, title, category, observations, uploadedBy }: { opportunityId: string; file: File; title: string; category: string; observations: string; uploadedBy: string }) => {
+      // 1. Upload to storage
+      const ext = file.name.split('.').pop() || '';
+      const filePath = `${opportunityId}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('opportunity-files').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      // 2. Get Public URL
+      const { data: publicUrlData } = supabase.storage.from('opportunity-files').getPublicUrl(filePath);
+      const fileUrl = publicUrlData.publicUrl;
+
+      // 3. Create DB record
+      const { error: dbError } = await supabase.from('opportunity_files').insert({
+        tenant_id: ECAR_TENANT_ID,
+        opportunity_id: opportunityId,
+        title,
+        category,
+        file_url: fileUrl,
+        file_type: ext.toLowerCase(),
+        file_size: file.size,
+        observations,
+        uploaded_by: uploadedBy
+      });
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
+  });
+}
+
+export function useDeleteOpportunityFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('opportunity_files').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),

@@ -950,6 +950,21 @@ export type Opportunity = {
   // Joined
   project?: Project | null;
   versions?: BudgetVersion[];
+  files?: OpportunityFile[];
+};
+
+export type OpportunityFile = {
+  id: string;
+  tenant_id: string;
+  opportunity_id: string;
+  file_url: string;
+  title: string;
+  category: string;
+  file_type: string | null;
+  file_size: number | null;
+  observations: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 };
 
 export type BudgetVersion = {
@@ -1103,6 +1118,7 @@ export type Budget = {
   id: string;
   tenant_id: string;
   project_id: string | null;
+  opportunity_id: string | null;
   name: string;
   description: string | null;
   version: number;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   HardHat, Search, Plus, Package, Calculator, FolderOpen, X, Check,
   FileText, Layers, DollarSign, ChevronDown, ChevronRight,
@@ -14,7 +14,8 @@ import {
   useDuplicateBudget,
   useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource,
   useProjects, useCreateProject,
-  useItemDictionary, useSectionDictionary
+  useItemDictionary, useSectionDictionary,
+  useOpportunities
 } from '../hooks/useData';
 
 /* ━━━ Formatters ━━━ */
@@ -59,6 +60,7 @@ type ViewMode = 'list' | 'detail' | 'resources';
 export const ProjectBudgetModule: React.FC = () => {
   const { data: budgets, isLoading } = useBudgets();
   const { data: projects } = useProjects();
+  const { data: opportunities } = useOpportunities();
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
   const duplicateBudget = useDuplicateBudget();
@@ -70,7 +72,7 @@ export const ProjectBudgetModule: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
   const [newForm, setNewForm] = useState({
-    name: '', description: '', project_id: '',
+    name: '', description: '', project_id: '', opportunity_id: '',
     gastos_generales_pct: '10', beneficio_pct: '10', financieros_pct: '3',
     impuestos_pct: '21', iibb_pct: '3.5',
     assumptions: '', exclusions: '', validity_days: '15', work_type: 'obra_nueva',
@@ -98,6 +100,7 @@ export const ProjectBudgetModule: React.FC = () => {
   const handleCreateBudget = async () => {
     if (!newForm.name.trim()) return;
     let projectId: string | null = newForm.project_id || null;
+    let opportunityId: string | null = newForm.opportunity_id || null;
     // If user chose to create a new project, create it first
     if (newForm.project_id === '___new___' && newProjectName.trim()) {
       const newProj = await createProject.mutateAsync({ name: newProjectName.trim() });
@@ -109,6 +112,7 @@ export const ProjectBudgetModule: React.FC = () => {
       name: newForm.name,
       description: newForm.description || null,
       project_id: projectId,
+      opportunity_id: opportunityId,
       gastos_generales_pct: parseFloat(newForm.gastos_generales_pct) || 0,
       beneficio_pct: parseFloat(newForm.beneficio_pct) || 0,
       financieros_pct: parseFloat(newForm.financieros_pct) || 0,
@@ -118,11 +122,12 @@ export const ProjectBudgetModule: React.FC = () => {
       exclusions: newForm.exclusions || null,
       validity_days: parseInt(newForm.validity_days) || 15,
       work_type: newForm.work_type as any,
+      created_by: 'Colaborador',
     } as any);
     setShowNew(false);
     setNewProjectName('');
     setNewForm({
-      name: '', description: '', project_id: '',
+      name: '', description: '', project_id: '', opportunity_id: '',
       gastos_generales_pct: '10', beneficio_pct: '10', financieros_pct: '3',
       impuestos_pct: '21', iibb_pct: '3.5',
       assumptions: '', exclusions: '', validity_days: '15', work_type: 'obra_nueva',
@@ -243,8 +248,8 @@ export const ProjectBudgetModule: React.FC = () => {
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Proyecto</label>
-              <select value={newForm.project_id} onChange={e => { setNewForm({ ...newForm, project_id: e.target.value }); if (e.target.value !== '___new___') setNewProjectName(''); }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm">
+              <select value={newForm.project_id} onChange={e => { setNewForm({ ...newForm, project_id: e.target.value, opportunity_id: '' }); if (e.target.value !== '___new___') setNewProjectName(''); }}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" disabled={!!newForm.opportunity_id}>
                 <option value="">Sin asignar</option>
                 {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 <option value="___new___">➕ Crear nuevo proyecto...</option>
@@ -254,6 +259,14 @@ export const ProjectBudgetModule: React.FC = () => {
                   className="w-full mt-2 px-3 py-2 border border-dashed border-cyan-400 rounded-xl text-sm bg-cyan-50/30 focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500"
                   placeholder="Nombre del nuevo proyecto..." autoFocus />
               )}
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Oportunidad (CRM)</label>
+              <select value={newForm.opportunity_id} onChange={e => setNewForm({ ...newForm, opportunity_id: e.target.value, project_id: '' })}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" disabled={!!newForm.project_id}>
+                <option value="">Sin asignar</option>
+                {(opportunities || []).map((o: any) => <option key={o.id} value={o.id}>{o.client_name} - {o.description?.substring(0,20)}...</option>)}
+              </select>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tipo de Trabajo</label>
@@ -345,7 +358,7 @@ export const ProjectBudgetModule: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {budget.project?.name ? (<span className="flex items-center gap-1.5"><FolderOpen size={14} className="text-cyan-600" />{budget.project.name}</span>) : (<span className="text-gray-400 text-xs">Sin proyecto</span>)}
+                      {budget.project?.name ? (<span className="flex items-center gap-1.5"><FolderOpen size={14} className="text-cyan-600" />{budget.project.name}</span>) : budget.opportunity?.client_name ? (<span className="flex items-center gap-1.5"><Layers size={14} className="text-amber-500" />{budget.opportunity.client_name} - Oportunidad</span>) : (<span className="text-gray-400 text-xs">Sin asignar</span>)}
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
@@ -451,6 +464,13 @@ const BudgetDetailView: React.FC<{
   const iva = subtotal * (budget.impuestos_pct / 100);
   const iibb = subtotal * (budget.iibb_pct / 100);
   const totalFinal = subtotal + financiero + iva + iibb;
+
+  // Sync totalFinal to DB if it changes
+  useEffect(() => {
+    if (budget && Math.abs((budget.total_final_ars || 0) - totalFinal) > 0.01) {
+      updateBudget.mutate({ id: budget.id, total_final_ars: totalFinal });
+    }
+  }, [totalFinal, budget?.id]);
 
   // Items grouped by section
   const itemsBySection = useMemo(() => {
@@ -690,6 +710,7 @@ const BudgetDetailView: React.FC<{
           {budget.description && <p className="text-cyan-100 text-sm mt-2">{budget.description}</p>}
           <div className="flex gap-4 mt-2 text-cyan-200 text-xs flex-wrap">
             {budget.project?.name && <span className="flex items-center gap-1"><FolderOpen size={12} /> {budget.project.name}</span>}
+            {budget.opportunity?.client_name && <span className="flex items-center gap-1"><Layers size={12} /> {budget.opportunity.client_name} (Oportunidad)</span>}
             <span className="flex items-center gap-1"><Calendar size={12} /> {fmtDate(budget.created_at)}</span>
             {(budget as any).validity_days && <span className="flex items-center gap-1"><Clock size={12} /> Validez: {(budget as any).validity_days} días</span>}
             {budget.approved_by && <span className="flex items-center gap-1"><Shield size={12} /> Aprobado por: {budget.approved_by}</span>}

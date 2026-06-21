@@ -2,10 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
   Target, Search, Plus, ChevronRight, Star, AlertTriangle,
   Clock, DollarSign, MapPin, FileText, X, Save, CheckCircle2,
-  BarChart3, Eye,
+  BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File
 } from 'lucide-react';
-import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects } from '../hooks/useData';
-import type { Opportunity, OpportunityStage } from '../lib/types';
+import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
+import type { Opportunity, OpportunityStage, OpportunityFile } from '../lib/types';
+import { exportOpportunityPdf } from '../lib/pdfExport';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -47,23 +48,53 @@ const emptyChecklist = {
   visita_obra: false, fotos: false, mediciones: false, condiciones_pago: false,
 };
 
+const DateInput: React.FC<{ value: string; onChange: (v: string) => void; className?: string }> = ({ value, onChange, className }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const displayValue = isFocused ? value : (value ? value.split('-').reverse().join('/') : '');
+
+  return (
+    <input
+      type={isFocused ? 'date' : 'text'}
+      value={displayValue}
+      onChange={e => onChange(e.target.value)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      placeholder="dd/mm/yyyy"
+      className={className}
+    />
+  );
+};
+
 export const OpportunitiesModule: React.FC = () => {
   const { data: opportunities, isLoading } = useOpportunities();
   const { data: projects } = useProjects();
   const createOpp = useCreateOpportunity();
   const updateOpp = useUpdateOpportunity();
+  const uploadFile = useUploadOpportunityFile();
+  const deleteFile = useDeleteOpportunityFile();
+  const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
+  const { data: oppBudgets, isLoading: loadingBudgets } = useOpportunityBudgets(selectedOpp?.id);
+
+  const [activeTab, setActiveTab] = useState<'general' | 'archivos' | 'presupuestos'>('general');
+  const [fileForm, setFileForm] = useState({
+    title: '',
+    category: 'adicional',
+    observations: '',
+    file: null as File | null
+  });
 
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'pipeline' | 'list'>('pipeline');
   const [filterStage, setFilterStage] = useState<OpportunityStage | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
-  const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
+  const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [form, setForm] = useState({
     client_name: '',
     client_contact: '',
     description: '',
     work_type: 'obra_nueva' as Opportunity['work_type'],
-    estimated_amount: 0,
+    estimated_amount: '' as number | string,
     stage: 'oportunidad' as OpportunityStage,
     priority: 'media' as Opportunity['priority'],
     risk_level: 'bajo' as Opportunity['risk_level'],
@@ -118,13 +149,14 @@ export const OpportunitiesModule: React.FC = () => {
   const handleSubmit = async () => {
     try {
       if (selectedOpp) {
-        await updateOpp.mutateAsync({ id: selectedOpp.id, ...form, project_id: form.project_id || null });
+        await updateOpp.mutateAsync({ id: selectedOpp.id, ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
       } else {
-        await createOpp.mutateAsync({ ...form, project_id: form.project_id || null });
+        await createOpp.mutateAsync({ ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
       }
       setShowForm(false);
       setSelectedOpp(null);
       resetForm();
+      setActiveTab('general');
     } catch (err) {
       console.error(err);
     }
@@ -133,7 +165,7 @@ export const OpportunitiesModule: React.FC = () => {
   const resetForm = () => {
     setForm({
       client_name: '', client_contact: '', description: '', work_type: 'obra_nueva',
-      estimated_amount: 0, stage: 'oportunidad', priority: 'media', risk_level: 'bajo',
+      estimated_amount: '', stage: 'oportunidad', priority: 'media', risk_level: 'bajo',
       location: '', estimated_deadline: '', assumptions: '', exclusions: '', project_id: '',
       documentation_checklist: { ...emptyChecklist },
     });
@@ -141,6 +173,7 @@ export const OpportunitiesModule: React.FC = () => {
 
   const openEdit = (opp: Opportunity) => {
     setSelectedOpp(opp);
+    setActiveTab('general');
     setForm({
       client_name: opp.client_name,
       client_contact: opp.client_contact || '',
@@ -218,7 +251,7 @@ export const OpportunitiesModule: React.FC = () => {
             <option value="all">Todas las etapas</option>
             {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
-          <button onClick={() => { resetForm(); setSelectedOpp(null); setShowForm(true); }}
+          <button onClick={() => { resetForm(); setSelectedOpp(null); setActiveTab('general'); setShowForm(true); }}
             className="bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 hover:shadow-lg transition-all">
             <Plus size={16} /> Nueva Oportunidad
           </button>
@@ -230,7 +263,20 @@ export const OpportunitiesModule: React.FC = () => {
         <div className="overflow-x-auto overflow-y-hidden pb-4 flex-1 min-h-0">
           <div className="flex gap-3 min-w-max h-full">
             {pipelineData.map(stage => (
-              <div key={stage.id} className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col h-full`}>
+              <div key={stage.id} 
+                className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col h-full transition-all ${dragOverStage === stage.id ? 'ring-2 ring-cyan-500 bg-opacity-80 scale-[1.01]' : ''}`}
+                onDragOver={e => { e.preventDefault(); setDragOverStage(stage.id); }}
+                onDragLeave={() => setDragOverStage(null)}
+                onDrop={async e => {
+                  e.preventDefault();
+                  setDragOverStage(null);
+                  const oppId = e.dataTransfer.getData('text/plain');
+                  const opp = opportunities?.find(o => o.id === oppId);
+                  if (opp && opp.stage !== stage.id) {
+                    await moveStage(opp, stage.id);
+                  }
+                }}
+              >
                 {/* Column Header */}
                 <div className="p-3 border-b border-gray-200/60">
                   <div className="flex items-center justify-between">
@@ -243,7 +289,16 @@ export const OpportunitiesModule: React.FC = () => {
                 <div className="p-2 space-y-2 flex-1 min-h-[120px] overflow-y-auto ecar-scrollbar">
                   {stage.items.map(opp => (
                     <div key={opp.id} onClick={() => openEdit(opp)}
-                      className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group">
+                      draggable
+                      onDragStart={e => {
+                        e.dataTransfer.setData('text/plain', opp.id);
+                        setDraggedOppId(opp.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedOppId(null);
+                        setDragOverStage(null);
+                      }}
+                      className={`bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group ${draggedOppId === opp.id ? 'opacity-50 scale-95 ring-2 ring-cyan-500' : ''}`}>
                       <div className="flex items-start justify-between mb-1">
                         <span className="font-bold text-sm text-gray-800 leading-tight">{opp.client_name}</span>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${PRIORITIES[opp.priority].color}`}>
@@ -263,13 +318,18 @@ export const OpportunitiesModule: React.FC = () => {
                         </div>
                       </div>
                       {/* Quick stage move */}
-                      <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap items-center">
                         {STAGES.filter(s => s.id !== opp.stage && s.id !== 'rechazada').slice(0, 3).map(s => (
                           <button key={s.id} onClick={e => { e.stopPropagation(); moveStage(opp, s.id); }}
                             className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${s.bgColor} ${s.color} hover:opacity-80 transition-all`}>
                             → {s.label.slice(0, 8)}
                           </button>
                         ))}
+                        <button onClick={e => { e.stopPropagation(); exportOpportunityPdf(opp, projects?.find(p => p.id === opp.project_id)?.name); }}
+                          title="Descargar PDF"
+                          className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all ml-auto flex items-center gap-1">
+                          <Download size={10} /> PDF
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -322,7 +382,10 @@ export const OpportunitiesModule: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
                     <td className="px-4 py-3 text-center">
-                      <button onClick={() => openEdit(opp)} className="text-cyan-600 hover:text-cyan-800 p-1"><Eye size={16} /></button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={e => { e.stopPropagation(); exportOpportunityPdf(opp, projects?.find(p => p.id === opp.project_id)?.name); }} className="text-gray-400 hover:text-cyan-600 p-1" title="Descargar PDF"><Download size={16} /></button>
+                        <button onClick={() => openEdit(opp)} className="text-cyan-600 hover:text-cyan-800 p-1" title="Ver / Editar"><Eye size={16} /></button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -364,22 +427,48 @@ export const OpportunitiesModule: React.FC = () => {
           <div className="flex min-h-full items-start justify-center py-8 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
-              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <Target size={20} className="text-cyan-600" />
-                {selectedOpp ? 'Editar Oportunidad' : 'Nueva Oportunidad'}
-              </h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+              <div className="flex flex-col">
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                  <Target size={20} className="text-cyan-600" />
+                  {selectedOpp ? 'Editar Oportunidad' : 'Nueva Oportunidad'}
+                </h3>
+                {selectedOpp && (
+                  <div className="flex gap-4 mt-2">
+                    <button onClick={() => setActiveTab('general')}
+                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                      General
+                    </button>
+                    <button onClick={() => setActiveTab('archivos')}
+                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'archivos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                      Archivos Adjuntos ({selectedOpp.files?.length || 0})
+                    </button>
+                    <button onClick={() => setActiveTab('presupuestos')}
+                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'presupuestos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                      Presupuestos ({oppBudgets?.length || 0})
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 self-start"><X size={20} /></button>
             </div>
-            <div className="p-5 space-y-4">
+            
+            {/* General Tab */}
+            <div className={`p-5 space-y-4 ${activeTab === 'general' ? 'block' : 'hidden'}`}>
               {/* Row 1: Cliente + Contacto */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Cliente / Comitente *</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Cliente / Comitente *</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Razón social o nombre completo)</span>
+                  </label>
                   <input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Nombre del cliente" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Contacto</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Contacto</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Teléfono, email, cargo o área)</span>
+                  </label>
                   <input value={form.client_contact} onChange={e => setForm({ ...form, client_contact: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Teléfono, email" />
                 </div>
@@ -387,7 +476,10 @@ export const OpportunitiesModule: React.FC = () => {
 
               {/* Row 2: Descripción */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Descripción de la Oportunidad *</label>
+                <label className="block mb-1">
+                  <span className="block text-xs font-bold text-gray-600">Descripción de la Oportunidad *</span>
+                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Describir qué se necesita construir, proveer o mantener)</span>
+                </label>
                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Obra, servicio o necesidad..." />
               </div>
@@ -395,20 +487,34 @@ export const OpportunitiesModule: React.FC = () => {
               {/* Row 3: Tipo + Monto + Plazo */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Tipo de Trabajo</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Tipo de Trabajo</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Obra, Adicional, Licitación, etc.)</span>
+                  </label>
                   <select value={form.work_type} onChange={e => setForm({ ...form, work_type: e.target.value as Opportunity['work_type'] })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
                     {Object.entries(WORK_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Monto Estimado ($)</label>
-                  <input type="number" value={form.estimated_amount} onChange={e => setForm({ ...form, estimated_amount: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" />
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Monto Estimado ($)</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Valor aproximado sin IVA)</span>
+                  </label>
+                  <input type="text"
+                    value={form.estimated_amount === '' ? '' : Number(form.estimated_amount).toLocaleString('es-AR')}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setForm({ ...form, estimated_amount: val === '' ? '' : Number(val) });
+                    }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Plazo Estimado</label>
-                  <input type="date" value={form.estimated_deadline} onChange={e => setForm({ ...form, estimated_deadline: e.target.value })}
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Plazo Estimado</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fecha prevista de inicio/adjudicación)</span>
+                  </label>
+                  <DateInput value={form.estimated_deadline} onChange={v => setForm({ ...form, estimated_deadline: v })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" />
                 </div>
               </div>
@@ -416,14 +522,20 @@ export const OpportunitiesModule: React.FC = () => {
               {/* Row 4: Etapa + Prioridad + Riesgo + Ubicación */}
               <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Etapa</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Etapa</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fase comercial actual)</span>
+                  </label>
                   <select value={form.stage} onChange={e => setForm({ ...form, stage: e.target.value as OpportunityStage })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
                     {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Prioridad</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Prioridad</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Importancia estratégica)</span>
+                  </label>
                   <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Opportunity['priority'] })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
                     <option value="baja">Baja</option><option value="media">Media</option>
@@ -431,14 +543,20 @@ export const OpportunitiesModule: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Riesgo</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Riesgo</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Nivel de riesgo operativo/financiero)</span>
+                  </label>
                   <select value={form.risk_level} onChange={e => setForm({ ...form, risk_level: e.target.value as Opportunity['risk_level'] })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
                     <option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Ubicación</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Ubicación</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Provincia, ciudad o zona)</span>
+                  </label>
                   <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Ciudad / zona" />
                 </div>
@@ -446,7 +564,10 @@ export const OpportunitiesModule: React.FC = () => {
 
               {/* Row 5: Proyecto vinculado */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-1">Proyecto Vinculado (opcional)</label>
+                <label className="block mb-1">
+                  <span className="block text-xs font-bold text-gray-600">Proyecto Vinculado (opcional)</span>
+                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Si corresponde a una obra en ejecución)</span>
+                </label>
                 <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
                   <option value="">Sin proyecto</option>
@@ -456,7 +577,10 @@ export const OpportunitiesModule: React.FC = () => {
 
               {/* Documentation Checklist */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 mb-2">Checklist de Documentación Recibida</label>
+                <label className="block mb-2">
+                  <span className="block text-xs font-bold text-gray-600">Checklist de Documentación Recibida</span>
+                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Documentación entregada por el cliente)</span>
+                </label>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { key: 'planos', label: 'Planos' },
@@ -484,25 +608,180 @@ export const OpportunitiesModule: React.FC = () => {
               {/* Supuestos y Exclusiones */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Supuestos</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Supuestos</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Condiciones asumidas para cotizar o ejecutar)</span>
+                  </label>
                   <textarea value={form.assumptions} onChange={e => setForm({ ...form, assumptions: e.target.value })} rows={2}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Condiciones asumidas..." />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Exclusiones</label>
+                  <label className="block mb-1">
+                    <span className="block text-xs font-bold text-gray-600">Exclusiones</span>
+                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Elementos o tareas que NO se incluyen en la oferta)</span>
+                  </label>
                   <textarea value={form.exclusions} onChange={e => setForm({ ...form, exclusions: e.target.value })} rows={2}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Elementos no incluidos..." />
                 </div>
               </div>
             </div>
 
+            {/* Archivos Tab */}
+            <div className={`p-5 space-y-6 ${activeTab === 'archivos' ? 'block' : 'hidden'}`}>
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><Upload size={16} /> Subir Nuevo Archivo</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <div className="col-span-2">
+                    <input type="text" placeholder="Título del archivo" value={fileForm.title} onChange={e => setFileForm({...fileForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                  </div>
+                  <div>
+                    <select value={fileForm.category} onChange={e => setFileForm({...fileForm, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30">
+                      <option value="adicional">Adicional</option>
+                      <option value="planos">Planos</option>
+                      <option value="pliego">Pliego</option>
+                      <option value="memoria_tecnica">Memoria Técnica</option>
+                      <option value="ifc">Modelo 3D (IFC/RVT)</option>
+                      <option value="presupuesto">Presupuesto</option>
+                    </select>
+                  </div>
+                  <div>
+                    <input type="file" onChange={e => setFileForm({...fileForm, file: e.target.files?.[0] || null})} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100" />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <input type="text" placeholder="Observaciones (opcional)" value={fileForm.observations} onChange={e => setFileForm({...fileForm, observations: e.target.value})} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                  <button disabled={!fileForm.file || !fileForm.title || uploadFile.isPending}
+                    onClick={async () => {
+                      if (selectedOpp && fileForm.file) {
+                        await uploadFile.mutateAsync({
+                          opportunityId: selectedOpp.id,
+                          file: fileForm.file,
+                          title: fileForm.title,
+                          category: fileForm.category,
+                          observations: fileForm.observations,
+                          uploadedBy: 'Colaborador'
+                        });
+                        setFileForm({ title: '', category: 'adicional', observations: '', file: null });
+                        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                        if (fileInput) fileInput.value = '';
+                      }
+                    }}
+                    className="bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-cyan-700 disabled:opacity-50 flex items-center gap-2">
+                    {uploadFile.isPending ? 'Subiendo...' : <><Upload size={16} /> Subir</>}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedOpp?.files?.map(f => (
+                  <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
+                    <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
+                      {f.file_type?.match(/pdf/i) ? <FileText size={24} /> :
+                       f.file_type?.match(/png|jpg|jpeg/i) ? <ImageIcon size={24} /> :
+                       <File size={24} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <h5 className="font-bold text-sm text-gray-800 truncate pr-2" title={f.title}>{f.title}</h5>
+                        <span className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 uppercase shrink-0">{f.category}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate mt-0.5" title={f.observations || ''}>{f.observations || 'Sin observaciones'}</p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          {(f.file_size || 0) > 1024 * 1024 ? `${(f.file_size! / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file_size! / 1024)} KB`} • {f.file_type?.toUpperCase()}
+                        </span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver / Descargar">
+                            <Download size={14} />
+                          </a>
+                          <button onClick={() => { if(confirm('¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!selectedOpp?.files?.length && (
+                  <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <Paperclip size={32} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500 font-medium">No hay archivos adjuntos</p>
+                    <p className="text-sm text-gray-400">Subí planos, pliegos o referencias para esta oportunidad.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Presupuestos Tab */}
+            <div className={`p-5 space-y-4 ${activeTab === 'presupuestos' ? 'block' : 'hidden'}`}>
+              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-4 flex items-start gap-3">
+                <Target size={20} className="text-cyan-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-cyan-800 text-sm">Presupuestos Analíticos</h4>
+                  <p className="text-cyan-700 text-xs mt-1">
+                    Esta oportunidad está integrada con el módulo principal de Presupuestos. 
+                    Cualquier presupuesto detallado asociado a esta oportunidad aparecerá aquí.
+                  </p>
+                </div>
+              </div>
+
+              {loadingBudgets ? (
+                <div className="text-center py-6 text-gray-400">Cargando presupuestos...</div>
+              ) : oppBudgets && oppBudgets.length > 0 ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+                      <tr>
+                        <th className="px-4 py-3">Presupuesto</th>
+                        <th className="px-3 py-3 text-center">Versión</th>
+                        <th className="px-3 py-3 text-center">Estado</th>
+                        <th className="px-3 py-3 text-right">Total Final</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {oppBudgets.map(budget => (
+                        <tr key={budget.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium text-gray-800">{budget.name}</td>
+                          <td className="px-3 py-3 text-center font-mono text-xs font-bold text-gray-600">v{budget.version}</td>
+                          <td className="px-3 py-3 text-center">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide bg-gray-100 text-gray-600">
+                              {budget.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-right font-mono font-bold text-gray-800">
+                            {Number(budget.total_final_ars).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                  <FileText size={32} className="mx-auto mb-3 text-gray-300" />
+                  <p className="text-gray-500 font-medium">No hay presupuestos asociados</p>
+                  <p className="text-sm text-gray-400 mt-1">Para cotizar esta oportunidad, andá al módulo de Presupuestos y creá uno nuevo asociándolo a este cliente.</p>
+                </div>
+              )}
+            </div>
+
             {/* Form Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-end gap-3 rounded-b-2xl">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
-              <button onClick={handleSubmit} disabled={!form.client_name || !form.description || createOpp.isPending || updateOpp.isPending}
-                className="bg-cyan-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 disabled:opacity-50 transition-all">
-                <Save size={16} /> {selectedOpp ? 'Guardar Cambios' : 'Crear Oportunidad'}
-              </button>
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-between rounded-b-2xl">
+              <div>
+                {selectedOpp && (
+                  <button onClick={() => exportOpportunityPdf(selectedOpp, projects?.find(p => p.id === selectedOpp.project_id)?.name)} 
+                    className="text-cyan-600 hover:text-cyan-800 font-bold text-sm flex items-center gap-2">
+                    <Download size={16} /> Descargar PDF
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
+                <button onClick={handleSubmit} disabled={!form.client_name || !form.description || createOpp.isPending || updateOpp.isPending}
+                  className="bg-cyan-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 disabled:opacity-50 transition-all">
+                  <Save size={16} /> {selectedOpp ? 'Guardar Cambios' : 'Crear Oportunidad'}
+                </button>
+              </div>
             </div>
             </div>
           </div>
