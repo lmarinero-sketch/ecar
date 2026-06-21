@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PDFDocument } from 'pdf-lib';
+import { supabase } from './supabase';
 import type { Opportunity } from './types';
 
 // ECAR Institutional Colors
@@ -175,7 +177,71 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
   const wrappedFooter = doc.splitTextToSize(footerText, 515);
   doc.text(wrappedFooter, 40, finalY);
 
-  // Save the file
-  const filename = `ECAR_Oportunidad_${opportunity.client_name.replace(/\s+/g, '_')}.pdf`;
-  doc.save(filename);
+  // Generar el base PDF como array buffer
+  const pdfArrayBuffer = doc.output('arraybuffer');
+
+  try {
+    // Cargar en pdf-lib
+    const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
+
+    // Fetch files directly if not passed in the object
+    let filesToAttach = opportunity.files || [];
+    if (!filesToAttach.length) {
+      const { data: fetchedFiles, error: fetchErr } = await supabase
+        .from('opportunity_files')
+        .select('*')
+        .eq('opportunity_id', opportunity.id);
+      
+      if (!fetchErr && fetchedFiles) {
+        filesToAttach = fetchedFiles;
+      }
+    }
+
+    // Adjuntar archivos si existen
+    if (filesToAttach.length > 0) {
+      for (const file of filesToAttach) {
+        try {
+          const { data, error } = await supabase.storage
+            .from('opportunity-files')
+            .download(file.file_url);
+
+          if (error || !data) {
+            console.warn(`No se pudo descargar el archivo: ${file.title}`);
+            continue;
+          }
+
+          const fileBytes = await data.arrayBuffer();
+          const cleanFileName = (file.title || 'archivo').replace(/[^a-zA-Z0-9.\-_]/g, '_');
+          
+          await pdfDoc.attach(new Uint8Array(fileBytes), cleanFileName, {
+            mimeType: file.file_type || 'application/octet-stream',
+            description: file.observations || 'Archivo adjunto de la oportunidad',
+            creationDate: new Date(file.created_at || new Date()),
+            modificationDate: new Date(file.created_at || new Date()),
+          });
+        } catch (err) {
+          console.warn(`Error adjuntando archivo ${file.title}:`, err);
+        }
+      }
+    }
+
+    const finalPdfBytes = await pdfDoc.save();
+
+    // Descargar en navegador
+    const filename = `ECAR_Oportunidad_${opportunity.client_name.replace(/\s+/g, '_')}.pdf`;
+    const blob = new Blob([finalPdfBytes as any], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error procesando PDF embebido, guardando fallback...", err);
+    // Fallback: guardar el original de jsPDF sin embebidos si algo falla catastroficamente
+    const filename = `ECAR_Oportunidad_${opportunity.client_name.replace(/\s+/g, '_')}.pdf`;
+    doc.save(filename);
+  }
 };

@@ -74,6 +74,7 @@ export const OpportunitiesModule: React.FC = () => {
   const deleteFile = useDeleteOpportunityFile();
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const { data: oppBudgets, isLoading: loadingBudgets } = useOpportunityBudgets(selectedOpp?.id);
+  const [isExporting, setIsExporting] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<'general' | 'archivos' | 'presupuestos'>('general');
   const [fileForm, setFileForm] = useState({
@@ -159,6 +160,19 @@ export const OpportunitiesModule: React.FC = () => {
       setActiveTab('general');
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleExportPdf = async (e: React.MouseEvent, opp: Opportunity) => {
+    e.stopPropagation();
+    setIsExporting(opp.id);
+    try {
+      const projName = projects?.find(p => p.id === opp.project_id)?.name;
+      await exportOpportunityPdf(opp, projName);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(null);
     }
   };
 
@@ -325,10 +339,11 @@ export const OpportunitiesModule: React.FC = () => {
                             → {s.label.slice(0, 8)}
                           </button>
                         ))}
-                        <button onClick={e => { e.stopPropagation(); exportOpportunityPdf(opp, projects?.find(p => p.id === opp.project_id)?.name); }}
+                        <button onClick={e => handleExportPdf(e, opp)}
+                          disabled={isExporting === opp.id}
                           title="Descargar PDF"
-                          className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all ml-auto flex items-center gap-1">
-                          <Download size={10} /> PDF
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all ml-auto flex items-center gap-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`}>
+                          {isExporting === opp.id ? <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"/> : <Download size={10} />} PDF
                         </button>
                       </div>
                     </div>
@@ -383,7 +398,9 @@ export const OpportunitiesModule: React.FC = () => {
                     <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={e => { e.stopPropagation(); exportOpportunityPdf(opp, projects?.find(p => p.id === opp.project_id)?.name); }} className="text-gray-400 hover:text-cyan-600 p-1" title="Descargar PDF"><Download size={16} /></button>
+                        <button onClick={e => handleExportPdf(e, opp)} disabled={isExporting === opp.id} className={`text-gray-400 hover:text-cyan-600 p-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`} title="Descargar PDF">
+                          {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
+                        </button>
                         <button onClick={() => openEdit(opp)} className="text-cyan-600 hover:text-cyan-800 p-1" title="Ver / Editar"><Eye size={16} /></button>
                       </div>
                     </td>
