@@ -5,7 +5,7 @@ import {
   BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File
 } from 'lucide-react';
 import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
-import type { Opportunity, OpportunityStage, OpportunityFile } from '../lib/types';
+import type { Opportunity, OpportunityStage } from '../lib/types';
 import { exportOpportunityPdf } from '../lib/pdfExport';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;

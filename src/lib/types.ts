@@ -1143,6 +1143,7 @@ export type Budget = {
   updated_at: string;
   // Joined
   project?: Project | null;
+  opportunity?: Opportunity | null;
 };
 
 export type BudgetSection = {
