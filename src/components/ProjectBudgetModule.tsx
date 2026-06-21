@@ -88,15 +88,48 @@ export const ProjectBudgetModule: React.FC = () => {
   const approvedCount = (budgets || []).filter(b => b.status === 'approved').length;
   const totalValue = (budgets || []).reduce((s, b) => s + (b.total_final_ars || 0), 0);
 
+  const budgetChains = useMemo(() => {
+    const list = budgets || [];
+    const chains: Record<string, any[]> = {};
+    
+    const parentMap: Record<string, string> = {};
+    list.forEach(b => {
+       if (b.parent_version_id) parentMap[b.id] = b.parent_version_id;
+    });
+    
+    const findRoot = (id: string): string => {
+       let current = id;
+       // Prevent infinite loop in case of circular references
+       const seen = new Set<string>();
+       while (parentMap[current] && !seen.has(current)) {
+         seen.add(current);
+         current = parentMap[current];
+       }
+       return current;
+    };
+    
+    list.forEach(b => {
+      const rootId = findRoot(b.id);
+      if (!chains[rootId]) chains[rootId] = [];
+      chains[rootId].push(b);
+    });
+    
+    Object.values(chains).forEach(chain => {
+       chain.sort((a, b) => b.version - a.version);
+    });
+    
+    return chains;
+  }, [budgets]);
+
   const filtered = useMemo(() => {
-    let list = budgets || [];
+    let list = Object.values(budgetChains).map(chain => chain[0]).filter(Boolean);
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(b => b.name.toLowerCase().includes(q) || (b.project?.name || '').toLowerCase().includes(q));
     }
     if (filterStatus) list = list.filter(b => b.status === filterStatus);
     return list;
-  }, [budgets, search, filterStatus]);
+  }, [budgetChains, search, filterStatus]);
 
   const handleCreateBudget = async () => {
     if (!newForm.name.trim()) return;
@@ -138,6 +171,11 @@ export const ProjectBudgetModule: React.FC = () => {
   const handleDuplicate = async (budgetId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     const result = await duplicateBudget.mutateAsync(budgetId);
+    // Auto-cerrar la versión anterior si no estaba ya cerrada
+    const oldBudget = budgets?.find(b => b.id === budgetId);
+    if (oldBudget && oldBudget.status !== 'closed' && oldBudget.status !== 'approved') {
+      await updateBudget.mutateAsync({ id: budgetId, status: 'closed' });
+    }
     setSelectedId(result.id);
     setView('detail');
   };
@@ -166,6 +204,8 @@ export const ProjectBudgetModule: React.FC = () => {
     return (
       <BudgetDetailView
         budget={selectedBudget}
+        allVersions={Object.values(budgetChains).find(c => c.some((b: any) => b.id === selectedBudget.id)) || [selectedBudget]}
+        onSelectVersion={(id: string) => setSelectedId(id)}
         onBack={() => { setSelectedId(null); setView('list'); }}
         onDuplicate={() => handleDuplicate(selectedBudget.id)}
         updateBudget={updateBudget}
@@ -366,7 +406,15 @@ export const ProjectBudgetModule: React.FC = () => {
                         {WORK_TYPE_LABELS[(budget as any).work_type] || 'Obra Nueva'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center font-mono text-xs font-bold text-gray-600">v{budget.version}</td>
+                    <td className="px-3 py-3 text-center">
+                      <div className="font-mono text-xs font-bold text-gray-600">v{budget.version}</div>
+                      {(() => {
+                        const chain = Object.values(budgetChains).find(c => c.some((b: any) => b.id === budget.id));
+                        return chain && chain.length > 1 ? (
+                          <div className="text-[9px] font-normal text-gray-400 mt-0.5">({chain.length} versiones)</div>
+                        ) : null;
+                      })()}
+                    </td>
                     <td className="px-3 py-3 text-center">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${stat.bg} ${stat.color}`}>{stat.label}</span>
                     </td>
@@ -402,10 +450,12 @@ export const ProjectBudgetModule: React.FC = () => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const BudgetDetailView: React.FC<{
   budget: any;
+  allVersions: any[];
+  onSelectVersion: (id: string) => void;
   onBack: () => void;
   onDuplicate: () => void;
   updateBudget: any;
-}> = ({ budget, onBack, onDuplicate, updateBudget }) => {
+}> = ({ budget, allVersions, onSelectVersion, onBack, onDuplicate, updateBudget }) => {
   const { data: sections = [] } = useBudgetSections(budget.id);
   const { data: items = [] } = useBudgetItems(budget.id);
   const { data: allResources = [] } = useBudgetResources();
@@ -706,7 +756,24 @@ const BudgetDetailView: React.FC<{
           <div className="flex items-center gap-3 flex-wrap pr-20">
             <h3 className="font-black text-xl">{budget.name}</h3>
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${stat.bg} ${stat.color}`}>{stat.label}</span>
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white font-mono">v{budget.version}</span>
+            {allVersions.length > 1 ? (
+              <div className="relative">
+                <select
+                  value={budget.id}
+                  onChange={(e) => onSelectVersion(e.target.value)}
+                  className="appearance-none bg-white/20 text-white font-mono pl-2.5 pr-6 py-1 rounded-full text-[10px] font-bold outline-none cursor-pointer hover:bg-white/30 transition-colors border-none"
+                >
+                  {allVersions.map((v: any) => (
+                    <option key={v.id} value={v.id} className="text-gray-800 font-sans font-medium text-xs">
+                      v{v.version} — {STATUS_MAP[v.status]?.label || 'Borrador'} {v.id === budget.id ? '(Actual)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={10} className="absolute right-2 top-1.5 pointer-events-none opacity-70" />
+              </div>
+            ) : (
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white font-mono">v{budget.version}</span>
+            )}
             {(budget as any).work_type && (
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/10 text-cyan-100">
                 {WORK_TYPE_LABELS[(budget as any).work_type] || 'Obra Nueva'}
