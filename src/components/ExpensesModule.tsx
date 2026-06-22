@@ -2,14 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ChevronDown, ChevronRight, Plus, X, Save, TrendingUp, TrendingDown,
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
-  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Edit2
+  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem, useGastosRegistrosByItem } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
 
 // ─── Expanded Detail Component ───
-const ExpandedGastoDetail: React.FC<{ item: GastoItem; onClose: () => void }> = ({ item, onClose }) => {
+const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
   const [form, setForm] = useState({
     alias_cbu: item.alias_cbu || '',
     titular_cuenta: item.titular_cuenta || '',
@@ -162,7 +162,6 @@ export const ExpensesModule: React.FC = () => {
   const upsertRegistro = useUpsertGastoRegistro();
   const createItem = useCreateGastoItem();
   const deleteItem = useDeleteGastoItem();
-  const updateGastoItem = useUpdateGastoItem();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   const isLoading = itemsLoading || regLoading;
@@ -491,9 +490,7 @@ export const ExpensesModule: React.FC = () => {
                             {formatARS(periodos.reduce((s, p) => s + getMonto(item.id, p), 0))}
                           </td>
                         </tr>
-                        {expandedItemId === item.id && (
-                          <ExpandedGastoDetail item={item} onClose={() => setExpandedItemId(null)} />
-                        )}
+                        {expandedItemId === item.id && <ExpandedGastoDetail item={item} />}
                         </React.Fragment>
                       ))}
 
