@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import {
   Target, Search, Plus, ChevronRight, Star, AlertTriangle,
   Clock, DollarSign, MapPin, FileText, X, Save, CheckCircle2,
-  BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File
+  BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File,
+  Briefcase, User, FileCheck
 } from 'lucide-react';
 import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
 import type { Opportunity, OpportunityStage } from '../lib/types';
@@ -90,6 +91,7 @@ export const OpportunitiesModule: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<{ id: string; title: string; category: string; observations: string; file: File }[]>([]);
   const [form, setForm] = useState({
     client_name: '',
     client_contact: '',
@@ -152,7 +154,19 @@ export const OpportunitiesModule: React.FC = () => {
       if (selectedOpp) {
         await updateOpp.mutateAsync({ id: selectedOpp.id, ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
       } else {
-        await createOpp.mutateAsync({ ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
+        const newOpp = await createOpp.mutateAsync({ ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
+        if (pendingFiles.length > 0 && newOpp) {
+          for (const pf of pendingFiles) {
+            await uploadFile.mutateAsync({
+              opportunityId: newOpp.id,
+              file: pf.file,
+              title: pf.title,
+              category: pf.category,
+              observations: pf.observations,
+              uploadedBy: 'Colaborador'
+            });
+          }
+        }
       }
       setShowForm(false);
       setSelectedOpp(null);
@@ -183,6 +197,8 @@ export const OpportunitiesModule: React.FC = () => {
       location: '', estimated_deadline: '', assumptions: '', exclusions: '', project_id: '',
       documentation_checklist: { ...emptyChecklist },
     });
+    setPendingFiles([]);
+    setFileForm({ title: '', category: 'adicional', observations: '', file: null });
   };
 
   const openEdit = (opp: Opportunity) => {
@@ -449,156 +465,172 @@ export const OpportunitiesModule: React.FC = () => {
                   <Target size={20} className="text-cyan-600" />
                   {selectedOpp ? 'Editar Oportunidad' : 'Nueva Oportunidad'}
                 </h3>
-                {selectedOpp && (
-                  <div className="flex gap-4 mt-2">
-                    <button onClick={() => setActiveTab('general')}
-                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                      General
-                    </button>
-                    <button onClick={() => setActiveTab('archivos')}
-                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'archivos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                      Archivos Adjuntos ({selectedOpp.files?.length || 0})
-                    </button>
+                <div className="flex gap-4 mt-2">
+                  <button onClick={() => setActiveTab('general')}
+                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                    General
+                  </button>
+                  <button onClick={() => setActiveTab('archivos')}
+                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'archivos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                    Archivos Adjuntos ({selectedOpp ? (selectedOpp.files?.length || 0) : pendingFiles.length})
+                  </button>
+                  {selectedOpp && (
                     <button onClick={() => setActiveTab('presupuestos')}
                       className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'presupuestos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                       Presupuestos ({oppBudgets?.length || 0})
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 self-start"><X size={20} /></button>
             </div>
             
             {/* General Tab */}
-            <div className={`p-5 space-y-4 ${activeTab === 'general' ? 'block' : 'hidden'}`}>
-              {/* Row 1: Cliente + Contacto */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Cliente / Comitente *</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Razón social o nombre completo)</span>
-                  </label>
-                  <input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Nombre del cliente" />
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Contacto</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Teléfono, email, cargo o área)</span>
-                  </label>
-                  <input value={form.client_contact} onChange={e => setForm({ ...form, client_contact: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Teléfono, email" />
-                </div>
-              </div>
-
-              {/* Row 2: Descripción */}
-              <div>
-                <label className="block mb-1">
-                  <span className="block text-xs font-bold text-gray-600">Descripción de la Oportunidad *</span>
-                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Describir qué se necesita construir, proveer o mantener)</span>
-                </label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Obra, servicio o necesidad..." />
-              </div>
-
-              {/* Row 3: Tipo + Monto + Plazo */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Tipo de Trabajo</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Obra, Adicional, Licitación, etc.)</span>
-                  </label>
-                  <select value={form.work_type} onChange={e => setForm({ ...form, work_type: e.target.value as Opportunity['work_type'] })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-                    {Object.entries(WORK_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Monto Estimado ($)</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Valor aproximado sin IVA)</span>
-                  </label>
-                  <input type="text"
-                    value={form.estimated_amount === '' ? '' : Number(form.estimated_amount).toLocaleString('es-AR')}
-                    onChange={e => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setForm({ ...form, estimated_amount: val === '' ? '' : Number(val) });
-                    }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Plazo Estimado</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fecha prevista de inicio/adjudicación)</span>
-                  </label>
-                  <DateInput value={form.estimated_deadline} onChange={v => setForm({ ...form, estimated_deadline: v })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" />
+            <div className={`p-5 space-y-6 ${activeTab === 'general' ? 'block' : 'hidden'}`}>
+              
+              {/* Sección 1: Datos del Cliente */}
+              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-blue-800 text-sm mb-3 flex items-center gap-2">
+                  <div className="bg-blue-100 p-1.5 rounded-lg text-blue-600"><User size={16} /></div>
+                  Datos del Cliente
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Cliente / Comitente *</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Razón social o nombre completo)</span>
+                    </label>
+                    <input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Nombre del cliente" />
+                  </div>
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Contacto</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Teléfono, email, cargo o área)</span>
+                    </label>
+                    <input value={form.client_contact} onChange={e => setForm({ ...form, client_contact: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Teléfono, email" />
+                  </div>
                 </div>
               </div>
 
-              {/* Row 4: Etapa + Prioridad + Riesgo + Ubicación */}
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Etapa</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fase comercial actual)</span>
-                  </label>
-                  <select value={form.stage} onChange={e => setForm({ ...form, stage: e.target.value as OpportunityStage })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-                    {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Prioridad</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Importancia estratégica)</span>
-                  </label>
-                  <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Opportunity['priority'] })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-                    <option value="baja">Baja</option><option value="media">Media</option>
-                    <option value="alta">Alta</option><option value="critica">Crítica</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Riesgo</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Nivel de riesgo operativo/financiero)</span>
-                  </label>
-                  <select value={form.risk_level} onChange={e => setForm({ ...form, risk_level: e.target.value as Opportunity['risk_level'] })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-                    <option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Ubicación</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Provincia, ciudad o zona)</span>
-                  </label>
-                  <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Ciudad / zona" />
+              {/* Sección 2: Detalles Comerciales */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
+                  <div className="bg-gray-100 p-1.5 rounded-lg text-gray-600"><Briefcase size={16} /></div>
+                  Detalles Comerciales
+                </h4>
+                <div className="space-y-4">
+                  {/* Row 2: Descripción */}
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Descripción de la Oportunidad *</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Describir qué se necesita construir, proveer o mantener)</span>
+                    </label>
+                    <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Obra, servicio o necesidad..." />
+                  </div>
+
+                  {/* Row 3: Tipo + Monto + Plazo */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Tipo de Trabajo</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Obra, Adicional, Licitación, etc.)</span>
+                      </label>
+                      <select value={form.work_type} onChange={e => setForm({ ...form, work_type: e.target.value as Opportunity['work_type'] })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        {Object.entries(WORK_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Monto Estimado ($)</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Valor aproximado sin IVA)</span>
+                      </label>
+                      <input type="text"
+                        value={form.estimated_amount === '' ? '' : Number(form.estimated_amount).toLocaleString('es-AR')}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setForm({ ...form, estimated_amount: val === '' ? '' : Number(val) });
+                        }}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Plazo Estimado</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fecha prevista de inicio/adjudicación)</span>
+                      </label>
+                      <DateInput value={form.estimated_deadline} onChange={v => setForm({ ...form, estimated_deadline: v })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" />
+                    </div>
+                  </div>
+
+                  {/* Row 4: Etapa + Prioridad + Riesgo + Ubicación */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Etapa</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fase comercial actual)</span>
+                      </label>
+                      <select value={form.stage} onChange={e => setForm({ ...form, stage: e.target.value as OpportunityStage })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Prioridad</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Importancia estratégica)</span>
+                      </label>
+                      <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Opportunity['priority'] })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        <option value="baja">Baja</option><option value="media">Media</option>
+                        <option value="alta">Alta</option><option value="critica">Crítica</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Riesgo</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Nivel de riesgo operativo/financiero)</span>
+                      </label>
+                      <select value={form.risk_level} onChange={e => setForm({ ...form, risk_level: e.target.value as Opportunity['risk_level'] })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        <option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1">
+                        <span className="block text-xs font-bold text-gray-600">Ubicación</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Provincia, ciudad o zona)</span>
+                      </label>
+                      <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Ciudad / zona" />
+                    </div>
+                  </div>
+
+                  {/* Row 5: Proyecto vinculado */}
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Proyecto Vinculado (opcional)</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Si corresponde a una obra en ejecución)</span>
+                    </label>
+                    <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                      <option value="">Sin proyecto</option>
+                      {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Row 5: Proyecto vinculado */}
-              <div>
-                <label className="block mb-1">
-                  <span className="block text-xs font-bold text-gray-600">Proyecto Vinculado (opcional)</span>
-                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Si corresponde a una obra en ejecución)</span>
-                </label>
-                <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-                  <option value="">Sin proyecto</option>
-                  {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-
-              {/* Documentation Checklist */}
-              <div>
-                <label className="block mb-2">
-                  <span className="block text-xs font-bold text-gray-600">Checklist de Documentación Recibida</span>
-                  <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Documentación entregada por el cliente)</span>
-                </label>
-                <div className="grid grid-cols-4 gap-2">
+              {/* Sección 3: Documentación Recibida */}
+              <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-emerald-800 text-sm mb-3 flex items-center gap-2">
+                  <div className="bg-emerald-100 p-1.5 rounded-lg text-emerald-600"><FileCheck size={16} /></div>
+                  Documentación Recibida
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[
                     { key: 'planos', label: 'Planos' },
                     { key: 'pliego', label: 'Pliego' },
@@ -608,37 +640,43 @@ export const OpportunitiesModule: React.FC = () => {
                     { key: 'mediciones', label: 'Mediciones' },
                     { key: 'condiciones_pago', label: 'Cond. de Pago' },
                   ].map(item => (
-                    <label key={item.key} className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-2 cursor-pointer hover:bg-gray-100 transition-all">
+                    <label key={item.key} className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-emerald-100/50 rounded-lg p-2.5 cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all shadow-sm">
                       <input type="checkbox"
                         checked={(form.documentation_checklist as Record<string, boolean>)[item.key]}
                         onChange={e => setForm({
                           ...form,
                           documentation_checklist: { ...form.documentation_checklist, [item.key]: e.target.checked }
                         })}
-                        className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" />
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
                       {item.label}
                     </label>
                   ))}
                 </div>
               </div>
 
-              {/* Supuestos y Exclusiones */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Supuestos</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Condiciones asumidas para cotizar o ejecutar)</span>
-                  </label>
-                  <textarea value={form.assumptions} onChange={e => setForm({ ...form, assumptions: e.target.value })} rows={2}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Condiciones asumidas..." />
-                </div>
-                <div>
-                  <label className="block mb-1">
-                    <span className="block text-xs font-bold text-gray-600">Exclusiones</span>
-                    <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Elementos o tareas que NO se incluyen en la oferta)</span>
-                  </label>
-                  <textarea value={form.exclusions} onChange={e => setForm({ ...form, exclusions: e.target.value })} rows={2}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Elementos no incluidos..." />
+              {/* Sección 4: Alcance y Condiciones */}
+              <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-4 shadow-sm">
+                <h4 className="font-bold text-amber-800 text-sm mb-3 flex items-center gap-2">
+                  <div className="bg-amber-100 p-1.5 rounded-lg text-amber-600"><AlertTriangle size={16} /></div>
+                  Alcance y Condiciones
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Supuestos</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Condiciones asumidas para cotizar o ejecutar)</span>
+                    </label>
+                    <textarea value={form.assumptions} onChange={e => setForm({ ...form, assumptions: e.target.value })} rows={2}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30" placeholder="Condiciones asumidas..." />
+                  </div>
+                  <div>
+                    <label className="block mb-1">
+                      <span className="block text-xs font-bold text-gray-600">Exclusiones</span>
+                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Elementos o tareas que NO se incluyen en la oferta)</span>
+                    </label>
+                    <textarea value={form.exclusions} onChange={e => setForm({ ...form, exclusions: e.target.value })} rows={2}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30" placeholder="Elementos no incluidos..." />
+                  </div>
                 </div>
               </div>
             </div>
@@ -681,6 +719,17 @@ export const OpportunitiesModule: React.FC = () => {
                         setFileForm({ title: '', category: 'adicional', observations: '', file: null });
                         const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
                         if (fileInput) fileInput.value = '';
+                      } else if (!selectedOpp && fileForm.file) {
+                        setPendingFiles(prev => [...prev, {
+                          id: Math.random().toString(36).substring(7),
+                          title: fileForm.title,
+                          category: fileForm.category,
+                          observations: fileForm.observations,
+                          file: fileForm.file!
+                        }]);
+                        setFileForm({ title: '', category: 'adicional', observations: '', file: null });
+                        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                        if (fileInput) fileInput.value = '';
                       }
                     }}
                     className="bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-cyan-700 disabled:opacity-50 flex items-center gap-2">
@@ -690,42 +739,71 @@ export const OpportunitiesModule: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedOpp?.files?.map(f => (
-                  <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
-                    <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
-                      {f.file_type?.match(/pdf/i) ? <FileText size={24} /> :
-                       f.file_type?.match(/png|jpg|jpeg/i) ? <ImageIcon size={24} /> :
-                       <File size={24} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <h5 className="font-bold text-sm text-gray-800 truncate pr-2" title={f.title}>{f.title}</h5>
-                        <span className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 uppercase shrink-0">{f.category}</span>
+                {selectedOpp ? (
+                  selectedOpp.files?.map(f => (
+                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
+                      <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
+                        {f.file_type?.match(/pdf/i) ? <FileText size={24} /> :
+                         f.file_type?.match(/png|jpg|jpeg/i) ? <ImageIcon size={24} /> :
+                         <File size={24} />}
                       </div>
-                      <p className="text-xs text-gray-500 truncate mt-0.5" title={f.observations || ''}>{f.observations || 'Sin observaciones'}</p>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {(f.file_size || 0) > 1024 * 1024 ? `${(f.file_size! / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file_size! / 1024)} KB`} • {f.file_type?.toUpperCase()}
-                        </span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver / Descargar">
-                            <Download size={14} />
-                          </a>
-                          <button onClick={() => { if(confirm('¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
-                            <Trash2 size={14} />
-                          </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <h5 className="font-bold text-sm text-gray-800 truncate pr-2" title={f.title}>{f.title}</h5>
+                          <span className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 uppercase shrink-0">{f.category}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate mt-0.5" title={f.observations || ''}>{f.observations || 'Sin observaciones'}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {(f.file_size || 0) > 1024 * 1024 ? `${(f.file_size! / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file_size! / 1024)} KB`} • {f.file_type?.toUpperCase()}
+                          </span>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver / Descargar">
+                              <Download size={14} />
+                            </a>
+                            <button onClick={() => { if(confirm('¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {!selectedOpp?.files?.length && (
+                  ))
+                ) : (
+                  pendingFiles.map(f => (
+                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
+                      <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
+                        {f.file.type.match(/pdf/i) ? <FileText size={24} /> :
+                         f.file.type.match(/image/i) ? <ImageIcon size={24} /> :
+                         <File size={24} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <h5 className="font-bold text-sm text-gray-800 truncate pr-2" title={f.title}>{f.title}</h5>
+                          <span className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-600 uppercase shrink-0">{f.category}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate mt-0.5" title={f.observations || ''}>{f.observations || 'Sin observaciones'}</p>
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {f.file.size > 1024 * 1024 ? `${(f.file.size / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file.size / 1024)} KB`} • {f.file.name.split('.').pop()?.toUpperCase()}
+                          </span>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => setPendingFiles(prev => prev.filter(pf => pf.id !== f.id))} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {(!selectedOpp && pendingFiles.length === 0) || (selectedOpp && !selectedOpp.files?.length) ? (
                   <div className="col-span-full text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                     <Paperclip size={32} className="mx-auto mb-3 text-gray-300" />
                     <p className="text-gray-500 font-medium">No hay archivos adjuntos</p>
                     <p className="text-sm text-gray-400">Subí planos, pliegos o referencias para esta oportunidad.</p>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
 
