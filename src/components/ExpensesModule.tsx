@@ -20,13 +20,19 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
   const { data: history = [], isLoading } = useGastosRegistrosByItem(item.id);
 
   const handleSave = async () => {
-    await updateItem.mutateAsync({
-      id: item.id,
-      alias_cbu: form.alias_cbu,
-      titular_cuenta: form.titular_cuenta,
-      aclaraciones: form.aclaraciones,
-      importe_mensual_default: form.importe_mensual_default ? parseFloat(form.importe_mensual_default) : null,
-    } as any);
+    try {
+      await updateItem.mutateAsync({
+        id: item.id,
+        alias_cbu: form.alias_cbu,
+        titular_cuenta: form.titular_cuenta,
+        aclaraciones: form.aclaraciones,
+        importe_mensual_default: form.importe_mensual_default ? parseFloat(form.importe_mensual_default) : null,
+      } as any);
+      alert('Datos guardados correctamente.');
+    } catch (err: any) {
+      alert('Error al guardar: ' + err.message);
+      console.error(err);
+    }
   };
 
   return (
@@ -51,7 +57,21 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
               </div>
               <div>
                 <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Importe Mensual Base</label>
-                <input value={form.importe_mensual_default} onChange={e => setForm({...form, importe_mensual_default: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs font-mono bg-gray-50" placeholder="0.00" />
+                <input 
+                  value={
+                    form.importe_mensual_default 
+                      ? form.importe_mensual_default.split('.')[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (form.importe_mensual_default.includes('.') ? ',' + form.importe_mensual_default.split('.')[1] : '')
+                      : ''
+                  } 
+                  onChange={e => {
+                    let clean = e.target.value.replace(/[^0-9,]/g, '');
+                    const p = clean.split(',');
+                    if (p.length > 2) clean = p[0] + ',' + p.slice(1).join('');
+                    setForm({...form, importe_mensual_default: clean.replace(',', '.')});
+                  }} 
+                  className="w-full px-2 py-1.5 border rounded-lg text-xs font-mono bg-gray-50" 
+                  placeholder="0,00" 
+                />
               </div>
             </div>
             <div className="flex justify-end pt-2">
