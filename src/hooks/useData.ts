@@ -1517,6 +1517,19 @@ export function useGastosRegistros(periodo?: string) {
   });
 }
 
+export function useGastosRegistrosByItem(itemId?: string) {
+  return useQuery({
+    queryKey: ['gastos_registros_item', itemId],
+    queryFn: async () => {
+      if (!itemId) return [];
+      const { data, error } = await supabase.from('gastos_registros').select('*').eq('item_id', itemId).order('periodo', { ascending: false });
+      if (error) throw error;
+      return data as GastoRegistro[];
+    },
+    enabled: !!itemId,
+  });
+}
+
 export function useGastosRegistrosByRange(periodos: string[]) {
   return useQuery({
     queryKey: ['gastos_registros_range', periodos],

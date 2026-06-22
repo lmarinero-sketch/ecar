@@ -871,6 +871,10 @@ export type GastoItem = {
   descripcion: string;
   orden: number;
   activo: boolean;
+  alias_cbu: string | null;
+  titular_cuenta: string | null;
+  aclaraciones: string | null;
+  importe_mensual_default: number | null;
   created_at: string;
 };
 
@@ -880,6 +884,7 @@ export type GastoRegistro = {
   item_id: string;
   periodo: string; // 'YYYY-MM'
   monto: number;
+  monto_pagado: number;
   pagado: boolean;
   fecha_pago: string | null;
   metodo_pago: string | null;

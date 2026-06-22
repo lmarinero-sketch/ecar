@@ -35,10 +35,14 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const pendingGastos = useMemo(() => {
     const existingSources = new Set(items.filter(i => i.source_type === 'gastos_operativos').map(i => i.source_id));
     return gastosRegs
-      .filter(r => Number(r.monto) > 0 && !r.pagado && !existingSources.has(r.item_id))
+      .filter(r => {
+        const pendiente = Number(r.monto) - Number(r.monto_pagado || 0);
+        return pendiente > 0 && !existingSources.has(r.id);
+      })
       .map(r => {
         const item = gastosItems.find(gi => gi.id === r.item_id);
-        return { ...r, item_desc: item?.descripcion || 'Gasto', alias_cbu: (item as any)?.alias_cbu || '', titular_cuenta: (item as any)?.titular_cuenta || '' };
+        const pendiente = Number(r.monto) - Number(r.monto_pagado || 0);
+        return { ...r, item_desc: item?.descripcion || 'Gasto', alias_cbu: (item as any)?.alias_cbu || '', titular_cuenta: (item as any)?.titular_cuenta || '', pendiente };
       });
   }, [gastosRegs, gastosItems, items]);
 
@@ -65,16 +69,22 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   };
 
   const handleImport = async (gasto: any) => {
+    const defaultMonto = gasto.pendiente;
+    const input = window.prompt(`Importe pendiente para "${gasto.item_desc}": $${defaultMonto}\n\n¿Cuánto desea cargar en este pago?`, defaultMonto.toString());
+    if (input === null) return; // User cancelled
+    const finalMonto = parseFloat(input.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    if (finalMonto <= 0) return;
+
     await createItem.mutateAsync({
       payment_id: payment.id,
       concepto: gasto.item_desc,
-      monto: Number(gasto.monto),
+      monto: finalMonto,
       alias_cbu: gasto.alias_cbu,
       titular_cuenta: gasto.titular_cuenta,
       nro_factura: gasto.nro_factura || '',
       observaciones: '',
       source_type: 'gastos_operativos',
-      source_id: gasto.item_id,
+      source_id: gasto.id,
       orden: items.length,
     });
   };

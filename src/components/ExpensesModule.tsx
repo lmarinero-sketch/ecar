@@ -4,9 +4,106 @@ import {
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
   Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Edit2
 } from 'lucide-react';
-import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem } from '../hooks/useData';
+import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem, useGastosRegistrosByItem } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
+
+// ─── Expanded Detail Component ───
+const ExpandedGastoDetail: React.FC<{ item: GastoItem; onClose: () => void }> = ({ item, onClose }) => {
+  const [form, setForm] = useState({
+    alias_cbu: item.alias_cbu || '',
+    titular_cuenta: item.titular_cuenta || '',
+    aclaraciones: item.aclaraciones || '',
+    importe_mensual_default: item.importe_mensual_default?.toString() || ''
+  });
+  const updateItem = useUpdateGastoItem();
+  const { data: history = [], isLoading } = useGastosRegistrosByItem(item.id);
+
+  const handleSave = async () => {
+    await updateItem.mutateAsync({
+      id: item.id,
+      alias_cbu: form.alias_cbu,
+      titular_cuenta: form.titular_cuenta,
+      aclaraciones: form.aclaraciones,
+      importe_mensual_default: form.importe_mensual_default ? parseFloat(form.importe_mensual_default) : null,
+    } as any);
+  };
+
+  return (
+    <tr className="bg-emerald-50/50 border-b border-gray-200">
+      <td colSpan={100} className="px-6 py-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Formulario de Datos */}
+          <div className="flex-1 space-y-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+            <h4 className="font-bold text-sm text-emerald-800 border-b pb-2">Datos para Transferencia y Setup</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">CBU / Alias</label>
+                <input value={form.alias_cbu} onChange={e => setForm({...form, alias_cbu: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs font-mono bg-gray-50" placeholder="Ej: EMPRESA.MP" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
+                <input value={form.titular_cuenta} onChange={e => setForm({...form, titular_cuenta: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs bg-gray-50" placeholder="Ej: JUAN PEREZ" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Aclaraciones</label>
+                <input value={form.aclaraciones} onChange={e => setForm({...form, aclaraciones: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs bg-gray-50" placeholder="Ej: Pagar del 1 al 10" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Importe Mensual Base</label>
+                <input value={form.importe_mensual_default} onChange={e => setForm({...form, importe_mensual_default: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs font-mono bg-gray-50" placeholder="0.00" />
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button onClick={handleSave} disabled={updateItem.isPending} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 disabled:opacity-50">
+                {updateItem.isPending ? 'Guardando...' : 'Guardar Datos'}
+              </button>
+            </div>
+          </div>
+
+          {/* Historial de Pagos / Libro Mayor */}
+          <div className="flex-1 space-y-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm max-h-[250px] overflow-y-auto">
+            <h4 className="font-bold text-sm text-emerald-800 border-b pb-2">Historial de Pagos (Libro Mayor)</h4>
+            {isLoading ? (
+              <div className="text-center py-4 text-xs text-gray-500">Cargando historial...</div>
+            ) : history.length === 0 ? (
+              <div className="text-center py-4 text-xs text-gray-500">Sin historial de pagos registrado.</div>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-gray-500 border-b">
+                    <th className="text-left pb-1 font-bold uppercase text-[9px]">Periodo</th>
+                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Cargado</th>
+                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Pagado</th>
+                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Pendiente</th>
+                    <th className="text-center pb-1 font-bold uppercase text-[9px]">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {history.map(h => {
+                    const pendiente = Number(h.monto) - Number(h.monto_pagado || 0);
+                    return (
+                      <tr key={h.id} className="hover:bg-gray-50">
+                        <td className="py-1.5 font-bold text-gray-700">{h.periodo}</td>
+                        <td className="py-1.5 text-right font-mono text-gray-600">{formatARS(Number(h.monto))}</td>
+                        <td className="py-1.5 text-right font-mono text-green-600">{formatARS(Number(h.monto_pagado || 0))}</td>
+                        <td className="py-1.5 text-right font-mono text-orange-600">{pendiente > 0 ? formatARS(pendiente) : '-'}</td>
+                        <td className="py-1.5 text-center">
+                          {h.pagado ? <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold">PAGADO</span> : <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold">PENDIENTE</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
 
 // ─── Category config ───
 const CATEGORIA_CONFIG: Record<GastoItemCategoria, { label: string; icon: React.ElementType; color: string; bgColor: string }> = {
@@ -66,7 +163,7 @@ export const ExpensesModule: React.FC = () => {
   const createItem = useCreateGastoItem();
   const deleteItem = useDeleteGastoItem();
   const updateGastoItem = useUpdateGastoItem();
-  const [editingItem, setEditingItem] = useState<{ id: string; alias_cbu: string; titular_cuenta: string } | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   const isLoading = itemsLoading || regLoading;
 
@@ -315,27 +412,21 @@ export const ExpensesModule: React.FC = () => {
 
                       {/* Item rows (if not collapsed) */}
                       {!isCollapsed && catItems.map(item => (
-                        <tr key={item.id} className="hover:bg-gray-50 border-b border-gray-100 group">
+                        <React.Fragment key={item.id}>
+                        <tr className="hover:bg-gray-50 border-b border-gray-100 group cursor-pointer" onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}>
                           <td className="px-4 py-2 text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 min-w-0">
                                 <span className="truncate block">{item.descripcion}</span>
                                 {((item as any).alias_cbu || (item as any).titular_cuenta) && (
                                   <span className="text-[9px] text-gray-400 font-mono truncate block">
-                                    {(item as any).alias_cbu && `📎 ${(item as any).alias_cbu}`}
-                                    {(item as any).titular_cuenta && ` · ${(item as any).titular_cuenta}`}
+                                    {item.alias_cbu && `📎 ${item.alias_cbu}`}
+                                    {item.titular_cuenta && ` · ${item.titular_cuenta}`}
                                   </span>
                                 )}
                               </div>
                               <button
-                                onClick={() => setEditingItem({ id: item.id, alias_cbu: (item as any).alias_cbu || '', titular_cuenta: (item as any).titular_cuenta || '' })}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-blue-50 text-gray-300 hover:text-blue-500 transition-all flex-shrink-0"
-                                title="Editar alias/CBU"
-                              >
-                                <Edit2 size={11} />
-                              </button>
-                              <button
-                                onClick={() => { if (confirm(`¿Eliminar "${item.descripcion}"?`)) deleteItem.mutate(item.id); }}
+                                onClick={(e) => { e.stopPropagation(); if (confirm(`¿Eliminar "${item.descripcion}"?`)) deleteItem.mutate(item.id); }}
                                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all flex-shrink-0"
                                 title="Eliminar"
                               >
@@ -400,6 +491,10 @@ export const ExpensesModule: React.FC = () => {
                             {formatARS(periodos.reduce((s, p) => s + getMonto(item.id, p), 0))}
                           </td>
                         </tr>
+                        {expandedItemId === item.id && (
+                          <ExpandedGastoDetail item={item} onClose={() => setExpandedItemId(null)} />
+                        )}
+                        </React.Fragment>
                       ))}
 
                       {/* Add item inline */}
@@ -528,53 +623,6 @@ export const ExpensesModule: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Item Alias/CBU Modal */}
-      {editingItem && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Datos de Pago del Gasto</h3>
-              <button onClick={() => setEditingItem(null)}><X size={20} className="text-gray-400" /></button>
-            </div>
-            <p className="text-xs text-gray-500">Estos datos se usan al importar este gasto en la planilla de pagos semanal.</p>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Alias / CBU</label>
-                <input
-                  autoFocus
-                  value={editingItem.alias_cbu}
-                  onChange={e => setEditingItem({ ...editingItem, alias_cbu: e.target.value })}
-                  placeholder="Ej: EMPRESA.ALIAS.MP"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Titular de la Cuenta</label>
-                <input
-                  value={editingItem.titular_cuenta}
-                  onChange={e => setEditingItem({ ...editingItem, titular_cuenta: e.target.value })}
-                  placeholder="Ej: JUAN PÉREZ S.A."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                />
-              </div>
-            </div>
-            <button
-              onClick={async () => {
-                await updateGastoItem.mutateAsync({
-                  id: editingItem.id,
-                  alias_cbu: editingItem.alias_cbu,
-                  titular_cuenta: editingItem.titular_cuenta,
-                } as any);
-                setEditingItem(null);
-              }}
-              disabled={updateGastoItem.isPending}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50"
-            >
-              {updateGastoItem.isPending ? 'Guardando...' : '✓ Guardar Datos de Pago'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

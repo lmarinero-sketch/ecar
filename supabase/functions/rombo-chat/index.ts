@@ -915,7 +915,7 @@ serve(async (req) => {
     let response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: systemPrompt, input, tools: responsesTools, temperature: 0.7 }),
+      body: JSON.stringify({ model: 'gpt-4o-mini', instructions: systemPrompt, input, tools: responsesTools, temperature: 0.7 }),
     })
 
     if (!response.ok) {
@@ -948,7 +948,7 @@ serve(async (req) => {
       response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'gpt-5.4-mini', instructions: systemPrompt, input: followUp, tools: responsesTools, temperature: 0.7 }),
+        body: JSON.stringify({ model: 'gpt-4o-mini', instructions: systemPrompt, input: followUp, tools: responsesTools, temperature: 0.7 }),
       })
 
       if (!response.ok) break

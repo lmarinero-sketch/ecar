@@ -49,4 +49,4 @@ CREATE POLICY "auth_delete_certs" ON storage.objects FOR DELETE TO authenticated
 -- 5. Asegurar la integridad de perfiles huérfanos o con tenant_id nulo
 UPDATE public.profiles
 SET tenant_id = 'a0000000-0000-0000-0000-000000000001'
-WHERE tenant_id IS NULL OR tenant_id = '';
+WHERE tenant_id IS NULL;
