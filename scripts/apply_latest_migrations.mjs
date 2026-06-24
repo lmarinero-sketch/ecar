@@ -12,11 +12,11 @@ const ACCESS_TOKEN = envVars.SUPABASE_ACCESS_TOKEN;
 
 if (!PROJECT_REF || !ACCESS_TOKEN) {
   console.error('Missing SUPABASE_PROJECT_REF (or SUPABASE_URL) or SUPABASE_ACCESS_TOKEN in .env');
-  process.exit(1);
 }
 
 const queries = [
-  "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
+  fs.readFileSync('supabase/migrations/20260624_weekly_payments_init.sql', 'utf-8'),
+  fs.readFileSync('supabase/migrations/20260624_weekly_payroll_details.sql', 'utf-8')
 ];
 
 async function main() {

@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Save } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Save, Users } from 'lucide-react';
 import { useEmployees, useCreateWeeklyPaymentItem, useCreateWeeklyPayrollDetail } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 
 // Type definitions for internal state
 type ObreroPayroll = {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useGastosItems } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useImplementationStore } from '../store/useImplementationStore';
@@ -24,6 +24,10 @@ export const PurchasesModule: React.FC = () => {
   const [ocrError, setOcrError] = useState('');
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [supplierForm, setSupplierForm] = useState({ name: '', cuit: '', tax_condition: 'RI' });
+  const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
+  const [editingSupplierForm, setEditingSupplierForm] = useState({ name: '', cuit: '' });
+  const updateSupplier = useUpdateSupplier();
+  const deleteSupplier = useDeleteSupplier();
   const [activeTab, setActiveTab] = useState<InvoiceTab>('compras');
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
@@ -220,9 +224,26 @@ export const PurchasesModule: React.FC = () => {
           )}
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {suppliers.map((s: any) => (
-              <div key={s.id} className="flex justify-between items-center text-sm py-1.5 px-2 hover:bg-gray-50 rounded">
-                <span className="font-medium text-gray-800">{s.name}</span>
-                <span className="text-gray-400 font-mono text-xs">{s.cuit || '—'}</span>
+              <div key={s.id} className="group flex justify-between items-center text-sm py-1.5 px-2 hover:bg-gray-50 rounded">
+                {editingSupplier === s.id ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input className="border rounded px-2 py-1 text-xs w-1/2" value={editingSupplierForm.name} onChange={e => setEditingSupplierForm({ ...editingSupplierForm, name: e.target.value })} />
+                    <input className="border rounded px-2 py-1 text-xs w-1/3" value={editingSupplierForm.cuit} onChange={e => setEditingSupplierForm({ ...editingSupplierForm, cuit: e.target.value })} />
+                    <button onClick={async () => { await updateSupplier.mutateAsync({ id: s.id, ...editingSupplierForm }); setEditingSupplier(null); }} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check size={14}/></button>
+                    <button onClick={() => setEditingSupplier(null)} className="text-gray-400 hover:bg-gray-100 p-1 rounded"><X size={14}/></button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-800">{s.name}</span>
+                      <span className="text-gray-400 font-mono text-xs ml-2">{s.cuit || '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => { setEditingSupplier(s.id); setEditingSupplierForm({ name: s.name, cuit: s.cuit || '' }); }} className="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><Pencil size={14} /></button>
+                      <button onClick={async () => { if (confirm('¿Eliminar proveedor?')) await deleteSupplier.mutateAsync(s.id); }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
             {suppliers.length === 0 && <p className="text-gray-400 text-sm">Sin proveedores</p>}

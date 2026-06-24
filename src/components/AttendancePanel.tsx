@@ -5,10 +5,10 @@ import { useImplementationStore } from '../store/useImplementationStore';
 import {
   Clock, Users, QrCode, Monitor, CheckCircle2, XCircle, AlertTriangle,
   Calendar, ChevronLeft, ChevronRight, Maximize2, Minimize2, RefreshCw,
-  ArrowDownRight, ArrowUpRight, Coffee, UserCheck, Timer, Smartphone, Globe, ScreenShare
+  ArrowDownRight, ArrowUpRight, Coffee, UserCheck, Timer, Smartphone, Globe, ScreenShare, Pencil, Check, X, LogOut
 } from 'lucide-react';
 import { generateQRToken, getTimeRemaining, buildCheckInUrl } from '../lib/qrToken';
-import { useEmployees, useAttendance } from '../hooks/useData';
+import { useEmployees, useAttendance, useUpdateAttendance, useBulkCheckout } from '../hooks/useData';
 
 type ViewMode = 'dashboard' | 'qr_display';
 
@@ -22,6 +22,20 @@ export const AttendancePanel: React.FC = () => {
   const { data: employees = [] } = useEmployees();
   const activeEmployees = employees.filter(e => e.employment_status === 'active');
   const { data: attendanceRecords = [], isLoading, refetch } = useAttendance(selectedDate, selectedDate);
+  const updateAttendance = useUpdateAttendance();
+  const bulkCheckout = useBulkCheckout();
+
+  const [editingRow, setEditingRow] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ clock_in: '', clock_out: '' });
+
+  const handleBulkCheckout = async () => {
+    if (!confirm('¿Marcar salida para todos los presentes sin hora de salida?')) return;
+    const nowT = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const presentIds = attendanceRecords.filter(r => r.clock_in && !r.clock_out).map(r => r.id);
+    if (presentIds.length > 0) {
+      await bulkCheckout.mutateAsync({ date: selectedDate, checkoutTime: nowT, ids: presentIds });
+    }
+  };
 
   // Auto-refresh QR token & countdown
   useEffect(() => {
@@ -44,7 +58,7 @@ export const AttendancePanel: React.FC = () => {
   // Stats
   const stats = useMemo(() => {
     const present = attendanceRecords.filter(r => r.clock_in && r.status !== 'absent').length;
-    const late = attendanceRecords.filter(r => r.status === 'late').length;
+    const late = attendanceRecords.filter(r => r.clock_in && formatTime(r.clock_in) > '07:30').length;
     const absent = activeEmployees.length - present;
     const checkedOut = attendanceRecords.filter(r => r.clock_out).length;
     return { present, late, absent: Math.max(0, absent), checkedOut, total: activeEmployees.length };
@@ -167,16 +181,25 @@ export const AttendancePanel: React.FC = () => {
 
         {/* QR Button */}
         {isToday && (
-          <button
-            onClick={() => {
-              setViewMode('qr_display');
-              useImplementationStore.getState().completeItem('e2-29');
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-ecar-blue text-white rounded-lg font-bold text-sm shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all"
-          >
-            <Monitor size={18} />
-            Mostrar QR en Pantalla
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleBulkCheckout}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg font-bold text-sm shadow-md hover:bg-amber-600 transition-all"
+            >
+              <LogOut size={18} />
+              Retirar a Todos
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('qr_display');
+                useImplementationStore.getState().completeItem('e2-29');
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-ecar-blue text-white rounded-lg font-bold text-sm shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all"
+            >
+              <Monitor size={18} />
+              Mostrar QR en Pantalla
+            </button>
+          </div>
         )}
       </div>
 
@@ -263,12 +286,15 @@ export const AttendancePanel: React.FC = () => {
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-4 py-3 text-center">Fuente</th>
                   <th className="px-4 py-3 text-center">Dispositivo</th>
+                  <th className="px-4 py-3 text-center"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {attendanceRecords.map(record => {
                   const emp = record.employee;
-                  const statusConfig = getStatusConfig(record.status);
+                  const isLate = record.clock_in && formatTime(record.clock_in) > '07:30';
+                  const effectiveStatus = isLate ? 'late' : record.status;
+                  const statusConfig = getStatusConfig(effectiveStatus);
                   const workedStr = record.clock_in && record.clock_out
                     ? calculateWorkedHours(record.clock_in, record.clock_out)
                     : record.clock_in ? 'En obra...' : '—';
@@ -280,7 +306,7 @@ export const AttendancePanel: React.FC = () => {
                   const deviceInfo = deviceOut || deviceIn;
 
                   return (
-                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
@@ -293,7 +319,9 @@ export const AttendancePanel: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {record.clock_in ? (
+                        {editingRow === record.id ? (
+                          <input type="time" className="border rounded px-2 py-1 text-xs text-center w-24" value={editForm.clock_in} onChange={e => setEditForm({...editForm, clock_in: e.target.value})} />
+                        ) : record.clock_in ? (
                           <span className="inline-flex items-center gap-1 text-sm font-mono font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg">
                             <ArrowDownRight size={12} />
                             {formatTime(record.clock_in)}
@@ -301,7 +329,9 @@ export const AttendancePanel: React.FC = () => {
                         ) : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {record.clock_out ? (
+                        {editingRow === record.id ? (
+                          <input type="time" className="border rounded px-2 py-1 text-xs text-center w-24" value={editForm.clock_out} onChange={e => setEditForm({...editForm, clock_out: e.target.value})} />
+                        ) : record.clock_out ? (
                           <span className="inline-flex items-center gap-1 text-sm font-mono font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg">
                             <ArrowUpRight size={12} />
                             {formatTime(record.clock_out)}
@@ -334,6 +364,16 @@ export const AttendancePanel: React.FC = () => {
                           <DeviceInfoCell deviceIn={deviceIn} deviceOut={deviceOut} />
                         ) : (
                           <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {editingRow === record.id ? (
+                          <div className="flex justify-center gap-1">
+                            <button onClick={async () => { await updateAttendance.mutateAsync({ id: record.id, clock_in: editForm.clock_in || null, clock_out: editForm.clock_out || null }); setEditingRow(null); }} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check size={14} /></button>
+                            <button onClick={() => setEditingRow(null)} className="text-gray-400 hover:bg-gray-100 p-1 rounded"><X size={14} /></button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setEditingRow(record.id); setEditForm({ clock_in: formatTime(record.clock_in || ''), clock_out: formatTime(record.clock_out || '') }); }} className="text-blue-500 hover:bg-blue-50 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"><Pencil size={14} /></button>
                         )}
                       </td>
                     </tr>

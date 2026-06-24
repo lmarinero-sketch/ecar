@@ -206,6 +206,32 @@ export function useCreateAttendance() {
   });
 }
 
+export function useUpdateAttendance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<AttendanceRecord> & { id: string }) => {
+      const { error } = await supabase.from('attendance_records').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['attendance'] }),
+  });
+}
+
+export function useBulkCheckout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date, checkoutTime, ids }: { date: string, checkoutTime: string, ids: string[] }) => {
+      const { error } = await supabase.from('attendance_records')
+        .update({ clock_out: checkoutTime })
+        .in('id', ids)
+        .eq('record_date', date)
+        .is('clock_out', null);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['attendance'] }),
+  });
+}
+
 // ========== OBLIGATIONS ==========
 export function useObligations() {
   return useQuery({
@@ -299,6 +325,28 @@ export function useCreateSupplier() {
   return useMutation({
     mutationFn: async (sup: Partial<Supplier>) => {
       const { error } = await supabase.from('suppliers').insert({ ...sup, tenant_id: ECAR_TENANT_ID });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['suppliers'] }),
+  });
+}
+
+export function useUpdateSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Supplier> & { id: string }) => {
+      const { error } = await supabase.from('suppliers').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['suppliers'] }),
+  });
+}
+
+export function useDeleteSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('suppliers').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['suppliers'] }),
