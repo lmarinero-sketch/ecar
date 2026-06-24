@@ -4,7 +4,7 @@ import {
   FileText, Layers, DollarSign, ChevronDown, ChevronRight,
   ArrowLeft, Eye, Edit2, Copy, Lock, Trash2, Save, RotateCcw,
   AlertTriangle, Database, Tag, Clock, Calendar, Info, Shield, Building2, ClipboardCheck,
-  ShoppingCart, Truck, UploadCloud, File, Download, HelpCircle
+  ShoppingCart, UploadCloud, File, Download, HelpCircle
 } from 'lucide-react';
 import {
   useBudgets, useCreateBudget, useUpdateBudget,
@@ -1356,7 +1356,7 @@ const BudgetDetailView: React.FC<{
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
-                 await createLog.mutateAsync({ type: 'quote_request', reference_id: budget.id, message: `Solicitud de cotización para presupuesto ${budget.name}`, recipients: ['compras@ecar.com.ar'] });
+                 await createLog.mutateAsync({ contact_name: 'Compras', contact_phone: 'compras@ecar.com.ar', message_content: `Solicitud de cotización para presupuesto ${budget.name}`, status: 'sent' });
                  alert('Notificación enviada a Compras (simulado)');
              }} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors">Notificar a Compras</button>
           </div>
