@@ -9,6 +9,8 @@ import {
   useGastosItems, useGastosRegistrosByRange,
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { PayrollLiquidator } from './PayrollLiquidator';
+import { PayrollPDFButton } from './PayrollPDFButton';
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -25,6 +27,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const [form, setForm] = useState({ concepto: '', monto: '', alias_cbu: '', titular_cuenta: '', nro_factura: '', observaciones: '' });
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
+  const [showPayroll, setShowPayroll] = useState(false);
 
   // Import from gastos operativos
   const periodo = payment.payment_date?.slice(0, 7); // YYYY-MM
@@ -228,6 +231,9 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             <Building2 size={14} /> Importar de Gastos ({pendingGastos.length})
           </button>
         )}
+        <button onClick={() => setShowPayroll(true)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-200 border border-blue-200 transition-all">
+          <Users size={14} /> Liquidar Obreros
+        </button>
       </div>
 
       {/* Import from gastos */}
@@ -392,23 +398,29 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {items.map(item => (
-                    <tr key={item.id} className={`hover:bg-gray-50 ${item.pagado ? 'bg-green-50/30' : ''}`}>
+                {items.map(item => {
+                  const isPartial = item.pagado && Number(item.resto) > 0;
+                  return (
+                    <tr key={item.id} className={`hover:bg-gray-50 ${isPartial ? 'bg-amber-50/50' : item.pagado ? 'bg-green-50/30' : ''}`}>
                       <td className="px-3 py-2.5 font-bold text-gray-800 text-xs">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {item.source_type === 'gastos_operativos' && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold">GO</span>}
                           {item.concepto}
+                          {isPartial && <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm border border-amber-200">Pago Parcial</span>}
                         </div>
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono font-bold text-gray-900">{formatARS(Number(item.monto))}</td>
                       <td className="px-3 py-2.5 text-center font-mono font-bold text-xs text-gray-700">{item.alias_cbu || ''}</td>
                       <td className="px-3 py-2.5 text-gray-600 text-xs">{item.titular_cuenta || ''}</td>
                       <td className="px-3 py-2.5 text-gray-600 text-xs font-mono">{item.nro_factura || ''}</td>
-                      <td className="px-3 py-2.5 text-right font-mono text-xs text-gray-500">{Number(item.resto) > 0 ? formatARS(Number(item.resto)) : ''}</td>
+                      <td className={`px-3 py-2.5 text-right font-mono text-xs font-bold ${isPartial ? 'text-amber-600' : 'text-gray-500'}`}>{Number(item.resto) > 0 ? formatARS(Number(item.resto)) : ''}</td>
                       <td className="px-3 py-2.5 text-gray-500 text-xs">{item.observaciones || ''}</td>
                       <td className="px-3 py-2.5 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleTogglePagado(item)} className={`p-1 rounded transition-colors ${item.pagado ? 'bg-green-100 text-green-600' : 'text-gray-300 hover:text-green-500 hover:bg-green-50'}`} title={item.pagado ? 'Pagado ✓' : 'Marcar como pagado'}>
+                          {item.source_type === 'sueldos_obreros' && (
+                            <PayrollPDFButton paymentItemId={item.id} concepto={item.concepto} monto={Number(item.monto)} />
+                          )}
+                          <button onClick={() => handleTogglePagado(item)} className={`p-1 rounded transition-colors ${isPartial ? 'bg-amber-100 text-amber-600' : item.pagado ? 'bg-green-100 text-green-600' : 'text-gray-300 hover:text-green-500 hover:bg-green-50'}`} title={isPartial ? 'Pago Parcial ✓' : item.pagado ? 'Pagado ✓' : 'Marcar como pagado'}>
                             <Check size={13} />
                           </button>
                           <button onClick={() => startEdit(item)} className="p-1 rounded text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={13} /></button>
@@ -416,7 +428,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                         </div>
                       </td>
                     </tr>
-                ))}
+                )})}
                 {/* Total row */}
                 <tr className="bg-slate-800 text-white font-bold">
                   <td className="px-3 py-2.5 text-sm uppercase">Total</td>
@@ -433,6 +445,15 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           </div>
         )}
       </div>
+
+      {showPayroll && (
+        <PayrollLiquidator 
+          paymentId={payment.id} 
+          paymentDate={payment.payment_date} 
+          onClose={() => setShowPayroll(false)} 
+          onSuccess={() => setShowPayroll(false)} 
+        />
+      )}
     </div>
   );
 };

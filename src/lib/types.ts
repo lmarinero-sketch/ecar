@@ -606,6 +606,27 @@ export type InventoryItem = {
   shelf?: WarehouseShelf;
 };
 
+// ========== LIQUIDACIÓN OBREROS ==========
+export type WeeklyPayrollDetail = {
+  id: string;
+  tenant_id: string;
+  weekly_payment_id: string;
+  weekly_payment_item_id: string;
+  employee_id: string;
+  week_start: string;
+  week_end: string;
+  worked_hours: number;
+  overtime_hours: number;
+  hourly_rate: number;
+  base_amount: number;
+  extra_amount: number;
+  discount_amount: number;
+  final_amount: number;
+  created_at: string;
+  // Joined
+  employee?: Employee;
+};
+
 export type InventoryMovement = {
   id: string;
   tenant_id: string;
