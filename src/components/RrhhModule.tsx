@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Tag } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, Calendar, X, Download, Upload, Printer, FileSpreadsheet, Pencil, Trash2, Tag, User, Briefcase, Landmark, AlertCircle } from 'lucide-react';
 import { AttendancePanel } from './AttendancePanel';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
@@ -204,7 +204,7 @@ export const RrhhModule: React.FC = () => {
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} /> Nuevo Empleado</h3>
           
           {/* Datos personales */}
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Personales</p>
+          <p className="text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg border border-indigo-100 flex items-center gap-2 shadow-sm mb-4"><User size={14} /> Datos Personales</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="md:col-span-3">
               <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
@@ -273,8 +273,8 @@ export const RrhhModule: React.FC = () => {
             </div>
           </div>
 
-          {/* Datos laborales */}
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Datos Laborales</p>
+          {/* Datos Laborales */}
+          <p className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-700 px-3 py-2 rounded-lg border border-amber-100 flex items-center gap-2 shadow-sm mt-8 mb-4"><Briefcase size={14} /> Datos Laborales</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso (Alta ARCA)</label>
@@ -332,7 +332,7 @@ export const RrhhModule: React.FC = () => {
           </div>
 
           {/* Banco y Cobertura */}
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Banco y Cobertura</p>
+          <p className="text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg border border-emerald-100 flex items-center gap-2 shadow-sm mt-8 mb-4"><Landmark size={14} /> Banco y Cobertura</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Banco</label>
@@ -353,7 +353,7 @@ export const RrhhModule: React.FC = () => {
           </div>
 
           {/* Deuda y Observaciones */}
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Deuda y Observaciones</p>
+          <p className="text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 px-3 py-2 rounded-lg border border-rose-100 flex items-center gap-2 shadow-sm mt-8 mb-4"><AlertCircle size={14} /> Deuda y Observaciones</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Se le debe ($)</label>
@@ -420,7 +420,7 @@ export const RrhhModule: React.FC = () => {
               <button onClick={() => setEditingEmployee(null)}><X size={20} className="text-gray-400" /></button>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Datos Personales</p>
+            <p className="text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg border border-indigo-100 flex items-center gap-2 shadow-sm mb-2"><User size={14} /> Datos Personales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-3">
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
@@ -489,7 +489,7 @@ export const RrhhModule: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Datos Laborales</p>
+            <p className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-700 px-3 py-2 rounded-lg border border-amber-100 flex items-center gap-2 shadow-sm mt-6 mb-2"><Briefcase size={14} /> Datos Laborales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Ingreso</label>
@@ -546,7 +546,7 @@ export const RrhhModule: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Banco y Cobertura</p>
+            <p className="text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg border border-emerald-100 flex items-center gap-2 shadow-sm mt-6 mb-2"><Landmark size={14} /> Banco y Cobertura</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Banco</label>
@@ -566,7 +566,7 @@ export const RrhhModule: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2">Deuda y Observaciones</p>
+            <p className="text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 px-3 py-2 rounded-lg border border-rose-100 flex items-center gap-2 shadow-sm mt-6 mb-2"><AlertCircle size={14} /> Deuda y Observaciones</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Se le debe ($)</label>
