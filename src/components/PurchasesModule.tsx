@@ -114,6 +114,11 @@ export const PurchasesModule: React.FC = () => {
 
   function classifyInvoice(inv: any): 'compra' | 'venta' {
     const ocr = inv.ocr_raw_data || {};
+    
+    // Explicit type from OCR has highest priority
+    if (ocr.tipo === 'venta') return 'venta';
+    if (ocr.tipo === 'compra') return 'compra';
+
     // Check emisor/receptor fields if available
     const emisor = ocr.emisor || ocr.razon_social_emisor || '';
     const receptor = ocr.receptor || ocr.razon_social_receptor || '';
@@ -123,10 +128,6 @@ export const PurchasesModule: React.FC = () => {
     if (isEcar(emisor)) return 'venta';
     // If receptor is ECAR → it's a purchase (ECAR received this invoice)
     if (isEcar(receptor)) return 'compra';
-
-    // Fallback: if tipo from OCR is explicitly set
-    if (ocr.tipo === 'venta') return 'venta';
-    if (ocr.tipo === 'compra') return 'compra';
 
     // Last resort: if proveedor_cliente matches ECAR, it might be misclassified
     // In a COMPRA, proveedor_cliente should be the OTHER party, not ECAR

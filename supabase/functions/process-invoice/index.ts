@@ -25,7 +25,7 @@ EXTRACCIÓN DE NOMBRE DE LA CONTRAPARTE (proveedor_cliente) Y CUIT (cuit):
   - Si es COMPRA: el emisor externo es el "proveedor_cliente".
   - Si es VENTA: el receptor externo es el "proveedor_cliente".
 - "cuit" es el CUIT de la OTRA parte (NO ECAR) en formato XX-XXXXXXXX-X.
-- NUNCA dejes proveedor_cliente vacío. Si no lo puedes leer, pon "No legible".`;
+- NUNCA dejes proveedor_cliente vacío. Si no lo puedes leer, pon "No legible".
 
 Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin explicaciones:
 {
@@ -80,7 +80,7 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { fileUrl, invoiceId } = body;
+    const { fileUrl, invoiceId, tipo } = body;
 
     if (!fileUrl) return jsonResponse({ success: false, error: "fileUrl es requerido" });
     if (!OPENAI_API_KEY) return jsonResponse({ success: false, error: "OPENAI_API_KEY no configurada" });
@@ -123,9 +123,11 @@ serve(async (req: Request) => {
       });
     }
 
+    const tipoText = tipo ? ` IMPORTANTE: El usuario indicó que esta factura es una ${tipo.toUpperCase()}. Debes clasificar "tipo" estrictamente como "${tipo}" y extraer el "proveedor_cliente" acordemente (si es compra el proveedor_cliente es el emisor, si es venta el proveedor_cliente es el receptor).` : "";
+    
     userContent.push({
       type: "text",
-      text: "Analiza esta factura argentina y extrae todos los datos para el Libro IVA. Responde solo con JSON.",
+      text: "Analiza esta factura argentina y extrae todos los datos para el Libro IVA. Responde solo con JSON." + tipoText,
     });
 
     console.log("[process-invoice] Calling OpenAI GPT-4o...");
@@ -162,6 +164,9 @@ serve(async (req: Request) => {
     let extracted;
     try {
       extracted = JSON.parse(jsonStr);
+      if (tipo) {
+        extracted.tipo = tipo;
+      }
     } catch {
       return jsonResponse({ success: false, error: `No se pudo parsear respuesta IA: ${rawText.substring(0, 200)}` });
     }
