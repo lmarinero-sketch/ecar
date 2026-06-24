@@ -21,6 +21,7 @@ import {
   useCreateNotificationLog
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
+import { useModalStore } from '../store/useModalStore';
 
 /* ━━━ Formatters ━━━ */
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -636,7 +637,7 @@ const BudgetDetailView: React.FC<{
   };
 
   const handleDeleteSection = async (secId: string) => {
-    if (!confirm('¿Eliminar este rubro? Los ítems quedarán sin rubro asignado.')) return;
+    if (!await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este rubro? Los ítems quedarán sin rubro asignado.')) return;
     await deleteSection.mutateAsync(secId);
   };
 
@@ -1322,8 +1323,9 @@ const BudgetDetailView: React.FC<{
                     await uploadFile.mutateAsync({ budgetId: budget.id, file, title: fileTitle, category: fileCategory });
                     setFileTitle('');
                     e.target.value = '';
-                  } catch(err) {
-                    alert('Error al subir archivo');
+                  } catch(err: any) {
+                    console.error(err);
+                    useModalStore.getState().showAlert('Error', 'Error al subir archivo');
                   } finally {
                     setUploading(false);
                   }
@@ -1357,7 +1359,7 @@ const BudgetDetailView: React.FC<{
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
                  await createLog.mutateAsync({ contact_name: 'Compras', contact_phone: 'compras@ecar.com.ar', message_content: `Solicitud de cotización para presupuesto ${budget.name}`, status: 'sent' });
-                 alert('Notificación enviada a Compras (simulado)');
+                 useModalStore.getState().showAlert('Éxito', 'Notificación enviada a Compras (simulado)');
              }} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors">Notificar a Compras</button>
           </div>
         </div>

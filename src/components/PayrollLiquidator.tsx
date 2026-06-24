@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { X, Save, Users } from 'lucide-react';
 import { useEmployees, useCreateWeeklyPaymentItem, useCreateWeeklyPayrollDetail } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
+import { useModalStore } from '../store/useModalStore';
 
 // Type definitions for internal state
 type ObreroPayroll = {
@@ -90,9 +91,9 @@ export const PayrollLiquidator: React.FC<{
 
       setObreros(results);
       setStep(2);
-    } catch (e) {
-      console.error(e);
-      alert("Error al cargar asistencia.");
+    } catch (err) {
+      console.error(err);
+      useModalStore.getState().showAlert('Error', "Error al cargar asistencia.");
     } finally {
       setIsLoadingAtt(false);
     }
@@ -121,19 +122,19 @@ export const PayrollLiquidator: React.FC<{
   const handleSave = async () => {
     // Only save obreros with amount > 0
     const toPay = obreros.filter(o => o.final_amount > 0);
-    if (toPay.length === 0) {
-      alert("No hay montos a liquidar.");
+    const totalPayable = toPay.reduce((acc, o) => acc + o.final_amount, 0);
+
+    if (totalPayable <= 0) {
+      useModalStore.getState().showAlert('Aviso', "No hay montos a liquidar.");
       return;
     }
-
-    const total = toPay.reduce((acc, o) => acc + o.final_amount, 0);
 
     try {
       // 1. Create Weekly Payment Item for the total
       const newItem = await createPaymentItem.mutateAsync({
         payment_id: paymentId,
         concepto: `SUELDOS OBREROS (${startDate} al ${endDate})`,
-        monto: total,
+        monto: totalPayable,
         alias_cbu: '',
         titular_cuenta: '',
         nro_factura: '',
@@ -164,7 +165,7 @@ export const PayrollLiquidator: React.FC<{
       onSuccess();
     } catch (e) {
       console.error(e);
-      alert("Hubo un error al guardar la liquidación.");
+      useModalStore.getState().showAlert('Error', "Hubo un error al guardar la liquidación.");
     }
   };
 

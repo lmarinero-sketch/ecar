@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useModalStore } from '../store/useModalStore';
 import { ALL_MODULES, MODULE_LABELS } from '../lib/types';
 import type { ModuleId, ModulePermission } from '../lib/types';
 
@@ -176,10 +177,10 @@ export const UserManagementModule: React.FC = () => {
 
   const handleDelete = async (profile: UserProfile) => {
     if (profile.auth_user_id === user?.id) {
-      alert('No podés eliminar tu propia cuenta.');
+      useModalStore.getState().showAlert('Aviso', 'No podés eliminar tu propia cuenta.');
       return;
     }
-    if (!confirm(`¿Estás seguro de eliminar al usuario ${profile.full_name} (${profile.email})?`)) return;
+    if (!await useModalStore.getState().showConfirm('Confirmar', `¿Estás seguro de eliminar al usuario ${profile.full_name} (${profile.email})?`)) return;
 
     await callManageUsers({
       action: 'delete',

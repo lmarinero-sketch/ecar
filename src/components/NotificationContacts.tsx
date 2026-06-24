@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus, Phone, Trash2, X, User } from 'lucide-react';
+import { useModalStore } from '../store/useModalStore';
 import { useNotificationContacts, useCreateNotificationContact, useDeleteNotificationContact } from '../hooks/useData';
 import { formatArgPhone } from '../lib/builderbot';
 
@@ -86,7 +87,7 @@ export const NotificationContacts: React.FC = () => {
                 <p className="text-xs font-mono text-gray-400">{c.phone}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">{c.role}</span>
               </div>
-              <button onClick={() => { if(confirm('¿Eliminar contacto?')) deleteContact.mutate(c.id) }} className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
+              <button onClick={async () => { if(await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar contacto?')) deleteContact.mutate(c.id) }} className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
                 <Trash2 size={14} />
               </button>
             </div>

@@ -2,10 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ChevronDown, ChevronRight, Plus, X, Save, TrendingUp, TrendingDown,
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
-  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon
+  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Trash2
 } from 'lucide-react';
 import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem, useGastosRegistrosByItem } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
+import { useModalStore } from '../store/useModalStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
 
 // ─── Expanded Detail Component ───
@@ -28,9 +29,9 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
         aclaraciones: form.aclaraciones,
         importe_mensual_default: form.importe_mensual_default ? parseFloat(form.importe_mensual_default) : null,
       } as any);
-      alert('Datos guardados correctamente.');
+      useModalStore.getState().showAlert('Éxito', 'Datos guardados correctamente.');
     } catch (err: any) {
-      alert('Error al guardar: ' + err.message);
+      useModalStore.getState().showAlert('Error', 'Error al guardar: ' + err.message);
       console.error(err);
     }
   };
@@ -445,11 +446,16 @@ export const ExpensesModule: React.FC = () => {
                                 )}
                               </div>
                               <button
-                                onClick={(e) => { e.stopPropagation(); if (confirm(`¿Eliminar "${item.descripcion}"?`)) deleteItem.mutate(item.id); }}
+                                onClick={async (e) => { 
+                                  e.stopPropagation(); 
+                                  if (await useModalStore.getState().showConfirm('Eliminar Gasto', `¿Eliminar "${item.descripcion}"?`)) {
+                                    deleteItem.mutate(item.id); 
+                                  }
+                                }}
                                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-all flex-shrink-0"
                                 title="Eliminar"
                               >
-                                <X size={12} />
+                                <Trash2 size={12} />
                               </button>
                             </div>
                           </td>

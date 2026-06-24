@@ -12,6 +12,7 @@ import {
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 import { TutorialPanel } from './TutorialPanel';
+import { GlobalModal } from './GlobalModal';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
@@ -490,6 +491,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
       )}
+
+      {/* Global Modals */}
+      <GlobalModal />
     </div>
   );
 };

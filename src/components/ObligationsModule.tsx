@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, Plus, Upload, CheckCircle, X, MessageSquare, Pencil, Trash2, DollarSign, Eye } from 'lucide-react';
 import { useObligations, useCreateObligation, useUpdateObligation, useDeleteObligation } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
+import { useModalStore } from '../store/useModalStore';
 import { NotificationPanel } from './NotificationPanel';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -79,7 +80,7 @@ export const ObligationsModule: React.FC = () => {
       setPayingObl(null);
       setPayAmount('');
       refetch();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
   };
 
   const formatARS = (v: number) => `$ ${Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
@@ -282,7 +283,7 @@ export const ObligationsModule: React.FC = () => {
             </div>
             <button
               onClick={async () => {
-                try { await updateObligation.mutateAsync({ id: editingObl.id, ...editForm }); setEditingObl(null); } catch (err: any) { alert(err.message); }
+                try { await updateObligation.mutateAsync({ id: editingObl.id, ...editForm }); setEditingObl(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
               disabled={updateObligation.isPending || !editForm.name}
               className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
@@ -304,7 +305,7 @@ export const ObligationsModule: React.FC = () => {
             <div className="flex gap-3">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
               <button
-                onClick={async () => { try { await deleteObligation.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); } }}
+                onClick={async () => { try { await deleteObligation.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); } }}
                 disabled={deleteObligation.isPending}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
               >Eliminar</button>

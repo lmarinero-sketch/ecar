@@ -10,6 +10,7 @@ import type { Opportunity, OpportunityStage } from '../lib/types';
 import { exportOpportunityPdf } from '../lib/pdfExport';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
+import { useModalStore } from '../store/useModalStore';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -140,7 +141,7 @@ export const OpportunitiesModule: React.FC = () => {
       setIsRecording(true);
     } catch (err) {
       console.error('Error accessing microphone:', err);
-      alert('Error accediendo al micrófono. Verificá los permisos de tu navegador.');
+      useModalStore.getState().showAlert('Error', 'Error accediendo al micrófono. Verificá los permisos de tu navegador.');
     }
   };
 
@@ -180,7 +181,7 @@ export const OpportunitiesModule: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Error al transcribir el audio');
+      useModalStore.getState().showAlert('Error', 'Error al transcribir el audio');
     } finally {
       setIsTranscribing(false);
     }
@@ -864,7 +865,7 @@ export const OpportunitiesModule: React.FC = () => {
                             <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Descargar">
                               <Download size={14} />
                             </a>
-                            <button onClick={() => { if(confirm('¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
+                            <button onClick={async () => { if(await useModalStore.getState().showConfirm('Eliminar archivo', '¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
                               <Trash2 size={14} />
                             </button>
                           </div>

@@ -3,6 +3,7 @@ import { useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { useAppStore } from '../store/useStore';
+import { useModalStore } from '../store/useModalStore';
 import {
   Rocket, CheckCircle2, Circle, ChevronDown, ChevronRight, MessageSquare,
   User, Smartphone, Monitor, Clock, Target, Save, RotateCcw, Trophy,
@@ -1000,8 +1001,8 @@ export const ImplementationModule: React.FC = () => {
     }
   }, [checked, notes, completionDates, persistState]);
 
-  const resetAll = () => {
-    if (confirm('¿Estás seguro de reiniciar todo el progreso?')) {
+  const resetAll = async () => {
+    if (await useModalStore.getState().showConfirm('Confirmar', '¿Estás seguro de reiniciar todo el progreso?')) {
       storeResetAll();
       const empty: ImplState = { checked: {}, notes: {}, completionDates: {} };
       upsertSetting.mutate({ key: SUPABASE_SETTING_KEY, value: JSON.stringify(empty), description: 'Estado del checklist de implementación' });
@@ -1089,7 +1090,7 @@ export const ImplementationModule: React.FC = () => {
   const handleSaveMeeting = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formDate || !formResponsibles || !formObjective || !formDevelopment) {
-      alert('Por favor, completa todos los campos.');
+      useModalStore.getState().showAlert('Atención', 'Por favor, completa todos los campos.');
       return;
     }
 
@@ -1126,8 +1127,8 @@ export const ImplementationModule: React.FC = () => {
     setEditingMeeting(null);
   };
 
-  const handleDeleteMeeting = (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este registro de reunión?')) {
+  const handleDeleteMeeting = async (id: string) => {
+    if (await useModalStore.getState().showConfirm('Confirmar', '¿Estás seguro de eliminar este registro de reunión?')) {
       const updated = meetings.filter(m => m.id !== id);
       persistMeetings(updated);
     }

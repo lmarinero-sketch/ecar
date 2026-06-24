@@ -7,6 +7,7 @@ import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
 import { VehicleDailyReportModule } from './VehicleDailyReportModule';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle } from '../hooks/useData';
+import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle } from '../lib/types';
 
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report';
@@ -483,7 +484,7 @@ export const FleetModule: React.FC = () => {
               <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
               <button
                 onClick={async () => {
-                  try { await deleteVehicle.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                  try { await deleteVehicle.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
                 }}
                 disabled={deleteVehicle.isPending}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"

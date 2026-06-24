@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { generateQRToken, getTimeRemaining, buildCheckInUrl } from '../lib/qrToken';
 import { useEmployees, useAttendance, useUpdateAttendance, useBulkCheckout } from '../hooks/useData';
+import { useModalStore } from '../store/useModalStore';
 
 type ViewMode = 'dashboard' | 'qr_display';
 
@@ -29,7 +30,8 @@ export const AttendancePanel: React.FC = () => {
   const [editForm, setEditForm] = useState({ clock_in: '', clock_out: '' });
 
   const handleBulkCheckout = async () => {
-    if (!confirm('¿Marcar salida para todos los presentes sin hora de salida?')) return;
+    const confirmed = await useModalStore.getState().showConfirm('Confirmar Acción', '¿Marcar salida para todos los presentes sin hora de salida?');
+    if (!confirmed) return;
     const nowT = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
     const presentIds = attendanceRecords.filter(r => r.clock_in && !r.clock_out).map(r => r.id);
     if (presentIds.length > 0) {

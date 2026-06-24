@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useModalStore } from '../store/useModalStore';
 
 export const PayrollPDFButton: React.FC<{
   paymentItemId: string;
@@ -53,7 +54,7 @@ export const PayrollPDFButton: React.FC<{
       doc.save(`Pago_Obreros_${paymentItemId.slice(0,6)}.pdf`);
     } catch (e) {
       console.error(e);
-      alert("Error generando PDF de Sueldos.");
+      useModalStore.getState().showAlert('Error', "Error generando PDF de Sueldos.");
     } finally {
       setLoading(false);
     }

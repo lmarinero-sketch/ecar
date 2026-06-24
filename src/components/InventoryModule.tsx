@@ -10,6 +10,7 @@ import {
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf
 } from '../hooks/useData';
+import { useModalStore } from '../store/useModalStore';
 import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
@@ -503,7 +504,7 @@ export const InventoryModule: React.FC = () => {
                         <div key={shelf.id} className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden" style={{ borderColor: shelf.color, gridRow: `${shelf.grid_row + 1} / span ${shelf.grid_height}`, gridColumn: `${shelf.grid_col + 1} / span ${shelf.grid_width}`, background: `${shelf.color}08` }}
                           onClick={() => { setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '' }); setShowNewShelf(true); }}>
                           <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); if (confirm('¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
+                            <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5 mb-1">
@@ -552,7 +553,7 @@ export const InventoryModule: React.FC = () => {
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '' }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
-                            <button onClick={() => { if (confirm('¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
+                            <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
                           </div>
                         </td>
                       </tr>

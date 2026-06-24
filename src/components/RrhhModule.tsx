@@ -4,6 +4,7 @@ import { AttendancePanel } from './AttendancePanel';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { AccountantNovedadesPanel } from './AccountantNovedadesPanel';
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, useCategories, useAllCategoriesHistory, useCreateCategory, useUpdateCategoryRate, useDeleteCategory, useProjects, useEmployeeDocuments, useLetterTemplates, useUploadDocument } from '../hooks/useData';
+import { useModalStore } from '../store/useModalStore';
 import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 import { EmployeeCostPanel } from './EmployeeCostPanel';
 import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
@@ -603,7 +604,7 @@ export const RrhhModule: React.FC = () => {
                   });
                   useImplementationStore.getState().completeItem('e2-24');
                   setEditingEmployee(null);
-                } catch (err: any) { alert(err.message); }
+                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
               disabled={updateEmployee.isPending || !editForm.full_name}
               className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
@@ -626,7 +627,7 @@ export const RrhhModule: React.FC = () => {
               <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
               <button
                 onClick={async () => {
-                  try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                  try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
                 }}
                 disabled={deleteEmployee.isPending}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"

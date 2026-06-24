@@ -5,6 +5,7 @@ import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useImplementationStore } from '../store/useImplementationStore';
+import { useModalStore } from '../store/useModalStore';
 
 type InvoiceTab = 'compras' | 'ventas';
 
@@ -240,7 +241,7 @@ export const PurchasesModule: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => { setEditingSupplier(s.id); setEditingSupplierForm({ name: s.name, cuit: s.cuit || '' }); }} className="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><Pencil size={14} /></button>
-                      <button onClick={async () => { if (confirm('¿Eliminar proveedor?')) await deleteSupplier.mutateAsync(s.id); }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
+                      <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar proveedor?')) await deleteSupplier.mutateAsync(s.id); }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
                     </div>
                   </>
                 )}
@@ -364,16 +365,17 @@ export const PurchasesModule: React.FC = () => {
                         <select
                           value={inv.gasto_item_id || ''}
                           onChange={async (e) => {
-                            const val = e.target.value || null;
-                            const { error } = await supabase
-                              .from('purchase_invoices')
-                              .update({ gasto_item_id: val })
-                              .eq('id', inv.id);
-                            if (error) {
-                              console.error('Error al asociar rubro:', error.message);
-                              alert('Error al asociar rubro: ' + error.message);
+                            try {
+                              const val = e.target.value || null;
+                              const { error } = await supabase
+                                .from('purchase_invoices')
+                                .update({ gasto_item_id: val })
+                                .eq('id', inv.id);
+                              if (error) throw error;
+                              refetch();
+                            } catch (error: any) {
+                              useModalStore.getState().showAlert('Error', 'Error al asociar rubro: ' + error.message);
                             }
-                            refetch();
                           }}
                           className="px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[180px] truncate"
                         >
@@ -475,7 +477,7 @@ export const PurchasesModule: React.FC = () => {
                   if (error) throw error;
                   setEditingInvoice(null);
                   refetch();
-                } catch (err: any) { alert(err.message); }
+                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
               className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-colors"
             >
@@ -502,7 +504,7 @@ export const PurchasesModule: React.FC = () => {
                     if (error) throw error;
                     setDeleteTarget(null);
                     refetch();
-                  } catch (err: any) { alert(err.message); }
+                  } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
                 }}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600"
               >Eliminar</button>

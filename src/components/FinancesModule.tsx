@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
+import { useModalStore } from '../store/useModalStore';
 import type { Cheque } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -130,7 +131,7 @@ export const FinancesModule: React.FC = () => {
       setScanUrl('');
       setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
     } catch (err: any) {
-      alert(err.message || 'Error al registrar el cheque');
+      useModalStore.getState().showAlert('Error', err.message || 'Error al registrar el cheque');
     }
   };
 
@@ -181,7 +182,7 @@ export const FinancesModule: React.FC = () => {
 
       setEditingCheque(null);
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar');
+      useModalStore.getState().showAlert('Error', err.message || 'Error al actualizar');
     }
   };
 
@@ -199,7 +200,7 @@ export const FinancesModule: React.FC = () => {
       await deleteCheque.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar');
+      useModalStore.getState().showAlert('Error', err.message || 'Error al eliminar');
     }
   };
 
@@ -339,7 +340,7 @@ export const FinancesModule: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-500">Monto ARS</label>
-                    <input type="number" value={form.amount_ars || ''} onChange={e => setForm({ ...form, amount_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono font-bold text-lg" />
+                    <input type="number" value={form.amount_ars || ''} onChange={e => setForm({ ...form, amount_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono font-bold" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-500">Tipo</label>
@@ -525,7 +526,7 @@ export const FinancesModule: React.FC = () => {
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (receiptForm.amount_ars <= 0) {
-                alert('El monto debe ser mayor a 0');
+                useModalStore.getState().showAlert('Error', 'El monto debe ser mayor a 0');
                 return;
               }
               
@@ -540,7 +541,7 @@ export const FinancesModule: React.FC = () => {
                   .upload(filePath, receiptFile);
                 
                 if (uploadError) {
-                  alert('Error al subir el archivo: ' + uploadError.message);
+                  useModalStore.getState().showAlert('Error', 'Error al subir el archivo: ' + uploadError.message);
                   setIsUploadingReceipt(false);
                   return;
                 }
@@ -574,7 +575,7 @@ export const FinancesModule: React.FC = () => {
                   notes: '',
                 });
               } catch (err: any) {
-                alert('Error al guardar el comprobante: ' + err.message);
+                useModalStore.getState().showAlert('Error', 'Error al guardar el comprobante: ' + err.message);
               } finally {
                 setIsUploadingReceipt(false);
               }

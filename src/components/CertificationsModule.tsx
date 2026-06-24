@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
+import { useModalStore } from '../store/useModalStore';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
 
@@ -64,7 +65,7 @@ export const CertificationsModule: React.FC = () => {
           .upload(filePath, selectedFile);
         
         if (uploadError) {
-          alert('Error al subir el archivo: ' + uploadError.message);
+          useModalStore.getState().showAlert('Error', 'Error al subir el archivo: ' + uploadError.message);
           setIsUploading(false);
           return;
         }
@@ -74,7 +75,7 @@ export const CertificationsModule: React.FC = () => {
           .getPublicUrl(filePath);
         photoUrl = urlData.publicUrl;
       } catch (err: any) {
-        alert('Error en la subida del archivo: ' + err.message);
+        useModalStore.getState().showAlert('Error', 'Error en la subida del archivo: ' + err.message);
         setIsUploading(false);
         return;
       }
@@ -98,7 +99,7 @@ export const CertificationsModule: React.FC = () => {
       setSelectedFile(null);
       setForm({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
     } catch (err: any) {
-      alert('Error al guardar el certificado: ' + err.message);
+      useModalStore.getState().showAlert('Error', 'Error al guardar el certificado: ' + err.message);
     } finally {
       setIsUploading(false);
     }
@@ -378,7 +379,7 @@ export const CertificationsModule: React.FC = () => {
                 try {
                   await updateCert.mutateAsync({ id: editingCert.id, ...editForm, total_certified: total, net_deposit: netDep, deposit_date: editForm.deposit_date || null });
                   setEditingCert(null);
-                } catch (err: any) { alert(err.message); }
+                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
               disabled={updateCert.isPending}
               className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
@@ -401,7 +402,7 @@ export const CertificationsModule: React.FC = () => {
               <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
               <button
                 onClick={async () => {
-                  try { await deleteCert.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { alert(err.message); }
+                  try { await deleteCert.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
                 }}
                 disabled={deleteCert.isPending}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
