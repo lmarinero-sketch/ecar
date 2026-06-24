@@ -852,45 +852,54 @@ const SectionBlock: React.FC<{
                           e.stopPropagation();
                           onGoToModule(item.id, section.id);
                         }}
-                        className="text-[11px] text-rose-600 hover:text-rose-800 hover:underline font-bold flex items-center gap-1 mt-1 transition-colors animate-pulse"
+                        className="text-[11px] text-rose-600 hover:text-rose-800 hover:underline font-bold flex items-center gap-1 mt-1.5 mb-1 transition-colors animate-pulse"
                       >
                         🚀 Ir a Probar
                       </button>
                     )}
+                    
+                    {/* Explicit Add Note Button below the text */}
+                    {!hasNote && !isEditing && (
+                      <button
+                        onClick={() => setEditingNote(item.id)}
+                        className={`text-[11px] font-bold flex items-center gap-1 mt-1.5 transition-colors ${
+                          item.label.includes('Validar:') 
+                            ? 'text-amber-600 hover:text-amber-700 hover:underline bg-amber-50 px-2 py-1 rounded-md border border-amber-200' 
+                            : 'text-gray-400 hover:text-amber-600 hover:underline'
+                        }`}
+                      >
+                        <MessageSquare size={12} /> {item.label.includes('Validar:') ? 'Escribir respuesta' : 'Agregar nota'}
+                      </button>
+                    )}
+
                     {/* Note */}
                     {(hasNote || isEditing) && (
-                      <div className="mt-2">
+                      <div className="mt-2 w-full pr-4">
                         {isEditing ? (
                           <textarea
                             autoFocus
                             value={notes[item.id] || ''}
                             onChange={e => onNote(item.id, e.target.value)}
                             onBlur={() => setEditingNote(null)}
-                            placeholder="Escribí las notas acá..."
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all resize-none"
-                            rows={2}
+                            placeholder={item.label.includes('Validar:') ? "Escribí la respuesta a la validación..." : "Escribí las notas acá..."}
+                            className="w-full px-3 py-2 border border-amber-300 bg-amber-50/50 rounded-lg text-xs focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none shadow-inner text-gray-800 font-medium"
+                            rows={3}
                           />
                         ) : (
-                          <button
+                          <div
                             onClick={() => setEditingNote(item.id)}
-                            className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md hover:bg-amber-100 transition-colors"
+                            className="group relative text-xs text-gray-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg hover:bg-amber-100 cursor-pointer transition-colors shadow-sm"
                           >
-                            📝 {notes[item.id]}
-                          </button>
+                            <div className="flex items-start gap-2">
+                              <span className="shrink-0 mt-0.5 opacity-70">📝</span>
+                              <p className="whitespace-pre-wrap leading-relaxed flex-1 font-medium">{notes[item.id]}</p>
+                              <Edit size={12} className="text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
                   </div>
-                  {/* Add note button */}
-                  {!hasNote && !isEditing && (
-                    <button
-                      onClick={() => setEditingNote(item.id)}
-                      className="text-gray-300 hover:text-amber-500 transition-colors shrink-0 mt-0.5"
-                      title="Agregar nota"
-                    >
-                      <MessageSquare size={14} />
-                    </button>
-                  )}
                 </div>
               </div>
             );
