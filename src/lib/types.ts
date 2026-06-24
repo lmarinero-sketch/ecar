@@ -1139,6 +1139,16 @@ export type Budget = {
   assumptions: string | null;
   exclusions: string | null;
   validity_days: number;
+  entry_checklist: Record<string, any> | null;
+  missing_info: string | null;
+  risks: Array<any> | null;
+  change_origin: string | null;
+  change_cause: string | null;
+  change_technical_impact: string | null;
+  change_economic_impact: string | null;
+  actual_cost_ars: number;
+  cost_deviation_cause: string | null;
+  lessons_learned: string | null;
   work_type: BudgetWorkType;
   approved_by: string | null;
   approved_at: string | null;
@@ -1174,10 +1184,23 @@ export type BudgetItem = {
   cost_type: 'material' | 'mano_obra' | 'equipo' | 'subcontrato' | 'gasto_general' | 'financiero';
   notes: string | null;
   sort_order: number;
+  quote_status: 'none' | 'requested' | 'received';
+  quote_requested_at: string | null;
+  logistics_validation: boolean;
   created_at: string;
   // Joined
   section?: BudgetSection | null;
   resource?: BudgetResource | null;
+};
+
+export type BudgetFile = {
+  id: string;
+  budget_id: string;
+  file_path: string;
+  file_name: string;
+  file_type: string | null;
+  file_size: number | null;
+  created_at: string;
 };
 
 export type BudgetAPU = {

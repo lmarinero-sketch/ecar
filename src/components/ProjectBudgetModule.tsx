@@ -3,7 +3,8 @@ import {
   HardHat, Search, Plus, Package, Calculator, FolderOpen, X, Check,
   FileText, Layers, DollarSign, ChevronDown, ChevronRight,
   ArrowLeft, Eye, Edit2, Copy, Lock, Trash2, Save, RotateCcw,
-  AlertTriangle, Database, Tag, Clock, Calendar, Info, Shield, Building2, ClipboardCheck
+  AlertTriangle, Database, Tag, Clock, Calendar, Info, Shield, Building2, ClipboardCheck,
+  ShoppingCart, Truck, UploadCloud, File, Download, HelpCircle
 } from 'lucide-react';
 import {
   useBudgets, useCreateBudget, useUpdateBudget,
@@ -15,7 +16,9 @@ import {
   useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource,
   useProjects, useCreateProject,
   useItemDictionary, useSectionDictionary,
-  useOpportunities
+  useOpportunities,
+  useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
+  useCreateNotificationLog
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 
@@ -480,6 +483,17 @@ const BudgetDetailView: React.FC<{
   const [editingPcts, setEditingPcts] = useState(false);
   const [pctForm, setPctForm] = useState({ gastos_generales_pct: '', beneficio_pct: '', financieros_pct: '', impuestos_pct: '', iibb_pct: '' });
 
+  // Nuevos hooks para adjuntos y pestañas
+  const { data: budgetFiles = [] } = useBudgetFiles(budget.id);
+  const uploadFile = useUploadBudgetFile();
+  const deleteFile = useDeleteBudgetFile();
+  const createLog = useCreateNotificationLog();
+
+  const [activeTab, setActiveTab] = useState<'general' | 'entrada' | 'computo' | 'adjuntos' | 'cierre'>('computo');
+  const [uploading, setUploading] = useState(false);
+  const [fileTitle, setFileTitle] = useState('');
+  const [fileCategory, setFileCategory] = useState('General');
+  
   // Handoff checklist
   const HANDOFF_ITEMS = [
     { key: 'alcance', label: 'Alcance definido y documentado', desc: 'Descripción clara de qué incluye el trabajo, límites y condiciones' },
@@ -791,13 +805,32 @@ const BudgetDetailView: React.FC<{
         </div>
       </div>
 
-      {/* Supuestos / Exclusiones Panel */}
-      {((budget as any).assumptions || (budget as any).exclusions) && (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
-            <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><Info size={14} className="text-cyan-600" /> Supuestos y Exclusiones</span>
-            {showInfo ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+      {/* TABS NAVIGATION */}
+      <div className="flex overflow-x-auto gap-2 bg-gray-100 p-1 rounded-xl shadow-inner">
+        {[
+          { id: 'general', label: 'General & Alcance', icon: Info },
+          { id: 'entrada', label: 'Entrada & Riesgos', icon: AlertTriangle },
+          { id: 'computo', label: 'Cómputo & Precios', icon: Calculator },
+          { id: 'adjuntos', label: 'Documentos', icon: FileText },
+          { id: 'cierre', label: 'Cierre & Lecciones', icon: Check },
+        ].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id as any)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center ${
+              activeTab === t.id ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
+            }`}>
+            <t.icon size={16} /> {t.label}
           </button>
+        ))}
+      </div>
+
+      {/* TAB: GENERAL & ALCANCE */}
+      {activeTab === 'general' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><Info size={14} className="text-cyan-600" /> Detalles del Alcance</span>
+              {showInfo ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+            </button>
           {showInfo && (
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               {(budget as any).assumptions && (
@@ -814,11 +847,105 @@ const BudgetDetailView: React.FC<{
               )}
             </div>
           )}
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><Layers size={14} className="text-cyan-600" /> Información Adicional</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Días de Validez</label>
+                <input type="number" value={budget.validity_days || ''} 
+                  onChange={e => updateBudget.mutate({ id: budget.id, validity_days: parseInt(e.target.value) || null })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">Tipo de Trabajo</label>
+                <select value={budget.work_type || 'obra_nueva'} 
+                  onChange={e => updateBudget.mutate({ id: budget.id, work_type: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm">
+                  {Object.entries(WORK_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Quick KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {/* TAB: ENTRADA & RIESGOS */}
+      {activeTab === 'entrada' && (
+        <div className="space-y-4">
+          {/* Handoff Checklist — Carpeta de Entrada */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50 border-b border-gray-200 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
+                  <ClipboardCheck size={20} className="text-gray-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 flex items-center gap-2">Checklist de Entrada
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                      handoffComplete ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
+                    }`}>{handoffProgress}/{HANDOFF_ITEMS.length}</span>
+                  </h4>
+                  <p className="text-xs text-gray-500">Validaciones previas según PR-GPP-01</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {HANDOFF_ITEMS.map(item => (
+                  <label key={item.key}
+                    onClick={() => toggleHandoff(item.key)}
+                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
+                      handoffChecklist[item.key]
+                        ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}>
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all mt-0.5 ${
+                      handoffChecklist[item.key]
+                        ? 'bg-green-500 text-white shadow-sm'
+                        : 'bg-white border-2 border-gray-300'
+                    }`}>
+                      {handoffChecklist[item.key] && <Check size={12} strokeWidth={3} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-sm font-medium block ${
+                        handoffChecklist[item.key] ? 'text-green-800 line-through decoration-green-400' : 'text-gray-700'
+                      }`}>{item.label}</span>
+                      <span className="text-[10px] text-gray-400 leading-tight block mt-0.5">{item.desc}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="h-1.5 bg-gray-100">
+              <div className="h-full bg-gradient-to-r from-gray-400 to-green-500 transition-all duration-500 rounded-r-full"
+                style={{ width: `${(handoffProgress / HANDOFF_ITEMS.length) * 100}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><AlertTriangle size={14} className="text-amber-500" /> Matriz de Riesgos Identificados</h4>
+             <textarea value={budget.risks || ''} 
+                onChange={e => updateBudget.mutate({ id: budget.id, risks: e.target.value })}
+                placeholder="Describir riesgos técnicos, climáticos, logísticos o financieros..."
+                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><HelpCircle size={14} className="text-cyan-600" /> Información Faltante</h4>
+             <textarea value={budget.missing_info || ''} 
+                onChange={e => updateBudget.mutate({ id: budget.id, missing_info: e.target.value })}
+                placeholder="Detallar información faltante o consultas a ingeniería..."
+                className="w-full h-24 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+          </div>
+        </div>
+      )}
+
+      {/* TAB: CÓMPUTO Y PRECIOS */}
+      {activeTab === 'computo' && (
+        <div className="space-y-4">
+          {/* Quick KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <p className="text-[10px] font-bold text-gray-500 uppercase">Costo Directo</p>
           <p className="text-lg font-black text-gray-800 font-mono">{fmt(directTotal)}</p>
@@ -871,7 +998,7 @@ const BudgetDetailView: React.FC<{
         </div>
       )}
 
-      {/* Actions Bar */}
+      {/* Actions Bar (Computo) */}
       <div className="flex flex-wrap gap-2">
         {!isLocked && (
           <>
@@ -883,107 +1010,7 @@ const BudgetDetailView: React.FC<{
             </button>
           </>
         )}
-        {budget.status === 'draft' && (
-          <button onClick={() => handleStatusChange('revision')} className="bg-yellow-100 text-yellow-700 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-yellow-200 transition-all border border-yellow-200">
-            <Eye size={14} /> Enviar a Revisión
-          </button>
-        )}
-        {budget.status === 'revision' && (
-          <>
-            <button onClick={() => handleStatusChange('approved')} className="bg-green-100 text-green-700 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-green-200 transition-all border border-green-200">
-              <Check size={14} /> Aprobar
-            </button>
-            <button onClick={() => handleStatusChange('draft')} className="bg-gray-100 text-gray-600 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-gray-200 transition-all">
-              <RotateCcw size={14} /> Devolver a Borrador
-            </button>
-          </>
-        )}
-        {budget.status === 'approved' && (
-          <>
-            <button onClick={() => handleStatusChange('revision')} className="bg-gray-100 text-gray-600 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-gray-200 transition-all">
-              <RotateCcw size={14} /> Devolver a Revisión
-            </button>
-            <button onClick={() => { if (handoffComplete) handleStatusChange('closed'); }}
-              disabled={!handoffComplete}
-              className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all ${
-                handoffComplete
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md hover:shadow-lg'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}>
-              <Building2 size={14} /> {handoffComplete ? 'Entregar a Obra' : `Checklist ${handoffProgress}/${HANDOFF_ITEMS.length}`}
-            </button>
-          </>
-        )}
-        <button onClick={onDuplicate} className="bg-white border border-gray-300 text-gray-700 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-gray-50 hover:border-cyan-400 transition-all ml-auto">
-          <Copy size={14} /> Nueva Versión
-        </button>
       </div>
-
-      {/* Handoff Checklist — Carpeta de Entrega a Obra */}
-      {budget.status === 'approved' && (
-        <div className="bg-white rounded-2xl border-2 border-amber-200 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                <ClipboardCheck size={20} className="text-amber-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-amber-900 flex items-center gap-2">Carpeta de Entrega a Obra
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    handoffComplete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                  }`}>{handoffProgress}/{HANDOFF_ITEMS.length}</span>
-                </h4>
-                <p className="text-xs text-amber-600">Completá todos los ítems antes de entregar a Obras — Doc PR-GPP-01</p>
-              </div>
-            </div>
-            {handoffComplete && (
-              <div className="flex items-center gap-1.5 text-green-600 text-xs font-bold bg-green-50 px-3 py-1.5 rounded-full">
-                <Check size={14} /> Listo para entregar
-              </div>
-            )}
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {HANDOFF_ITEMS.map(item => (
-                <label key={item.key}
-                  onClick={() => toggleHandoff(item.key)}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
-                    handoffChecklist[item.key]
-                      ? 'bg-green-50 border-green-200 hover:bg-green-100'
-                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                  }`}>
-                  <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all mt-0.5 ${
-                    handoffChecklist[item.key]
-                      ? 'bg-green-500 text-white shadow-sm'
-                      : 'bg-white border-2 border-gray-300'
-                  }`}>
-                    {handoffChecklist[item.key] && <Check size={12} strokeWidth={3} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-sm font-medium block ${
-                      handoffChecklist[item.key] ? 'text-green-800 line-through decoration-green-400' : 'text-gray-700'
-                    }`}>{item.label}</span>
-                    <span className="text-[10px] text-gray-400 leading-tight block mt-0.5">{item.desc}</span>
-                  </div>
-                </label>
-              ))}
-            </div>
-            {!handoffComplete && (
-              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                <AlertTriangle size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-amber-800">
-                  <strong>Recordá:</strong> No entregar a Obras sin completar esta carpeta. Un presupuesto mal transferido genera compras urgentes, faltantes logísticos y desvíos económicos.
-                </p>
-              </div>
-            )}
-          </div>
-          {/* Progress bar */}
-          <div className="h-1.5 bg-gray-100">
-            <div className="h-full bg-gradient-to-r from-amber-400 to-green-500 transition-all duration-500 rounded-r-full"
-              style={{ width: `${(handoffProgress / HANDOFF_ITEMS.length) * 100}%` }} />
-          </div>
-        </div>
-      )}
 
       {/* New Section Form */}
       {showNewSection && (
@@ -1267,6 +1294,142 @@ const BudgetDetailView: React.FC<{
             </table>
           </div>
         )}
+      </div>
+        </div>
+      )}
+
+      {/* TAB: ADJUNTOS */}
+      {activeTab === 'adjuntos' && (
+        <div className="space-y-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><FileText size={16} className="text-cyan-600" /> Documentos y Planos</h4>
+            <div className="flex gap-2 items-start mb-6">
+              <input type="text" placeholder="Título corto (ej. Plano Eléctrico)" value={fileTitle} onChange={e => setFileTitle(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm" />
+              <select value={fileCategory} onChange={e => setFileCategory(e.target.value)} className="w-40 px-3 py-2 border rounded-lg text-sm">
+                <option value="General">General</option>
+                <option value="Planos">Planos</option>
+                <option value="Cotizaciones">Cotizaciones</option>
+                <option value="Especificaciones">Especificaciones</option>
+              </select>
+              <label className="cursor-pointer bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-cyan-700 transition-colors">
+                {uploading ? <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : <UploadCloud size={16} />}
+                {uploading ? 'Subiendo...' : 'Subir Archivo'}
+                <input type="file" className="hidden" disabled={uploading || !fileTitle.trim()} onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  try {
+                    await uploadFile.mutateAsync({ budgetId: budget.id, file, title: fileTitle, category: fileCategory });
+                    setFileTitle('');
+                    e.target.value = '';
+                  } catch(err) {
+                    alert('Error al subir archivo');
+                  } finally {
+                    setUploading(false);
+                  }
+                }} />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {budgetFiles.length === 0 ? (
+                <p className="text-sm text-gray-500 col-span-2 text-center py-8">No hay documentos adjuntos a este presupuesto.</p>
+              ) : budgetFiles.map((f: any) => (
+                <div key={f.id} className="border border-gray-200 rounded-lg p-3 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="flex gap-3 items-center min-w-0">
+                    <div className="bg-cyan-100 text-cyan-700 p-2 rounded-lg flex-shrink-0"><File size={16} /></div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{f.file_name}</p>
+                      <p className="text-[10px] text-gray-500">{f.file_type} • {(f.file_size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <a href={f.file_path} target="_blank" rel="noopener noreferrer" className="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded"><Download size={14} /></a>
+                    {!isLocked && <button onClick={() => deleteFile.mutate(f.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
+             <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
+             <button onClick={async () => {
+                 await createLog.mutateAsync({ type: 'quote_request', reference_id: budget.id, message: `Solicitud de cotización para presupuesto ${budget.name}`, recipients: ['compras@ecar.com.ar'] });
+                 alert('Notificación enviada a Compras (simulado)');
+             }} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors">Notificar a Compras</button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: CIERRE Y LECCIONES */}
+      {activeTab === 'cierre' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-4"><DollarSign size={14} className="text-cyan-600" /> Cierre Post-Obra</h4>
+              <label className="block text-xs font-bold text-gray-500 mb-1">Costo Real Final (ARS)</label>
+              <input type="number" value={budget.actual_cost_ars || ''} 
+                onChange={e => updateBudget.mutate({ id: budget.id, actual_cost_ars: parseFloat(e.target.value) || null })}
+                className="w-full px-3 py-2 border rounded-lg text-sm font-mono mb-3" />
+              {budget.actual_cost_ars > 0 && (
+                <div className={`p-3 rounded-lg text-sm font-bold text-center ${
+                  budget.actual_cost_ars > directTotal ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'
+                }`}>
+                  Desvío vs. Presupuestado: {(((budget.actual_cost_ars - directTotal) / directTotal) * 100).toFixed(1)}%
+                </div>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><AlertTriangle size={14} className="text-amber-500" /> Lecciones Aprendidas</h4>
+              <textarea value={budget.lessons_learned || ''} 
+                onChange={e => updateBudget.mutate({ id: budget.id, lessons_learned: e.target.value })}
+                placeholder="Documentar qué salió bien y qué salió mal para futuros presupuestos..."
+                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GLOBAL ACTIONS BAR */}
+      <div className="bg-white border-t border-gray-200 p-4 rounded-b-xl flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-4">
+        <div className="flex gap-2">
+          {budget.status === 'draft' && (
+            <button onClick={() => handleStatusChange('revision')} className="bg-yellow-100 text-yellow-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-yellow-200 transition-all border border-yellow-200">
+              <Eye size={16} /> Enviar a Revisión
+            </button>
+          )}
+          {budget.status === 'revision' && (
+            <>
+              <button onClick={() => handleStatusChange('approved')} className="bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-green-700 transition-all shadow-md">
+                <Check size={16} /> Aprobar
+              </button>
+              <button onClick={() => handleStatusChange('draft')} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition-all">
+                <RotateCcw size={16} /> Devolver a Borrador
+              </button>
+            </>
+          )}
+          {budget.status === 'approved' && (
+            <>
+              <button onClick={() => handleStatusChange('revision')} className="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition-all">
+                <RotateCcw size={16} /> Devolver a Revisión
+              </button>
+              <button onClick={() => { if (handoffComplete) handleStatusChange('closed'); }}
+                disabled={!handoffComplete}
+                className={`px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all ${
+                  handoffComplete
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md hover:shadow-lg'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}>
+                <Building2 size={16} /> {handoffComplete ? 'Cerrar y Entregar a Obra' : `Completar Checklist Entrada para Cerrar`}
+              </button>
+            </>
+          )}
+        </div>
+        <button onClick={onDuplicate} className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-50 hover:border-cyan-400 transition-all">
+          <Copy size={16} /> Crear Nueva Versión
+        </button>
       </div>
     </div>
   );

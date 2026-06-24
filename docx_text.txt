@@ -1,0 +1,759 @@
+﻿1. Control documental
+Campo
+Definición
+Nombre del procedimiento
+Procedimiento de Gerencia de Proyectos y Presupuestos
+Código
+PR-GPP-01
+Versión
+v2.0 – Normalizado
+Empresa
+ECAR Construcciones / ECAR Constructora
+Área responsable
+Gerencia de Proyectos y Presupuestos
+Responsable del procedimiento
+Responsable de Gerencia de Proyectos y Presupuestos, con revisión de Gerencia General
+Revisión
+Gerencia General
+Aprobación
+Gerencia General / Dirección
+Fecha
+Junio 2026
+Estado
+Documento interno de trabajo
+Tipo de documento
+Documento interno de conducción, control operativo, trazabilidad y mejora continua
+Criterio normativo
+Compatible con criterios de gestión de calidad tipo ISO 9001. No implica certificación formal.
+Uso previsto
+Ordenar el proceso desde la oportunidad o necesidad hasta la propuesta, entrega a obra, control de cambios y aprendizaje posterior.
+Próxima revisión
+Al validar responsables reales, formularios definitivos e indicadores de implementación.
+2. Índice operativo
+Este documento mantiene la estructura del procedimiento ya trabajado, pero queda normalizado con el formato institucional ECAR, texto justificado, cuerpo en letra 12, enfoque de procesos, trazabilidad, perfiles de puesto, alcance de la persona responsable y herramientas necesarias para sostener la función.
+Objetivo del procedimiento y propósito del área.
+Alcance, exclusiones, criterio rector y definiciones.
+Entradas, actividades, salidas, responsables y registros.
+Indicadores, riesgos, controles preventivos y comunicación entre gerencias.
+Perfil del responsable, alcance de decisión y herramientas necesarias.
+Casos ejemplo, esquema visual, anexos y cierre institucional.
+3. Introducción institucional
+La Gerencia de Proyectos y Presupuestos es una pieza central en el sistema de gestión de ECAR. Su trabajo define, antes de la ejecución, qué se entiende por el pedido, qué se mide, qué se incluye, qué se excluye, qué riesgos existen, qué costos se consideran y qué información utilizarán Obras, Compras, Logística, Administración y Gerencia General para tomar decisiones.
+El presente procedimiento busca transformar la presupuestación en un proceso ordenado, trazable y revisable. No se trata únicamente de armar una propuesta económica, sino de construir una base técnica y empresarial que permita ejecutar mejor, comprar mejor, abastecer mejor y controlar mejor.
+4. Objetivo del procedimiento
+Establecer el método de trabajo de la Gerencia de Proyectos y Presupuestos de ECAR para transformar oportunidades, pedidos, relevamientos, planos, pliegos, necesidades internas o cambios de alcance en información técnica y económica confiable, trazable y útil para la toma de decisiones, la presentación de propuestas y la ejecución posterior de las obras.
+El procedimiento busca evitar presupuestos armados sólo por urgencia, información incompleta o memoria operativa. Su finalidad es proteger la rentabilidad de ECAR, reducir desvíos posteriores, ordenar la comunicación con Obras, Compras y Logística, y asegurar que Gerencia General reciba información clara para decidir cuando corresponda.
+5. Propósito del área
+La Gerencia de Proyectos y Presupuestos no tiene como función principal “hacer números” ni emitir presupuestos de manera aislada. Su propósito es ordenar técnicamente cada oportunidad, transformar información dispersa en una propuesta clara, anticipar riesgos, definir supuestos, proteger márgenes y entregar a las demás gerencias una base confiable para ejecutar, comprar, abastecer y controlar.
+En ECAR, esta gerencia debe funcionar como puente entre la necesidad del cliente, la decisión de Gerencia General y la ejecución real de Obras. Un presupuesto mal armado no termina en el presupuesto: impacta en compras urgentes, faltantes logísticos, discusiones con clientes, adicionales mal defendidos, desvíos económicos y pérdida de control operativo.
+6. Alcance del procedimiento
+Este procedimiento aplica desde el ingreso de una oportunidad, pedido, pliego, plano, consulta, visita de obra, necesidad interna o requerimiento de una obra en curso, hasta la emisión de una propuesta técnica-económica, la entrega formal de información a Obras en caso de adjudicación y el registro de cambios, adicionales o desvíos posteriores vinculados al presupuesto.
+Relevamiento técnico, análisis documental, consulta a cliente, inspección o comitente.
+Cómputo métrico, presupuesto, análisis de precios y evaluación de riesgos.
+Solicitud de cotizaciones a Compras cuando existan materiales, servicios o equipos críticos.
+Consulta a Logística sobre disponibilidad de equipos, herramientas, vehículos, depósito o recursos existentes.
+Consulta a Obras sobre metodología constructiva, tiempos reales, restricciones e interferencias.
+Presentación de propuesta, registro de versiones, entrega formal a Obras y seguimiento de cambios de alcance, adicionales y modificaciones.
+7. Exclusiones y límites
+No reemplaza el procedimiento de Compras: Proyectos y Presupuestos solicita información y valida criterios técnicos, pero no emite órdenes de compra.
+No reemplaza la planificación operativa de Obras: entrega base técnica y económica, pero la programación diaria y semanal corresponde a Obras.
+No reemplaza el control financiero: debe consultar condiciones de pago y costos financieros, pero el flujo de fondos y pagos corresponden a Administración y Finanzas.
+No debe asumir como válida información incompleta sin dejar registro de supuestos, aclaraciones, exclusiones o riesgos.
+8. Criterio rector del área
+Todo presupuesto debe poder explicar qué se entendió, qué se midió, qué se incluyó, qué se excluyó, qué se asumió, qué riesgo existe, qué versión fue enviada y con qué información deberán trabajar Obras, Compras, Logística y Gerencia General.
+9. Definiciones básicas
+Término
+Definición operativa para ECAR
+Oportunidad
+Pedido, consulta, licitación, necesidad interna o posibilidad comercial que puede transformarse en propuesta o proyecto.
+Cómputo
+Medición ordenada de materiales, tareas, cantidades y recursos necesarios para presupuestar.
+Análisis de precios
+Descomposición del costo de una tarea o ítem, considerando materiales, mano de obra, equipos, subcontratos, gastos y margen.
+Supuesto
+Condición considerada para poder presupuestar cuando la información no es completa. Debe quedar escrita.
+Exclusión
+Elemento, tarea o condición que no forma parte del presupuesto presentado.
+Cambio de alcance
+Modificación solicitada por cliente, inspección, obra o Gerencia General respecto de lo presupuestado o contratado.
+Adicional
+Trabajo, provisión o condición no incluida originalmente que requiere evaluación técnica, económica y aprobación.
+Versión de presupuesto
+Emisión identificable de una propuesta. Evita confusión entre valores, alcances o condiciones enviadas en momentos distintos.
+Carpeta de inicio
+Conjunto mínimo de documentos que GPP entrega a Obras al adjudicar: alcance, cómputo, supuestos, restricciones, riesgos, propuesta y contactos clave.
+10. Entradas del proceso
+Entrada posible
+Origen habitual
+Uso dentro del proceso
+Pedido de cliente
+Cliente, comitente o contacto comercial
+Inicia evaluación, relevamiento y posible propuesta.
+Pedido de Gerencia General
+GG
+Prioriza oportunidad, define foco comercial o decisión estratégica.
+Licitación, pliego o documentación formal
+Cliente, organismo, inspección
+Base para analizar alcance, condiciones, plazos, requisitos y riesgos.
+Plano, memoria técnica o cómputo previo
+Cliente, proyectista, inspección
+Base para medición, revisión técnica y armado de presupuesto.
+Visita o relevamiento de obra
+GPP, Obras o cliente
+Permite detectar interferencias, condiciones reales y restricciones.
+Necesidad de obra en curso
+Obras, GG o inspección
+Puede generar adicional, modificación, reclamo o recálculo.
+Información de proveedores
+Compras, proveedor, mercado
+Actualiza precios, plazos de entrega, condiciones y disponibilidad.
+Información logística
+Logística
+Permite saber si existen equipos, herramientas, vehículos o materiales disponibles.
+Históricos de obras anteriores
+Archivo técnico, Obras, Administración
+Sirve como referencia para rendimientos, costos, desvíos y lecciones aprendidas.
+11. Actividades principales
+Recepción de la oportunidad o necesidad.
+Registro inicial de la oportunidad o pedido.
+Clasificación del tipo de trabajo: obra nueva, adicional, servicio, mantenimiento, instalación, licitación, cambio de alcance o consulta interna.
+Revisión de documentación disponible.
+Detección de información faltante.
+Solicitud de aclaraciones al cliente, inspección, Obras o Gerencia General.
+Relevamiento técnico cuando corresponda.
+Análisis técnico de alcance, metodología, restricciones y riesgos.
+Cómputo de materiales, tareas, recursos, equipos y servicios.
+Consulta a Obras sobre metodología, plazos reales, interferencias, rendimientos o restricciones.
+Consulta a Logística sobre disponibilidad de equipos, herramientas, vehículos, materiales existentes o capacidad de abastecimiento.
+Solicitud a Compras de cotizaciones específicas, precios críticos, proveedores sugeridos o condiciones de entrega.
+Armado del análisis de precios.
+Evaluación de riesgos técnicos, económicos, financieros, logísticos y de plazo.
+Armado del presupuesto interno y propuesta técnica-económica.
+Revisión interna de coherencia: alcance, precios, cantidades, márgenes, condiciones y aclaraciones.
+Validación con Gerencia General cuando corresponda por monto, margen, riesgo, cliente o impacto estratégico.
+Emisión de propuesta formal al cliente o destinatario interno.
+Registro de versión enviada.
+Seguimiento de respuesta, consultas, negociaciones o ajustes.
+Entrega formal a Obras en caso de adjudicación.
+Registro de cambios de alcance y adicionales durante la ejecución.
+Cierre documental del presupuesto y archivo de lecciones aprendidas.
+12. Salidas del proceso
+Salida
+Destinatario
+Utilidad
+Presupuesto técnico-económico
+Cliente / GG
+Formaliza alcance, valor, condiciones, exclusiones y validez.
+Cómputo métrico
+GPP / Obras / Compras
+Base para materiales, recursos, mediciones y control posterior.
+Análisis de precios
+GPP / GG / Administración
+Sustenta costos, márgenes y rentabilidad esperada.
+Memoria o aclaración técnica
+Cliente / Obras / GG
+Deja claro qué se consideró y bajo qué supuestos.
+Planilla de materiales
+Compras / Logística / Obras
+Permite anticipar compras, stock, entregas y disponibilidad.
+Solicitud de cotizaciones
+Compras
+Activa consulta formal a proveedores.
+Comparativa técnica
+GPP / Compras / GG
+Ayuda a elegir alternativas técnicas o económicas.
+Carpeta de inicio para Obras
+Obras / GG
+Transfiere información para ejecución real.
+Lista de recursos críticos
+Obras / Compras / Logística
+Anticipa faltantes, equipos, herramientas, materiales especiales o plazos de entrega.
+Registro de adicionales y cambios de alcance
+GG / Obras / Administración
+Sustenta reclamos, ajustes económicos y decisiones.
+Base para cierre económico posterior
+Administración / GG / GPP
+Permite comparar presupuesto vs real y aprender.
+13. Responsables y matriz de responsabilidades
+Proyectos y Presupuestos es responsable de ordenar, presupuestar, documentar y entregar información confiable. No debe trabajar aislada ni aceptar información incompleta como si fuera definitiva. Cada intervención de otra gerencia debe quedar asociada a una consulta, registro o validación mínima.
+Rol / Área
+Responsabilidad principal
+Responsable de Proyectos y Presupuestos
+Conducir el proceso técnico-económico, registrar oportunidades, coordinar información, emitir presupuestos y dejar trazabilidad.
+Gerencia General
+Priorizar oportunidades, validar presupuestos relevantes, aprobar márgenes/riesgos y resolver escalamiento.
+Gerencia de Obras
+Aportar criterio constructivo, metodología, tiempos reales, restricciones, interferencias y devolución sobre desvíos.
+Gerencia de Compras
+Gestionar cotizaciones, validar precios críticos, condiciones de entrega, proveedores y disponibilidad comercial.
+Gerencia de Logística
+Informar disponibilidad de equipos, herramientas, vehículos, stock crítico, depósito y restricciones logísticas.
+Administración y Finanzas
+Informar condiciones de pago, anticipos, flujo, costos financieros, facturación y cierre económico.
+Cliente / comitente / inspección
+Entregar documentación, aclarar alcance, validar modificaciones y aprobar propuestas o adicionales.
+Actividad clave
+GPP
+GG
+Obras
+Compras
+Logística
+Adm./Fin.
+Registrar oportunidad
+R
+I
+I
+I
+I
+I
+Definir prioridad comercial
+C
+A/R
+I
+I
+I
+C
+Relevar y analizar documentación
+R
+C
+C
+I
+I
+I
+Validar metodología y plazos reales
+C
+I
+R
+I
+C
+I
+Solicitar cotizaciones críticas
+R
+I
+C
+R
+I
+I
+Validar disponibilidad de recursos
+C
+I
+C
+I
+R
+I
+Armar presupuesto y propuesta
+R
+C/A
+C
+C
+C
+C
+Aprobar margen o riesgo relevante
+C
+A/R
+I
+C
+C
+C
+Entregar carpeta a Obras
+R
+I
+R
+I
+I
+I
+Registrar adicional o cambio de alcance
+R
+A según impacto
+C
+C
+C
+C
+Comparar presupuesto vs real
+R
+A
+C
+C
+C
+R
+Referencias: R = responsable de ejecutar | A = aprueba o responsable final | C = consultado | I = informado.
+14. Registros obligatorios
+Registro
+Responsable
+Momento
+Destinatario
+Utilidad
+Registro de oportunidad / pedido
+GPP
+Al recibir pedido
+GG / archivo GPP
+Evita que la oportunidad quede sólo en WhatsApp o memoria.
+Checklist de documentación recibida
+GPP
+Antes de presupuestar
+GPP / GG si hay riesgo
+Detecta faltantes, supuestos y condiciones incompletas.
+Registro de información faltante
+GPP
+Al revisar documentación
+Cliente / GG / área involucrada
+Permite pedir aclaraciones y dejar evidencia.
+Acta o informe de relevamiento
+GPP / Obras
+Después de visita
+GPP / Obras / GG
+Documenta condiciones reales, interferencias y observaciones.
+Cómputo
+GPP
+Durante presupuesto
+GPP / Obras / Compras
+Base de materiales, tareas y control posterior.
+Análisis de precios
+GPP
+Durante presupuesto
+GG / Administración
+Sustenta costo y margen.
+Solicitud de cotización a Compras
+GPP
+Al detectar precios críticos
+Compras
+Formaliza requerimiento y datos mínimos.
+Cotizaciones recibidas
+Compras / GPP
+Antes de cerrar presupuesto
+GPP / GG
+Respalda valores y validez.
+Presupuesto interno
+GPP
+Antes de propuesta formal
+GG
+Permite revisión interna.
+Propuesta enviada
+GPP
+Al emitir oferta
+Cliente / GG
+Formaliza condiciones, alcance y precio.
+Registro de versiones
+GPP
+Cada modificación
+GPP / GG
+Evita confusión entre valores y alcances.
+Aprobación interna
+GG / GPP
+Antes de enviar propuesta relevante
+Archivo GPP
+Deja evidencia de validación de margen o riesgo.
+Carpeta de entrega a Obras
+GPP
+Al adjudicar
+Obras / GG
+Transfiere información para ejecución.
+Registro de cambio de alcance
+GPP / Obras
+Durante negociación o ejecución
+GG / Obras / Administración
+Permite defender adicionales o ajustes.
+Registro de adicional
+GPP / Obras
+Cuando surge trabajo no previsto
+GG / Cliente / Administración
+Sustenta valor, alcance y aprobación.
+Registro de desvío presupuesto vs real
+GPP / Administración
+Cierre de etapa u obra
+GG
+Permite aprendizaje y mejora.
+Lección aprendida
+GPP / Obras / GG
+Al cierre
+Manual / archivo
+Evita repetir errores de cómputo, precio o alcance.
+15. Indicadores de gestión
+Indicador
+Objetivo
+Fórmula simple
+Frecuencia
+Revisión
+Presupuestos emitidos por mes
+Medir volumen de trabajo y capacidad del área.
+Cantidad total mensual.
+Mensual
+GPP / GG
+Presupuestos entregados en plazo
+Medir cumplimiento interno o comercial.
+Presupuestos en plazo / total emitidos x 100.
+Mensual
+GPP
+Tiempo promedio de emisión
+Detectar demoras y cuellos de botella.
+Días desde registro hasta emisión / cantidad de presupuestos.
+Mensual
+GPP
+Presupuestos con documentación completa
+Medir calidad de entrada de información.
+Presupuestos completos / total x 100.
+Mensual
+GPP / GG
+Tasa de conversión de propuestas
+Medir efectividad comercial y calidad de propuesta.
+Propuestas ganadas / propuestas emitidas x 100.
+Mensual / trimestral
+GG / GPP
+Desvío presupuesto vs costo real
+Detectar errores de cómputo, precios o ejecución.
+(Costo real - costo presupuestado) / costo presupuestado x 100.
+Cierre de etapa / obra
+GPP / Adm. / GG
+Adicionales detectados
+Controlar cambios de alcance y oportunidades de recupero.
+Cantidad de adicionales registrados.
+Mensual
+GPP / Obras
+Presupuestos rehechos por falta de información
+Medir retrabajo y calidad de entrada.
+Cantidad mensual de presupuestos rehechos.
+Mensual
+GPP
+Consultas posteriores de Obras
+Medir claridad de entrega a ejecución.
+Cantidad de consultas técnicas posteriores a entrega.
+Por obra
+GPP / Obras
+Rentabilidad estimada vs real
+Medir protección del margen.
+Margen real - margen estimado.
+Cierre de obra
+GG / Adm. / GPP
+Oportunidades rechazadas por inviabilidad
+Evitar aceptar trabajos no convenientes.
+Cantidad de oportunidades no recomendadas.
+Mensual
+GPP / GG
+Cambios de alcance registrados
+Asegurar trazabilidad de modificaciones.
+Cambios registrados / cambios detectados.
+Mensual
+GPP / Obras
+16. Riesgos principales y controles preventivos
+Riesgo
+Consecuencia
+Control preventivo
+Presupuestar con documentación incompleta
+Omisiones, reclamos, pérdida de margen.
+Checklist documental, supuestos y aprobación de riesgo.
+No relevar correctamente
+Interferencias no vistas, costos no considerados.
+Relevamiento con fotos, croquis, acta y consulta a Obras.
+Omitir tareas o materiales
+Adicional no defendible o pérdida económica.
+Revisión cruzada de cómputo y memoria de alcance.
+Subestimar mano de obra
+Desvío de costo, atraso y presión sobre Obras.
+Consulta a Obras, históricos y rendimientos reales.
+Subestimar plazos
+Incumplimiento contractual o conflicto con cliente.
+Validación de programa con Obras y Logística.
+No consultar precios actualizados
+Presupuesto desfasado respecto del mercado.
+Solicitud a Compras y control de validez de cotizaciones.
+No contemplar logística, equipos o herramientas
+Obra frenada por recursos no disponibles.
+Consulta formal a Logística antes de cerrar propuesta.
+No dejar aclaraciones técnicas
+Cliente interpreta alcances no incluidos.
+Propuesta con alcance, exclusiones y condiciones explícitas.
+No registrar versiones
+Confusión de precios, alcance o condiciones.
+Codificación de versiones y archivo único.
+No detectar adicionales
+Trabajo ejecutado sin recupero económico.
+Registro de cambios de alcance y validación con GG.
+No transferir bien información a Obras
+Ejecución con dudas, compras incorrectas o retrasos.
+Carpeta de inicio con cómputo, planos, supuestos y riesgos.
+No contemplar condiciones de pago
+Rentabilidad aparente pero flujo negativo.
+Consulta a Administración y Finanzas.
+No contemplar riesgos contractuales
+Compromisos difíciles de cumplir.
+Revisión de pliego, multas, plazos y obligaciones.
+Presupuestar rápido pero mal
+Ganar una obra que no conviene.
+Escalamiento a GG cuando hay urgencia y datos incompletos.
+Ganar una obra sin margen real
+Pérdida económica y desgaste operativo.
+Revisión de margen, sensibilidad de costos y validación GG.
+17. Comunicación con otras gerencias
+La comunicación de Proyectos y Presupuestos debe ser formal, oportuna y útil. No se trata de informar todo a todos, sino de comunicar lo necesario, en el momento correcto y con registro suficiente.
+Área
+Qué se comunica
+Cuándo
+Registro mínimo
+Gerencia General
+Oportunidades relevantes, presupuesto importante, margen bajo, riesgo técnico/económico, cliente estratégico, decisión de avanzar o rechazar.
+Antes de comprometer precio, plazo o condiciones. También en revisión semanal.
+Resumen ejecutivo, presupuesto interno, matriz de riesgos, registro de aprobación.
+Gerencia de Obras
+Metodología constructiva, tiempos reales, interferencias, restricciones, carpeta de inicio, cambios de alcance y desvíos.
+Durante análisis y antes de cerrar presupuesto. Luego al adjudicar y durante cambios.
+Consulta técnica, acta de entrega a obra, registro de adicionales.
+Gerencia de Compras
+Materiales críticos, proveedores sugeridos, cotizaciones requeridas, validez de precios, condiciones de entrega y pago.
+Antes de cerrar costos y ante cambios de mercado.
+Solicitud formal de cotización, cotizaciones recibidas, comparativa.
+Gerencia de Logística
+Disponibilidad de equipos, herramientas, vehículos, stock, depósito, traslados y restricciones logísticas.
+Antes de comprometer plazos, costos de movilización o disponibilidad.
+Consulta logística, lista de recursos críticos, observaciones de disponibilidad.
+Administración y Finanzas
+Condiciones de pago, anticipos, costos financieros, flujo, facturación y cierre económico posterior.
+Antes de emitir propuestas relevantes y al cierre de obra.
+Consulta financiera, resumen económico, comparación presupuesto vs real.
+18. Comunicación con Gerencia General y criterios de escalamiento
+Gerencia General no debe resolver todos los cálculos ni reemplazar el trabajo del área. Su función es conducir, priorizar, validar riesgos, aprobar márgenes cuando corresponda y controlar el sistema. Para eso necesita información clara, resumida y respaldada.
+Tipo de información
+Frecuencia / momento
+Contenido mínimo
+Decisión esperada de GG
+Oportunidades relevantes
+Semanal o al ingreso
+Cliente, obra, monto estimado, plazo, riesgo y recomendación inicial.
+Priorizar, avanzar, esperar o descartar.
+Presupuesto de impacto económico
+Antes de emitir
+Costo, precio, margen, supuestos, exclusiones, riesgos y validez.
+Aprobar, ajustar o rechazar.
+Riesgo alto
+Inmediato
+Riesgo técnico, económico, contractual, financiero o de plazo.
+Definir criterio de avance o límite.
+Cambio de alcance o adicional relevante
+Cuando se detecta
+Descripción, causa, impacto, valor estimado y respaldo.
+Aprobar gestión ante cliente o estrategia.
+Desvío presupuesto vs real
+Cierre de etapa u obra
+Diferencia, causa probable, impacto y acción correctiva.
+Definir mejora y responsabilidades.
+Presupuesto superior a monto definido por la empresa o con impacto económico relevante.
+Margen bajo, dudoso o condicionado a supuestos importantes.
+Riesgo técnico, económico, contractual, financiero, logístico o de plazo alto.
+Cliente nuevo relevante o cliente con antecedentes de conflicto, demora o condiciones especiales.
+Plazos exigentes que Obras o Logística no puedan validar con seguridad.
+Falta de documentación crítica para presupuestar.
+Cambio de alcance, adicional importante o modificación solicitada por cliente, inspección u obra.
+Diferencia fuerte entre costo estimado y costo real en obra en curso.
+Necesidad de inversión previa, compra especial, uso intensivo de maquinaria u obra fuera de la provincia.
+Compromiso comercial o técnico que pueda afectar la reputación de ECAR.
+19. Tratamiento de desvíos, cambios de alcance y adicionales
+Todo cambio respecto del alcance presupuestado debe ser tratado como un hecho de gestión. No debe quedar sólo como conversación con el cliente, comentario de obra o pedido informal. La regla de ECAR debe ser: si cambia el alcance, cambia la documentación.
+Situación
+Acción mínima de GPP
+Registro requerido
+Escalamiento
+Cambio pedido por cliente
+Comparar contra alcance aprobado y presupuestar impacto.
+Registro de cambio de alcance y versión de propuesta.
+GG si afecta monto, plazo o contrato.
+Adicional detectado por Obras
+Validar si estaba o no incluido y cuantificar.
+Registro de adicional con respaldo técnico.
+GG antes de ejecutar si es relevante.
+Especificación modificada por inspección
+Revisar impacto técnico, materiales, plazos y costo.
+Informe breve + presupuesto complementario.
+GG y cliente/comitente.
+Desvío de costo real
+Analizar causa: cómputo, precio, rendimiento, alcance o ejecución.
+Registro presupuesto vs real.
+GG en cierre de etapa/obra.
+Error u omisión interna
+Registrar no conformidad y acción correctiva.
+NC + lección aprendida.
+GG si impacta en margen o cliente.
+20. No conformidades vinculadas al área
+Una no conformidad del área no debe entenderse como búsqueda de culpables, sino como una oportunidad de corregir desvíos que pueden repetirse. El enfoque debe ser registrar, analizar causa, corregir y verificar eficacia.
+Presupuesto emitido sin documentación mínima ni aclaraciones.
+Cotización usada sin validez o con precio desactualizado.
+Material crítico omitido en el cómputo.
+Carpeta de inicio entregada incompleta a Obras.
+Cambio de alcance ejecutado sin registro de adicional.
+Versión de presupuesto no identificada correctamente.
+Desvío económico significativo sin análisis de causa.
+Formato simple de tratamiento: detección del desvío -> registro -> causa probable -> acción inmediata -> responsable -> fecha compromiso -> verificación de eficacia -> cierre -> lección aprendida.
+21. Perfil del responsable de la Gerencia
+Sí corresponde incorporar el perfil del puesto dentro del procedimiento, preferentemente como sección específica o anexo operativo. El procedimiento define cómo debe funcionar el área. El perfil del puesto define qué capacidades debe tener la persona responsable para sostener ese funcionamiento.
+Aspecto
+Definición
+Nombre del puesto
+Responsable de Gerencia de Proyectos y Presupuestos
+Reporta a
+Gerencia General
+Áreas con las que se vincula
+Obras, Compras, Logística, Administración y Finanzas, RRHH cuando corresponda, clientes, comitentes, inspecciones y proveedores técnicos.
+Propósito del puesto
+Transformar oportunidades, necesidades y documentación técnica en propuestas, cómputos y presupuestos claros, rentables, trazables y útiles para la toma de decisiones y ejecución posterior.
+Responsabilidades principales
+Registrar oportunidades, revisar documentación, relevar, computar, analizar precios, solicitar cotizaciones, evaluar riesgos, emitir propuestas, controlar versiones, entregar carpeta a Obras y registrar adicionales o desvíos.
+Competencias técnicas
+Lectura de planos, cómputo métrico, análisis de precios, Excel avanzado, interpretación de pliegos, redacción técnica, evaluación de riesgos, manejo de versiones y criterios de adicional.
+Competencias personales
+Orden, criterio técnico, comunicación clara, pensamiento analítico, responsabilidad, prudencia comercial, capacidad de seguimiento, atención al detalle y mejora continua.
+Indicadores de evaluación
+Presupuestos en plazo, desvío presupuesto vs real, documentación completa, tasa de conversión, calidad de entrega a Obras, adicionales registrados y reducción de retrabajos.
+Errores que no debe cometer
+Presupuestar sin aclarar supuestos, no registrar versiones, no consultar a Obras, Compras o Logística, no escalar riesgos, omitir tareas críticas o entregar carpetas incompletas.
+22. Alcance de la persona responsable del área
+Esta sección define hasta dónde puede decidir la persona responsable, cuándo debe consultar y cuándo debe escalar. El objetivo es evitar tanto la parálisis por pedir autorización para todo como el riesgo de comprometer a ECAR sin respaldo suficiente.
+Nivel de alcance
+Criterio
+Puede decidir directamente sobre
+Organización diaria del área; distribución de tareas internas; revisión de documentación; armado de cómputos y presupuestos; pedidos de información; consultas técnicas; registro de versiones; propuesta de mejoras; reportes de pendientes y desvíos.
+Debe consultar antes de decidir sobre
+Cambios que impacten costo, plazo, cliente o calidad; modificaciones de alcance; precios críticos; metodología constructiva; disponibilidad de recursos; condiciones de pago; aceptación de supuestos importantes o riesgos no previstos.
+Debe escalar obligatoriamente a Gerencia General cuando exista
+Riesgo económico relevante; margen bajo o dudoso; falta de documentación crítica; plazo inviable; cliente estratégico o conflictivo; obra fuera de provincia; inversión previa; cambio de alcance relevante; adicional significativo; decisión fuera del procedimiento o situación que pueda afectar la imagen de ECAR.
+Límites del puesto
+No emite órdenes de compra; no aprueba pagos; no define solo la planificación de obra; no compromete condiciones comerciales relevantes sin aprobación; no ejecuta cambios de alcance sin registro y validación.
+23. Herramientas necesarias para el puesto
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios físicos, tecnológicos, documentales y de gestión necesarios para cumplir su función con orden, evidencia y trazabilidad.
+Grupo
+Herramientas necesarias
+Herramientas físicas
+Puesto de trabajo definido, escritorio, silla, espacio para revisión de planos, archivo físico mínimo, sector para carpetas activas y espacio para reuniones de revisión técnica.
+Herramientas tecnológicas
+Computadora o notebook, acceso a internet, correo corporativo, Excel avanzado, software de cómputo/presupuesto cuando corresponda, acceso a carpetas digitales, impresora, scanner o aplicación de escaneo y cámara/celular para registro fotográfico.
+Herramientas documentales
+Procedimiento GPP, checklist documental, registro de oportunidades, matriz de riesgos, banco de precios, registro de versiones, formato de propuesta, solicitud de cotización, carpeta de inicio de obra, registro de adicionales, registro presupuesto vs real y lecciones aprendidas.
+Herramientas de gestión
+Agenda diaria, lista de prioridades, tablero de oportunidades, semáforo de riesgos, matriz RACI, matriz de comunicación, reunión semanal con GG, revisión técnica con Obras/Compras/Logística e indicadores mensuales.
+24. Rutina diaria, semanal y mensual
+Frecuencia
+Rutina mínima
+Diaria
+Revisar oportunidades activas, pedidos pendientes, vencimientos de propuestas, información faltante y consultas abiertas. Actualizar registro de versiones y prioridades.
+Semanal
+Reunirse con Gerencia General para priorizar oportunidades, revisar riesgos y decidir avances. Coordinar con Obras, Compras y Logística los presupuestos en curso.
+Mensual
+Revisar indicadores del área, presupuestos emitidos, tasa de conversión, desvíos presupuesto vs real, adicionales registrados, problemas repetidos y acciones de mejora.
+25. Reuniones y frecuencia de seguimiento
+Reunión
+Participantes
+Frecuencia
+Objetivo
+Registro resultante
+Revisión de oportunidades
+GPP + GG
+Semanal
+Priorizar oportunidades, definir foco y descartar trabajos no convenientes.
+Listado de oportunidades y decisiones.
+Revisión técnica de presupuesto
+GPP + Obras + Compras/Logística si corresponde
+Según proyecto
+Validar metodología, precios críticos y recursos.
+Minuta técnica o comentarios de validación.
+Entrega a Obras
+GPP + Obras + GG si corresponde
+Al adjudicar
+Transferir alcance, cómputo, supuestos, riesgos y restricciones.
+Acta o checklist de entrega.
+Revisión presupuesto vs real
+GPP + Administración + Obras + GG
+Cierre de etapa/obra
+Detectar desvíos y aprender.
+Informe de cierre y acción correctiva.
+Revisión de indicadores
+GPP + GG
+Mensual
+Evaluar cumplimiento, tiempos, conversión y desvíos.
+Reporte mensual GPP.
+26. Casos ejemplo aplicables a ECAR
+Los siguientes casos buscan transformar situaciones habituales en criterios de actuación. Sirven como guía para que el área responda con sistema y no sólo con urgencia.
+Caso
+Riesgo
+Forma de resolución
+Comunicación / registro / escalamiento
+1. Cliente pide presupuesto sin planos completos
+Omisiones, supuestos no aclarados y conflicto posterior.
+Registrar oportunidad, usar checklist, pedir documentación faltante y presupuestar con aclaraciones si se decide avanzar.
+GG si el monto o riesgo es relevante. Registro de información faltante y versión.
+2. Obra solicita adicional no previsto
+Trabajo ejecutado sin recupero económico.
+Comparar contra alcance original, cuantificar adicional y emitir respaldo técnico-económico.
+Obras, GG, Administración. Registro de adicional.
+3. Inspección cambia especificación técnica
+Cambio de costo, plazo o metodología.
+Evaluar impacto técnico, pedir cotización si aplica y actualizar propuesta o adicional.
+GG y cliente/comitente. Registro de cambio.
+4. Compras informa aumento fuerte de precio
+Margen presupuestado queda afectado.
+Actualizar análisis de precios, revisar validez de oferta y definir alternativa.
+GG si cambia margen o valor final. Cotización actualizada.
+5. Logística informa que no hay equipo disponible
+Costo por alquiler o atraso no previsto.
+Recalcular costo o plazo, consultar alternativa y actualizar supuestos.
+Logística, Obras, GG. Consulta logística.
+6. Obras detecta tarea omitida
+Pérdida económica o conflicto interno.
+Analizar si es omisión, adicional o cambio de alcance; registrar causa.
+Obras y GG. NC o lección aprendida.
+7. Cliente pide bajar el precio
+Reducción de margen sin criterio.
+Definir opciones: reducir alcance, ajustar forma de pago, cambiar alternativa técnica o rechazar.
+GG antes de aceptar. Registro de negociación.
+8. Plazo solicitado inviable
+Incumplimiento y pérdida de reputación.
+Consultar Obras y Logística, proponer plazo real o condiciones necesarias.
+GG y cliente. Informe de plazo.
+9. Aparece interferencia no relevada
+Mayor costo, demora o retrabajo.
+Documentar, cuantificar impacto y definir si corresponde adicional.
+Obras, GG y cliente/inspección. Registro de interferencia.
+10. Proveedor cotiza con validez corta
+Precio puede vencer antes de adjudicación.
+Dejar validez en presupuesto y solicitar actualización antes de comprometer precio.
+Compras y GG si impacta margen. Cotización con validez.
+11. Obra adjudicada sin carpeta de inicio
+Obras inicia sin información completa.
+Preparar carpeta de inicio: alcance, cómputo, presupuesto interno, supuestos, exclusiones, riesgos y contactos.
+Obras y GG. Checklist de entrega.
+12. Forma de pago afecta flujo
+Obra rentable en papel pero riesgosa financieramente.
+Revisar costos financieros, anticipo, certificación y condiciones.
+Adm./Fin. y GG. Consulta financiera.
+13. Presupuesto urgente
+Presupuestar rápido pero mal.
+Definir alcance mínimo, faltantes y supuestos; elevar si no hay información suficiente.
+GG si se compromete precio. Registro de urgencia.
+14. Desvío fuerte contra presupuesto
+Pérdida de margen y repetición del error.
+Analizar causa: cómputo, precio, rendimiento, alcance, compra o ejecución.
+GG, Obras, Adm. Registro presupuesto vs real.
+15. Cambio de alcance durante ejecución
+Trabajo no incluido pasa a ejecutarse sin aprobación.
+Pausar definición económica, registrar cambio y emitir adicional o nueva versión.
+Obras, GG, cliente. Registro de cambio de alcance.
+27. Esquema visual de caso
+Caso seleccionado: cliente solicita presupuesto sin documentación completa. El esquema muestra la secuencia mínima para evitar que ECAR emita una propuesta sin respaldo, sin aclaraciones o con riesgo no validado.
+28. Anexos operativos sugeridos
+Anexo / formulario
+Campos mínimos sugeridos
+Registro de oportunidad
+Cliente, contacto, obra, necesidad, fecha, responsable, prioridad, documentación recibida y próxima acción.
+Checklist de documentación
+Planos, pliego, memoria, mediciones, fotos, ubicación, interferencias, plazo, condiciones y faltantes.
+Solicitud de cotización a Compras
+Material o servicio, especificación, cantidad, unidad, fecha límite, proveedor sugerido, obra y observaciones.
+Carpeta de entrega a Obras
+Alcance, cómputo, presupuesto interno, supuestos, exclusiones, riesgos, planos, contactos y condiciones críticas.
+Registro de adicional
+Origen, descripción, causa, impacto técnico, impacto económico, aprobación y versión enviada.
+Registro presupuesto vs real
+Costo presupuestado, costo real, desvío, causa, responsable de análisis y acción correctiva.
+Lección aprendida
+Qué ocurrió, por qué ocurrió, qué se cambia, responsable y fecha de verificación.
+29. Cierre institucional
+La Gerencia de Proyectos y Presupuestos es una pieza central del orden empresarial de ECAR. Cuando esta gerencia trabaja con método, la empresa decide mejor, compra mejor, ejecuta mejor y aprende más rápido. Cuando trabaja sólo por urgencia, los errores se trasladan a Obras, Compras, Logística, Administración y Gerencia General.
+Este procedimiento debe instalar una regla simple: ningún presupuesto importante debe salir sin alcance claro, información revisada, supuestos escritos, versión identificada, riesgos detectados y comunicación mínima con las áreas que después deberán ejecutar, comprar, abastecer o controlar.
+Un presupuesto no es sólo un número. Es la primera decisión operativa de una obra. Si nace desordenado, el desorden se traslada a toda la empresa.
+

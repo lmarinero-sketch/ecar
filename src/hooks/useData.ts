@@ -14,7 +14,7 @@ import type {
   Inspeccion, PunchListItem, ConsultaObra,
   GastoItem, GastoRegistro,
   EmployeeAbsence, EmployeeAdvance, SalaryHistoryEntry, DailyTask,
-  BudgetResource, Budget, BudgetSection, BudgetItem,
+  BudgetResource, Budget, BudgetSection, BudgetItem, BudgetFile,
   FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation,
   VehicleDailyReport,
   Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange
@@ -1988,6 +1988,63 @@ export function useDeleteBudgetResource() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_resources'] }),
+  });
+}
+
+// ========== BUDGET FILES ==========
+export function useBudgetFiles(budgetId?: string) {
+  return useQuery({
+    queryKey: ['budget_files', budgetId],
+    queryFn: async () => {
+      let q = supabase.from('budget_files').select('*').order('created_at', { ascending: false });
+      if (budgetId) q = q.eq('budget_id', budgetId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as BudgetFile[];
+    },
+    enabled: !!budgetId,
+  });
+}
+
+export function useUploadBudgetFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ budgetId, file, title, category }: { budgetId: string; file: File; title: string; category?: string }) => {
+      // 1. Upload file to Storage (project-files)
+      const filePath = `budgets/${budgetId}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      const { error: uploadError } = await supabase.storage.from('project-files').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      // 2. Get signed/public URL (depends on if bucket is public, we assume signed if private)
+      const { data: signedData, error: signedError } = await supabase.storage.from('project-files').createSignedUrl(filePath, 31536000); // 1 year
+      const fileUrl = signedError ? supabase.storage.from('project-files').getPublicUrl(filePath).data.publicUrl : signedData.signedUrl;
+
+      // 3. Create document record
+      const { error: dbError } = await supabase.from('budget_files').insert({
+        budget_id: budgetId,
+        file_name: title,
+        file_path: fileUrl, // we store the url in file_path
+        file_type: category || 'General',
+        file_size: file.size,
+      });
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_files'] }),
+  });
+}
+
+export function useDeleteBudgetFile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // we could also delete from storage but usually we just delete the db record or mark inactive
+      const { error } = await supabase.from('budget_files').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_files'] }),
   });
 }
 
