@@ -515,6 +515,62 @@ const PHASES: Phase[] = [
       },
     ],
   },
+  {
+    id: 'gustavo-gpp',
+    title: 'Capacitación Gustavo — Gerencia de Proyectos y Presupuestos',
+    person: 'Gustavo (growlabs.com)',
+    device: 'PC (Navegador)',
+    deviceIcon: Monitor,
+    color: 'from-blue-800',
+    colorTo: 'to-blue-600',
+    textColor: 'text-blue-100',
+    meetingDate: '24/06',
+    meetingTime: '16:00 hs',
+    sections: [
+      {
+        id: 'gpp-opp', title: 'Oportunidades (Pipeline)', icon: Target, duration: '15 min',
+        items: [
+          { id: 'gpp-1', label: 'Cargar una nueva oportunidad o licitación' },
+          { id: 'gpp-2', label: 'Explicar los estados (Relevamiento, Cotizado, Adjudicado, Perdido)' },
+          { id: 'gpp-3', label: 'Validar: ¿Qué datos mínimos se necesitan al abrir una oportunidad?' },
+        ],
+      },
+      {
+        id: 'gpp-bud', title: 'Presupuesto y Cómputo', icon: Calculator, duration: '20 min',
+        items: [
+          { id: 'gpp-4', label: 'Crear un presupuesto vinculado a la oportunidad' },
+          { id: 'gpp-5', label: 'Cargar rubros, subrubros e ítems con análisis de precios' },
+          { id: 'gpp-6', label: 'Explicar el manejo de versiones (v1, v2, etc.)' },
+          { id: 'gpp-7', label: 'Validar: ¿Cómo gestionan hoy los precios y la inflación en los presupuestos?' },
+          { id: 'gpp-8', label: 'Validar el flujo de aprobación interna (GG)' },
+        ],
+      },
+      {
+        id: 'gpp-cert', title: 'Certificaciones y Avance', icon: FileText, duration: '15 min',
+        items: [
+          { id: 'gpp-9', label: 'Explicar la carga de mediciones (ICC)' },
+          { id: 'gpp-10', label: 'Generar una certificación parcial' },
+          { id: 'gpp-11', label: 'Validar: ¿Cómo aprueban hoy los certificados de obra?' },
+        ],
+      },
+      {
+        id: 'gpp-deliv', title: 'Entregables (Handoff a Operaciones)', icon: ClipboardCheck, duration: '15 min',
+        items: [
+          { id: 'gpp-12', label: 'Revisar la Carpeta de Inicio que recibe Obras' },
+          { id: 'gpp-13', label: 'Revisar la Solicitud de Cotizaciones que recibe Compras' },
+          { id: 'gpp-14', label: 'Validar: ¿Faltan datos en este traspaso de GPP al resto de la empresa?' },
+        ],
+      },
+      {
+        id: 'gpp-cierre', title: 'Feedback y Cierre', icon: MessageSquareText, duration: '10 min',
+        items: [
+          { id: 'gpp-15', label: 'Puntuación del módulo GPP (1 al 5)' },
+          { id: 'gpp-16', label: 'Anotar qué funcionalidad es crítica y aún no está cubierta' },
+          { id: 'gpp-17', label: 'Definir fechas para probar con un presupuesto real' },
+        ],
+      },
+    ],
+  },
 ];
 
 const STORAGE_KEY = 'ecar_implementation_state';
@@ -679,6 +735,9 @@ const mapItemToModule = (itemId: string, sectionId: string): string | null => {
   if (sectionId === 'c2-metricas' || sectionId === 'c2-cruce') return 'bi';
   if (sectionId === 'g-wbs') return 'wbs';
   if (sectionId === 'g-match') return 'bi';
+  if (sectionId === 'gpp-opp') return 'opportunities';
+  if (sectionId === 'gpp-bud') return 'project_budget';
+  if (sectionId === 'gpp-cert') return 'certifications';
 
   if (itemId.startsWith('e2-')) {
     const num = parseInt(itemId.replace('e2-', ''));

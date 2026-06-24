@@ -31,6 +31,8 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const { data: gastosItems = [] } = useGastosItems();
   const { data: gastosRegs = [] } = useGastosRegistrosByRange(periodo ? [periodo] : []);
   const [showImport, setShowImport] = useState(false);
+  const [importGasto, setImportGasto] = useState<any>(null);
+  const [importMonto, setImportMonto] = useState('');
 
   const pendingGastos = useMemo(() => {
     const existingSources = new Set(items.filter(i => i.source_type === 'gastos_operativos').map(i => i.source_id));
@@ -68,25 +70,30 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
     setShowAdd(false);
   };
 
-  const handleImport = async (gasto: any) => {
-    const defaultMonto = gasto.pendiente;
-    const input = window.prompt(`Importe pendiente para "${gasto.item_desc}": $${defaultMonto}\n\n¿Cuánto desea cargar en este pago?`, defaultMonto.toString());
-    if (input === null) return; // User cancelled
-    const finalMonto = parseFloat(input.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+  const handleImport = (gasto: any) => {
+    setImportGasto(gasto);
+    setImportMonto(gasto.pendiente.toString());
+  };
+
+  const confirmImport = async () => {
+    if (!importGasto) return;
+    const finalMonto = parseFloat(importMonto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     if (finalMonto <= 0) return;
 
     await createItem.mutateAsync({
       payment_id: payment.id,
-      concepto: gasto.item_desc,
+      concepto: importGasto.item_desc,
       monto: finalMonto,
-      alias_cbu: gasto.alias_cbu,
-      titular_cuenta: gasto.titular_cuenta,
-      nro_factura: gasto.nro_factura || '',
+      alias_cbu: importGasto.alias_cbu,
+      titular_cuenta: importGasto.titular_cuenta,
+      nro_factura: importGasto.nro_factura || '',
       observaciones: '',
       source_type: 'gastos_operativos',
-      source_id: gasto.id,
+      source_id: importGasto.id,
       orden: items.length,
     });
+    setImportGasto(null);
+    setImportMonto('');
   };
 
   const handleTogglePagado = async (item: any) => {
@@ -246,41 +253,119 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
         </div>
       )}
 
-      {/* Add form */}
+      {/* Add form modal */}
       {showAdd && (
-        <div className="bg-white border-2 border-indigo-200 rounded-xl p-5 space-y-3 shadow-sm">
-          <h4 className="font-bold text-gray-800 flex items-center gap-2"><Plus size={14} className="text-indigo-600" /> Nuevo Pago</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="col-span-2 md:col-span-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Empresa / Concepto</label>
-              <input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} placeholder="Ej: TANKITO" className="w-full px-3 py-2 border rounded-lg text-sm" />
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Plus size={18} className="text-indigo-600" /> Nuevo Pago</h4>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Monto</label>
-              <input value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} placeholder="0.00" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Concepto</label>
+                <input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} placeholder="Ej: TANKITO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Monto</label>
+                <input value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Alias / CBU</label>
+                <input value={form.alias_cbu} onChange={e => setForm({ ...form, alias_cbu: e.target.value })} placeholder="ALIAS.CUENTA" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
+                <input value={form.titular_cuenta} onChange={e => setForm({ ...form, titular_cuenta: e.target.value })} placeholder="NOMBRE TITULAR" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nro. Factura / Periodo</label>
+                <input value={form.nro_factura} onChange={e => setForm({ ...form, nro_factura: e.target.value })} placeholder="71103" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Observaciones</label>
+                <input value={form.observaciones} onChange={e => setForm({ ...form, observaciones: e.target.value })} placeholder="CANCELACIÓN, etc." className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Alias / CBU</label>
-              <input value={form.alias_cbu} onChange={e => setForm({ ...form, alias_cbu: e.target.value })} placeholder="ALIAS.CUENTA" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
-              <input value={form.titular_cuenta} onChange={e => setForm({ ...form, titular_cuenta: e.target.value })} placeholder="NOMBRE TITULAR" className="w-full px-3 py-2 border rounded-lg text-sm" />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Nro. Factura / Periodo</label>
-              <input value={form.nro_factura} onChange={e => setForm({ ...form, nro_factura: e.target.value })} placeholder="71103" className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Observaciones</label>
-              <input value={form.observaciones} onChange={e => setForm({ ...form, observaciones: e.target.value })} placeholder="CANCELACIÓN, etc." className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <div className="flex gap-3 justify-end pt-3 border-t mt-4">
+              <button onClick={() => setShowAdd(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-2">
+                <Save size={16} /> Guardar Pago
+              </button>
             </div>
           </div>
-          <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100">Cancelar</button>
-            <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors">
-              <Save size={14} className="inline mr-1" /> Guardar
-            </button>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {importGasto && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Building2 size={18} className="text-amber-600" /> Importar Gasto</h4>
+              <button onClick={() => setImportGasto(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                Importe pendiente para <span className="font-bold text-gray-800">{importGasto.item_desc}</span>: <br/><span className="font-mono font-bold text-amber-600">{formatARS(importGasto.pendiente)}</span>
+              </p>
+              <label className="text-xs font-bold text-gray-500 uppercase block mb-1">¿Cuánto desea cargar en este pago?</label>
+              <input value={importMonto} onChange={e => setImportMonto(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-lg font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" autoFocus />
+            </div>
+            <div className="flex gap-3 justify-end pt-3 border-t mt-4">
+              <button onClick={() => setImportGasto(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button onClick={confirmImport} disabled={!importMonto} className="bg-amber-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-amber-600 transition-colors shadow-md">
+                Importar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit form modal */}
+      {editId && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Edit2 size={18} className="text-indigo-600" /> Editar Pago</h4>
+              <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Concepto</label>
+                <input value={editForm.concepto} onChange={e => setEditForm({ ...editForm, concepto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Monto</label>
+                <input value={editForm.monto} onChange={e => setEditForm({ ...editForm, monto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Alias / CBU</label>
+                <input value={editForm.alias_cbu} onChange={e => setEditForm({ ...editForm, alias_cbu: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
+                <input value={editForm.titular_cuenta} onChange={e => setEditForm({ ...editForm, titular_cuenta: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nro. Factura / Periodo</label>
+                <input value={editForm.nro_factura} onChange={e => setEditForm({ ...editForm, nro_factura: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Resto (Pendiente)</label>
+                <input value={editForm.resto} onChange={e => setEditForm({ ...editForm, resto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Observaciones</label>
+                <input value={editForm.observaciones} onChange={e => setEditForm({ ...editForm, observaciones: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-3 border-t mt-4">
+              <button onClick={() => setEditId(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button onClick={handleSaveEdit} disabled={!editForm.concepto?.trim() || !editForm.monto} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-2">
+                <Save size={16} /> Guardar Cambios
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -308,23 +393,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {items.map(item => (
-                  editId === item.id ? (
-                    <tr key={item.id} className="bg-indigo-50">
-                      <td className="px-2 py-1.5"><input value={editForm.concepto} onChange={e => setEditForm({ ...editForm, concepto: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.monto} onChange={e => setEditForm({ ...editForm, monto: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono text-right" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.alias_cbu} onChange={e => setEditForm({ ...editForm, alias_cbu: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.titular_cuenta} onChange={e => setEditForm({ ...editForm, titular_cuenta: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.nro_factura} onChange={e => setEditForm({ ...editForm, nro_factura: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.resto} onChange={e => setEditForm({ ...editForm, resto: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono text-right" /></td>
-                      <td className="px-2 py-1.5"><input value={editForm.observaciones} onChange={e => setEditForm({ ...editForm, observaciones: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                      <td className="px-2 py-1.5 text-center">
-                        <div className="flex gap-1 justify-center">
-                          <button onClick={handleSaveEdit} className="p-1 rounded bg-green-500 text-white hover:bg-green-600"><Save size={12} /></button>
-                          <button onClick={() => setEditId(null)} className="p-1 rounded bg-gray-300 text-gray-600 hover:bg-gray-400"><X size={12} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
                     <tr key={item.id} className={`hover:bg-gray-50 ${item.pagado ? 'bg-green-50/30' : ''}`}>
                       <td className="px-3 py-2.5 font-bold text-gray-800 text-xs">
                         <div className="flex items-center gap-2">
@@ -348,7 +416,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                         </div>
                       </td>
                     </tr>
-                  )
                 ))}
                 {/* Total row */}
                 <tr className="bg-slate-800 text-white font-bold">
@@ -415,29 +482,34 @@ export const PaymentsModule: React.FC = () => {
         </button>
       </div>
 
-      {/* New payment form */}
+      {/* New payment form modal */}
       {showNew && (
-        <div className="bg-white border-2 border-indigo-200 rounded-xl p-5 space-y-3 shadow-sm">
-          <h4 className="font-bold text-gray-800">Nueva Planilla de Pagos</h4>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Fecha de Pago</label>
-              <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h4 className="font-bold text-lg text-gray-800">Nueva Planilla de Pagos</h4>
+              <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Responsable</label>
-              <input value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="ADOLFO" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Fecha de Pago</label>
+                <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Responsable</label>
+                <input value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="ADOLFO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
+              <div className="sm:col-span-3">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Notas (opcional)</label>
+                <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Pagos semana 1 de junio" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Notas (opcional)</label>
-              <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Pagos semana 1 de junio" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <div className="flex gap-3 justify-end pt-3 border-t mt-4">
+              <button onClick={() => setShowNew(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md">
+                Crear Planilla
+              </button>
             </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowNew(false)} className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100">Cancelar</button>
-            <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-40 hover:bg-indigo-700">
-              Crear Planilla
-            </button>
           </div>
         </div>
       )}
