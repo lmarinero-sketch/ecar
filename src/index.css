@@ -73,6 +73,12 @@
     @apply bg-ecar-blueLight/30;
   }
 
+  /* Fix responsive tables globally */
+  .overflow-hidden:has(table) {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* ─── Status Badges ─── */
   .badge {
     @apply px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 tracking-wide;
