@@ -223,12 +223,13 @@ export const PayrollLiquidator: React.FC<{
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-          <table className="w-full text-left min-w-[800px]">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th className="px-4 py-3 min-w-[200px]">Obrero / CBU</th>
+      <div className="flex-1 overflow-hidden p-6 flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-left min-w-[1000px] border-collapse">
+              <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
+                <tr className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 min-w-[250px] bg-gray-50">Obrero / CBU</th>
                 <th className="px-4 py-3 min-w-[100px] text-center">Horas</th>
                 <th className="px-4 py-3 min-w-[120px] text-right">Valor Hora</th>
                 <th className="px-4 py-3 min-w-[120px] text-right">Premios</th>
@@ -298,6 +299,7 @@ export const PayrollLiquidator: React.FC<{
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       </div>
     </div>

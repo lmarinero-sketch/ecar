@@ -30,12 +30,19 @@ export const AttendancePanel: React.FC = () => {
   const [editForm, setEditForm] = useState({ clock_in: '', clock_out: '' });
 
   const handleBulkCheckout = async () => {
-    const confirmed = await useModalStore.getState().showConfirm('Confirmar Acción', '¿Marcar salida para todos los presentes sin hora de salida?');
-    if (!confirmed) return;
-    const nowT = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    const presentIds = attendanceRecords.filter(r => r.clock_in && !r.clock_out).map(r => r.id);
-    if (presentIds.length > 0) {
-      await bulkCheckout.mutateAsync({ date: selectedDate, checkoutTime: nowT, ids: presentIds });
+    try {
+      const confirmed = await useModalStore.getState().showConfirm('Confirmar Acción', '¿Marcar salida para todos los presentes sin hora de salida?');
+      if (!confirmed) return;
+      const nowT = new Date().toTimeString().slice(0, 5); // Format HH:MM safely
+      const presentIds = attendanceRecords.filter(r => r.clock_in && !r.clock_out).map(r => r.id);
+      if (presentIds.length > 0) {
+        await bulkCheckout.mutateAsync({ date: selectedDate, checkoutTime: nowT, ids: presentIds });
+        useModalStore.getState().showAlert('Éxito', 'Se marcó la salida para todos.');
+      } else {
+        useModalStore.getState().showAlert('Aviso', 'No hay empleados con salida pendiente.');
+      }
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
     }
   };
 
@@ -153,9 +160,9 @@ export const AttendancePanel: React.FC = () => {
 
   // ---------- DASHBOARD MODE ----------
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-140px)] gap-4">
       {/* Top Actions Row */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between shrink-0">
         {/* Date Picker */}
         <div className="flex items-center gap-2">
           <button onClick={() => changeDate(-1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -206,7 +213,7 @@ export const AttendancePanel: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
         <StatCard icon={<UserCheck size={20} />} label="Presentes" value={stats.present} total={stats.total} color="green" pct={progressPct} />
         <StatCard icon={<AlertTriangle size={20} />} label="Tardanzas" value={stats.late} color="yellow" />
         <StatCard icon={<XCircle size={20} />} label="Ausentes" value={stats.absent} color="red" />
@@ -255,9 +262,10 @@ export const AttendancePanel: React.FC = () => {
         </div>
       )}
 
-      {/* Attendance Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      {/* Main content (Table) */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
+        {/* Table header */}
+        <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
           <h4 className="font-bold text-gray-800 flex items-center gap-2">
             <Clock size={16} className="text-ecar-blue" />
             Registro de Asistencia — {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -277,8 +285,9 @@ export const AttendancePanel: React.FC = () => {
             {isToday && <p className="text-sm mt-1">Los fichajes aparecerán aquí en tiempo real</p>}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          /* Table wrapper */
+          <div className="overflow-auto flex-1">
+            <table className="w-full text-left border-collapse">
               <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                 <tr>
                   <th className="px-4 py-3 text-left">Empleado</th>
@@ -389,7 +398,7 @@ export const AttendancePanel: React.FC = () => {
 
       {/* Employees who haven't checked in (Today only) */}
       {isToday && stats.absent > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 shrink-0">
           <h4 className="font-bold text-red-800 text-sm flex items-center gap-2 mb-3">
             <XCircle size={16} />
             Sin fichar hoy ({stats.absent})
