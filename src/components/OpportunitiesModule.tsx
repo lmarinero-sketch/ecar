@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Target, Search, Plus, ChevronRight, Star, AlertTriangle,
   Clock, DollarSign, MapPin, FileText, X, Save, CheckCircle2,
   BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File,
-  Briefcase, User, FileCheck
+  Briefcase, User, FileCheck, Mic, Square, Loader2
 } from 'lucide-react';
 import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
 import type { Opportunity, OpportunityStage } from '../lib/types';
 import { exportOpportunityPdf } from '../lib/pdfExport';
+import { ImageViewer } from './ImageViewer';
+import { supabase } from '../lib/supabase';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -76,6 +78,7 @@ export const OpportunitiesModule: React.FC = () => {
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const { data: oppBudgets, isLoading: loadingBudgets } = useOpportunityBudgets(selectedOpp?.id);
   const [isExporting, setIsExporting] = useState<string | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<'general' | 'archivos' | 'presupuestos'>('general');
   const [fileForm, setFileForm] = useState({
@@ -108,6 +111,80 @@ export const OpportunitiesModule: React.FC = () => {
     project_id: '',
     documentation_checklist: { ...emptyChecklist },
   });
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await handleTranscription(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      alert('Error accediendo al micrófono. Verificá los permisos de tu navegador.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleTranscription = async (blob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+
+      const formData = new FormData();
+      formData.append('file', blob, 'audio.webm');
+
+      const url = `${supabase.supabaseUrl}/functions/v1/transcribe-audio`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) throw new Error('Error in transcription');
+      const data = await res.json();
+      
+      if (data.text) {
+        setForm(prev => ({ 
+          ...prev, 
+          description: prev.description ? `${prev.description}\n\n${data.text}` : data.text 
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al transcribir el audio');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!opportunities) return [];
@@ -523,10 +600,33 @@ export const OpportunitiesModule: React.FC = () => {
                 <div className="space-y-4">
                   {/* Row 2: Descripción */}
                   <div>
-                    <label className="block mb-1">
-                      <span className="block text-xs font-bold text-gray-600">Descripción de la Oportunidad *</span>
-                      <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Describir qué se necesita construir, proveer o mantener)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block">
+                        <span className="block text-xs font-bold text-gray-600">Descripción de la Oportunidad *</span>
+                        <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Describir qué se necesita construir, proveer o mantener)</span>
+                      </label>
+                      <button 
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={isTranscribing}
+                        className={`p-2 rounded-full transition-all flex items-center gap-1 text-xs font-bold shadow-sm ${
+                          isRecording 
+                            ? 'bg-red-100 text-red-600 hover:bg-red-200 animate-pulse border border-red-200' 
+                            : isTranscribing
+                              ? 'bg-amber-100 text-amber-600 border border-amber-200'
+                              : 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100 border border-cyan-100'
+                        }`}
+                        title={isRecording ? "Detener grabación" : "Grabar descripción por voz (AI)"}
+                      >
+                        {isTranscribing ? (
+                          <><Loader2 size={14} className="animate-spin" /> Transcribiendo...</>
+                        ) : isRecording ? (
+                          <><Square size={14} className="fill-current" /> Detener</>
+                        ) : (
+                          <><Mic size={14} /> Dictar</>
+                        )}
+                      </button>
+                    </div>
                     <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Obra, servicio o necesidad..." />
                   </div>
@@ -758,7 +858,10 @@ export const OpportunitiesModule: React.FC = () => {
                             {(f.file_size || 0) > 1024 * 1024 ? `${(f.file_size! / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file_size! / 1024)} KB`} • {f.file_type?.toUpperCase()}
                           </span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver / Descargar">
+                            <button onClick={(e) => { e.preventDefault(); setViewerUrl(f.file_url); }} className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver archivo">
+                              <Eye size={14} />
+                            </button>
+                            <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Descargar">
                               <Download size={14} />
                             </a>
                             <button onClick={() => { if(confirm('¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
@@ -881,6 +984,15 @@ export const OpportunitiesModule: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Viewer Modal */}
+      {viewerUrl && (
+        <ImageViewer
+          src={viewerUrl}
+          alt="Archivo adjunto"
+          onClose={() => setViewerUrl(null)}
+        />
       )}
     </div>
   );

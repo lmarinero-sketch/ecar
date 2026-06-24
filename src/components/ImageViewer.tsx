@@ -71,26 +71,34 @@ export const ImageViewer: React.FC<Props> = ({ src, alt = 'Imagen', onClose }) =
       {/* Canvas */}
       <div
         className="flex-1 overflow-hidden flex items-center justify-center select-none"
-        style={{ cursor: dragging ? 'grabbing' : 'grab' }}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        style={{ cursor: isPdf ? 'auto' : (dragging ? 'grabbing' : 'grab') }}
+        onWheel={isPdf ? undefined : handleWheel}
+        onMouseDown={isPdf ? undefined : handleMouseDown}
+        onMouseMove={isPdf ? undefined : handleMouseMove}
+        onMouseUp={isPdf ? undefined : handleMouseUp}
+        onMouseLeave={isPdf ? undefined : handleMouseUp}
       >
-        <img
-          src={src}
-          alt={alt}
-          draggable={false}
-          className="max-w-none transition-transform duration-100"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-          }}
-        />
+        {isPdf ? (
+          <iframe 
+            src={src} 
+            title={alt}
+            className="w-full h-full border-0 bg-white" 
+          />
+        ) : (
+          <img
+            src={src}
+            alt={alt}
+            draggable={false}
+            className="max-w-none transition-transform duration-100"
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
+            }}
+          />
+        )}
       </div>
 
       {/* Hint */}
-      <div className="text-center py-2 text-white/30 text-xs">Scroll para zoom · Arrastrá para mover · ESC para cerrar</div>
+      {!isPdf && <div className="text-center py-2 text-white/30 text-xs">Scroll para zoom · Arrastrá para mover · ESC para cerrar</div>}
     </div>
   );
 };
