@@ -160,7 +160,7 @@ export const OpportunitiesModule: React.FC = () => {
       const formData = new FormData();
       formData.append('file', blob, 'audio.webm');
 
-      const url = `${supabase.supabaseUrl}/functions/v1/transcribe-audio`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {

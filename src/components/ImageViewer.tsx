@@ -4,6 +4,7 @@ import { X, ZoomIn, ZoomOut, RotateCw, Download, Maximize2 } from 'lucide-react'
 type Props = { src: string; alt?: string; onClose: () => void };
 
 export const ImageViewer: React.FC<Props> = ({ src, alt = 'Imagen', onClose }) => {
+  const isPdf = src.toLowerCase().includes('.pdf');
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
