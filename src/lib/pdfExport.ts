@@ -164,6 +164,51 @@ export const exportOpportunityPdf = async (opportunity: Opportunity, projectName
     currentY = (doc as any).lastAutoTable.finalY + 20;
   }
 
+  // Fetch and show Budgets
+  const { data: budgets } = await supabase
+    .from('budgets')
+    .select('name, version, status, total_final_ars')
+    .eq('opportunity_id', opportunity.id)
+    .eq('tenant_id', opportunity.tenant_id);
+
+  if (budgets && budgets.length > 0) {
+    const STATUS_MAP: Record<string, string> = { draft: 'Borrador', revision: 'En Revisión', approved: 'Aprobado', closed: 'Cerrado' };
+    const budgetData = budgets.map((b: any) => [
+      b.name || 'Sin Título',
+      `v${b.version}`,
+      STATUS_MAP[b.status] || b.status.toUpperCase(),
+      fmtMoney(b.total_final_ars || 0)
+    ]);
+
+    doc.setFontSize(11);
+    doc.setFont(FONT_TITLE, 'bold');
+    doc.setTextColor(COLOR_BLUE);
+    doc.text('Presupuestos Vinculados', 40, currentY);
+    currentY += 10;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Nombre del Presupuesto', 'Versión', 'Estado', 'Monto Final']],
+      body: budgetData,
+      theme: 'grid',
+      styles: {
+        font: FONT_TITLE,
+        fontSize: 9,
+        cellPadding: 5,
+        textColor: '#333333',
+        lineColor: '#e5e7eb',
+        lineWidth: 0.5,
+      },
+      headStyles: {
+        fillColor: COLOR_BLUE,
+        textColor: '#ffffff',
+        fontStyle: 'bold'
+      },
+      margin: { left: 40, right: 40 }
+    });
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+  }
+
   // Footer Text
   const finalY = currentY + 20;
   
