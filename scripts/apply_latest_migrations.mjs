@@ -7,20 +7,16 @@ envContent.split('\n').forEach(line => {
   if (match) envVars[match[1].trim()] = match[2].trim();
 });
 
-const PROJECT_REF = envVars.SUPABASE_PROJECT_REF;
+const PROJECT_REF = envVars.SUPABASE_PROJECT_REF || (envVars.SUPABASE_URL ? envVars.SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)[1] : null);
 const ACCESS_TOKEN = envVars.SUPABASE_ACCESS_TOKEN;
 
 if (!PROJECT_REF || !ACCESS_TOKEN) {
-  console.error('Missing SUPABASE_PROJECT_REF or SUPABASE_ACCESS_TOKEN in .env');
+  console.error('Missing SUPABASE_PROJECT_REF (or SUPABASE_URL) or SUPABASE_ACCESS_TOKEN in .env');
   process.exit(1);
 }
 
 const queries = [
-  // Budget Opportunities Link
-  `ALTER TABLE budgets ADD COLUMN IF NOT EXISTS opportunity_id UUID REFERENCES opportunities(id);`,
-  `CREATE INDEX IF NOT EXISTS idx_budgets_opportunity ON budgets(opportunity_id);`,
-  // Opportunity Files
-  fs.readFileSync('supabase/migrations/20260620_opportunity_files.sql', 'utf-8')
+  "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
 ];
 
 async function main() {

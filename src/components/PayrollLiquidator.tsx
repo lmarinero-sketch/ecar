@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Users, Save, Download, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { useEmployees, useCreateWeeklyPaymentItem, useCreateWeeklyPayrollDetail } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';

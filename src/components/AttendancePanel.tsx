@@ -296,7 +296,7 @@ export const AttendancePanel: React.FC = () => {
                         {record.clock_in ? (
                           <span className="inline-flex items-center gap-1 text-sm font-mono font-bold text-green-700 bg-green-50 px-2 py-1 rounded-lg">
                             <ArrowDownRight size={12} />
-                            {record.clock_in.slice(0, 5)}
+                            {formatTime(record.clock_in)}
                           </span>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
@@ -304,7 +304,7 @@ export const AttendancePanel: React.FC = () => {
                         {record.clock_out ? (
                           <span className="inline-flex items-center gap-1 text-sm font-mono font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg">
                             <ArrowUpRight size={12} />
-                            {record.clock_out.slice(0, 5)}
+                            {formatTime(record.clock_out)}
                           </span>
                         ) : record.clock_in ? (
                           <span className="text-xs text-blue-500 font-bold flex items-center justify-center gap-1">
@@ -369,14 +369,28 @@ export const AttendancePanel: React.FC = () => {
 
 // ─── Helpers ───
 
+function formatTime(timeStr: string): string {
+  if (!timeStr) return '';
+  if (timeStr.includes('T')) {
+    return new Date(timeStr).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+  return timeStr.slice(0, 5);
+}
+
 function calculateWorkedHours(clockIn: string, clockOut: string): string {
-  const [inH, inM] = clockIn.split(':').map(Number);
-  const [outH, outM] = clockOut.split(':').map(Number);
-  const totalMin = (outH * 60 + outM) - (inH * 60 + inM);
-  if (totalMin <= 0) return '—';
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return `${h}h ${m}m`;
+  try {
+    const inT = formatTime(clockIn);
+    const outT = formatTime(clockOut);
+    const [inH, inM] = inT.split(':').map(Number);
+    const [outH, outM] = outT.split(':').map(Number);
+    const totalMin = (outH * 60 + outM) - (inH * 60 + inM);
+    if (totalMin <= 0 || isNaN(totalMin)) return '—';
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h ${m}m`;
+  } catch (e) {
+    return '—';
+  }
 }
 
 function getStatusConfig(status: string) {
