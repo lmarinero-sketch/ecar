@@ -241,7 +241,15 @@ export const PurchasesModule: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => { setEditingSupplier(s.id); setEditingSupplierForm({ name: s.name, cuit: s.cuit || '' }); }} className="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><Pencil size={14} /></button>
-                      <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar proveedor?')) await deleteSupplier.mutateAsync(s.id); }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
+                      <button onClick={async () => {
+                        if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar proveedor?')) {
+                          try {
+                            await deleteSupplier.mutateAsync(s.id);
+                          } catch (err: any) {
+                            useModalStore.getState().showAlert('Error', 'No se puede eliminar el proveedor porque tiene facturas u otros registros asociados.');
+                          }
+                        }
+                      }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
                     </div>
                   </>
                 )}
@@ -402,7 +410,7 @@ export const PurchasesModule: React.FC = () => {
                             <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
                           </>
                         )}
-                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status, tipo_operacion: inv.ocr_raw_data?.tipo || classifyInvoice(inv) }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
                         <button onClick={() => setDeleteTarget(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -426,6 +434,13 @@ export const PurchasesModule: React.FC = () => {
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500">Proveedor / Cliente</label>
                 <input value={editForm.supplier_name} onChange={e => setEditForm({ ...editForm, supplier_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Clasificación</label>
+                <select value={editForm.tipo_operacion} onChange={e => setEditForm({ ...editForm, tipo_operacion: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="compra">Compra</option>
+                  <option value="venta">Venta</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500">CUIT</label>
@@ -472,7 +487,7 @@ export const PurchasesModule: React.FC = () => {
             <button
               onClick={async () => {
                 try {
-                  const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number };
+                  const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
                   const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr }).eq('id', editingInvoice.id);
                   if (error) throw error;
                   setEditingInvoice(null);
