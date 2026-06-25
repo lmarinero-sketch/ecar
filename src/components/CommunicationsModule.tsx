@@ -46,7 +46,7 @@ const formatDateSeparator = (ts?: string) => {
 
 // Get last user message for preview
 const getLastPreview = (messages: { role: string; content: string }[]) => {
-  if (!messages || messages.length === 0) return 'Sin mensajes';
+  if (!Array.isArray(messages) || messages.length === 0) return 'Sin mensajes';
   const last = messages[messages.length - 1];
   const text = last.content || '';
   const prefix = last.role === 'user' ? '' : '🤖 ';
@@ -55,7 +55,7 @@ const getLastPreview = (messages: { role: string; content: string }[]) => {
 
 // Count user messages
 const countUserMessages = (messages: { role: string }[]) =>
-  messages?.filter(m => m.role === 'user').length || 0;
+  Array.isArray(messages) ? messages.filter(m => m.role === 'user').length : 0;
 
 export const CommunicationsModule: React.FC = () => {
   const { data: conversations = [], isLoading, refetch } = useWhatsappConversations();

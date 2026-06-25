@@ -57,7 +57,7 @@ export const PayrollLiquidator: React.FC<{
       if (error) throw error;
 
       const results: ObreroPayroll[] = activeObreros.map(emp => {
-        const empAtt = attendance?.filter(a => a.employee_id === emp.id) || [];
+        const empAtt = Array.isArray(attendance) ? attendance.filter(a => a.employee_id === emp.id) : [];
         // calculate hours down to minute
         let totalWorkedMinutes = 0;
         let totalOvertimeHours = 0; // manual overtime

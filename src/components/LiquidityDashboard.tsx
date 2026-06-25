@@ -164,7 +164,7 @@ export const LiquidityDashboard: React.FC = () => {
               <kpi.icon size={16} className={`text-${kpi.color}-500`} /> {kpi.label}
             </div>
             <p className={`text-2xl font-black text-${kpi.color}-600 font-mono`}>{fmt(kpi.value)}</p>
-            {kpi.type !== 'total' && accounts?.filter(a => a.type === kpi.type).map(a => (
+            {kpi.type !== 'total' && Array.isArray(accounts) && accounts.filter(a => a.type === kpi.type).map(a => (
               <p key={a.id} className="text-xs text-gray-400 mt-1">{a.name}{a.bank_name ? ` (${a.bank_name})` : ''}</p>
             ))}
           </div>
