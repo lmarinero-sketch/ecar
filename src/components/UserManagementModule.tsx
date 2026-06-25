@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
 import { ALL_MODULES, MODULE_LABELS } from '../lib/types';
 import type { ModuleId, ModulePermission } from '../lib/types';
+import { SIDEBAR_SECTIONS } from './Layout';
 
 type UserProfile = {
   id: string;
@@ -761,33 +762,58 @@ const PermissionsGrid: React.FC<{
         </div>
 
         {/* Rows */}
-        <div className="divide-y divide-gray-100 max-h-[320px] overflow-y-auto">
-          {ASSIGNABLE_MODULES.map(moduleId => {
-            const p = perms[moduleId] || { read: false, write: false, delete: false };
+        <div className="divide-y divide-gray-100 max-h-[380px] overflow-y-auto">
+          {SIDEBAR_SECTIONS.map((section, idx) => {
+            const sectionItems = section.items.filter(i => ASSIGNABLE_MODULES.includes(i.id as any));
+            if (sectionItems.length === 0) return null;
+            
             return (
-              <div key={moduleId} className={`grid grid-cols-[1fr_60px_60px_60px] md:grid-cols-[1fr_80px_80px_80px] gap-0 px-3 py-2 items-center hover:bg-white transition-colors ${p.read ? 'bg-white' : ''}`}>
-                <span className={`text-xs font-medium truncate ${p.read ? 'text-gray-800' : 'text-gray-400'}`}>
-                  {MODULE_LABELS[moduleId as ModuleId]}
-                </span>
-                <div className="flex justify-center">
-                  <button type="button" onClick={() => onToggle(moduleId, 'read')}
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.read ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300 hover:border-blue-300'}`}>
-                    {p.read && <Check size={12} strokeWidth={3} />}
-                  </button>
-                </div>
-                <div className="flex justify-center">
-                  <button type="button" onClick={() => onToggle(moduleId, 'write')}
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.write ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 hover:border-emerald-300'} ${!p.read ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    disabled={!p.read}>
-                    {p.write && <Check size={12} strokeWidth={3} />}
-                  </button>
-                </div>
-                <div className="flex justify-center">
-                  <button type="button" onClick={() => onToggle(moduleId, 'delete')}
-                    className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.delete ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 hover:border-red-300'} ${!p.write ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    disabled={!p.write}>
-                    {p.delete && <Check size={12} strokeWidth={3} />}
-                  </button>
+              <div key={idx}>
+                {section.label ? (
+                  <div className="bg-gray-200/50 px-3 py-1.5 border-y border-gray-200">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1">
+                      {section.emoji} {section.label}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-gray-200/50 px-3 py-1.5 border-y border-gray-200">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1">
+                      🌐 Generales
+                    </span>
+                  </div>
+                )}
+                <div className="divide-y divide-gray-100">
+                  {sectionItems.map(item => {
+                    const moduleId = item.id;
+                    const p = perms[moduleId] || { read: false, write: false, delete: false };
+                    return (
+                      <div key={moduleId} className={`grid grid-cols-[1fr_60px_60px_60px] md:grid-cols-[1fr_80px_80px_80px] gap-0 px-3 py-2 items-center hover:bg-white transition-colors ${p.read ? 'bg-white' : ''}`}>
+                        <span className={`text-xs font-medium truncate ${p.read ? 'text-gray-800' : 'text-gray-400'}`}>
+                          {MODULE_LABELS[moduleId as ModuleId]}
+                        </span>
+                        <div className="flex justify-center">
+                          <button type="button" onClick={() => onToggle(moduleId, 'read')}
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.read ? 'bg-blue-500 border-blue-500 text-white' : 'border-gray-300 hover:border-blue-300'}`}>
+                            {p.read && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        </div>
+                        <div className="flex justify-center">
+                          <button type="button" onClick={() => onToggle(moduleId, 'write')}
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.write ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 hover:border-emerald-300'} ${!p.read ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            disabled={!p.read}>
+                            {p.write && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        </div>
+                        <div className="flex justify-center">
+                          <button type="button" onClick={() => onToggle(moduleId, 'delete')}
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${p.delete ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 hover:border-red-300'} ${!p.write ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            disabled={!p.write}>
+                            {p.delete && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

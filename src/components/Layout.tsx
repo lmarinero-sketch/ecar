@@ -77,9 +77,9 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
 };
 
 /* ─── Sidebar sections ─── */
-type SidebarSection = { label: string; emoji: string; items: { id: ModuleId; requires?: boolean }[] };
+export type SidebarSection = { label: string; emoji: string; items: { id: ModuleId; requires?: boolean }[] };
 
-const SIDEBAR_SECTIONS: SidebarSection[] = [
+export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: '', emoji: '',
     items: [
@@ -115,6 +115,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
+      { id: 'fuel', requires: true },
     ],
   },
   {
@@ -175,12 +176,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
   // Trigger content animation on module change
   useEffect(() => {
     if (prevModule.current !== activeModule) {
       setContentKey(k => k + 1);
       prevModule.current = activeModule;
+    }
+    
+    // Auto-expand the section containing the active module
+    const activeSectionIndex = SIDEBAR_SECTIONS.findIndex(s => s.items.some(i => i.id === activeModule));
+    if (activeSectionIndex !== -1) {
+      setExpandedSections(prev => ({ ...prev, [activeSectionIndex]: true }));
     }
   }, [activeModule]);
 
@@ -262,29 +270,37 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {/* Section divider/label */}
                 {section.label && expanded && (
                   <div className="mx-2 mt-3 mb-1">
-                    <div className="flex items-center gap-1.5 px-3 py-[6px] bg-ecar-blue/90 rounded-md">
-                      <span className="text-[10px] opacity-80">{section.emoji}</span>
-                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">{section.label}</span>
-                    </div>
+                    <button 
+                      onClick={() => setExpandedSections(prev => ({ ...prev, [si]: !prev[si] }))}
+                      className="w-full flex items-center justify-between px-3 py-[6px] bg-ecar-blue/90 hover:bg-ecar-blue transition-colors rounded-md group"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] opacity-80">{section.emoji}</span>
+                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">{section.label}</span>
+                      </div>
+                      <ChevronRight size={12} className={`text-white/70 group-hover:text-white transition-transform duration-200 ${expandedSections[si] ? 'rotate-90' : ''}`} />
+                    </button>
                   </div>
                 )}
                 {section.label && !expanded && (
                   <div className="mx-3 my-2 border-t-2 border-ecar-blue/30" />
                 )}
 
-                <div className={expanded ? 'px-2 space-y-0.5' : 'px-1.5 space-y-0.5'}>
-                  {visibleItems.map((item, idx) => (
-                    <SidebarItem
-                      key={item.id}
-                      id={item.id}
-                      icon={iconMap[item.id]}
-                      active={activeModule}
-                      expanded={expanded}
-                      onSelect={handleSelect}
-                      delay={idx * 20}
-                    />
-                  ))}
-                </div>
+                {(!section.label || expandedSections[si] || !expanded) && (
+                  <div className={expanded ? 'px-2 space-y-0.5' : 'px-1.5 space-y-0.5'}>
+                    {visibleItems.map((item, idx) => (
+                      <SidebarItem
+                        key={item.id}
+                        id={item.id}
+                        icon={iconMap[item.id]}
+                        active={activeModule}
+                        expanded={expanded}
+                        onSelect={handleSelect}
+                        delay={idx * 20}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
