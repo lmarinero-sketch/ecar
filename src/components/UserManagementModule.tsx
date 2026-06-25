@@ -676,11 +676,11 @@ export const UserManagementModule: React.FC = () => {
                       <p className="text-xs text-amber-600 font-bold">🛡️ Acceso total a todos los módulos (Admin)</p>
                     ) : (
                       <div className="space-y-1">
-                        {(profile.allowed_modules || []).length === 0 ? (
+                        {(profile.allowed_modules && Array.isArray(profile.allowed_modules) ? profile.allowed_modules : []).length === 0 ? (
                           <p className="text-xs text-gray-400 italic">Sin módulos asignados</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                            {(profile.allowed_modules || []).map((m: string) => {
+                            {(profile.allowed_modules && Array.isArray(profile.allowed_modules) ? profile.allowed_modules : []).map((m: string) => {
                               const sp = storedPerms.find(p => p.module_id === m);
                               return (
                                 <div key={m} className="flex items-center justify-between bg-white rounded-lg px-3 py-1.5 border border-gray-100">
@@ -763,8 +763,8 @@ const PermissionsGrid: React.FC<{
 
         {/* Rows */}
         <div className="divide-y divide-gray-100 max-h-[380px] overflow-y-auto">
-          {SIDEBAR_SECTIONS.map((section, idx) => {
-            const sectionItems = section.items.filter(i => ASSIGNABLE_MODULES.includes(i.id as any));
+          {(SIDEBAR_SECTIONS || []).map((section, idx) => {
+            const sectionItems = (section?.items || []).filter(i => ASSIGNABLE_MODULES.includes(i.id as any));
             if (sectionItems.length === 0) return null;
             
             return (

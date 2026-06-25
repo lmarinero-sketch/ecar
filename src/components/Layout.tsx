@@ -94,7 +94,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Presupuestos', emoji: '📐',
     items: [
-      { id: 'budget_landing' },
+      { id: 'budget_landing', requires: true },
       { id: 'opportunities', requires: true },
       { id: 'project_budget', requires: true },
       { id: 'certifications', requires: true },
@@ -151,7 +151,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Comunicaciones', emoji: '💬',
     items: [
-      { id: 'communications' },
+      { id: 'communications', requires: true },
     ],
   },
   {
@@ -186,7 +186,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }
     
     // Auto-expand the section containing the active module
-    const activeSectionIndex = SIDEBAR_SECTIONS.findIndex(s => s.items.some(i => i.id === activeModule));
+    const activeSectionIndex = SIDEBAR_SECTIONS.findIndex(s => (s.items || []).some(i => i.id === activeModule));
     if (activeSectionIndex !== -1) {
       setExpandedSections(prev => ({ ...prev, [activeSectionIndex]: true }));
     }
@@ -256,7 +256,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {/* ── Navigation ── */}
         <div className="flex-1 overflow-y-auto py-2 sidebar-scrollbar">
           {SIDEBAR_SECTIONS.map((section, si) => {
-            const visibleItems = section.items.filter(
+            const visibleItems = (section.items || []).filter(
               item => {
                 // user_management is admin-only
                 if (item.id === 'user_management') return isAdmin;
