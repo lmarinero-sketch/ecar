@@ -224,7 +224,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <>
               <div className="flex items-center gap-2.5 group">
                 <div className="w-9 h-9 rounded-full bg-white ring-1 ring-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] group-hover:shadow-[0_2px_12px_rgba(17,92,156,0.15)] group-hover:ring-ecar-blue/30 transition-all duration-300 overflow-hidden flex items-center justify-center p-[3px]">
-                  <img src="/logogrow.png" alt="Grow Labs" className="w-full h-full object-contain rounded-full" />
+                  <img src="/logoECAR.png" alt="ECAR" className="w-full h-full object-contain rounded-full" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-slate-900 font-bold text-sm tracking-tight leading-none">ECAR</span>
@@ -247,7 +247,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               title="Expandir sidebar"
             >
               <div className="w-9 h-9 rounded-full bg-white ring-1 ring-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.06)] group-hover:shadow-[0_2px_12px_rgba(17,92,156,0.15)] group-hover:ring-ecar-blue/30 group-hover:scale-105 transition-all duration-300 overflow-hidden flex items-center justify-center p-[3px]">
-                <img src="/logogrow.png" alt="Grow Labs" className="w-full h-full object-contain rounded-full" />
+                <img src="/logoECAR.png" alt="ECAR" className="w-full h-full object-contain rounded-full" />
               </div>
             </button>
           )}
