@@ -52,7 +52,9 @@ Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin expli
 
 IMPORTANTE sobre MONTOS:
 - Todos los montos son numéricos con decimales (ej: 12100.50, NO 12100)
-- Preservá siempre los centavos/decimales
+- ATENCIÓN: En Argentina se usa el punto (.) para los miles y la coma (,) para los decimales en las imágenes. Si ves "2.525.983,00", el número es de millones (2525983.00), NO devuelvas "2525.983".
+- Devuelve SIEMPRE un número float válido en JSON (usando punto para decimales y sin separador de miles). Ej: 2525983.00.
+- Preservá siempre los centavos/decimales.
 - Si un campo no se puede leer, usá null
 - La fecha en formato YYYY-MM-DD`;
 
