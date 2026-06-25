@@ -77,7 +77,18 @@ export const PurchasesModule: React.FC = () => {
         setOcrError(`Error de función: ${errMsg}`);
         refetch();
       } else if (fnData?.success) {
-        setOcrResult(fnData.data);
+        const finalData = fnData.data;
+        
+        // FORZAR SIEMPRE el tipo de operación según lo que seleccionó el usuario,
+        // descartando cualquier clasificación errónea de la IA.
+        finalData.tipo = uploadTipo;
+        
+        // Actualizamos el registro en la DB para guardar la decisión final
+        await supabase.from('purchase_invoices').update({
+          ocr_raw_data: finalData
+        }).eq('id', record.id);
+        
+        setOcrResult(finalData);
         refetch();
         queryClient.invalidateQueries({ queryKey: ['suppliers'] });
         useImplementationStore.getState().completeItem('e2-9');
@@ -120,9 +131,10 @@ export const PurchasesModule: React.FC = () => {
   function classifyInvoice(inv: any): 'compra' | 'venta' {
     const ocr = inv.ocr_raw_data || {};
     
-    // Explicit type from OCR has highest priority
-    if (ocr.tipo === 'venta') return 'venta';
-    if (ocr.tipo === 'compra') return 'compra';
+    // Explicit type from OCR has highest priority (case insensitive)
+    const explicitTipo = (ocr.tipo || '').toLowerCase();
+    if (explicitTipo === 'venta') return 'venta';
+    if (explicitTipo === 'compra') return 'compra';
 
     // Check emisor/receptor fields if available
     const emisor = ocr.emisor || ocr.razon_social_emisor || '';
