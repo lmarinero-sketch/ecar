@@ -74,18 +74,46 @@ function injectStyles() {
     .mt-delay-7 { animation-delay: 0.7s; }
     .mt-delay-8 { animation-delay: 0.8s; }
 
+    @keyframes mt-shimmer {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      100% { transform: translateX(250%) skewX(-20deg); }
+    }
+    @keyframes mt-pulse-slow {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
     .mt-btn-card {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    /* Shimmer effect pseudo-element */
+    .mt-btn-card::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 50%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
+      transform: translateX(-150%) skewX(-20deg);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .mt-btn-card:hover::after {
+      animation: mt-shimmer 0.7s forwards;
     }
     .mt-btn-card:hover {
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -6px rgba(0,0,0,0.06);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 15px 30px -5px rgba(0,0,0,0.12), 0 8px 15px -8px rgba(0,0,0,0.08);
+      z-index: 20;
     }
     .mt-btn-card:hover .mt-arrow {
-      transform: translateX(3px);
+      transform: translateX(4px) scale(1.1);
+    }
+    .mt-btn-card:hover .mt-btn-number {
+      animation: mt-pulse-slow 1.5s infinite;
     }
     .mt-arrow {
-      transition: transform 0.25s ease;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .mt-notes-panel {
@@ -257,20 +285,39 @@ export function MesaTecnicaPresentation() {
           <p className="text-xl text-slate-700 leading-relaxed">
             La obra no debe presentarse como una simple repavimentación.
           </p>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
+              <p className="text-sm text-blue-600 font-bold uppercase tracking-wider mb-1">Presupuesto Oficial</p>
+              <p className="text-2xl font-black text-blue-900">$9.995.558.079</p>
+              <p className="text-xs text-blue-700 mt-1">Rubro 1: $9.075M | Rubro 2: $920M</p>
+            </div>
+            <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+              <p className="text-sm text-emerald-600 font-bold uppercase tracking-wider mb-1">Plazo y Longitud</p>
+              <p className="text-2xl font-black text-emerald-900">270 días / 2400m</p>
+              <p className="text-xs text-emerald-700 mt-1">1157m Autovía | 1250m a duplicar</p>
+            </div>
+          </div>
+
           <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-            <h3 className="font-semibold text-slate-800 mb-4">Alcance integral detectado:</h3>
+            <h3 className="font-semibold text-slate-800 mb-4">Puntos Críticos Técnicos:</h3>
             <ul className="grid grid-cols-2 gap-4">
-              {[
-                "Refuncionalización vial", "Rotondas", "Duplicación de calzada",
-                "Hidráulica", "Alumbrado", "Señalización",
-                "Seguridad vial", "Banquinas", "New Jersey",
-                "Cómputos", "Documentación técnica"
-              ].map((item, idx) => (
-                <li key={idx} className="flex items-center text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
+              <li className="flex items-start text-slate-600">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                <span><strong className="text-slate-700">3 Rotondas:</strong> RP1-RP5, Virginia Palace y Bv. Los Ciruelos.</span>
+              </li>
+              <li className="flex items-start text-slate-600">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                <span><strong className="text-slate-700">Hidráulica:</strong> Canal revestido en C. Gardel por pendientes.</span>
+              </li>
+              <li className="flex items-start text-slate-600">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                <span><strong className="text-slate-700">Iluminación:</strong> Columnas LED 12m (Rubro 2 independiente).</span>
+              </li>
+              <li className="flex items-start text-slate-600">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                <span><strong className="text-slate-700">Mano de Obra:</strong> Cláusula "Trabajo por San Luis".</span>
+              </li>
             </ul>
           </div>
           <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r">
@@ -294,10 +341,15 @@ export function MesaTecnicaPresentation() {
               <h3 className="text-xl font-semibold text-slate-800 mb-2">
                 Anteproyecto Básico Obligatorio
               </h3>
-              <p className="text-slate-600 text-lg leading-relaxed">
+              <p className="text-slate-600 text-lg leading-relaxed mb-4">
                 La licitación exige acompañar la oferta con un Proyecto Base / Anteproyecto Básico.
                 Este anteproyecto debe explicar la solución técnica y ayudar a sostener los cómputos y la oferta.
               </p>
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                <p className="text-amber-800 font-bold font-mono text-sm uppercase tracking-wide">
+                  "Nota del Pliego: Las ofertas que no presenten Anteproyecto Básico no serán evaluadas"
+                </p>
+              </div>
             </div>
           </div>
           <div className="bg-slate-800 p-6 rounded-xl text-white mt-8">
@@ -419,10 +471,10 @@ export function MesaTecnicaPresentation() {
               </h4>
               <ul className="text-red-900 text-sm space-y-2 list-disc list-inside">
                 <li>Ajuste alzado</li>
-                <li>Falta de topografía</li>
-                <li>Interferencias no relevadas</li>
-                <li>Hidráulica no verificada</li>
-                <li>Plazo corto</li>
+                <li>Hidráulica C. Gardel no verificada</li>
+                <li>Interferencias en nuevas rotondas</li>
+                <li>Plazo corto (270 días)</li>
+                <li>Certificación separada por rubros</li>
               </ul>
             </div>
             <div className="bg-orange-50 p-5 rounded-xl border border-orange-100">
@@ -621,8 +673,25 @@ export function MesaTecnicaPresentation() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-8 relative overflow-hidden" 
-         style={{ fontFamily: "'Inter', sans-serif", backgroundImage: 'radial-gradient(#e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px', backgroundColor: '#f8fbff' }}>
+    <div className="min-h-screen flex flex-col justify-center items-center p-8 relative overflow-hidden bg-slate-950" style={{ fontFamily: "'Inter', sans-serif" }}>
+      
+      {/* Background Video */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline 
+        className="absolute inset-0 w-full h-full object-cover z-0 opacity-80"
+      >
+        <source src="/Cinematic_sunset_on_a_road._202606260006.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Extra Dark Overlay */}
+      <div className="absolute inset-0 bg-slate-900/85 z-0" />
+
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 opacity-[0.05] z-0" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
       
       <div key={animKey} className="max-w-6xl w-full bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden z-10 mt-animate-scale">
         
@@ -638,7 +707,7 @@ export function MesaTecnicaPresentation() {
                 MESA TÉCNICA DE APOYO LICITATORIO
               </h1>
               <p className="text-[#64748b] text-lg font-medium">
-                Proyecto Base para Presentación de Oferta <span className="mx-2 text-slate-300">|</span> Del pliego a una propuesta técnica defendible
+                Proyecto Base para Presentación de Oferta
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -662,9 +731,6 @@ export function MesaTecnicaPresentation() {
             <div className="flex items-center text-slate-500">
               <span className="text-slate-400 font-medium mr-1.5">Proyecto:</span> Licitación vial — RP Nº 1, Ingreso a Merlo, San Luis
             </div>
-            <div className="flex items-center text-slate-500">
-              <span className="text-slate-400 font-medium mr-1.5">Destinatario:</span> Empresa oferente / equipo decisor
-            </div>
           </div>
         </div>
 
@@ -677,9 +743,9 @@ export function MesaTecnicaPresentation() {
               <button
                 key={btn.id}
                 onClick={() => navigateTo(btn.id as ScreenId)}
-                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-blue-300 mt-animate-slide-left mt-delay-${idx + 1}`}
+                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-blue-400 mt-animate-slide-left mt-delay-${idx + 1}`}
               >
-                <div className="w-14 bg-[#1a4a76] text-white flex items-center justify-center text-2xl font-bold">
+                <div className="mt-btn-number w-14 bg-[#1a4a76] text-white flex items-center justify-center text-2xl font-bold transition-colors duration-300 group-hover:bg-blue-600">
                   {btn.id}
                 </div>
                 <div className="flex-1 p-3 flex justify-between items-center bg-white">
@@ -699,33 +765,8 @@ export function MesaTecnicaPresentation() {
           <div className="col-span-12 lg:col-span-6 flex items-stretch mt-animate-fade mt-delay-2">
             <div className="w-full bg-white border-2 border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-3xl overflow-hidden flex flex-col">
               
-              {/* Top info section */}
-              <div className="p-6 pb-4">
-                <div className="text-center">
-                  <div className="inline-block bg-[#f0f7ff] rounded-2xl px-6 py-2.5 mb-4 shadow-sm border border-blue-50">
-                    <h2 className="text-xl font-bold text-[#1e3a5f]">Tablero de reunión interactivo</h2>
-                    <p className="text-slate-500 text-xs mt-1">Cada botón abre una explicación técnica breve.</p>
-                  </div>
-                  
-                  <ul className="text-left space-y-2.5 max-w-sm mx-auto text-[#475569] text-sm font-medium">
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-[#e25d48] mr-2.5"></div>
-                      No es una presentación lineal
-                    </li>
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-[#e25d48] mr-2.5"></div>
-                      Permite explicar según el tema que surja
-                    </li>
-                    <li className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-[#e25d48] mr-2.5"></div>
-                      Ordena pliego, alcance, riesgos y próximos pasos
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
               {/* Street View Embed */}
-              <div className="flex-1 min-h-[200px] relative border-t border-slate-100">
+              <div className="flex-1 min-h-[200px] relative">
                 <iframe
                   className="w-full h-full absolute inset-0"
                   style={{ border: 0, minHeight: '200px' }}
@@ -748,9 +789,9 @@ export function MesaTecnicaPresentation() {
               <button
                 key={btn.id}
                 onClick={() => navigateTo(btn.id as ScreenId)}
-                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-emerald-300 mt-animate-slide-right mt-delay-${idx + 1}`}
+                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-emerald-400 mt-animate-slide-right mt-delay-${idx + 1}`}
               >
-                <div className="w-14 bg-[#2d7667] text-white flex items-center justify-center text-2xl font-bold">
+                <div className="mt-btn-number w-14 bg-[#2d7667] text-white flex items-center justify-center text-2xl font-bold transition-colors duration-300 group-hover:bg-emerald-600">
                   {btn.id}
                 </div>
                 <div className="flex-1 p-3 flex justify-between items-center bg-white">
@@ -768,14 +809,6 @@ export function MesaTecnicaPresentation() {
 
         </div>
 
-        {/* Footer */}
-        <div className="mt-10 bg-[#1e293b] rounded-xl px-6 py-4 flex justify-between items-center text-slate-200 text-sm font-medium mt-animate-fade mt-delay-5">
-          <p>Uso en reunión: pantalla principal + navegación por tema + retorno al tablero</p>
-          <div className="flex items-center gap-4">
-            <p className="text-slate-500 text-xs">Atajos: 1-8 secciones · Esc volver · F fullscreen · N notas</p>
-            <p className="text-slate-400">Web Interactiva</p>
-          </div>
-        </div>
 
       </div>{/* closes p-10 wrapper */}
       </div>{/* closes white card */}
