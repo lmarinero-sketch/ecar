@@ -23,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/fichar" element={<CheckInPage />} />
         <Route path="/checkin" element={<CheckInPage />} />
         <Route path="/checkin/:vehicleId" element={<VehicleCheckInWrapper />} />
+        <Route path="/presentacion-mesa-tecnica" element={<App />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

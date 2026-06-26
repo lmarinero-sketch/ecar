@@ -5,6 +5,7 @@ import { LoginPage } from './components/LoginPage';
 import { CheckInPage } from './components/CheckInPage';
 import { VehicleCheckInPage } from './components/VehicleCheckInPage';
 import { useAppStore } from './store/useStore';
+import { MesaTecnicaPresentation } from './components/MesaTecnicaPresentation';
 
 // Module imports
 import { BiDashboard } from './components/BiDashboard';
@@ -54,8 +55,11 @@ const queryClient = new QueryClient({
 });
 
 // Detect public QR routes before auth
-function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | null {
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | null {
   const path = window.location.pathname;
+  if (path === '/presentacion-mesa-tecnica' || path === '/presentacion-mesa-tecnica/') {
+    return { type: 'mesa_tecnica' };
+  }
   // /checkin/{uuid} → Vehicle daily report (QR scan)
   const vehicleMatch = path.match(/^\/checkin\/([0-9a-f-]{36})$/i);
   if (vehicleMatch) {
@@ -75,6 +79,9 @@ function AppContent() {
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
   if (publicRoute) {
+    if (publicRoute.type === 'mesa_tecnica') {
+      return <MesaTecnicaPresentation />;
+    }
     if (publicRoute.type === 'checkin_vehicle') {
       return <VehicleCheckInPage vehicleId={publicRoute.vehicleId} />;
     }

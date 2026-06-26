@@ -1,0 +1,219 @@
+﻿DISEÑO CONCEPTUALPresentación Interactiva
+Mesa Técnica de Apoyo LicitatorioProyecto Base para Presentación de Oferta
+Del pliego a una propuesta técnica clara, defendible y presentable.
+Proyecto
+Licitación vial - Ruta Provincial Nº 1, Ingreso a Merlo, San Luis
+Uso previsto
+Reunión comercial-técnica inicial
+Destinatario
+Empresa oferente / equipo decisor
+Versión
+v1 - Documento conceptual
+Fecha
+A completar
+Documento preparado para orientar el diseño final que luego podrá desarrollar Lucas / GrowLabs en PowerPoint interactivo, Canva, Genially, Figma o web simple.
+Índice
+Objetivo de la presentación
+Contexto de la reunión
+Concepto de navegación interactiva
+Mapa de botones principales
+Contenido sugerido para cada botón
+Imagen guía - maqueta de pantalla principal
+Estilo visual recomendado
+Texto sugerido para explicar cada sección durante la reunión
+Herramienta recomendada para desarrollarla
+Próximos pasos para producir la presentación
+Nota: el índice está preparado como referencia de trabajo para Lucas. Si se edita el documento final en Word, puede reemplazarse por una tabla de contenido automática.
+1. Objetivo de la presentación
+El objetivo es contar con una presentación dinámica para una reunión comercial-técnica inicial con la empresa que solicita apoyo para presentarse a una licitación vial en San Luis. La presentación debe permitir explicar, de manera ordenada y visual, qué vimos en el pliego, qué exige la licitación, qué documentación hace falta y qué alcance podemos asumir como consultores.
+Idea central
+No se busca una presentación lineal. Se busca un tablero de reunión con botones o tarjetas interactivas que permitan ingresar al tema que corresponda según avance la conversación.
+2. Contexto de la reunión
+La empresa necesita comprender qué implica preparar un Proyecto Base o Anteproyecto Básico Licitatorio para acompañar su oferta. La reunión debe ayudar a ordenar expectativas, definir alcance, identificar información faltante y separar claramente esta etapa licitatoria del futuro proyecto ejecutivo.
+La presentación debe dejar claro que el rol del equipo consultor no es ejecutar la obra ni asumir, en esta primera etapa, el proyecto ejecutivo definitivo. El rol inicial es ayudar a transformar el pliego en una documentación base clara, defendible y presentable para licitación.
+3. Concepto de navegación interactiva
+La presentación funcionará como una pantalla principal, similar a un tablero de control. Desde esa pantalla se podrá acceder a cada explicación mediante botones. Cada botón abrirá una pantalla interna breve, visual y orientada a la toma de decisiones.
+Elemento
+Función en la reunión
+Resultado esperado
+Pantalla principal
+Ordena los temas clave y evita perderse en el pliego.
+Reunión más clara y profesional.
+Botones interactivos
+Permiten abrir cada tema según la conversación.
+Explicación flexible, no lineal.
+Pantallas internas
+Desarrollan cada punto con textos breves, gráficos y mensajes fuertes.
+Cliente entiende alcance, riesgos y próximos pasos.
+Botón volver
+Permite regresar al tablero principal.
+Control de navegación y continuidad.
+4. Mapa de botones principales
+La pantalla principal debe mostrar ocho botones principales. Cada botón debe ser visible, claro y fácil de tocar durante la reunión.
+Nº
+Botón
+Propósito
+Mensaje central
+1
+Qué vimos en el pliego
+Mostrar que la obra requiere lectura integral.
+No alcanza con mirar solo presupuesto.
+2
+Qué exige la licitación
+Explicar el anteproyecto básico obligatorio.
+La urgencia es presentar documentación admisible.
+3
+Proyecto Base vs Ejecutivo
+Separar etapa licitatoria de etapa constructiva.
+El proyecto base no reemplaza al ejecutivo.
+4
+Alcance que podemos asumir
+Mostrar los módulos del servicio consultor.
+No vendemos planos sueltos, vendemos orden técnico.
+5
+Información que necesitamos
+Pedir documentación concreta para avanzar.
+La velocidad depende de la información disponible.
+6
+Riesgos principales
+Mostrar riesgos por ajuste alzado, hidráulica e interferencias.
+Detectar riesgos antes de cerrar oferta.
+7
+Entregables propuestos
+Definir qué recibirá el cliente.
+El entregable incluye criterios, supuestos y límites.
+8
+Próximos pasos
+Cerrar decisiones y responsables.
+La reunión debe terminar con acciones concretas.
+5. Contenido sugerido para cada botón
+Botón 1 - Qué vimos en el pliego
+La obra no debe presentarse como una simple repavimentación.
+Incluye re funcionalización vial, rotondas, duplicación de calzada, hidráulica, alumbrado, señalización, seguridad vial, banquinas, New Jersey, cómputos y documentación técnica.
+Mensaje: el pliego exige una lectura técnica integral.
+Botón 2 - Qué exige la licitación
+La licitación exige acompañar la oferta con un Proyecto Base / Anteproyecto Básico.
+El anteproyecto debe explicar la solución técnica y ayudar a sostener cómputos y oferta.
+Mensaje: la urgencia no es solo cotizar, sino presentar documentación técnica admisible y defendible.
+Botón 3 - Proyecto Base vs Proyecto Ejecutivo
+Proyecto Base: se presenta con la oferta, define criterios generales, ordena la solución, permite computar preliminarmente e identifica riesgos.
+Proyecto Ejecutivo: se desarrolla si la obra es adjudicada, requiere topografía definitiva, detalles constructivos, memorias, verificaciones y documentación aprobable.
+Mensaje: primero se necesita una propuesta técnica base; luego, si se adjudica, se desarrolla el ejecutivo completo.
+Botón 4 - Alcance que podemos asumir
+Revisión técnica del pliego.
+Anteproyecto vial base.
+Anteproyecto hidráulico preliminar.
+Iluminación, servicios e interferencias.
+Señalización y seguridad vial.
+Cómputo preliminar, memoria técnica, matriz de riesgos y presentación visual.
+Mensaje: no ofrecemos planos sueltos; ofrecemos una mesa técnica para transformar el pliego en una presentación licitatoria ordenada.
+Botón 5 - Información que necesitamos
+Pliego completo definitivo y circulares.
+Planos DWG, topografía y archivos Civil 3D si existen.
+Relevamiento de servicios, alumbrado y alcantarillas.
+Datos hidráulicos previos y criterio de vehículo de diseño.
+Fecha interna de cierre, responsable técnico y contacto de validación.
+Mensaje: la calidad y velocidad del trabajo dependen directamente de la información disponible.
+Botón 6 - Riesgos principales
+Riesgo alto: ajuste alzado, falta de topografía, interferencias no relevadas, hidráulica no verificada y plazo corto.
+Riesgo medio: rediseños posteriores, New Jersey con drenaje y servicios, posibles terrenos laterales y falta de definición de alcance.
+Riesgo controlable: orden documental, memoria técnica clara, cómputo preliminar ordenado y matriz de supuestos.
+Mensaje: el anteproyecto básico debe ayudar a detectar riesgos antes de cerrar la oferta.
+Botón 7 - Entregables propuestos
+Informe de revisión del pliego.
+Memoria técnica del proyecto base.
+Planos base en PDF y editables cuando corresponda.
+Cómputo preliminar en Excel.
+Matriz de riesgos técnicos y listado de documentación faltante.
+Lámina ejecutiva y reunión de explicación técnica.
+Mensaje: el entregable no es solo gráfico; también debe dejar criterios, supuestos, riesgos y límites de responsabilidad.
+Botón 8 - Próximos pasos
+Reunión de alcance.
+Recepción de información.
+Definición de criterios.
+Desarrollo del proyecto base.
+Revisión con la empresa oferente.
+Ajustes finales.
+Entrega para presentación licitatoria.
+Mensaje: para avanzar se necesita definir alcance, plazo, documentación disponible y responsable de validación.
+6. Imagen guía - maqueta de pantalla principal
+La siguiente imagen sirve como referencia para Lucas. La idea es que la pantalla principal funcione como tablero de reunión, con ocho accesos visibles y un centro visual asociado a ruta, plano o esquema vial.
+Figura 1 - Wireframe conceptual de tablero interactivo para reunión.
+7. Estilo visual recomendado
+Criterio
+Recomendación
+Evitar
+Identidad
+Consultoría técnica premium, sin marca ECAR.
+Apariencia de flyer o pieza publicitaria débil.
+Color
+Fondo claro, azul sobrio, gris técnico y acentos puntuales.
+Colores saturados o excesivamente llamativos.
+Texto
+Frases breves, mensajes fuertes y cuadros comparativos.
+Párrafos largos dentro de las pantallas.
+Navegación
+Botones grandes, retorno al tablero y secuencia flexible.
+Diapositivas lineales sin control de recorrido.
+Elementos visuales
+Ruta, plano, iconos técnicos, tarjetas y matriz de riesgos.
+Imágenes genéricas sin relación con ingeniería.
+Animación
+Transiciones simples y elegantes.
+Animaciones excesivas que distraigan.
+8. Texto sugerido para explicar cada sección durante la reunión
+Sección
+Texto sugerido para exponer
+Apertura
+La idea de esta reunión es ordenar qué pide el pliego y qué hace falta para que la oferta llegue técnicamente bien presentada. No venimos a vender planos sueltos, sino a definir una mesa técnica de apoyo licitatorio.
+Qué vimos en el pliego
+Vimos una intervención vial integral, con rotondas, duplicación, hidráulica, iluminación, señalización y seguridad vial. Por eso conviene leer el pliego como un sistema, no como una lista de ítems.
+Exigencia licitatoria
+El punto crítico es que la oferta necesita un proyecto base o anteproyecto básico. Si eso no se resuelve bien, la presentación puede quedar débil o directamente fuera de evaluación.
+Proyecto Base vs Ejecutivo
+El anteproyecto básico sirve para presentar la oferta. El ejecutivo completo se desarrolla después, si la obra se adjudica, con más información y nivel de detalle.
+Alcance consultor
+Podemos asumir una etapa inicial para ordenar pliego, criterios, planos base, cómputos preliminares, riesgos y memoria técnica, siempre dejando claros los límites de esta etapa.
+Información necesaria
+Para trabajar bien necesitamos saber con qué información cuentan: DWG, topografía, Civil 3D, interferencias, hidráulica previa, alumbrado y fecha interna de cierre.
+Riesgos
+Por ser una obra con ajuste alzado, los riesgos no detectados pueden impactar en el precio. El anteproyecto debe ayudar a anticipar esos puntos antes de cerrar la oferta.
+Próximos pasos
+Para avanzar necesitamos tres definiciones: alcance, documentación disponible y plazo real. Con eso podemos preparar una propuesta técnica y económica concreta.
+9. Herramienta recomendada para desarrollarla
+Para la reunión de corto plazo se recomienda producirla en PowerPoint interactivo, porque permite trabajar offline, usar botones con hipervínculos internos, volver al tablero principal y entregar un archivo editable. Luego, si se busca una experiencia más digital, puede migrarse a Genially, Figma o una web simple.
+Herramienta
+Ventaja
+Uso recomendado
+Observación
+PowerPoint interactivo
+Rápido, editable y usable offline.
+Reunión de mañana o corto plazo.
+Recomendado como primera versión.
+Canva
+Buena estética y rapidez visual.
+Diseño bonito y exportable.
+Limitado para navegación avanzada.
+Genially
+Muy interactivo y visual.
+Presentación online con botones.
+Depende de conexión y cuenta.
+Figma
+Excelente para prototipar UX.
+Maqueta y navegación conceptual.
+Requiere diseño posterior para presentar.
+Web simple
+Máxima personalización.
+Versión comercial premium.
+Mayor tiempo de producción.
+10. Próximos pasos para producir la presentación
+Validar con Gustavo el esquema de botones y los mensajes centrales.
+Definir la herramienta de producción: PowerPoint interactivo como opción recomendada.
+Crear pantalla principal con los ocho botones y un botón fijo de retorno.
+Diseñar una pantalla interna por cada botón, con textos breves y visuales técnicos.
+Incorporar matrices simples: alcance, riesgos, información requerida y próximos pasos.
+Preparar versión de prueba para ensayar la reunión.
+Ajustar lenguaje según la empresa oferente y el tiempo real disponible.
+Cierre recomendado para Lucas
+Necesitamos una presentación tipo tablero interactivo de reunión. No queremos pasar diapositivas una atrás de otra; queremos tocar un botón según el tema que surja y explicar con claridad cada punto del pliego, el alcance consultor y los próximos pasos.
+
