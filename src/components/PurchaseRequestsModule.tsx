@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
-  useSystemSetting, useUpsertSystemSetting, useInventoryItems
+  useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequestItem } from '../lib/types';
@@ -23,6 +23,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   ordered: { label: 'Pedido', color: 'bg-purple-100 text-purple-700' },
   received: { label: 'Recibido', color: 'bg-emerald-100 text-emerald-700' },
   rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-700' },
+  quoted: { label: 'Cotizado', color: 'bg-teal-100 text-teal-700' },
 };
 
 const formatPhone = (phone: string) => {
@@ -51,10 +52,15 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [showNew, setShowNew] = useState(false);
   const [showWhatsappConfig, setShowWhatsappConfig] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
+  const [activeTab, setActiveTab] = useState<'obra' | 'quote'>('obra');
   const [form, setForm] = useState({ project_id: '', urgency: 'normal', requested_by: '', notes: '' });
   const [formItems, setFormItems] = useState<{ description: string; quantity: string; unit: string; inventoryItemId: string; searchText: string; showDropdown: boolean }[]>([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [phoneSaved, setPhoneSaved] = useState(false);
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
+  const [quotePrices, setQuotePrices] = useState<Record<string, number>>({});
+
+  const updateQuoteItems = useUpdatePurchaseRequestItems();
 
   useEffect(() => {
     if (whatsappSetting?.value !== undefined) {
@@ -64,11 +70,14 @@ export const PurchaseRequestsModule: React.FC = () => {
 
   const filtered = useMemo(() => {
     if (!requests) return [];
-    return requests.filter(r => !filterStatus || r.status === filterStatus);
-  }, [requests, filterStatus]);
+    return requests.filter(r => {
+      const typeMatch = activeTab === 'quote' ? r.request_type === 'quote' : (r.request_type === 'purchase' || !r.request_type);
+      return typeMatch && (!filterStatus || r.status === filterStatus);
+    });
+  }, [requests, filterStatus, activeTab]);
 
-  const pendingCount = useMemo(() => (requests || []).filter(r => r.status === 'pending').length, [requests]);
-  const urgentCount = useMemo(() => (requests || []).filter(r => r.urgency === 'urgent' && r.status === 'pending').length, [requests]);
+  const pendingCount = useMemo(() => (requests || []).filter(r => r.status === 'pending' && (r.request_type === 'purchase' || !r.request_type)).length, [requests]);
+  const urgentCount = useMemo(() => (requests || []).filter(r => r.urgency === 'urgent' && r.status === 'pending' && (r.request_type === 'purchase' || !r.request_type)).length, [requests]);
 
   const addItem = () => setFormItems([...formItems, { description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   const removeItem = (i: number) => setFormItems(formItems.filter((_, idx) => idx !== i));
@@ -219,6 +228,12 @@ export const PurchaseRequestsModule: React.FC = () => {
         )}
       </div>
 
+      {/* TABS */}
+      <div className="flex border-b border-gray-200">
+        <button onClick={() => { setActiveTab('obra'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'obra' ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Pedidos de Obra</button>
+        <button onClick={() => { setActiveTab('quote'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'quote' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Cotizaciones de Presupuestos</button>
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 border rounded-lg text-sm">
@@ -226,9 +241,11 @@ export const PurchaseRequestsModule: React.FC = () => {
           {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
         <div className="flex-1" />
-        <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
-          <Plus size={16} /> Nuevo Pedido
-        </button>
+        {activeTab === 'obra' && (
+          <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+            <Plus size={16} /> Nuevo Pedido
+          </button>
+        )}
       </div>
 
       {/* Requests list */}
@@ -262,19 +279,68 @@ export const PurchaseRequestsModule: React.FC = () => {
                     </div>
                   )}
                 </div>
-                {req.status === 'pending' && (
+                {req.status === 'pending' && activeTab === 'obra' && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'approved', approved_at: new Date().toISOString() })} className="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-all" title="Aprobar"><Check size={16} className="text-green-700" /></button>
                     <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'rejected' })} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-all" title="Rechazar"><XCircle size={16} className="text-red-700" /></button>
                   </div>
                 )}
-                {req.status === 'approved' && (
+                {req.status === 'approved' && activeTab === 'obra' && (
                   <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200 transition-all">Marcar Pedido</button>
                 )}
-                {req.status === 'ordered' && (
+                {req.status === 'ordered' && activeTab === 'obra' && (
                   <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'received' })} className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-all">Recibido ✅</button>
                 )}
+                
+                {/* Quote Actions */}
+                {activeTab === 'quote' && req.status === 'pending' && editingQuoteId !== req.id && (
+                  <button onClick={() => {
+                    const initialPrices: Record<string, number> = {};
+                    items.forEach(i => { initialPrices[i.id] = i.estimated_unit_cost || 0; });
+                    setQuotePrices(initialPrices);
+                    setEditingQuoteId(req.id);
+                  }} className="px-4 py-2 rounded-lg bg-teal-100 text-teal-700 text-xs font-bold hover:bg-teal-200 transition-all">Cotizar</button>
+                )}
               </div>
+              
+              {/* Quote Editing UI */}
+              {editingQuoteId === req.id && (
+                <div className="border-t border-gray-100 p-4 bg-gray-50">
+                  <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Ingresar Precios Unitarios (ARS)</h4>
+                  <div className="space-y-2">
+                    {items.map(item => (
+                      <div key={item.id} className="flex items-center gap-3 bg-white p-2 border border-gray-200 rounded-lg">
+                        <div className="flex-1 text-sm">{item.description}</div>
+                        <div className="w-24 text-right text-xs text-gray-500">{item.quantity} {item.unit}</div>
+                        <div className="w-32 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-sm">$</span>
+                          <input 
+                            type="number" 
+                            className="w-full pl-7 pr-3 py-1.5 text-sm font-mono border border-gray-300 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                            value={quotePrices[item.id] || ''} 
+                            onChange={e => setQuotePrices({...quotePrices, [item.id]: parseFloat(e.target.value) || 0})}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button onClick={() => setEditingQuoteId(null)} className="px-4 py-2 text-sm text-gray-500 font-bold hover:bg-gray-200 rounded-lg">Cancelar</button>
+                    <button 
+                      onClick={async () => {
+                        const itemsToUpdate = items.map(i => ({ id: i.id, estimated_unit_cost: quotePrices[i.id] || 0, budget_item_id: i.budget_item_id }));
+                        await updateQuoteItems.mutateAsync(itemsToUpdate);
+                        await updateRequest.mutateAsync({ id: req.id, status: 'quoted' });
+                        setEditingQuoteId(null);
+                      }} 
+                      disabled={updateQuoteItems.isPending || updateRequest.isPending}
+                      className="px-4 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                    >
+                      {(updateQuoteItems.isPending || updateRequest.isPending) ? 'Guardando...' : 'Enviar Cotización a Presupuestos'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

@@ -1150,6 +1150,27 @@ export function useUpdatePurchaseRequest() {
   });
 }
 
+export function useUpdatePurchaseRequestItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { id: string; estimated_unit_cost: number; budget_item_id?: string | null }[]) => {
+      for (const item of items) {
+        const { error } = await supabase.from('purchase_request_items').update({ estimated_unit_cost: item.estimated_unit_cost }).eq('id', item.id);
+        if (error) throw error;
+        if (item.budget_item_id) {
+          const { error: budgetError } = await supabase.from('budget_items').update({ unit_price_ars: item.estimated_unit_cost, quote_status: 'received' }).eq('id', item.budget_item_id);
+          if (budgetError) throw budgetError;
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['budgets'] });
+      qc.invalidateQueries({ queryKey: ['budget_items'] });
+    },
+  });
+}
+
 // ========== PARTE DIARIO DE OBRA ==========
 export function usePartesDiarios(obraId?: string) {
   return useQuery({

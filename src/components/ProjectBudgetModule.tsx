@@ -18,7 +18,7 @@ import {
   useItemDictionary, useSectionDictionary,
   useOpportunities,
   useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
-  useCreateNotificationLog
+  useCreateNotificationLog, useCreatePurchaseRequest
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 import { useModalStore } from '../store/useModalStore';
@@ -489,6 +489,7 @@ const BudgetDetailView: React.FC<{
   const uploadFile = useUploadBudgetFile();
   const deleteFile = useDeleteBudgetFile();
   const createLog = useCreateNotificationLog();
+  const createPurchaseRequest = useCreatePurchaseRequest();
 
   const [activeTab, setActiveTab] = useState<'general' | 'entrada' | 'computo' | 'adjuntos' | 'cierre'>('computo');
   const [uploading, setUploading] = useState(false);
@@ -1358,9 +1359,31 @@ const BudgetDetailView: React.FC<{
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
-                 await createLog.mutateAsync({ contact_id: '00000000-0000-0000-0000-000000000000', contact_name: 'Compras', contact_phone: 'compras@ecar.com.ar', message_content: `Solicitud de cotización para presupuesto ${budget.name}`, status: 'sent' });
-                 useModalStore.getState().showAlert('Éxito', 'Notificación enviada a Compras (simulado)');
-             }} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors">Notificar a Compras</button>
+                 const materialItems = budgetItems.filter(i => i.cost_type === 'material');
+                 if (materialItems.length === 0) {
+                   useModalStore.getState().showAlert('Aviso', 'No hay materiales en el cómputo para cotizar.');
+                   return;
+                 }
+                 await createPurchaseRequest.mutateAsync({
+                   project_id: budget.project_id,
+                   budget_id: budget.id,
+                   request_type: 'quote',
+                   urgency: 'normal',
+                   requested_by: 'Presupuestos',
+                   notes: `Solicitud de cotización generada desde Presupuesto: ${budget.name}`,
+                   items: materialItems.map(item => ({
+                     description: item.description,
+                     quantity: item.quantity,
+                     unit: item.unit,
+                     estimated_unit_cost: 0,
+                     inventory_item_id: null,
+                     budget_item_id: item.id
+                   }))
+                 } as any);
+                 useModalStore.getState().showAlert('Éxito', 'Solicitud de cotización enviada a Compras correctamente.');
+             }} disabled={createPurchaseRequest.isPending} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors disabled:opacity-50">
+                {createPurchaseRequest.isPending ? 'Enviando...' : 'Solicitar Cotización a Compras'}
+             </button>
           </div>
         </div>
       )}

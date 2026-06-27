@@ -665,9 +665,11 @@ export type PurchaseRequest = {
   id: string;
   tenant_id: string;
   project_id: string | null;
+  budget_id: string | null;
+  request_type: 'purchase' | 'quote';
   requested_by: string | null;
   urgency: 'low' | 'normal' | 'urgent';
-  status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected';
+  status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected' | 'quoted';
   notes: string | null;
   approved_by: string | null;
   approved_at: string | null;
@@ -684,6 +686,7 @@ export type PurchaseRequestItem = {
   unit: string;
   estimated_unit_cost: number;
   inventory_item_id: string | null;
+  budget_item_id: string | null;
   created_at: string;
 };
 

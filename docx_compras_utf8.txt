@@ -1,0 +1,118 @@
+﻿
+
+1. Control documental
+2. Ãndice operativo
+Este documento normaliza el Procedimiento de Gerencia de Compras bajo una lÃ­nea visual y metodolÃ³gica comÃºn para ECAR. Mantiene el contenido operativo ya desarrollado, mejora su presentaciÃ³n institucional y agrega perfil del responsable, alcance de la persona en el puesto y herramientas necesarias para cumplir la funciÃ³n con trazabilidad.
+Objetivo, propÃ³sito, alcance, exclusiones y criterio rector.
+Entradas, actividades, salidas, responsables, registros, indicadores y riesgos.
+ComunicaciÃ³n entre gerencias, escalamiento a Gerencia General y tratamiento de urgencias.
+Tratamiento de proveedores y no conformidades de compra.
+Perfil del responsable, alcance del puesto, herramientas necesarias y rutinas de seguimiento.
+Casos ejemplo, esquema visual, anexos operativos y cierre institucional.
+3. IntroducciÃ³n institucional
+La Gerencia de Compras cumple una funciÃ³n crÃ­tica dentro del sistema operativo de ECAR: transforma necesidades internas en abastecimiento concreto, documentado y coordinado con la obra, la logÃ­stica, la administraciÃ³n y la conducciÃ³n general. Cuando Compras trabaja con mÃ©todo, la empresa gana control; cuando trabaja sÃ³lo por urgencia, los errores se trasladan a obra, depÃ³sito, caja, proveedores y rentabilidad.
+Este procedimiento busca que cada compra pueda ser explicada, respaldada y trazada: quiÃ©n la pidiÃ³, para quÃ© obra, con quÃ© especificaciÃ³n, bajo quÃ© comparaciÃ³n, con quÃ© aprobaciÃ³n, a quÃ© proveedor, con quÃ© condiciÃ³n de entrega y con quÃ© documentaciÃ³n de cierre.
+4. Objetivo del procedimiento
+Establecer el mÃ©todo de trabajo de la Gerencia de Compras de ECAR para transformar necesidades internas, pedidos de obra, requerimientos de LogÃ­stica y solicitudes de Proyectos y Presupuestos en compras concretas, comparadas, aprobadas, documentadas y coordinadas con AdministraciÃ³n y Finanzas, LogÃ­stica, Obras y Gerencia General.
+El procedimiento busca evitar compras improvisadas, compras sin especificaciÃ³n, compras duplicadas, compras fuera de presupuesto, compras sin aprobaciÃ³n y compras que generen desvÃ­os operativos o econÃ³micos. Comprar bien no significa comprar Ãºnicamente barato: significa comprar lo correcto, en el momento correcto, con respaldo, trazabilidad, control de proveedor y criterio financiero.
+5. PropÃ³sito del Ã¡rea
+La Gerencia de Compras tiene como propÃ³sito asegurar que ECAR adquiera materiales, herramientas, equipos, repuestos, servicios y contrataciones externas de manera ordenada, oportuna, documentada y conveniente para la operaciÃ³n. Su funciÃ³n no es sÃ³lo resolver pedidos, sino proteger la continuidad de obra, la rentabilidad de la empresa y la calidad de los recursos que ingresan al sistema.
+Compras debe evitar que la urgencia se convierta en la forma normal de trabajo. Una compra sin datos completos puede terminar en un material equivocado, una entrega tardÃ­a, un sobrecosto, una discusiÃ³n con proveedores o una obra frenada. Por eso, el Ã¡rea debe trabajar con informaciÃ³n mÃ­nima, comparaciÃ³n, autorizaciÃ³n y comunicaciÃ³n clara.
+6. Alcance del procedimiento
+Este procedimiento aplica desde que ingresa una solicitud de compra, cotizaciÃ³n, reparaciÃ³n, reposiciÃ³n, servicio externo o compra urgente, hasta que la compra queda emitida, documentada, comunicada a las Ã¡reas involucradas y disponible para su recepciÃ³n, retiro, entrega o cierre administrativo.
+RecepciÃ³n de pedidos internos y validaciÃ³n de datos mÃ­nimos.
+ClasificaciÃ³n de la compra y consulta tÃ©cnica cuando corresponda.
+BÃºsqueda y evaluaciÃ³n de proveedores.
+Solicitud y comparaciÃ³n de cotizaciones.
+ValidaciÃ³n de fondos y condiciones con AdministraciÃ³n y Finanzas.
+AplicaciÃ³n de matriz de aprobaciÃ³n por monto, riesgo o urgencia.
+EmisiÃ³n de orden de compra u orden de trabajo.
+Seguimiento de entrega, comunicaciÃ³n a LogÃ­stica y Obras, control documental y tratamiento de no conformidades.
+7. Exclusiones y lÃ­mites
+No reemplaza la planificaciÃ³n de Obras: Compras compra sobre pedidos validados, no define por sÃ­ sola prioridades de obra.
+No reemplaza a LogÃ­stica: Compras coordina la adquisiciÃ³n, pero la recepciÃ³n fÃ­sica, almacenamiento, trazabilidad de depÃ³sito y entrega a obra deben coordinarse con LogÃ­stica.
+No reemplaza a AdministraciÃ³n y Finanzas: Compras informa condiciones y documentaciÃ³n, pero fondos, pagos, cheques, transferencias y cuentas corrientes son responsabilidad administrativa-financiera.
+No debe comprar sin datos tÃ©cnicos completos, sin validaciÃ³n de fondos o sin aprobaciÃ³n cuando el monto, riesgo o urgencia lo requiera.
+8. Criterio rector del Ã¡rea
+Toda compra debe poder responder: quiÃ©n la pidiÃ³, para quÃ© obra o necesidad, quÃ© se comprÃ³, con quÃ© especificaciÃ³n, a quÃ© proveedor, bajo quÃ© comparaciÃ³n, con quÃ© aprobaciÃ³n, cuÃ¡ndo debe entregarse, quiÃ©n recibe, quÃ© documento respalda la operaciÃ³n y quÃ© impacto tiene sobre el costo de obra o de empresa.
+9. Definiciones bÃ¡sicas
+10. Entradas del proceso
+11. Actividades principales
+RecepciÃ³n del pedido interno.
+Registro inicial del pedido con obra, solicitante, prioridad, fecha requerida y destino.
+VerificaciÃ³n de datos mÃ­nimos.
+DevoluciÃ³n del pedido si falta informaciÃ³n crÃ­tica.
+ClasificaciÃ³n del tipo de compra: obra, logÃ­stica, herramienta, equipo, repuesto, servicio externo, urgencia, inversiÃ³n o compra administrativa.
+ValidaciÃ³n tÃ©cnica con el Ã¡rea solicitante cuando corresponda.
+VerificaciÃ³n de stock, disponibilidad o recurso existente con LogÃ­stica.
+Solicitud de cotizaciones a proveedores.
+ComparaciÃ³n de precios, plazos, calidad, disponibilidad, garantÃ­a, validez y condiciones de pago.
+RevisiÃ³n de proveedor: antecedentes, cumplimiento, documentaciÃ³n, respuesta y confiabilidad.
+ValidaciÃ³n financiera con AdministraciÃ³n y Finanzas.
+AplicaciÃ³n de matriz de aprobaciÃ³n por monto, riesgo, urgencia o proveedor.
+Escalamiento a Gerencia General cuando corresponda.
+EmisiÃ³n de orden de compra u orden de trabajo.
+ConfirmaciÃ³n al proveedor.
+ComunicaciÃ³n a LogÃ­stica para recepciÃ³n, retiro o entrega.
+ComunicaciÃ³n a Obras sobre fecha probable de entrega o sustituciÃ³n autorizada.
+Seguimiento de entrega.
+Control de remito, factura o comprobante contra lo solicitado y aprobado.
+Tratamiento de diferencias o no conformidades.
+Registro de cierre de compra.
+EvaluaciÃ³n del proveedor.
+Archivo documental.
+Reporte de compras relevantes a Gerencia General.
+12. Salidas del proceso
+13. Responsables y matriz de responsabilidades
+Compras es responsable de gestionar el proceso de adquisiciÃ³n, pero no debe asumir sola informaciÃ³n tÃ©cnica, logÃ­stica o financiera. Cada Ã¡rea solicitante debe aportar datos completos y validar lo que corresponde a su campo de responsabilidad.
+Referencias: R = Responsable de ejecutar | A = Aprueba o responsable final | C = Consultado | I = Informado.
+14. Registros obligatorios
+15. Indicadores de gestiÃ³n
+16. Riesgos principales y controles preventivos
+17. ComunicaciÃ³n con otras gerencias
+18. ComunicaciÃ³n con Gerencia General y criterios de escalamiento
+Compras debe elevar a Gerencia General cuando la decisiÃ³n excede la gestiÃ³n operativa normal, afecta el margen, compromete fondos relevantes o implica riesgo tÃ©cnico, financiero, contractual o reputacional.
+Compra superior al monto definido por Gerencia General.
+Compra fuera de presupuesto o no prevista en la obra.
+Compra urgente que pueda frenar obra.
+Proveedor nuevo crÃ­tico o pago anticipado.
+Cambio fuerte de precio respecto de presupuesto o cotizaciÃ³n previa.
+Compra de maquinaria, equipo o herramienta relevante.
+Compra con riesgo tÃ©cnico, financiero o documental.
+Compra sin documentaciÃ³n completa pero necesaria por urgencia.
+Material alternativo al especificado originalmente.
+Diferencia importante entre cotizaciones.
+Conflicto con proveedor o no conformidad grave.
+RepeticiÃ³n de compras urgentes en una misma obra.
+19. Tratamiento de urgencias
+Una urgencia puede atenderse cuando la continuidad de obra, seguridad, cumplimiento o servicio lo justifica. Pero no debe naturalizarse. Toda compra urgente debe dejar registro y aprendizaje.
+Registrar la urgencia y la obra afectada.
+Indicar motivo y consecuencia si no se compra.
+Identificar responsable que solicita.
+Realizar validaciÃ³n mÃ­nima de datos tÃ©cnicos.
+Consultar stock o alternativa con LogÃ­stica.
+Solicitar cotizaciÃ³n rÃ¡pida o precio de referencia.
+Validar fondos o forma de pago con AdministraciÃ³n.
+Solicitar aprobaciÃ³n rÃ¡pida segÃºn monto/riesgo.
+Ejecutar compra y coordinar entrega.
+Registrar documentaciÃ³n posterior.
+Revisar causa de la urgencia para evitar repeticiÃ³n.
+20. Tratamiento de proveedores
+21. No conformidades vinculadas a compras
+22. Perfil del responsable de Gerencia de Compras
+Corresponde incorporar el perfil del puesto como secciÃ³n especÃ­fica del procedimiento. El procedimiento define cÃ³mo debe funcionar el Ã¡rea; el perfil del puesto define quÃ© capacidades debe tener la persona responsable para sostener ese funcionamiento.
+23. Alcance de la persona responsable del Ã¡rea
+24. Herramientas necesarias para el puesto
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios fÃ­sicos, tecnolÃ³gicos, documentales y de gestiÃ³n necesarios para cumplir su funciÃ³n con orden, evidencia y trazabilidad.
+25. Rutina diaria, semanal y mensual
+26. Reuniones y reportes
+27. Casos ejemplo aplicables a ECAR
+Los siguientes casos buscan transformar situaciones habituales en criterios de actuaciÃ³n. Sirven como guÃ­a para que el Ã¡rea responda con sistema y no sÃ³lo con urgencia.
+28. Esquema visual de caso
+Caso: Obras solicita compra urgente sin informaciÃ³n completa. El flujo resume cÃ³mo debe actuar Compras para no transformar una urgencia real en una compra desordenada.
+
+29. Anexos operativos sugeridos
+30. Cierre institucional
+La Gerencia de Compras debe ser un Ã¡rea de control, servicio interno y anticipaciÃ³n. Su valor no se mide solamente por conseguir precio, sino por comprar con criterio, proteger el flujo de obra, sostener la trazabilidad, cuidar la caja, reducir urgencias repetidas y aportar informaciÃ³n Ãºtil para que ECAR tome mejores decisiones.
+Comprar bien no es comprar rÃ¡pido ni comprar barato. Comprar bien es abastecer a ECAR con criterio, respaldo, trazabilidad y oportunidad.
+El siguiente procedimiento recomendado es Gerencia de Obras, porque una vez definido el presupuesto, realizada la compra y ordenada la logÃ­stica, la obra es el lugar donde ECAR demuestra el cumplimiento real de su sistema de gestiÃ³n.
