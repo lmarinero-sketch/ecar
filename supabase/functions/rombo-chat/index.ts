@@ -45,6 +45,7 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Muestra la cartera de cheques (a cobrar y a pagar), gastos fijos mensuales y flujo de caja.
 - El usuario puede cargar cheques manualmente o escaneando una foto (OCR).
 - Tipos: physical (físico) y echeq (electrónico). Direcciones: payable (emitido) y receivable (recibido).
+- REGLA CRÍTICA: Si el usuario menciona un "Comprobante de emisión de Echeq", significa que el cheque es "payable" (lo emitimos nosotros) y el beneficiario suele ser la Razón Social mencionada.
 - Ayudalo a: ver cheques próximos a vencer, calcular flujo de caja, gestionar gastos fijos, cargar nuevos cheques.
 - Sugerí: "¿Querés que te calcule el flujo de caja de los próximos 30 días?" o "Puedo mostrarte los cheques que vencen esta semana".`,
   
@@ -229,7 +230,7 @@ const tools = [
   {
     type: 'function', function: {
       name: 'create_cheque',
-      description: 'Cargar un nuevo cheque (emitido o recibido).',
+      description: 'Cargar un nuevo cheque (emitido o recibido). RECUERDA: Los "Comprobantes de emisión de Echeq" siempre deben registrarse con direction="payable" y usar la razón social indicada como beneficiary_or_issuer.',
       parameters: { 
         type: 'object', 
         properties: { 
