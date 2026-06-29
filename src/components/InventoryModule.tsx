@@ -455,10 +455,7 @@ export const InventoryModule: React.FC = () => {
       {/* Shelves Tab */}
       {tab === 'shelves' && (() => {
         const shelfList = shelves || [];
-        const maxRow = Math.max(0, ...shelfList.map(s => s.grid_row + s.grid_height));
-        const maxCol = Math.max(0, ...shelfList.map(s => s.grid_col + s.grid_width));
-        const gridRows = Math.max(3, maxRow + 1);
-        const gridCols = Math.max(4, maxCol + 1);
+
         const itemsByShelf = (items || []).reduce((acc, it) => {
           if (it.shelf_id) { acc[it.shelf_id] = (acc[it.shelf_id] || 0) + 1; }
           return acc;
@@ -508,15 +505,15 @@ export const InventoryModule: React.FC = () => {
                           bounds="parent"
                           position={{ x: shelf.grid_col, y: shelf.grid_row }}
                           size={{ width: shelf.grid_width, height: shelf.grid_height }}
-                          onDragStop={async (e, d) => {
+                          onDragStop={(_e, d) => {
                             if (d.x !== shelf.grid_col || d.y !== shelf.grid_row) {
-                              await updateShelf.mutateAsync({ id: shelf.id, grid_col: d.x, grid_row: d.y });
+                              updateShelf.mutate({ id: shelf.id, grid_col: d.x, grid_row: d.y });
                             }
                           }}
-                          onResizeStop={async (e, direction, ref, delta, position) => {
+                          onResizeStop={(_e, _direction, ref, _delta, position) => {
                             const newWidth = parseInt(ref.style.width, 10);
                             const newHeight = parseInt(ref.style.height, 10);
-                            await updateShelf.mutateAsync({
+                            updateShelf.mutate({
                               id: shelf.id,
                               grid_width: newWidth,
                               grid_height: newHeight,
