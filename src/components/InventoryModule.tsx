@@ -15,6 +15,7 @@ import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
+import { Rnd } from 'react-rnd';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -59,7 +60,7 @@ export const InventoryModule: React.FC = () => {
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
   const [showNewShelf, setShowNewShelf] = useState(false);
   const [editingShelf, setEditingShelf] = useState<WarehouseShelf | null>(null);
-  const [shelfForm, setShelfForm] = useState({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' });
+  const [shelfForm, setShelfForm] = useState({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' });
   const [assignShelfItem, setAssignShelfItem] = useState<InventoryItem | null>(null);
   const [shelfAssignForm, setShelfAssignForm] = useState({ shelf_id: '', shelf_position: '' });
 
@@ -468,16 +469,15 @@ export const InventoryModule: React.FC = () => {
           const payload = {
             code: shelfForm.code, name: shelfForm.name, shelf_type: shelfForm.shelf_type as WarehouseShelf['shelf_type'],
             rows_count: parseInt(shelfForm.rows_count) || 4, columns_count: parseInt(shelfForm.columns_count) || 3,
-            color: shelfForm.color, notes: shelfForm.notes || null,
+            color: shelfForm.color, notes: shelfForm.notes || null, rotation: parseInt(shelfForm.rotation) || 0
           };
           if (editingShelf) {
             await updateShelf.mutateAsync({ id: editingShelf.id, ...payload });
           } else {
-            const nextRow = shelfList.length > 0 ? Math.max(...shelfList.map(s => s.grid_row + s.grid_height)) : 0;
-            await createShelf.mutateAsync({ ...payload, grid_row: nextRow, grid_col: 0, grid_width: 1, grid_height: 1 });
+            await createShelf.mutateAsync({ ...payload, grid_row: 50, grid_col: 50, grid_width: 200, grid_height: 120 });
           }
           setShowNewShelf(false); setEditingShelf(null);
-          setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' });
+          setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' });
         };
 
         return (
@@ -486,7 +486,7 @@ export const InventoryModule: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2"><LayoutGrid size={16} /> Plano del Depósito</h3>
-                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '' }); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
                   <Plus size={16} /> Nueva Estantería
                 </button>
               </div>
@@ -500,34 +500,71 @@ export const InventoryModule: React.FC = () => {
                 ) : (
                   <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner" style={{ minHeight: 300 }}>
                     <WebGLWarehouseGrid />
-                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito</div>
-                    <div className="grid gap-3 mt-4 relative z-10" style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gridTemplateRows: `repeat(${gridRows}, minmax(80px, auto))` }}>
+                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito interactivo</div>
+                    <div className="relative z-10 mt-6 w-full h-[600px]">
                       {shelfList.map(shelf => (
-                        <div key={shelf.id} className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden" style={{ borderColor: shelf.color, gridRow: `${shelf.grid_row + 1} / span ${shelf.grid_height}`, gridColumn: `${shelf.grid_col + 1} / span ${shelf.grid_width}`, background: `${shelf.color}08` }}
-                          onClick={() => { setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '' }); setShowNewShelf(true); }}>
-                          <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
-                            <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
-                          </div>
-                          <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
-                            <div>
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
-                                <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                        <Rnd
+                          key={shelf.id}
+                          bounds="parent"
+                          position={{ x: shelf.grid_col, y: shelf.grid_row }}
+                          size={{ width: shelf.grid_width, height: shelf.grid_height }}
+                          onDragStop={async (e, d) => {
+                            if (d.x !== shelf.grid_col || d.y !== shelf.grid_row) {
+                              await updateShelf.mutateAsync({ id: shelf.id, grid_col: d.x, grid_row: d.y });
+                            }
+                          }}
+                          onResizeStop={async (e, direction, ref, delta, position) => {
+                            const newWidth = parseInt(ref.style.width, 10);
+                            const newHeight = parseInt(ref.style.height, 10);
+                            await updateShelf.mutateAsync({
+                              id: shelf.id,
+                              grid_width: newWidth,
+                              grid_height: newHeight,
+                              grid_col: position.x,
+                              grid_row: position.y
+                            });
+                          }}
+                          className="group"
+                          style={{ zIndex: 10 }}
+                        >
+                          <div 
+                            className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-move hover:shadow-lg transition-shadow w-full h-full relative overflow-hidden" 
+                            style={{ 
+                              borderColor: shelf.color, 
+                              background: `${shelf.color}08`,
+                              transform: `rotate(${shelf.rotation || 0}deg)`,
+                              transformOrigin: 'center center'
+                            }}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setEditingShelf(shelf); 
+                              setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '', rotation: String(shelf.rotation || 0) }); 
+                              setShowNewShelf(true); 
+                            }}
+                          >
+                            <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
+                              <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
+                            </div>
+                            <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
+                              <div>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
+                                  <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                                </div>
+                                <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
                               </div>
-                              <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
-                            </div>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-[10px] text-gray-500 font-medium">{shelf.rows_count}×{shelf.columns_count} posiciones</span>
-                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}15`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
-                            </div>
-                            {/* Mini grid visualization */}
-                            <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
-                              {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
-                                <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '60' : '20'}` }} />
-                              ))}
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-[10px] text-gray-500 font-medium">{shelf.rows_count}×{shelf.columns_count} pos</span>
+                                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}15`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
+                              </div>
+                              <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
+                                {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
+                                  <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '60' : '20'}` }} />
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Rnd>
                       ))}
                     </div>
                   </div>
@@ -556,7 +593,7 @@ export const InventoryModule: React.FC = () => {
                         <td className="px-4 py-3 text-gray-400 text-xs">{s.notes || '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '' }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
+                            <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
                             <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
                           </div>
                         </td>
@@ -577,10 +614,17 @@ export const InventoryModule: React.FC = () => {
                       <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={shelfForm.code} onChange={e => setShelfForm({ ...shelfForm, code: e.target.value.toUpperCase() })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="EST-01" /></div>
                       <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={shelfForm.name} onChange={e => setShelfForm({ ...shelfForm, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Estantería Principal" /></div>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-4 gap-3">
                       <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={shelfForm.shelf_type} onChange={e => setShelfForm({ ...shelfForm, shelf_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">{Object.entries(SHELF_TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}</select></div>
                       <div><label className="text-xs font-bold text-gray-500">Niveles</label><input type="number" min="1" max="10" value={shelfForm.rows_count} onChange={e => setShelfForm({ ...shelfForm, rows_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                       <div><label className="text-xs font-bold text-gray-500">Divisiones</label><input type="number" min="1" max="10" value={shelfForm.columns_count} onChange={e => setShelfForm({ ...shelfForm, columns_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-500">Rotación</label>
+                        <div className="flex items-center gap-2">
+                           <input type="range" min="0" max="360" value={shelfForm.rotation} onChange={e => setShelfForm({ ...shelfForm, rotation: e.target.value })} className="w-full" />
+                           <span className="text-xs font-mono w-8">{shelfForm.rotation}º</span>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label className="text-xs font-bold text-gray-500">Color</label>

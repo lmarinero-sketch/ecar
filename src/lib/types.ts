@@ -582,6 +582,7 @@ export type WarehouseShelf = {
   grid_col: number;
   grid_width: number;
   grid_height: number;
+  rotation: number;
   notes: string | null;
   is_active: boolean;
   created_at: string;
