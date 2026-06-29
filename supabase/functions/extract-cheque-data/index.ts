@@ -13,10 +13,13 @@ Analiza detalladamente la imagen o PDF y responde ÚNICAMENTE con un objeto JSON
 - issue_date (string, format YYYY-MM-DD): La fecha de emisión del cheque. En cheques argentinos suele encontrarse junto al lugar de emisión, ej: "San Juan, 15 de Mayo de 2026". Traduce a formato YYYY-MM-DD.
 - due_date (string o null, format YYYY-MM-DD): La fecha de cobro o pago diferido (ej: "Páguese el..." o "Páguese desde el..."). Si es un cheque corriente (donde solo figura la fecha de emisión) o el campo de pago diferido está vacío, pon null.
 - beneficiary (string o null): El nombre de la persona física o jurídica a favor de quien se emite ("Páguese a...", "Páguese a la orden de..."). 
-  REGLA CRÍTICA DE BENEFICIARIO: Si el cheque está al portador (ej: dice "Al Portador", "a la orden de: al portador", o la línea de beneficiario está en blanco, vacía, tiene líneas continuas o firmas encima sin aclarar), debes retornar estrictamente null. NUNCA uses el nombre del librador/firmante/emisor como beneficiario.
+  REGLA CRÍTICA DE BENEFICIARIO 1: Si el cheque está al portador (ej: dice "Al Portador", "a la orden de: al portador", o la línea de beneficiario está en blanco, vacía, tiene líneas continuas o firmas encima sin aclarar), debes retornar estrictamente null. NUNCA uses el nombre del librador/firmante/emisor como beneficiario.
+  REGLA CRÍTICA DE BENEFICIARIO 2 (Comprobantes de Emisión): Si el documento es un "Comprobante de emisión de Echeq", el beneficiario suele figurar como la Razón Social central en el documento (ejemplo: "Agromaq San Juan S A" arriba del CUIT).
 - issuer_name (string o null): El nombre/razón social del librador/firmante (quien emite el cheque, dueño de la cuenta bancaria). Suele estar impreso en el cheque en la esquina inferior izquierda o superior, o aclarado bajo las firmas.
 - branch (string o null): Sucursal del banco.
 - type (string): "physical" (si es un cheque físico escaneado/fotografiado) o "echeq" (si es un comprobante digital de echeq).
+- direction (string): "payable" o "receivable". 
+  REGLA CRÍTICA DE DIRECCIÓN: Si el documento explícitamente dice ser un "Comprobante de emisión de Echeq", entonces nosotros emitimos el cheque, por lo tanto, establécelo como "payable" (cheque a pagar). Para el resto de cheques estándar que recibimos de terceros, establécelo como "receivable" (cheque a cobrar).
 
 REGLAS DE EXTRACCIÓN ADICIONALES:
 1. Las fechas manuscritas o impresas en Argentina son en formato DD/MM/AAAA. Por favor parsealas correctamente. Si el año es manuscrito e ilegible o ambiguo, asume el año actual (2026) a menos que la imagen muestre otra cosa con claridad.

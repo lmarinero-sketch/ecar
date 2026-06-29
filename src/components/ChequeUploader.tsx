@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 type ExtractedData = {
   cheque_number?: string; bank_name?: string; amount?: number;
   issue_date?: string; due_date?: string; beneficiary?: string;
-  type?: string; branch?: string;
+  type?: string; branch?: string; direction?: string;
 };
 
 type Props = {

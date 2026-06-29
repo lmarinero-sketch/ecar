@@ -259,6 +259,7 @@ const tools = [
           date: { type: 'string', description: 'Fecha del cheque (YYYY-MM-DD)' },
           beneficiary: { type: 'string', description: 'Beneficiario' },
           payment_date: { type: 'string', description: 'Fecha de pago/vencimiento (YYYY-MM-DD)' },
+          direction: { type: 'string', enum: ['payable', 'receivable'], description: 'Dirección (payable para pagos nuestros como comprobantes de emisión de Echeq, receivable para cheques a cobrar)' },
         },
         required: ['amount']
       }
@@ -925,7 +926,7 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           bank_name: args.bank || 'Sin especificar',
           cheque_number: args.cheque_number || 'OCR-' + Date.now(),
           amount_ars: args.amount,
-          direction: 'receivable',
+          direction: args.direction || 'receivable',
           issue_date: args.date || new Date().toISOString().split('T')[0],
           due_date: args.payment_date || args.date || new Date().toISOString().split('T')[0],
           beneficiary_or_issuer: args.beneficiary || null,
@@ -1131,7 +1132,7 @@ serve(async (req) => {
     }
 
     let bodyText = body;
-    let visionImageUrl: string | null = null;
+    let visionMediaObject: any = null;
     const openaiKey = Deno.env.get("OPENAI_API_KEY") || "";
 
     // ── Procesamiento de Multimedia (Audios → Whisper, Imágenes → Vision OCR) ──
@@ -1163,14 +1164,39 @@ serve(async (req) => {
         } else if (contentType.includes("image") || contentType.includes("pdf")) {
           const isPdf = contentType.includes("pdf");
           console.log(`${isPdf ? 'PDF' : 'Imagen'} detectado. Procesando con Vision OCR...`);
-          visionImageUrl = mediaUrl;
+          
+          const mediaBlob = await mediaRes.blob();
+          const buffer = await mediaBlob.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          const base64Data = btoa(binary);
+
+          if (isPdf) {
+            visionMediaObject = {
+              type: "file",
+              file: {
+                filename: "documento.pdf",
+                file_data: `data:application/pdf;base64,${base64Data}`,
+              },
+            };
+          } else {
+            visionMediaObject = {
+              type: "image_url",
+              image_url: {
+                url: `data:${contentType};base64,${base64Data}`,
+                detail: "high",
+              },
+            };
+          }
+
           if (!bodyText || !bodyText.trim()) {
-            bodyText = "Te envié una foto. Analizá si es un cheque o una factura. Si es un cheque, extraé los datos y cargalo con process_cheque_photo. Si es una factura, usá create_purchase_invoice.";
+            bodyText = "Te envié un documento o foto. Analizá si es un cheque o una factura. Si es un cheque, extraé los datos y cargalo con process_cheque_photo (recordá asignar la dirección correcta si es un comprobante de emisión de Echeq). Si es una factura, usá create_purchase_invoice.";
           } else {
             // Si el usuario escribió algo junto con la foto, agregar contexto de detección
             const lowerBody = bodyText.toLowerCase();
             if (lowerBody.includes('cheque') || lowerBody.includes('chq')) {
-              bodyText += " [IMAGEN ADJUNTA: Es un cheque. Usá process_cheque_photo para cargarlo.]";
+              bodyText += " [DOCUMENTO ADJUNTO: Es un cheque. Usá process_cheque_photo para cargarlo y detectá si es a pagar (comprobante de emisión) o a cobrar.]";
             }
           }
         }
@@ -1220,15 +1246,16 @@ serve(async (req) => {
 
       // Build OpenAI messages (system + history without timestamps)
       let imageOcrPrompt = '';
-      if (visionImageUrl) {
+      if (visionMediaObject) {
         const lowerBody = bodyText.toLowerCase();
         const isChequeContext = lowerBody.includes('cheque') || lowerBody.includes('chq');
         
         if (isChequeContext) {
-          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTA IMAGEN — CHEQUE
-El usuario envió una FOTO DE CHEQUE. Debés:
+          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTE DOCUMENTO — CHEQUE
+El usuario envió un DOCUMENTO O FOTO DE CHEQUE. Debés:
 1. Analizar la imagen con máximo detalle.
 2. Extraer los datos del cheque: banco emisor, número de cheque, monto, fecha de emisión (DD/MM/AAAA → YYYY-MM-DD), fecha de pago/vencimiento, beneficiario.
+   * REGLA DE DIRECCIÓN: Si es un "Comprobante de emisión de Echeq", setea direction="payable" y extrae el beneficiario como la Razón Social central en el documento (ej: "Agromaq San Juan S A").
 3. Ejecutar la herramienta process_cheque_photo con los campos extraídos.
 4. Mostrar un resumen visual con emojis de lo que cargaste.
 5. Si algún dato no es legible, avisá al usuario.
@@ -1256,13 +1283,13 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
         { role: 'system', content: systemPrompt + imageOcrPrompt }
       ];
       for (const m of chatMessages) {
-        // If this is the last user message and has an image, send as multimodal
-        if (m === chatMessages[chatMessages.length - 1] && m.role === 'user' && visionImageUrl) {
+        // If this is the last user message and has an image/pdf, send as multimodal
+        if (m === chatMessages[chatMessages.length - 1] && m.role === 'user' && visionMediaObject) {
           openaiMessages.push({
             role: 'user',
             content: [
               { type: 'text', text: m.content },
-              { type: 'image_url', image_url: { url: visionImageUrl, detail: 'high' } }
+              visionMediaObject
             ]
           });
         } else {
@@ -1277,9 +1304,9 @@ Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legibl
       let rounds = 0;
       const MAX_ROUNDS = 3;
 
-      // Use gpt-4o for Vision (image) requests, gpt-4o-mini for text-only
-      const modelToUse = visionImageUrl ? 'gpt-4o' : 'gpt-4o-mini';
-      console.log(`Modelo: ${modelToUse}${visionImageUrl ? ' (Vision OCR activo)' : ''}`);
+      // Use gpt-4o for Vision/PDF requests, gpt-4o-mini for text-only
+      const modelToUse = visionMediaObject ? 'gpt-4o' : 'gpt-4o-mini';
+      console.log(`Modelo: ${modelToUse}${visionMediaObject ? ' (Vision OCR activo)' : ''}`);
 
       while (rounds < MAX_ROUNDS) {
         const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
