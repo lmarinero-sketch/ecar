@@ -108,7 +108,6 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'purchase_requests' },
       { id: 'purchase_orders', requires: true },
       { id: 'supplier_eval', requires: true },
-      { id: 'inventory', requires: true },
     ],
   },
   {
@@ -116,6 +115,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
+      { id: 'inventory', requires: true },
     ],
   },
   {

@@ -14,12 +14,13 @@ import { useModalStore } from '../store/useModalStore';
 import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
+import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 type Tab = 'stock' | 'tools' | 'movements' | 'shelves';
 
-const SHELF_TYPES: Record<string, { label: string; icon: string }> = {
+const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: string }> = {
   rack: { label: 'Rack / Estantería', icon: '🗄️' },
   pallet: { label: 'Zona Pallets', icon: '📦' },
   cabinet: { label: 'Gabinete / Armario', icon: '🔒' },
@@ -497,31 +498,34 @@ export const InventoryModule: React.FC = () => {
                     <p className="text-sm">Creá tu primera estantería para armar el plano del depósito.</p>
                   </div>
                 ) : (
-                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50" style={{ minHeight: 200 }}>
-                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-300 uppercase tracking-wider">Plano depósito</div>
-                    <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gridTemplateRows: `repeat(${gridRows}, minmax(80px, auto))` }}>
+                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner" style={{ minHeight: 300 }}>
+                    <WebGLWarehouseGrid />
+                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito</div>
+                    <div className="grid gap-3 mt-4 relative z-10" style={{ gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gridTemplateRows: `repeat(${gridRows}, minmax(80px, auto))` }}>
                       {shelfList.map(shelf => (
                         <div key={shelf.id} className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden" style={{ borderColor: shelf.color, gridRow: `${shelf.grid_row + 1} / span ${shelf.grid_height}`, gridColumn: `${shelf.grid_col + 1} / span ${shelf.grid_width}`, background: `${shelf.color}08` }}
                           onClick={() => { setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '' }); setShowNewShelf(true); }}>
-                          <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
                             <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
-                              <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                          <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
+                                <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                              </div>
+                              <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
                             </div>
-                            <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-[10px] text-gray-400">{shelf.rows_count}×{shelf.columns_count} posiciones</span>
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}20`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
-                          </div>
-                          {/* Mini grid visualization */}
-                          <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
-                            {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
-                              <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '40' : '15'}` }} />
-                            ))}
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-[10px] text-gray-500 font-medium">{shelf.rows_count}×{shelf.columns_count} posiciones</span>
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}15`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
+                            </div>
+                            {/* Mini grid visualization */}
+                            <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
+                              {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
+                                <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '60' : '20'}` }} />
+                              ))}
+                            </div>
                           </div>
                         </div>
                       ))}
