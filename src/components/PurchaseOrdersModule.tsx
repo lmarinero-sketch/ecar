@@ -3,7 +3,7 @@ import {
   FileSignature, Search, Plus, X, Save, Eye, Trash2,
   Clock, DollarSign, AlertTriangle, Package, BarChart3,
 } from 'lucide-react';
-import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useProjects, useSuppliers } from '../hooks/useData';
+import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useProjects, useSuppliers, usePurchaseRequests } from '../hooks/useData';
 import type { PurchaseOrder } from '../lib/types';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -31,6 +31,7 @@ export const PurchaseOrdersModule: React.FC = () => {
   const { data: orders, isLoading } = usePurchaseOrders();
   const { data: projects } = useProjects();
   const { data: suppliers } = useSuppliers();
+  const { data: purchaseRequests } = usePurchaseRequests();
   const createPO = useCreatePurchaseOrder();
   const updatePO = useUpdatePurchaseOrder();
 
@@ -43,6 +44,7 @@ export const PurchaseOrdersModule: React.FC = () => {
     supplier_name: '',
     supplier_id: '',
     project_id: '',
+    request_id: '',
     order_type: 'compra' as PurchaseOrder['order_type'],
     items: [{ description: '', quantity: 1, unit: 'un', unit_price: 0, subtotal: 0 }] as LineItem[],
     total_amount: 0,
@@ -114,7 +116,9 @@ export const PurchaseOrdersModule: React.FC = () => {
         po_number: form.po_number || nextPONumber,
         project_id: form.project_id || null,
         supplier_id: form.supplier_id || null,
+        request_id: form.request_id || null,
         approval_status: form.total_amount > 5000000 ? 'pendiente' as const : 'no_requerida' as const,
+        status: form.total_amount > 5000000 && !selectedPO ? 'pendiente_aprobacion' : form.status,
       };
       if (selectedPO) {
         await updatePO.mutateAsync({ id: selectedPO.id, ...payload });
@@ -129,7 +133,7 @@ export const PurchaseOrdersModule: React.FC = () => {
 
   const resetForm = () => {
     setForm({
-      po_number: '', supplier_name: '', supplier_id: '', project_id: '', order_type: 'compra',
+      po_number: '', supplier_name: '', supplier_id: '', project_id: '', request_id: '', order_type: 'compra',
       items: [{ description: '', quantity: 1, unit: 'un', unit_price: 0, subtotal: 0 }],
       total_amount: 0, payment_condition: '', delivery_date: '', delivery_location: '',
       status: 'borrador', urgency: false, urgency_reason: '', notes: '',
@@ -140,7 +144,7 @@ export const PurchaseOrdersModule: React.FC = () => {
     setSelectedPO(po);
     setForm({
       po_number: po.po_number, supplier_name: po.supplier_name,
-      supplier_id: po.supplier_id || '', project_id: po.project_id || '',
+      supplier_id: po.supplier_id || '', project_id: po.project_id || '', request_id: po.request_id || '',
       order_type: po.order_type,
       items: (po.items && po.items.length > 0) ? po.items : [{ description: '', quantity: 1, unit: 'un', unit_price: 0, subtotal: 0 }],
       total_amount: po.total_amount, payment_condition: po.payment_condition || '',
@@ -287,8 +291,8 @@ export const PurchaseOrdersModule: React.FC = () => {
                 </div>
               </div>
 
-              {/* Supplier + Project */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Supplier + Project + Request */}
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Proveedor *</label>
                   <select value={form.supplier_id} onChange={e => {
@@ -302,11 +306,23 @@ export const PurchaseOrdersModule: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" placeholder="O escribir nombre del proveedor" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Proyecto / Obra</label>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Proyecto (Opcional)</label>
                   <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">General</option>
+                    <option value="">Uso General / Sin Proyecto</option>
                     {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Solicitud Origen (Trazabilidad)</label>
+                  <select value={form.request_id} onChange={e => setForm({ ...form, request_id: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-violet-700 bg-violet-50 focus:border-violet-300 focus:ring-violet-300">
+                    <option value="">Sin solicitud vinculada</option>
+                    {(purchaseRequests || []).filter(r => r.status === 'approved' || r.id === form.request_id).map(r => (
+                      <option key={r.id} value={r.id}>
+                        {new Date(r.created_at).toLocaleDateString('es-AR')} - {r.items?.[0]?.description} {r.items && r.items.length > 1 ? `(+${r.items.length - 1} más)` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -404,21 +420,24 @@ export const PurchaseOrdersModule: React.FC = () => {
                 </div>
                 <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs mt-2" rows={2} placeholder="Justificación de elección: precio, calidad, plazo, experiencia previa..." />
               </div>
-
-              {form.total_amount > 5000000 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertTriangle size={16} className="text-yellow-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-yellow-800"><strong>Requiere Aprobación de GG:</strong> Esta OC supera el umbral de $5.000.000. Será enviada para aprobación antes de emitirse.</p>
-                </div>
-              )}
             </div>
 
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-end gap-3 rounded-b-2xl">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
-              <button onClick={handleSubmit} disabled={!form.supplier_name || form.items.length === 0 || createPO.isPending || updatePO.isPending}
-                className="bg-violet-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-violet-700 disabled:opacity-50 transition-all">
-                <Save size={16} /> {selectedPO ? 'Guardar Cambios' : 'Emitir Orden'}
-              </button>
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 rounded-b-2xl">
+              <div className="pt-2 flex items-center justify-between">
+                {form.total_amount > 5000000 && !selectedPO && (
+                  <div className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-200">
+                    ⚠️ Esta OC superará el umbral ($5,000,000) y requerirá Aprobación de GG.
+                  </div>
+                )}
+                {!form.total_amount || (form.total_amount <= 5000000 || selectedPO) ? <div /> : null}
+                <div className="flex gap-2">
+                  <button onClick={() => setShowForm(false)} className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold text-sm transition-all">Cancelar</button>
+                  <button onClick={handleSubmit} disabled={createPO.isPending || updatePO.isPending}
+                    className="bg-violet-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-violet-700 shadow-md transition-all disabled:opacity-50">
+                    {createPO.isPending || updatePO.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando</> : <><Save size={16} /> Guardar OC</>}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

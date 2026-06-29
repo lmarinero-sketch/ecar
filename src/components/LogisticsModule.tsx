@@ -1,200 +1,287 @@
-import React, { useMemo } from 'react';
-import {
-  Warehouse, Package, Truck, ClipboardCheck,
-  AlertTriangle, ArrowRight, Clock,
-  FileSignature,
-} from 'lucide-react';
-import {
-  useInventoryItems, usePurchaseOrders, useFuelVehicles,
-  useToolAssignments, useInventoryMovements,
-} from '../hooks/useData';
-import { useAppStore } from '../store/useStore';
-
-const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+import React, { useState } from 'react';
+import { Warehouse, PackageSearch, Truck, Repeat, Wrench, AlertTriangle, Plus, ChevronDown, ChevronUp, Package, Clock, ShieldAlert } from 'lucide-react';
+import { useLogisticsInventory, useLogisticsAssets, useLogisticsMovements } from '../hooks/useData';
 
 export const LogisticsModule: React.FC = () => {
-  const { data: items = [] } = useInventoryItems();
-  const { data: purchaseOrders = [] } = usePurchaseOrders();
-  const { data: vehicles = [] } = useFuelVehicles();
-  const { data: assignments = [] } = useToolAssignments();
-  const { data: movements = [] } = useInventoryMovements();
-  const { setActiveModule } = useAppStore();
-
-  const lowStock = useMemo(() => items.filter(i => i.current_stock <= i.min_stock && i.min_stock > 0), [items]);
-  const totalValue = useMemo(() => items.reduce((s, i) => s + i.current_stock * i.unit_cost, 0), [items]);
-  const activeAssignments = useMemo(() => (assignments || []).filter(a => a.status === 'assigned').length, [assignments]);
-  const pendingPOs = useMemo(() => purchaseOrders.filter(po => ['pendiente_aprobacion', 'aprobada', 'emitida'].includes(po.status)), [purchaseOrders]);
-  const fleetOperative = useMemo(() => vehicles.filter(v => v.vehicle_condition === 'operativo').length, [vehicles]);
-  const recentMovements = useMemo(() => (movements || []).slice(0, 5), [movements]);
-
-  const cards = [
-    {
-      title: 'Depósito & Inventario',
-      desc: 'Control de stock, estanterías, códigos de barras y movimientos',
-      icon: Package,
-      color: 'from-orange-600 to-orange-400',
-      stats: [
-        { label: 'Ítems', value: items.length },
-        { label: 'Stock Bajo', value: lowStock.length, alert: lowStock.length > 0 },
-        { label: 'Valor Total', value: fmt(totalValue) },
-      ],
-      module: 'inventory' as const,
-    },
-    {
-      title: 'Flota & Combustible',
-      desc: 'Vehículos, mantenimiento preventivo, cargas de combustible',
-      icon: Truck,
-      color: 'from-slate-700 to-slate-500',
-      stats: [
-        { label: 'Vehículos', value: vehicles.length },
-        { label: 'Operativos', value: fleetOperative },
-        { label: 'Con Obs.', value: vehicles.filter(v => v.vehicle_condition === 'con_observaciones').length },
-      ],
-      module: 'fleet' as const,
-    },
-    {
-      title: 'Órdenes de Compra',
-      desc: 'OC/OT emitidas, entregas pendientes, urgencias',
-      icon: FileSignature,
-      color: 'from-violet-600 to-purple-400',
-      stats: [
-        { label: 'OC Pendientes', value: pendingPOs.length },
-        { label: 'Urgentes', value: purchaseOrders.filter(po => po.urgency && !['cerrada', 'cancelada'].includes(po.status)).length, alert: true },
-      ],
-      module: 'purchase_orders' as const,
-    },
-    {
-      title: 'Pedidos de Compra',
-      desc: 'Solicitudes internas de materiales desde obra',
-      icon: ClipboardCheck,
-      color: 'from-purple-600 to-indigo-400',
-      stats: [
-        { label: 'Herr. Asignadas', value: activeAssignments },
-      ],
-      module: 'purchase_requests' as const,
-    },
-  ];
+  const [activeTab, setActiveTab] = useState<'inventory' | 'assets' | 'movements' | 'kpis'>('inventory');
+  const [showIntro, setShowIntro] = useState(true);
+  
+  const { data: inventory, isLoading: loadingInventory } = useLogisticsInventory();
+  const { data: assets, isLoading: loadingAssets } = useLogisticsAssets();
+  const { data: movements, isLoading: loadingMovements } = useLogisticsMovements();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-teal-700 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Warehouse size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 via-teal-400 to-purple-400" />
+    <div className="space-y-4 md:space-y-6">
+      {/* Descriptive Header */}
+      <div className="bg-gradient-to-r from-teal-800 to-teal-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
+          <Warehouse size={80} className="md:w-[120px] md:h-[120px]" />
+        </div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Warehouse size={24} /> Gerencia de Logística</h3>
-          <p className="text-teal-100 text-sm mt-1">Doc PR-GL-01 — Control de acopios, transporte, inventario y abastecimiento</p>
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
+            <Warehouse size={24} className="md:w-7 md:h-7" /> Gerencia de Logística
+          </h3>
+          <p className="text-teal-100 text-xs md:text-sm mt-1 max-w-2xl">
+            Aseguramos que cada obra cuente con los recursos físicos necesarios en tiempo y forma.
+            Administramos inventarios, pañol, herramientas y la flota para evitar interrupciones operativas.
+          </p>
         </div>
       </div>
 
-      {/* KPI Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-[10px] font-bold text-gray-400 uppercase">Ítems en Stock</p>
-          <p className="text-xl font-black text-gray-800 font-mono">{items.length}</p>
-        </div>
-        <div className={`bg-white border rounded-xl p-4 shadow-sm ${lowStock.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
-          <p className="text-[10px] font-bold text-red-400 uppercase flex items-center gap-1"><AlertTriangle size={10} /> Stock Bajo</p>
-          <p className="text-xl font-black text-red-600 font-mono">{lowStock.length}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-[10px] font-bold text-emerald-400 uppercase">Valor Inventario</p>
-          <p className="text-xl font-black text-emerald-700 font-mono">{fmt(totalValue)}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-[10px] font-bold text-purple-400 uppercase">OC Pendientes</p>
-          <p className="text-xl font-black text-purple-700 font-mono">{pendingPOs.length}</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">Flota Operativa</p>
-          <p className="text-xl font-black text-slate-700 font-mono">{fleetOperative}/{vehicles.length}</p>
-        </div>
-      </div>
-
-      {/* Alerts */}
-      {lowStock.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-bold text-red-700 text-sm mb-1">⚠️ {lowStock.length} ítems por debajo del stock mínimo</p>
-            <div className="flex flex-wrap gap-1.5">
-              {lowStock.slice(0, 6).map(i => (
-                <span key={i.id} className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">{i.name} ({i.current_stock}/{i.min_stock})</span>
-              ))}
-              {lowStock.length > 6 && <span className="text-red-400 text-xs font-medium">y {lowStock.length - 6} más...</span>}
+      {/* Intro Accordion */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
+        <button
+          onClick={() => setShowIntro(!showIntro)}
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 shrink-0">
+              <PackageSearch size={20} />
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 text-sm">¿Cómo funciona Logística en ECAR?</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Conocé los procesos clave: Stock crítico, Trazabilidad, y Mantenimiento preventivo.</p>
             </div>
           </div>
-          <button onClick={() => setActiveModule('inventory')} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-700 transition-all shrink-0 flex items-center gap-1">
-            Ver Inventario <ArrowRight size={12} />
-          </button>
-        </div>
-      )}
-
-      {/* Module Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cards.map(card => {
-          const Icon = card.icon;
-          return (
-            <button
-              key={card.title}
-              onClick={() => setActiveModule(card.module)}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all text-left group overflow-hidden"
-            >
-              <div className={`bg-gradient-to-r ${card.color} px-5 py-3 flex items-center gap-2`}>
-                <Icon size={18} className="text-white" />
-                <span className="font-bold text-white text-sm">{card.title}</span>
-                <ArrowRight size={14} className="text-white/50 ml-auto group-hover:translate-x-1 transition-transform" />
-              </div>
-              <div className="p-4">
-                <p className="text-xs text-gray-500 mb-3">{card.desc}</p>
-                <div className="flex gap-3">
-                  {card.stats.map((s, i) => (
-                    <div key={i} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${(s as any).alert ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
-                      <span className="text-gray-400 font-medium">{s.label}:</span> {s.value}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </button>
-          );
-        })}
+          <div className="text-gray-400">
+            {showIntro ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </div>
+        </button>
+        {showIntro && (
+          <div className="p-4 md:p-6 border-t border-gray-100 bg-white grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito y Stock Crítico</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Logística debe conocer exactamente qué tenemos, dónde está y su estado.
+                Definimos <span className="font-semibold text-gray-800">Alertas de Reposición</span> antes de que el material o herramienta se agote (Stock Mínimo), protegiendo así el ritmo de la obra.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos y Devoluciones</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Cada salida (Despacho) debe tener un responsable y una fecha de devolución.
+                La trazabilidad previene pérdidas económicas. Logística acciona alertas cuando las herramientas no retornan a tiempo.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota y Mantenimiento</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                El control de horas y kilómetros nos permite anticipar mantenimientos preventivos (services, VTV) y roturas de maquinarias y vehículos de flota, evitando paradas forzadas.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Recent Movements */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2"><Clock size={16} /> Últimos Movimientos de Inventario</h3>
-          <button onClick={() => setActiveModule('inventory')} className="text-xs text-blue-600 font-bold hover:text-blue-800 flex items-center gap-1">
-            Ver todos <ArrowRight size={12} />
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 gap-2 md:gap-6 px-2 overflow-x-auto no-scrollbar">
+        {[
+          { id: 'inventory', icon: Package, label: 'Inventario & Pañol' },
+          { id: 'assets', icon: Truck, label: 'Flota & Máquinas' },
+          { id: 'movements', icon: Repeat, label: 'Despachos & Devoluciones' },
+          { id: 'kpis', icon: Wrench, label: 'Mantenimiento & KPIs' }
+        ].map(tab => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`pb-3 text-xs md:text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <tab.icon size={16} /> {tab.label}
           </button>
-        </div>
-        {recentMovements.length > 0 ? (
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-2">Fecha</th>
-                <th className="px-4 py-2">Ítem</th>
-                <th className="px-4 py-2">Tipo</th>
-                <th className="px-4 py-2 text-center">Cantidad</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {recentMovements.map(m => (
-                <tr key={m.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-mono text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString('es-AR')}</td>
-                  <td className="px-4 py-2 font-medium">{(m.item as any)?.name || '—'}</td>
-                  <td className="px-4 py-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.movement_type === 'in' ? 'bg-green-100 text-green-700' : m.movement_type === 'out' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {m.movement_type === 'in' ? 'Ingreso' : m.movement_type === 'out' ? 'Egreso' : m.movement_type === 'return' ? 'Devolución' : 'Ajuste'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-center font-mono font-bold">{m.quantity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="text-center py-8 text-gray-400 text-sm">Sin movimientos registrados aún</div>
+        ))}
+      </div>
+
+      {/* Tab Contents */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px]">
+        {activeTab === 'inventory' && (
+          <div className="p-4 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Package className="text-teal-600" /> Inventario</h3>
+              <button className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                <Plus size={16} /> Nuevo Ítem
+              </button>
+            </div>
+            {loadingInventory ? (
+              <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+            ) : inventory && inventory.length > 0 ? (
+               <table className="w-full text-left text-sm">
+                 <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+                   <tr>
+                     <th className="px-4 py-3 font-bold">Código</th>
+                     <th className="px-4 py-3 font-bold">Nombre</th>
+                     <th className="px-4 py-3 font-bold">Rubro</th>
+                     <th className="px-4 py-3 font-bold text-center">Stock Actual</th>
+                     <th className="px-4 py-3 font-bold text-center">Stock Mínimo</th>
+                     <th className="px-4 py-3 font-bold">Estado</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-100">
+                   {inventory.map((item: any) => (
+                     <tr key={item.id} className="hover:bg-gray-50">
+                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">{item.code}</td>
+                       <td className="px-4 py-3 font-medium text-gray-800">{item.name}</td>
+                       <td className="px-4 py-3 text-gray-600 capitalize">{item.category}</td>
+                       <td className="px-4 py-3 text-center font-bold">{item.stock_current} {item.unit}</td>
+                       <td className="px-4 py-3 text-center text-gray-500">{item.stock_min}</td>
+                       <td className="px-4 py-3">
+                         {item.stock_current <= item.stock_min ? (
+                           <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold"><AlertTriangle size={12} /> Crítico</span>
+                         ) : (
+                           <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">Óptimo</span>
+                         )}
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <Package size={48} className="mx-auto mb-3 opacity-20" />
+                <p>El inventario está vacío. Creá nuevos ítems para comenzar a registrar.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'assets' && (
+          <div className="p-4 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Truck className="text-teal-600" /> Flota y Maquinaria</h3>
+              <button className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                <Plus size={16} /> Nuevo Activo
+              </button>
+            </div>
+            {loadingAssets ? (
+              <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+            ) : assets && assets.length > 0 ? (
+               <table className="w-full text-left text-sm">
+                 <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+                   <tr>
+                     <th className="px-4 py-3 font-bold">Código / PIN</th>
+                     <th className="px-4 py-3 font-bold">Activo</th>
+                     <th className="px-4 py-3 font-bold">Ubicación / Resp.</th>
+                     <th className="px-4 py-3 font-bold text-center">Horas/Km Actual</th>
+                     <th className="px-4 py-3 font-bold">Estado</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-100">
+                   {assets.map((a: any) => (
+                     <tr key={a.id} className="hover:bg-gray-50">
+                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">{a.pin_plate || a.code}</td>
+                       <td className="px-4 py-3 font-medium text-gray-800">{a.name} <span className="text-gray-400 font-normal ml-1">({a.brand})</span></td>
+                       <td className="px-4 py-3 text-gray-600">
+                         {a.current_location || '-'} <br/>
+                         <span className="text-xs text-gray-400">{a.assigned_to}</span>
+                       </td>
+                       <td className="px-4 py-3 text-center font-bold">{a.current_hours_km}</td>
+                       <td className="px-4 py-3">
+                         {a.status === 'available' && <span className="inline-flex items-center bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">Disponible</span>}
+                         {a.status === 'in_use' && <span className="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">En Uso</span>}
+                         {a.status === 'maintenance' && <span className="inline-flex items-center bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold">Mantenimiento</span>}
+                         {a.status === 'out_of_service' && <span className="inline-flex items-center bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold">Fuera de Serv.</span>}
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <Truck size={48} className="mx-auto mb-3 opacity-20" />
+                <p>No hay activos registrados en la flota.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'movements' && (
+          <div className="p-4 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-teal-600" /> Despachos y Devoluciones</h3>
+              <div className="flex gap-2">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">
+                  Registrar Salida
+                </button>
+                <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">
+                  Registrar Devolución
+                </button>
+              </div>
+            </div>
+            {loadingMovements ? (
+              <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+            ) : movements && movements.length > 0 ? (
+               <table className="w-full text-left text-sm">
+                 <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+                   <tr>
+                     <th className="px-4 py-3 font-bold">Fecha</th>
+                     <th className="px-4 py-3 font-bold">Movimiento</th>
+                     <th className="px-4 py-3 font-bold">Destino / Origen</th>
+                     <th className="px-4 py-3 font-bold">Responsable</th>
+                     <th className="px-4 py-3 font-bold">Estado</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-100">
+                   {movements.map((m: any) => (
+                     <tr key={m.id} className="hover:bg-gray-50">
+                       <td className="px-4 py-3 text-gray-500 text-xs">{new Date(m.created_at).toLocaleDateString('es-AR')}</td>
+                       <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2">
+                         {m.type === 'dispatch' ? <span className="text-blue-500">↑ Despacho</span> : <span className="text-emerald-500">↓ Devolución</span>}
+                       </td>
+                       <td className="px-4 py-3 text-gray-600">{m.type === 'dispatch' ? m.destination : m.origin}</td>
+                       <td className="px-4 py-3 font-medium text-gray-700">{m.responsible_person}</td>
+                       <td className="px-4 py-3">
+                         {m.status === 'pending_return' ? (
+                           <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold"><Clock size={12} /> Pendiente</span>
+                         ) : (
+                           <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">Cerrado</span>
+                         )}
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <Repeat size={48} className="mx-auto mb-3 opacity-20" />
+                <p>No hay movimientos registrados.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'kpis' && (
+          <div className="p-4 md:p-6 space-y-6">
+            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><ShieldAlert className="text-teal-600" /> Tablero Logístico (Indicadores)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-4">
+                <h4 className="text-red-700 text-sm font-bold flex justify-between items-center">Stock Crítico <span>(bajo mínimo)</span></h4>
+                <p className="text-3xl font-black text-red-800 mt-2">0</p>
+                <p className="text-xs text-red-600 mt-1">Ítems que requieren reposición urgente</p>
+              </div>
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-4">
+                <h4 className="text-amber-700 text-sm font-bold flex justify-between items-center">Devoluciones <span>(vencidas)</span></h4>
+                <p className="text-3xl font-black text-amber-800 mt-2">0</p>
+                <p className="text-xs text-amber-600 mt-1">Herramientas no retornadas a pañol</p>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
+                <h4 className="text-blue-700 text-sm font-bold flex justify-between items-center">Mantenimientos <span>(próximos)</span></h4>
+                <p className="text-3xl font-black text-blue-800 mt-2">0</p>
+                <p className="text-xs text-blue-600 mt-1">Services de máquinas/flota a planificar</p>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl p-4">
+                <h4 className="text-emerald-700 text-sm font-bold flex justify-between items-center">Flota Activa <span>(en uso)</span></h4>
+                <p className="text-3xl font-black text-emerald-800 mt-2">0</p>
+                <p className="text-xs text-emerald-600 mt-1">Vehículos y maquinaria operando</p>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><Wrench size={16} className="text-gray-500" /> Últimos Mantenimientos y Cargas</h4>
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+                <Wrench size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No hay registros recientes de services o carga de combustible.</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

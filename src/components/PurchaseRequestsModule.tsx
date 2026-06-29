@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   received: { label: 'Recibido', color: 'bg-emerald-100 text-emerald-700' },
   rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-700' },
   quoted: { label: 'Cotizado', color: 'bg-teal-100 text-teal-700' },
+  returned: { label: 'Devuelto', color: 'bg-orange-100 text-orange-700' },
 };
 
 const formatPhone = (phone: string) => {
@@ -53,7 +54,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [showWhatsappConfig, setShowWhatsappConfig] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [activeTab, setActiveTab] = useState<'obra' | 'quote'>('obra');
-  const [form, setForm] = useState({ project_id: '', urgency: 'normal', requested_by: '', notes: '' });
+  const [form, setForm] = useState({ project_id: '', urgency: 'normal', urgency_reason: '', requested_by: '', notes: '' });
   const [formItems, setFormItems] = useState<{ description: string; quantity: string; unit: string; inventoryItemId: string; searchText: string; showDropdown: boolean }[]>([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [phoneSaved, setPhoneSaved] = useState(false);
@@ -101,12 +102,13 @@ export const PurchaseRequestsModule: React.FC = () => {
     await createRequest.mutateAsync({
       project_id: form.project_id || null,
       urgency: form.urgency as any,
+      urgency_reason: form.urgency === 'urgent' ? form.urgency_reason : null,
       requested_by: form.requested_by || null,
       notes: form.notes || null,
       items: validItems.map(i => ({ description: i.description, quantity: parseFloat(i.quantity) || 1, unit: i.unit })),
     } as any);
     setShowNew(false);
-    setForm({ project_id: '', urgency: 'normal', requested_by: '', notes: '' });
+    setForm({ project_id: '', urgency: 'normal', urgency_reason: '', requested_by: '', notes: '' });
     setFormItems([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   };
 
@@ -127,12 +129,20 @@ export const PurchaseRequestsModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-violet-800 to-violet-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><ShoppingBag size={120} /></div>
+      {/* Descriptive Header */}
+      <div className="bg-gradient-to-r from-violet-800 to-violet-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
+          <ShoppingBag size={80} className="md:w-[120px] md:h-[120px]" />
+        </div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><ShoppingBag size={24} /> Pedidos de Compra</h3>
-          <p className="text-violet-100 text-sm mt-1">Consolidación de pedidos desde obra para negociar mejores precios</p>
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
+            <ShoppingBag size={24} className="md:w-7 md:h-7" /> Gerencia de Compras
+          </h3>
+          <p className="text-violet-100 text-xs md:text-sm mt-1 max-w-2xl">
+            Unificamos y profesionalizamos el proceso de adquisición. 
+            Transformamos los pedidos urgentes y desordenados en compras planificadas, 
+            garantizando calidad, mejor precio y trazabilidad.
+          </p>
         </div>
       </div>
 
@@ -267,6 +277,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                     {req.project && <span className="text-xs text-gray-500 flex items-center gap-1"><Building2 size={12} /> {(req.project as any)?.name}</span>}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Por: {req.requested_by || '—'} · {new Date(req.created_at).toLocaleDateString('es-AR')}</p>
+                  {req.urgency === 'urgent' && req.urgency_reason && <p className="text-sm text-red-600 font-medium mt-1 bg-red-50 p-2 rounded-md border border-red-100">Motivo de urgencia: {req.urgency_reason}</p>}
                   {req.notes && <p className="text-sm text-gray-500 mt-1">{req.notes}</p>}
                   {items.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -282,6 +293,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                 {req.status === 'pending' && activeTab === 'obra' && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'approved', approved_at: new Date().toISOString() })} className="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-all" title="Aprobar"><Check size={16} className="text-green-700" /></button>
+                    <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'returned' })} className="p-2 rounded-lg bg-orange-100 hover:bg-orange-200 transition-all" title="Devolver (Faltan Datos)"><AlertTriangle size={16} className="text-orange-700" /></button>
                     <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'rejected' })} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-all" title="Rechazar"><XCircle size={16} className="text-red-700" /></button>
                   </div>
                 )}
@@ -353,10 +365,13 @@ export const PurchaseRequestsModule: React.FC = () => {
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Pedido de Compra</h3><button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-                <div><label className="text-xs font-bold text-gray-500">Urgencia</label><select value={form.urgency} onChange={e => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="low">Baja</option><option value="normal">Normal</option><option value="urgent">Urgente</option></select></div>
+                <div><label className="text-xs font-bold text-gray-500">Obra *</label><select required value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                <div><label className="text-xs font-bold text-gray-500">Urgencia *</label><select required value={form.urgency} onChange={e => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="low">Baja</option><option value="normal">Normal</option><option value="urgent">Urgente</option></select></div>
               </div>
-              <div><label className="text-xs font-bold text-gray-500">Solicitado por</label><input value={form.requested_by || userName} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" readOnly /></div>
+              {form.urgency === 'urgent' && (
+                <div><label className="text-xs font-bold text-red-500">Motivo de Urgencia (Impacto si no se compra) *</label><input required value={form.urgency_reason} onChange={e => setForm({ ...form, urgency_reason: e.target.value })} className="w-full px-3 py-2 border border-red-300 rounded-xl text-sm bg-red-50 focus:ring-red-500" placeholder="Ej: Obra frenada por falta de material" /></div>
+              )}
+              <div><label className="text-xs font-bold text-gray-500">Solicitado por *</label><input required value={form.requested_by || userName} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" readOnly /></div>
 
               <div>
                 <label className="text-xs font-bold text-gray-500 mb-1 block">Materiales / Herramientas Solicitados</label>

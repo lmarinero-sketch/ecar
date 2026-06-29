@@ -166,15 +166,20 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Ayudalo a: ver historial de cargas, analizar consumo por vehículo, identificar vehículos con alto consumo.
 - Sugerí: "¿Querés que analice el consumo de combustible por vehículo?"`,
 
-  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Pedidos de Compra
-- Solicitudes internas de compra de materiales y herramientas para obra.
-- IMPORTANTE: Los materiales y herramientas están VINCULADOS AL INVENTARIO. Solo se pueden pedir ítems que estén registrados en el pañol.
-- Las herramientas (🔧) aparecen primero en el selector por prioridad.
-- Cada pedido muestra el stock actual del ítem y la unidad de medida se autocompleta.
-- Estados: pendiente, aprobado, consolidado, recibido.
-- Ayudalo a: ver pedidos pendientes, consultar qué materiales se pueden pedir, verificar stock disponible.
-- Sugerí: "¿Querés que revise los pedidos pendientes?" o "Puedo mostrarte qué herramientas hay disponibles para pedir".
-- Si el usuario quiere pedir algo que no está en inventario, decile que primero lo cargue en Inventario.`,
+  logistics: `## CONTEXTO ACTUAL: El usuario está en Gerencia de Logística
+- Este módulo maneja Depósito, Pañol, Flota, Mantenimiento y Despachos.
+- El procedimiento rector establece que NO se debe entregar ninguna herramienta sin registro del responsable y fecha de devolución.
+- Existen "Alertas de Reposición" basadas en Stock Mínimo para evitar que la obra se detenga.
+- El mantenimiento preventivo de máquinas y vehículos (services, VTV) se dispara por acumulación de horas/km cargados por los usuarios.
+- Ayudalo a: consultar el stock de un material, ver qué herramientas tiene asignadas alguien, revisar qué vehículos necesitan service pronto, o registrar un despacho.
+- Sugerí: "Puedo consultar qué herramientas están vencidas en obra" o "Revisemos el stock crítico del depósito".`,
+
+  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Gerencia de Compras
+- Consolidación de pedidos desde obra para negociar mejores precios y profesionalizar la adquisición.
+- TODO pedido requiere "Datos Mínimos" y si es "Urgente", requiere un motivo justificado para no naturalizar las urgencias.
+- Las herramientas y materiales están vinculados al inventario de Logística.
+- Ayudalo a: ver pedidos pendientes, consultar el estado de una orden de compra, revisar qué pedidos urgentes hay.
+- Sugerí: "¿Querés que revise los pedidos que están pendientes de aprobación?"`,
 
   implementation: `## CONTEXTO ACTUAL: El usuario está en Implementación
 - Panel de seguimiento del progreso de implementación del sistema ECAR.

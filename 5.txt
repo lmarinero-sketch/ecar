@@ -1,0 +1,845 @@
+﻿1. Control documental
+Campo
+DefiniciÃ³n
+Nombre del procedimiento
+Procedimiento de Gerencia de Obras
+CÃ³digo
+PR-GO-01
+VersiÃ³n
+v1.0 â€“ Premium
+Empresa
+ECAR Construcciones / ECAR Constructora
+Ãrea responsable
+Gerencia de Obras
+Responsable del procedimiento
+Responsable de Gerencia de Obras, con revisiÃ³n de Gerencia General
+RevisiÃ³n
+Gerencia General
+AprobaciÃ³n
+Gerencia General / DirecciÃ³n
+Fecha
+Junio 2026
+Estado
+Documento interno de trabajo
+Tipo de documento
+Documento interno de conducciÃ³n, planificaciÃ³n, ejecuciÃ³n, control operativo y mejora continua
+Criterio normativo
+Compatible con criterios de gestiÃ³n de calidad tipo ISO 9001. No implica certificaciÃ³n formal.
+Uso previsto
+Ordenar el proceso desde la planificaciÃ³n de obra hasta la ejecuciÃ³n, control de avance, Ã³rdenes de trabajo, comunicaciÃ³n con Ã¡reas, cierre de etapa y aprendizaje posterior.
+PrÃ³xima revisiÃ³n
+Al validar responsables reales, formularios definitivos, frecuencia de reportes y rutina de planificaciÃ³n semanal.
+2. Ãndice ejecutivo del procedimiento
+SecciÃ³n
+Contenido
+1
+Control documental
+2
+Ãndice ejecutivo
+3
+IntroducciÃ³n
+4
+Objetivo
+5
+PropÃ³sito de la Gerencia de Obras
+6
+Alcance, lÃ­mites y criterio rector
+7
+Definiciones bÃ¡sicas
+8
+Entradas, actividades y salidas
+9
+Responsables y matriz RACI
+10
+Registros obligatorios
+11
+Indicadores
+12
+Riesgos y controles preventivos
+13
+ComunicaciÃ³n con gerencias y Gerencia General
+14
+Tratamiento de planificaciÃ³n, Ã³rdenes de trabajo y urgencias
+15
+No conformidades de obra
+16
+Reuniones, rutina y reportes
+17
+Perfil, alcance y herramientas del responsable
+18
+10 casos ejemplo aplicables a ECAR
+19
+Esquema visual de caso
+20
+Anexos operativos sugeridos
+21
+Cierre institucional
+3. IntroducciÃ³n
+Este procedimiento desarrolla el funcionamiento operativo de la Gerencia de Obras dentro del sistema interno de organizaciÃ³n, procedimientos y comunicaciÃ³n entre gerencias de ECAR. Su finalidad es transformar la ejecuciÃ³n en obra en un proceso planificado, medible, documentado y coordinado con Proyectos y Presupuestos, Compras, LogÃ­stica, AdministraciÃ³n y Finanzas y Gerencia General.
+La Gerencia de Obras es el lugar donde la empresa demuestra en terreno lo que prometiÃ³ en el presupuesto y lo que planificÃ³ internamente. Por eso, no puede trabajar solamente por urgencia, mensajes aislados o memoria de encargados. Debe planificar, conducir, registrar, controlar, comunicar desvÃ­os y cerrar cada etapa con evidencia.
+El enfoque del procedimiento es compatible con criterios de gestiÃ³n de calidad tipo ISO 9001: enfoque a procesos, informaciÃ³n documentada, trazabilidad, control operativo, pensamiento basado en riesgos, indicadores, no conformidades, acciones correctivas y mejora continua. No implica certificaciÃ³n formal.
+4. Objetivo del procedimiento
+Establecer el mÃ©todo de trabajo de la Gerencia de Obras de ECAR para planificar, ejecutar, controlar y cerrar obras, servicios o frentes de trabajo con orden, seguridad, calidad, productividad, trazabilidad y comunicaciÃ³n efectiva entre Ã¡reas.
+El procedimiento busca evitar inicios sin planificaciÃ³n, pedidos tardÃ­os de materiales, Ã³rdenes de trabajo ambiguas, falta de partes diarios, ejecuciÃ³n de adicionales sin respaldo, errores de calidad, desvÃ­os no comunicados, dependencia excesiva de WhatsApp y ausencia de cierre documental.
+5. PropÃ³sito de la Gerencia de Obras
+La Gerencia de Obras tiene como propÃ³sito asegurar que ECAR ejecute los trabajos comprometidos con planificaciÃ³n, coordinaciÃ³n de recursos, control de avance, control de calidad, seguridad, comunicaciÃ³n y registro. Su funciÃ³n no es sÃ³lo â€œhacer obraâ€, sino conducir el proceso real de ejecuciÃ³n para que la empresa cumpla, cobre, aprenda y mejore.
+Obras debe ser el puente entre el presupuesto aprobado y la realidad del terreno. Si Obras no planifica, Compras compra tarde; si Obras no comunica faltantes, LogÃ­stica actÃºa por urgencia; si Obras no registra avances, AdministraciÃ³n no puede certificar; si Obras ejecuta cambios sin aviso, Proyectos y Presupuestos no puede defender adicionales.
+6. Alcance, exclusiones y criterio rector
+6.1 Alcance
+Este procedimiento aplica desde la recepciÃ³n de una obra aprobada o frente de trabajo autorizado hasta la planificaciÃ³n, inicio, ejecuciÃ³n, control de avance, comunicaciÃ³n de pedidos, tratamiento de desvÃ­os, cierre de etapa, devoluciÃ³n de recursos y cierre final de obra.
+PlanificaciÃ³n operativa semanal y mensual.
+RevisiÃ³n de alcance, presupuesto, cÃ³mputos, supuestos y restricciones recibidos desde Proyectos y Presupuestos.
+ElaboraciÃ³n y emisiÃ³n de Ã³rdenes de trabajo internas.
+Pedido anticipado de materiales, herramientas, equipos, vehÃ­culos y recursos.
+ComunicaciÃ³n formal con Compras y LogÃ­stica.
+Control de avance fÃ­sico, productividad, calidad y seguridad.
+ElaboraciÃ³n de partes diarios y reportes semanales.
+Registro de desvÃ­os, interferencias, adicionales y no conformidades.
+Entrega de planificaciÃ³n, novedades crÃ­ticas y reportes a Gerencia General.
+Cierre de etapa, cierre de obra y lecciones aprendidas.
+6.2 Exclusiones y lÃ­mites
+No reemplaza el procedimiento de Proyectos y Presupuestos: Obras no debe modificar alcance tÃ©cnico-econÃ³mico sin consulta cuando impacte costo, plazo o cliente.
+No reemplaza el procedimiento de Compras: Obras solicita recursos con datos mÃ­nimos, pero no define por sÃ­ sola condiciones comerciales ni emite Ã³rdenes de compra.
+No reemplaza el procedimiento de LogÃ­stica: Obras pide herramientas, equipos y materiales, pero LogÃ­stica controla disponibilidad, entrega, devoluciÃ³n y trazabilidad fÃ­sica.
+No reemplaza el control financiero: Obras aporta avance, mediciones y respaldos, pero facturaciÃ³n, pagos, cobranzas y cierre econÃ³mico corresponden a AdministraciÃ³n y Finanzas.
+No debe ejecutar adicionales relevantes sin registrar, consultar y escalar cuando corresponda.
+6.3 Criterio rector del Ã¡rea
+Toda obra debe poder explicar quÃ© se va a hacer, quiÃ©n lo harÃ¡, cuÃ¡ndo, con quÃ© recursos, con quÃ© materiales, bajo quÃ© estÃ¡ndar, quÃ© avance tiene, quÃ© desvÃ­os existen, quÃ© decisiones necesita y quÃ© evidencia respalda lo ejecutado.
+7. Definiciones bÃ¡sicas
+TÃ©rmino
+DefiniciÃ³n operativa para ECAR
+PlanificaciÃ³n de obra
+Documento operativo donde Obras define frentes, tareas, responsables, recursos, fechas, restricciones, riesgos y necesidades de materiales o equipos.
+Orden de trabajo interna
+InstrucciÃ³n formal de ejecuciÃ³n para una tarea, frente o servicio, indicando alcance, responsable, fecha, recursos, condiciÃ³n de seguridad, registro y criterio de cierre.
+Parte diario
+Registro mÃ­nimo de lo ocurrido en obra: personal, tareas, avance, recursos usados, novedades, fotos, desvÃ­os, clima, seguridad y pendientes.
+Frente de obra
+Sector fÃ­sico o funcional donde se ejecuta una parte del trabajo.
+DesvÃ­o
+Diferencia entre lo planificado y lo ocurrido en plazo, costo, calidad, seguridad, recursos o alcance.
+Adicional
+Trabajo no incluido en el alcance original que requiere evaluaciÃ³n tÃ©cnica, econÃ³mica y aprobaciÃ³n.
+No conformidad de obra
+Incumplimiento tÃ©cnico, documental, operativo o de seguridad respecto del procedimiento, presupuesto, plano, estÃ¡ndar o requisito aplicable.
+Cierre de etapa
+Registro que evidencia que una tarea o hito fue ejecutado, controlado y respaldado para continuar, certificar o cerrar.
+8. Entradas, actividades y salidas del proceso
+8.1 Entradas del proceso
+Entrada
+Origen habitual
+Uso dentro del proceso
+Obra adjudicada o aprobada
+GG / Cliente / GPP
+Activa planificaciÃ³n operativa y carpeta de inicio.
+Carpeta de inicio de obra
+GPP
+Base tÃ©cnica y econÃ³mica para ejecutar con alcance claro.
+Planos, cÃ³mputos, presupuesto y supuestos
+GPP / Cliente
+Permiten definir tareas, materiales, rendimientos y restricciones.
+Pedido de cliente o inspecciÃ³n
+Cliente / InspecciÃ³n
+Puede generar coordinaciÃ³n, cambio de alcance o adicional.
+Disponibilidad de materiales, herramientas y equipos
+LogÃ­stica
+Condiciona arranque, continuidad y planificaciÃ³n.
+Estado de compras pendientes
+Compras
+Permite prever entregas, faltantes y alternativas.
+Personal disponible
+RRHH / Obras
+Permite asignar cuadrillas y responsables.
+Novedad de campo o interferencia
+Encargado / Obra
+Activa anÃ¡lisis, registro de desvÃ­o y comunicaciÃ³n.
+Necesidad de orden de trabajo
+Obras / GG
+Formaliza una tarea o frente especÃ­fico de ejecuciÃ³n.
+Requerimiento de planificaciÃ³n a GG
+Gerencia General
+Activa reporte de programaciÃ³n y decisiones requeridas.
+8.2 Actividades principales
+RecepciÃ³n de carpeta de inicio o alcance aprobado.
+RevisiÃ³n de presupuesto, cÃ³mputo, planos, supuestos, exclusiones y restricciones.
+DefiniciÃ³n de frentes de obra, secuencia, responsables y prioridades.
+ElaboraciÃ³n de planificaciÃ³n semanal y mensual.
+IdentificaciÃ³n de necesidades de materiales, herramientas, equipos, vehÃ­culos, personal y subcontratos.
+ComunicaciÃ³n anticipada con Compras y LogÃ­stica.
+Entrega de planificaciÃ³n a Gerencia General con decisiones requeridas.
+ElaboraciÃ³n de Ã³rdenes de trabajo internas para tareas, frentes o servicios definidos.
+Inicio de obra o frente con condiciones mÃ­nimas verificadas.
+Control diario de avance, calidad, seguridad, recursos y novedades.
+ElaboraciÃ³n de parte diario con registro fotogrÃ¡fico cuando corresponda.
+ComunicaciÃ³n inmediata de faltantes, interferencias, accidentes, desvÃ­os o cambios de alcance.
+Registro de adicionales o cambios antes de ejecutar cuando impacten costo o plazo.
+Seguimiento semanal de avance real vs planificado.
+Cierre de etapa, devoluciÃ³n de recursos y registro de lecciones aprendidas.
+8.3 Salidas del proceso
+Salida
+Destinatario
+Utilidad
+PlanificaciÃ³n semanal / mensual
+GG, Compras, LogÃ­stica
+Permite anticipar recursos y decisiones.
+Orden de trabajo interna
+Encargado, cuadrilla, archivo de obra
+Define quÃ© se ejecuta, quiÃ©n responde y con quÃ© criterio.
+Pedido de materiales / herramientas / equipos
+Compras / LogÃ­stica
+Activa abastecimiento y entrega con datos mÃ­nimos.
+Parte diario
+GG / Obras / AdministraciÃ³n si aplica
+Deja evidencia de avance, personal, tareas y desvÃ­os.
+Reporte semanal de obra
+GG
+Muestra avance, riesgos, necesidades y decisiones pendientes.
+Registro de desvÃ­o
+GG / GPP / Ã¡rea afectada
+Permite analizar causa, impacto y acciÃ³n correctiva.
+Registro de adicional
+GPP / GG / AdministraciÃ³n
+Sustenta recupero econÃ³mico o ajuste de alcance.
+Checklist de calidad o seguridad
+Obras / GG / Cliente si aplica
+Verifica cumplimiento antes de avanzar o tapar.
+Cierre de etapa
+GG / AdministraciÃ³n / Cliente si aplica
+Permite certificar, continuar o cerrar tÃ©cnicamente.
+LecciÃ³n aprendida
+GG / Manual interno
+Evita repetir errores y mejora el procedimiento.
+9. Responsables y matriz RACI
+Rol / Ã¡rea
+Responsabilidad principal dentro del procedimiento
+Responsable de Gerencia de Obras
+Planificar, conducir ejecuciÃ³n, ordenar frentes, emitir Ã³rdenes de trabajo internas, controlar avance, calidad, seguridad y reportar a GG.
+Gerencia General
+Validar prioridades, destrabar decisiones crÃ­ticas, revisar planificaciÃ³n, controlar indicadores y escalamientos.
+Proyectos y Presupuestos
+Entregar carpeta de inicio, aclarar alcance, evaluar adicionales, cambios y desvÃ­os contra presupuesto.
+Compras
+Gestionar adquisiciÃ³n de materiales, servicios y recursos solicitados con datos completos.
+LogÃ­stica
+Informar disponibilidad, entregar materiales/herramientas/equipos y controlar devoluciones y trazabilidad.
+AdministraciÃ³n y Finanzas
+Recibir avances, cierres, certificados y datos para control econÃ³mico, facturaciÃ³n y pagos.
+RRHH
+Aportar informaciÃ³n de personal, asistencia, altas, documentaciÃ³n y necesidades de capacitaciÃ³n.
+Encargado / Responsable de frente
+Ejecutar la planificaciÃ³n, informar novedades, completar parte diario y cuidar seguridad/calidad.
+Actividad clave
+Obras
+GG
+GPP
+Compras
+LogÃ­stica
+Adm./Fin.
+RecepciÃ³n de carpeta de inicio
+R
+A/I
+R
+I
+I
+I
+PlanificaciÃ³n semanal/mensual
+R
+A/C
+C
+C
+C
+I
+Pedido de materiales
+R
+I
+I
+C/R
+C
+I
+Pedido logÃ­stico de herramientas/equipos
+R
+I
+I
+I
+R/C
+I
+Orden de trabajo interna
+R
+I
+C
+I
+C
+I
+Control diario y parte diario
+R
+I
+I
+I
+I
+I
+Cambio de alcance/adicional
+C/R
+A
+R/C
+C
+C
+C
+Cierre de etapa / certificaciÃ³n
+R
+A/C
+C
+I
+C
+R/C
+DesvÃ­o grave
+R
+A
+C
+C
+C
+C
+Referencias: R = Responsable de ejecutar | A = Aprueba o responsable final | C = Consultado | I = Informado.
+10. Registros obligatorios
+Registro
+Responsable
+Momento
+Destinatario
+Utilidad
+Carpeta de inicio de obra
+GPP / Obras
+Antes de iniciar
+Obras / GG
+Transfiere alcance, cÃ³mputo, supuestos y restricciones.
+PlanificaciÃ³n semanal de obra
+Obras
+Semanal
+GG / Compras / LogÃ­stica
+Anticipa tareas, recursos y decisiones.
+PlanificaciÃ³n mensual base
+Obras
+Mensual
+GG
+Permite mirar hitos, recursos crÃ­ticos y capacidad.
+Orden de trabajo interna
+Obras
+Antes de ejecutar tarea/frente
+Encargado / archivo
+Define alcance, responsable, recursos, fecha y cierre.
+Pedido de materiales
+Obras
+Con anticipaciÃ³n
+Compras
+Activa compra con datos mÃ­nimos.
+Pedido logÃ­stico
+Obras
+Con anticipaciÃ³n
+LogÃ­stica
+Activa entrega de herramientas, equipos o materiales disponibles.
+Parte diario
+Encargado / Obras
+Diario
+Obras / GG
+Registra avance, personal, fotos, novedades y desvÃ­os.
+Reporte semanal de obra
+Obras
+Semanal
+GG
+Resume avance, riesgos, faltantes y decisiones.
+Registro de desvÃ­o
+Obras
+Ante desvÃ­o
+GG / Ã¡rea afectada
+Permite acciÃ³n correctiva.
+Registro de adicional
+Obras / GPP
+Cuando surge
+GG / AdministraciÃ³n
+Respalda reclamo o ajuste econÃ³mico.
+Checklist de calidad
+Obras
+Antes de cerrar etapa
+Obras / GG
+Evita retrabajos y entrega deficiente.
+Checklist de seguridad
+Obras
+Inicio y controles
+Obras / RRHH / GG
+Previene incidentes y evidencia control.
+Cierre de etapa
+Obras
+Al finalizar hito
+GG / Adm.
+Permite certificar, continuar o cerrar.
+Cierre de obra
+Obras
+Final
+GG / Adm. / LogÃ­stica
+Cierra pendientes, documentaciÃ³n y devoluciones.
+LecciÃ³n aprendida
+Obras / GG
+Cierre
+Sistema interno
+Mejora procesos futuros.
+11. Indicadores de gestiÃ³n
+Indicador
+Objetivo
+FÃ³rmula simple
+Frecuencia
+Responsable
+Avance real vs planificado
+Medir cumplimiento de programaciÃ³n
+% avance real / % avance planificado
+Semanal
+Obras / GG
+Partes diarios completos
+Medir disciplina documental
+Partes completos / dÃ­as de obra x 100
+Semanal
+Obras
+Planificaciones entregadas a GG
+Medir anticipaciÃ³n y conducciÃ³n
+Planificaciones entregadas / planificaciones requeridas
+Semanal / mensual
+Obras / GG
+Ã“rdenes de trabajo emitidas correctamente
+Medir claridad operativa
+OT completas / OT emitidas x 100
+Semanal
+Obras
+Pedidos urgentes vs planificados
+Detectar improvisaciÃ³n
+Pedidos urgentes / pedidos totales
+Semanal
+Obras / Compras / LogÃ­stica
+Faltantes de materiales que frenan obra
+Medir impacto de abastecimiento
+NÂ° faltantes crÃ­ticos
+Semanal
+Obras / LogÃ­stica / GG
+No conformidades de obra
+Medir desvÃ­os tÃ©cnicos/operativos
+NÂ° NC registradas
+Mensual
+Obras / GG
+Adicionales registrados antes de ejecutar
+Proteger recupero econÃ³mico
+Adicionales registrados / adicionales detectados
+Mensual
+Obras / GPP / GG
+Incidentes o desvÃ­os de seguridad
+Medir control preventivo
+NÂ° incidentes/desvÃ­os
+Mensual
+Obras / RRHH / GG
+Cierres de etapa con respaldo
+Medir cierre documental
+Cierres respaldados / cierres realizados
+Mensual
+Obras / Adm. / GG
+12. Riesgos principales y controles preventivos
+Riesgo
+Consecuencia
+Control preventivo
+Iniciar obra sin planificaciÃ³n
+Demoras, urgencias y pÃ©rdida de control
+PlanificaciÃ³n semanal/mensual aprobada o informada a GG.
+Pedir materiales tarde
+Frente detenido y sobrecostos
+Pedido anticipado segÃºn planificaciÃ³n y confirmaciÃ³n con Compras.
+No comunicar falta de materiales a LogÃ­stica
+Obra planifica con recursos inexistentes
+Consulta diaria/semanal de disponibilidad y pedido logÃ­stico formal.
+Elaborar Ã³rdenes de trabajo ambiguas
+Trabajo mal ejecutado o sin responsable
+Formato de OT con alcance, responsable, recursos, fecha y criterio de cierre.
+No registrar parte diario
+No hay evidencia de avance ni desvÃ­os
+Parte diario obligatorio con fotos cuando corresponda.
+Ejecutar adicionales sin registro
+PÃ©rdida econÃ³mica o conflicto con cliente
+Registro de cambio y validaciÃ³n con GPP/GG antes de ejecutar si aplica.
+No controlar calidad antes de tapar/cerrar
+Retrabajos, reclamos o fallas
+Checklist de calidad por etapa.
+No controlar seguridad
+Accidentes, sanciones o daÃ±o reputacional
+Checklist de seguridad y observaciÃ³n diaria.
+No informar desvÃ­os a GG
+Decisiones tardÃ­as y desgaste interno
+Criterios de escalamiento inmediato.
+No cerrar etapa formalmente
+No se certifica o quedan pendientes ocultos
+Cierre de etapa con evidencia y responsables.
+13. ComunicaciÃ³n con gerencias y Gerencia General
+Ãrea vinculada
+QuÃ© debe comunicarse
+CuÃ¡ndo
+Registro mÃ­nimo
+Gerencia General
+PlanificaciÃ³n semanal/mensual, avance, desvÃ­os, riesgos, decisiones requeridas, problemas de cliente/inspecciÃ³n, seguridad y faltantes crÃ­ticos.
+Semanal y de inmediato ante riesgo.
+PlanificaciÃ³n, reporte semanal, registro de desvÃ­o.
+Proyectos y Presupuestos
+Dudas de alcance, adicionales, cambios de especificaciÃ³n, interferencias, omisiones y comparaciÃ³n presupuesto vs real.
+Antes de ejecutar cambios que impacten costo/plazo y en cierre.
+Consulta tÃ©cnica, registro de adicional, lecciÃ³n aprendida.
+Compras
+Materiales, servicios o recursos a comprar con obra, cantidad, especificaciÃ³n, fecha requerida, prioridad y responsable.
+Con anticipaciÃ³n segÃºn planificaciÃ³n.
+Pedido interno de compra.
+LogÃ­stica
+Materiales disponibles, herramientas, equipos, vehÃ­culos, entregas, retiros, devoluciones, faltantes y urgencias.
+Antes de necesitar recurso y de inmediato ante faltante crÃ­tico.
+Pedido logÃ­stico, registro de entrega, novedad de faltante.
+AdministraciÃ³n y Finanzas
+Avances, cierres de etapa, mediciones, certificados, recursos usados y datos para cierre econÃ³mico.
+Cierre de etapa, semanal/mensual segÃºn obra.
+Parte, certificado, cierre de etapa.
+RRHH
+Necesidad de personal, asistencia, ausencias, desempeÃ±o, seguridad, capacitaciÃ³n y novedades de cuadrillas.
+SegÃºn necesidad y en reportes.
+Novedad de personal, parte diario, pedido de capacitaciÃ³n.
+13.1 Criterios de escalamiento a Gerencia General
+DesvÃ­o de plazo que pueda afectar compromiso con cliente, inspecciÃ³n o certificaciÃ³n.
+Faltante de materiales, herramientas o equipos que frene obra.
+Riesgo de seguridad, incidente o condiciÃ³n insegura relevante.
+Cambio de alcance o adicional de impacto econÃ³mico.
+Conflicto con cliente, inspecciÃ³n, proveedor, subcontrato o entre Ã¡reas.
+Falta de personal crÃ­tico o baja productividad sostenida.
+Obra sin planificaciÃ³n posible por falta de informaciÃ³n o recursos.
+No conformidad grave de calidad.
+Necesidad de compra o alquiler extraordinario.
+SituaciÃ³n que pueda afectar la imagen de ECAR.
+14. Tratamiento de planificaciÃ³n, Ã³rdenes de trabajo y urgencias
+14.1 Entrega de planificaciÃ³n a Gerencia General
+La planificaciÃ³n debe entregarse a Gerencia General como herramienta de conducciÃ³n, no como una formalidad. Debe mostrar quÃ© se harÃ¡, quÃ© recursos se necesitan, quÃ© riesgos existen y quÃ© decisiones estÃ¡n pendientes.
+PlanificaciÃ³n mensual base: hitos, frentes, recursos crÃ­ticos, restricciones y objetivos de avance.
+PlanificaciÃ³n semanal: tareas por frente, responsables, materiales, herramientas, equipos, vehÃ­culos, personal, fechas y prioridades.
+Reporte a GG: avance previsto, decisiones requeridas, faltantes crÃ­ticos, riesgos y pedidos de apoyo.
+Toda planificaciÃ³n debe cruzarse con Compras y LogÃ­stica para evitar programar recursos inexistentes.
+14.2 ElaboraciÃ³n de Ã³rdenes de trabajo internas
+La orden de trabajo interna es el instrumento que traduce la planificaciÃ³n en una instrucciÃ³n concreta para un frente, tarea o servicio. No reemplaza la orden de compra ni la orden de trabajo externa de Compras; sirve para ordenar la ejecuciÃ³n interna de obra.
+Debe indicar obra, frente, tarea, alcance, responsable, cuadrilla, fecha de inicio, fecha objetivo, materiales, herramientas, equipos, condiciones de seguridad, criterio de calidad y registro de cierre.
+Debe emitirse antes de iniciar tareas relevantes, repetitivas, crÃ­ticas o que involucren varios recursos.
+Debe quedar asociada al parte diario y al cierre de etapa correspondiente.
+Si la OT implica compra, alquiler, contrataciÃ³n externa o costo no previsto, debe comunicarse a Compras/GPP/GG segÃºn corresponda antes de comprometer la ejecuciÃ³n.
+14.3 ComunicaciÃ³n con LogÃ­stica ante falta de materiales
+Cuando Obras detecte falta de materiales, herramientas, equipos o vehÃ­culos, debe evitar resolver Ãºnicamente por llamada o WhatsApp. El aviso puede ser inmediato, pero debe existir registro que permita analizar causa, responsable, impacto y acciÃ³n preventiva.
+Registrar obra, frente, material/recurso faltante, cantidad, fecha requerida, impacto si no se entrega y responsable solicitante.
+Consultar disponibilidad real con LogÃ­stica y alternativas posibles.
+Si no hay stock, coordinar con Compras la reposiciÃ³n o compra urgente.
+Si el faltante frena obra, escalar a Gerencia General indicando impacto, causa probable y decisiÃ³n requerida.
+Al cierre semanal, analizar si el faltante fue por falta de planificaciÃ³n, compra tardÃ­a, stock mÃ­nimo inexistente o error de comunicaciÃ³n.
+14.4 Tratamiento de urgencias de obra
+La urgencia puede atenderse cuando hay riesgo de frenar obra, afectar seguridad, incumplir con cliente o perder productividad. Pero cada urgencia repetida debe registrarse como desvÃ­o del sistema para corregir la causa.
+Registrar la urgencia y el frente afectado.
+Definir impacto si no se resuelve.
+Identificar responsable que solicita y responsable que resuelve.
+Verificar alternativa interna con LogÃ­stica.
+Pedir compra o recurso con datos mÃ­nimos.
+Escalar a GG si afecta plazo, costo, seguridad o cliente.
+Resolver y registrar evidencia.
+Analizar causa raÃ­z en la revisiÃ³n semanal.
+15. No conformidades de obra
+No conformidad
+AcciÃ³n inmediata
+Responsable
+Registro obligatorio
+Tarea ejecutada sin orden o planificaciÃ³n mÃ­nima
+Detener o reordenar tarea, emitir OT retroactiva si corresponde y registrar desvÃ­o.
+Obras
+NC interna / parte diario
+Material utilizado no coincide con especificaciÃ³n
+Bloquear continuidad, consultar a GPP/inspecciÃ³n y corregir.
+Obras + GPP
+NC tÃ©cnica + fotos
+Faltante de material frena frente
+Registrar faltante, consultar LogÃ­stica, activar Compras y escalar si afecta plazo.
+Obras + LogÃ­stica
+Registro de faltante / desvÃ­o
+Parte diario incompleto
+Completar informaciÃ³n faltante y reforzar rutina con encargado.
+Obras
+ObservaciÃ³n documental
+Adicional ejecutado sin aprobaciÃ³n
+Registrar causa, cuantificar impacto y elevar a GG/GPP.
+Obras + GPP
+Registro de adicional / NC
+Trabajo con defecto de calidad
+Corregir, analizar causa y verificar antes de cerrar etapa.
+Obras
+Checklist / NC calidad
+Incumplimiento de seguridad
+Detener condiciÃ³n insegura y registrar acciÃ³n inmediata.
+Obras + RRHH
+Registro seguridad
+Recurso no devuelto a LogÃ­stica
+Solicitar devoluciÃ³n o justificar permanencia.
+Obras + LogÃ­stica
+Registro de devoluciÃ³n pendiente
+16. Reuniones, rutina y reportes
+Rutina
+Frecuencia
+Participantes
+Objetivo
+Registro
+RevisiÃ³n diaria de obra
+Diaria
+Obras / encargado
+Ordenar tareas, seguridad, recursos y novedades del dÃ­a.
+Parte diario / lista de prioridades
+Control de pedidos a Compras y LogÃ­stica
+Diaria o segÃºn frente
+Obras + Compras/LogÃ­stica
+Verificar faltantes, entregas y recursos crÃ­ticos.
+Listado de pedidos y estado
+Entrega de planificaciÃ³n semanal a GG
+Semanal
+Obras + GG
+Informar plan, riesgos, decisiones y recursos necesarios.
+PlanificaciÃ³n semanal
+ReuniÃ³n Obras + Compras + LogÃ­stica
+Semanal
+Obras, Compras, LogÃ­stica
+Anticipar materiales, herramientas, equipos y evitar urgencias.
+Minuta breve
+RevisiÃ³n de avance y desvÃ­os
+Semanal
+Obras + GG
+Comparar avance real vs planificado y definir correcciones.
+Reporte semanal
+Cierre mensual de obra
+Mensual
+Obras, GG, Adm., GPP
+Revisar avance, costos, adicionales, certificaciÃ³n y lecciones.
+Informe mensual / acta
+Cierre de etapa
+SegÃºn hito
+Obras + GG/Adm. si aplica
+Validar calidad, mediciÃ³n, fotos, pendientes y devoluciÃ³n de recursos.
+Cierre de etapa
+17. Perfil, alcance y herramientas del responsable
+17.1 Perfil del responsable de Gerencia de Obras
+Aspecto
+DefiniciÃ³n
+Nombre del puesto
+Responsable de Gerencia de Obras
+Reporta a
+Gerencia General
+Ãreas con las que se vincula
+Proyectos y Presupuestos, Compras, LogÃ­stica, AdministraciÃ³n y Finanzas, RRHH, clientes, inspecciÃ³n y proveedores cuando corresponda.
+PropÃ³sito del puesto
+Asegurar que las obras de ECAR se ejecuten con planificaciÃ³n, control de avance, calidad, seguridad, productividad, comunicaciÃ³n y documentaciÃ³n suficiente para cumplir compromisos y proteger la rentabilidad.
+Responsabilidades principales
+Planificar frentes, emitir Ã³rdenes de trabajo, coordinar cuadrillas, solicitar recursos, controlar avance, completar partes diarios, comunicar desvÃ­os, registrar adicionales, controlar calidad/seguridad y cerrar etapas.
+Competencias tÃ©cnicas
+Lectura de planos, criterio constructivo, planificaciÃ³n de obra, control de avance, mediciones, partes diarios, seguridad, coordinaciÃ³n de recursos, comunicaciÃ³n con inspecciÃ³n y manejo bÃ¡sico de costos.
+Competencias personales
+Liderazgo, orden, firmeza, comunicaciÃ³n clara, criterio operativo, anticipaciÃ³n, responsabilidad, capacidad de decisiÃ³n, seguimiento y orientaciÃ³n a resultados.
+Indicadores de evaluaciÃ³n
+Cumplimiento de planificaciÃ³n, partes diarios completos, avance real vs planificado, urgencias evitables, no conformidades, adicionales registrados, seguridad y cierres de etapa.
+Errores que no debe cometer
+Iniciar sin planificar, pedir tarde, no registrar partes, ejecutar adicionales sin avisar, no comunicar faltantes, no controlar calidad, no elevar riesgos y naturalizar urgencias.
+LÃ­mites del puesto
+No debe comprometer costos extraordinarios, cambios de alcance, compras relevantes ni acuerdos con cliente sin validar con GG/GPP/Compras segÃºn corresponda.
+17.2 Alcance de la persona responsable del Ã¡rea
+Alcance
+Criterio
+Puede decidir directamente
+OrganizaciÃ³n diaria de frentes, distribuciÃ³n de tareas, asignaciÃ³n operativa de cuadrillas disponibles, emisiÃ³n de Ã³rdenes de trabajo internas, priorizaciÃ³n de tareas habituales, parte diario, comunicaciÃ³n operativa y propuesta de mejoras.
+Debe consultar antes de decidir
+Cambios que impacten costo, plazo, cliente, calidad o seguridad; adicionales; modificaciones de alcance; compras o alquileres; uso de recursos crÃ­ticos; cambios de proveedor o subcontrato; alteraciÃ³n de prioridades definidas por GG.
+Debe escalar obligatoriamente a GG
+DesvÃ­os relevantes de plazo/costo, faltante crÃ­tico, riesgo de seguridad, conflicto con cliente/inspecciÃ³n, adicional importante, compra extraordinaria, falta de personal crÃ­tico, obra detenida, conflicto entre Ã¡reas o situaciÃ³n que afecte imagen de ECAR.
+17.3 Herramientas necesarias para el puesto
+Grupo
+Herramientas necesarias
+Herramientas fÃ­sicas
+Puesto de trabajo definido, espacio de reuniÃ³n breve, carpeta fÃ­sica de obra, planos impresos cuando corresponda, elementos de seguridad, equipo de mediciÃ³n bÃ¡sico, tablero de obra y archivo de documentaciÃ³n.
+Herramientas tecnolÃ³gicas
+Computadora o notebook, celular corporativo, acceso a internet, correo corporativo, Excel o software de gestiÃ³n, acceso a carpetas digitales, cÃ¡mara/celular para fotos, aplicaciones de planificaciÃ³n y acceso a tablero de control.
+Herramientas documentales
+Procedimiento de Obras, carpeta de inicio, planificaciÃ³n semanal/mensual, orden de trabajo interna, parte diario, registro de avance, registro de adicionales, checklist de calidad, checklist de seguridad, registro de desvÃ­os y cierre de etapa.
+Herramientas de gestiÃ³n
+Agenda diaria, lista de prioridades, semÃ¡foro de urgencias, tablero de pendientes, reuniÃ³n semanal con GG, reuniÃ³n con Compras y LogÃ­stica, indicadores de avance, matriz de riesgos y plan de mejora continua.
+No se debe exigir control sin herramientas. Cada responsable debe contar con los medios fÃ­sicos, tecnolÃ³gicos, documentales y de gestiÃ³n necesarios para cumplir su funciÃ³n con orden, evidencia y trazabilidad.
+18. 10 casos ejemplo aplicables a ECAR
+1. ElaboraciÃ³n de Ã³rdenes de trabajo internas
+Ãtem
+Contenido
+SituaciÃ³n
+Se necesita ordenar una tarea especÃ­fica de obra para una cuadrilla o frente.
+Riesgo
+Trabajo mal interpretado, falta de responsable, ejecuciÃ³n sin recursos o sin criterio de cierre.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe emitir OT interna con obra, frente, tarea, alcance, responsable, recursos, fecha, seguridad, calidad y registro de cierre. Si la OT implica gasto o cambio de alcance, debe consultar antes.
+Registro obligatorio
+Orden de trabajo interna + parte diario + cierre de etapa.
+ComunicaciÃ³n necesaria / escalamiento
+Encargado, LogÃ­stica si requiere equipos, Compras si requiere materiales, GG si hay impacto de plazo/costo.
+AcciÃ³n preventiva o correctiva
+Estandarizar formato de OT y usarlo en tareas crÃ­ticas o repetitivas.
+2. ComunicaciÃ³n con LogÃ­stica ante falta de materiales
+Ãtem
+Contenido
+SituaciÃ³n
+En obra se detecta que falta material para continuar un frente.
+Riesgo
+Frente detenido, pÃ©rdida de productividad, compra urgente y discusiÃ³n interna.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Registrar el faltante con obra, frente, cantidad, fecha requerida e impacto. Consultar stock con LogÃ­stica; si no hay disponibilidad, activar Compras. Escalar a GG si frena obra.
+Registro obligatorio
+Registro de faltante / pedido logÃ­stico / pedido de compra si aplica.
+ComunicaciÃ³n necesaria / escalamiento
+LogÃ­stica, Compras, GG si el impacto es crÃ­tico.
+AcciÃ³n preventiva o correctiva
+Revisar planificaciÃ³n semanal y definir stock mÃ­nimo o pedido anticipado.
+3. Entrega de planificaciÃ³n a Gerencia General
+Ãtem
+Contenido
+SituaciÃ³n
+Obras debe informar quÃ© harÃ¡ la semana o el mes y quÃ© necesita para cumplir.
+Riesgo
+GG se entera tarde, Compras/LogÃ­stica no anticipan recursos y la obra trabaja por urgencias.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Preparar planificaciÃ³n con frentes, tareas, responsables, recursos, materiales, herramientas, fechas, riesgos y decisiones requeridas. Entregarla semanalmente a GG y compartir necesidades con Compras/LogÃ­stica.
+Registro obligatorio
+PlanificaciÃ³n semanal/mensual + reporte a GG.
+ComunicaciÃ³n necesaria / escalamiento
+GG, Compras, LogÃ­stica, GPP si hay alcance tÃ©cnico.
+AcciÃ³n preventiva o correctiva
+Instalar rutina fija de entrega y revisiÃ³n de planificaciÃ³n.
+4. Obra pide materiales sin especificaciÃ³n completa
+Ãtem
+Contenido
+SituaciÃ³n
+El encargado pide â€œcaÃ±osâ€ o â€œaccesoriosâ€ sin cantidad, unidad, diÃ¡metro, obra o fecha.
+Riesgo
+Compra incorrecta, demora, material equivocado y pÃ©rdida de tiempo.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe completar pedido con datos mÃ­nimos antes de enviarlo. Compras puede devolver el pedido si falta informaciÃ³n crÃ­tica.
+Registro obligatorio
+Solicitud interna de materiales con checklist de datos mÃ­nimos.
+ComunicaciÃ³n necesaria / escalamiento
+Compras y LogÃ­stica si existe stock.
+AcciÃ³n preventiva o correctiva
+Capacitar encargados y usar formato Ãºnico de pedido.
+5. Cambio de alcance o adicional en campo
+Ãtem
+Contenido
+SituaciÃ³n
+Cliente o inspecciÃ³n pide una tarea no prevista o modifica una condiciÃ³n tÃ©cnica.
+Riesgo
+Trabajo ejecutado sin reconocimiento econÃ³mico o conflicto posterior.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe pausar la definiciÃ³n econÃ³mica, registrar el pedido, consultar con GPP, cuantificar impacto y elevar a GG si corresponde antes de ejecutar.
+Registro obligatorio
+Registro de cambio de alcance / adicional + fotos + respaldo tÃ©cnico.
+ComunicaciÃ³n necesaria / escalamiento
+GPP, GG, AdministraciÃ³n y cliente/inspecciÃ³n segÃºn corresponda.
+AcciÃ³n preventiva o correctiva
+Reforzar regla: si cambia el alcance, cambia la documentaciÃ³n.
+6. Interferencia no prevista
+Ãtem
+Contenido
+SituaciÃ³n
+Durante excavaciÃ³n o ejecuciÃ³n aparece una interferencia no indicada en planos.
+Riesgo
+Demora, daÃ±o, retrabajo, riesgo de seguridad y sobrecosto.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Detener o adecuar tarea, registrar con fotos, informar a GG/GPP, evaluar impacto y definir alternativa tÃ©cnica antes de continuar.
+Registro obligatorio
+Registro de interferencia + parte diario + fotos.
+ComunicaciÃ³n necesaria / escalamiento
+GG, GPP, cliente/inspecciÃ³n, LogÃ­stica si requiere equipo.
+AcciÃ³n preventiva o correctiva
+Mejorar relevamientos previos y checklist de interferencias.
+7. DesvÃ­o de avance frente al cronograma
+Ãtem
+Contenido
+SituaciÃ³n
+El avance real de la obra queda por debajo de lo planificado.
+Riesgo
+Incumplimiento de plazo, presiÃ³n sobre cuadrillas y pÃ©rdida de confianza del cliente.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe comparar avance real vs planificado, identificar causa, definir acciÃ³n correctiva, reprogramar y comunicar a GG.
+Registro obligatorio
+Reporte semanal de avance + registro de desvÃ­o.
+ComunicaciÃ³n necesaria / escalamiento
+GG, Compras/LogÃ­stica si la causa es recurso, RRHH si es personal.
+AcciÃ³n preventiva o correctiva
+Revisar rendimientos reales, mejorar planificaciÃ³n y anticipar restricciones.
+8. Falta de personal o cuadrilla incompleta
+Ãtem
+Contenido
+SituaciÃ³n
+Un frente queda sin personal suficiente por ausencia, baja productividad o reasignaciÃ³n.
+Riesgo
+Demora, incumplimiento de plan y sobrecarga del equipo.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Registrar novedad, informar a RRHH/GG, reprogramar tareas y priorizar frentes crÃ­ticos.
+Registro obligatorio
+Parte diario + novedad de personal + planificaciÃ³n ajustada.
+ComunicaciÃ³n necesaria / escalamiento
+RRHH, GG y encargados afectados.
+AcciÃ³n preventiva o correctiva
+Definir dotaciÃ³n mÃ­nima por frente y reporte temprano de ausencias.
+9. Control de calidad antes de tapada o cierre de etapa
+Ãtem
+Contenido
+SituaciÃ³n
+Se estÃ¡ por tapar, cerrar o avanzar sobre una tarea que despuÃ©s serÃ¡ difÃ­cil de revisar.
+Riesgo
+Retrabajo, reclamos, fallas ocultas y costo de reparaciÃ³n.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe aplicar checklist, tomar fotos, validar medidas/pruebas si aplica y cerrar etapa antes de continuar.
+Registro obligatorio
+Checklist de calidad + fotos + cierre de etapa.
+ComunicaciÃ³n necesaria / escalamiento
+GG, GPP o cliente/inspecciÃ³n si corresponde.
+AcciÃ³n preventiva o correctiva
+Incluir puntos de control obligatorios por tipo de obra.
+10. Cierre de obra o etapa con devoluciÃ³n de recursos
+Ãtem
+Contenido
+SituaciÃ³n
+La obra o etapa finaliza pero quedan herramientas, materiales sobrantes, pendientes o documentaciÃ³n dispersa.
+Riesgo
+PÃ©rdidas, faltantes, no certificaciÃ³n y cierre econÃ³mico incompleto.
+Forma de resoluciÃ³n siguiendo el procedimiento
+Obras debe cerrar pendientes, devolver recursos a LogÃ­stica, entregar documentaciÃ³n a AdministraciÃ³n/GG y registrar lecciones aprendidas.
+Registro obligatorio
+Acta o checklist de cierre + devoluciÃ³n logÃ­stica + reporte final.
+ComunicaciÃ³n necesaria / escalamiento
+GG, LogÃ­stica, AdministraciÃ³n, GPP.
+AcciÃ³n preventiva o correctiva
+Usar checklist de cierre y reuniÃ³n corta de lecciones aprendidas.
+19. Esquema visual de caso
+Caso seleccionado: entrega de planificaciÃ³n de obra a Gerencia General. Este esquema resume cÃ³mo Obras debe convertir la informaciÃ³n tÃ©cnica y operativa en una planificaciÃ³n comunicada, revisada, ejecutable y controlable.
+20. Anexos operativos sugeridos
+Formulario / anexo
+Campos mÃ­nimos sugeridos
+Formulario de planificaciÃ³n semanal
+Obra, semana, frente, tarea, responsable, fecha, cuadrilla, materiales, herramientas, equipos, restricciones, riesgo, decisiÃ³n requerida y estado.
+Orden de trabajo interna
+NÂ° OT, obra, frente, tarea, alcance, responsable, cuadrilla, fecha, recursos, seguridad, calidad, evidencia, cierre y firma.
+Parte diario de obra
+Fecha, obra, clima, personal, tareas, avance, materiales usados, equipos, fotos, novedades, desvÃ­os, seguridad y pendientes.
+Pedido de materiales
+Obra, frente, solicitante, descripciÃ³n, cantidad, unidad, especificaciÃ³n, fecha requerida, prioridad e impacto.
+Pedido logÃ­stico
+Obra, frente, herramienta/equipo/material, cantidad, fecha, responsable, devoluciÃ³n estimada y observaciones.
+Registro de desvÃ­o
+DescripciÃ³n, causa, impacto en plazo/costo/calidad/seguridad, acciÃ³n inmediata, responsable y fecha compromiso.
+Registro de adicional
+Origen, descripciÃ³n, respaldo, fotos, impacto tÃ©cnico, costo estimado, aprobaciÃ³n y estado.
+Checklist de calidad
+Tarea, criterio tÃ©cnico, mediciones, prueba, fotos, conformidad y responsable.
+Checklist de cierre de etapa
+Hito, tareas terminadas, pendientes, fotos, mediciÃ³n, devoluciÃ³n de recursos, aprobaciÃ³n y observaciones.
+Reporte semanal a GG
+Avance, planificaciÃ³n siguiente, faltantes, riesgos, decisiones requeridas, fotos, desvÃ­os y acciones correctivas.
+21. Cierre institucional
+La Gerencia de Obras es una pieza central del orden empresarial de ECAR. Cuando Obras planifica, comunica y registra, toda la empresa trabaja mejor: Proyectos y Presupuestos puede defender alcances, Compras puede anticipar proveedores, LogÃ­stica puede preparar recursos, AdministraciÃ³n puede certificar y Gerencia General puede conducir con informaciÃ³n real.
+La obra no debe funcionar como una sucesiÃ³n de urgencias. Debe funcionar como un proceso: planificar, ordenar, ejecutar, controlar, registrar, comunicar, corregir y cerrar.
+La obra es donde ECAR demuestra lo que promete. Por eso debe ejecutarse con planificaciÃ³n, control, seguridad, comunicaciÃ³n y registro.

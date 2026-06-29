@@ -6,6 +6,7 @@ import {
   AlertTriangle, Database, Tag, Clock, Calendar, Info, Shield, Building2, ClipboardCheck,
   ShoppingCart, UploadCloud, File, Download, HelpCircle
 } from 'lucide-react';
+import { exportToCompras, exportToLogistica, exportToObra } from '../lib/budgetExports';
 import {
   useBudgets, useCreateBudget, useUpdateBudget,
   useBudgetItems, useBudgetSections,
@@ -18,7 +19,7 @@ import {
   useItemDictionary, useSectionDictionary,
   useOpportunities,
   useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
-  useCreateNotificationLog, useCreatePurchaseRequest
+  useCreatePurchaseRequest
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 import { useModalStore } from '../store/useModalStore';
@@ -488,7 +489,7 @@ const BudgetDetailView: React.FC<{
   const { data: budgetFiles = [] } = useBudgetFiles(budget.id);
   const uploadFile = useUploadBudgetFile();
   const deleteFile = useDeleteBudgetFile();
-  const createLog = useCreateNotificationLog();
+  
   const createPurchaseRequest = useCreatePurchaseRequest();
 
   const [activeTab, setActiveTab] = useState<'general' | 'entrada' | 'computo' | 'adjuntos' | 'cierre'>('computo');
@@ -517,6 +518,67 @@ const BudgetDetailView: React.FC<{
   const toggleHandoff = async (key: string) => {
     const updated = { ...handoffChecklist, [key]: !handoffChecklist[key] };
     await updateBudget.mutateAsync({ id: budget.id, handoff_checklist: updated });
+  };
+
+  const handleSendToCompras = async () => {
+    const comprasItems = items.filter(
+      (i: any) => i.cost_type === 'material' || i.cost_type === 'subcontrato'
+    );
+    if (comprasItems.length === 0) {
+      alert('No hay materiales o subcontratos para enviar a Compras.');
+      return;
+    }
+    if (!budget.project_id) {
+      alert('El presupuesto debe estar asignado a un proyecto para enviar a Compras.');
+      return;
+    }
+
+    try {
+      await createPurchaseRequest.mutateAsync({
+        project_id: budget.project_id,
+        urgency: 'normal',
+        status: 'pending',
+        items: comprasItems.map((i: any) => ({
+          description: i.description + (i.notes ? ` - ${i.notes}` : ` (Rubro: ${i.section_id || 'Gral'})`),
+          quantity: i.quantity,
+          unit: i.unit || 'un'
+        }))
+      });
+      alert('Solicitud enviada a Compras exitosamente.');
+    } catch (e) {
+      console.error(e);
+      alert('Error al enviar solicitud a Compras.');
+    }
+  };
+
+  const handleSendToLogistica = async () => {
+    const logisticaItems = items.filter((i: any) => i.cost_type === 'equipo');
+    if (logisticaItems.length === 0) {
+      alert('No hay equipos para enviar a Logística.');
+      return;
+    }
+    if (!budget.project_id) {
+      alert('El presupuesto debe estar asignado a un proyecto para solicitar equipos.');
+      return;
+    }
+
+    try {
+      // Usamos PurchaseRequest como workaround técnico actual para bandeja de pedidos
+      await createPurchaseRequest.mutateAsync({
+        project_id: budget.project_id,
+        urgency: 'normal',
+        status: 'pending',
+        items: logisticaItems.map((i: any) => ({
+          description: i.description + (i.notes ? ` [REQUERIMIENTO LOGÍSTICO] - ${i.notes}` : ` [REQUERIMIENTO LOGÍSTICO]`),
+          quantity: i.quantity,
+          unit: i.unit || 'un'
+        }))
+      });
+      alert('Solicitud enviada a Logística exitosamente.');
+    } catch (e) {
+      console.error(e);
+      alert('Error al enviar solicitud a Logística.');
+    }
   };
 
   const isLocked = budget.status === 'approved' || budget.status === 'closed';
@@ -1014,6 +1076,100 @@ const BudgetDetailView: React.FC<{
         )}
       </div>
 
+      {/* Entregables e Interconexiones */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-4 mt-2">
+        <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Download size={14} className="text-cyan-600" /> Generar Entregables e Interconexiones</h4>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={() => exportToObra(budget, items, sections)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-200 hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm">
+            <FileText size={16} /> Carpeta de Obra (PDF)
+          </button>
+          
+          <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
+          <button onClick={() => exportToCompras(budget, items, sections)} className="bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1.5 transition-all shadow-sm">
+            <Package size={16} /> Planilla de Compras (Excel)
+          </button>
+          <button onClick={handleSendToCompras} className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5 transition-all shadow-sm">
+            <Check size={16} /> Enviar Solicitud a Compras
+          </button>
+
+          <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
+          <button onClick={() => exportToLogistica(budget, items, sections)} className="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-purple-200 hover:bg-purple-100 flex items-center gap-1.5 transition-all shadow-sm">
+            <HardHat size={16} /> Planilla Logística (Excel)
+          </button>
+          <button onClick={handleSendToLogistica} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-purple-700 flex items-center gap-1.5 transition-all shadow-sm">
+            <Check size={16} /> Solicitar Equipos a Logística
+          </button>
+        </div>
+      </div>
+
+      {/* Handoff Checklist — Carpeta de Entrega a Obra */}
+      {budget.status === 'approved' && (
+        <div className="bg-white rounded-2xl border-2 border-amber-200 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <ClipboardCheck size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-amber-900 flex items-center gap-2">Carpeta de Entrega a Obra
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    handoffComplete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  }`}>{handoffProgress}/{HANDOFF_ITEMS.length}</span>
+                </h4>
+                <p className="text-xs text-amber-600">Completá todos los ítems antes de entregar a Obras — Doc PR-GPP-01</p>
+              </div>
+            </div>
+            {handoffComplete && (
+              <div className="flex items-center gap-1.5 text-green-600 text-xs font-bold bg-green-50 px-3 py-1.5 rounded-full">
+                <Check size={14} /> Listo para entregar
+              </div>
+            )}
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {HANDOFF_ITEMS.map(item => (
+                <label key={item.key}
+                  onClick={() => toggleHandoff(item.key)}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${
+                    handoffChecklist[item.key]
+                      ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                  }`}>
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all mt-0.5 ${
+                    handoffChecklist[item.key]
+                      ? 'bg-green-500 text-white shadow-sm'
+                      : 'bg-white border-2 border-gray-300'
+                  }`}>
+                    {handoffChecklist[item.key] && <Check size={12} strokeWidth={3} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium block ${
+                      handoffChecklist[item.key] ? 'text-green-800 line-through decoration-green-400' : 'text-gray-700'
+                    }`}>{item.label}</span>
+                    <span className="text-[10px] text-gray-400 leading-tight block mt-0.5">{item.desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {!handoffComplete && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                <AlertTriangle size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-800">
+                  <strong>Recordá:</strong> No entregar a Obras sin completar esta carpeta. Un presupuesto mal transferido genera compras urgentes, faltantes logísticos y desvíos económicos.
+                </p>
+              </div>
+            )}
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-gray-100">
+            <div className="h-full bg-gradient-to-r from-amber-400 to-green-500 transition-all duration-500 rounded-r-full"
+              style={{ width: `${(handoffProgress / HANDOFF_ITEMS.length) * 100}%` }} />
+          </div>
+        </div>
+      )}
+
       {/* New Section Form */}
       {showNewSection && (
         <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
@@ -1359,7 +1515,7 @@ const BudgetDetailView: React.FC<{
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
-                 const materialItems = budgetItems.filter(i => i.cost_type === 'material');
+                 const materialItems = items.filter((i: any) => i.cost_type === 'material');
                  if (materialItems.length === 0) {
                    useModalStore.getState().showAlert('Aviso', 'No hay materiales en el cómputo para cotizar.');
                    return;
@@ -1371,7 +1527,7 @@ const BudgetDetailView: React.FC<{
                    urgency: 'normal',
                    requested_by: 'Presupuestos',
                    notes: `Solicitud de cotización generada desde Presupuesto: ${budget.name}`,
-                   items: materialItems.map(item => ({
+                   items: materialItems.map((item: any) => ({
                      description: item.description,
                      quantity: item.quantity,
                      unit: item.unit,

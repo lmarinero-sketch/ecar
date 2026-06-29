@@ -2839,3 +2839,73 @@ export function useDeleteWeeklyPayrollDetail() {
     },
   });
 }
+
+// ========== LOGISTICS MODULE ==========
+export function useLogisticsInventory() {
+  return useQuery({
+    queryKey: ['logistics_inventory'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('logistics_inventory').select('*').order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useLogisticsAssets() {
+  return useQuery({
+    queryKey: ['logistics_assets'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('logistics_assets').select('*').order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useLogisticsMovements() {
+  return useQuery({
+    queryKey: ['logistics_movements'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('logistics_movements').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useLogisticsMaintenance() {
+  return useQuery({
+    queryKey: ['logistics_maintenance'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('logistics_maintenance').select('*').order('date', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+// ========== AUDIT LOGS ==========
+export function useAuditLogs() {
+  return useQuery({
+    queryKey: ['audit_logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useCreateAuditLog() {
+  return useMutation({
+    mutationFn: async (payload: { user_id: string; user_name: string; action_type: string; module: string; duration_seconds?: number; details?: any }) => {
+      const { error } = await supabase.from('audit_logs').insert({ ...payload, tenant_id: ECAR_TENANT_ID });
+      if (error) console.error('Audit log failed:', error);
+    }
+  });
+}

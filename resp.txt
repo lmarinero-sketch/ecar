@@ -1,0 +1,2356 @@
+﻿ECAR | RESPUESTAS AL CUESTIONARIO DE RELEVAMIENTO
+MÃ³dulo
+Proyectos
+ y 
+Presupuestos
+ (PR-GPP-01)
+Respuesta 
+institucional
+para Lucas
+ / Grow Labs
+SituaciÃ³n
+ actual de ECAR, 
+criterios
+ de 
+implementaciÃ³n
+ y 
+prioridades
+funcionales
+ para 
+el
+ ERP
+Empresa
+ECAR Construcciones / ECAR Constructora
+Destinatario
+Lucas / Grow Labs
+Entrevistado
+Ing. Gustavo Regalado - 
+Gerencia
+ General
+Proyecto
+ERP ECAR - 
+MÃ³dulo
+Proyectos
+ y 
+Presupuestos
+ v1.0
+Tipo de 
+documento
+Respuesta 
+operativa
+ para 
+ingenierÃ­a
+ de 
+requerimientos
+Fecha
+Junio 2026
+Estado
+Borrador
+institucional
+ para 
+validaciÃ³n
+Criterio
+normativo
+Compatible con 
+criterios
+ de 
+gestiÃ³n
+ de 
+calidad
+tipo
+ ISO 9001. No 
+implica
+certificaciÃ³n
+ formal.
+Documento
+interno
+ de 
+respuesta
+ para 
+ordenar
+el
+relevamiento
+funcional
+ del 
+mÃ³dulo
+. La 
+respuesta
+ describe la 
+realidad
+ actual de ECAR y propone 
+el
+criterio
+deseado
+ de 
+implementaciÃ³n
+, 
+evitando
+sobredimensionar
+el
+sistema
+ y 
+priorizando
+trazabilidad
+, control 
+operativo
+ y 
+mejora
+ continua.
+1. Control 
+documental
+Documento
+Respuestas
+ al 
+cuestionario
+ de 
+relevamiento
+operativo
+ - 
+MÃ³dulo
+Proyectos
+ y 
+Presupuestos
+CÃ³digo 
+sugerido
+ECAR-REQ-GPP-001
+VersiÃ³n
+v1.0
+Empresa
+ECAR Construcciones / ECAR Constructora
+Elaborado
+ para
+Lucas / Grow Labs
+Elaborado
+por
+Gerencia
+ General ECAR
+Ãrea
+vinculada
+Gerencia
+ de 
+Proyectos
+ y 
+Presupuestos
+Uso 
+previsto
+DefiniciÃ³n
+funcional
+inicial
+ del 
+mÃ³dulo
+ de software
+Criterio
+Enfoque
+ a 
+procesos
+, 
+trazabilidad
+, 
+informaciÃ³n
+documentada
+ y 
+mejora
+ continua compatible con ISO 9001
+PrÃ³xima
+revisiÃ³n
+Al 
+validar
+alcance
+funcional
+ con Grow Labs y 
+responsables
+ de 
+Ã¡rea
+2. 
+Criterio
+ general de 
+respuesta
+Las 
+respuestas
+ se 
+elaboran
+ con un 
+criterio
+realista
+: hoy ECAR 
+cuenta
+ con 
+experiencia
+operativa
+, 
+capacidad
+ de 
+resoluciÃ³n
+ y 
+conocimiento
+tÃ©cnico
+, 
+pero
+parte
+ de la 
+informaciÃ³n
+todavÃ­a
+ se 
+gestiona
+mediante
+ WhatsApp, 
+archivos
+ Excel, 
+carpetas
+dispersas
+, 
+correos
+ y memoria del 
+equipo
+. El 
+objetivo
+ del 
+sistema
+ no 
+debe
+ ser 
+reemplazar
+el
+criterio
+ de las personas, 
+sino
+ordenar
+ la 
+informaciÃ³n
+crÃ­tica
+, 
+obligar
+ a registrar 
+los
+ pasos 
+mÃ­nimos
+ y 
+permitir
+que
+una
+oportunidad
+pueda
+seguirse
+desde
+su
+ingreso
+ hasta 
+el
+cierre
+econÃ³mico
+ de la 
+obra
+.
+El 
+mÃ³dulo
+ de 
+Proyectos
+ y 
+Presupuestos
+debe
+nacer
+como
+una
+herramienta
+ simple, 
+escalable
+ y 
+aplicable
+. La 
+prioridad
+inicial
+ no es 
+cargar
+burocracia
+, 
+sino
+evitar
+pÃ©rdidas
+ de 
+trazabilidad
+, 
+presupuestos
+ con 
+informaciÃ³n
+incompleta
+, 
+versiones
+confundidas
+, 
+adicionales
+ sin 
+respaldo
+ y 
+decisiones
+que
+ no 
+quedan
+registradas
+.
+3. 
+Resumen
+ejecutivo
+para Lucas
+Estado actual
+Proceso
+funcional
+pero
+ no 
+completamente
+sistematizado
+. La 
+informaciÃ³n
+suele
+ingresar
+por
+ canales 
+informales
+ y se 
+ordena
+ luego 
+en
+archivos
+ de 
+trabajo
+.
+Riesgo principal
+PÃ©rdida
+ de 
+trazabilidad
+ entre 
+oportunidad
+, 
+documentaciÃ³n
+tÃ©cnica
+, 
+cÃ³mputo
+, 
+cotizaciones
+, 
+versiÃ³n
+enviada
+, 
+adjudicaciÃ³n
+, 
+adicionales
+ y 
+cierre
+econÃ³mico
+.
+Criterio
+ de 
+diseÃ±o
+Alta de 
+oportunidad
+obligatoria
+, checklist documental, APU 
+estructurado
+, 
+consultas
+interdepartamentales
+registradas
+, 
+versionado
+ de 
+propuestas
+ y 
+mÃ³dulo
+ de 
+adicionales
+/
+cierre
+econÃ³mico
+.
+ImplementaciÃ³n
+recomendada
+Por 
+etapas
+: primero 
+trazabilidad
+ y 
+versiones
+; luego base de 
+insumos
+/APU; 
+despuÃ©s
+automatizaciones
+ con 
+Compras
+, 
+LogÃ­stica
+, Obras y AdministraciÃ³n.
+CondiciÃ³n
+ clave
+El 
+sistema
+debe
+permitir
+trabajar
+rÃ¡pido
+, 
+pero
+ no 
+permitir
+que
+ lo 
+importante
+quede
+ sin registrar.
+4. 
+Respuestas
+por
+eje
+ del 
+cuestionario
+4.1. Registro de la 
+oportunidad
+ o 
+necesidad
+inicial
+Pregunta
+ de 
+relevamiento
+Â¿
+CÃ³mo
+ingresan
+ y se 
+centralizan
+ hoy las solicitudes de 
+presupuestos
+? Â¿
+Existe
+alguna
+ base de 
+datos
+inicial
+ o 
+el
+proceso
+comienza
+directo
+en
+el
+archivo
+ de 
+cÃ³mputo
+ del 
+analista
+?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Hoy las solicitudes 
+ingresan
+por
+distintos
+ canales: WhatsApp, 
+llamadas
+, 
+correos
+, 
+contactos
+directos
+ de 
+clientes
+, 
+pedidos
+ de 
+Gerencia
+ General, 
+consultas
+ de 
+obras
+en
+curso
+, 
+licitaciones
+ o 
+necesidades
+internas
+. En la 
+prÃ¡ctica
+, 
+muchas
+oportunidades
+comienzan
+ primero 
+como
+una
+conversaciÃ³n
+ o un 
+pedido
+ informal y luego se 
+transforman
+en
+una
+carpeta
+, 
+archivo
+ Excel, 
+documento
+ de 
+presupuesto
+ o 
+intercambio
+tÃ©cnico
+. No 
+existe
+todavÃ­a
+una
+ base 
+Ãºnica
+ y 
+obligatoria
+donde
+toda
+oportunidad
+quede
+ dada de 
+alta
+ antes de 
+empezar
+ a 
+presupuestar
+.
+Riesgo 
+operativo
+detectado
+El 
+riesgo
+ actual es 
+que
+una
+oportunidad
+quede
+dispersa
+ entre 
+mensajes
+, 
+correos
+, 
+archivos
+personales
+ o memoria del 
+equipo
+. TambiÃ©n 
+puede
+ocurrir
+que
+ no 
+quede
+ claro 
+quiÃ©n
+recibiÃ³
+el
+pedido
+, 
+quÃ©
+plazo
+comercial
+tiene
+, 
+quÃ©
+datos
+faltan
+, 
+quÃ©
+versiÃ³n
+ se 
+estÃ¡
+trabajando
+ o 
+por
+quÃ©
+ se 
+descartÃ³
+una
+oportunidad
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+Se 
+recomienda
+implementar
+ un 
+formulario
+ de Alta de 
+Oportunidad
+como
+ primer paso del 
+mÃ³dulo
+. Debe 
+generar
+ un 
+cÃ³digo
+correlativo
+, 
+clasificar
+el
+tipo
+ de 
+oportunidad
+ y 
+asignar
+responsable
+, 
+fecha
+ de 
+ingreso
+, 
+cliente
+, 
+obra
+, 
+prioridad
+, 
+plazo
+comercial
+ y 
+estado
+. El 
+sistema
+deberÃ­a
+permitir
+estados
+ simples: 
+ingresada
+, 
+en
+relevamiento
+, 
+documentaciÃ³n
+incompleta
+, 
+en
+cÃ³mputo
+, 
+en
+revisiÃ³n
+, 
+enviada
+, 
+adjudicada
+, 
+descartada
+ o 
+pendiente
+ de 
+decisiÃ³n
+.
+Prioridad
+funcional
+Prioridad
+alta.
+ Este es 
+el
+ punto de 
+partida
+ del 
+mÃ³dulo
+ y 
+debe
+implementarse
+desde
+ la 
+primera
+versiÃ³n
+.
+4.2. 
+Relevamiento
+tÃ©cnico
+en
+terreno
+ y 
+anÃ¡lisis
+ documental
+Pregunta
+ de 
+relevamiento
+Â¿
+CuÃ¡l
+ es 
+el
+protocolo
+ actual para 
+asentar
+ y 
+comunicar
+que
+ un plano o 
+pliego
+enviado
+por
+el
+cliente
+tiene
+inconsistencias
+? Â¿
+DÃ³nde
+ se 
+guardan
+ y 
+cÃ³mo
+ se 
+comparten
+ las 
+fotos
+ y croquis de las visitas de 
+obra
+?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Actualmente
+ las 
+inconsistencias
+ se 
+comunican
+ de 
+manera
+prÃ¡ctica
+, 
+principalmente
+por
+ WhatsApp, 
+llamadas
+, 
+correos
+ o 
+comentarios
+internos
+. Las 
+fotos
+, croquis y 
+observaciones
+ de 
+relevamiento
+suelen
+quedar
+en
+celulares
+, 
+grupos
+ de WhatsApp, 
+carpetas
+ de 
+obra
+ o 
+archivos
+compartidos
+, 
+pero
+ no 
+siempre
+quedan
+vinculadas
+formalmente
+ al 
+presupuesto
+. No 
+existe
+todavÃ­a
+ un checklist documental 
+Ãºnico
+ y 
+obligatorio
+que
+indique
+quÃ©
+documentaciÃ³n
+estÃ¡
+ completa, 
+incompleta
+, 
+observada
+ o 
+pendiente
+ de 
+respuesta
+ del 
+cliente
+.
+Riesgo 
+operativo
+detectado
+El principal 
+riesgo
+ es 
+presupuestar
+ con 
+documentaciÃ³n
+parcial
+, 
+planos
+ no 
+actualizados
+, 
+pliegos
+incompletos
+, 
+interferencias
+ no 
+registradas
+ o 
+fotos
+que
+ luego no se 
+encuentran
+. Esto 
+puede
+afectar
+alcance
+, 
+costos
+, 
+plazos
+, 
+adicionales
+ y defensa 
+tÃ©cnica
+ ante 
+el
+cliente
+ o 
+inspecciÃ³n
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+El 
+sistema
+deberÃ­a
+incluir
+ un panel de control documental 
+por
+oportunidad
+/
+presupuesto
+. Cada 
+documento
+debe
+tener
+estado
+: 
+recibido
+, 
+pendiente
+, 
+observado
+, no 
+aplica
+, 
+aprobado
+ o 
+reemplazado
+. Las 
+fotos
+ y croquis 
+deben
+cargarse
+dentro
+ de la 
+misma
+oportunidad
+, con 
+fecha
+, 
+responsable
+ y breve 
+descripciÃ³n
+. Si 
+falta
+documentaciÃ³n
+crÃ­tica
+, 
+el
+sistema
+debe
+permitir
+avanzar
+sÃ³lo
+dejando
+supuestos
+ y 
+advertencias
+visibles
+.
+Prioridad
+funcional
+Prioridad
+alta.
+ El checklist documental 
+evita
+que
+el
+presupuesto
+nazca
+dÃ©bil
+desde
+el
+origen
+.
+4.3. Desarrollo del 
+cÃ³mputo
+mÃ©trico
+ y 
+anÃ¡lisis
+ de 
+precios
+unitarios
+ (APU)
+Pregunta
+ de 
+relevamiento
+Â¿
+QuÃ©
+herramientas
+utilizan
+ hoy para 
+armar
+el
+ Ã¡rbol de 
+tareas
+ y 
+el
+ APU? Â¿
+Cuentan
+ con 
+una
+ base de 
+datos
+Ãºnica
+ de 
+insumos
+ y 
+rendimientos
+histÃ³ricos
+ o 
+cada
+analista
+edita
+planillas
+ Excel 
+independientes
+?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Hoy 
+el
+trabajo
+ se 
+apoya
+principalmente
+en
+planillas
+ Excel, 
+experiencia
+tÃ©cnica
+, 
+presupuestos
+anteriores
+, 
+consultas
+ a 
+proveedores
+ y 
+criterio
+ del 
+analista
+. 
+Existen
+referencias
+histÃ³ricas
+y 
+conocimiento
+acumulado
+, 
+pero
+ no 
+estÃ¡
+consolidado
+como
+una
+ base 
+Ãºnica
+ de 
+insumos
+, 
+rendimientos
+, cuadrillas, 
+equipos
+ y 
+precios
+actualizados
+. En 
+muchos
+casos
+, 
+cada
+presupuesto
+ se arma 
+sobre
+archivos
+independientes
+, 
+copias
+ de 
+trabajos
+anteriores
+ o 
+estructuras
+adaptadas
+ a la 
+necesidad
+ del 
+momento
+.
+Riesgo 
+operativo
+detectado
+El 
+riesgo
+ es 
+duplicar
+criterios
+, usar 
+precios
+desactualizados
+, no 
+identificar
+variaciones
+ de 
+rendimiento
+, 
+perder
+consistencia
+ entre 
+presupuestos
+ o no 
+poder
+recalcular
+rÃ¡pidamente
+el
+impacto
+ de un 
+aumento
+ de 
+materiales
+crÃ­ticos
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+El 
+sistema
+deberÃ­a
+avanzar
+hacia
+ un maestro 
+centralizado
+ de 
+insumos
+, mano de 
+obra
+, cuadrillas, 
+equipos
+, 
+subcontratos
+, 
+gastos
+indirectos
+ y 
+mÃ¡rgenes
+. El APU 
+debe
+permitir
+armar
+partidas
+reutilizables
+, 
+actualizar
+precios
+, registrar 
+fecha
+ y 
+fuente
+ del valor, y 
+comparar
+costo
+presupuestado
+ contra 
+costo
+ real al 
+cierre
+. TambiÃ©n 
+debe
+permitir
+exportar
+a
+ Excel o PDF 
+porque
+ la 
+empresa
+seguirÃ¡
+necesitando
+flexibilidad
+ para 
+presentar
+propuestas
+.
+Prioridad
+funcional
+Prioridad
+ media-
+alta.
+Conviene
+implementarlo
+por
+etapas
+ para no 
+frenar
+el
+uso
+inicial
+ del 
+sistema
+.
+4.4. 
+Consultas
+ de 
+disponibilidad
+ y 
+cotizaciÃ³n
+interdepartamental
+Pregunta
+ de 
+relevamiento
+Â¿
+CÃ³mo
+ se 
+gestiona
+ hoy la 
+comunicaciÃ³n
+ interna con las 
+Ã¡reas
+ de 
+Compras
+ y 
+LogÃ­stica
+durante
+el
+armado
+ de la 
+propuesta
+? Â¿Queda 
+algÃºn
+registro
+ auditable de 
+estas
+consultas
+ o son 
+resoluciones
+verbales
+?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Hoy la 
+comunicaciÃ³n
+ con 
+Compras
+, 
+LogÃ­stica
+ y Obras se 
+resuelve
+principalmente
+por
+consultas
+directas
+, WhatsApp, 
+llamadas
+ o 
+conversaciones
+internas
+. Cuando se 
+requiere
+ un 
+precio
+crÃ­tico
+, 
+disponibilidad
+ de 
+equipo
+, 
+herramienta
+ o material, se consulta al 
+Ã¡rea
+correspondiente
+, 
+pero
+el
+registro
+ auditable no 
+siempre
+queda
+asociado
+ al 
+presupuesto
+. La 
+informaciÃ³n
+existe
+, 
+pero
+puede
+quedar
+dispersa
+ entre personas, chats, 
+archivos
+ o 
+decisiones
+verbales
+.
+Riesgo 
+operativo
+detectado
+El 
+riesgo
+ es 
+que
+el
+presupuesto
+ tome 
+como
+vÃ¡lido
+ un 
+precio
+, 
+plazo
+, 
+disponibilidad
+ o 
+recurso
+que
+ luego no 
+pueda
+comprobarse
+. TambiÃ©n 
+puede
+ocurrir
+que
+una
+respuesta
+ se 
+pierda
+, 
+que
+Compras
+ no 
+sepa
+quÃ©
+precio
+fue
+usado
+, 
+que
+LogÃ­stica
+ no 
+recuerde
+quÃ©
+disponibilidad
+informÃ³
+ o 
+que
+ Obras no 
+haya
+validado
+ la 
+metodologÃ­a
+constructiva
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+El 
+sistema
+deberÃ­a
+permitir
+generar
+ solicitudes 
+internas
+vinculadas
+ al 
+presupuesto
+: 
+Solicitud
+ de 
+CotizaciÃ³n
+ a 
+Compras
+, 
+ValidaciÃ³n
+ de Stock a 
+LogÃ­stica
+, 
+ValidaciÃ³n
+ de 
+Maquinaria
+/Equipo, Consulta TÃ©cnica a Obras y Consulta Financiera a AdministraciÃ³n. Cada 
+solicitud
+debe
+tener
+responsable
+, 
+fecha
+, 
+plazo
+ de 
+respuesta
+, 
+estado
+, 
+adjuntos
+, 
+respuesta
+registrada
+ y 
+trazabilidad
+.
+Prioridad
+funcional
+Prioridad
+ media-
+alta.
+ Es clave para 
+que
+el
+presupuesto
+ no 
+dependa
+sÃ³lo
+ de 
+conversaciones
+.
+4.5. 
+EmisiÃ³n
+, control de 
+versiones
+ y 
+archivo
+ de la 
+propuesta
+ formal
+Pregunta
+ de 
+relevamiento
+Cuando un 
+cliente
+solicita
+rebajas
+, 
+cambios
+tÃ©cnicos
+ o 
+refinanciaciones
+, Â¿
+cÃ³mo
+ se 
+archivan
+ y 
+diferencian
+ las 
+versiones
+ previas de la 
+oferta
+ final? Â¿
+CÃ³mo
+ se 
+transfiere
+ la 
+informaciÃ³n
+tÃ©cnica
+ganadora
+ al Director de Obra?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Hoy las 
+versiones
+suelen
+diferenciarse
+mediante
+nombres
+ de 
+archivo
+, 
+fechas
+, 
+copias
+, 
+correos
+enviados
+ o 
+mensajes
+. En 
+muchos
+casos
+ se 
+identifica
+ la 
+versiÃ³n
+ final 
+por
+ la 
+Ãºltima
+propuesta
+enviada
+ o 
+aprobada
+, 
+pero
+ no 
+existe
+todavÃ­a
+ un 
+mecanismo
+obligatorio
+ de 
+congelamiento
+, 
+versionado
+ formal y 
+registro
+ de 
+motivos
+ de 
+cambio
+. La 
+transferencia
+ a Obras se 
+realiza
+mediante
+conversaciones
+, 
+envÃ­o
+ de 
+archivos
+, 
+planos
+, 
+cÃ³mputos
+ o 
+reuniones
+, 
+pero
+falta
+una
+carpeta
+ de 
+inicio
+estandarizada
+ y 
+controlada
+.
+Riesgo 
+operativo
+detectado
+El 
+riesgo
+ es 
+ejecutar
+ con 
+una
+versiÃ³n
+desactualizada
+, 
+confundir
+alcances
+, 
+perder
+exclusiones
+, 
+olvidar
+condiciones
+comerciales
+modificadas
+, no registrar 
+una
+rebaja
+ o no 
+comunicar
+ a Obras 
+los
+supuestos
+crÃ­ticos
+ del 
+presupuesto
+adjudicado
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+El 
+sistema
+debe
+congelar
+automÃ¡ticamente
+el
+presupuesto
+ al 
+marcarlo
+como
+Enviado
+ al 
+Cliente
+. Toda 
+modificaciÃ³n
+ posterior 
+debe
+generar
+una
+nueva
+versiÃ³n
+ con 
+motivo
+ de 
+cambio
+: 
+rebaja
+, 
+cambio
+tÃ©cnico
+, 
+refinanciaciÃ³n
+, 
+cambio
+ de 
+alcance
+, 
+ajuste
+ de 
+precios
+ o 
+correcciÃ³n
+ interna. Cuando 
+el
+presupuesto
+ sea 
+adjudicado
+, 
+debe
+generarse
+una
+Carpeta
+ de 
+Inicio
+ para Obras con 
+alcance
+, 
+cÃ³mputo
+, 
+supuestos
+, 
+exclusiones
+, 
+recursos
+crÃ­ticos
+, 
+documentaciÃ³n
+tÃ©cnica
+, 
+plazos
+ y 
+versiÃ³n
+aprobada
+.
+Prioridad
+funcional
+Prioridad
+alta.
+ El control de 
+versiones
+ protege a ECAR de 
+confusiones
+costosas
+.
+4.6. Registro histÃ³rico de 
+adicionales
+, 
+desvÃ­os
+ y 
+lecciones
+aprendidas
+Pregunta
+ de 
+relevamiento
+Actualmente
+, 
+cuando
+surgen
+adicionales
+solicitados
+por
+ la 
+inspecciÃ³n
+ o 
+desvÃ­os
+econÃ³micos
+fuertes
+frente
+ al 
+presupuesto
+ original, Â¿
+existe
+algÃºn
+registro
+ formal o es 
+informaciÃ³n
+que
+queda
+en
+ la memoria 
+operativa
+ del 
+equipo
+?
+Respuesta de ECAR - 
+situaciÃ³n
+ actual
+Actualmente
+parte
+ de la 
+informaciÃ³n
+queda
+registrada
+en
+mensajes
+, 
+planillas
+, 
+presupuestos
+complementarios
+, 
+correos
+ o 
+conversaciones
+ con 
+obra
+/
+cliente
+, 
+pero
+ no 
+existe
+ un 
+mÃ³dulo
+Ãºnico
+donde
+cada
+adicional
+, 
+cambio
+ de 
+alcance
+, 
+interferencia
+ o 
+desvÃ­o
+econÃ³mico
+quede
+vinculado
+ al 
+presupuesto
+ original. En la 
+prÃ¡ctica
+, 
+mucha
+informaciÃ³n
+depende
+ de la memoria 
+operativa
+ del 
+equipo
+ y de la 
+capacidad
+ de 
+cada
+responsable
+ para 
+ordenar
+ sus 
+archivos
+.
+Riesgo 
+operativo
+detectado
+El 
+riesgo
+ es 
+ejecutar
+adicionales
+ sin 
+respaldo
+suficiente
+, no 
+cuantificar
+ a 
+tiempo
+los
+cambios
+, 
+perder
+recupero
+econÃ³mico
+, no 
+identificar
+ la causa de un 
+desvÃ­o
+ o 
+repetir
+errores
+ de 
+cÃ³mputo
+, 
+rendimiento
+, 
+compra
+ o 
+planificaciÃ³n
+en
+futuras
+obras
+.
+Criterio
+solicitado
+ para 
+el
+sistema
+El 
+sistema
+debe
+incorporar
+ un 
+mÃ³dulo
+ de 
+Ã“rdenes
+ de Cambio y 
+Adicionales
+asociado
+ al 
+presupuesto
+/
+contrato
+ original. Cada 
+adicional
+debe
+indicar
+origen
+, causa, 
+impacto
+tÃ©cnico
+, 
+impacto
+econÃ³mico
+, 
+impacto
+en
+plazo
+, 
+estado
+ de 
+aprobaciÃ³n
+, 
+documentaciÃ³n
+respaldatoria
+ y 
+relaciÃ³n
+ con 
+el
+alcance
+inicial
+. TambiÃ©n 
+debe
+incluir
+ un 
+mÃ³dulo
+ de Cierre EconÃ³mico 
+que
+ compare APU 
+presupuestado
+ contra 
+compras
+ reales, 
+costos
+administrativos
+, 
+equipos
+, mano de 
+obra
+, 
+subcontratos
+ y 
+margen
+ final.
+Prioridad
+funcional
+Prioridad
+alta
+ para 
+una
+segunda
+etapa
+. Es fundamental para 
+proteger
+margen
+ y 
+aprender
+ de 
+cada
+obra
+.
+5. 
+Requerimientos
+funcionales
+mÃ­nimos
+sugeridos
+Funcionalidad
+DescripciÃ³n
+mÃ­nima
+Prioridad
+Alta de 
+oportunidad
+CÃ³digo 
+Ãºnico
+, 
+cliente
+, 
+tipo
+, 
+responsable
+, 
+plazo
+, 
+estado
+ y 
+prioridad
+.
+Alta
+Checklist documental
+Control de 
+planos
+, 
+pliegos
+, 
+fotos
+, croquis, 
+supuestos
+ y 
+observaciones
+.
+Alta
+Versionado
+ de 
+propuestas
+Congelar
+enviados
+, 
+crear
+nuevas
+versiones
+ y registrar 
+motivos
+ de 
+cambio
+.
+Alta
+Carpeta
+ de 
+inicio
+ de 
+obra
+Transferir
+ a Obras la 
+versiÃ³n
+aprobada
+, 
+alcance
+, 
+cÃ³mputo
+, 
+supuestos
+ y 
+recursos
+crÃ­ticos
+.
+Alta
+Consultas
+internas
+Tareas
+ a 
+Compras
+, 
+LogÃ­stica
+, Obras y AdministraciÃ³n con 
+respuesta
+ auditable.
+Media-
+alta
+Maestro de 
+insumos
+/APU
+Base de 
+materiales
+, mano de 
+obra
+, 
+equipos
+, 
+rendimientos
+, 
+precios
+ y 
+fuentes
+.
+Media-
+alta
+Ã“rdenes
+ de 
+cambio
+/
+adicionales
+Registro 
+vinculado
+ al 
+presupuesto
+ original con 
+impacto
+tÃ©cnico
+, 
+econÃ³mico
+ y de 
+plazo
+.
+Alta - 
+etapa
+ 2
+Cierre 
+econÃ³mico
+ComparaciÃ³n
+presupuesto
+ vs real: 
+compras
+, mano de 
+obra
+, 
+equipos
+, 
+subcontratos
+ y 
+margen
+.
+Alta - 
+etapa
+ 2
+Lecciones
+aprendidas
+Registro de 
+causas
+ de 
+desvÃ­o
+ y 
+mejoras
+ para 
+futuros
+presupuestos
+.
+Media
+6. 
+ImplementaciÃ³n
+recomendada
+por
+etapas
+Etapa
+Alcance
+Resultado
+esperado
+Etapa 1 - 
+Trazabilidad
+bÃ¡sica
+Alta de 
+oportunidades
+, checklist documental, 
+estados
+ del 
+presupuesto
+, 
+adjuntos
+, 
+versionado
+ y 
+carpeta
+ de 
+inicio
+.
+Lograr
+que
+ninguna
+oportunidad
+importante
+quede
+ sin 
+cÃ³digo
+, 
+responsable
+, 
+documentaciÃ³n
+ y 
+versiÃ³n
+controlada
+.
+Etapa 2 - 
+IntegraciÃ³n
+operativa
+Solicitudes 
+internas
+ a 
+Compras
+, 
+LogÃ­stica
+, Obras y AdministraciÃ³n; 
+registro
+ de 
+respuestas
+ y 
+validaciones
+.
+Evitar
+consultas
+verbales
+ no 
+auditables
+ y 
+conectar
+presupuesto
+ con 
+recursos
+ reales.
+Etapa 3 - APU y maestro de 
+datos
+Maestro de 
+insumos
+, mano de 
+obra
+, 
+equipos
+, 
+precios
+, 
+rendimientos
+ y 
+partidas
+reutilizables
+.
+Mejorar
+precisiÃ³n
+, 
+velocidad
+ y 
+consistencia
+ de 
+presupuestos
+.
+Etapa 4 - 
+Adicionales
+ y 
+cierre
+econÃ³mico
+Ã“rdenes
+ de 
+cambio
+, 
+adicionales
+, 
+desvÃ­os
+, 
+presupuesto
+ vs 
+costo
+ real y 
+lecciones
+aprendidas
+.
+Proteger
+margen
+, defender 
+adicionales
+ y 
+aprender
+ de 
+cada
+obra
+.
+7. Respuesta 
+institucional
+sugerida
+ para 
+enviar
+ a Lucas
+Lucas, 
+te
+comparto
+una
+respuesta
+ordenada
+ del 
+estado
+ actual de ECAR 
+respecto
+ del 
+mÃ³dulo
+ de 
+Proyectos
+ y 
+Presupuestos
+. En 
+tÃ©rminos
+generales
+, hoy 
+el
+proceso
+funciona
+por
+experiencia
+, 
+criterio
+tÃ©cnico
+ y 
+archivos
+ de 
+trabajo
+, 
+pero
+todavÃ­a
+ no 
+tiene
+una
+trazabilidad
+Ãºnica
+desde
+ la 
+oportunidad
+ hasta 
+el
+cierre
+econÃ³mico
+. Por 
+eso
+vemos
+muy
+Ãºtil
+que
+el
+sistema
+ se 
+diseÃ±e
+como
+ un 
+puente
+ entre la 
+oportunidad
+comercial
+, 
+el
+presupuesto
+, las 
+consultas
+internas
+, la 
+versiÃ³n
+enviada
+, la 
+entrega
+ a Obras, 
+los
+adicionales
+ y 
+el
+cierre
+ real.
+La 
+prioridad
+inicial
+deberÃ­a
+estar
+en
+ registrar 
+oportunidades
+, 
+controlar
+documentaciÃ³n
+, 
+ordenar
+versiones
+ y 
+generar
+una
+carpeta
+ de 
+inicio
+ para Obras. Luego 
+conviene
+avanzar
+ con la base 
+centralizada
+ de 
+insumos
+/APU, las 
+consultas
+internas
+ a 
+Compras
+, 
+LogÃ­stica
+ y Obras, y 
+finalmente
+el
+mÃ³dulo
+ de 
+adicionales
+ y 
+cierre
+econÃ³mico
+. El 
+sistema
+debe
+ayudarnos
+ a 
+trabajar
+ con 
+mÃ¡s
+orden
+, 
+pero
+ sin 
+volver
+ lento 
+el
+proceso
+. La idea es 
+que
+ ECAR 
+pueda
+ saber 
+quÃ©
+ se 
+pidiÃ³
+, 
+quÃ©
+ se 
+presupuestÃ³
+, 
+quÃ©
+versiÃ³n
+ se 
+enviÃ³
+, 
+quÃ©
+cambiÃ³
+, 
+quiÃ©n
+aprobÃ³
+ y 
+quÃ©
+resultado
+dejÃ³
+ la 
+obra
+.
+8. Cierre 
+institucional
+El 
+mÃ³dulo
+ de 
+Proyectos
+ y 
+Presupuestos
+debe
+ ser 
+el
+ primer punto de 
+trazabilidad
+ de 
+una
+obra
+. Si 
+el
+presupuesto
+nace
+ sin 
+cÃ³digo
+, sin 
+documentaciÃ³n
+ordenada
+, sin 
+versiÃ³n
+controlada
+ o sin 
+supuestos
+ claros, 
+el
+desorden
+ se 
+traslada
+despuÃ©s
+ a 
+Compras
+, 
+LogÃ­stica
+, Obras, AdministraciÃ³n y 
+Gerencia
+ General.
+El 
+criterio
+ de ECAR es 
+avanzar
+hacia
+ un 
+sistema
+ simple, gradual y 
+exigible
+: 
+pocas
+ cargas 
+obligatorias
+, 
+pero
+muy
+ bien 
+elegidas
+. Lo 
+importante
+debe
+quedar
+registrado
+. La 
+urgencia
+puede
+atenderse
+, 
+pero
+ no 
+debe
+borrar
+ la 
+evidencia
+.

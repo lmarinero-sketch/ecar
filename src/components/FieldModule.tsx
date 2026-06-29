@@ -11,9 +11,11 @@ import {
   useParteSolicitudes, useCreateParteSolicitud, useUpdateParteSolicitud,
   usePartePersonal, useCreatePartePersonal, useDeletePartePersonal,
   useParteEquipos, useCreateParteEquipo, useDeleteParteEquipo,
+  usePurchaseOrders
 } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import type { ParteDiario } from '../lib/types';
+import { CarpetaObraButton } from './CarpetaObraButton';
 
 const CLIMA_ICONS: Record<string, React.ElementType> = { despejado: Sun, nublado: Cloud, lluvia: CloudRain, tormenta: CloudLightning, nieve: Snowflake, ventoso: Wind };
 const CLIMA_LABELS: Record<string, string> = { despejado: 'Despejado', nublado: 'Nublado', lluvia: 'Lluvia', tormenta: 'Tormenta', nieve: 'Nieve', ventoso: 'Ventoso' };
@@ -21,6 +23,38 @@ const ESTADO_COLORS: Record<string, string> = { borrador: 'bg-gray-100 text-gray
 
 type DetailTab = 'actividad' | 'fotos' | 'personal' | 'materiales' | 'equipos';
 type PendingPhoto = { file: File; preview: string; tipo: 'avance' | 'entrega' | 'incidente' | 'otro' };
+
+const EntregasProgramadas: React.FC<{ projectId: string }> = ({ projectId }) => {
+  const { data: orders = [] } = usePurchaseOrders();
+  const entregas = orders.filter(
+    (o) => o.project_id === projectId && o.delivery_date && ['aprobada', 'emitida', 'entregada_parcial'].includes(o.status)
+  );
+
+  if (entregas.length === 0) return null;
+
+  return (
+    <div className="mt-4 border border-indigo-200 rounded-xl p-4 bg-indigo-50/50 shadow-sm">
+      <h4 className="text-sm font-bold text-indigo-700 flex items-center gap-2 mb-3">
+        <Package size={16} /> Entregas Programadas de Compras
+      </h4>
+      <div className="space-y-2">
+        {entregas.map((o) => (
+          <div key={o.id} className="bg-white border border-indigo-100 rounded-lg p-3 flex justify-between items-center text-sm shadow-sm">
+            <div>
+              <p className="font-bold text-gray-800">{o.supplier_name}</p>
+              <p className="text-xs text-gray-500 line-clamp-1">{o.items?.map(i => `${i.quantity} ${i.unit} ${i.description}`).join(', ')}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">
+                Llega: {new Date(o.delivery_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const FieldModule: React.FC = () => {
   const { data: partes = [], isLoading } = usePartesDiarios();
@@ -124,7 +158,15 @@ export const FieldModule: React.FC = () => {
                 <option value="">Seleccioná una obra</option>
                 {projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
+              {form.obra_id && (
+                <div className="mt-2">
+                  <CarpetaObraButton projectId={form.obra_id} />
+                </div>
+              )}
             </div>
+          </div>
+          {form.obra_id && <EntregasProgramadas projectId={form.obra_id} />}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Fecha *</label>
               <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500" />

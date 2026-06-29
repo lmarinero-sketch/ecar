@@ -41,9 +41,10 @@ import { GuideModule } from './components/GuideModule';
 import { ManualModule } from './components/ManualModule';
 import { ImplementationModule } from './components/ImplementationModule';
 import { UserManagementModule } from './components/UserManagementModule';
+import { UserActivityModule } from './components/UserActivityModule';
 import { CommunicationsModule } from './components/CommunicationsModule';
 import { WeeklyReportModule } from './components/WeeklyReportModule';
-
+import { ActivityTracker } from './components/ActivityTracker';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -136,6 +137,7 @@ function AppContent() {
       case 'manual': return <ManualModule />;
       case 'implementation': return <ImplementationModule />;
       case 'user_management': return <UserManagementModule />;
+      case 'user_activity': return <UserActivityModule />;
       case 'communications': return <CommunicationsModule />;
       case 'weekly_report': return <WeeklyReportModule />;
       default: return <BiDashboard />;
@@ -144,6 +146,7 @@ function AppContent() {
 
   return (
     <>
+      <ActivityTracker />
       <Layout>
         {renderModule()}
       </Layout>

@@ -503,4 +503,10 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'El PDF se genera con formato de tabla formal listo para imprimir.',
     ],
   },
+  user_activity: {
+    title: 'Actividad de Usuarios',
+    description: 'Auditoría de navegación y clicks.',
+    steps: [],
+    tips: []
+  },
 };

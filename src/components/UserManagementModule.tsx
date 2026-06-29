@@ -263,17 +263,19 @@ export const UserManagementModule: React.FC = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
+      {/* Descriptive Header */}
       <div className="bg-gradient-to-r from-slate-800 to-slate-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
           <Users size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
         <div className="relative z-10">
           <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
-            <Users size={20} className="md:w-6 md:h-6" /> Gestión de Usuarios
+            <Users size={24} className="md:w-7 md:h-7" /> Gerencia de Recursos Humanos
           </h3>
-          <p className="text-slate-300 text-xs md:text-sm mt-1">
-            Crear, editar y asignar roles y permisos a los usuarios del sistema
+          <p className="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl">
+            Gestionamos el acceso, los roles y la seguridad de cada colaborador en la plataforma. 
+            Mantenemos el orden operativo definiendo qué puede ver y modificar cada persona, 
+            garantizando que la información llegue a quien la necesita sin riesgos.
           </p>
         </div>
       </div>

@@ -6,8 +6,9 @@ import {
   Warehouse, Truck, FileSignature, Smartphone, ShoppingCart,
   Bell, FolderOpen, LogOut, Shield, Menu, X, DollarSign, Package,
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
-  PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel, HelpCircle, BookMarked, Rocket,
-  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, UserCog, Banknote,
+  PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
+  GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
+  Activity, BookOpen, FileText, PieChart, Mail
 } from 'lucide-react';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
@@ -28,10 +29,10 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   payments: Banknote,
   nonconformities: ShieldAlert, scope_changes: FileSignature,
   supplier_eval: ClipboardCheck,
-  guide: HelpCircle, manual: BookMarked,
-  implementation: Rocket, user_management: UserCog,
-  communications: MessageSquareText,
-  weekly_report: FileSignature,
+  guide: BookOpen, manual: FileText,
+  implementation: Rocket, user_management: Users, user_activity: Activity,
+  communications: Mail,
+  weekly_report: PieChart,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -49,7 +50,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   nonconformities: 'No Conf.', scope_changes: 'Adicionales',
   supplier_eval: 'Eval. Prov.',
   guide: 'Guía', manual: 'Manual ISO',
-  implementation: 'Implementación', user_management: 'Usuarios',
+  implementation: 'Implementación', user_management: 'Usuarios', user_activity: 'Actividad',
   communications: 'Comunicaciones',
   weekly_report: 'Reporte GG',
 };
@@ -67,13 +68,13 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-cyan-600',
   opportunities: 'bg-blue-600', fuel: 'bg-sky-600', budget_landing: 'bg-slate-700',
-  payments: 'bg-indigo-700',
+  payments: 'text-emerald-500 bg-emerald-50',
   nonconformities: 'bg-red-600', scope_changes: 'bg-amber-600',
   supplier_eval: 'bg-teal-600',
-  guide: 'bg-ecar-blue', manual: 'bg-blue-900',
-  implementation: 'bg-rose-500', user_management: 'bg-slate-600',
-  communications: 'bg-green-600',
-  weekly_report: 'bg-indigo-600',
+  guide: 'text-emerald-500 bg-emerald-50', manual: 'text-indigo-500 bg-indigo-50',
+  implementation: 'text-amber-500 bg-amber-50', user_management: 'text-slate-500 bg-slate-50', user_activity: 'text-blue-500 bg-blue-50',
+  communications: 'text-sky-500 bg-sky-50',
+  weekly_report: 'text-purple-500 bg-purple-50',
 };
 
 /* ─── Sidebar sections ─── */

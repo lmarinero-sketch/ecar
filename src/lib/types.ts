@@ -669,7 +669,8 @@ export type PurchaseRequest = {
   request_type: 'purchase' | 'quote';
   requested_by: string | null;
   urgency: 'low' | 'normal' | 'urgent';
-  status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected' | 'quoted';
+  urgency_reason?: string | null;
+  status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected' | 'quoted' | 'returned';
   notes: string | null;
   approved_by: string | null;
   approved_at: string | null;
@@ -1438,6 +1439,7 @@ export const ALL_MODULES = [
   'manual',
   'implementation',
   'user_management',
+  'user_activity',
   'communications',
   'weekly_report',
   'payments',
@@ -1478,8 +1480,17 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   manual: 'Manual de Procedimientos',
   implementation: 'Implementación',
   user_management: 'Gestión de Usuarios',
+  user_activity: 'Actividad de Usuarios',
   communications: 'Comunicaciones',
   weekly_report: 'Reporte Semanal GG',
   payments: 'Control de Pagos',
 };
 
+
+export type AuditLog = { id: string; tenant_id: string; user_id: string; user_name: string; action_type: string; module: string; details: any; duration_seconds: number; created_at: string; };
+
+// ========== LOGISTICS MODULE ==========
+export type LogisticsInventoryItem = { id: string; tenant_id: string; code: string; name: string; category: string; unit: string; stock_current: number; stock_min: number; stock_ideal: number; location: string | null; supplier: string | null; notes: string | null; created_at: string; updated_at: string; };
+export type LogisticsAsset = { id: string; tenant_id: string; code: string; name: string; type: string; brand: string | null; model: string | null; pin_plate: string | null; status: string; current_location: string | null; assigned_to: string | null; current_hours_km: number; next_maintenance_hours_km: number | null; notes: string | null; created_at: string; updated_at: string; };
+export type LogisticsMovement = { id: string; tenant_id: string; type: string; item_id: string | null; item_type: string; quantity: number; origin: string | null; destination: string | null; responsible_person: string; expected_return_date: string | null; status: string; notes: string | null; created_by: string; created_at: string; };
+export type LogisticsMaintenance = { id: string; tenant_id: string; asset_id: string; type: string; date: string; hours_km: number; cost: number; provider: string | null; fuel_liters: number | null; notes: string | null; created_by: string; created_at: string; };
