@@ -337,17 +337,27 @@ export const OpportunitiesModule: React.FC = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: 'Total', value: stats.total, icon: <FileText size={16} />, color: 'text-gray-700' },
-          { label: 'Activas', value: stats.activas, icon: <Clock size={16} />, color: 'text-blue-600' },
-          { label: 'Monto Pipeline', value: fmt(stats.montoTotal), icon: <DollarSign size={16} />, color: 'text-emerald-600' },
-          { label: 'Adjudicadas', value: stats.adjudicadas, icon: <CheckCircle2 size={16} />, color: 'text-green-600' },
-          { label: 'Tasa Conversión', value: `${stats.tasa}%`, icon: <BarChart3 size={16} />, color: 'text-indigo-600' },
+          { label: 'Total', value: stats.total, icon: <FileText size={20} />, color: 'text-gray-600', bgColor: 'bg-gray-100', ring: 'ring-gray-100', gradient: 'from-gray-50 to-white' },
+          { label: 'Activas', value: stats.activas, icon: <Clock size={20} />, color: 'text-blue-600', bgColor: 'bg-blue-100', ring: 'ring-blue-100', gradient: 'from-blue-50/50 to-white' },
+          { label: 'Monto Pipeline', value: fmt(stats.montoTotal), icon: <DollarSign size={20} />, color: 'text-emerald-600', bgColor: 'bg-emerald-100', ring: 'ring-emerald-100', gradient: 'from-emerald-50/50 to-white' },
+          { label: 'Adjudicadas', value: stats.adjudicadas, icon: <CheckCircle2 size={20} />, color: 'text-teal-600', bgColor: 'bg-teal-100', ring: 'ring-teal-100', gradient: 'from-teal-50/50 to-white' },
+          { label: 'Tasa Conversión', value: `${stats.tasa}%`, icon: <BarChart3 size={20} />, color: 'text-indigo-600', bgColor: 'bg-indigo-100', ring: 'ring-indigo-100', gradient: 'from-indigo-50/50 to-white' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <div className={`flex items-center gap-1.5 text-xs font-medium ${kpi.color} mb-1`}>{kpi.icon} {kpi.label}</div>
-            <div className="text-xl font-bold text-gray-800">{kpi.value}</div>
+          <div key={kpi.label} className={`relative bg-gradient-to-br ${kpi.gradient} rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 group overflow-hidden ring-1 ${kpi.ring}`}>
+            <div className={`absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 pointer-events-none transform group-hover:scale-110 ${kpi.color}`}>
+              {React.cloneElement(kpi.icon as React.ReactElement, { size: 100 })}
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`p-2.5 rounded-xl ${kpi.bgColor} ${kpi.color} shadow-sm border border-white/50 group-hover:scale-110 transition-transform duration-300`}>
+                  {kpi.icon}
+                </div>
+                <div className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{kpi.label}</div>
+              </div>
+              <div className="text-2xl font-black text-gray-800 tracking-tight">{kpi.value}</div>
+            </div>
           </div>
         ))}
       </div>
