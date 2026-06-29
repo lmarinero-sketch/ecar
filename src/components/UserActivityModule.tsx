@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useAuditLogs } from '../hooks/useData';
 import { Activity, Clock, MousePointerClick, Calendar, Search } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const UserActivityModule: React.FC = () => {
+  const { isAdmin } = useAuth();
   const { data: logs, isLoading } = useAuditLogs();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -57,6 +59,20 @@ export const UserActivityModule: React.FC = () => {
     const m2 = m % 60;
     return `${h}h ${m2}m`;
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+          <Activity size={32} />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Acceso Denegado</h2>
+        <p className="text-slate-500 max-w-md">
+          El módulo de actividad de usuarios y auditoría es exclusivo para administradores del sistema.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <div className="flex justify-center p-20"><div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div></div>;
