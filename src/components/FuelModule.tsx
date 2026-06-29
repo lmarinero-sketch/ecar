@@ -209,7 +209,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-bold text-gray-500">Responsable</label>
-              <input value={form.driver_name || ''} onChange={e => setForm(f => ({ ...f, driver_name: e.target.value }))} placeholder="Nombre" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+              <input readOnly value={form.driver_name || ''} placeholder="Nombre" className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Obra / Centro Costo</label>
