@@ -116,7 +116,6 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
-      { id: 'fuel', requires: true },
     ],
   },
   {
