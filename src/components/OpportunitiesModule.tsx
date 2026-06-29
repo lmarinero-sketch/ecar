@@ -5,7 +5,7 @@ import {
   BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File,
   Briefcase, User, FileCheck, Mic, Square, Loader2
 } from 'lucide-react';
-import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
+import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useDeleteOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
 import type { Opportunity, OpportunityStage } from '../lib/types';
 import { exportOpportunityPdf } from '../lib/pdfExport';
 import { ImageViewer } from './ImageViewer';
@@ -76,6 +76,7 @@ export const OpportunitiesModule: React.FC = () => {
   const updateOpp = useUpdateOpportunity();
   const uploadFile = useUploadOpportunityFile();
   const deleteFile = useDeleteOpportunityFile();
+  const deleteOpp = useDeleteOpportunity();
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const { data: oppBudgets, isLoading: loadingBudgets } = useOpportunityBudgets(selectedOpp?.id);
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -305,6 +306,17 @@ export const OpportunitiesModule: React.FC = () => {
     await updateOpp.mutateAsync({ id: opp.id, stage: newStage });
   };
 
+  const handleDeleteOpp = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (await useModalStore.getState().showConfirm('Eliminar Oportunidad', '¿Seguro que querés borrar esta oportunidad de forma permanente?')) {
+      await deleteOpp.mutateAsync(id);
+      if (selectedOpp?.id === id) {
+        setShowForm(false);
+        setSelectedOpp(null);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -439,6 +451,9 @@ export const OpportunitiesModule: React.FC = () => {
                           className={`text-[9px] px-1.5 py-0.5 rounded font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all ml-auto flex items-center gap-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`}>
                           {isExporting === opp.id ? <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"/> : <Download size={10} />} PDF
                         </button>
+                        <button onClick={e => handleDeleteOpp(e, opp.id)} className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-red-100 text-red-600 hover:bg-red-200 transition-all flex items-center gap-1" title="Eliminar">
+                          <Trash2 size={10} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -496,6 +511,7 @@ export const OpportunitiesModule: React.FC = () => {
                           {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
                         </button>
                         <button onClick={() => openEdit(opp)} className="text-cyan-600 hover:text-cyan-800 p-1" title="Ver / Editar"><Eye size={16} /></button>
+                        <button onClick={e => handleDeleteOpp(e, opp.id)} className="text-red-600 hover:text-red-800 p-1" title="Eliminar"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -966,12 +982,17 @@ export const OpportunitiesModule: React.FC = () => {
 
             {/* Form Footer */}
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-between rounded-b-2xl">
-              <div>
+              <div className="flex items-center gap-4">
                 {selectedOpp && (
+                  <>
                   <button onClick={() => exportOpportunityPdf(selectedOpp, projects?.find(p => p.id === selectedOpp.project_id)?.name)} 
                     className="text-cyan-600 hover:text-cyan-800 font-bold text-sm flex items-center gap-2">
                     <Download size={16} /> Descargar PDF
                   </button>
+                  <button onClick={e => handleDeleteOpp(e, selectedOpp.id)} className="text-red-600 hover:text-red-800 font-bold text-sm flex items-center gap-2">
+                    <Trash2 size={16} /> Eliminar
+                  </button>
+                  </>
                 )}
               </div>
               <div className="flex items-center gap-3">

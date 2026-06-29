@@ -2481,6 +2481,17 @@ export function useUpdateOpportunity() {
   });
 }
 
+export function useDeleteOpportunity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('opportunities').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
+  });
+}
+
 export function useUploadOpportunityFile() {
   const qc = useQueryClient();
   return useMutation({
