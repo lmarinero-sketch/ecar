@@ -2485,6 +2485,13 @@ export function useDeleteOpportunity() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // 1. Eliminar archivos asociados en la base de datos para evitar FK conflict
+      await supabase.from('opportunity_files').delete().eq('opportunity_id', id);
+      
+      // 2. Desvincular presupuestos asociados (setear a null)
+      await supabase.from('budgets').update({ opportunity_id: null }).eq('opportunity_id', id);
+
+      // 3. Eliminar la oportunidad
       const { error } = await supabase.from('opportunities').delete().eq('id', id);
       if (error) throw error;
     },
