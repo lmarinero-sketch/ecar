@@ -158,6 +158,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Sistema', emoji: '⚙️',
     items: [
       { id: 'user_management' as ModuleId, requires: false },
+      { id: 'user_activity' as ModuleId, requires: false },
     ],
   },
 ];
