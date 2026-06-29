@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -106,7 +107,17 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad }) => {
-  const [form, setForm] = useState<Partial<FuelLoad>>({});
+  const { user } = useAuth();
+  const [form, setForm] = useState<Partial<FuelLoad>>(() => {
+    const d = new Date();
+    return {
+      load_date: d.toISOString().split('T')[0],
+      month: MONTHS_ES[d.getMonth()],
+      year: d.getFullYear(),
+      day_of_week: DAYS_ES[d.getDay()],
+      driver_name: user?.email || '',
+    };
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ liters: number; price_per_liter: number; total_amount: number }>({ liters: 0, price_per_liter: 0, total_amount: 0 });
   const updateLoad = useUpdateFuelLoad();
