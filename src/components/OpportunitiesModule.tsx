@@ -218,13 +218,12 @@ export const OpportunitiesModule: React.FC = () => {
     if (!opportunities) return { total: 0, activas: 0, montoTotal: 0, adjudicadas: 0, tasa: 0 };
     const activas = opportunities.filter(o => !['adjudicada', 'rechazada'].includes(o.stage));
     const adjudicadas = opportunities.filter(o => o.stage === 'adjudicada');
-    const cerradas = opportunities.filter(o => ['adjudicada', 'rechazada'].includes(o.stage));
     return {
       total: opportunities.length,
       activas: activas.length,
       montoTotal: activas.reduce((s, o) => s + o.estimated_amount, 0),
       adjudicadas: adjudicadas.length,
-      tasa: cerradas.length > 0 ? Math.round((adjudicadas.length / cerradas.length) * 100) : 0,
+      tasa: opportunities.length > 0 ? Math.round((adjudicadas.length / opportunities.length) * 100) : 0,
     };
   }, [opportunities]);
 
