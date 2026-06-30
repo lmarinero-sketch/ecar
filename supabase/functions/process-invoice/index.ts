@@ -32,7 +32,7 @@ Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin expli
   "tipo": "compra" o "venta",
   "proveedor_cliente": "Nombre/Razón Social de la otra parte (NO ECAR)",
   "cuit": "XX-XXXXXXXX-X",
-  "tipo_factura": "A", "B" o "C",
+  "tipo_factura": "A", "B", "C", "M", "NCA" (Nota de Crédito A), "NCB", "NDA", etc.,
   "punto_venta": "0003",
   "numero_factura": "00001234",
   "fecha_emision": "2026-04-07",

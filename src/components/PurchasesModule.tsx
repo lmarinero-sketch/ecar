@@ -34,6 +34,7 @@ export const PurchasesModule: React.FC = () => {
   const [editForm, setEditForm] = useState<any>({});
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
+  const [searchProvider, setSearchProvider] = useState('');
 
   // Periodo for Libro IVA export
   const now = new Date();
@@ -155,14 +156,21 @@ export const PurchasesModule: React.FC = () => {
     return 'compra';
   }
 
+  function isCreditNote(type: string | undefined): boolean {
+    if (!type || typeof type !== 'string') return false;
+    const t = type.toUpperCase();
+    return t.startsWith('NC') || t.includes('NOTA DE CRÉDITO') || t.includes('CREDITO');
+  }
+
   const compras = invoices.filter((i: any) => classifyInvoice(i) === 'compra');
   const ventas = invoices.filter((i: any) => classifyInvoice(i) === 'venta');
   const currentList = activeTab === 'compras' ? compras : ventas;
 
   // Totals
-  const totNeto = currentList.reduce((s: number, i: any) => s + Number(i.net_amount_ars || 0), 0);
-  const totIva = currentList.reduce((s: number, i: any) => s + Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0), 0);
-  const totTotal = currentList.reduce((s: number, i: any) => s + Number(i.total_ars || 0), 0);
+  const getMultiplier = (inv: any) => isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) ? -1 : 1;
+  const totNeto = currentList.reduce((s: number, i: any) => s + (Number(i.net_amount_ars || 0) * getMultiplier(i)), 0);
+  const totIva = currentList.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
+  const totTotal = currentList.reduce((s: number, i: any) => s + (Number(i.total_ars || 0) * getMultiplier(i)), 0);
 
   const statusColor: Record<string, string> = {
     pending_review: 'bg-yellow-100 text-yellow-700',
@@ -377,9 +385,18 @@ export const PurchasesModule: React.FC = () => {
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>
                     <td className="px-4 py-3 text-gray-600">{inv.issue_date || '—'}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatARS(inv.net_amount_ars)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-500">{formatARS(inv.iva_21_ars)}</td>
-                    <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(inv.total_ars)}</td>
+                    <td className="px-4 py-3 text-right font-mono">
+                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                      {formatARS(inv.net_amount_ars)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-gray-500">
+                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                      {formatARS(inv.iva_21_ars)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-bold">
+                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                      {formatARS(inv.total_ars)}
+                    </td>
                     {activeTab === 'compras' && (
                       <td className="px-4 py-3">
                         <select
@@ -422,7 +439,7 @@ export const PurchasesModule: React.FC = () => {
                             <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
                           </>
                         )}
-                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status, tipo_operacion: inv.ocr_raw_data?.tipo || classifyInvoice(inv) }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status, tipo_operacion: inv.ocr_raw_data?.tipo || classifyInvoice(inv), related_invoice_id: inv.related_invoice_id || '' }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
                         <button onClick={() => setDeleteTarget(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -460,8 +477,66 @@ export const PurchasesModule: React.FC = () => {
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500">Tipo Factura</label>
-                <input value={editForm.invoice_type} onChange={e => setEditForm({ ...editForm, invoice_type: e.target.value })} placeholder="A, B, C..." className="w-full px-3 py-2 border rounded-xl text-sm" />
+                <select value={editForm.invoice_type} onChange={e => setEditForm({ ...editForm, invoice_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                  <optgroup label="Facturas">
+                    <option value="A">Factura A</option>
+                    <option value="B">Factura B</option>
+                    <option value="C">Factura C</option>
+                    <option value="M">Factura M</option>
+                  </optgroup>
+                  <optgroup label="Notas de Crédito">
+                    <option value="NCA">Nota de Crédito A (NCA)</option>
+                    <option value="NCB">Nota de Crédito B (NCB)</option>
+                    <option value="NCC">Nota de Crédito C (NCC)</option>
+                    <option value="NCM">Nota de Crédito M (NCM)</option>
+                  </optgroup>
+                  <optgroup label="Notas de Débito">
+                    <option value="NDA">Nota de Débito A (NDA)</option>
+                    <option value="NDB">Nota de Débito B (NDB)</option>
+                    <option value="NDC">Nota de Débito C (NDC)</option>
+                    <option value="NDM">Nota de Débito M (NDM)</option>
+                  </optgroup>
+                  <option value={editForm.invoice_type} hidden>{editForm.invoice_type}</option>
+                </select>
               </div>
+
+              {isCreditNote(editForm.invoice_type) && (
+                <div className="col-span-2 space-y-2">
+                  <label className="text-xs font-bold text-gray-500">Factura Asociada (Buscador)</label>
+                  {editForm.related_invoice_id ? (
+                    <div className="flex justify-between items-center bg-blue-50 border border-blue-200 p-2 rounded-lg">
+                      <span className="text-sm font-medium text-blue-800 truncate">
+                        {invoices.find((i:any) => i.id === editForm.related_invoice_id) 
+                          ? (() => {
+                              const i = invoices.find((inv:any) => inv.id === editForm.related_invoice_id);
+                              return `${i.invoice_type || 'FA'} ${i.point_of_sale}-${i.invoice_number} | ${formatARS(i.total_ars)}`;
+                            })()
+                          : `ID: ${editForm.related_invoice_id.substring(0,8)}...`
+                        }
+                      </span>
+                      <button onClick={() => setEditForm({...editForm, related_invoice_id: null})} className="text-blue-500 hover:text-blue-700 text-xs font-bold bg-white px-2 py-1 rounded shadow-sm border border-blue-100">Cambiar</button>
+                    </div>
+                  ) : (
+                    <>
+                      <input type="text" placeholder="🔍 Escribí para buscar por proveedor..." value={searchProvider} onChange={e => setSearchProvider(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
+                      <div className="max-h-32 overflow-y-auto border rounded-lg bg-gray-50 divide-y shadow-inner">
+                        {invoices
+                          .filter((inv: any) => !isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura))
+                          .filter((inv: any) => {
+                             const prov = (inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '').toLowerCase();
+                             return searchProvider === '' || prov.includes(searchProvider.toLowerCase());
+                          })
+                          .map((inv: any) => (
+                          <div key={inv.id} onClick={() => setEditForm({...editForm, related_invoice_id: inv.id})} className="p-2 hover:bg-blue-100 cursor-pointer text-sm flex flex-col md:flex-row md:justify-between transition-colors">
+                            <span className="font-bold truncate max-w-[50%]">{(inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Sin Proveedor')}</span>
+                            <span className="text-gray-600 text-xs md:text-sm mt-0.5 md:mt-0">{inv.invoice_type || 'FA'} {inv.point_of_sale}-{inv.invoice_number} | <span className="font-bold font-mono">{formatARS(inv.total_ars)}</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="text-xs font-bold text-gray-500">Punto de Venta</label>
                 <input value={editForm.point_of_sale} onChange={e => setEditForm({ ...editForm, point_of_sale: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
@@ -500,7 +575,7 @@ export const PurchasesModule: React.FC = () => {
               onClick={async () => {
                 try {
                   const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
-                  const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr }).eq('id', editingInvoice.id);
+                  const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
                   if (error) throw error;
                   setEditingInvoice(null);
                   refetch();

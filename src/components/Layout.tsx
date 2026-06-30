@@ -259,8 +259,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {SIDEBAR_SECTIONS.map((section, si) => {
             const visibleItems = (section.items || []).filter(
               item => {
-                // user_management is admin-only
-                if (item.id === 'user_management') return isAdmin;
+                // user_management and user_activity are admin-only
+                if (item.id === 'user_management' || item.id === 'user_activity') return isAdmin;
                 return !item.requires || hasModule(item.id);
               }
             );
