@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Warehouse, PackageSearch, Truck, Repeat, Wrench, AlertTriangle, Plus, ChevronDown, ChevronUp, Package, Clock, ShieldAlert } from 'lucide-react';
-import { useLogisticsInventory, useLogisticsAssets, useLogisticsMovements } from '../hooks/useData';
+import { Warehouse, PackageSearch, Truck, Repeat, Wrench, Plus, ChevronDown, ChevronUp, Package, Clock, ShieldAlert } from 'lucide-react';
+import { useLogisticsAssets, useLogisticsMovements } from '../hooks/useData';
 
 export const LogisticsModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'assets' | 'movements' | 'kpis'>('assets');
   const [showIntro, setShowIntro] = useState(true);
   
-  const { data: inventory, isLoading: loadingInventory } = useLogisticsInventory();
   const { data: assets, isLoading: loadingAssets } = useLogisticsAssets();
   const { data: movements, isLoading: loadingMovements } = useLogisticsMovements();
 

@@ -34,6 +34,8 @@ export type Project = {
   start_date: string | null;
   end_date: string | null;
   created_at: string;
+  manager_id?: string | null;
+  startup_folder_notes?: string | null;
 };
 
 export type Employee = {
