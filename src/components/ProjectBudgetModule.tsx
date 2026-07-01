@@ -20,7 +20,7 @@ import {
   useOpportunities,
   useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
   useCreatePurchaseRequest,
-  useProfiles
+  useProfiles, useCopyOpportunityFilesToBudget
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 import { useModalStore } from '../store/useModalStore';
@@ -475,6 +475,7 @@ const BudgetDetailView: React.FC<{
   const deleteSection = useDeleteBudgetSection();
   const { data: profiles = [] } = useProfiles();
   const createProject = useCreateProject();
+  const copyOppFiles = useCopyOpportunityFilesToBudget();
 
   const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
   const [adjudicarData, setAdjudicarData] = useState({
@@ -512,6 +513,12 @@ const BudgetDetailView: React.FC<{
       });
       if (proj && proj.id) {
         await updateBudget.mutateAsync({ id: budget.id, project_id: proj.id, status: 'approved' });
+        
+        // Copy files from opportunity if opportunity exists
+        if (budget.opportunity_id) {
+          await copyOppFiles.mutateAsync({ opportunityId: budget.opportunity_id, budgetId: budget.id });
+        }
+
         useModalStore.getState().showAlert('Éxito', 'Proyecto creado y presupuesto adjudicado.');
         setShowAdjudicarModal(false);
       }

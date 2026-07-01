@@ -2,8 +2,8 @@ import pg from 'pg';
 import fs from 'fs';
 
 const envFile = fs.readFileSync('.env', 'utf8');
-const dbUrlMatch = envFile.match(/SUPABASE_DB_URL="?([^"\n\r]+)"?/);
-const dbUrl = dbUrlMatch ? dbUrlMatch[1] : process.env.SUPABASE_DB_URL;
+const dbUrlMatch = envFile.match(/DATABASE_URL="?([^"\n\r]+)"?/);
+const dbUrl = dbUrlMatch ? dbUrlMatch[1] : process.env.DATABASE_URL;
 
 const { Client } = pg;
 const client = new Client({

@@ -2117,6 +2117,35 @@ export function useDeleteBudgetFile() {
   });
 }
 
+export function useCopyOpportunityFilesToBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ opportunityId, budgetId }: { opportunityId: string, budgetId: string }) => {
+      // Fetch opportunity files
+      const { data: oppFiles, error: fetchError } = await supabase
+        .from('opportunity_files')
+        .select('*')
+        .eq('opportunity_id', opportunityId);
+      
+      if (fetchError) throw fetchError;
+      if (!oppFiles || oppFiles.length === 0) return;
+
+      // Prepare payload for budget files
+      const payload = oppFiles.map(f => ({
+        budget_id: budgetId,
+        file_name: f.file_name,
+        file_path: f.file_path, // Reuse existing URL
+        file_type: 'Oportunidad (Adjunto original)',
+        file_size: f.file_size
+      }));
+
+      const { error: insertError } = await supabase.from('budget_files').insert(payload);
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['budget_files'] }),
+  });
+}
+
 // ========== BUDGET DICTIONARIES (autocomplete) ==========
 export function useItemDictionary() {
   return useQuery({
