@@ -1,0 +1,117 @@
+1. Control documental
+Campo	Definición
+Nombre del procedimiento	Procedimiento de Gerencia de Administración y Finanzas
+Código	PR-GAF-01
+Versión	v1.0 – Premium
+Empresa	ECAR Construcciones / ECAR Constructora
+Área responsable	Gerencia de Administración y Finanzas
+Responsable del procedimiento	Responsable de Administración y Finanzas
+Revisión	Gerencia General
+Aprobación	Gerencia General / Dirección
+Fecha	Julio 2026
+Estado	Documento interno de trabajo
+Tipo de documento	Documento interno de conducción, control financiero, trazabilidad y mejora continua
+Criterio normativo	Compatible con criterios de gestión de calidad tipo ISO 9001.
+Uso previsto	Ordenar el flujo de fondos, pagos, facturación, cierres económicos y control de rentabilidad.
+
+2. Índice operativo
+1. Control documental
+2. Índice operativo
+3. Introducción institucional
+4. Objetivo del procedimiento
+5. Propósito del área
+6. Alcance del procedimiento
+7. Exclusiones y límites
+8. Criterio rector del área
+9. Definiciones básicas
+10. Entradas del proceso
+11. Actividades y flujo operativo
+12. Salidas del proceso (Entregables)
+13. Interacción con otras áreas (Matriz RACI)
+14. Riesgos y controles
+15. Herramientas del sistema
+
+3. Introducción institucional
+La Gerencia de Administración y Finanzas es el "centro de gravedad" económico de ECAR. Recibe información de todas las áreas (Compras, Obras, Proyectos y RRHH) y la transforma en decisiones de pago, facturación, control de liquidez y cierres económicos. Sin un procedimiento administrativo claro, el esfuerzo técnico de construir se pierde en desórdenes financieros, pagos duplicados o facturación tardía.
+
+4. Objetivo del procedimiento
+Establecer el método de trabajo para registrar, controlar y ejecutar los movimientos económicos de la empresa, garantizando que todo gasto tenga su respaldo (factura/remito/OC), que las obras se facturen en tiempo y forma, que los impuestos y sueldos se liquiden correctamente, y que la Gerencia General cuente con un tablero de liquidez confiable para tomar decisiones.
+
+5. Propósito del área
+El propósito de Administración y Finanzas no es solo "pagar facturas", sino cuidar la salud financiera de ECAR. Su función es proteger la liquidez, asegurar que la rentabilidad presupuestada por GPP se convierta en rentabilidad real, y garantizar el cumplimiento normativo e impositivo ante los organismos de control (AFIP/ARCA).
+
+6. Alcance del procedimiento
+Aplica a:
+- Recepción, validación y contabilización de facturas de proveedores y subcontratistas.
+- Programación de pagos y emisión de órdenes de pago/cheques/transferencias.
+- Emisión de facturas de venta (certificados de obra) a clientes.
+- Seguimiento de cobranzas.
+- Gestión de tesorería, conciliación bancaria y manejo de caja chica.
+- Pago de nómina salarial (RRHH) y cargas sociales.
+- Liquidación de impuestos y retenciones.
+- Emisión de reportes de rentabilidad y cierre económico de obra.
+
+7. Exclusiones y límites
+- La Gerencia de Administración no decide qué materiales comprar; eso corresponde a Compras/Obras. Solo controla que lo comprado esté facturado y autorizado.
+- No aprueba avances físicos de obra; depende de los certificados emitidos por Obras y validados por el Cliente.
+- Las contrataciones y acuerdos paritarios son definidos por RRHH o Dirección, Administración solo los liquida/paga.
+
+8. Criterio rector del área
+"Ningún pago sale sin respaldo (OC + Factura + Remito/Recepción) y ningún cobro se demora sin justificación". Todo movimiento debe estar registrado en el ERP para mantener la trazabilidad.
+
+9. Definiciones básicas
+- Orden de Pago (OP): Documento interno que autoriza y consolida el pago de una o más facturas a un proveedor.
+- Conciliación Bancaria: Proceso de cruzar los movimientos registrados en el sistema contra el extracto del banco.
+- Cashflow (Flujo de Caja): Proyección de ingresos (cobranzas) y egresos (pagos) en el tiempo.
+- Cierre Económico: Análisis final de una obra donde se compara el costo real ejecutado contra el presupuesto base de GPP.
+- Certificado de Obra: Documento que avala el avance físico y habilita a Administración a emitir la factura de venta.
+
+10. Entradas del proceso
+- Órdenes de Compra y Facturas de proveedores (Desde Compras).
+- Remitos y recepciones conformes (Desde Logística / Obras).
+- Certificados de avance físico y Actas de medición (Desde Obras).
+- Presupuesto y Cashflow base (Desde GPP).
+- Novedades del personal para liquidación (Desde RRHH).
+
+11. Actividades y flujo operativo
+A. Gestión de Cuentas por Pagar (Proveedores)
+1. Recepción de factura y validación contra Orden de Compra y Remito (Regla de las 3 vías).
+2. Detección de duplicados (mediante N° de factura y CUIT).
+3. Carga en el módulo de Finanzas/Compras.
+4. Programación en el calendario de pagos según vencimiento.
+5. Emisión de OP, retenciones impositivas y ejecución del pago (Transferencia/Cheque).
+
+B. Gestión de Cuentas por Cobrar (Clientes)
+1. Recepción del Certificado de Obra aprobado.
+2. Emisión de la Factura de Venta (conexión AFIP/ARCA).
+3. Envío al cliente y carga en la proyección de cobranzas.
+4. Reclamo de pagos vencidos.
+
+C. Tesorería y Bancos
+1. Registro diario de movimientos bancarios y caja fuerte.
+2. Conciliación bancaria semanal.
+3. Gestión de la cartera de cheques (propios y de terceros).
+
+D. Cierre Económico de Obra
+1. Al finalizar la obra, consolidar todos los gastos imputados al centro de costo.
+2. Comparar el costo real total vs. el presupuesto original de GPP.
+3. Emitir el reporte de rentabilidad real para Gerencia General.
+
+12. Salidas del proceso (Entregables)
+- Flujo de Fondos Proyectado (Cashflow semanal/mensual).
+- Órdenes de Pago y Comprobantes de Retención.
+- Facturas de Venta (Clientes).
+- Reporte de Rentabilidad de Obra (Cierre económico).
+- Liquidación de impuestos (IVA, IIBB, SICORE, etc.).
+- Posición Bancaria y Estado de Cheques.
+
+13. Matriz de Interacción
+- Con Obras: Recibe certificados, rinde fondos fijos.
+- Con Compras: Recibe facturas y OCs. Autoriza límites crediticios.
+- Con GPP: Analiza desvíos de precios y rentabilidad.
+- Con GG: Envía reportes de liquidez para decisiones de inversión.
+
+14. Riesgos y controles
+- Riesgo de pagos duplicados: Controlado mediante validación de CUIT y N° de Factura en la carga.
+- Riesgo de pago sin recepción: Controlado exigiendo el remito conformado en Logística u Obras.
+- Riesgo de desfinanciamiento: Controlado mediante el tablero de liquidez y proyecciones semanales.

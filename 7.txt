@@ -1,0 +1,117 @@
+1. Control documental
+Campo	Definición
+Nombre del procedimiento	Procedimiento de Gerencia de Recursos Humanos
+Código	PR-GRH-01
+Versión	v1.0 – Premium
+Empresa	ECAR Construcciones / ECAR Constructora
+Área responsable	Gerencia de Recursos Humanos
+Responsable del procedimiento	Responsable de RRHH / Capital Humano
+Revisión	Gerencia General
+Aprobación	Gerencia General / Dirección
+Fecha	Julio 2026
+Estado	Documento interno de trabajo
+Tipo de documento	Documento interno de conducción, gestión de personal, seguridad laboral y liquidación
+Criterio normativo	Compatible con criterios de gestión de calidad ISO 9001 e ISO 45001.
+Uso previsto	Ordenar el ingreso, seguimiento, seguridad, liquidación y egreso de todo el personal.
+
+2. Índice operativo
+1. Control documental
+2. Índice operativo
+3. Introducción institucional
+4. Objetivo del procedimiento
+5. Propósito del área
+6. Alcance del procedimiento
+7. Exclusiones y límites
+8. Criterio rector del área
+9. Definiciones básicas
+10. Entradas del proceso
+11. Actividades y flujo operativo
+12. Salidas del proceso (Entregables)
+13. Interacción con otras áreas (Matriz RACI)
+14. Riesgos y controles
+15. Herramientas del sistema
+
+3. Introducción institucional
+En una empresa constructora, el recurso humano es el motor principal de la producción. La Gerencia de RRHH se encarga de que ese motor funcione bajo la normativa vigente (UOCRA/UOCRA-Empleados), con la capacitación adecuada, en un entorno seguro y con sus haberes liquidados en tiempo y forma. Un error en RRHH puede traducirse en paralización de obras, accidentes graves o juicios laborales costosos para ECAR.
+
+4. Objetivo del procedimiento
+Establecer los estándares y pasos obligatorios para la selección, contratación, inducción, seguimiento de asistencia, control de seguridad e higiene, liquidación de haberes y desvinculación del personal propio y subcontratado.
+
+5. Propósito del área
+El propósito de RRHH es dotar a Obras, Logística, Compras y Administración del personal idóneo en el momento exacto. Además, tiene como función indelegable resguardar a la empresa legalmente ante contingencias laborales y proteger la integridad física de los trabajadores mediante políticas de Seguridad e Higiene estrictas.
+
+6. Alcance del procedimiento
+Aplica a:
+- Reclutamiento y alta temprana de empleados.
+- Armado y mantenimiento del Legajo Digital.
+- Inducción en Seguridad e Higiene y entrega de EPP (Elementos de Protección Personal).
+- Control de asistencia diaria (Parte Diario de Obra / Fichaje).
+- Liquidación de quincenas, sueldos, vacaciones y aguinaldos.
+- Control de documentación de Subcontratistas (ART, Cláusula de no repetición, Seguros de vida).
+- Gestión de desvinculaciones y liquidaciones finales.
+
+7. Exclusiones y límites
+- RRHH no define los plazos ni el método constructivo de la obra, eso es potestad de Obras.
+- RRHH no paga los sueldos directamente, genera la liquidación y la transfiere a Administración y Finanzas para su pago.
+
+8. Criterio rector del área
+"Ninguna persona ingresa a una obra sin alta temprana, sin cobertura de ART y sin la charla de inducción de seguridad. La seguridad no es negociable".
+
+9. Definiciones básicas
+- Legajo Digital: Repositorio centralizado con DNI, constancia de CUIL, alta AFIP, apto médico y entrega de ropa/EPP del trabajador.
+- ART: Aseguradora de Riesgos del Trabajo.
+- EPP: Elementos de Protección Personal (Casco, botines, arnés, etc.).
+- Parte Diario (Asistencia): Registro emitido por el Jefe de Obra donde constan presentes, ausentes y horas extras.
+- Subcontratista: Personal externo que debe cumplir con las mismas normativas de seguridad y registro que el personal propio.
+
+10. Entradas del proceso
+- Requerimiento de personal (Desde Obras o Gerencias).
+- Parte Diario de asistencia y horas extras (Desde Obras).
+- Novedades médicas o accidentes (Desde Obras / Empleados).
+- Documentación legal y seguros (Desde Subcontratistas).
+
+11. Actividades y flujo operativo
+A. Ingreso e Inducción
+1. Recepción del pedido de personal. Búsqueda y selección.
+2. Examen pre-ocupacional y solicitud de Alta Temprana (AFIP).
+3. Armado del Legajo Digital en el ERP.
+4. Charla de inducción de Seguridad e Higiene. Entrega y firma de EPP y ropa de trabajo.
+
+B. Control de Asistencia y Novedades
+1. Recepción diaria/quincenal del Parte Diario de Obras.
+2. Procesamiento de ausencias (injustificadas, vacaciones, licencias médicas).
+3. Registro de horas extras aprobadas.
+
+C. Liquidación de Haberes
+1. Consolidación de horas normales, extras, premios y descuentos.
+2. Emisión de recibos de sueldo (Quincena/Mes).
+3. Envío del archivo de liquidación a Administración y Finanzas para su pago.
+4. Gestión de firmas de recibos.
+
+D. Seguridad, Higiene y Subcontratistas
+1. Control de vigencia de pólizas de ART y cláusulas de no repetición de los contratistas antes de su ingreso a obra.
+2. Inspecciones sorpresa en obra para verificar el uso de EPP (en conjunto con el responsable de SyH).
+3. Gestión de denuncias ante la ART en caso de accidentes.
+
+E. Egreso y Desvinculación
+1. Notificación legal (telegrama).
+2. Cálculo y revisión de liquidación final.
+3. Baja en AFIP y actualización de la nómina activa en el sistema.
+
+12. Salidas del proceso (Entregables)
+- Legajo Digital completo y actualizado.
+- Reporte de Asistencia y Novedades (Horas trabajadas vs. ausentismo).
+- Liquidación de sueldos (Pre-liquidación para Finanzas).
+- Registro de entrega de EPP firmado.
+- Informe de Inspección de Seguridad e Higiene.
+- Panel de Subcontratistas Habilitados/Bloqueados.
+
+13. Matriz de Interacción
+- Con Obras: Recibe el parte diario, coordina inspecciones de seguridad.
+- Con Adm. y Finanzas: Envía liquidaciones para fondear cuentas sueldo.
+- Con Compras/Logística: Solicita stock de EPP y ropa de trabajo.
+
+14. Riesgos y controles
+- Riesgo de accidente sin cobertura: Control restrictivo (bloqueo en sistema) para ingresos sin alta AFIP o ART vigente.
+- Riesgo de juicios por subcontratistas: Control de pólizas de terceros con vencimientos automatizados (Alertas).
+- Riesgo de liquidación incorrecta: Doble chequeo entre el Jefe de Obra (quien reporta el Parte) y RRHH (quien liquida).
