@@ -42,6 +42,28 @@ export const PurchasesModule: React.FC = () => {
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   const [periodoDesde, setPeriodoDesde] = useState(firstDay.toISOString().split('T')[0]);
   const [periodoHasta, setPeriodoHasta] = useState(lastDay.toISOString().split('T')[0]);
+  const [dateFilterMode, setDateFilterMode] = useState<'current' | 'last_month' | 'last_3_months' | 'custom'>('current');
+
+  const applyQuickFilter = (mode: 'current' | 'last_month' | 'last_3_months' | 'custom') => {
+    setDateFilterMode(mode);
+    const today = new Date();
+    if (mode === 'current') {
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
+      const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      setPeriodoDesde(first.toISOString().split('T')[0]);
+      setPeriodoHasta(last.toISOString().split('T')[0]);
+    } else if (mode === 'last_month') {
+      const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const last = new Date(today.getFullYear(), today.getMonth(), 0);
+      setPeriodoDesde(first.toISOString().split('T')[0]);
+      setPeriodoHasta(last.toISOString().split('T')[0]);
+    } else if (mode === 'last_3_months') {
+      const first = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      setPeriodoDesde(first.toISOString().split('T')[0]);
+      setPeriodoHasta(last.toISOString().split('T')[0]);
+    }
+  };
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -308,16 +330,24 @@ export const PurchasesModule: React.FC = () => {
       )}
 
       {/* Global Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-        <div className="text-sm font-bold text-gray-700">Filtro de período</div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-sm font-bold text-gray-700">Filtro de período</div>
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button onClick={() => applyQuickFilter('current')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'current' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Mes Actual</button>
+            <button onClick={() => applyQuickFilter('last_month')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_month' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Mes Pasado</button>
+            <button onClick={() => applyQuickFilter('last_3_months')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_3_months' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Últ. 3 Meses</button>
+            <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'custom' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500'}`}>Personalizado</div>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs">
             <label className="text-gray-500 font-medium">Desde:</label>
-            <input type="date" value={periodoDesde} onChange={e => setPeriodoDesde(e.target.value)} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
+            <input type="date" value={periodoDesde} onChange={e => { setPeriodoDesde(e.target.value); setDateFilterMode('custom'); }} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
           </div>
           <div className="flex items-center gap-2 text-xs">
             <label className="text-gray-500 font-medium">Hasta:</label>
-            <input type="date" value={periodoHasta} onChange={e => setPeriodoHasta(e.target.value)} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
+            <input type="date" value={periodoHasta} onChange={e => { setPeriodoHasta(e.target.value); setDateFilterMode('custom'); }} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
           </div>
         </div>
       </div>
