@@ -507,7 +507,8 @@ const BudgetDetailView: React.FC<{
         startup_folder_notes: adjudicarData.startup_folder_notes,
         start_date: adjudicarData.start_date || null,
         end_date: adjudicarData.end_date || null,
-        status: 'active'
+        status: 'active',
+        budget_ars: budget.total_final_ars || 0
       });
       if (proj && proj.id) {
         await updateBudget.mutateAsync({ id: budget.id, project_id: proj.id, status: 'approved' });
