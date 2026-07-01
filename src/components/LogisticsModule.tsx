@@ -3,7 +3,7 @@ import { Warehouse, PackageSearch, Truck, Repeat, Wrench, AlertTriangle, Plus, C
 import { useLogisticsInventory, useLogisticsAssets, useLogisticsMovements } from '../hooks/useData';
 
 export const LogisticsModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'assets' | 'movements' | 'kpis'>('inventory');
+  const [activeTab, setActiveTab] = useState<'assets' | 'movements' | 'kpis'>('assets');
   const [showIntro, setShowIntro] = useState(true);
   
   const { data: inventory, isLoading: loadingInventory } = useLogisticsInventory();
@@ -76,7 +76,6 @@ export const LogisticsModule: React.FC = () => {
       {/* Tabs */}
       <div className="flex border-b border-gray-200 gap-2 md:gap-6 px-2 overflow-x-auto no-scrollbar">
         {[
-          { id: 'inventory', icon: Package, label: 'Inventario & Pañol' },
           { id: 'assets', icon: Truck, label: 'Flota & Máquinas' },
           { id: 'movements', icon: Repeat, label: 'Despachos & Devoluciones' },
           { id: 'kpis', icon: Wrench, label: 'Mantenimiento & KPIs' }
@@ -93,56 +92,6 @@ export const LogisticsModule: React.FC = () => {
 
       {/* Tab Contents */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px]">
-        {activeTab === 'inventory' && (
-          <div className="p-4 md:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Package className="text-teal-600" /> Inventario</h3>
-              <button className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
-                <Plus size={16} /> Nuevo Ítem
-              </button>
-            </div>
-            {loadingInventory ? (
-              <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
-            ) : inventory && inventory.length > 0 ? (
-               <table className="w-full text-left text-sm">
-                 <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
-                   <tr>
-                     <th className="px-4 py-3 font-bold">Código</th>
-                     <th className="px-4 py-3 font-bold">Nombre</th>
-                     <th className="px-4 py-3 font-bold">Rubro</th>
-                     <th className="px-4 py-3 font-bold text-center">Stock Actual</th>
-                     <th className="px-4 py-3 font-bold text-center">Stock Mínimo</th>
-                     <th className="px-4 py-3 font-bold">Estado</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-gray-100">
-                   {inventory.map((item: any) => (
-                     <tr key={item.id} className="hover:bg-gray-50">
-                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">{item.code}</td>
-                       <td className="px-4 py-3 font-medium text-gray-800">{item.name}</td>
-                       <td className="px-4 py-3 text-gray-600 capitalize">{item.category}</td>
-                       <td className="px-4 py-3 text-center font-bold">{item.stock_current} {item.unit}</td>
-                       <td className="px-4 py-3 text-center text-gray-500">{item.stock_min}</td>
-                       <td className="px-4 py-3">
-                         {item.stock_current <= item.stock_min ? (
-                           <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold"><AlertTriangle size={12} /> Crítico</span>
-                         ) : (
-                           <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">Óptimo</span>
-                         )}
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-            ) : (
-              <div className="text-center py-20 text-gray-400">
-                <Package size={48} className="mx-auto mb-3 opacity-20" />
-                <p>El inventario está vacío. Creá nuevos ítems para comenzar a registrar.</p>
-              </div>
-            )}
-          </div>
-        )}
-
         {activeTab === 'assets' && (
           <div className="p-4 md:p-6">
             <div className="flex justify-between items-center mb-6">

@@ -19,7 +19,8 @@ import {
   useItemDictionary, useSectionDictionary,
   useOpportunities,
   useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
-  useCreatePurchaseRequest
+  useCreatePurchaseRequest,
+  useProfiles
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 import { useModalStore } from '../store/useModalStore';
@@ -472,6 +473,51 @@ const BudgetDetailView: React.FC<{
   const updateItem = useUpdateBudgetItem();
   const updateSection = useUpdateBudgetSection();
   const deleteSection = useDeleteBudgetSection();
+  const { data: profiles = [] } = useProfiles();
+  const createProject = useCreateProject();
+
+  const [showAdjudicarModal, setShowAdjudicarModal] = useState(false);
+  const [adjudicarData, setAdjudicarData] = useState({
+    name: '', client_name: '', manager_id: '', startup_folder_notes: '', start_date: '', end_date: ''
+  });
+
+  const handleOpenAdjudicar = () => {
+    setAdjudicarData({
+      name: budget.name,
+      client_name: budget.opportunity?.client_name || '',
+      manager_id: '',
+      startup_folder_notes: [
+        budget.description ? `DESCRIPCIÓN:\n${budget.description}` : '',
+        (budget as any).assumptions ? `SUPUESTOS:\n${(budget as any).assumptions}` : '',
+        (budget as any).exclusions ? `EXCLUSIONES:\n${(budget as any).exclusions}` : ''
+      ].filter(Boolean).join('\n\n'),
+      start_date: new Date().toISOString().split('T')[0],
+      end_date: ''
+    });
+    setShowAdjudicarModal(true);
+  };
+
+  const handleAdjudicar = async () => {
+    if (!adjudicarData.name.trim()) return;
+    try {
+      const proj = await createProject.mutateAsync({
+        name: adjudicarData.name,
+        client_name: adjudicarData.client_name,
+        manager_id: adjudicarData.manager_id || null,
+        startup_folder_notes: adjudicarData.startup_folder_notes,
+        start_date: adjudicarData.start_date || null,
+        end_date: adjudicarData.end_date || null,
+        status: 'active'
+      });
+      if (proj && proj.id) {
+        await updateBudget.mutateAsync({ id: budget.id, project_id: proj.id, status: 'approved' });
+        useModalStore.getState().showAlert('Éxito', 'Proyecto creado y presupuesto adjudicado.');
+        setShowAdjudicarModal(false);
+      }
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message || 'Error al crear proyecto');
+    }
+  };
 
   const [showNewItem, setShowNewItem] = useState(false);
   const [showNewSection, setShowNewSection] = useState(false);
@@ -869,8 +915,14 @@ const BudgetDetailView: React.FC<{
             )}
           </div>
           {budget.description && <p className="text-cyan-100 text-sm mt-2">{budget.description}</p>}
-          <div className="flex gap-4 mt-2 text-cyan-200 text-xs flex-wrap">
-            {budget.project?.name && <span className="flex items-center gap-1"><FolderOpen size={12} /> {budget.project.name}</span>}
+          <div className="flex gap-4 mt-2 text-cyan-200 text-xs flex-wrap items-center">
+            {budget.project?.name ? (
+              <span className="flex items-center gap-1"><FolderOpen size={12} /> {budget.project.name}</span>
+            ) : (
+              <button onClick={handleOpenAdjudicar} className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-md text-xs font-bold transition-colors flex items-center gap-1 shadow-sm">
+                <FolderOpen size={12} /> Adjudicar y Crear Proyecto
+              </button>
+            )}
             {budget.opportunity?.client_name && <span className="flex items-center gap-1"><Layers size={12} /> {budget.opportunity.client_name} (Oportunidad)</span>}
             <span className="flex items-center gap-1"><Calendar size={12} /> {fmtDate(budget.created_at)}</span>
             {(budget as any).validity_days && <span className="flex items-center gap-1"><Clock size={12} /> Validez: {(budget as any).validity_days} días</span>}
@@ -1643,6 +1695,77 @@ const BudgetDetailView: React.FC<{
           <Copy size={16} /> Crear Nueva Versión
         </button>
       </div>
+
+      {/* MODAL ADJUDICAR Y CREAR PROYECTO */}
+      {showAdjudicarModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-emerald-600 p-4 text-white flex justify-between items-center shrink-0">
+              <h2 className="font-bold text-lg flex items-center gap-2"><FolderOpen size={20} /> Adjudicar y Crear Proyecto (Carpeta de Inicio)</h2>
+              <button onClick={() => setShowAdjudicarModal(false)} className="hover:bg-emerald-700 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-4 bg-gray-50 flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre de la Obra *</label>
+                  <input type="text" value={adjudicarData.name} onChange={e => setAdjudicarData({...adjudicarData, name: e.target.value})} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej: Torre Norte" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Cliente</label>
+                  <input type="text" value={adjudicarData.client_name} onChange={e => setAdjudicarData({...adjudicarData, client_name: e.target.value})} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Nombre del cliente" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Jefe de Obra (Responsable)</label>
+                  <select value={adjudicarData.manager_id} onChange={e => setAdjudicarData({...adjudicarData, manager_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
+                    <option value="">Seleccione un responsable...</option>
+                    {profiles.map((p: any) => (
+                      <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Fecha Inicio</label>
+                    <input type="date" value={adjudicarData.start_date} onChange={e => setAdjudicarData({...adjudicarData, start_date: e.target.value})} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Fecha Fin Est.</label>
+                    <input type="date" value={adjudicarData.end_date} onChange={e => setAdjudicarData({...adjudicarData, end_date: e.target.value})} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Resumen de Carpeta de Inicio (Alcance, Riesgos, Restricciones)</label>
+                <textarea 
+                  value={adjudicarData.startup_folder_notes} 
+                  onChange={e => setAdjudicarData({...adjudicarData, startup_folder_notes: e.target.value})}
+                  rows={6}
+                  className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm font-mono"
+                  placeholder="Detalle el alcance inicial, supuestos y exclusiones a transferir a obra..."
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white border-t border-gray-200 flex justify-end gap-2 shrink-0">
+              <button onClick={() => setShowAdjudicarModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={handleAdjudicar} disabled={createProject.isPending || !adjudicarData.name.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
+                <Check size={16} /> Crear y Adjudicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

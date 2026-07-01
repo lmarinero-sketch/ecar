@@ -1,0 +1,2 @@
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS manager_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS startup_folder_notes TEXT;

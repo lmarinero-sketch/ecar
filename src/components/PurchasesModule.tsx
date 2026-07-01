@@ -512,7 +512,7 @@ export const PurchasesModule: React.FC = () => {
                         {invoices.find((i:any) => i.id === editForm.related_invoice_id) 
                           ? (() => {
                               const i = invoices.find((inv:any) => inv.id === editForm.related_invoice_id);
-                              return `${i.invoice_type || 'FA'} ${i.point_of_sale}-${i.invoice_number} | ${formatARS(i.total_ars)}`;
+                              return i ? `${i.invoice_type || 'FA'} ${i.point_of_sale}-${i.invoice_number} | ${formatARS(i.total_ars)}` : '';
                             })()
                           : `ID: ${editForm.related_invoice_id.substring(0,8)}...`
                         }

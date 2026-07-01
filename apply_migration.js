@@ -9,7 +9,7 @@ const client = new Client({
 async function run() {
   try {
     await client.connect();
-    const sql = fs.readFileSync('./supabase/migrations/20260629191120_audit_logs.sql', 'utf8');
+    const sql = fs.readFileSync('./supabase/migrations/20260701000000_add_project_fields.sql', 'utf8');
     await client.query(sql);
     console.log('Migration applied successfully!');
   } catch (err) {
