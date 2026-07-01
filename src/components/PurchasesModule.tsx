@@ -162,8 +162,13 @@ export const PurchasesModule: React.FC = () => {
     return t.startsWith('NC') || t.includes('NOTA DE CREDITO') || t.includes('CREDITO');
   }
 
-  const compras = invoices.filter((i: any) => classifyInvoice(i) === 'compra');
-  const ventas = invoices.filter((i: any) => classifyInvoice(i) === 'venta');
+  const filteredInvoices = invoices.filter((i: any) => {
+    if (!i.issue_date) return false;
+    return i.issue_date >= periodoDesde && i.issue_date <= periodoHasta;
+  });
+
+  const compras = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'compra');
+  const ventas = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'venta');
   const currentList = activeTab === 'compras' ? compras : ventas;
 
   // Totals
@@ -302,6 +307,21 @@ export const PurchasesModule: React.FC = () => {
         </div>
       )}
 
+      {/* Global Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+        <div className="text-sm font-bold text-gray-700">Filtro de período</div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs">
+            <label className="text-gray-500 font-medium">Desde:</label>
+            <input type="date" value={periodoDesde} onChange={e => setPeriodoDesde(e.target.value)} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <label className="text-gray-500 font-medium">Hasta:</label>
+            <input type="date" value={periodoHasta} onChange={e => setPeriodoHasta(e.target.value)} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
+          </div>
+        </div>
+      </div>
+
       {/* Tabs: Compras / Ventas */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
         <button onClick={() => setActiveTab('compras')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -335,21 +355,13 @@ export const PurchasesModule: React.FC = () => {
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
           <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 text-xs">
-              <label className="text-gray-500">Desde:</label>
-              <input type="date" value={periodoDesde} onChange={e => setPeriodoDesde(e.target.value)} className="border rounded px-2 py-1 text-xs" />
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <label className="text-gray-500">Hasta:</label>
-              <input type="date" value={periodoHasta} onChange={e => setPeriodoHasta(e.target.value)} className="border rounded px-2 py-1 text-xs" />
-            </div>
             <button
               onClick={() => {
-                generateLibroIVA(invoices as any, periodoDesde, periodoHasta);
+                generateLibroIVA(filteredInvoices as any, periodoDesde, periodoHasta);
                 useImplementationStore.getState().completeItem('e2-11');
                 useImplementationStore.getState().completeItem('c2-6');
               }}
-              disabled={invoices.length === 0}
+              disabled={filteredInvoices.length === 0}
               className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Download size={14} /> Descargar Libro IVA (.xlsx)
