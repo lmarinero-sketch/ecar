@@ -477,6 +477,8 @@ const BudgetDetailView: React.FC<{
   const [showNewSection, setShowNewSection] = useState(false);
   const [newSection, setNewSection] = useState({ ordinal: '', name: '' });
   const [newItem, setNewItem] = useState({ description: '', unit: 'gl', quantity: '1', unit_price_ars: '0', cost_type: 'material', notes: '', section_id: '', resource_id: '' });
+  const [machineryList, setMachineryList] = useState<{name: string, hours: string}[]>([]);
+  const [newMachinery, setNewMachinery] = useState({ name: '', hours: '' });
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<any>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
@@ -525,11 +527,11 @@ const BudgetDetailView: React.FC<{
       (i: any) => i.cost_type === 'material' || i.cost_type === 'subcontrato'
     );
     if (comprasItems.length === 0) {
-      alert('No hay materiales o subcontratos para enviar a Compras.');
+      useModalStore.getState().showAlert('Aviso', 'No hay materiales o subcontratos para enviar a Compras.');
       return;
     }
     if (!budget.project_id) {
-      alert('El presupuesto debe estar asignado a un proyecto para enviar a Compras.');
+      useModalStore.getState().showAlert('Atención', 'El presupuesto debe estar asignado a un proyecto para enviar a Compras.');
       return;
     }
 
@@ -544,21 +546,21 @@ const BudgetDetailView: React.FC<{
           unit: i.unit || 'un'
         }))
       });
-      alert('Solicitud enviada a Compras exitosamente.');
+      useModalStore.getState().showAlert('Éxito', 'Solicitud enviada a Compras exitosamente.');
     } catch (e) {
       console.error(e);
-      alert('Error al enviar solicitud a Compras.');
+      useModalStore.getState().showAlert('Error', 'Error al enviar solicitud a Compras.');
     }
   };
 
   const handleSendToLogistica = async () => {
     const logisticaItems = items.filter((i: any) => i.cost_type === 'equipo');
     if (logisticaItems.length === 0) {
-      alert('No hay equipos para enviar a Logística.');
+      useModalStore.getState().showAlert('Aviso', 'No hay equipos para enviar a Logística.');
       return;
     }
     if (!budget.project_id) {
-      alert('El presupuesto debe estar asignado a un proyecto para solicitar equipos.');
+      useModalStore.getState().showAlert('Atención', 'El presupuesto debe estar asignado a un proyecto para solicitar equipos.');
       return;
     }
 
@@ -574,10 +576,10 @@ const BudgetDetailView: React.FC<{
           unit: i.unit || 'un'
         }))
       });
-      alert('Solicitud enviada a Logística exitosamente.');
+      useModalStore.getState().showAlert('Éxito', 'Solicitud enviada a Logística exitosamente.');
     } catch (e) {
       console.error(e);
-      alert('Error al enviar solicitud a Logística.');
+      useModalStore.getState().showAlert('Error', 'Error al enviar solicitud a Logística.');
     }
   };
 
@@ -632,6 +634,13 @@ const BudgetDetailView: React.FC<{
 
   const handleCreateItem = async () => {
     if (!newItem.description.trim()) return;
+
+    let finalNotes = newItem.notes || '';
+    if (machineryList.length > 0) {
+      const machineryText = machineryList.map(m => `- ${m.name}: ${m.hours} hs`).join('\n');
+      finalNotes = finalNotes ? `${finalNotes}\n\nMaquinaria requerida:\n${machineryText}` : `Maquinaria requerida:\n${machineryText}`;
+    }
+
     await createItem.mutateAsync({
       budget_id: budget.id,
       section_id: newItem.section_id || (sections.length > 0 ? sections[0].id : null),
@@ -640,11 +649,12 @@ const BudgetDetailView: React.FC<{
       quantity: parseFloat(newItem.quantity) || 1,
       unit_price_ars: parseFloat(newItem.unit_price_ars) || 0,
       cost_type: newItem.cost_type as any,
-      notes: newItem.notes || null,
+      notes: finalNotes || null,
       sort_order: items.length,
     } as any);
     setShowNewItem(false);
     setNewItem({ description: '', unit: 'gl', quantity: '1', unit_price_ars: '0', cost_type: 'material', notes: '', section_id: '', resource_id: '' });
+    setMachineryList([]);
   };
 
   const handleResourceSelect = (resourceId: string) => {
@@ -1267,6 +1277,27 @@ const BudgetDetailView: React.FC<{
               className="px-3 py-2 border border-gray-300 rounded-xl text-sm">
               {Object.entries(COST_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
+          </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-600 uppercase flex items-center gap-1"><HardHat size={12}/> Maquinaria / Equipos Asociados (Opcional)</label>
+            </div>
+            {machineryList.length > 0 && (
+              <ul className="text-xs space-y-1 mb-2">
+                {machineryList.map((m, i) => (
+                  <li key={i} className="flex items-center gap-2 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+                    <span className="font-bold flex-1 text-gray-700">{m.name}</span>
+                    <span className="text-cyan-600 font-mono font-bold bg-cyan-50 px-1.5 py-0.5 rounded">{m.hours} hs</span>
+                    <button onClick={() => setMachineryList(machineryList.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <input value={newMachinery.name} onChange={e => setNewMachinery({ ...newMachinery, name: e.target.value })} placeholder="Ej: Retroexcavadora..." className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-cyan-500/30" />
+              <input type="number" value={newMachinery.hours} onChange={e => setNewMachinery({ ...newMachinery, hours: e.target.value })} placeholder="Horas..." className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-cyan-500/30" />
+              <button onClick={() => { if(newMachinery.name && newMachinery.hours) { setMachineryList([...machineryList, newMachinery]); setNewMachinery({name: '', hours: ''}); } }} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><Plus size={14}/></button>
+            </div>
           </div>
           <div className="flex gap-2">
             <input value={newItem.notes} onChange={e => setNewItem({ ...newItem, notes: e.target.value })} placeholder="Notas / supuestos..."

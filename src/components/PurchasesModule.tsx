@@ -158,8 +158,8 @@ export const PurchasesModule: React.FC = () => {
 
   function isCreditNote(type: string | undefined): boolean {
     if (!type || typeof type !== 'string') return false;
-    const t = type.toUpperCase();
-    return t.startsWith('NC') || t.includes('NOTA DE CRÉDITO') || t.includes('CREDITO');
+    const t = type.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return t.startsWith('NC') || t.includes('NOTA DE CREDITO') || t.includes('CREDITO');
   }
 
   const compras = invoices.filter((i: any) => classifyInvoice(i) === 'compra');
@@ -379,8 +379,10 @@ export const PurchasesModule: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {currentList.map((inv: any) => (
-                  <tr key={inv.id} className="hover:bg-gray-50">
+                {currentList.map((inv: any) => {
+                  const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
+                  return (
+                  <tr key={inv.id} className={`hover:bg-gray-50 ${isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}`}>
                     <td className="px-4 py-3 font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>
@@ -444,7 +446,8 @@ export const PurchasesModule: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
