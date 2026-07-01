@@ -619,6 +619,21 @@ export const PurchasesModule: React.FC = () => {
             <button
               onClick={async () => {
                 try {
+                  // Validación de duplicados en Frontend
+                  const isDuplicate = invoices.some((i: any) => 
+                    i.id !== editingInvoice.id &&
+                    i.supplier_id === editingInvoice.supplier_id &&
+                    i.invoice_type === editForm.invoice_type &&
+                    i.invoice_number === editForm.invoice_number &&
+                    (i.point_of_sale || '') === (editForm.point_of_sale || '') &&
+                    i.status !== 'rejected'
+                  );
+
+                  if (isDuplicate) {
+                    useModalStore.getState().showAlert('Factura Duplicada', `Ya existe una factura ${editForm.invoice_type} ${editForm.point_of_sale}-${editForm.invoice_number} cargada para este proveedor.`);
+                    return;
+                  }
+
                   const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
                   const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
                   if (error) throw error;

@@ -103,7 +103,7 @@ export const RrhhModule: React.FC = () => {
       <div className="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Users size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Users size={24} /> RRHH & Legajos Digitales</h3>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><Users size={24} /> Gerencia de RRHH</h3>
           <p className="text-indigo-100 text-sm mt-1">
             {activeEmployees.length} empleados activos · Categorías UOCRA · Parte diario de asistencia
           </p>

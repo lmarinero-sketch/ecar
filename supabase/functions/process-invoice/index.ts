@@ -221,6 +221,33 @@ serve(async (req: Request) => {
           }
         }
       }
+      if (supplierId && extracted.numero_factura && extracted.tipo_factura) {
+        let dupQuery = sb
+          .from("purchase_invoices")
+          .select("id")
+          .eq("tenant_id", tenantId)
+          .eq("supplier_id", supplierId)
+          .eq("invoice_type", extracted.tipo_factura)
+          .eq("invoice_number", extracted.numero_factura)
+          .neq("id", invoiceId)
+          .neq("status", "rejected")
+          .limit(1);
+          
+        if (extracted.punto_venta) {
+          dupQuery = dupQuery.eq("point_of_sale", extracted.punto_venta);
+        }
+        
+        const { data: dupCheckList } = await dupQuery;
+        
+        if (dupCheckList && dupCheckList.length > 0) {
+          // Delete the temporary pending record
+          await sb.from("purchase_invoices").delete().eq("id", invoiceId);
+          return jsonResponse({ 
+            success: false, 
+            error: `¡Factura Duplicada! El comprobante ${extracted.tipo_factura} ${extracted.punto_venta ? extracted.punto_venta + '-' : ''}${extracted.numero_factura} de este proveedor ya está cargado.` 
+          });
+        }
+      }
 
       await sb.from("purchase_invoices").update({
         supplier_id: supplierId,

@@ -132,7 +132,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: 'Finanzas', emoji: '💼',
+    label: 'Ger. Adm. y Finanzas', emoji: '💼',
     items: [
       { id: 'finances', requires: true },
       { id: 'obligations', requires: true },
@@ -143,7 +143,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: 'Personal', emoji: '👥',
+    label: 'Ger. RRHH', emoji: '👥',
     items: [
       { id: 'rrhh', requires: true },
     ],

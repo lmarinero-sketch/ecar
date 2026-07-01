@@ -224,7 +224,7 @@ export const FinancesModule: React.FC = () => {
       <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Landmark size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Landmark size={24} /> Finanzas & Tesorería</h3>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><Landmark size={24} /> Gerencia de Administración y Finanzas</h3>
           <p className="text-emerald-100 text-sm mt-1">Cartera de cheques, gastos fijos y flujo de caja operativo.</p>
         </div>
       </div>
