@@ -22,9 +22,9 @@ REGLAS DE CLASIFICACIÓN COMPRA vs VENTA:
 
 EXTRACCIÓN DE NOMBRE DE LA CONTRAPARTE (proveedor_cliente) Y CUIT (cuit):
 - "proveedor_cliente" debe ser la Razón Social de la OTRA parte (NO ECAR).
-  - Si es COMPRA: el emisor externo es el "proveedor_cliente".
-  - Si es VENTA: el receptor externo es el "proveedor_cliente".
 - "cuit" es el CUIT de la OTRA parte (NO ECAR) en formato XX-XXXXXXXX-X.
+  - Si es COMPRA: la contraparte es el EMISOR. Debes extraer la Razón Social y el CUIT del EMISOR. (Atención: El CUIT del emisor SIEMPRE se encuentra en la parte superior, ANTES que el del receptor).
+  - Si es VENTA: la contraparte es el RECEPTOR (Cliente). Debes extraer la Razón Social y el CUIT del RECEPTOR.
 - NUNCA dejes proveedor_cliente vacío. Si no lo puedes leer, pon "No legible".
 
 Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin explicaciones:
@@ -125,7 +125,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const tipoText = tipo ? ` IMPORTANTE: El usuario indicó que esta factura es una ${tipo.toUpperCase()}. Debes clasificar "tipo" estrictamente como "${tipo}" y extraer el "proveedor_cliente" acordemente (si es compra el proveedor_cliente es el emisor, si es venta el proveedor_cliente es el receptor).` : "";
+    const tipoText = tipo ? ` IMPORTANTE: El usuario indicó que esta factura es una ${tipo.toUpperCase()}. Debes clasificar "tipo" estrictamente como "${tipo}" y extraer el "proveedor_cliente" y su "cuit" acordemente (si es compra la contraparte es el EMISOR cuyo CUIT está arriba antes que el del cliente, si es venta la contraparte es el RECEPTOR).` : "";
     
     userContent.push({
       type: "text",
