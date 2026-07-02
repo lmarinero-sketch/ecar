@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { useModalStore } from '../store/useModalStore';
 
 export const PayrollPDFButton: React.FC<{
@@ -40,7 +40,7 @@ export const PayrollPDFButton: React.FC<{
         formatARS(Number(row.final_amount))
       ]);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: 40,
         head: [['Obrero', 'Alias / CBU', 'Horas Semanales', 'Monto a Transferir']],
         body: tableData,

@@ -245,7 +245,7 @@ export const FinancesModule: React.FC = () => {
     }
   };
 
-  const handleQuickStatus = async (ch: Cheque, newStatus: string) => {
+  const handleQuickStatus = async (ch: Cheque, newStatus: "pending" | "cancelled" | "deposited" | "cashed" | "bounced") => {
     if (!canWrite) return;
     try {
       await updateCheque.mutateAsync({ id: ch.id, status: newStatus });

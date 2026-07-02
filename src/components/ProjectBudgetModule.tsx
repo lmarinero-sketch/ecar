@@ -1647,8 +1647,6 @@ const BudgetDetailView: React.FC<{
               projectId={budget.project_id}
               presupuestado={totalFinal}
               costoDirectoPresupuestado={directTotal}
-              budget={budget}
-              updateBudget={updateBudget}
             />
           )}
           {!budget.project_id && (
@@ -2033,9 +2031,7 @@ const CierreEconomicoPanel: React.FC<{
   projectId: string;
   presupuestado: number;
   costoDirectoPresupuestado: number;
-  budget: any;
-  updateBudget: any;
-}> = ({ projectId, presupuestado, costoDirectoPresupuestado, budget, updateBudget }) => {
+}> = ({ projectId, presupuestado, costoDirectoPresupuestado }) => {
   const { data: invoices = [] } = usePurchaseInvoices();
   const projectInvoices = useMemo(() => invoices.filter((inv: any) => inv.project_id === projectId), [invoices, projectId]);
   

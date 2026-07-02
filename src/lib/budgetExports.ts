@@ -1,6 +1,6 @@
 import { utils, writeFile } from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Tipos requeridos basados en el esquema
 type Budget = any;
@@ -176,8 +176,7 @@ export const exportToObra = (budget: Budget, items: BudgetItem[], sections: Budg
     });
   }
 
-  // @ts-ignore
-  doc.autoTable({
+  autoTable(doc, {
     startY: currentY + 6,
     head: [['Descripción / Tarea', 'Unidad', 'Cant.', 'Observaciones']],
     body: tableData,
