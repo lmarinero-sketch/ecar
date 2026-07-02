@@ -47,7 +47,7 @@ export const RrhhModule: React.FC = () => {
     full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', hire_date: '',
     bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '',
-    modo_liquidacion: 'mensual', retribucion_pactada: '',
+    modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS',
     gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA',
     observations: '', debt_to_employee: '', debt_notes: '',
     does_overtime: false, overtime_rate: '50',
@@ -74,6 +74,7 @@ export const RrhhModule: React.FC = () => {
   const handleCreate = async () => {
     await createEmployee.mutateAsync({
       ...form,
+      employer_entity: form.employer_entity || 'ECAR SAS',
       category_id: form.category_id || null,
       current_project_id: form.current_project_id || null,
       retribucion_pactada: form.retribucion_pactada ? parseFloat(form.retribucion_pactada) : null,
@@ -89,7 +90,7 @@ export const RrhhModule: React.FC = () => {
       overtime_rate: (form.does_overtime ? form.overtime_rate : null) as any,
     });
     useImplementationStore.getState().completeItem('e2-21');
-    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50' });
+    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50' });
     setTab('roster');
   };
 
@@ -175,6 +176,9 @@ export const RrhhModule: React.FC = () => {
                             {emp.employment_status !== 'active' && (
                               <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">BAJA</span>
                             )}
+                            <div className="text-[10px] font-medium text-gray-500 mt-0.5">
+                              {emp.employer_entity || 'ECAR SAS'}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -186,7 +190,7 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
-                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
                           <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
                         </div>
                       </td>
@@ -304,6 +308,13 @@ export const RrhhModule: React.FC = () => {
               <input value={form.union_name} onChange={e => setForm({ ...form, union_name: e.target.value })} placeholder="UOCRA" className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
             <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Empresa Registrada</label>
+              <select value={form.employer_entity} onChange={e => setForm({ ...form, employer_entity: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="ECAR SAS">ECAR SAS</option>
+                <option value="CARLOS ADOLFO REGALADO">CARLOS ADOLFO REGALADO</option>
+              </select>
+            </div>
+            <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
               <select value={form.modo_liquidacion} onChange={e => setForm({ ...form, modo_liquidacion: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
                 <option value="mensual">Mensual</option>
@@ -386,7 +397,7 @@ export const RrhhModule: React.FC = () => {
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
-          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }}
+          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }}
           calcAntiguedad={calcAntiguedad}
         />
       )}
@@ -519,6 +530,13 @@ export const RrhhModule: React.FC = () => {
                 <input value={editForm.union_name} onChange={e => setEditForm({ ...editForm, union_name: e.target.value })} placeholder="UOCRA" className="w-full px-3 py-2 border rounded-xl text-sm" />
               </div>
               <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Empresa Registrada</label>
+                <select value={editForm.employer_entity} onChange={e => setEditForm({ ...editForm, employer_entity: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                  <option value="ECAR SAS">ECAR SAS</option>
+                  <option value="CARLOS ADOLFO REGALADO">CARLOS ADOLFO REGALADO</option>
+                </select>
+              </div>
+              <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Modo Liquidación</label>
                 <select value={editForm.modo_liquidacion} onChange={e => setEditForm({ ...editForm, modo_liquidacion: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
                   <option value="mensual">Mensual</option>
@@ -588,6 +606,7 @@ export const RrhhModule: React.FC = () => {
                 try {
                   await updateEmployee.mutateAsync({
                     id: editingEmployee.id, ...editForm,
+                    employer_entity: editForm.employer_entity || 'ECAR SAS',
                     category_id: editForm.category_id || null,
                     current_project_id: editForm.current_project_id || null,
                     retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null,
@@ -817,6 +836,7 @@ const LegajoView: React.FC<{
             <div><span className="text-xs font-bold text-gray-400 block">Antigüedad</span><span className="text-indigo-600 font-bold">{calcAntiguedad(employee.hire_date)}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Convenio / Sindicato</span><span className="font-bold">{employee.union_name || '—'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Modo Liquidación</span>{employee.modo_liquidacion || '—'}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Empresa Registrada</span><span className="font-bold text-gray-800">{employee.employer_entity || 'ECAR SAS'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Retribución</span>{employee.retribucion_pactada ? `$ ${Number(employee.retribucion_pactada).toLocaleString('es-AR')}` : '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Horas Extras</span>{employee.does_overtime ? <span className="font-bold text-indigo-600">Sí — al {employee.overtime_rate || '50'}%</span> : <span className="text-gray-400">No</span>}</div>
           </div>

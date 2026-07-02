@@ -58,6 +58,7 @@ export type Employee = {
   profile_photo_url: string | null;
   custom_fields: Record<string, unknown>;
   // New RRHH fields
+  employer_entity: string | null;
   bank_name: string | null;
   bank_alias_cbu: string | null;
   trial_start_date: string | null;

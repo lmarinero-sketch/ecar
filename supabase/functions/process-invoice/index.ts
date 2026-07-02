@@ -51,6 +51,10 @@ Responde ÚNICAMENTE con un JSON válido, sin markdown, sin backticks, sin expli
 }
 
 IMPORTANTE sobre MONTOS:
+- El campo "total" SIEMPRE corresponde al importe FINAL de la factura (usualmente abajo a la derecha).
+- El campo "neto_gravado" corresponde a la base imponible antes de impuestos (suele decir "Neto" o "Neto gravado").
+- ¡ATENCIÓN! No confundas la columna "Total" de los ítems individuales con el "total" final de la factura.
+- Revisa cuidadosamente la fila inferior de resumen: el "Neto" es el subtotal sin IVA, y el "Total" es el valor final a pagar con todos los impuestos incluidos. NUNCA los inviertas.
 - Todos los montos son numéricos con decimales (ej: 12100.50, NO 12100)
 - ATENCIÓN: En Argentina se usa el punto (.) para los miles y la coma (,) para los decimales en las imágenes. Si ves "2.525.983,00", el número es de millones (2525983.00), NO devuelvas "2525.983".
 - Devuelve SIEMPRE un número float válido en JSON (usando punto para decimales y sin separador de miles). Ej: 2525983.00.
