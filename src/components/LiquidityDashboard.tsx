@@ -352,12 +352,15 @@ export const LiquidityDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Movimientos */}
+      {/* Flujo de Caja */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-gray-800">Últimos Movimientos</h3>
+          <div>
+            <h3 className="font-bold text-gray-800 flex items-center gap-2"><DollarSign size={18} className="text-emerald-600" /> Flujo de Caja — Ingresos y Egresos</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Registro de todas las entradas y salidas de dinero de la empresa</p>
+          </div>
           <button onClick={() => setShowNewMovement(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all">
-            <Plus size={16} /> Nuevo Movimiento
+            <Plus size={16} /> Nuevo Ingreso/Egreso
           </button>
         </div>
 
@@ -367,6 +370,7 @@ export const LiquidityDashboard: React.FC = () => {
               <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                 <tr>
                   <th className="px-4 py-3">Fecha</th>
+                  <th className="px-4 py-3">Tipo</th>
                   <th className="px-4 py-3">Categoría</th>
                   <th className="px-4 py-3">Descripción</th>
                   <th className="px-4 py-3">Contraparte</th>
@@ -378,7 +382,12 @@ export const LiquidityDashboard: React.FC = () => {
                   <tr key={m.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{new Date(m.movement_date).toLocaleDateString('es-AR')}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.type === 'income' ? 'bg-green-100 text-green-700' : m.type === 'transfer' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {m.type === 'income' ? '📥 Ingreso' : '📤 Egreso'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.type === 'income' ? 'bg-emerald-50 text-emerald-700' : m.type === 'transfer' ? 'bg-blue-100 text-blue-700' : 'bg-orange-50 text-orange-700'}`}>
                         {m.category}
                       </span>
                     </td>
@@ -402,8 +411,8 @@ export const LiquidityDashboard: React.FC = () => {
         ) : (
           <div className="text-center py-12 text-gray-400">
             <ArrowDownRight size={48} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Sin movimientos registrados</p>
-            <p className="text-sm">Cargá tu primer movimiento o pedíselo a Rombo por WhatsApp 📱</p>
+            <p className="font-medium">Sin registros en el flujo de caja</p>
+            <p className="text-sm">Cargá tu primer ingreso o egreso, o pedíselo a Rombo por WhatsApp 📱</p>
           </div>
         )}
       </div>
@@ -413,7 +422,7 @@ export const LiquidityDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Nuevo Movimiento</h3>
+              <h3 className="font-bold text-lg">Registrar Ingreso / Egreso</h3>
               <button onClick={() => setShowNewMovement(false)}><X size={20} className="text-gray-400" /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -459,7 +468,7 @@ export const LiquidityDashboard: React.FC = () => {
               </div>
 
               <button type="submit" disabled={createMovement.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
-                {createMovement.isPending ? 'Guardando...' : '✅ Registrar Movimiento'}
+                {createMovement.isPending ? 'Guardando...' : '✅ Registrar'}
               </button>
             </form>
           </div>

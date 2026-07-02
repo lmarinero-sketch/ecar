@@ -20,7 +20,8 @@ import {
   useOpportunities,
   useBudgetFiles, useUploadBudgetFile, useDeleteBudgetFile,
   useCreatePurchaseRequest,
-  useProfiles, useCopyOpportunityFilesToBudget
+  useProfiles, useCopyOpportunityFilesToBudget,
+  usePurchaseInvoices
 } from '../hooks/useData';
 import { exportBudgetPdf } from '../lib/pdfExport';
 import { useModalStore } from '../store/useModalStore';
@@ -597,7 +598,9 @@ const BudgetDetailView: React.FC<{
         items: comprasItems.map((i: any) => ({
           description: i.description + (i.notes ? ` - ${i.notes}` : ` (Rubro: ${i.section_id || 'Gral'})`),
           quantity: i.quantity,
-          unit: i.unit || 'un'
+          unit: i.unit || 'un',
+          budget_item_id: i.id,
+          estimated_unit_cost: i.unit_price_ars || 0
         }))
       });
       useModalStore.getState().showAlert('Éxito', 'Solicitud enviada a Compras exitosamente.');
@@ -1638,10 +1641,28 @@ const BudgetDetailView: React.FC<{
       {/* TAB: CIERRE Y LECCIONES */}
       {activeTab === 'cierre' && (
         <div className="space-y-4">
+          {/* Cierre Económico Automático */}
+          {budget.project_id && (
+            <CierreEconomicoPanel
+              projectId={budget.project_id}
+              presupuestado={totalFinal}
+              costoDirectoPresupuestado={directTotal}
+              budget={budget}
+              updateBudget={updateBudget}
+            />
+          )}
+          {!budget.project_id && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <AlertTriangle size={24} className="mx-auto text-amber-500 mb-2" />
+              <p className="text-sm font-bold text-amber-700">Este presupuesto no está asignado a un proyecto.</p>
+              <p className="text-xs text-amber-600 mt-1">El cierre económico requiere un proyecto con facturas de compra registradas.</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-4"><DollarSign size={14} className="text-cyan-600" /> Cierre Post-Obra</h4>
-              <label className="block text-xs font-bold text-gray-500 mb-1">Costo Real Final (ARS)</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1">Costo Real Final (ARS) — Ingreso Manual</label>
               <input type="number" value={budget.actual_cost_ars || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, actual_cost_ars: parseFloat(e.target.value) || null })}
                 className="w-full px-3 py-2 border rounded-lg text-sm font-mono mb-3" />
@@ -1998,6 +2019,91 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <Database size={44} className="mx-auto mb-3 opacity-30" />
             <p className="font-medium">Sin recursos en el catálogo</p>
             <p className="text-sm">Agregá materiales, mano de obra, equipos y subcontratos</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CIERRE ECONÓMICO — Presupuesto vs. Real
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const CierreEconomicoPanel: React.FC<{
+  projectId: string;
+  presupuestado: number;
+  costoDirectoPresupuestado: number;
+  budget: any;
+  updateBudget: any;
+}> = ({ projectId, presupuestado, costoDirectoPresupuestado, budget, updateBudget }) => {
+  const { data: invoices = [] } = usePurchaseInvoices();
+  const projectInvoices = useMemo(() => invoices.filter((inv: any) => inv.project_id === projectId), [invoices, projectId]);
+  
+  const gastoReal = useMemo(() => projectInvoices.reduce((sum: number, inv: any) => sum + (inv.total_ars || 0), 0), [projectInvoices]);
+  const desvio = costoDirectoPresupuestado > 0 ? ((gastoReal - costoDirectoPresupuestado) / costoDirectoPresupuestado) * 100 : 0;
+  const rentabilidadEsperada = presupuestado - costoDirectoPresupuestado;
+  const rentabilidadReal = presupuestado - gastoReal;
+  const estaEnRojo = gastoReal > costoDirectoPresupuestado;
+
+  return (
+    <div className={`rounded-2xl border-2 shadow-sm overflow-hidden ${estaEnRojo ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}`}>
+      <div className={`p-4 border-b ${estaEnRojo ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}`}>
+        <h4 className={`font-bold text-sm flex items-center gap-2 ${estaEnRojo ? 'text-red-800' : 'text-green-800'}`}>
+          <DollarSign size={16} /> Cierre Económico — Presupuesto vs. Ejecución Real
+          <span className={`ml-auto text-xs px-2.5 py-1 rounded-full font-black ${estaEnRojo ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {projectInvoices.length} facturas registradas
+          </span>
+        </h4>
+      </div>
+      <div className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Costo Directo Presupuestado</p>
+            <p className="text-lg font-black text-gray-800 font-mono">{fmt(costoDirectoPresupuestado)}</p>
+          </div>
+          <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Gasto Real (Facturas)</p>
+            <p className={`text-lg font-black font-mono ${estaEnRojo ? 'text-red-600' : 'text-green-700'}`}>{fmt(gastoReal)}</p>
+          </div>
+          <div className={`rounded-xl p-3 border shadow-sm ${estaEnRojo ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Desvío</p>
+            <p className={`text-lg font-black font-mono ${estaEnRojo ? 'text-red-600' : 'text-green-700'}`}>
+              {desvio > 0 ? '+' : ''}{desvio.toFixed(1)}%
+            </p>
+          </div>
+          <div className={`rounded-xl p-3 border shadow-sm ${rentabilidadReal < 0 ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Rentabilidad Real</p>
+            <p className={`text-lg font-black font-mono ${rentabilidadReal < 0 ? 'text-red-600' : 'text-emerald-700'}`}>{fmt(rentabilidadReal)}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">Esperada: {fmt(rentabilidadEsperada)}</p>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="bg-gray-100 rounded-full h-5 overflow-hidden mb-3 relative">
+          <div 
+            className={`h-full transition-all duration-700 rounded-full ${estaEnRojo ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-green-400 to-green-600'}`}
+            style={{ width: `${Math.min((gastoReal / costoDirectoPresupuestado) * 100, 100)}%` }}
+          />
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-gray-700">
+            {costoDirectoPresupuestado > 0 ? `${((gastoReal / costoDirectoPresupuestado) * 100).toFixed(0)}% ejecutado` : '—'}
+          </span>
+        </div>
+
+        {/* Latest invoices */}
+        {projectInvoices.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs font-bold text-gray-500 mb-2">Últimas facturas del proyecto</p>
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {projectInvoices.slice(0, 8).map((inv: any) => (
+                <div key={inv.id} className="flex items-center justify-between text-xs bg-white px-3 py-2 rounded-lg border border-gray-100">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="font-bold text-gray-700 truncate">{inv.supplier?.name || 'Sin proveedor'}</span>
+                    <span className="text-gray-400 shrink-0">Fact. {inv.invoice_number || '—'}</span>
+                  </div>
+                  <span className="font-mono font-bold text-gray-800 shrink-0 ml-3">{fmt(inv.total_ars)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

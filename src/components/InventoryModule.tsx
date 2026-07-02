@@ -2,13 +2,14 @@ import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
-  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3
+  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3, ShoppingBag
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
   useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
-  useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf
+  useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
+  useCreatePurchaseRequest
 } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 import type { InventoryItem, WarehouseShelf } from '../lib/types';
@@ -20,6 +21,7 @@ import { Rnd } from 'react-rnd';
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 type Tab = 'stock' | 'tools' | 'movements' | 'shelves';
+type RepoItem = { name: string; quantity: number; unit: string; unit_cost: number; id: string; current_stock: number; min_stock: number };
 
 const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: string }> = {
   rack: { label: 'Rack / Estantería', icon: '🗄️' },
@@ -46,6 +48,7 @@ export const InventoryModule: React.FC = () => {
   const createShelf = useCreateWarehouseShelf();
   const updateShelf = useUpdateWarehouseShelf();
   const deleteShelf = useDeleteWarehouseShelf();
+  const createPurchaseRequest = useCreatePurchaseRequest();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -63,6 +66,40 @@ export const InventoryModule: React.FC = () => {
   const [shelfForm, setShelfForm] = useState({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' });
   const [assignShelfItem, setAssignShelfItem] = useState<InventoryItem | null>(null);
   const [shelfAssignForm, setShelfAssignForm] = useState({ shelf_id: '', shelf_position: '' });
+  // Reposición modal state
+  const [showRepoModal, setShowRepoModal] = useState(false);
+  const [repoProjectId, setRepoProjectId] = useState<string>('');
+  const [repoItems, setRepoItems] = useState<RepoItem[]>([]);
+
+  const openRepoModal = (items: RepoItem[]) => {
+    setRepoItems(items);
+    setRepoProjectId('');
+    setShowRepoModal(true);
+  };
+
+  const handleRepoSubmit = async () => {
+    try {
+      await createPurchaseRequest.mutateAsync({
+        project_id: repoProjectId || null,
+        urgency: repoItems.some(i => i.current_stock === 0) ? 'urgent' as const : 'normal' as const,
+        urgency_reason: repoItems.some(i => i.current_stock === 0) ? `Stock agotado de ${repoItems.filter(i => i.current_stock === 0).map(i => i.name).join(', ')}` : undefined,
+        status: 'pending',
+        requested_by: 'Logística (Reposición)',
+        notes: `Reposición de ${repoItems.length} ítem(s). ${repoProjectId ? 'Asignado a proyecto/centro de costo.' : 'Sin proyecto asignado.'}`,
+        items: repoItems.map(i => ({
+          description: i.name,
+          quantity: Math.max(i.min_stock * 2 - i.current_stock, i.min_stock),
+          unit: i.unit || 'unidad',
+          estimated_unit_cost: i.unit_cost || 0,
+          inventory_item_id: i.id,
+        }))
+      });
+      useModalStore.getState().showAlert('Éxito', `Solicitud de reposición enviada a Compras con ${repoItems.length} ítems.`);
+      setShowRepoModal(false);
+    } catch {
+      useModalStore.getState().showAlert('Error', 'No se pudo enviar la solicitud.');
+    }
+  };
 
   const generateRandomBarcode = () => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -178,6 +215,14 @@ export const InventoryModule: React.FC = () => {
         <div className={`bg-white border rounded-xl p-5 shadow-sm ${lowStockItems.length > 0 ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Stock Bajo</div>
           <p className="text-2xl font-black text-red-600 font-mono">{lowStockItems.length}</p>
+          {lowStockItems.length > 0 && (
+            <button
+              onClick={() => openRepoModal(lowStockItems.map(i => ({ name: i.name, quantity: i.current_stock, unit: i.unit, unit_cost: i.unit_cost, id: i.id, current_stock: i.current_stock, min_stock: i.min_stock })))}
+              className="mt-2 w-full px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              <ShoppingBag size={12} /> Solicitar Reposición
+            </button>
+          )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Depósito</div>
@@ -187,7 +232,7 @@ export const InventoryModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {([['stock', '📦 Stock', null], ['tools', '🔧 Herramientas', null], ['movements', '📋 Movimientos', null], ['shelves', '🗄️ Estanterías', null]] as [Tab, string, null][]).map(([id, label]) => (
+        {([['stock', '📦 Stock', null], ['tools', '🔧 Herramientas', null], ['movements', '📋 Historial Entradas/Salidas', null], ['shelves', '🗄️ Estanterías', null]] as [Tab, string, null][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === id ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{label}</button>
         ))}
       </div>
@@ -260,6 +305,14 @@ export const InventoryModule: React.FC = () => {
                         <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
                       ) : null}
                       <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
+                      {item.current_stock <= item.min_stock && item.min_stock > 0 && (
+                        <button
+                          onClick={() => openRepoModal([{ name: item.name, quantity: item.current_stock, unit: item.unit, unit_cost: item.unit_cost, id: item.id, current_stock: item.current_stock, min_stock: item.min_stock }])}
+                          className="p-1.5 hover:bg-red-100 rounded-lg" title="Solicitar reposición a Compras"
+                        >
+                          <ShoppingBag size={14} className="text-red-600" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -691,6 +744,79 @@ export const InventoryModule: React.FC = () => {
             setShowNewItem(true);
           }}
         />
+      )}
+
+      {/* Modal Solicitar Reposición a Compras */}
+      {showRepoModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-red-600 to-orange-600 p-4 text-white flex justify-between items-center">
+              <h2 className="font-bold text-lg flex items-center gap-2"><ShoppingBag size={20} /> Solicitar Reposición a Compras</h2>
+              <button onClick={() => setShowRepoModal(false)} className="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Proyecto / Centro de Costo */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                  🏗️ Centro de Costo (Proyecto / Obra) *
+                </label>
+                <select
+                  value={repoProjectId}
+                  onChange={e => setRepoProjectId(e.target.value)}
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
+                >
+                  <option value="">— Sin asignar (stock general) —</option>
+                  {(projects || []).map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">Seleccioná el proyecto u obra al que se imputan estos materiales.</p>
+              </div>
+
+              {/* Items to request */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ítems a reponer ({repoItems.length})</label>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-100 rounded-xl p-2">
+                  {repoItems.map(item => {
+                    const qty = Math.max(item.min_stock * 2 - item.current_stock, item.min_stock);
+                    return (
+                      <div key={item.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg text-xs">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-bold text-gray-700">{item.name}</span>
+                          <span className="text-gray-400 ml-2">Stock: {item.current_stock} / Mín: {item.min_stock}</span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-mono font-bold text-orange-700">{qty} {item.unit}</span>
+                          {item.current_stock === 0 && <span className="ml-1 px-1 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-bold">SIN STOCK</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-800">
+                <strong>Resumen:</strong> Se enviará un pedido de compra con {repoItems.length} ítem{repoItems.length > 1 ? 's' : ''} 
+                {repoProjectId ? ` imputado al proyecto "${(projects || []).find(p => p.id === repoProjectId)?.name}"` : ' sin centro de costo asignado'}.
+                {repoItems.some(i => i.current_stock === 0) && ' ⚡ Se marcará como URGENTE por ítems con stock agotado.'}
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={() => setShowRepoModal(false)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleRepoSubmit}
+                  disabled={createPurchaseRequest.isPending}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 rounded-xl font-bold text-sm hover:from-red-700 hover:to-orange-700 transition-all shadow-md disabled:opacity-50"
+                >
+                  {createPurchaseRequest.isPending ? 'Enviando...' : '📤 Enviar a Compras'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

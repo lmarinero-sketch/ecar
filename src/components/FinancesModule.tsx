@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil } from 'lucide-react';
+import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil, CheckCircle2 } from 'lucide-react';
 import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { ChequeUploader } from './ChequeUploader';
@@ -29,6 +29,11 @@ export const FinancesModule: React.FC = () => {
   const [editForm, setEditForm] = useState<any>({});
   const [deleteTarget, setDeleteTarget] = useState<Cheque | null>(null);
   const [auditChequeId, setAuditChequeId] = useState<string | null>(null);
+  
+  // Filters
+  const [filterDate, setFilterDate] = useState<string>('');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
   
   const { data: paymentRecords = [], isLoading: isLoadingPayments } = usePaymentRecords();
   const createPaymentRecord = useCreatePaymentRecord();
@@ -86,6 +91,42 @@ export const FinancesModule: React.FC = () => {
   const totalPayable = payable.reduce((a, c) => a + c.amount_ars, 0);
   const totalReceivable = receivable.reduce((a, c) => a + c.amount_ars, 0);
   const totalFixed = expenses.filter(e => e.status === 'active').reduce((a, e) => a + e.estimated_amount_ars, 0);
+
+  const filteredCheques = React.useMemo(() => {
+    return cheques.filter(ch => {
+      if (!filterDate) return true;
+      const dateStr = ch.due_date || ch.issue_date;
+      if (!dateStr) return false;
+      const d = new Date(dateStr + 'T12:00:00');
+      const today = new Date();
+      today.setHours(12,0,0,0);
+      
+      if (filterDate === 'today') {
+        return d.toDateString() === today.toDateString();
+      }
+      if (filterDate === 'week') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - today.getDay());
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return d >= start && d <= end;
+      }
+      if (filterDate === 'month') {
+        return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      }
+      if (filterDate === 'next_month') {
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(today.getMonth() + 1);
+        return d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear();
+      }
+      if (filterDate === 'custom') {
+        if (customStart && d < new Date(customStart + 'T12:00:00')) return false;
+        if (customEnd && d > new Date(customEnd + 'T12:00:00')) return false;
+        return true;
+      }
+      return true;
+    });
+  }, [cheques, filterDate, customStart, customEnd]);
 
   const [ocrData, setOcrData] = useState<any | null>(null);
 
@@ -201,6 +242,25 @@ export const FinancesModule: React.FC = () => {
       setDeleteTarget(null);
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message || 'Error al eliminar');
+    }
+  };
+
+  const handleQuickStatus = async (ch: Cheque, newStatus: string) => {
+    if (!canWrite) return;
+    try {
+      await updateCheque.mutateAsync({ id: ch.id, status: newStatus });
+      auditLog.mutate({
+        cheque_id: ch.id,
+        action: 'status_changed',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        changes: { status: { old: ch.status, new: newStatus } },
+        snapshot: { ...ch, status: newStatus },
+      });
+      useImplementationStore.getState().completeItem('e2-4');
+      useImplementationStore.getState().completeItem('c2-2');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message || 'Error al actualizar estado');
     }
   };
 
@@ -368,8 +428,27 @@ export const FinancesModule: React.FC = () => {
 
           {/* Cheques table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Cartera de Cheques</h3></div>
-            {cheques.length === 0 ? (
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center justify-between gap-4">
+              <h3 className="font-bold text-gray-800">Cartera de Cheques</h3>
+              <div className="flex items-center gap-2">
+                <select value={filterDate} onChange={e => setFilterDate(e.target.value)} className="px-3 py-1.5 text-sm border rounded-lg bg-white">
+                  <option value="">Todos los vencimientos</option>
+                  <option value="today">Vencen hoy</option>
+                  <option value="week">Esta semana</option>
+                  <option value="month">Este mes</option>
+                  <option value="next_month">Mes que viene</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+                {filterDate === 'custom' && (
+                  <div className="flex items-center gap-1">
+                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="px-2 py-1.5 text-sm border rounded-lg" />
+                    <span className="text-gray-400">-</span>
+                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="px-2 py-1.5 text-sm border rounded-lg" />
+                  </div>
+                )}
+              </div>
+            </div>
+            {filteredCheques.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">Sin cheques registrados. Escaneá o cargá el primero.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -389,7 +468,7 @@ export const FinancesModule: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {cheques.map(ch => (
+                    {filteredCheques.map(ch => (
                       <tr key={ch.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-mono text-xs">{ch.cheque_number}</td>
                         <td className="px-4 py-3">{ch.bank_name}</td>
@@ -429,6 +508,16 @@ export const FinancesModule: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            {ch.status === 'pending' && (
+                              <button
+                                onClick={() => handleQuickStatus(ch, ch.direction === 'payable' ? 'cashed' : 'deposited')}
+                                disabled={!canWrite}
+                                className={`p-1.5 rounded-lg hover:bg-green-50 text-green-600 hover:text-green-700 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                title={ch.direction === 'payable' ? 'Marcar como Pagado' : 'Marcar como Depositado'}
+                              >
+                                <CheckCircle2 size={16} />
+                              </button>
+                            )}
                             <button onClick={() => handleEdit(ch)} disabled={!canWrite} className={`p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canWrite ? 'Sin permisos de edición' : 'Editar'}><Pencil size={14} /></button>
                             <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="Historial"><History size={14} /></button>
                             <button onClick={() => setDeleteTarget(ch)} disabled={!canDelete} className={`p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar'}><Trash2 size={14} /></button>

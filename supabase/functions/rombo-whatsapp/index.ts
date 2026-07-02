@@ -40,7 +40,8 @@ const tools = [
           type: { type: 'string', enum: ['physical', 'echeq'], description: 'Tipo de cheque: "physical" (físico) o "echeq" (electrónico).' },
           issue_date: { type: 'string', description: 'Fecha de emisión en formato YYYY-MM-DD.' },
           due_date: { type: 'string', description: 'Fecha de pago/vencimiento en formato YYYY-MM-DD.' },
-          beneficiary_or_issuer: { type: 'string', description: 'Beneficiario o emisor del cheque.' }
+          beneficiary_or_issuer: { type: 'string', description: 'Beneficiario o emisor del cheque.' },
+          scan_url: { type: 'string', description: 'URL pública de la foto del cheque (si aplica).' }
         },
         required: ['cheque_number', 'bank_name', 'amount_ars', 'direction', 'due_date']
       }
@@ -118,7 +119,8 @@ const tools = [
           perceptions_iibb_ars: { type: 'number', description: 'Percepciones IIBB' },
           total_ars: { type: 'number', description: 'Total de la factura' },
           cae_number: { type: 'string', description: 'Número de CAE' },
-          gasto_item_id: { type: 'string', description: 'ID de rubro de gasto mensual asociado (opcional, uuid)' }
+          gasto_item_id: { type: 'string', description: 'ID de rubro de gasto mensual asociado (opcional, uuid)' },
+          scan_url: { type: 'string', description: 'URL pública de la foto de la factura (si aplica).' }
         },
         required: ['supplier_name', 'invoice_type', 'invoice_number', 'issue_date', 'total_ars']
       }
@@ -514,6 +516,7 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           issue_date: args.issue_date || null,
           due_date: args.due_date,
           beneficiary_or_issuer: args.beneficiary_or_issuer || null,
+          scan_url: args.scan_url || null,
           status: 'pending'
         }).select().single()
         if (error) return JSON.stringify({ error: error.message })
@@ -667,6 +670,7 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
           total_ars: args.total_ars || 0,
           cae_number: args.cae_number || null,
           status: 'pending_review',
+          original_file_url: args.scan_url || null,
           ocr_validated: false,
           ocr_raw_data: args,
           gasto_item_id: gastoItemId,
@@ -1172,6 +1176,25 @@ serve(async (req) => {
           for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
           const base64Data = btoa(binary);
 
+          // Subir a Storage
+          const fileExt = isPdf ? 'pdf' : (contentType.split('/')[1] || 'jpg');
+          const fileName = `${phone}_${Date.now()}.${fileExt}`;
+          const { data: uploadData, error: uploadErr } = await supabase.storage
+            .from('whatsapp_media')
+            .upload(fileName, mediaBlob, {
+              contentType,
+              upsert: false
+            });
+          
+          let publicUrl = '';
+          if (uploadErr) {
+            console.error('Error subiendo archivo a Storage:', uploadErr);
+          } else {
+            const { data: publicUrlData } = supabase.storage.from('whatsapp_media').getPublicUrl(fileName);
+            publicUrl = publicUrlData.publicUrl;
+            console.log(`Archivo subido: ${publicUrl}`);
+          }
+
           if (isPdf) {
             visionMediaObject = {
               type: "file",
@@ -1191,12 +1214,14 @@ serve(async (req) => {
           }
 
           if (!bodyText || !bodyText.trim()) {
-            bodyText = "Te envié un documento o foto. Analizá si es un cheque o una factura. Si es un cheque, extraé los datos y cargalo con process_cheque_photo (recordá asignar la dirección correcta si es un comprobante de emisión de Echeq). Si es una factura, usá create_purchase_invoice.";
+            bodyText = `Te envié un documento o foto. Analizá si es un cheque o una factura. NO LO CARGUES INMEDIATAMENTE. Preguntame qué quiero hacer con este archivo. Recordá esta URL pública para cuando decida cargarlo: ${publicUrl}`;
           } else {
             // Si el usuario escribió algo junto con la foto, agregar contexto de detección
             const lowerBody = bodyText.toLowerCase();
             if (lowerBody.includes('cheque') || lowerBody.includes('chq')) {
-              bodyText += " [DOCUMENTO ADJUNTO: Es un cheque. Usá process_cheque_photo para cargarlo y detectá si es a pagar (comprobante de emisión) o a cobrar.]";
+              bodyText += ` [DOCUMENTO ADJUNTO: Es un cheque. NO lo cargues sin preguntarme antes. Recordá esta URL: ${publicUrl}]`;
+            } else {
+              bodyText += ` [DOCUMENTO ADJUNTO: Analizalo e interpretá mi mensaje para decidir la acción, pero PREGUNTAME antes de registrar en la base de datos. Recordá esta URL: ${publicUrl}]`;
             }
           }
         }
@@ -1254,27 +1279,17 @@ serve(async (req) => {
           imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTE DOCUMENTO — CHEQUE
 El usuario envió un DOCUMENTO O FOTO DE CHEQUE. Debés:
 1. Analizar la imagen con máximo detalle.
-2. Extraer los datos del cheque: banco emisor, número de cheque, monto, fecha de emisión (DD/MM/AAAA → YYYY-MM-DD), fecha de pago/vencimiento, beneficiario.
-   * REGLA DE DIRECCIÓN: Si es un "Comprobante de emisión de Echeq", setea direction="payable" y extrae el beneficiario como la Razón Social central en el documento (ej: "Agromaq San Juan S A").
-3. Ejecutar la herramienta process_cheque_photo con los campos extraídos.
-4. Mostrar un resumen visual con emojis de lo que cargaste.
-5. Si algún dato no es legible, avisá al usuario.
-6. En Argentina "$150.000,50" = 150000.50 (punto como separador de miles, coma decimal).`;
+2. Extraer los datos del cheque: banco emisor, número de cheque, monto, fecha de emisión, fecha de pago/vencimiento, beneficiario.
+3. NO LO CARGUES INMEDIATAMENTE. Preguntale al usuario si desea registrar este cheque, y decile qué datos identificaste.
+4. Si el usuario confirma, recién ahí ejecutá la herramienta create_cheque pasándole los campos y la URL pública (scan_url).
+5. Si algún dato no es legible, preguntáselo al usuario.`;
         } else {
-          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTA IMAGEN
-El usuario envió una FOTO. Primero determiná si es:
-A) Un CHEQUE bancario → extraé banco, número, monto, fechas, beneficiario y usá process_cheque_photo
-B) Una FACTURA de compra → extraé proveedor, CUIT, tipo, número, montos, IVA y usá create_purchase_invoice
-
-Analizá la imagen con máximo detalle. Si es una factura:
-- Extraé TODOS los datos fiscales: proveedor, CUIT, condición fiscal, tipo factura (A/B/C), punto de venta, número, fecha, neto gravado, IVA 21%, IVA 10.5%, IVA 27%, exento, percepciones IVA, percepciones IIBB, total, CAE.
-- Ejecutá create_purchase_invoice con TODOS los campos extraídos.
-
-Si es un cheque:
-- Extraé banco, número, monto, fecha emisión, fecha pago/vencimiento, beneficiario.
-- Ejecutá process_cheque_photo.
-
-Mostrá un resumen visual bonito de lo que cargaste. Si algún dato no es legible, marcalo como 0 o vacío y avisá al usuario.`;
+          imageOcrPrompt = `\n\n## INSTRUCCIÓN ESPECIAL PARA ESTE DOCUMENTO
+El usuario envió un DOCUMENTO O FOTO. Debés:
+1. Analizar la imagen para determinar si es factura o cheque.
+2. NO LO CARGUES INMEDIATAMENTE. Extraé los datos e interpretá lo que el usuario escribió en el mensaje.
+3. Preguntale al usuario si desea registrar este documento (ej: "¿Querés que cargue esta factura de X por $Y?").
+4. Si el usuario confirma, recién ahí ejecutá la herramienta correspondiente (create_purchase_invoice o create_cheque) incluyendo la URL pública (scan_url) que te llegó en el mensaje.`;
         }
       }
 

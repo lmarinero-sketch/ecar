@@ -695,6 +695,26 @@ export type PurchaseRequestItem = {
   created_at: string;
 };
 
+// ========== ORDENES DE TRABAJO INTERNA (OTI) ==========
+
+export type WorkOrder = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  title: string;
+  description: string | null;
+  assigned_to: string | null;
+  priority: 'baja' | 'normal' | 'alta' | 'urgente';
+  status: 'pendiente' | 'en_ejecucion' | 'completada' | 'cancelada';
+  start_date: string | null;
+  due_date: string | null;
+  completed_at: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  project?: Project;
+};
+
 // ========== PARTE DIARIO DE OBRA ==========
 
 export type ParteDiario = {

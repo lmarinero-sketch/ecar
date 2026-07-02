@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   ClipboardList, Plus, Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind,
   Check, X, Clock, ChevronDown, ChevronUp, Eye, Camera, Users, Package,
-  Truck, Send, Image as ImageIcon, Trash2, Search,
+  Truck, Send, Image as ImageIcon, Trash2, Search, Hammer,
 } from 'lucide-react';
 import {
   usePartesDiarios, useCreateParteDiario, useUpdateParteDiario, useProjects,
@@ -11,7 +11,8 @@ import {
   useParteSolicitudes, useCreateParteSolicitud, useUpdateParteSolicitud,
   usePartePersonal, useCreatePartePersonal, useDeletePartePersonal,
   useParteEquipos, useCreateParteEquipo, useDeleteParteEquipo,
-  usePurchaseOrders
+  usePurchaseOrders,
+  useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder
 } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import type { ParteDiario } from '../lib/types';
@@ -300,6 +301,9 @@ export const FieldModule: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ═══════ ORDENES DE TRABAJO INTERNA (OTI) ═══════ */}
+      <OrdenesTrabajoPanel projects={projects} />
     </div>
   );
 };
@@ -700,6 +704,150 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
           <Truck size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin equipos registrados</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/*              ORDENES DE TRABAJO INTERNA (OTI)                      */
+/* ═══════════════════════════════════════════════════════════════════ */
+const PRIO_LABELS: Record<string, { label: string; color: string }> = {
+  baja: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
+  normal: { label: 'Normal', color: 'bg-blue-100 text-blue-700' },
+  alta: { label: 'Alta', color: 'bg-orange-100 text-orange-700' },
+  urgente: { label: 'Urgente', color: 'bg-red-100 text-red-700' },
+};
+const OTI_STATUS: Record<string, { label: string; color: string }> = {
+  pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
+  en_ejecucion: { label: 'En Ejecución', color: 'bg-blue-100 text-blue-700' },
+  completada: { label: 'Completada', color: 'bg-green-100 text-green-700' },
+  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-700' },
+};
+
+const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
+  const { data: workOrders = [], isLoading } = useWorkOrders();
+  const createWO = useCreateWorkOrder();
+  const updateWO = useUpdateWorkOrder();
+  const [showNew, setShowNew] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [form, setForm] = useState({
+    project_id: '', title: '', description: '', assigned_to: '',
+    priority: 'normal', start_date: new Date().toISOString().split('T')[0], due_date: '',
+  });
+
+  const filtered = useMemo(() => {
+    let result = workOrders;
+    if (filterStatus !== 'all') result = result.filter(wo => wo.status === filterStatus);
+    return result;
+  }, [workOrders, filterStatus]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createWO.mutateAsync({
+      project_id: form.project_id || null,
+      title: form.title,
+      description: form.description || null,
+      assigned_to: form.assigned_to || null,
+      priority: form.priority as any,
+      start_date: form.start_date || null,
+      due_date: form.due_date || null,
+      status: 'pendiente',
+    });
+    setShowNew(false);
+    setForm({ project_id: '', title: '', description: '', assigned_to: '', priority: 'normal', start_date: new Date().toISOString().split('T')[0], due_date: '' });
+  };
+
+  const activeCount = workOrders.filter(w => w.status === 'en_ejecucion').length;
+  const pendingCount = workOrders.filter(w => w.status === 'pendiente').length;
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-gray-800 flex items-center gap-2"><Hammer size={18} className="text-amber-600" /> Órdenes de Trabajo Interna (OTI)</h3>
+          <p className="text-xs text-gray-500 mt-0.5">PR-GO-01 — Define qué se ejecuta, quién responde y con qué criterio</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {pendingCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">{pendingCount} pendientes</span>}
+          {activeCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">{activeCount} en ejecución</span>}
+          <button onClick={() => setShowNew(!showNew)} className="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-sm hover:bg-amber-700 transition-all">
+            {showNew ? <><X size={14} /> Cancelar</> : <><Plus size={14} /> Nueva OTI</>}
+          </button>
+        </div>
+      </div>
+
+      {showNew && (
+        <form onSubmit={handleCreate} className="p-4 border-b border-gray-100 bg-amber-50/30 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2"><label className="text-xs font-bold text-gray-500">Título / Tarea *</label><input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Ej: Armar encofrado de columna C-3" /></div>
+            <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin obra</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div><label className="text-xs font-bold text-gray-500">Asignar a</label><input value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Cuadrilla / Encargado" /></div>
+            <div><label className="text-xs font-bold text-gray-500">Prioridad</label><select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="baja">Baja</option><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+            <div><label className="text-xs font-bold text-gray-500">Inicio</label><input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
+            <div><label className="text-xs font-bold text-gray-500">Vencimiento</label><input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
+          </div>
+          <div><label className="text-xs font-bold text-gray-500">Descripción / Criterio de ejecución</label><textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} placeholder="Detallá las instrucciones técnicas, materiales a usar, condiciones de calidad y seguridad..." /></div>
+          <button type="submit" disabled={createWO.isPending || !form.title} className="bg-amber-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-amber-700 transition-all disabled:opacity-50">
+            {createWO.isPending ? 'Creando...' : '📋 Crear Orden de Trabajo'}
+          </button>
+        </form>
+      )}
+
+      {/* Filter */}
+      <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-2 py-1 border rounded-md text-xs">
+          <option value="all">Todos</option>
+          {Object.entries(OTI_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <span className="text-xs text-gray-400 ml-auto">{filtered.length} órdenes</span>
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-amber-600 rounded-full animate-spin mx-auto" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-10 text-gray-400"><Hammer size={36} className="mx-auto mb-2 opacity-30" /><p className="text-sm font-medium">Sin órdenes de trabajo</p></div>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {filtered.map(wo => {
+            const prio = PRIO_LABELS[wo.priority] || PRIO_LABELS.normal;
+            const stat = OTI_STATUS[wo.status] || OTI_STATUS.pendiente;
+            return (
+              <div key={wo.id} className="p-4 hover:bg-gray-50/50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 mt-0.5"><Hammer size={18} className="text-amber-600" /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-gray-800">{wo.title}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${stat.color}`}>{stat.label}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${prio.color}`}>{prio.label}</span>
+                    </div>
+                    {wo.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{wo.description}</p>}
+                    <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-400">
+                      {wo.assigned_to && <span>👷 {wo.assigned_to}</span>}
+                      {wo.project && <span>🏗️ {(wo.project as any)?.name}</span>}
+                      {wo.due_date && <span>📅 Vence: {new Date(wo.due_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {wo.status === 'pendiente' && (
+                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'en_ejecucion' })} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-[10px] font-bold hover:bg-blue-200">▶ Iniciar</button>
+                    )}
+                    {wo.status === 'en_ejecucion' && (
+                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'completada', completed_at: new Date().toISOString() })} className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-[10px] font-bold hover:bg-green-200">✅ Completar</button>
+                    )}
+                    {['pendiente', 'en_ejecucion'].includes(wo.status) && (
+                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'cancelada' })} className="px-2 py-1 bg-red-50 text-red-600 rounded-md text-[10px] font-bold hover:bg-red-100">✕</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -282,10 +282,16 @@ export const PurchaseRequestsModule: React.FC = () => {
                   {items.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {items.map((item, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs">
+                        <div key={i} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs border border-gray-200 shadow-sm">
                           <Package size={12} className="text-gray-400" />
-                          {item.quantity} {item.unit} — {item.description}
-                        </span>
+                          <span className="font-medium text-gray-700">{item.quantity} {item.unit} — {item.description}</span>
+                          {item.estimated_unit_cost > 0 && (
+                            <span className="ml-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold font-mono" title="Costo estimado por Presupuestos">
+                              Est: ${(item.estimated_unit_cost * item.quantity).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                            </span>
+                          )}
+                          {item.budget_item_id && <span className="ml-0.5 text-blue-500" title="Vinculado al Presupuesto Oficial">🔗</span>}
+                        </div>
                       ))}
                     </div>
                   )}
