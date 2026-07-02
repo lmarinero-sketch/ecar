@@ -537,7 +537,7 @@ export type ProjectCertificate = {
   net_deposit: number;
   deposit_date: string | null;
   deposit_bank_account_id: string | null;
-  status: 'pending' | 'approved' | 'deposited' | 'rejected';
+  status: 'pending' | 'approved' | 'invoiced' | 'deposited' | 'rejected';
   photo_url?: string | null;
   created_at: string;
   project?: Project;

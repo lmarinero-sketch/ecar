@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useImplementationStore } from '../store/useImplementationStore';
@@ -19,6 +19,7 @@ export const PurchasesModule: React.FC = () => {
   const { data: suppliers = [] } = useSuppliers();
   const createSupplier = useCreateSupplier();
   const { data: gastosItems = [] } = useGastosItems();
+  const { data: projects = [] } = useProjects();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<any>(null);
@@ -416,6 +417,7 @@ export const PurchasesModule: React.FC = () => {
                   <th className="px-4 py-3 text-right">IVA 21%</th>
                   <th className="px-4 py-3 text-right">Total</th>
                   {activeTab === 'compras' && <th className="px-4 py-3">Rubro de Gasto</th>}
+                  {activeTab === 'compras' && <th className="px-4 py-3">Centro de Costo</th>}
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-4 py-3 text-center">Acciones</th>
                 </tr>
@@ -458,12 +460,40 @@ export const PurchasesModule: React.FC = () => {
                               useModalStore.getState().showAlert('Error', 'Error al asociar rubro: ' + error.message);
                             }
                           }}
-                          className="px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[180px] truncate"
+                          className="px-2 py-1 text-[10px] border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[130px] truncate"
                         >
-                          <option value="">-- Sin Vincular --</option>
+                          <option value="">-- Sin Rubro --</option>
                           {gastosItems.map((item: any) => (
                             <option key={item.id} value={item.id}>
                               {item.categoria.toUpperCase()} - {item.descripcion}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
+                    {activeTab === 'compras' && (
+                      <td className="px-4 py-3">
+                        <select
+                          value={inv.project_id || ''}
+                          onChange={async (e) => {
+                            try {
+                              const val = e.target.value || null;
+                              const { error } = await supabase
+                                .from('purchase_invoices')
+                                .update({ project_id: val })
+                                .eq('id', inv.id);
+                              if (error) throw error;
+                              refetch();
+                            } catch (error: any) {
+                              useModalStore.getState().showAlert('Error', 'Error al asociar centro de costo: ' + error.message);
+                            }
+                          }}
+                          className="px-2 py-1 text-[10px] border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all max-w-[130px] truncate"
+                        >
+                          <option value="">🏢 ECAR (General)</option>
+                          {projects.map((p: any) => (
+                            <option key={p.id} value={p.id}>
+                              🚧 {p.name}
                             </option>
                           ))}
                         </select>

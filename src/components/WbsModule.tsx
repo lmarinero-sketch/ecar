@@ -1903,6 +1903,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
   // Payment fields
   const [bankAccountId, setBankAccountId] = useState('');
   const [depositDate, setDepositDate] = useState('');
+  const [actualDepositAmount, setActualDepositAmount] = useState('');
 
   const handleSaveCert = async () => {
     const grossVal = parseFloat(gross) || 0;
@@ -1924,7 +1925,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
       retention_imp_cheque: chequeVal,
       other_retentions: otherVal,
       net_deposit: netVal,
-      status: 'pending',
+      status: 'approved',
     });
 
     setShowNewCertModal(false);
@@ -1939,15 +1940,23 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
 
   const handlePayCert = async () => {
     if (!showPayModal || !bankAccountId || !depositDate) return;
+    
+    const actualDeposit = parseFloat(actualDepositAmount) || showPayModal.net_deposit;
+    const difference = showPayModal.net_deposit - actualDeposit;
+    const newOtherRetentions = (showPayModal.other_retentions || 0) + difference;
+
     await updateCert.mutateAsync({
       id: showPayModal.id,
       status: 'deposited',
       deposit_bank_account_id: bankAccountId,
       deposit_date: depositDate,
+      net_deposit: actualDeposit,
+      other_retentions: newOtherRetentions,
     });
     setShowPayModal(null);
     setBankAccountId('');
     setDepositDate('');
+    setActualDepositAmount('');
   };
 
   return (
@@ -2001,22 +2010,31 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                       ${cert.net_deposit.toLocaleString('es-AR')}
                     </td>
                     <td className="px-4 py-3 font-sans">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        cert.status === 'deposited' ? 'bg-green-100 text-green-700' :
-                        cert.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                        cert.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {cert.status === 'deposited' ? 'Cobrado' :
-                         cert.status === 'approved' ? 'Aprobado' :
-                         cert.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
-                      </span>
+                      <select
+                        value={cert.status}
+                        onChange={(e) => {
+                          const newStatus = e.target.value as 'pending' | 'approved' | 'invoiced' | 'deposited';
+                          if (newStatus === 'deposited') {
+                             setShowPayModal(cert);
+                             setActualDepositAmount(cert.net_deposit.toString());
+                          } else {
+                             updateCert.mutate({ id: cert.id, status: newStatus });
+                          }
+                        }}
+                        className={`px-2 py-1 rounded font-bold text-xs cursor-pointer border outline-none transition-all ${
+                          cert.status === 'approved' ? 'bg-white text-gray-700 border-gray-300' :
+                          cert.status === 'invoiced' ? 'bg-green-100 text-green-700 border-green-200' :
+                          cert.status === 'deposited' ? 'bg-emerald-700 text-white border-emerald-800' :
+                          'bg-gray-100 text-gray-700 border-gray-200'
+                        }`}
+                      >
+                        <option value="pending">Pendiente</option>
+                        <option value="approved">Aprobado</option>
+                        <option value="invoiced">Facturado</option>
+                        <option value="deposited">Pagado</option>
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-right font-sans">
-                      {cert.status !== 'deposited' && cert.status !== 'rejected' && (
-                        <button onClick={() => setShowPayModal(cert)} className="bg-emerald-600 text-white px-2 py-1 rounded font-bold text-[10px] hover:bg-emerald-700 transition-all">
-                          Registrar Cobro
-                        </button>
-                      )}
                     </td>
                   </tr>
                 );
@@ -2103,10 +2121,15 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             </div>
 
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-800">
-              <p>Monto Neto a Acreditar: <strong className="font-mono">${showPayModal.net_deposit.toLocaleString('es-AR')}</strong></p>
+              <p>Monto Neto a Acreditar (Original): <strong className="font-mono">${showPayModal.net_deposit.toLocaleString('es-AR')}</strong></p>
             </div>
 
             <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Monto Depositado Real *</label>
+                <input type="number" step="any" value={actualDepositAmount} onChange={e => setActualDepositAmount(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                <p className="text-[10px] text-gray-400 mt-1">Si recibís menos dinero, la diferencia se descontará en concepto de SIRCREB / Impuesto a Débitos y Créditos automáticamente.</p>
+              </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Cuenta Bancaria de Destino *</label>
                 <select value={bankAccountId} onChange={e => setBankAccountId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none">
