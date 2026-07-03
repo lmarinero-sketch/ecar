@@ -9,8 +9,9 @@ import { VehicleDailyReportModule } from './VehicleDailyReportModule';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle } from '../lib/types';
+import { FleetTrackingMap } from './tracking/FleetTrackingMap';
 
-type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report';
+type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking';
 
 const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
   operativo: { icon: '🟢', cls: 'bg-green-100 text-green-700' },
@@ -143,6 +144,17 @@ export const FleetModule: React.FC = () => {
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota
         </button>
         <FuelModule />
+      </div>
+    );
+  }
+
+  if (view === 'tracking') {
+    return (
+      <div className="space-y-4 h-[calc(100vh-12rem)]">
+        <button onClick={() => setView('overview')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota
+        </button>
+        <FleetTrackingMap />
       </div>
     );
   }
@@ -291,6 +303,11 @@ export const FleetModule: React.FC = () => {
           <ClipboardCheck size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors">Parte Diario</h4>
           <p className="text-sm text-gray-500">Inspección diaria con QR y checklist.</p>
+        </button>
+        <button onClick={() => setView('tracking')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-emerald-300 hover:shadow-md hover:bg-emerald-50/30 transition-all group cursor-pointer">
+          <Navigation size={48} className="mx-auto mb-3 text-emerald-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-emerald-700 transition-colors">Mapa en Vivo</h4>
+          <p className="text-sm text-gray-500">Rastreo satelital de vehículos activos.</p>
         </button>
       </div>
 

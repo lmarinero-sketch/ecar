@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { LoginPage } from './components/LoginPage';
 import { CheckInPage } from './components/CheckInPage';
 import { VehicleCheckInPage } from './components/VehicleCheckInPage';
+import { VehicleTrackingPage } from './components/tracking/VehicleTrackingPage';
 import { useAppStore } from './store/useStore';
 import { MesaTecnicaPresentation } from './components/MesaTecnicaPresentation';
 
@@ -56,8 +57,11 @@ const queryClient = new QueryClient({
 });
 
 // Detect public QR routes before auth
-function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | null {
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | null {
   const path = window.location.pathname;
+  if (path === '/tracking' || path === '/tracking/') {
+    return { type: 'tracking' };
+  }
   if (path === '/presentacion-mesa-tecnica' || path === '/presentacion-mesa-tecnica/') {
     return { type: 'mesa_tecnica' };
   }
@@ -80,6 +84,9 @@ function AppContent() {
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
   if (publicRoute) {
+    if (publicRoute.type === 'tracking') {
+      return <VehicleTrackingPage />;
+    }
     if (publicRoute.type === 'mesa_tecnica') {
       return <MesaTecnicaPresentation />;
     }
