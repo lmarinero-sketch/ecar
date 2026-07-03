@@ -112,7 +112,7 @@ export const exportToObra = (budget: Budget, items: BudgetItem[], sections: Budg
   doc.text('Definición de Alcance', 14, 60);
   doc.setFontSize(10);
   doc.setTextColor(50, 50, 50);
-  const descLines = doc.splitTextToSize(budget.description || 'Sin alcance definido.', 180);
+  const descLines = doc.splitTextToSize((budget.description || 'Sin alcance definido.').toString(), 180);
   doc.text(descLines, 14, 66);
   
   // Riesgos / Exclusiones / Supuestos
@@ -123,7 +123,7 @@ export const exportToObra = (budget: Budget, items: BudgetItem[], sections: Budg
   doc.text('Supuestos:', 14, currentY);
   doc.setFontSize(10);
   doc.setTextColor(50, 50, 50);
-  const supLines = doc.splitTextToSize(budget.assumptions || 'Ninguno', 180);
+  const supLines = doc.splitTextToSize((budget.assumptions || 'Ninguno').toString(), 180);
   doc.text(supLines, 14, currentY + 6);
   currentY += 6 + (supLines.length * 5) + 5;
   
@@ -132,7 +132,7 @@ export const exportToObra = (budget: Budget, items: BudgetItem[], sections: Budg
   doc.text('Exclusiones:', 14, currentY);
   doc.setFontSize(10);
   doc.setTextColor(50, 50, 50);
-  const excLines = doc.splitTextToSize(budget.exclusions || 'Ninguna', 180);
+  const excLines = doc.splitTextToSize((budget.exclusions || 'Ninguna').toString(), 180);
   doc.text(excLines, 14, currentY + 6);
   currentY += 6 + (excLines.length * 5) + 10;
   
@@ -144,7 +144,7 @@ export const exportToObra = (budget: Budget, items: BudgetItem[], sections: Budg
   const tableData: any[] = [];
   
   // Agrupar por sección
-  sections.sort((a, b) => a.ordinal.localeCompare(b.ordinal)).forEach(sec => {
+  sections.sort((a, b) => (a.ordinal || '').localeCompare(b.ordinal || '')).forEach(sec => {
     tableData.push([
       { content: `${sec.ordinal} - ${sec.name}`, colSpan: 4, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }
     ]);
