@@ -359,10 +359,28 @@ export function usePurchaseInvoices() {
   return useQuery({
     queryKey: ['purchase_invoices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*)').order('created_at', { ascending: false });
       if (error) throw error;
       return data as PurchaseInvoice[];
     },
+  });
+}
+
+export function useUpdateInvoiceAllocations() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invoice_id, allocations }: { invoice_id: string; allocations: any[] }) => {
+      // Delete old allocations for this invoice
+      const { error: deleteErr } = await supabase.from('purchase_invoice_allocations').delete().eq('invoice_id', invoice_id);
+      if (deleteErr) throw deleteErr;
+
+      // Insert new allocations
+      if (allocations.length > 0) {
+        const { error: insertErr } = await supabase.from('purchase_invoice_allocations').insert(allocations);
+        if (insertErr) throw insertErr;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] }),
   });
 }
 

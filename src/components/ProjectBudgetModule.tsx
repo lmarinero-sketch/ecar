@@ -2033,9 +2033,24 @@ const CierreEconomicoPanel: React.FC<{
   costoDirectoPresupuestado: number;
 }> = ({ projectId, presupuestado, costoDirectoPresupuestado }) => {
   const { data: invoices = [] } = usePurchaseInvoices();
-  const projectInvoices = useMemo(() => invoices.filter((inv: any) => inv.project_id === projectId), [invoices, projectId]);
+  const projectInvoices = useMemo(() => {
+    return invoices.filter((inv: any) => {
+      if (inv.allocations && inv.allocations.length > 0) {
+        return inv.allocations.some((a: any) => a.project_id === projectId);
+      }
+      return inv.project_id === projectId;
+    });
+  }, [invoices, projectId]);
   
-  const gastoReal = useMemo(() => projectInvoices.reduce((sum: number, inv: any) => sum + (inv.total_ars || 0), 0), [projectInvoices]);
+  const gastoReal = useMemo(() => {
+    return projectInvoices.reduce((sum: number, inv: any) => {
+      if (inv.allocations && inv.allocations.length > 0) {
+        const alloc = inv.allocations.find((a: any) => a.project_id === projectId);
+        return sum + (alloc ? alloc.amount_ars : 0);
+      }
+      return sum + (inv.total_ars || 0);
+    }, 0);
+  }, [projectInvoices, projectId]);
   const desvio = costoDirectoPresupuestado > 0 ? ((gastoReal - costoDirectoPresupuestado) / costoDirectoPresupuestado) * 100 : 0;
   const rentabilidadEsperada = presupuestado - costoDirectoPresupuestado;
   const rentabilidadReal = presupuestado - gastoReal;
@@ -2096,7 +2111,13 @@ const CierreEconomicoPanel: React.FC<{
                     <span className="font-bold text-gray-700 truncate">{inv.supplier?.name || 'Sin proveedor'}</span>
                     <span className="text-gray-400 shrink-0">Fact. {inv.invoice_number || '—'}</span>
                   </div>
-                  <span className="font-mono font-bold text-gray-800 shrink-0 ml-3">{fmt(inv.total_ars)}</span>
+                  <span className="font-mono font-bold text-gray-800 shrink-0 ml-3">
+                    {fmt(
+                      (inv.allocations && inv.allocations.length > 0) 
+                        ? (inv.allocations.find((a: any) => a.project_id === projectId)?.amount_ars || 0)
+                        : (inv.total_ars || 0)
+                    )}
+                  </span>
                 </div>
               ))}
             </div>

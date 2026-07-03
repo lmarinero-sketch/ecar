@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useImplementationStore } from '../store/useImplementationStore';
@@ -23,6 +23,9 @@ export const PurchasesModule: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<any>(null);
+  const [distributeInvoice, setDistributeInvoice] = useState<any>(null);
+  const [allocations, setAllocations] = useState<{project_id: string, percentage: number, amount_ars: number}[]>([]);
+  const updateAllocations = useUpdateInvoiceAllocations();
   const [ocrError, setOcrError] = useState('');
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [supplierForm, setSupplierForm] = useState({ name: '', cuit: '', tax_condition: 'RI' });
@@ -473,30 +476,29 @@ export const PurchasesModule: React.FC = () => {
                     )}
                     {activeTab === 'compras' && (
                       <td className="px-4 py-3">
-                        <select
-                          value={inv.project_id || ''}
-                          onChange={async (e) => {
-                            try {
-                              const val = e.target.value || null;
-                              const { error } = await supabase
-                                .from('purchase_invoices')
-                                .update({ project_id: val })
-                                .eq('id', inv.id);
-                              if (error) throw error;
-                              refetch();
-                            } catch (error: any) {
-                              useModalStore.getState().showAlert('Error', 'Error al asociar centro de costo: ' + error.message);
+                        <button
+                          onClick={() => {
+                            setDistributeInvoice(inv);
+                            if (inv.allocations && inv.allocations.length > 0) {
+                              setAllocations(inv.allocations.map((a: any) => ({
+                                project_id: a.project_id,
+                                percentage: a.percentage,
+                                amount_ars: a.amount_ars
+                              })));
+                            } else if (inv.project_id) {
+                              setAllocations([{ project_id: inv.project_id, percentage: 100, amount_ars: inv.total_ars }]);
+                            } else {
+                              setAllocations([]);
                             }
                           }}
-                          className="px-2 py-1 text-[10px] border border-gray-300 rounded-lg bg-blue-50 text-blue-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all max-w-[130px] truncate"
+                          className="px-2 py-1 text-[10px] border border-blue-200 rounded-lg bg-blue-50 text-blue-800 font-bold focus:outline-none hover:bg-blue-100 transition-all truncate"
                         >
-                          <option value="">🏢 ECAR (General)</option>
-                          {projects.map((p: any) => (
-                            <option key={p.id} value={p.id}>
-                              🚧 {p.name}
-                            </option>
-                          ))}
-                        </select>
+                          {(inv.allocations && inv.allocations.length > 0) 
+                            ? `Dividido (${inv.allocations.length})` 
+                            : inv.project_id 
+                              ? '🚧 Obra (100%)' 
+                              : '🏢 ECAR (100%)'}
+                        </button>
                       </td>
                     )}
                     <td className="px-4 py-3 text-center">
@@ -525,6 +527,189 @@ export const PurchasesModule: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal OCR Result */}
+      {ocrResult && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                <Check size={20} className="text-green-500" /> Factura Procesada
+              </h3>
+              <button onClick={() => setOcrResult(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Proveedor</p><p className="font-medium text-gray-800">{ocrResult.supplier_name}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">CUIT</p><p className="font-mono text-sm">{ocrResult.supplier_cuit || 'No detectado'}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Nro Factura</p><p className="font-mono text-sm">{ocrResult.invoice_type || 'A'} {ocrResult.point_of_sale || '0000'}-{ocrResult.invoice_number}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Fecha Emisión</p><p className="font-mono text-sm">{ocrResult.issue_date || 'No detectada'}</p></div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-3 gap-4 border border-gray-100">
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Neto Gravado</p><p className="font-mono font-medium text-gray-800">${(ocrResult.net_amount_ars || 0).toLocaleString('es-AR')}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">IVA (Total)</p><p className="font-mono font-medium text-gray-800">${((ocrResult.iva_21_ars || 0) + (ocrResult.iva_105_ars || 0) + (ocrResult.iva_27_ars || 0)).toLocaleString('es-AR')}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Total Factura</p><p className="font-mono font-bold text-ecar-blue text-lg">${(ocrResult.total_ars || 0).toLocaleString('es-AR')}</p></div>
+            </div>
+            
+            <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
+              <strong>Nota:</strong> Los datos fueron extraídos automáticamente. La factura fue guardada en estado <strong>Pendiente de revisión</strong>. Si encontrás algún error, podés editarla desde la tabla.
+            </p>
+
+            <div className="flex justify-end pt-2">
+              <button onClick={() => setOcrResult(null)} className="bg-ecar-blue hover:bg-blue-800 text-white px-6 py-2 rounded-xl font-bold shadow-md transition-all">
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Distribuir Costos */}
+      {distributeInvoice && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                Distribuir Centro de Costos
+              </h3>
+              <button onClick={() => setDistributeInvoice(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 flex justify-between items-center">
+              <div>
+                <p className="text-xs text-gray-500 font-bold uppercase">Factura</p>
+                <p className="font-mono font-medium">{distributeInvoice.supplier?.name || 'S/D'} (Nº {distributeInvoice.invoice_number})</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 font-bold uppercase">Monto Total</p>
+                <p className="font-mono font-bold text-ecar-blue text-lg">${distributeInvoice.total_ars.toLocaleString('es-AR')}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 block">Distribución de Costos por Obra</label>
+              
+              {allocations.map((alloc, idx) => (
+                <div key={idx} className="flex gap-2 items-center bg-gray-50 p-2 rounded border">
+                  <select
+                    value={alloc.project_id}
+                    onChange={(e) => {
+                      const newAlloc = [...allocations];
+                      newAlloc[idx].project_id = e.target.value;
+                      setAllocations(newAlloc);
+                    }}
+                    className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none"
+                  >
+                    <option value="">Seleccionar obra...</option>
+                    {projects.map((p: any) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  
+                  <div className="w-24 relative">
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      value={alloc.percentage} 
+                      onChange={(e) => {
+                        const newAlloc = [...allocations];
+                        const perc = parseFloat(e.target.value) || 0;
+                        newAlloc[idx].percentage = perc;
+                        newAlloc[idx].amount_ars = (perc / 100) * distributeInvoice.total_ars;
+                        setAllocations(newAlloc);
+                      }}
+                      className="w-full px-2 py-1.5 border rounded text-sm pr-6 focus:outline-none" 
+                    />
+                    <span className="absolute right-2 top-2 text-gray-400 text-xs">%</span>
+                  </div>
+                  
+                  <div className="w-36 relative">
+                    <span className="absolute left-2 top-2 text-gray-400 text-xs">$</span>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={alloc.amount_ars} 
+                      onChange={(e) => {
+                        const newAlloc = [...allocations];
+                        const amt = parseFloat(e.target.value) || 0;
+                        newAlloc[idx].amount_ars = amt;
+                        newAlloc[idx].percentage = (amt / distributeInvoice.total_ars) * 100;
+                        setAllocations(newAlloc);
+                      }}
+                      className="w-full px-2 py-1.5 pl-6 border rounded text-sm focus:outline-none" 
+                    />
+                  </div>
+                  
+                  <button onClick={() => {
+                    const newAlloc = [...allocations];
+                    newAlloc.splice(idx, 1);
+                    setAllocations(newAlloc);
+                  }} className="text-red-500 p-1 hover:bg-red-50 rounded">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+
+              <button 
+                onClick={() => {
+                  setAllocations([...allocations, { project_id: '', percentage: 0, amount_ars: 0 }]);
+                }}
+                className="text-sm font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1 mt-2"
+              >
+                <Plus size={16} /> Agregar Obra
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+              <div className="text-sm">
+                <p>Total Asignado: <strong>${allocations.reduce((sum, a) => sum + a.amount_ars, 0).toLocaleString('es-AR')}</strong> ({allocations.reduce((sum, a) => sum + a.percentage, 0).toFixed(2)}%)</p>
+                {allocations.reduce((sum, a) => sum + a.percentage, 0) < 99.9 && (
+                  <p className="text-xs text-amber-600">Lo restante se asignará como costo general (ECAR).</p>
+                )}
+                {allocations.reduce((sum, a) => sum + a.percentage, 0) > 100.1 && (
+                  <p className="text-xs text-red-600 font-bold">Error: Has superado el 100% de la factura.</p>
+                )}
+              </div>
+              <button 
+                onClick={async () => {
+                  if (allocations.reduce((sum, a) => sum + a.percentage, 0) > 100.1) {
+                    useModalStore.getState().showAlert('Error', 'La distribución no puede superar el 100%.');
+                    return;
+                  }
+                  
+                  // Formatear payload para la base de datos
+                  const formattedAllocations = allocations
+                    .filter(a => a.project_id && a.percentage > 0)
+                    .map(a => ({
+                      tenant_id: ECAR_TENANT_ID,
+                      invoice_id: distributeInvoice.id,
+                      project_id: a.project_id,
+                      percentage: a.percentage,
+                      amount_ars: a.amount_ars
+                    }));
+
+                  await updateAllocations.mutateAsync({
+                    invoice_id: distributeInvoice.id,
+                    allocations: formattedAllocations
+                  });
+
+                  setDistributeInvoice(null);
+                }}
+                disabled={updateAllocations.isPending}
+                className="bg-ecar-blue hover:bg-blue-800 text-white px-6 py-2 rounded-xl font-bold shadow-md transition-all disabled:opacity-50"
+              >
+                {updateAllocations.isPending ? 'Guardando...' : 'Guardar Distribución'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Invoice Modal */}
       {editingInvoice && (

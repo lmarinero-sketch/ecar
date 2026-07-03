@@ -202,11 +202,23 @@ export type Supplier = {
   created_at: string;
 };
 
+export type PurchaseInvoiceAllocation = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  project_id: string;
+  percentage: number;
+  amount_ars: number;
+  created_at: string;
+  project?: Project;
+};
+
 export type PurchaseInvoice = {
   id: string;
   tenant_id: string;
   supplier_id: string | null;
-  project_id: string | null;
+  project_id: string | null; // Legacy, optional
+  allocations?: PurchaseInvoiceAllocation[];
   invoice_type: string | null;
   point_of_sale: string | null;
   invoice_number: string | null;
