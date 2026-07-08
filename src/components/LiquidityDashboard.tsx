@@ -4,6 +4,7 @@ import {
   Calendar, AlertTriangle, Plus, X, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
+import { MonthlyLiquiditySummary } from './MonthlyLiquiditySummary';
 import { useImplementationStore } from '../store/useImplementationStore';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -415,10 +416,12 @@ export const LiquidityDashboard: React.FC = () => {
             <p className="text-sm">Cargá tu primer ingreso o egreso, o pedíselo a Rombo por WhatsApp 📱</p>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Modal Nuevo Movimiento */}
-      {showNewMovement && (
+        <MonthlyLiquiditySummary />
+
+        {/* Modal Nuevo Movimiento */}
+        {showNewMovement && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">

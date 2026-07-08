@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Plus, X, TrendingUp, Banknote,
-  ChevronDown, ChevronUp, Building2, Upload, Pencil
+  ChevronDown, ChevronUp, Building2, Upload, Pencil, Trash2
 } from 'lucide-react';
 import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
@@ -191,28 +191,42 @@ export const CertificationsModule: React.FC = () => {
                           {certs.map(c => (
                             <th key={c.id} className="border border-gray-300 p-2 bg-amber-400 text-black text-center relative group min-w-[120px]">
                               CERTIFICADO {c.certificate_number}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingCert(c);
-                                  setEditForm({
-                                    certificate_number: c.certificate_number,
-                                    gross_amount: c.gross_amount,
-                                    redetermination: c.redetermination || 0,
-                                    period_description: c.period_description || '',
-                                    retention_iibb: c.retention_iibb || 0,
-                                    retention_imp_cheque: c.retention_imp_cheque || 0,
-                                    other_retentions: c.other_retentions || 0,
-                                    status: c.status,
-                                    deposit_date: c.deposit_date || '',
-                                    net_deposit: c.net_deposit || 0
-                                  });
-                                }}
-                                className="absolute right-1 top-1 p-1 bg-white/50 hover:bg-white rounded text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Editar certificado"
-                              >
-                                <Pencil size={12} />
-                              </button>
+                              <div className="absolute right-1 top-1 flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingCert(c);
+                                      setEditForm({
+                                        certificate_number: c.certificate_number,
+                                        gross_amount: c.gross_amount,
+                                        redetermination: c.redetermination || 0,
+                                        period_description: c.period_description || '',
+                                        retention_iibb: c.retention_iibb || 0,
+                                        retention_imp_cheque: c.retention_imp_cheque || 0,
+                                        other_retentions: c.other_retentions || 0,
+                                        status: c.status,
+                                        deposit_date: c.deposit_date || '',
+                                        net_deposit: c.net_deposit || 0
+                                      });
+                                    }}
+                                    className="p-1 bg-white/80 hover:bg-white rounded text-gray-800 shadow-sm"
+                                    title="Editar certificado"
+                                  >
+                                    <Pencil size={12} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (window.confirm('¿Seguro que deseas eliminar este certificado?')) {
+                                        deleteCert.mutate(c.id);
+                                      }
+                                    }}
+                                    className="p-1 bg-white/80 hover:bg-rose-100 hover:text-rose-600 rounded text-gray-800 shadow-sm"
+                                    title="Eliminar certificado"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
                             </th>
                           ))}
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center min-w-[140px]">

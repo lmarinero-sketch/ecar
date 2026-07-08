@@ -1498,7 +1498,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   inventory: 'Inventario & Pañol',
   logistics: 'Acopios & Entregas',
   fleet: 'Flota y Maquinaria',
-  certifications: 'Certificaciones / ICC',
+  certifications: 'Certificaciones',
   field: 'Parte Diario de Obra',
   safety: 'Seguridad & Incidentes',
   inspections: 'Inspecciones & Calidad',

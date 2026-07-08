@@ -216,8 +216,22 @@ export const GuideModule: React.FC = () => {
       name: 'Finanzas & Tesorería',
       color: 'border-l-emerald-500',
       icon: '💵',
-      description: 'Gestión integral de cartera de cheques físicos y eCheqs (emitidos y recibidos). Control del flujo de caja corporativo y gastos recurrentes.',
-      features: ['Proyección de flujo de caja 30/60/90 días', 'Alertas de vencimiento automatizadas', 'Gestión de gastos fijos mensuales', 'Carga de cheques por foto (OCR)']
+      description: 'Gestión integral de cartera de cheques físicos y eCheqs (emitidos y recibidos), y tablero interactivo de liquidez mensual.',
+      features: ['Resumen mensual interactivo (Esperado vs Real)', 'Gestión de cartera de cheques', 'Alertas de vencimiento automatizadas', 'Carga de cheques por foto (OCR)']
+    },
+    {
+      name: 'Gastos Operativos',
+      color: 'border-l-rose-500',
+      icon: '📉',
+      description: 'Seguimiento de egresos, pagos a terceros y gastos fijos corporativos con filtros dinámicos por período.',
+      features: ['Categorización automática y manual', 'Soporte para gastos fijos e impuestos', 'Filtros temporales rápidos', 'Asignación por cuenta bancaria']
+    },
+    {
+      name: 'Certificaciones de Obras',
+      color: 'border-l-sky-500',
+      icon: '🏗️',
+      description: 'Control de certificados de obra pública y privada, con seguimiento visual de estados (Facturado, Depositado, Pendiente).',
+      features: ['Carga de importes base y redeterminaciones', 'Cálculo de retenciones automáticas', 'Estados por colores', 'Vinculación directa a ingresos de liquidez']
     },
     {
       name: 'RRHH & Asistencia',

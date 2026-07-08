@@ -870,6 +870,28 @@ export function useMonthlySnapshots() {
   });
 }
 
+export function useUpsertMonthlySnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (snap: Partial<MonthlySnapshot> & { month: string }) => {
+      const { data: exist } = await supabase.from('monthly_snapshots').select('id').eq('month', snap.month).maybeSingle();
+      const payload = { ...snap, tenant_id: ECAR_TENANT_ID };
+      if (exist?.id) {
+        const { data, error } = await supabase.from('monthly_snapshots').update(payload).eq('id', exist.id).select().single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase.from('monthly_snapshots').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['monthly_snapshots'] });
+    },
+  });
+}
+
 // ========== PROJECT CERTIFICATES ==========
 export function useProjectCertificates(projectId?: string) {
   return useQuery({

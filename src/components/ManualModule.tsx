@@ -71,13 +71,59 @@ const MODULES_DATA: ModuleDoc[] = [
     process: [
       'El sistema consolida automáticamente los saldos de todas las cuentas bancarias registradas.',
       'Se proyectan los cheques a cobrar y a pagar según sus fechas de vencimiento.',
-      'Las obligaciones fiscales y gremiales se incorporan como egresos proyectados.',
       'El tablero muestra el saldo proyectado diario para los próximos 30, 60 y 90 días.',
-      'Las alertas de saldo negativo proyectado se destacan en rojo para acción preventiva.'
+      'Incluye un Resumen Mensual que cruza los ingresos reales (facturación de certificados) vs gastos reales operativos.',
+      'Permite el ajuste manual de "Caja Final Real", "Apoyo Financiero" y "Otros Ingresos/Gastos" para auditar la liquidez mensual.'
     ],
-    records: ['Proyección de flujo de caja 90 días', 'Saldos bancarios actualizados', 'Cronograma de cheques', 'Snapshot mensual de liquidez'],
-    kpis: ['Saldo disponible total', 'Cheques a cobrar próximos 30 días', 'Obligaciones pendientes', 'Días de cobertura financiera'],
-    features: ['Proyección 30/60/90 días', 'Integración multi-cuenta bancaria', 'Alertas de saldo negativo', 'Snapshots mensuales históricos']
+    records: ['Proyección de flujo de caja 90 días', 'Saldos bancarios actualizados', 'Cronograma de cheques', 'Resumen Mensual Esperado vs Real'],
+    kpis: ['Saldo disponible total', 'Cheques a cobrar próximos 30 días', 'Diferencia de Caja Mensual', 'Días de cobertura financiera'],
+    features: ['Proyección 30/60/90 días', 'Integración multi-cuenta bancaria', 'Resumen Mensual interactivo', 'Cálculo de Diferencia de Caja']
+  },
+  {
+    id: 'certifications',
+    code: 'MOD-02A',
+    name: 'Certificaciones de Obras',
+    section: 'Gerencia Adm y Finanzas',
+    icon: HardHat,
+    color: 'text-sky-600',
+    bgColor: 'bg-sky-50',
+    borderColor: 'border-sky-400',
+    purpose: 'Control y seguimiento del cobro de certificados de obra pública y privada, controlando el ciclo Facturado > Depositado.',
+    scope: 'Gerencia Administrativa y Financiera. Relacionado con proyectos de obra y vinculación directa al ingreso de flujo de caja.',
+    responsible: 'Gerente Administrativo',
+    process: [
+      'Se asocian los proyectos de obra activos con sus valores contractuales.',
+      'Se registran mes a mes las certificaciones con importes base y redeterminaciones.',
+      'El sistema calcula deducciones y retenciones (Anticipo, Fondo de Reparo) automáticamente.',
+      'Los certificados cambian de color según su estado: Blanco (Pendiente), Verde Claro (Facturado), Verde Oscuro (Depositado).',
+      'El depósito real se vincula como ingreso para el Tablero de Liquidez.'
+    ],
+    records: ['Certificados de obra emitidos', 'Historial de depósitos bancarios', 'Registro de redeterminaciones'],
+    kpis: ['Total Facturado vs Depositado', 'Días de atraso en cobro', 'Saldo pendiente de cobro por obra'],
+    features: ['Cálculo de retenciones automáticas', 'Estados visuales por colores', 'Vinculación a Liquidez Mensual']
+  },
+  {
+    id: 'gastos',
+    code: 'MOD-02B',
+    name: 'Gastos Operativos',
+    section: 'Gerencia Adm y Finanzas',
+    icon: ShoppingBag,
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-50',
+    borderColor: 'border-rose-400',
+    purpose: 'Auditoría y registro mensual de los egresos, gastos fijos y pagos a terceros de la empresa.',
+    scope: 'Gerencia Administrativa y Contable. Alimentación del flujo de caja corporativo.',
+    responsible: 'Gerente de Finanzas / Contable',
+    process: [
+      'Se cargan o autocalculan los gastos fijos del mes organizados en categorías (Sueldos, Seguros, Impuestos, etc.).',
+      'El sistema permite filtrar dinámicamente los registros por: mes actual, semana actual, hoy o personalizado.',
+      'Cada registro de gasto especifica un método de pago y afecta el saldo de caja.',
+      'Incluye consolidación automática de los "Cheques Emitidos" que se deben pagar en el período.',
+      'La suma de estos egresos alimenta de manera directa el Resumen Mensual de Liquidez.'
+    ],
+    records: ['Registro de gastos fijos mensuales', 'Pagos a terceros', 'Consolidado de sueldos y honorarios'],
+    kpis: ['Egresos totales del mes', 'Distribución del gasto por categoría', 'Gastos fijos vs variables'],
+    features: ['Filtros temporales dinámicos', 'Asignación de categorías de gasto', 'Integración automática con Liquidez']
   },
   {
     id: 'purchases',
