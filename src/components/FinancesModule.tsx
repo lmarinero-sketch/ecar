@@ -90,6 +90,15 @@ export const FinancesModule: React.FC = () => {
   const receivable = cheques.filter(c => c.direction === 'receivable' && c.status === 'pending');
   const totalPayable = payable.reduce((a, c) => a + c.amount_ars, 0);
   const totalReceivable = receivable.reduce((a, c) => a + c.amount_ars, 0);
+  
+  const payableThisMonth = payable.filter(c => {
+    const dStr = c.due_date || c.issue_date;
+    if (!dStr) return false;
+    const d = new Date(dStr + 'T12:00:00');
+    const today = new Date();
+    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  });
+  const totalPayableThisMonth = payableThisMonth.reduce((a, c) => a + c.amount_ars, 0);
   const totalFixed = expenses.filter(e => e.status === 'active').reduce((a, e) => a + e.estimated_amount_ars, 0);
 
   const filteredCheques = React.useMemo(() => {
@@ -291,10 +300,17 @@ export const FinancesModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-red-50 to-transparent pointer-events-none" />
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingDown size={16} className="text-red-500" /> Cheques a Pagar</div>
           <p className="text-2xl font-black text-red-600 font-mono">{formatARS(totalPayable)}</p>
-          <p className="text-xs text-gray-400 mt-1">{payable.length} pendientes</p>
+          <div className="flex justify-between items-end mt-1 relative z-10">
+            <p className="text-xs text-gray-400">{payable.length} pendientes en total</p>
+            <div className="text-right">
+              <p className="text-xs font-bold text-red-800">Este mes:</p>
+              <p className="text-sm font-mono font-bold text-red-700">{formatARS(totalPayableThisMonth)} <span className="text-[10px] font-normal text-red-500">({payableThisMonth.length})</span></p>
+            </div>
+          </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-green-500" /> Cheques a Cobrar</div>
@@ -428,22 +444,36 @@ export const FinancesModule: React.FC = () => {
 
           {/* Cheques table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center justify-between gap-4">
-              <h3 className="font-bold text-gray-800">Cartera de Cheques</h3>
-              <div className="flex items-center gap-2">
-                <select value={filterDate} onChange={e => setFilterDate(e.target.value)} className="px-3 py-1.5 text-sm border rounded-lg bg-white">
-                  <option value="">Todos los vencimientos</option>
-                  <option value="today">Vencen hoy</option>
-                  <option value="week">Esta semana</option>
-                  <option value="month">Este mes</option>
-                  <option value="next_month">Mes que viene</option>
-                  <option value="custom">Personalizado</option>
-                </select>
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h3 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h3>
+              <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
+                <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm overflow-x-auto max-w-full no-scrollbar">
+                  {[
+                    { id: '', label: 'Todos' },
+                    { id: 'month', label: 'Este mes' },
+                    { id: 'week', label: 'Esta semana' },
+                    { id: 'today', label: 'Hoy' },
+                    { id: 'custom', label: 'Personalizado' }
+                  ].map(filter => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setFilterDate(filter.id)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
+                        filterDate === filter.id 
+                          ? 'bg-ecar-blue text-white shadow-sm' 
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+
                 {filterDate === 'custom' && (
-                  <div className="flex items-center gap-1">
-                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="px-2 py-1.5 text-sm border rounded-lg" />
-                    <span className="text-gray-400">-</span>
-                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="px-2 py-1.5 text-sm border rounded-lg" />
+                  <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1 shadow-sm">
+                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="px-1 py-1 text-xs outline-none bg-transparent" />
+                    <span className="text-gray-400 text-xs">-</span>
+                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="px-1 py-1 text-xs outline-none bg-transparent" />
                   </div>
                 )}
               </div>
