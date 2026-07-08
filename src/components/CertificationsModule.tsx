@@ -182,78 +182,120 @@ export const CertificationsModule: React.FC = () => {
 
                 {/* Certificates detail */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                          <tr>
-                            <th className="px-4 py-3">Cert #</th>
-                            <th className="px-4 py-3 text-right">🟡 Bruto</th>
-                            <th className="px-4 py-3 text-right">🟠 Redeterminación</th>
-                            <th className="px-4 py-3 text-right">🟢 Total</th>
-                            <th className="px-4 py-3 text-right text-gray-400">Ret. IIBB</th>
-                            <th className="px-4 py-3 text-right text-gray-400">Ret. Cheque</th>
-                            <th className="px-4 py-3 text-right">🔵 Depósito</th>
-                            <th className="px-4 py-3 text-center">Estado</th>
-                            <th className="px-4 py-3 text-center">Foto</th>
-                            <th className="px-4 py-3 text-center">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
+                  <div className="border-t border-gray-100 p-4 bg-gray-50 overflow-x-auto">
+                    <table className="w-full text-sm border-collapse bg-white shadow-sm border border-gray-200">
+                      <thead>
+                        <tr>
+                          <th colSpan={3} className="border border-gray-300 p-2 bg-gray-100 text-left font-bold text-gray-700">
+                            {proj.name}
+                          </th>
                           {certs.map(c => (
-                            <tr key={c.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 font-bold text-gray-800">#{c.certificate_number}</td>
-                              <td className="px-4 py-3 text-right font-mono text-yellow-700">{fmtM(c.gross_amount)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-orange-600">{fmtM(c.redetermination || 0)}</td>
-                              <td className="px-4 py-3 text-right font-mono font-bold text-green-700">{fmtM(c.total_certified)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-gray-400 text-xs">{fmt(c.retention_iibb || 0)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-gray-400 text-xs">{fmt(c.retention_imp_cheque || 0)}</td>
-                              <td className="px-4 py-3 text-right font-mono font-bold text-blue-700">{fmtM(c.net_deposit || 0)}</td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c.status === 'deposited' ? 'bg-green-100 text-green-700' : c.status === 'approved' ? 'bg-yellow-100 text-yellow-700' : c.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
-                                  {c.status === 'deposited' ? 'Depositado' : c.status === 'approved' ? 'Aprobado' : c.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                {c.photo_url ? (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setViewerUrl(c.photo_url || null); }}
-                                    className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-1 rounded transition-colors"
-                                    title="Ver foto de la certificación"
-                                  >
-                                    <Image size={16} />
-                                  </button>
-                                ) : (
-                                  <span className="text-gray-400 text-xs">—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  <button onClick={(e) => { e.stopPropagation(); setEditingCert(c); setEditForm({ certificate_number: c.certificate_number, gross_amount: c.gross_amount, redetermination: c.redetermination || 0, period_description: c.period_description || '', retention_iibb: c.retention_iibb || 0, retention_imp_cheque: c.retention_imp_cheque || 0, other_retentions: c.other_retentions || 0, status: c.status, deposit_date: c.deposit_date || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
-                                  <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(c); }} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
-                                </div>
-                              </td>
-                            </tr>
+                            <th key={c.id} className="border border-gray-300 p-2 bg-amber-400 text-black text-center relative group min-w-[120px]">
+                              CERTIFICADO {c.certificate_number}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingCert(c);
+                                  setEditForm({
+                                    certificate_number: c.certificate_number,
+                                    gross_amount: c.gross_amount,
+                                    redetermination: c.redetermination || 0,
+                                    period_description: c.period_description || '',
+                                    retention_iibb: c.retention_iibb || 0,
+                                    retention_imp_cheque: c.retention_imp_cheque || 0,
+                                    other_retentions: c.other_retentions || 0,
+                                    status: c.status,
+                                    deposit_date: c.deposit_date || '',
+                                    net_deposit: c.net_deposit || 0
+                                  });
+                                }}
+                                className="absolute right-1 top-1 p-1 bg-white/50 hover:bg-white rounded text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Editar certificado"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                            </th>
                           ))}
-                          {/* Totals row */}
-                          <tr className="bg-gray-50 font-bold">
-                            <td className="px-4 py-3">TOTAL</td>
-                            <td className="px-4 py-3 text-right font-mono text-yellow-700">{fmtM(certs.reduce((s, c) => s + c.gross_amount, 0))}</td>
-                            <td className="px-4 py-3 text-right font-mono text-orange-600">{fmtM(certs.reduce((s, c) => s + (c.redetermination || 0), 0))}</td>
-                            <td className="px-4 py-3 text-right font-mono text-green-700">{fmtM(totalCertified)}</td>
-                            <td className="px-4 py-3" colSpan={2}></td>
-                            <td className="px-4 py-3 text-right font-mono text-blue-700">{fmtM(totalDeposited)}</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="p-4 border-t border-gray-100 flex justify-end">
-                      <button onClick={(e) => { e.stopPropagation(); setShowNewCert(proj.id); setForm({ ...form, certificate_number: String(certs.length + 1) }); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
-                        <Plus size={16} /> Nuevo Certificado
-                      </button>
+                          <th className="border border-gray-300 p-2 bg-gray-50 text-center min-w-[140px]">
+                            <button onClick={(e) => { e.stopPropagation(); setShowNewCert(proj.id); setForm({ ...form, certificate_number: String(certs.length + 1) }); }} className="text-ecar-blue hover:text-ecar-blueDark font-bold flex items-center justify-center gap-1 mx-auto w-full">
+                              <Plus size={14} /> Nuevo Cert.
+                            </button>
+                          </th>
+                        </tr>
+                        <tr>
+                          <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">CONTRATO</th>
+                          <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">ANTICIPO ({proj.advance_pct || 30}%)</th>
+                          <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">REDETERMINACION ANTICIPO</th>
+                          {certs.map(c => (
+                            <th key={c.id} className="border border-gray-300 p-2 bg-cyan-400 text-black text-center text-xs whitespace-nowrap">
+                              CERT REDETER.<br/>{c.period_description || '-'}
+                            </th>
+                          ))}
+                          <th className="border border-gray-300 p-2 bg-gray-50"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Base Amount Row */}
+                        <tr>
+                          <td className="border border-gray-300 p-2 text-right font-mono font-medium">{fmt(proj.contract_amount)}</td>
+                          <td className="border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium">{fmt(proj.advance_amount)}</td>
+                          <td className="border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium">{fmt(proj.advance_redetermination)}</td>
+                          {certs.map(c => (
+                            <td key={c.id} className="border border-gray-300 p-2 bg-amber-300 text-right font-mono font-medium">{fmt(c.gross_amount)}</td>
+                          ))}
+                          <td className="border border-gray-300 p-2 bg-gray-50"></td>
+                        </tr>
+                        {/* Redetermination Row */}
+                        <tr>
+                          <td colSpan={3} className="border border-gray-300 p-2 bg-gray-50"></td>
+                          {certs.map(c => (
+                            <td key={c.id} className="border border-gray-300 p-2 bg-cyan-300 text-right font-mono font-medium">{fmt(c.redetermination || 0)}</td>
+                          ))}
+                          <td className="border border-gray-300 p-2 bg-gray-50"></td>
+                        </tr>
+                        {/* Total Certified Row */}
+                        <tr>
+                          <td colSpan={3} className="border border-gray-300 p-2 bg-gray-50"></td>
+                          {certs.map(c => (
+                            <td key={c.id} className="border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-bold">{fmt(c.total_certified)}</td>
+                          ))}
+                          <td className="border border-gray-300 p-2 bg-gray-50"></td>
+                        </tr>
+                        {/* Bank Deposit Row */}
+                        <tr>
+                          <td className="border border-gray-300 p-2 font-bold text-gray-700 uppercase">Deposito Banco</td>
+                          <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
+                            {/* Assuming full advance was deposited as per spreadsheet example */}
+                            {fmt(proj.advance_amount * 0.95)}
+                          </td>
+                          <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
+                            {fmt(proj.advance_redetermination * 0.95)}
+                          </td>
+                          {certs.map(c => {
+                            let bgClass = 'bg-white';
+                            let textClass = 'text-gray-900';
+                            if (c.status === 'deposited') {
+                              bgClass = 'bg-green-600';
+                              textClass = 'text-white';
+                            } else if (c.status === 'approved' || c.status === 'invoiced') {
+                              bgClass = 'bg-green-200';
+                              textClass = 'text-green-900';
+                            }
+
+                            return (
+                              <td key={c.id} className={`border border-gray-300 p-2 text-right font-mono font-bold transition-colors ${bgClass} ${textClass}`}>
+                                {fmt(c.net_deposit || 0)}
+                              </td>
+                            );
+                          })}
+                          <td className="border border-gray-300 p-2 bg-gray-50"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div className="flex gap-4 mt-4 text-xs text-gray-500 font-medium justify-end">
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-white border border-gray-300 rounded-sm"></div> No Facturado (Pendiente)</div>
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-200 border border-gray-300 rounded-sm"></div> Facturado / Aprobado</div>
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-green-600 rounded-sm"></div> Depositado</div>
                     </div>
                   </div>
                 )}

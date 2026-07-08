@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { PayrollLiquidator } from './PayrollLiquidator';
 import { PayrollPDFButton } from './PayrollPDFButton';
+import { PayrollViewerModal } from './PayrollViewerModal';
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -28,6 +29,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [showPayroll, setShowPayroll] = useState(false);
+  const [viewPayrollItem, setViewPayrollItem] = useState<{id: string, concepto: string} | null>(null);
 
   // Import from gastos operativos
   const periodo = payment.payment_date?.slice(0, 7); // YYYY-MM
@@ -54,6 +56,9 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const total = items.reduce((s, i) => s + Number(i.monto || 0), 0);
   const totalResto = items.reduce((s, i) => s + Number(i.resto || 0), 0);
   const pagados = items.filter(i => i.pagado).length;
+  
+  const isFriday = new Date(payment.payment_date + 'T12:00:00').getDay() === 5;
+  const hasPayroll = items.some(i => i.source_type === 'sueldos_obreros');
 
   const handleAdd = async () => {
     const monto = parseFloat(form.monto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
@@ -398,12 +403,30 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
+                {isFriday && !hasPayroll && (
+                  <tr 
+                    className="hover:bg-blue-50/50 bg-blue-50/30 border-l-4 border-blue-500 cursor-pointer transition-colors"
+                    onClick={() => setShowPayroll(true)}
+                    title="Clic para generar sueldos"
+                  >
+                    <td colSpan={8} className="px-3 py-4 text-center">
+                      <span className="font-bold text-blue-700 flex items-center justify-center gap-2">
+                        <Users size={16} /> Sueldos de Obreros (Pendiente de Liquidar)
+                      </span>
+                    </td>
+                  </tr>
+                )}
                 {items.map(item => {
                   const isPartial = item.pagado && Number(item.resto) > 0;
+                  const isPayroll = item.source_type === 'sueldos_obreros';
                   return (
                     <tr key={item.id} className={`hover:bg-gray-50 ${isPartial ? 'bg-amber-50/50' : item.pagado ? 'bg-green-50/30' : ''}`}>
-                      <td className="px-3 py-2.5 font-bold text-gray-800 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <td 
+                        className={`px-3 py-2.5 font-bold text-xs ${isPayroll ? 'cursor-pointer text-indigo-700 hover:text-indigo-800 underline decoration-indigo-300 underline-offset-2' : 'text-gray-800'}`}
+                        onClick={() => isPayroll && setViewPayrollItem({id: item.id, concepto: item.concepto})}
+                        title={isPayroll ? "Ver detalle de alias" : ""}
+                      >
+                        <div className="flex items-center gap-2 flex-wrap pointer-events-none">
                           {item.source_type === 'gastos_operativos' && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold">GO</span>}
                           {item.concepto}
                           {isPartial && <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm border border-amber-200">Pago Parcial</span>}
@@ -452,6 +475,14 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           paymentDate={payment.payment_date} 
           onClose={() => setShowPayroll(false)} 
           onSuccess={() => setShowPayroll(false)} 
+        />
+      )}
+
+      {viewPayrollItem && (
+        <PayrollViewerModal
+          paymentItemId={viewPayrollItem.id}
+          concepto={viewPayrollItem.concepto}
+          onClose={() => setViewPayrollItem(null)}
         />
       )}
     </div>
