@@ -18,7 +18,8 @@ import type {
   FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation,
   VehicleDailyReport,
   Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange,
-  WorkOrder
+  WorkOrder,
+  LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog
 } from '../lib/types';
 
 
@@ -3030,5 +3031,119 @@ export function useUpdateWorkOrder() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['work_orders'] }),
+  });
+}
+
+// ========== LOGISTICS MODULE ==========
+
+export function useAllFuelVehicles() {
+  return useQuery({
+    queryKey: ['all_fuel_vehicles'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fuel_vehicles').select('*').order('code');
+      if (error) throw error;
+      return data as FuelVehicle[];
+    },
+  });
+}
+
+export function useLogisticsDeliveries() {
+  return useQuery({
+    queryKey: ['logistics_deliveries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('logistics_deliveries')
+        .select('*, project:projects(id, name), vehicle:fuel_vehicles(id, code, description, plate), items:logistics_delivery_items(*)')
+        .order('delivery_date', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data as LogisticsDelivery[];
+    },
+  });
+}
+
+export function useCreateLogisticsDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ items, ...delivery }: Partial<LogisticsDelivery> & { items?: Partial<LogisticsDeliveryItem>[] }) => {
+      const { data, error } = await supabase
+        .from('logistics_deliveries')
+        .insert({ ...delivery, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+      if (items?.length) {
+        const { error: itemErr } = await supabase
+          .from('logistics_delivery_items')
+          .insert(items.map(i => ({ ...i, delivery_id: data.id })));
+        if (itemErr) throw itemErr;
+      }
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_deliveries'] }),
+  });
+}
+
+export function useUpdateLogisticsDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<LogisticsDelivery> & { id: string }) => {
+      const { error } = await supabase.from('logistics_deliveries').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_deliveries'] }),
+  });
+}
+
+export function useDeleteLogisticsDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('logistics_deliveries').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_deliveries'] }),
+  });
+}
+
+export function useLogisticsMaintenanceLog() {
+  return useQuery({
+    queryKey: ['logistics_maintenance_log'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('logistics_maintenance_log')
+        .select('*, vehicle:fuel_vehicles(id, code, description, plate)')
+        .order('date', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data as LogisticsMaintenanceLog[];
+    },
+  });
+}
+
+export function useCreateLogisticsMaintenanceLog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (log: Partial<LogisticsMaintenanceLog>) => {
+      const { data, error } = await supabase
+        .from('logistics_maintenance_log')
+        .insert({ ...log, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_maintenance_log'] }),
+  });
+}
+
+export function useUpdateLogisticsMaintenanceLog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<LogisticsMaintenanceLog> & { id: string }) => {
+      const { error } = await supabase.from('logistics_maintenance_log').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_maintenance_log'] }),
   });
 }

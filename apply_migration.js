@@ -13,7 +13,7 @@ const client = new Client({
 async function run() {
   try {
     await client.connect();
-    const sql = fs.readFileSync('./supabase/migrations/20260701000000_add_project_fields.sql', 'utf8');
+    const sql = fs.readFileSync('./supabase/migrations/20260708_logistics_module.sql', 'utf8');
     await client.query(sql);
     await client.query("NOTIFY pgrst, 'reload schema'");
     console.log('Migration applied successfully!');

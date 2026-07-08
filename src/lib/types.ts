@@ -1526,7 +1526,53 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
 export type AuditLog = { id: string; tenant_id: string; user_id: string; user_name: string; action_type: string; module: string; details: any; duration_seconds: number; created_at: string; };
 
 // ========== LOGISTICS MODULE ==========
-export type LogisticsInventoryItem = { id: string; tenant_id: string; code: string; name: string; category: string; unit: string; stock_current: number; stock_min: number; stock_ideal: number; location: string | null; supplier: string | null; notes: string | null; created_at: string; updated_at: string; };
-export type LogisticsAsset = { id: string; tenant_id: string; code: string; name: string; type: string; brand: string | null; model: string | null; pin_plate: string | null; status: string; current_location: string | null; assigned_to: string | null; current_hours_km: number; next_maintenance_hours_km: number | null; notes: string | null; created_at: string; updated_at: string; };
-export type LogisticsMovement = { id: string; tenant_id: string; type: string; item_id: string | null; item_type: string; quantity: number; origin: string | null; destination: string | null; responsible_person: string; expected_return_date: string | null; status: string; notes: string | null; created_by: string; created_at: string; };
-export type LogisticsMaintenance = { id: string; tenant_id: string; asset_id: string; type: string; date: string; hours_km: number; cost: number; provider: string | null; fuel_liters: number | null; notes: string | null; created_by: string; created_at: string; };
+
+export type LogisticsDelivery = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  delivery_date: string;
+  status: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado';
+  vehicle_id: string | null;
+  driver_name: string | null;
+  destination: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  // Joined
+  project?: Project | null;
+  vehicle?: FuelVehicle | null;
+  items?: LogisticsDeliveryItem[];
+};
+
+export type LogisticsDeliveryItem = {
+  id: string;
+  delivery_id: string;
+  item_id: string | null;
+  description: string;
+  quantity: number;
+  unit: string | null;
+  delivered_quantity: number;
+  status: 'pendiente' | 'parcial' | 'entregado';
+  created_at: string;
+  // Joined
+  item?: InventoryItem | null;
+};
+
+export type LogisticsMaintenanceLog = {
+  id: string;
+  tenant_id: string;
+  vehicle_id: string;
+  type: 'service' | 'vtv' | 'seguro' | 'reparacion' | 'neumaticos' | 'otro';
+  date: string;
+  km_hours: number | null;
+  cost: number;
+  provider: string | null;
+  description: string | null;
+  next_due_date: string | null;
+  next_due_km: number | null;
+  created_by: string | null;
+  created_at: string;
+  // Joined
+  vehicle?: FuelVehicle | null;
+};
