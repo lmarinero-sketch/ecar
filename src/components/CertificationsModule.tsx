@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Plus, X, TrendingUp, Banknote,
-  ChevronDown, ChevronUp, Building2, Upload, Image, Pencil, Trash2
+  ChevronDown, ChevronUp, Building2, Upload, Pencil
 } from 'lucide-react';
 import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
@@ -146,7 +146,6 @@ export const CertificationsModule: React.FC = () => {
           {contractProjects.map((proj: any) => {
             const certs = certsByProject[proj.id] || [];
             const totalCertified = certs.reduce((s, c) => s + (c.total_certified || 0), 0);
-            const totalDeposited = certs.reduce((s, c) => s + (c.net_deposit || 0), 0);
             const pct = proj.contract_amount > 0 ? (totalCertified / proj.contract_amount) * 100 : 0;
             const isExpanded = expandedProject === proj.id;
 

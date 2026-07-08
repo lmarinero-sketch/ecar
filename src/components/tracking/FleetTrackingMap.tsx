@@ -36,7 +36,6 @@ export const FleetTrackingMap: React.FC = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeVehicles, setActiveVehicles] = useState<Record<string, ActiveVehicle>>({});
   const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
-  const [lastSync, setLastSync] = useState(new Date());
 
   const channelRef = useRef<any>(null);
 
@@ -78,7 +77,6 @@ export const FleetTrackingMap: React.FC = () => {
       });
 
       setActiveVehicles(sessions);
-      setLastSync(new Date());
       
       // Auto-center on first load if vehicles exist and map exists
       if (data && data.length > 0 && map && window.google) {
