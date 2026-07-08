@@ -298,6 +298,83 @@ export const FinancesModule: React.FC = () => {
         </div>
       </div>
 
+      {/* ⚠️ ALERTA: Cheques que vencen esta semana */}
+      {(() => {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // domingo
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // sábado
+
+        const dueThisWeek = cheques.filter(ch => {
+          if (ch.status !== 'pending') return false;
+          const dateStr = ch.due_date || ch.issue_date;
+          if (!dateStr) return false;
+          const d = new Date(dateStr + 'T12:00:00');
+          return d >= startOfWeek && d <= endOfWeek;
+        });
+
+        const totalDueThisWeek = dueThisWeek.reduce((s, c) => s + c.amount_ars, 0);
+
+        if (dueThisWeek.length === 0) return null;
+
+        return (
+          <div className="relative bg-gradient-to-r from-red-600 via-orange-500 to-red-600 rounded-xl p-4 md:p-5 shadow-lg text-white overflow-hidden animate-pulse-subtle">
+            {/* Background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-2 right-4 text-6xl">⚠️</div>
+              <div className="absolute bottom-2 left-4 text-6xl">🔔</div>
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-xl animate-bounce" style={{ animationDuration: '2s' }}>
+                    🔔
+                  </div>
+                  <div>
+                    <h4 className="font-black text-lg tracking-tight">¡{dueThisWeek.length} cheque{dueThisWeek.length > 1 ? 's' : ''} vence{dueThisWeek.length > 1 ? 'n' : ''} esta semana!</h4>
+                    <p className="text-white/80 text-xs">Semana del {startOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} al {endOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-white/70 font-bold">TOTAL A CUBRIR</p>
+                  <p className="text-2xl font-black font-mono tracking-tight">{formatARS(totalDueThisWeek)}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {dueThisWeek.map(ch => {
+                  const dueDate = ch.due_date || ch.issue_date || '';
+                  const isPagar = ch.direction === 'payable';
+                  return (
+                    <div key={ch.id} className="bg-white/15 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between border border-white/20">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isPagar ? 'bg-red-900/50 text-red-100' : 'bg-green-900/50 text-green-100'}`}>
+                          {isPagar ? '↑ Pagar' : '↓ Cobrar'}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate">{ch.beneficiary_or_issuer || 'Sin beneficiario'}</p>
+                          <p className="text-xs text-white/60">#{ch.cheque_number} · {ch.bank_name} · Vto: {new Date(dueDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' })}</p>
+                        </div>
+                      </div>
+                      <p className="font-mono font-bold text-sm whitespace-nowrap ml-2">{formatARS(ch.amount_ars)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={() => setFilterDate('week')}
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors border border-white/30"
+                >
+                  Ver solo esta semana →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">

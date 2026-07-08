@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   Warehouse, Truck, Repeat, Wrench, Plus, ChevronDown, ChevronUp, Package, Clock,
-  ShieldAlert, AlertTriangle, ArrowRight, X, Save, Calendar, MapPin, User, Eye,
-  CheckCircle2, PackageCheck, Fuel, Gauge, Shield, FileText, TrendingUp, Search
+  ShieldAlert, AlertTriangle, ArrowRight, X, Save, Calendar, MapPin,
+  CheckCircle2, PackageCheck, FileText, TrendingUp, Search
 } from 'lucide-react';
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,

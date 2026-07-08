@@ -189,44 +189,42 @@ export const CertificationsModule: React.FC = () => {
                             {proj.name}
                           </th>
                           {certs.map(c => (
-                            <th key={c.id} className="border border-gray-300 p-2 bg-amber-400 text-black text-center relative group min-w-[120px]">
-                              CERTIFICADO {c.certificate_number}
-                              <div className="absolute right-1 top-1 flex gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingCert(c);
-                                      setEditForm({
-                                        certificate_number: c.certificate_number,
-                                        gross_amount: c.gross_amount,
-                                        redetermination: c.redetermination || 0,
-                                        period_description: c.period_description || '',
-                                        retention_iibb: c.retention_iibb || 0,
-                                        retention_imp_cheque: c.retention_imp_cheque || 0,
-                                        other_retentions: c.other_retentions || 0,
-                                        status: c.status,
-                                        deposit_date: c.deposit_date || '',
-                                        net_deposit: c.net_deposit || 0
-                                      });
-                                    }}
-                                    className="p-1 bg-white/80 hover:bg-white rounded text-gray-800 shadow-sm"
-                                    title="Editar certificado"
-                                  >
-                                    <Pencil size={12} />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (window.confirm('¿Seguro que deseas eliminar este certificado?')) {
-                                        deleteCert.mutate(c.id);
-                                      }
-                                    }}
-                                    className="p-1 bg-white/80 hover:bg-rose-100 hover:text-rose-600 rounded text-gray-800 shadow-sm"
-                                    title="Eliminar certificado"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
+                            <th key={c.id} className="border border-gray-300 p-2 bg-amber-400 text-black text-center min-w-[120px]">
+                              <div className="flex items-center justify-center gap-1">
+                                <span className="font-bold">CERTIFICADO {c.certificate_number}</span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingCert(c);
+                                    setEditForm({
+                                      certificate_number: c.certificate_number,
+                                      gross_amount: c.gross_amount,
+                                      redetermination: c.redetermination || 0,
+                                      period_description: c.period_description || '',
+                                      retention_iibb: c.retention_iibb || 0,
+                                      retention_imp_cheque: c.retention_imp_cheque || 0,
+                                      other_retentions: c.other_retentions || 0,
+                                      status: c.status,
+                                      deposit_date: c.deposit_date || '',
+                                      net_deposit: c.net_deposit || 0
+                                    });
+                                  }}
+                                  className="p-1 bg-white/70 hover:bg-white rounded text-amber-800 hover:text-blue-600 transition-colors"
+                                  title="Editar certificado"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(c);
+                                  }}
+                                  className="p-1 bg-white/70 hover:bg-rose-100 rounded text-amber-800 hover:text-rose-600 transition-colors"
+                                  title="Eliminar certificado"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </th>
                           ))}
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center min-w-[140px]">
@@ -417,6 +415,7 @@ export const CertificationsModule: React.FC = () => {
                 <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
                   <option value="pending">Pendiente</option>
                   <option value="approved">Aprobado</option>
+                  <option value="invoiced">Facturado</option>
                   <option value="deposited">Depositado</option>
                   <option value="rejected">Rechazado</option>
                 </select>
