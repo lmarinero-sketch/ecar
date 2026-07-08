@@ -162,7 +162,7 @@ export const LogisticsModule: React.FC = () => {
       {/* Tab Content */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px]">
         {activeTab === 'dashboard' && (
-          <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} maintenanceLogs={maintenanceLogs} />
+          <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
         {activeTab === 'deliveries' && (
           <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} />
