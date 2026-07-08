@@ -165,7 +165,7 @@ export const LogisticsModule: React.FC = () => {
           <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
         {activeTab === 'deliveries' && (
-          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} />
+          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
         {activeTab === 'fleet' && (
           <FleetTab vehicles={allVehicles} loading={loadingVehicles} />
@@ -316,7 +316,8 @@ const DeliveriesTab: React.FC<{
   loading: boolean;
   projects: any[];
   allVehicles: FuelVehicle[];
-}> = ({ deliveries, loading, projects, allVehicles }) => {
+  inventoryItems: any[];
+}> = ({ deliveries, loading, projects, allVehicles, inventoryItems }) => {
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -326,7 +327,7 @@ const DeliveriesTab: React.FC<{
 
   const [form, setForm] = useState({
     project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '',
-    items: [{ description: '', quantity: 1, unit: 'u' }] as { description: string; quantity: number; unit: string }[],
+    items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] as { item_id: string; description: string; quantity: number; unit: string }[],
   });
 
   const filtered = useMemo(() => {
@@ -359,7 +360,7 @@ const DeliveriesTab: React.FC<{
         unit: i.unit,
       })),
     } as any);
-    setForm({ project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '', items: [{ description: '', quantity: 1, unit: 'u' }] });
+    setForm({ project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '', items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] });
     setShowForm(false);
   };
 
@@ -443,12 +444,37 @@ const DeliveriesTab: React.FC<{
             <label className="text-xs font-bold text-gray-600 block mb-2">Materiales / Herramientas a enviar</label>
             {form.items.map((item, idx) => (
               <div key={idx} className="flex gap-2 mb-2 items-center">
-                <input
-                  value={item.description}
-                  onChange={e => { const items = [...form.items]; items[idx].description = e.target.value; setForm({ ...form, items }); }}
-                  placeholder="Descripción del ítem"
+                <select
+                  value={item.item_id}
+                  onChange={e => {
+                    const items = [...form.items];
+                    const selectedId = e.target.value;
+                    if (selectedId === '__manual__') {
+                      items[idx] = { ...items[idx], item_id: '__manual__', description: '', unit: 'u' };
+                    } else if (selectedId) {
+                      const inv = inventoryItems.find((i: any) => i.id === selectedId);
+                      items[idx] = { ...items[idx], item_id: selectedId, description: inv?.name || '', unit: inv?.unit || 'u' };
+                    } else {
+                      items[idx] = { ...items[idx], item_id: '', description: '', unit: 'u' };
+                    }
+                    setForm({ ...form, items });
+                  }}
                   className="flex-1 border rounded-lg px-3 py-2 text-sm"
-                />
+                >
+                  <option value="">— Seleccionar material —</option>
+                  {inventoryItems.map((inv: any) => (
+                    <option key={inv.id} value={inv.id}>{inv.name} ({inv.unit}) — Stock: {inv.current_stock}</option>
+                  ))}
+                  <option value="__manual__">✏️ Otro (ingreso manual)</option>
+                </select>
+                {item.item_id === '__manual__' && (
+                  <input
+                    value={item.description}
+                    onChange={e => { const items = [...form.items]; items[idx].description = e.target.value; setForm({ ...form, items }); }}
+                    placeholder="Descripción manual"
+                    className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                  />
+                )}
                 <input
                   type="number"
                   value={item.quantity}
@@ -456,18 +482,13 @@ const DeliveriesTab: React.FC<{
                   className="w-20 border rounded-lg px-3 py-2 text-sm text-center"
                   min={1}
                 />
-                <input
-                  value={item.unit}
-                  onChange={e => { const items = [...form.items]; items[idx].unit = e.target.value; setForm({ ...form, items }); }}
-                  className="w-16 border rounded-lg px-3 py-2 text-sm text-center"
-                  placeholder="u"
-                />
+                <span className="text-xs text-gray-500 w-10 text-center font-bold">{item.unit}</span>
                 {form.items.length > 1 && (
                   <button onClick={() => { const items = form.items.filter((_, i) => i !== idx); setForm({ ...form, items }); }} className="text-red-400 hover:text-red-600"><X size={16} /></button>
                 )}
               </div>
             ))}
-            <button onClick={() => setForm({ ...form, items: [...form.items, { description: '', quantity: 1, unit: 'u' }] })} className="text-teal-600 text-xs font-bold hover:underline flex items-center gap-1 mt-1">
+            <button onClick={() => setForm({ ...form, items: [...form.items, { item_id: '', description: '', quantity: 1, unit: 'u' }] })} className="text-teal-600 text-xs font-bold hover:underline flex items-center gap-1 mt-1">
               <Plus size={14} /> Agregar ítem
             </button>
           </div>
