@@ -7,8 +7,7 @@ import {
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
-  useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog, useInventoryMovements,
-  useFuelLoads
+  useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
@@ -49,8 +48,6 @@ export const LogisticsModule: React.FC = () => {
   const { data: inventoryItems = [], isLoading: loadingInventory } = useInventoryItems();
   const { data: toolAssignments = [] } = useToolAssignments();
   const { data: projects = [] } = useProjects();
-  const { data: movements = [] } = useInventoryMovements();
-  const { data: fuelLoads = [] } = useFuelLoads();
 
   // Logistics-own tables
   const { data: deliveries = [], isLoading: loadingDeliveries } = useLogisticsDeliveries();
@@ -191,8 +188,7 @@ const DashboardTab: React.FC<{
   deliveries: LogisticsDelivery[];
   allVehicles: FuelVehicle[];
   inventoryItems: any[];
-  maintenanceLogs: LogisticsMaintenanceLog[];
-}> = ({ kpis, deliveries, allVehicles, inventoryItems, maintenanceLogs }) => {
+}> = ({ kpis, deliveries, allVehicles, inventoryItems }) => {
   const upcomingDeliveries = deliveries.filter(d => d.status === 'pendiente' || d.status === 'en_transito').slice(0, 5);
   const criticalItems = (inventoryItems || []).filter((i: any) => i.current_stock <= i.min_stock).slice(0, 5);
   const vehiclesNeedingMaint = allVehicles.filter(v => {

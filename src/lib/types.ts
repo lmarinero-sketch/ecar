@@ -530,7 +530,7 @@ export type MonthlySnapshot = {
   projected_closing: number;
   real_closing: number;
   deviation: number;
-  expense_breakdown: Record<string, number> | null;
+  expense_breakdown: Record<string, any> | null;
   created_at: string;
 };
 
