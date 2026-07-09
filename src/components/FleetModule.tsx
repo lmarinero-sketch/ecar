@@ -10,6 +10,7 @@ import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteF
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle } from '../lib/types';
 import { FleetTrackingMap } from './tracking/FleetTrackingMap';
+// const FleetTrackingMap = React.lazy(() => import('./tracking/FleetTrackingMap').then(m => ({ default: m.FleetTrackingMap })));
 
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking';
 

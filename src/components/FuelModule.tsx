@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, MapPin, Download } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -876,7 +876,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tick={{fontSize: 12}} />
                 <YAxis tick={{fontSize: 12}} />
-                <RechartsTooltip formatter={(value: number) => [`${value.toLocaleString('es-AR')} L`, 'Litros']} />
+                <RechartsTooltip formatter={(value: any) => [`${Number(value).toLocaleString('es-AR')} L`, 'Litros']} />
                 <Bar dataKey="liters" fill="#0284c7" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -907,7 +907,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="load_date" tick={{fontSize: 10}} tickFormatter={v => new Date(v).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'})} />
                 <YAxis tick={{fontSize: 12}} />
-                <RechartsTooltip labelFormatter={v => new Date(v).toLocaleDateString('es-AR')} formatter={(value: number) => [`${value} L`, 'Litros']} />
+                <RechartsTooltip labelFormatter={v => new Date(v).toLocaleDateString('es-AR')} formatter={(value: any) => [`${value} L`, 'Litros']} />
                 <Line type="monotone" dataKey="liters" stroke="#ea580c" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
               </LineChart>
             </ResponsiveContainer>

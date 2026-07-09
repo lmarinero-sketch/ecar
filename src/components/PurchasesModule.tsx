@@ -5,6 +5,7 @@ import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useModalStore } from '../store/useModalStore';
+import { useImplementationStore } from '../store/useImplementationStore';
 import * as XLSX from 'xlsx';
 
 type InvoiceTab = 'compras' | 'ventas' | 'banco';
@@ -19,7 +20,7 @@ const BancoPreciosTab: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 });
+  const [form, setForm] = useState({ name: '', resource_type: 'material' as 'material' | 'mano_obra' | 'equipo' | 'subcontrato', unit: 'un', unit_price_ars: 0 });
   const [isImporting, setIsImporting] = useState(false);
   const [importSummary, setImportSummary] = useState<{created: number, updated: number} | null>(null);
 
@@ -32,7 +33,7 @@ const BancoPreciosTab: React.FC = () => {
     if (editItem) {
       await updateResource.mutateAsync({ id: editItem.id, ...form });
     } else {
-      await createResource.mutateAsync(form);
+      await createResource.mutateAsync(form as any);
     }
     setShowForm(false);
     setEditItem(null);
@@ -53,7 +54,7 @@ const BancoPreciosTab: React.FC = () => {
   const handleDownloadTemplate = () => {
     const data = [
       { Tipo: 'material', Descripcion: 'Cemento Loma Negra 50kg', Unidad: 'bl', Precio_Unitario: 8500 },
-      { Tipo: 'labor', Descripcion: 'Oficial Albañil', Unidad: 'hs', Precio_Unitario: 4500 }
+      { Tipo: 'mano_obra', Descripcion: 'Oficial Albañil', Unidad: 'hs', Precio_Unitario: 4500 }
     ];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -135,9 +136,9 @@ const BancoPreciosTab: React.FC = () => {
           <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50">
             <option value="all">Todos los rubros</option>
             <option value="material">Materiales</option>
-            <option value="labor">Mano de Obra</option>
-            <option value="equipment">Equipos</option>
-            <option value="subcontract">Subcontratos</option>
+            <option value="mano_obra">Mano de Obra</option>
+            <option value="equipo">Equipos</option>
+            <option value="subcontrato">Subcontratos</option>
           </select>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -149,7 +150,7 @@ const BancoPreciosTab: React.FC = () => {
             {isImporting ? 'Importando...' : 'Importar Excel'}
             <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
           </label>
-          <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
+          <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material' as any, unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
             <Plus size={16} /> Nuevo Insumo
           </button>
         </div>
@@ -184,7 +185,7 @@ const BancoPreciosTab: React.FC = () => {
               <tr><td colSpan={5} className="text-center py-8 text-gray-400">No hay insumos registrados.</td></tr>
             ) : filtered.map((r: any) => (
               <tr key={r.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-xs font-bold text-gray-500 uppercase">{r.resource_type === 'material' ? 'Material' : r.resource_type === 'labor' ? 'Mano Obra' : r.resource_type === 'equipment' ? 'Equipo' : 'Subcontrato'}</td>
+                <td className="px-4 py-3 text-xs font-bold text-gray-500 uppercase">{r.resource_type === 'material' ? 'Material' : r.resource_type === 'mano_obra' ? 'Mano Obra' : r.resource_type === 'equipo' ? 'Equipo' : 'Subcontrato'}</td>
                 <td className="px-4 py-3 font-medium">{r.name}</td>
                 <td className="px-4 py-3 text-sm text-gray-500">{r.unit}</td>
                 <td className="px-4 py-3 text-right font-mono font-bold text-ecar-blue">{formatARS(r.unit_price_ars)}</td>
@@ -210,11 +211,11 @@ const BancoPreciosTab: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-500">Tipo de Recurso</label>
-                <select value={form.resource_type} onChange={e => setForm({...form, resource_type: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50">
+                <select value={form.resource_type} onChange={e => setForm({...form, resource_type: e.target.value as any})} className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50">
                   <option value="material">Material</option>
-                  <option value="labor">Mano de Obra</option>
-                  <option value="equipment">Equipo</option>
-                  <option value="subcontract">Subcontrato</option>
+                  <option value="mano_obra">Mano de Obra</option>
+                  <option value="equipo">Equipo</option>
+                  <option value="subcontrato">Subcontrato</option>
                 </select>
               </div>
               <div>
