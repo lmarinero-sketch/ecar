@@ -607,6 +607,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const [sigData, setSigData] = useState<string | null>(profile?.signature_data || null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [sigSaving, setSigSaving] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const hasSignature = !!(profile?.dni && profile?.signature_data);
@@ -619,18 +620,19 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   // Canvas drawing functions
   useEffect(() => {
     const canvas = sigCanvasRef.current;
-    if (canvas && showSignaturePanel && !sigData) {
+    if (canvas && showSignaturePanel) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.strokeStyle = '#1a2744';
         ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        // Clear
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!hasDrawn) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
       }
     }
-  }, [showSignaturePanel, sigData]);
+  }, [showSignaturePanel]);
 
   const getCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = sigCanvasRef.current;
@@ -643,15 +645,22 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     setIsDrawing(true);
+    setHasDrawn(true);
     const ctx = sigCanvasRef.current?.getContext('2d');
     if (!ctx) return;
+    ctx.strokeStyle = '#1a2744';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     const { x, y } = getCoords(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (!isDrawing) return;
     const ctx = sigCanvasRef.current?.getContext('2d');
     if (!ctx) return;
@@ -661,17 +670,12 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   };
 
   const stopDrawing = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      const canvas = sigCanvasRef.current;
-      if (canvas) {
-        setSigData(canvas.toDataURL('image/png'));
-      }
-    }
+    setIsDrawing(false);
   };
 
   const clearSignature = () => {
     setSigData(null);
+    setHasDrawn(false);
     const canvas = sigCanvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -686,11 +690,13 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   };
 
   const handleSaveSignature = async () => {
-    if (!sigDni || !sigName || !sigData) return;
+    const canvas = sigCanvasRef.current;
+    const canvasData = canvas ? canvas.toDataURL('image/png') : sigData;
+    if (!sigDni || !sigName || (!canvasData && !hasDrawn)) return;
     setSigSaving(true);
     try {
       const { supabase } = await import('../lib/supabase');
-      await supabase.from('profiles').update({ dni: sigDni, signature_data: sigData, full_name: sigName }).eq('id', profile?.id);
+      await supabase.from('profiles').update({ dni: sigDni, signature_data: canvasData, full_name: sigName }).eq('id', profile?.id);
       setShowSignaturePanel(false);
       // Force page reload to get updated profile
       window.location.reload();
@@ -856,36 +862,34 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
           </div>
           <div>
             <label className="text-xs font-bold text-gray-500 mb-2 block">Firma Digital <span className="text-red-500">*</span></label>
-            {sigData ? (
-              <div className="relative">
-                <img src={sigData} alt="Firma" className="w-full h-28 object-contain border-2 border-green-200 rounded-xl bg-green-50 p-2" />
+            <div className="relative">
+              <canvas
+                ref={sigCanvasRef}
+                width={500}
+                height={120}
+                className="w-full h-28 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+              {!hasDrawn && (
+                <p className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm pointer-events-none font-medium">
+                  Dibujá tu firma aquí
+                </p>
+              )}
+              {hasDrawn && (
                 <button
                   onClick={clearSignature}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg text-xs hover:bg-red-600 shadow-md"
                 >
                   <X size={14} />
                 </button>
-              </div>
-            ) : (
-              <div className="relative">
-                <canvas
-                  ref={sigCanvasRef}
-                  width={500}
-                  height={120}
-                  className="w-full h-28 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                />
-                <p className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm pointer-events-none font-medium">
-                  Dibujá tu firma aquí
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button onClick={() => setShowSignaturePanel(false)} className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
@@ -893,7 +897,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
             </button>
             <button
               onClick={handleSaveSignature}
-              disabled={!sigDni || !sigName || !sigData || sigSaving}
+              disabled={!sigDni || !sigName || !hasDrawn || sigSaving}
               className="px-5 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md"
             >
               {sigSaving ? (

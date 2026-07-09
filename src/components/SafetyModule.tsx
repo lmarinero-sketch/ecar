@@ -23,96 +23,203 @@ const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) =
     camera.lookAt(0, 0.8, 0);
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
     container.appendChild(renderer.domElement);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    dirLight.position.set(2, 4, 3);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(3, 5, 4);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
     scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0x8ecae6, 0.3);
+    fillLight.position.set(-2, 3, -1);
+    scene.add(fillLight);
 
     // Group for the body
     const bodyGroup = new THREE.Group();
     scene.add(bodyGroup);
 
     // Color definitions
-    const defaultColor = 0xe2e8f0; // Slate-200
-    const activeColor = 0xef4444; // ecar-red
-    const hoverColor = 0x93c5fd; // Blue-300
+    const skinColor = 0xd4a574; // Skin tone
+    const vestColor = 0xff8c00; // Hi-vis orange vest
+    const vestStripe = 0xcccccc; // Reflective stripe
+    const pantsColor = 0x2d3748; // Dark work pants
+    const bootColor = 0x4a3728; // Brown leather boots
+    const helmetColor = 0xfbbf24; // Yellow hard hat
+    const gloveColor = 0x6b5b4d; // Work gloves
+    const beltColor = 0x5a3e28; // Tool belt
+    const activeColor = 0xef4444; // Red for selected zone
+    const hoverColor = 0x60a5fa; // Blue hover
+    const defaultColor = 0xe2e8f0; // Fallback
 
-    const createPart = (geometry: THREE.BufferGeometry, name: string, pos: [number, number, number]) => {
-      const mat = new THREE.MeshPhongMaterial({
-        color: selectedZone === name ? activeColor : defaultColor,
-        shininess: 30,
-        flatShading: true,
+    const getColor = (name: string, partDefault: number) => {
+      return selectedZone === name ? activeColor : partDefault;
+    };
+
+    const createPart = (geometry: THREE.BufferGeometry, name: string, pos: [number, number, number], color: number = defaultColor) => {
+      const mat = new THREE.MeshStandardMaterial({
+        color: getColor(name, color),
+        roughness: 0.65,
+        metalness: 0.05,
       });
       const mesh = new THREE.Mesh(geometry, mat);
       mesh.position.set(...pos);
       mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
       bodyGroup.add(mesh);
       meshesRef.current[name] = mesh;
       return mesh;
     };
 
-    // Head
-    createPart(new THREE.SphereGeometry(0.24, 16, 16), 'Cabeza', [0, 1.8, 0]);
-    // Ojos (Eyes)
-    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Ojo Derecho', [0.08, 1.82, 0.2]);
-    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Ojo Izquierdo', [-0.08, 1.82, 0.2]);
-    // Neck
-    createPart(new THREE.CylinderGeometry(0.08, 0.09, 0.15, 12), 'Cuello', [0, 1.55, 0]);
-    // Torso - split into chest and abdomen
-    createPart(new THREE.CylinderGeometry(0.3, 0.28, 0.4, 16), 'Pecho', [0, 1.25, 0]);
-    createPart(new THREE.CylinderGeometry(0.28, 0.22, 0.4, 16), 'Abdomen', [0, 0.85, 0]);
-    // Espalda (back) - behind torso
-    createPart(new THREE.BoxGeometry(0.35, 0.7, 0.1), 'Espalda', [0, 1.05, -0.2]);
-    
-    // Shoulders
-    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Hombro Derecho', [0.38, 1.42, 0]);
-    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Hombro Izquierdo', [-0.38, 1.42, 0]);
-    // Arms
-    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.35, 12), 'Brazo Derecho', [0.45, 1.2, 0]);
-    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.35, 12), 'Brazo Izquierdo', [-0.45, 1.2, 0]);
+    // ===== HARD HAT (CASCO) =====
+    const helmetGeo = new THREE.SphereGeometry(0.28, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    const helmet = createPart(helmetGeo, 'Cabeza', [0, 1.92, 0], helmetColor);
+    helmet.rotation.x = -0.1;
+    // Brim
+    const brimGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.025, 24);
+    const brim = new THREE.Mesh(brimGeo, new THREE.MeshStandardMaterial({ color: helmetColor, roughness: 0.5 }));
+    brim.position.set(0, 1.78, 0);
+    brim.name = 'Cabeza';
+    bodyGroup.add(brim);
+    meshesRef.current['Casco_Brim'] = brim;
+
+    // ===== FACE =====
+    createPart(new THREE.SphereGeometry(0.22, 20, 20), 'Cabeza', [0, 1.72, 0.02], skinColor);
+    // Eyes (safety glasses)
+    const glassGeo = new THREE.BoxGeometry(0.28, 0.06, 0.04);
+    const glass = new THREE.Mesh(glassGeo, new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2, metalness: 0.6, transparent: true, opacity: 0.7 }));
+    glass.position.set(0, 1.76, 0.2);
+    glass.name = 'Ojo Derecho';
+    bodyGroup.add(glass);
+
+    // ===== NECK =====
+    createPart(new THREE.CylinderGeometry(0.08, 0.1, 0.12, 12), 'Cuello', [0, 1.55, 0], skinColor);
+
+    // ===== TORSO - HI-VIS VEST =====
+    // Chest (vest)
+    const chestGeo = new THREE.CylinderGeometry(0.32, 0.3, 0.38, 16);
+    createPart(chestGeo, 'Pecho', [0, 1.3, 0], vestColor);
+    // Reflective stripe on chest
+    const stripe1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.325, 0.305, 0.04, 16),
+      new THREE.MeshStandardMaterial({ color: vestStripe, roughness: 0.3, metalness: 0.4 })
+    );
+    stripe1.position.set(0, 1.2, 0);
+    bodyGroup.add(stripe1);
+    const stripe2 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.33, 0.315, 0.04, 16),
+      new THREE.MeshStandardMaterial({ color: vestStripe, roughness: 0.3, metalness: 0.4 })
+    );
+    stripe2.position.set(0, 1.38, 0);
+    bodyGroup.add(stripe2);
+
+    // Abdomen (vest continues)
+    createPart(new THREE.CylinderGeometry(0.3, 0.25, 0.35, 16), 'Abdomen', [0, 0.93, 0], vestColor);
+    // Espalda
+    createPart(new THREE.BoxGeometry(0.38, 0.65, 0.08), 'Espalda', [0, 1.12, -0.2], vestColor);
+
+    // Tool Belt
+    const toolBelt = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.27, 0.26, 0.08, 16),
+      new THREE.MeshStandardMaterial({ color: beltColor, roughness: 0.8 })
+    );
+    toolBelt.position.set(0, 0.76, 0);
+    bodyGroup.add(toolBelt);
+    // Tool pouch
+    const pouch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.12, 0.08),
+      new THREE.MeshStandardMaterial({ color: beltColor, roughness: 0.9 })
+    );
+    pouch.position.set(0.26, 0.72, 0.05);
+    bodyGroup.add(pouch);
+
+    // ===== SHOULDERS =====
+    createPart(new THREE.SphereGeometry(0.12, 14, 14), 'Hombro Derecho', [0.4, 1.46, 0], vestColor);
+    createPart(new THREE.SphereGeometry(0.12, 14, 14), 'Hombro Izquierdo', [-0.4, 1.46, 0], vestColor);
+
+    // ===== ARMS (short sleeves → skin) =====
+    createPart(new THREE.CylinderGeometry(0.08, 0.075, 0.3, 12), 'Brazo Derecho', [0.48, 1.25, 0], vestColor);
+    createPart(new THREE.CylinderGeometry(0.08, 0.075, 0.3, 12), 'Brazo Izquierdo', [-0.48, 1.25, 0], vestColor);
     // Elbows
-    createPart(new THREE.SphereGeometry(0.07, 10, 10), 'Codo Derecho', [0.45, 1.0, 0]);
-    createPart(new THREE.SphereGeometry(0.07, 10, 10), 'Codo Izquierdo', [-0.45, 1.0, 0]);
-    // Forearms
-    createPart(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 12), 'Antebrazo Derecho', [0.45, 0.88, 0]);
-    createPart(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 12), 'Antebrazo Izquierdo', [-0.45, 0.88, 0]);
-    // Hands
-    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Derecha', [0.45, 0.68, 0]);
-    createPart(new THREE.BoxGeometry(0.12, 0.15, 0.06), 'Mano Izquierda', [-0.45, 0.68, 0]);
-    // Dedos
-    createPart(new THREE.BoxGeometry(0.1, 0.06, 0.04), 'Dedos Mano Derecha', [0.45, 0.58, 0]);
-    createPart(new THREE.BoxGeometry(0.1, 0.06, 0.04), 'Dedos Mano Izquierda', [-0.45, 0.58, 0]);
+    createPart(new THREE.SphereGeometry(0.08, 12, 12), 'Codo Derecho', [0.48, 1.07, 0], skinColor);
+    createPart(new THREE.SphereGeometry(0.08, 12, 12), 'Codo Izquierdo', [-0.48, 1.07, 0], skinColor);
+    // Forearms (skin)
+    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.28, 12), 'Antebrazo Derecho', [0.48, 0.88, 0], skinColor);
+    createPart(new THREE.CylinderGeometry(0.07, 0.06, 0.28, 12), 'Antebrazo Izquierdo', [-0.48, 0.88, 0], skinColor);
 
-    // Hips
-    createPart(new THREE.SphereGeometry(0.09, 10, 10), 'Cadera Derecha', [0.16, 0.65, 0]);
-    createPart(new THREE.SphereGeometry(0.09, 10, 10), 'Cadera Izquierda', [-0.16, 0.65, 0]);
-    // Thighs
-    createPart(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 12), 'Muslo Derecho', [0.18, 0.5, 0]);
-    createPart(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 12), 'Muslo Izquierdo', [-0.18, 0.5, 0]);
-    // Knees
-    createPart(new THREE.SphereGeometry(0.08, 10, 10), 'Rodilla Derecha', [0.18, 0.32, 0]);
-    createPart(new THREE.SphereGeometry(0.08, 10, 10), 'Rodilla Izquierda', [-0.18, 0.32, 0]);
-    // Lower Legs
-    createPart(new THREE.CylinderGeometry(0.08, 0.06, 0.35, 12), 'Pierna Derecha', [0.18, 0.18, 0]);
-    createPart(new THREE.CylinderGeometry(0.08, 0.06, 0.35, 12), 'Pierna Izquierda', [-0.18, 0.18, 0]);
-    // Feet
-    createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Derecho', [0.18, 0.04, 0.08]);
-    createPart(new THREE.BoxGeometry(0.12, 0.08, 0.25), 'Pie Izquierdo', [-0.18, 0.04, 0.08]);
-    // Tobillos
-    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Tobillo Derecho', [0.18, 0.05, -0.04]);
-    createPart(new THREE.SphereGeometry(0.05, 8, 8), 'Tobillo Izquierdo', [-0.18, 0.05, -0.04]);
+    // ===== HANDS - WORK GLOVES =====
+    createPart(new THREE.BoxGeometry(0.13, 0.14, 0.07), 'Mano Derecha', [0.48, 0.7, 0], gloveColor);
+    createPart(new THREE.BoxGeometry(0.13, 0.14, 0.07), 'Mano Izquierda', [-0.48, 0.7, 0], gloveColor);
+    createPart(new THREE.BoxGeometry(0.11, 0.05, 0.05), 'Dedos Mano Derecha', [0.48, 0.6, 0], gloveColor);
+    createPart(new THREE.BoxGeometry(0.11, 0.05, 0.05), 'Dedos Mano Izquierda', [-0.48, 0.6, 0], gloveColor);
 
-    // Floor Grid
-    const grid = new THREE.GridHelper(4, 8, 0xe5e7eb, 0xf3f4f6);
-    grid.position.y = 0;
+    // ===== HIPS / PELVIS =====
+    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Cadera Derecha', [0.16, 0.68, 0], pantsColor);
+    createPart(new THREE.SphereGeometry(0.1, 12, 12), 'Cadera Izquierda', [-0.16, 0.68, 0], pantsColor);
+
+    // ===== LEGS - WORK PANTS =====
+    createPart(new THREE.CylinderGeometry(0.11, 0.1, 0.38, 14), 'Muslo Derecho', [0.18, 0.5, 0], pantsColor);
+    createPart(new THREE.CylinderGeometry(0.11, 0.1, 0.38, 14), 'Muslo Izquierdo', [-0.18, 0.5, 0], pantsColor);
+    // Knees (reinforced)
+    createPart(new THREE.SphereGeometry(0.09, 12, 12), 'Rodilla Derecha', [0.18, 0.32, 0], pantsColor);
+    createPart(new THREE.SphereGeometry(0.09, 12, 12), 'Rodilla Izquierda', [-0.18, 0.32, 0], pantsColor);
+    // Knee pads
+    const kneePadGeo = new THREE.BoxGeometry(0.09, 0.1, 0.06);
+    const kneePadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9 });
+    const kneePadR = new THREE.Mesh(kneePadGeo, kneePadMat);
+    kneePadR.position.set(0.18, 0.32, 0.09);
+    bodyGroup.add(kneePadR);
+    const kneePadL = new THREE.Mesh(kneePadGeo, kneePadMat.clone());
+    kneePadL.position.set(-0.18, 0.32, 0.09);
+    bodyGroup.add(kneePadL);
+
+    // Lower legs
+    createPart(new THREE.CylinderGeometry(0.09, 0.07, 0.3, 14), 'Pierna Derecha', [0.18, 0.16, 0], pantsColor);
+    createPart(new THREE.CylinderGeometry(0.09, 0.07, 0.3, 14), 'Pierna Izquierda', [-0.18, 0.16, 0], pantsColor);
+
+    // ===== ANKLES + SAFETY BOOTS =====
+    createPart(new THREE.CylinderGeometry(0.08, 0.09, 0.1, 12), 'Tobillo Derecho', [0.18, 0.05, 0], bootColor);
+    createPart(new THREE.CylinderGeometry(0.08, 0.09, 0.1, 12), 'Tobillo Izquierdo', [-0.18, 0.05, 0], bootColor);
+    // Boot body
+    createPart(new THREE.BoxGeometry(0.14, 0.1, 0.28), 'Pie Derecho', [0.18, 0.02, 0.06], bootColor);
+    createPart(new THREE.BoxGeometry(0.14, 0.1, 0.28), 'Pie Izquierdo', [-0.18, 0.02, 0.06], bootColor);
+    // Boot sole (rubber)
+    const soleMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 1.0 });
+    const soleGeo = new THREE.BoxGeometry(0.15, 0.03, 0.3);
+    const soleR = new THREE.Mesh(soleGeo, soleMat);
+    soleR.position.set(0.18, -0.04, 0.06);
+    bodyGroup.add(soleR);
+    const soleL = new THREE.Mesh(soleGeo, soleMat.clone());
+    soleL.position.set(-0.18, -0.04, 0.06);
+    bodyGroup.add(soleL);
+    // Steel toe cap
+    const toeMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.6 });
+    const toeGeo = new THREE.SphereGeometry(0.06, 8, 8, 0, Math.PI, 0, Math.PI * 0.5);
+    const toeR = new THREE.Mesh(toeGeo, toeMat);
+    toeR.position.set(0.18, 0.01, 0.18);
+    toeR.rotation.x = -Math.PI / 2;
+    bodyGroup.add(toeR);
+    const toeL = new THREE.Mesh(toeGeo, toeMat.clone());
+    toeL.position.set(-0.18, 0.01, 0.18);
+    toeL.rotation.x = -Math.PI / 2;
+    bodyGroup.add(toeL);
+
+    // Floor Grid (concrete look)
+    const grid = new THREE.GridHelper(4, 10, 0xd1d5db, 0xe5e7eb);
+    grid.position.y = -0.055;
     scene.add(grid);
 
     // Interaction Raycasting
@@ -140,11 +247,14 @@ const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) =
       if (currentHover !== hoveredName) {
         if (hoveredName && hoveredName !== selectedZone) {
           const m = meshesRef.current[hoveredName];
-          if (m) (m.material as THREE.MeshPhongMaterial).color.setHex(defaultColor);
+          if (m) (m.material as THREE.MeshStandardMaterial).color.setHex((m as any)._defaultColor || defaultColor);
         }
         if (currentHover && currentHover !== selectedZone) {
           const m = meshesRef.current[currentHover];
-          if (m) (m.material as THREE.MeshPhongMaterial).color.setHex(hoverColor);
+          if (m) {
+            (m as any)._defaultColor = (m.material as THREE.MeshStandardMaterial).color.getHex();
+            (m.material as THREE.MeshStandardMaterial).color.setHex(hoverColor);
+          }
         }
         hoveredName = currentHover;
       }
