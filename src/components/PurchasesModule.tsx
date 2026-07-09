@@ -601,7 +601,11 @@ export const PurchasesModule: React.FC = () => {
           <TrendingUp size={16} /> Ventas ({ventas.length})
         </button>
         <button onClick={() => setActiveTab('banco')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'banco' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-{/* Totals bar (Only for invoices) */}
+          <Database size={16} /> Banco de Precios
+        </button>
+      </div>
+
+      {/* Totals bar (Only for invoices) */}
       {activeTab !== 'banco' && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
@@ -763,13 +767,14 @@ export const PurchasesModule: React.FC = () => {
               </tbody>
             </table>
           </div>
-          </div>
-        </div>
+        )}
+      </div>
       )}
 
       {/* Modal OCR Result */}
       {ocrResult && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <Check size={20} className="text-green-500" /> Factura Procesada
