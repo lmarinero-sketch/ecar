@@ -1007,6 +1007,27 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                   onClick={async () => {
                     const doc = new jsPDF('p', 'pt', 'a4');
                     
+                    // ECAR Corporate Background (Diagonal bands)
+                    // Top Blue Band
+                    doc.setFillColor(11, 34, 64); // ECAR Blue
+                    doc.triangle(0, 0, 600, 0, 600, 100, 'F');
+                    doc.triangle(0, 0, 600, 100, 0, 160, 'F');
+
+                    // Top Red Band
+                    doc.setFillColor(210, 32, 39); // ECAR Red
+                    doc.triangle(0, 160, 600, 100, 600, 115, 'F');
+                    doc.triangle(0, 160, 600, 115, 0, 175, 'F');
+
+                    // Bottom Blue Band
+                    doc.setFillColor(11, 34, 64);
+                    doc.triangle(0, 780, 600, 700, 600, 842, 'F');
+                    doc.triangle(0, 780, 600, 842, 0, 842, 'F');
+
+                    // Bottom Red Band
+                    doc.setFillColor(210, 32, 39);
+                    doc.triangle(0, 765, 600, 685, 600, 700, 'F');
+                    doc.triangle(0, 765, 600, 700, 0, 780, 'F');
+                    
                     // Attempt to load ECAR logo
                     try {
                       const response = await fetch('/logoECAR.png');
@@ -1017,6 +1038,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                           reader.onloadend = () => resolve(reader.result as string);
                           reader.readAsDataURL(blob);
                         });
+                        // Draw white box for logo
+                        doc.setFillColor(255, 255, 255);
+                        doc.roundedRect(30, 30, 140, 60, 5, 5, 'F');
+                        
                         doc.addImage(base64, 'PNG', 40, 40, 120, 42);
                       }
                     } catch (e) {
@@ -1027,21 +1052,21 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor(11, 34, 64); // ECAR Blue
                     doc.setFontSize(22);
-                    doc.text("VALE DE COMBUSTIBLE Y LUBRICANTES", 40, 120);
+                    doc.text("VALE DE COMBUSTIBLE Y LUBRICANTES", 40, 220);
                     
                     // Red/Blue line separator
                     doc.setDrawColor(210, 32, 39); // ECAR Red
                     doc.setLineWidth(3);
-                    doc.line(40, 135, 300, 135);
+                    doc.line(40, 235, 300, 235);
                     doc.setDrawColor(11, 34, 64); // ECAR Blue
-                    doc.line(300, 135, 550, 135);
+                    doc.line(300, 235, 550, 235);
 
                     // Content
                     doc.setFontSize(12);
                     doc.setTextColor(50, 50, 50);
                     doc.setFont("helvetica", "normal");
                     
-                    const startY = 180;
+                    const startY = 280;
                     const lineSpacing = 28;
                     
                     doc.setFont("helvetica", "bold");
@@ -1075,7 +1100,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 5);
 
                     // Signature Section
-                    const sigY = 400;
+                    const sigY = 500;
                     doc.setFontSize(16);
                     doc.setFont("helvetica", "bold");
                     doc.setTextColor(11, 34, 64);
