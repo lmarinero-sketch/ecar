@@ -13,17 +13,18 @@ export default {
       },
       colors: {
         ecar: {
-          blue: '#115C9C',
-          blueDark: '#0B477D',
-          blueLight: '#EBF3FB',
-          blueMuted: '#3B82C4',
-          red: '#EF4444',
-          redLight: '#FEE2E2',
+          blue: '#0B2240',      // Corporate Navy Blue
+          blueDark: '#07162A',
+          blueLight: '#E5E8EC',
+          blueMuted: '#1A3F70',
+          red: '#D22027',       // Corporate Red
+          redDark: '#A6191E',
+          redLight: '#FBE8E9',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          secondary: '#F8FAFC',
-          tertiary: '#F1F5F9',
+          secondary: '#F4F6F8', // Very light corporate gray
+          tertiary: '#EAECEF',
         }
       },
       backgroundImage: {
