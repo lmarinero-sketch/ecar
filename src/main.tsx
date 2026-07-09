@@ -25,6 +25,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/checkin/:vehicleId" element={<VehicleCheckInWrapper />} />
         <Route path="/presentacion-mesa-tecnica" element={<App />} />
         <Route path="/tracking" element={<App />} />
+        <Route path="/fuel-request" element={<App />} />
+        <Route path="/solicitud-combustible" element={<App />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
