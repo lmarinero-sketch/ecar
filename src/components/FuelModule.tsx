@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, MapPin, Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
@@ -14,7 +16,7 @@ const FUEL_TYPES = ['Diesel V-Power','Diesel - EVOLUX','Nafta','Aceite'];
 
 const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-type Tab = 'loads' | 'batan' | 'reconciliation' | 'fleet';
+type Tab = 'loads' | 'requests' | 'batan' | 'reconciliation' | 'fleet' | 'dashboard';
 
 export const FuelModule: React.FC = () => {
   const [tab, setTab] = useState<Tab>('loads');
@@ -36,6 +38,7 @@ export const FuelModule: React.FC = () => {
   const { data: reconciliation = [] } = useFuelReconciliation();
   const { data: projects = [] } = useProjects();
   const createLoad = useCreateFuelLoad();
+  const updateLoad = useUpdateFuelLoad();
   const createBatan = useCreateFuelBatanMovement();
 
   const now = new Date();
@@ -46,7 +49,9 @@ export const FuelModule: React.FC = () => {
   const batanBalance = batanMovements.length > 0 ? (batanMovements[0].balance_after || 0) : 0;
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: 'loads', label: 'Cargas', icon: Fuel },
+    { id: 'requests', label: 'Autorizaciones', icon: ClipboardCheck },
+    { id: 'loads', label: 'Cargas Realizadas', icon: Fuel },
+    { id: 'dashboard', label: 'Dashboard', icon: PieChart },
     { id: 'batan', label: 'Batán', icon: Droplets },
     { id: 'reconciliation', label: 'Conciliación', icon: FileCheck },
     { id: 'fleet', label: 'Flota', icon: Truck },
@@ -83,7 +88,9 @@ export const FuelModule: React.FC = () => {
           </div>
 
           {/* Content */}
+          {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} />}
           {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} />}
+          {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} />}
           {tab === 'batan' && <BatanTab movements={batanMovements} createBatan={createBatan} />}
           {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
           {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
@@ -159,7 +166,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-gray-800">Registro de Cargas</h3>
-        <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+        <button onClick={() => setShowForm(!showForm)} className="bg-sky-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-sky-700 transition-all">
           {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Cancelar' : 'Nueva Carga'}
         </button>
       </div>
@@ -170,7 +177,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-bold text-gray-500">Fecha</label>
-              <input type="date" value={form.load_date || ''} onChange={e => handleDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue" />
+              <input type="date" value={form.load_date || ''} onChange={e => handleDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Día</label>
@@ -260,7 +267,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
           </div>
-          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters} className="bg-ecar-blue text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters} className="bg-sky-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-sky-700 transition-all disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
         </div>
@@ -582,6 +589,331 @@ const Batan3dTank: React.FC<{ balance: number; capacity?: number }> = ({ balance
           {balance.toLocaleString('es-AR')} L / {capacity.toLocaleString('es-AR')} L
         </p>
       </div>
+    </div>
+  );
+};
+
+
+/* ── Requests Tab ── */
+const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; updateLoad: any; createLoad: any; projects: any[] }> = ({ loads, vehicles, updateLoad, createLoad, projects }) => {
+  const { user, isAdmin, profile } = useAuth();
+  const [showReqForm, setShowReqForm] = useState(false);
+  const [reqForm, setReqForm] = useState({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '' });
+  
+  // Pending authorizations
+  const pendingRequests = loads.filter(l => l.workflow_status === 'requested');
+  // Pending loads (authorized but not completed)
+  const authorizedRequests = loads.filter(l => l.workflow_status === 'authorized');
+
+  const handleRequestSubmit = async () => {
+    if (!reqForm.vehicle_code || !reqForm.requested_liters) return;
+    const v = vehicles.find(x => x.code === reqForm.vehicle_code);
+    const d = new Date();
+    await createLoad.mutateAsync({
+      load_number: `REQ-${String(loads.length + 1).padStart(4, '0')}`,
+      load_date: d.toISOString().split('T')[0],
+      month: MONTHS_ES[d.getMonth()],
+      year: d.getFullYear(),
+      day_of_week: DAYS_ES[d.getDay()],
+      vehicle_code: reqForm.vehicle_code,
+      vehicle_id: v?.id,
+      vehicle_description: v?.description,
+      plate: v?.plate,
+      vehicle_type: v?.vehicle_type,
+      fuel_type: v?.preferred_fuel,
+      requested_liters: parseFloat(reqForm.requested_liters) || 0,
+      odometer_km: parseInt(reqForm.odometer_km) || null,
+      project_name: reqForm.project_name || null,
+      observations: reqForm.observations,
+      requested_by: user?.email || 'Operario',
+      workflow_status: 'requested',
+      created_by: 'web'
+    });
+    setReqForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '' });
+    setShowReqForm(false);
+  };
+
+  const handleAuthorize = async (id: string) => {
+    if (!profile?.dni || !profile?.signature_data) {
+      alert("Debes configurar tu firma digital y DNI en tu Perfil antes de poder autorizar cargas.");
+      return;
+    }
+    const signature = `Firmado por: ${profile.full_name} (DNI: ${profile.dni}) - ${new Date().toLocaleString()}`;
+    await updateLoad.mutateAsync({
+      id,
+      workflow_status: 'authorized',
+      authorized_by: profile.full_name,
+      authorized_at: new Date().toISOString(),
+      supervisor_signature: signature
+    });
+  };
+
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [completeForm, setCompleteForm] = useState({ liters: '', price_per_liter: '', total_amount: '' });
+
+  const handleComplete = async () => {
+    if (!completingId || !completeForm.liters) return;
+    await updateLoad.mutateAsync({
+      id: completingId,
+      liters: parseFloat(completeForm.liters) || 0,
+      price_per_liter: parseFloat(completeForm.price_per_liter) || 0,
+      total_amount: parseFloat(completeForm.total_amount) || 0,
+      workflow_status: 'completed'
+    });
+    setCompletingId(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="font-bold text-gray-800">Autorizaciones de Carga</h3>
+        <button onClick={() => setShowReqForm(!showReqForm)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
+          {showReqForm ? <X size={16} /> : <Plus size={16} />} Nueva Solicitud
+        </button>
+      </div>
+
+      {showReqForm && (
+        <div className="bg-white border-2 border-orange-200 rounded-xl p-5 shadow-lg space-y-4">
+          <h4 className="font-bold text-gray-700 text-sm">📝 Solicitud de Carga (Operario)</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-500">Vehículo</label>
+              <select value={reqForm.vehicle_code} onChange={e => setReqForm({ ...reqForm, vehicle_code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">Seleccioná...</option>
+                {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Litros Solicitados</label>
+              <input type="number" step="0.1" value={reqForm.requested_liters} onChange={e => setReqForm({ ...reqForm, requested_liters: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Odómetro (Km) / Horómetro (Hs)</label>
+              <input type="number" value={reqForm.odometer_km} onChange={e => setReqForm({ ...reqForm, odometer_km: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Obra / CC</label>
+              <select value={reqForm.project_name} onChange={e => setReqForm({ ...reqForm, project_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">Uso General</option>
+                {projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500">Motivo / Notas</label>
+            <input value={reqForm.observations} onChange={e => setReqForm({ ...reqForm, observations: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej: Viaje a obra interior..." />
+          </div>
+          <button onClick={handleRequestSubmit} disabled={!reqForm.vehicle_code || !reqForm.requested_liters} className="w-full bg-orange-600 text-white py-2 rounded-lg font-bold text-sm shadow-md disabled:opacity-50">Enviar Solicitud a Gerencia</button>
+        </div>
+      )}
+
+      {/* Pending Auth */}
+      <div>
+        <h4 className="font-bold text-gray-600 mb-3 text-sm flex items-center gap-2"><Info size={16} className="text-orange-500" /> Pendientes de Autorización (Gerencia)</h4>
+        {pendingRequests.length === 0 ? <p className="text-sm text-gray-400 italic">No hay solicitudes pendientes.</p> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pendingRequests.map(r => (
+              <div key={r.id} className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm relative">
+                <div className="text-xs font-bold text-orange-600 mb-1">{r.vehicle_code} - {r.vehicle_description}</div>
+                <div className="text-sm">Solicita: <span className="font-bold">{r.requested_by}</span></div>
+                <div className="text-sm">Litros: <span className="font-mono font-bold text-lg">{r.requested_liters} L</span></div>
+                <div className="text-xs text-gray-500 mt-1 line-clamp-1">{r.observations || 'Sin notas'}</div>
+                {isAdmin ? (
+                  <button onClick={() => handleAuthorize(r.id)} className="mt-3 w-full bg-orange-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-orange-700">
+                    <Check size={14} /> Autorizar con Firma
+                  </button>
+                ) : (
+                  <div className="mt-3 w-full bg-orange-100 text-orange-700 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                    Esperando Autorización
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Authorized - Pending Load */}
+      <div>
+        <h4 className="font-bold text-gray-600 mb-3 text-sm flex items-center gap-2"><Check size={16} className="text-green-500" /> Autorizadas - Listas para Cargar</h4>
+        {authorizedRequests.length === 0 ? <p className="text-sm text-gray-400 italic">No hay cargas autorizadas pendientes.</p> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {authorizedRequests.map(r => (
+              <div key={r.id} className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="text-xs font-bold text-green-700">{r.vehicle_code}</div>
+                  <div className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-mono">Autorizado</div>
+                </div>
+                <div className="text-sm">Litros autorizados: <span className="font-mono font-bold">{r.requested_liters} L</span></div>
+                <div className="text-[10px] text-gray-500 font-mono mt-1 bg-white p-1 rounded border border-green-100 line-clamp-2">
+                  {r.supervisor_signature}
+                </div>
+                <button 
+                  onClick={() => {
+                    const doc = new jsPDF();
+                    doc.setFontSize(20);
+                    doc.text("Vale de Combustible / Lubricantes", 20, 20);
+                    doc.setFontSize(12);
+                    doc.text(`Fecha Solicitud: ${new Date(r.load_date).toLocaleDateString()}`, 20, 35);
+                    doc.text(`Vehículo / Máquina: ${r.vehicle_code}`, 20, 45);
+                    doc.text(`Odómetro / Horómetro: ${r.odometer_km || '-'}`, 20, 55);
+                    doc.text(`Litros Solicitados: ${r.requested_liters} L`, 20, 65);
+                    doc.text(`Solicitante: ${r.requested_by}`, 20, 75);
+                    doc.text(`Centro de Costo: ${r.project_name || 'Uso General'}`, 20, 85);
+                    
+                    doc.setFontSize(14);
+                    doc.text("Autorización de Gerencia", 20, 110);
+                    doc.setFontSize(10);
+                    doc.text(r.supervisor_signature || '', 20, 120);
+                    
+                    if (profile?.signature_data) {
+                      try {
+                        doc.addImage(profile.signature_data, 'PNG', 20, 130, 60, 20);
+                      } catch (e) {
+                        console.error("Error embedding signature", e);
+                      }
+                    }
+                    
+                    doc.save(`Vale_Combustible_${r.vehicle_code}_${r.id.substring(0,6)}.pdf`);
+                  }}
+                  className="mt-2 text-xs font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1"
+                >
+                  <Download size={14} /> Descargar PDF Autorizado
+                </button>
+                {completingId === r.id ? (
+                  <div className="mt-3 bg-white p-2 rounded-lg border border-green-200 space-y-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-gray-500">Lts Reales</label>
+                        <input type="number" step="0.1" value={completeForm.liters} onChange={e => { const l = parseFloat(e.target.value) || 0; setCompleteForm({ ...completeForm, liters: e.target.value, total_amount: String(l * (parseFloat(completeForm.price_per_liter) || 0)) }); }} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-gray-500">Monto Final</label>
+                        <input type="number" step="0.1" value={completeForm.total_amount} onChange={e => setCompleteForm({ ...completeForm, total_amount: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
+                      </div>
+                    </div>
+                    <label className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors border border-gray-300">
+                      <Camera size={14} /> Foto del Ticket
+                      <input type="file" accept="image/*" capture="environment" className="hidden" />
+                    </label>
+                    <div className="flex gap-1">
+                      <button onClick={handleComplete} className="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold">Cargar</button>
+                      <button onClick={() => setCompletingId(null)} className="flex-1 bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold">Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setCompletingId(r.id); setCompleteForm({ liters: String(r.requested_liters || 0), price_per_liter: '', total_amount: '' }); }} className="mt-3 w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-green-700 shadow-sm">
+                    <Fuel size={14} /> Completar Carga Real
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ── Dashboard Tab ── */
+const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }> = ({ loads, vehicles }) => {
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  
+  const completedLoads = loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status);
+
+  // Stats
+  const totalLitersAll = completedLoads.reduce((s, l) => s + (l.liters || 0), 0);
+  
+  // Group by month
+  const loadsByMonth = completedLoads.reduce((acc, load) => {
+    const k = `${load.month} ${load.year}`;
+    if (!acc[k]) acc[k] = { name: k, liters: 0, amount: 0, count: 0 };
+    acc[k].liters += (load.liters || 0);
+    acc[k].amount += (load.total_amount || 0);
+    acc[k].count += 1;
+    return acc;
+  }, {} as Record<string, any>);
+  const monthlyData = Object.values(loadsByMonth).reverse(); // Assuming descending order from loads
+
+  // Selected vehicle data
+  const vehicleLoads = selectedVehicle ? completedLoads.filter(l => l.vehicle_code === selectedVehicle) : [];
+  const vTotalLiters = vehicleLoads.reduce((s, l) => s + (l.liters || 0), 0);
+  const vAvgLiters = vehicleLoads.length ? vTotalLiters / vehicleLoads.length : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-4 items-center">
+        <h3 className="font-bold text-gray-800">Dashboard de Flota</h3>
+        <select value={selectedVehicle} onChange={e => setSelectedVehicle(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white min-w-[200px]">
+          <option value="">Toda la flota (Global)</option>
+          {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
+        </select>
+      </div>
+
+      {!selectedVehicle ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+              <p className="text-xs font-bold text-gray-500 uppercase">Litros Totales Históricos</p>
+              <p className="text-2xl font-black text-sky-600 font-mono mt-1">{totalLitersAll.toLocaleString('es-AR')} L</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+              <p className="text-xs font-bold text-gray-500 uppercase">Cargas Realizadas</p>
+              <p className="text-2xl font-black text-emerald-600 font-mono mt-1">{completedLoads.length}</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+              <p className="text-xs font-bold text-gray-500 uppercase">Litros Mes Actual</p>
+              <p className="text-2xl font-black text-purple-600 font-mono mt-1">
+                {monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].liters.toLocaleString('es-AR') : 0} L
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[300px]">
+            <h4 className="font-bold text-gray-700 text-sm mb-4">Evolución de Consumo (Litros por Mes)</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" tick={{fontSize: 12}} />
+                <YAxis tick={{fontSize: 12}} />
+                <RechartsTooltip formatter={(value: number) => [`${value.toLocaleString('es-AR')} L`, 'Litros']} />
+                <Bar dataKey="liters" fill="#0284c7" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-sky-500">
+              <p className="text-xs font-bold text-gray-500 uppercase">Última Carga</p>
+              <p className="text-xl font-bold text-gray-800 mt-1">{vehicleLoads[0] ? new Date(vehicleLoads[0].load_date).toLocaleDateString('es-AR') : 'N/A'}</p>
+              {vehicleLoads[0] && <p className="text-xs text-gray-500 mt-1">{vehicleLoads[0].liters} L - {vehicleLoads[0].odometer_km ? `${vehicleLoads[0].odometer_km} km` : ''}</p>}
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-orange-500">
+              <p className="text-xs font-bold text-gray-500 uppercase">Carga Promedio</p>
+              <p className="text-xl font-bold text-gray-800 mt-1">{vAvgLiters.toLocaleString('es-AR', {maximumFractionDigits:1})} L</p>
+            </div>
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-emerald-500">
+              <p className="text-xs font-bold text-gray-500 uppercase">Cargas Totales (Vehículo)</p>
+              <p className="text-xl font-bold text-gray-800 mt-1">{vehicleLoads.length}</p>
+            </div>
+          </div>
+          
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[300px]">
+            <h4 className="font-bold text-gray-700 text-sm mb-4">Historial Reciente de Cargas</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={[...vehicleLoads].reverse().slice(-10)} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="load_date" tick={{fontSize: 10}} tickFormatter={v => new Date(v).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'})} />
+                <YAxis tick={{fontSize: 12}} />
+                <RechartsTooltip labelFormatter={v => new Date(v).toLocaleDateString('es-AR')} formatter={(value: number) => [`${value} L`, 'Litros']} />
+                <Line type="monotone" dataKey="liters" stroke="#ea580c" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

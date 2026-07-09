@@ -14,6 +14,7 @@ import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 import { TutorialPanel } from './TutorialPanel';
 import { GlobalModal } from './GlobalModal';
+import { UserProfileModal } from './UserProfileModal';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
@@ -171,6 +172,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { profile, signOut, changePassword, hasModule, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const prevModule = useRef(activeModule);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -321,7 +323,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           )}
 
           {/* User info */}
-          <div className={`flex items-center ${expanded ? 'gap-2.5 px-1.5' : 'justify-center'} mb-2`}>
+          <div 
+            onClick={() => setShowProfileModal(true)}
+            className={`flex items-center ${expanded ? 'gap-2.5 px-1.5' : 'justify-center'} mb-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors`}
+            title="Mi Perfil"
+          >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ecar-blue/10 to-ecar-blue/20 flex items-center justify-center text-ecar-blue text-[11px] font-bold shrink-0 ring-1 ring-ecar-blue/10">
               {profile?.full_name?.charAt(0) || '?'}
             </div>
@@ -428,7 +434,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Password Change Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -507,6 +513,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           </div>
         </div>
+      )}
+
+      {/* User Profile Modal */}
+      {showProfileModal && (
+        <UserProfileModal onClose={() => setShowProfileModal(false)} />
       )}
 
       {/* Global Modals */}

@@ -1,13 +1,154 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2 } from 'lucide-react';
+import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { useModalStore } from '../store/useModalStore';
 
-type InvoiceTab = 'compras' | 'ventas';
+type InvoiceTab = 'compras' | 'ventas' | 'banco';
+
+const BancoPreciosTab: React.FC = () => {
+  const { data: resources = [], isLoading } = useBudgetResources();
+  const createResource = useCreateBudgetResource();
+  const updateResource = useUpdateBudgetResource();
+  const deleteResource = useDeleteBudgetResource();
+  
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  const [form, setForm] = useState({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 });
+
+  const filtered = resources.filter((r: any) => 
+    (filterType === 'all' || r.resource_type === filterType) &&
+    r.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSave = async () => {
+    if (editItem) {
+      await updateResource.mutateAsync({ id: editItem.id, ...form });
+    } else {
+      await createResource.mutateAsync(form);
+    }
+    setShowForm(false);
+    setEditItem(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if(window.confirm('¿Eliminar este insumo del Banco de Precios?')) {
+      await deleteResource.mutateAsync(id);
+    }
+  };
+
+  const openEdit = (r: any) => {
+    setEditItem(r);
+    setForm({ name: r.name, resource_type: r.resource_type, unit: r.unit, unit_price_ars: r.unit_price_ars });
+    setShowForm(true);
+  };
+
+  const formatARS = (val: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val);
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex flex-wrap gap-3 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div className="flex items-center gap-3 flex-1 min-w-[300px]">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input type="text" placeholder="Buscar en el banco de precios..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm" />
+          </div>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50">
+            <option value="all">Todos los rubros</option>
+            <option value="material">Materiales</option>
+            <option value="labor">Mano de Obra</option>
+            <option value="equipment">Equipos</option>
+            <option value="subcontract">Subcontratos</option>
+          </select>
+        </div>
+        <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
+          <Plus size={16} /> Nuevo Insumo
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+            <tr>
+              <th className="px-4 py-3">Tipo</th>
+              <th className="px-4 py-3">Descripción</th>
+              <th className="px-4 py-3">Unidad</th>
+              <th className="px-4 py-3 text-right">Precio Unitario</th>
+              <th className="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {isLoading ? (
+              <tr><td colSpan={5} className="text-center py-8"><Loader2 className="animate-spin mx-auto text-gray-400" /></td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={5} className="text-center py-8 text-gray-400">No hay insumos registrados.</td></tr>
+            ) : filtered.map((r: any) => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 text-xs font-bold text-gray-500 uppercase">{r.resource_type === 'material' ? 'Material' : r.resource_type === 'labor' ? 'Mano Obra' : r.resource_type === 'equipment' ? 'Equipo' : 'Subcontrato'}</td>
+                <td className="px-4 py-3 font-medium">{r.name}</td>
+                <td className="px-4 py-3 text-sm text-gray-500">{r.unit}</td>
+                <td className="px-4 py-3 text-right font-mono font-bold text-ecar-blue">{formatARS(r.unit_price_ars)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-center gap-2">
+                    <button onClick={() => openEdit(r)} className="p-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100"><Pencil size={14} /></button>
+                    <button onClick={() => handleDelete(r.id)} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100"><Trash2 size={14} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-lg">{editItem ? 'Editar Insumo' : 'Nuevo Insumo'}</h3>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:bg-gray-100 p-1 rounded-md"><X size={20} /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Tipo de Recurso</label>
+                <select value={form.resource_type} onChange={e => setForm({...form, resource_type: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50">
+                  <option value="material">Material</option>
+                  <option value="labor">Mano de Obra</option>
+                  <option value="equipment">Equipo</option>
+                  <option value="subcontract">Subcontrato</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Descripción</label>
+                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Ej: Cemento Loma Negra 50kg" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Unidad</label>
+                  <input type="text" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="bl, m2, m3, un" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Precio Unitario ($)</label>
+                  <input type="number" step="0.01" value={form.unit_price_ars || ''} onChange={e => setForm({...form, unit_price_ars: parseFloat(e.target.value) || 0})} className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 font-bold text-gray-600 bg-gray-100 rounded-lg text-sm">Cancelar</button>
+              <button onClick={handleSave} disabled={createResource.isPending || updateResource.isPending || !form.name} className="px-4 py-2 font-bold text-white bg-ecar-blue hover:bg-blue-800 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2">
+                <Check size={16} /> Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const PurchasesModule: React.FC = () => {
   const queryClient = useQueryClient();
@@ -356,7 +497,7 @@ export const PurchasesModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs: Compras / Ventas */}
+      {/* Tabs: Compras / Ventas / Banco */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
         <button onClick={() => setActiveTab('compras')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <TrendingDown size={16} /> Compras ({compras.length})
@@ -364,10 +505,9 @@ export const PurchasesModule: React.FC = () => {
         <button onClick={() => setActiveTab('ventas')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'ventas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <TrendingUp size={16} /> Ventas ({ventas.length})
         </button>
-      </div>
-
-      {/* Totals bar */}
-      {currentList.length > 0 && (
+        <button onClick={() => setActiveTab('banco')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'banco' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+{/* Totals bar (Only for invoices) */}
+      {activeTab !== 'banco' && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
             <p className="text-xs text-gray-400 font-bold uppercase">Neto Gravado</p>
@@ -384,8 +524,11 @@ export const PurchasesModule: React.FC = () => {
         </div>
       )}
 
-      {/* Invoices table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Main Content */}
+      {activeTab === 'banco' ? (
+        <BancoPreciosTab />
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
           <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
           <div className="flex items-center gap-2 flex-wrap">
@@ -525,13 +668,13 @@ export const PurchasesModule: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal OCR Result */}
       {ocrResult && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                 <Check size={20} className="text-green-500" /> Factura Procesada

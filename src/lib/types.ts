@@ -8,6 +8,8 @@ export type Profile = {
   role: 'admin' | 'colaborador';
   allowed_modules: string[];
   avatar_url: string | null;
+  dni?: string | null;
+  signature_data?: string | null;
   created_at: string;
 };
 
@@ -1392,6 +1394,13 @@ export type FuelLoad = {
   batan_balance_after: number | null;
   created_at: string;
   created_by: string;
+  workflow_status?: 'requested' | 'authorized' | 'completed' | 'rejected';
+  requested_liters?: number | null;
+  requested_by?: string | null;
+  authorized_by?: string | null;
+  authorized_at?: string | null;
+  supervisor_signature?: string | null;
+  ticket_photo_url?: string | null;
   // Joined
   vehicle?: FuelVehicle | null;
 };
