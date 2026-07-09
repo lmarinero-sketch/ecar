@@ -1004,30 +1004,104 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                   {r.supervisor_signature}
                 </div>
                 <button 
-                  onClick={() => {
-                    const doc = new jsPDF();
-                    doc.setFontSize(20);
-                    doc.text("Vale de Combustible / Lubricantes", 20, 20);
+                  onClick={async () => {
+                    const doc = new jsPDF('p', 'pt', 'a4');
+                    
+                    // Attempt to load ECAR logo
+                    try {
+                      const response = await fetch('/logoECAR.png');
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const base64 = await new Promise<string>((resolve) => {
+                          const reader = new FileReader();
+                          reader.onloadend = () => resolve(reader.result as string);
+                          reader.readAsDataURL(blob);
+                        });
+                        doc.addImage(base64, 'PNG', 40, 40, 120, 42);
+                      }
+                    } catch (e) {
+                      console.warn("No se pudo cargar el logo para el PDF", e);
+                    }
+
+                    // Header formatting
+                    doc.setFont("helvetica", "bold");
+                    doc.setTextColor(11, 34, 64); // ECAR Blue
+                    doc.setFontSize(22);
+                    doc.text("VALE DE COMBUSTIBLE Y LUBRICANTES", 40, 120);
+                    
+                    // Red/Blue line separator
+                    doc.setDrawColor(210, 32, 39); // ECAR Red
+                    doc.setLineWidth(3);
+                    doc.line(40, 135, 300, 135);
+                    doc.setDrawColor(11, 34, 64); // ECAR Blue
+                    doc.line(300, 135, 550, 135);
+
+                    // Content
                     doc.setFontSize(12);
-                    doc.text(`Fecha Solicitud: ${new Date(r.load_date).toLocaleDateString()}`, 20, 35);
-                    doc.text(`Vehículo / Máquina: ${r.vehicle_code}`, 20, 45);
-                    doc.text(`Odómetro / Horómetro: ${r.odometer_km || '-'}`, 20, 55);
-                    doc.text(`Litros Solicitados: ${r.requested_liters} L`, 20, 65);
-                    doc.text(`Solicitante: ${r.requested_by}`, 20, 75);
-                    doc.text(`Centro de Costo: ${r.project_name || 'Uso General'}`, 20, 85);
+                    doc.setTextColor(50, 50, 50);
+                    doc.setFont("helvetica", "normal");
                     
-                    doc.setFontSize(14);
-                    doc.text("Autorización de Gerencia", 20, 110);
-                    doc.setFontSize(10);
-                    doc.text(r.supervisor_signature || '', 20, 120);
+                    const startY = 180;
+                    const lineSpacing = 28;
                     
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Fecha Solicitud:", 40, startY);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(new Date(r.load_date).toLocaleDateString(), 140, startY);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Vehículo / Máquina:", 40, startY + lineSpacing);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`${r.vehicle_code} - ${r.vehicle_description || ''}`, 170, startY + lineSpacing);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Odómetro / Horómetro:", 40, startY + lineSpacing * 2);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(String(r.odometer_km || '-'), 190, startY + lineSpacing * 2);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Litros Solicitados:", 40, startY + lineSpacing * 3);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`${r.requested_liters} L`, 160, startY + lineSpacing * 3);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Solicitante:", 40, startY + lineSpacing * 4);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(r.requested_by || '', 120, startY + lineSpacing * 4);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Centro de Costo / Obra:", 40, startY + lineSpacing * 5);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 5);
+
+                    // Signature Section
+                    const sigY = 400;
+                    doc.setFontSize(16);
+                    doc.setFont("helvetica", "bold");
+                    doc.setTextColor(11, 34, 64);
+                    doc.text("Autorización de Gerencia", 40, sigY);
+                    
+                    doc.setFontSize(12);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(60, 60, 60);
+                    
+                    const sigText = r.supervisor_signature || '';
+                    const splitText = doc.splitTextToSize(sigText, 500);
+                    doc.text(splitText, 40, sigY + 25);
+
                     if (profile?.signature_data) {
                       try {
-                        doc.addImage(profile.signature_data, 'PNG', 20, 130, 60, 20);
+                        // Very large signature layout
+                        doc.addImage(profile.signature_data, 'PNG', 40, sigY + 45, 180, 60);
                       } catch (e) {
                         console.error("Error embedding signature", e);
                       }
                     }
+
+                    // Footer
+                    doc.setFontSize(9);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`ID Sistema: ${r.id}`, 40, 800);
                     
                     doc.save(`Vale_Combustible_${r.vehicle_code}_${r.id.substring(0,6)}.pdf`);
                   }}
