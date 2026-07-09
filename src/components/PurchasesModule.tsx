@@ -4,8 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
-import { useImplementationStore } from '../store/useImplementationStore';
 import { useModalStore } from '../store/useModalStore';
+import * as XLSX from 'xlsx';
 
 type InvoiceTab = 'compras' | 'ventas' | 'banco';
 
@@ -20,6 +20,8 @@ const BancoPreciosTab: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [form, setForm] = useState({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 });
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<{created: number, updated: number} | null>(null);
 
   const filtered = resources.filter((r: any) => 
     (filterType === 'all' || r.resource_type === filterType) &&
@@ -48,6 +50,78 @@ const BancoPreciosTab: React.FC = () => {
     setShowForm(true);
   };
 
+  const handleDownloadTemplate = () => {
+    const data = [
+      { Tipo: 'material', Descripcion: 'Cemento Loma Negra 50kg', Unidad: 'bl', Precio_Unitario: 8500 },
+      { Tipo: 'labor', Descripcion: 'Oficial Albañil', Unidad: 'hs', Precio_Unitario: 4500 }
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "BancoPrecios");
+    XLSX.writeFile(wb, "Plantilla_Banco_Precios.xlsx");
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsImporting(true);
+    setImportSummary(null);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        let created = 0;
+        let updated = 0;
+
+        for (const row of data as any[]) {
+          const type = row.Tipo || 'material';
+          const name = row.Descripcion || row.Descripción;
+          const unit = row.Unidad || 'un';
+          const price = parseFloat(row.Precio_Unitario) || 0;
+
+          if (!name) continue;
+
+          // Find if exists
+          const existing = resources.find((r: any) => r.name.toLowerCase() === name.toLowerCase());
+
+          if (existing) {
+            await updateResource.mutateAsync({
+              id: existing.id,
+              resource_type: type,
+              name: name,
+              unit: unit,
+              unit_price_ars: price
+            });
+            updated++;
+          } else {
+            await createResource.mutateAsync({
+              resource_type: type,
+              name: name,
+              unit: unit,
+              unit_price_ars: price
+            });
+            created++;
+          }
+        }
+        setImportSummary({ created, updated });
+      } catch (error) {
+        console.error("Error importing excel:", error);
+        alert("Ocurrió un error al importar el archivo Excel.");
+      } finally {
+        setIsImporting(false);
+        e.target.value = ''; // reset input
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const formatARS = (val: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val);
 
   return (
@@ -66,10 +140,31 @@ const BancoPreciosTab: React.FC = () => {
             <option value="subcontract">Subcontratos</option>
           </select>
         </div>
-        <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
-          <Plus size={16} /> Nuevo Insumo
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={handleDownloadTemplate} className="text-gray-500 hover:text-gray-700 font-medium text-sm flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg transition-colors">
+            <Download size={16} /> Plantilla
+          </button>
+          <label className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors cursor-pointer">
+            {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            {isImporting ? 'Importando...' : 'Importar Excel'}
+            <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
+          </label>
+          <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material', unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
+            <Plus size={16} /> Nuevo Insumo
+          </button>
+        </div>
       </div>
+
+      {importSummary && (
+        <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-xl flex items-start gap-3">
+          <Check className="text-green-600 mt-0.5" size={20} />
+          <div>
+            <h4 className="font-bold">Importación exitosa</h4>
+            <p className="text-sm text-green-700">Se actualizaron {importSummary.updated} insumos y se crearon {importSummary.created} nuevos.</p>
+          </div>
+          <button onClick={() => setImportSummary(null)} className="ml-auto text-green-600 hover:bg-green-100 p-1 rounded-md"><X size={16} /></button>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full text-left border-collapse">
