@@ -7,6 +7,7 @@ import { VehicleCheckInPage } from './components/VehicleCheckInPage';
 import { VehicleTrackingPage } from './components/tracking/VehicleTrackingPage';
 import { useAppStore } from './store/useStore';
 import { MesaTecnicaPresentation } from './components/MesaTecnicaPresentation';
+import { FuelRequestPage } from './components/FuelRequestPage';
 
 // Module imports
 import { BiDashboard } from './components/BiDashboard';
@@ -57,8 +58,11 @@ const queryClient = new QueryClient({
 });
 
 // Detect public QR routes before auth
-function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | null {
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | { type: 'fuel_request' } | null {
   const path = window.location.pathname;
+  if (path === '/fuel-request' || path === '/fuel-request/' || path === '/solicitud-combustible' || path === '/solicitud-combustible/') {
+    return { type: 'fuel_request' };
+  }
   if (path === '/tracking' || path === '/tracking/') {
     return { type: 'tracking' };
   }
@@ -84,6 +88,9 @@ function AppContent() {
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
   if (publicRoute) {
+    if (publicRoute.type === 'fuel_request') {
+      return <FuelRequestPage />;
+    }
     if (publicRoute.type === 'tracking') {
       return <VehicleTrackingPage />;
     }

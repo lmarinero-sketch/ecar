@@ -600,10 +600,105 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const [showReqForm, setShowReqForm] = useState(false);
   const [reqForm, setReqForm] = useState({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '' });
   
+  // Signature registration
+  const [showSignaturePanel, setShowSignaturePanel] = useState(false);
+  const [sigDni, setSigDni] = useState(profile?.dni || '');
+  const [sigName, setSigName] = useState(profile?.full_name || '');
+  const [sigData, setSigData] = useState<string | null>(profile?.signature_data || null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [sigSaving, setSigSaving] = useState(false);
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const hasSignature = !!(profile?.dni && profile?.signature_data);
+  
   // Pending authorizations
   const pendingRequests = loads.filter(l => l.workflow_status === 'requested');
   // Pending loads (authorized but not completed)
   const authorizedRequests = loads.filter(l => l.workflow_status === 'authorized');
+
+  // Canvas drawing functions
+  useEffect(() => {
+    const canvas = sigCanvasRef.current;
+    if (canvas && showSignaturePanel && !sigData) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#1a2744';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  }, [showSignaturePanel, sigData]);
+
+  const getCoords = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    setIsDrawing(true);
+    const ctx = sigCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoords(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const ctx = sigCanvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const { x, y } = getCoords(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing) {
+      setIsDrawing(false);
+      const canvas = sigCanvasRef.current;
+      if (canvas) {
+        setSigData(canvas.toDataURL('image/png'));
+      }
+    }
+  };
+
+  const clearSignature = () => {
+    setSigData(null);
+    const canvas = sigCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#1a2744';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      }
+    }
+  };
+
+  const handleSaveSignature = async () => {
+    if (!sigDni || !sigName || !sigData) return;
+    setSigSaving(true);
+    try {
+      const { supabase } = await import('../lib/supabase');
+      await supabase.from('profiles').update({ dni: sigDni, signature_data: sigData, full_name: sigName }).eq('id', profile?.id);
+      setShowSignaturePanel(false);
+      // Force page reload to get updated profile
+      window.location.reload();
+    } catch (e: any) {
+      alert('Error al guardar firma: ' + e.message);
+    }
+    setSigSaving(false);
+  };
 
   const handleRequestSubmit = async () => {
     if (!reqForm.vehicle_code || !reqForm.requested_liters) return;
@@ -635,7 +730,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
 
   const handleAuthorize = async (id: string) => {
     if (!profile?.dni || !profile?.signature_data) {
-      alert("Debes configurar tu firma digital y DNI en tu Perfil antes de poder autorizar cargas.");
+      setShowSignaturePanel(true);
       return;
     }
     const signature = `Firmado por: ${profile.full_name} (DNI: ${profile.dni}) - ${new Date().toLocaleString()}`;
@@ -663,8 +758,155 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     setCompletingId(null);
   };
 
+  // Build shareable link
+  const shareableLink = `${window.location.origin}/fuel-request`;
+
   return (
     <div className="space-y-6">
+      {/* ── Shareable Link + Signature Banner ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Shareable Link Card */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <ClipboardCheck size={16} className="text-blue-600" />
+            </div>
+            <div>
+              <h4 className="font-bold text-blue-900 text-sm">Link Directo para Operarios</h4>
+              <p className="text-[10px] text-blue-600">Compartí este link para que los operarios soliciten cargas sin ingresar al sistema</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+            <input
+              readOnly
+              value={shareableLink}
+              className="flex-1 bg-white border border-blue-200 rounded-lg px-3 py-2 text-xs font-mono text-blue-700 select-all"
+              onClick={e => (e.target as HTMLInputElement).select()}
+            />
+            <button
+              onClick={() => { navigator.clipboard.writeText(shareableLink); }}
+              className="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
+              📋 Copiar
+            </button>
+          </div>
+        </div>
+
+        {/* Signature Registration Card */}
+        {isAdmin && (
+          <div className={`rounded-xl p-4 shadow-sm border ${hasSignature ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-gradient-to-br from-amber-50 to-orange-50 border-orange-200'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${hasSignature ? 'bg-green-100' : 'bg-orange-100'}`}>
+                  <Pencil size={16} className={hasSignature ? 'text-green-600' : 'text-orange-600'} />
+                </div>
+                <div>
+                  <h4 className={`font-bold text-sm ${hasSignature ? 'text-green-900' : 'text-orange-900'}`}>
+                    {hasSignature ? '✅ Firma Registrada' : '⚠️ Registrar Firma Digital'}
+                  </h4>
+                  <p className="text-[10px] text-gray-600">
+                    {hasSignature ? `${profile?.full_name} — DNI: ${profile?.dni}` : 'Necesitás registrar tu firma para autorizar cargas'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSignaturePanel(!showSignaturePanel)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${hasSignature ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-orange-600 text-white hover:bg-orange-700 animate-pulse'}`}
+              >
+                {hasSignature ? 'Modificar' : 'Registrar Firma'}
+              </button>
+            </div>
+            {hasSignature && profile?.signature_data && !showSignaturePanel && (
+              <div className="mt-3 flex items-center gap-3">
+                <img src={profile.signature_data} alt="Firma" className="h-10 border border-green-200 rounded bg-white p-1" />
+                <span className="text-[10px] text-green-700 font-mono">Firma activa</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Signature Registration Panel (expandable) ── */}
+      {showSignaturePanel && (
+        <div className="bg-white border-2 border-blue-300 rounded-xl p-6 shadow-lg animate-fade-in">
+          <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <Pencil size={18} className="text-blue-600" /> Registrar Firma Digital
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">Nombre Completo <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={sigName}
+                onChange={e => setSigName(e.target.value)}
+                placeholder="Ej: Juan Carlos Pérez"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">DNI <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={sigDni}
+                onChange={e => setSigDni(e.target.value)}
+                placeholder="Ej: 30.456.789"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500 mb-2 block">Firma Digital <span className="text-red-500">*</span></label>
+            {sigData ? (
+              <div className="relative">
+                <img src={sigData} alt="Firma" className="w-full h-28 object-contain border-2 border-green-200 rounded-xl bg-green-50 p-2" />
+                <button
+                  onClick={clearSignature}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg text-xs hover:bg-red-600 shadow-md"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <canvas
+                  ref={sigCanvasRef}
+                  width={500}
+                  height={120}
+                  className="w-full h-28 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                />
+                <p className="absolute inset-0 flex items-center justify-center text-gray-300 text-sm pointer-events-none font-medium">
+                  Dibujá tu firma aquí
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <button onClick={() => setShowSignaturePanel(false)} className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSaveSignature}
+              disabled={!sigDni || !sigName || !sigData || sigSaving}
+              className="px-5 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md"
+            >
+              {sigSaving ? (
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando...</>
+              ) : (
+                <><Check size={16} /> Guardar Firma</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Header ── */}
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-gray-800">Autorizaciones de Carga</h3>
         <button onClick={() => setShowReqForm(!showReqForm)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
@@ -814,6 +1056,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     </div>
   );
 };
+
 
 /* ── Dashboard Tab ── */
 const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }> = ({ loads, vehicles }) => {
