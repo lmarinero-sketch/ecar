@@ -638,10 +638,19 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     const canvas = sigCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
+    // Scale from display size to canvas internal resolution
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     if ('touches' in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
     }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+    return {
+      x: ((e as React.MouseEvent).clientX - rect.left) * scaleX,
+      y: ((e as React.MouseEvent).clientY - rect.top) * scaleY
+    };
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -865,9 +874,9 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
             <div className="relative">
               <canvas
                 ref={sigCanvasRef}
-                width={500}
-                height={120}
-                className="w-full h-28 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
+                width={800}
+                height={200}
+                className="w-full border-2 border-dashed border-gray-300 rounded-xl bg-white cursor-crosshair touch-none" style={{ height: '160px' }}
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
