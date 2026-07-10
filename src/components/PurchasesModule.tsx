@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search } from 'lucide-react';
+import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search, Building2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useModalStore } from '../store/useModalStore';
 import { useImplementationStore } from '../store/useImplementationStore';
 import * as XLSX from 'xlsx';
 
-type InvoiceTab = 'compras' | 'ventas' | 'banco';
+import { LegalEntitiesPanel } from './LegalEntitiesPanel';
+
+type InvoiceTab = 'compras' | 'ventas' | 'banco' | 'razones_sociales';
 
 const BancoPreciosTab: React.FC = () => {
   const { data: resources = [], isLoading } = useBudgetResources();
@@ -272,6 +274,8 @@ export const PurchasesModule: React.FC = () => {
   const deleteSupplier = useDeleteSupplier();
   const [activeTab, setActiveTab] = useState<InvoiceTab>('compras');
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const { data: legalEntities = [] } = useLegalEntities();
+  const [selectedLegalEntityId, setSelectedLegalEntityId] = useState<string>('');
   const [editForm, setEditForm] = useState<any>({});
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
@@ -321,6 +325,7 @@ export const PurchasesModule: React.FC = () => {
       // 2. Create pending record
       const { data: record, error: insertError } = await supabase.from('purchase_invoices').insert({
         tenant_id: ECAR_TENANT_ID,
+        legal_entity_id: selectedLegalEntityId || null,
         original_file_url: publicUrl,
         status: 'pending_review',
         issue_date: new Date().toISOString().split('T')[0],
@@ -475,7 +480,32 @@ export const PurchasesModule: React.FC = () => {
               <TrendingUp size={14} /> Venta
             </button>
           </div>
-          <label className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all block ${uploading || processing ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-ecar-blue hover:bg-blue-50/50'}`}>
+          
+          {legalEntities.length === 0 && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm flex items-start gap-3">
+              <AlertCircle className="shrink-0 mt-0.5 text-yellow-600" size={18} />
+              <div>
+                <p className="font-bold mb-1">¡Falta configurar las Razones Sociales!</p>
+                <p>Para poder cargar facturas, primero debes registrar al menos una Razón Social (ej. ECAR SAS) desde la pestaña <strong>"Razones Sociales"</strong>. Una vez creada, podrás seleccionarla aquí.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-gray-700 mb-1">Seleccionar Razón Social *</label>
+            <select
+              value={selectedLegalEntityId}
+              onChange={e => setSelectedLegalEntityId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            >
+              <option value="">-- Requerido para cargar factura --</option>
+              {legalEntities.map(entity => (
+                <option key={entity.id} value={entity.id}>{entity.name} (CUIT: {entity.cuit})</option>
+              ))}
+            </select>
+          </div>
+
+          <label className={`border-2 border-dashed rounded-xl p-8 text-center transition-all block ${!selectedLegalEntityId ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : uploading || processing ? 'border-blue-300 bg-blue-50 cursor-pointer' : 'border-gray-300 hover:border-ecar-blue hover:bg-blue-50/50 cursor-pointer'}`}>
           {processing ? (
             <>
               <Loader2 size={36} className="mx-auto mb-3 text-blue-500 animate-spin" />
@@ -494,7 +524,7 @@ export const PurchasesModule: React.FC = () => {
               <p className="text-xs text-gray-400 mt-1">PDF o foto (JPG, PNG). La IA detecta si es compra o venta.</p>
             </>
           )}
-          <input type="file" className="hidden" accept="image/*,.pdf" disabled={uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
+          <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
           </label>
           <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-violet-600' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
         </div>
@@ -604,10 +634,13 @@ export const PurchasesModule: React.FC = () => {
         <button onClick={() => setActiveTab('banco')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'banco' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <Database size={16} /> Banco de Precios
         </button>
+        <button onClick={() => setActiveTab('razones_sociales')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'razones_sociales' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <Building2 size={16} /> Razones Sociales
+        </button>
       </div>
 
       {/* Totals bar (Only for invoices) */}
-      {activeTab !== 'banco' && (
+      {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
             <p className="text-xs text-gray-400 font-bold uppercase">Neto Gravado</p>
@@ -627,6 +660,8 @@ export const PurchasesModule: React.FC = () => {
       {/* Main Content */}
       {activeTab === 'banco' ? (
         <BancoPreciosTab />
+      ) : activeTab === 'razones_sociales' ? (
+        <LegalEntitiesPanel />
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
@@ -655,6 +690,7 @@ export const PurchasesModule: React.FC = () => {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                 <tr>
+                  <th className="px-4 py-3">Razón Social</th>
                   <th className="px-4 py-3">{activeTab === 'compras' ? 'Proveedor' : 'Cliente'}</th>
                   <th className="px-4 py-3">CUIT</th>
                   <th className="px-4 py-3">Tipo/Nro</th>
@@ -673,6 +709,9 @@ export const PurchasesModule: React.FC = () => {
                   const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
                   return (
                   <tr key={inv.id} className={`hover:bg-gray-50 ${isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}`}>
+                    <td className="px-4 py-3 text-xs font-bold text-indigo-700">
+                      {inv.legal_entity?.name || '-'}
+                    </td>
                     <td className="px-4 py-3 font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>

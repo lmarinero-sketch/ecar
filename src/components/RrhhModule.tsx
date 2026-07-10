@@ -9,6 +9,7 @@ import { CartaDocumentoPDF, fillTemplate } from './CartaDocumento';
 import { EmployeeCostPanel } from './EmployeeCostPanel';
 import { EmployeeNovedadesPanel } from './EmployeeNovedadesPanel';
 import { CategoriesPanel } from './CategoriesPanel';
+import { PPEDeliveriesPanel } from './PPEDeliveriesPanel';
 
 type Tab = 'roster' | 'add' | 'legajo' | 'attendance' | 'novedades' | 'categorias';
 
@@ -991,6 +992,9 @@ const LegajoView: React.FC<{
           </div>
         )}
       </div>
+
+      {/* Ropa y EPP */}
+      <PPEDeliveriesPanel employeeId={employee.id} />
 
       {/* Letter Templates */}
       {templates.length > 0 && (

@@ -153,9 +153,20 @@ export type ObligationPayment = {
   created_at: string;
 };
 
+export interface LegalEntity {
+  id: string;
+  tenant_id: string;
+  name: string;
+  cuit: string | null;
+  iibb_number: string | null;
+  constancia_url: string | null;
+  created_at: string;
+}
+
 export type Invoice = {
   id: string;
   tenant_id: string;
+  legal_entity_id?: string | null;
   project_id: string | null;
   invoice_type: string;
   point_of_sale: string;
@@ -218,6 +229,8 @@ export type PurchaseInvoiceAllocation = {
 export type PurchaseInvoice = {
   id: string;
   tenant_id: string;
+  legal_entity_id?: string | null;
+  legal_entity?: LegalEntity | null;
   supplier_id: string | null;
   project_id: string | null; // Legacy, optional
   allocations?: PurchaseInvoiceAllocation[];
@@ -356,6 +369,19 @@ export type FixedExpense = {
   created_at: string;
   supplier?: Supplier;
 };
+
+export interface EmployeePPEDelivery {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  item_type: 'pantalon' | 'zapatos' | 'campera' | 'camisa' | 'remera' | 'otro';
+  size: string;
+  quantity: number;
+  delivery_date: string;
+  notes: string | null;
+  signature_url: string | null;
+  created_at: string;
+}
 
 export type EmployeeDocument = {
   id: string;

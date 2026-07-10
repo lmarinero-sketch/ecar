@@ -19,7 +19,8 @@ import type {
   VehicleDailyReport,
   Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange,
   WorkOrder,
-  LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog
+  LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog,
+  EmployeePPEDelivery, LegalEntity
 } from '../lib/types';
 
 
@@ -93,6 +94,53 @@ export function useDeleteEmployee() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+  });
+}
+
+// ========== EMPLOYEE PPE DELIVERIES ==========
+export function useEmployeePPE(employeeId: string | null) {
+  return useQuery({
+    queryKey: ['employee_ppe_deliveries', employeeId],
+    queryFn: async () => {
+      if (!employeeId) return [];
+      const { data, error } = await supabase
+        .from('employee_ppe_deliveries')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .order('delivery_date', { ascending: false });
+      if (error) throw error;
+      return data as EmployeePPEDelivery[];
+    },
+    enabled: !!employeeId,
+  });
+}
+
+export function useCreateEmployeePPE() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ppe: Partial<EmployeePPEDelivery>) => {
+      const { data, error } = await supabase
+        .from('employee_ppe_deliveries')
+        .insert({ ...ppe, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries', variables.employee_id] });
+    },
+  });
+}
+
+export function useDeleteEmployeePPE() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, employee_id }: { id: string, employee_id: string }) => {
+      const { error } = await supabase.from('employee_ppe_deliveries').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries', variables.employee_id] }),
   });
 }
 
@@ -355,12 +403,58 @@ export function useDeleteSupplier() {
   });
 }
 
+// ========== LEGAL ENTITIES ==========
+export function useLegalEntities() {
+  return useQuery({
+    queryKey: ['legal_entities'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('legal_entities').select('*').order('name');
+      if (error) throw error;
+      return data as LegalEntity[];
+    },
+  });
+}
+
+export function useCreateLegalEntity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entity: Partial<LegalEntity>) => {
+      const { data, error } = await supabase.from('legal_entities').insert({ ...entity, tenant_id: ECAR_TENANT_ID }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['legal_entities'] }),
+  });
+}
+
+export function useUpdateLegalEntity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<LegalEntity> & { id: string }) => {
+      const { error } = await supabase.from('legal_entities').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['legal_entities'] }),
+  });
+}
+
+export function useDeleteLegalEntity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('legal_entities').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['legal_entities'] }),
+  });
+}
+
 // ========== PURCHASE INVOICES ==========
 export function usePurchaseInvoices() {
   return useQuery({
     queryKey: ['purchase_invoices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*)').order('created_at', { ascending: false });
       if (error) throw error;
       return data as PurchaseInvoice[];
     },
