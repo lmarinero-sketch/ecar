@@ -786,16 +786,16 @@ export const PurchasesModule: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Proveedor</p><p className="font-medium text-gray-800">{ocrResult.supplier_name}</p></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">CUIT</p><p className="font-mono text-sm">{ocrResult.supplier_cuit || 'No detectado'}</p></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Nro Factura</p><p className="font-mono text-sm">{ocrResult.invoice_type || 'A'} {ocrResult.point_of_sale || '0000'}-{ocrResult.invoice_number}</p></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Fecha Emisión</p><p className="font-mono text-sm">{ocrResult.issue_date || 'No detectada'}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Proveedor</p><p className="font-medium text-gray-800">{ocrResult.proveedor_cliente}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">CUIT</p><p className="font-mono text-sm">{ocrResult.cuit || 'No detectado'}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Nro Factura</p><p className="font-mono text-sm">{ocrResult.tipo_factura || 'A'} {ocrResult.punto_venta || '0000'}-{ocrResult.numero_factura}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Fecha Emisión</p><p className="font-mono text-sm">{ocrResult.fecha_emision || 'No detectada'}</p></div>
             </div>
 
             <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-3 gap-4 border border-gray-100">
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Neto Gravado</p><p className="font-mono font-medium text-gray-800">${(ocrResult.net_amount_ars || 0).toLocaleString('es-AR')}</p></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">IVA (Total)</p><p className="font-mono font-medium text-gray-800">${((ocrResult.iva_21_ars || 0) + (ocrResult.iva_105_ars || 0) + (ocrResult.iva_27_ars || 0)).toLocaleString('es-AR')}</p></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Total Factura</p><p className="font-mono font-bold text-ecar-blue text-lg">${(ocrResult.total_ars || 0).toLocaleString('es-AR')}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Neto Gravado</p><p className="font-mono font-medium text-gray-800">${(ocrResult.neto_gravado || 0).toLocaleString('es-AR')}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">IVA (Total)</p><p className="font-mono font-medium text-gray-800">${((ocrResult.iva_21 || 0) + (ocrResult.iva_105 || 0) + (ocrResult.iva_27 || 0)).toLocaleString('es-AR')}</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Total Factura</p><p className="font-mono font-bold text-ecar-blue text-lg">${(ocrResult.total || 0).toLocaleString('es-AR')}</p></div>
             </div>
             
             <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
