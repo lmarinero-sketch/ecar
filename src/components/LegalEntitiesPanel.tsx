@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useLegalEntities, useCreateLegalEntity, useDeleteLegalEntity } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
-import { Building2, Plus, Trash2, Upload, FileText, Download } from 'lucide-react';
+import { Building2, Plus, Trash2, Upload, Download } from 'lucide-react';
 
 export const LegalEntitiesPanel: React.FC = () => {
   const { data: entities = [], isLoading } = useLegalEntities();

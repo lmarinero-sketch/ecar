@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PackageOpen, Plus, Trash2, Calendar, FileText } from 'lucide-react';
+import { PackageOpen, Plus, Trash2, Calendar } from 'lucide-react';
 import { useEmployeePPE, useCreateEmployeePPE, useDeleteEmployeePPE } from '../hooks/useData';
 
 export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeId }) => {

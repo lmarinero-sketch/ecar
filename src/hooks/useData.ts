@@ -136,7 +136,7 @@ export function useCreateEmployeePPE() {
 export function useDeleteEmployeePPE() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, employee_id }: { id: string, employee_id: string }) => {
+    mutationFn: async ({ id }: { id: string, employee_id: string }) => {
       const { error } = await supabase.from('employee_ppe_deliveries').delete().eq('id', id);
       if (error) throw error;
     },
