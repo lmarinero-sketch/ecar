@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Navigation, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check } from 'lucide-react';
 
 const containerStyle = {
   width: '100%',
@@ -37,8 +37,15 @@ export const FleetTrackingMap: React.FC = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeVehicles, setActiveVehicles] = useState<Record<string, ActiveVehicle>>({});
   const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const channelRef = useRef<any>(null);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Load initial active sessions from DB
   const loadActiveSessions = async () => {
@@ -171,13 +178,22 @@ export const FleetTrackingMap: React.FC = () => {
             {vehiclesList.length} vehículo{vehiclesList.length !== 1 ? 's' : ''} en tránsito
           </p>
         </div>
-        <button 
-          onClick={loadActiveSessions}
-          className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Sincronizar
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleCopyLink}
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Share2 className="w-3.5 h-3.5" />}
+            {copied ? 'Copiado' : 'Compartir'}
+          </button>
+          <button 
+            onClick={loadActiveSessions}
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Sincronizar
+          </button>
+        </div>
       </div>
       
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex relative">
