@@ -39,6 +39,8 @@ interface ActiveVehicle {
   last_update: string;
   vehicle_code?: string;
   vehicle_description?: string;
+  destination_lat?: number | null;
+  destination_lng?: number | null;
 }
 
 export const FleetTrackingMap: React.FC = () => {
@@ -52,6 +54,7 @@ export const FleetTrackingMap: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
   const [copied, setCopied] = useState(false);
   const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
+  const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
 
   const channelRef = useRef<any>(null);
 
@@ -75,6 +78,8 @@ export const FleetTrackingMap: React.FC = () => {
           last_heading,
           last_speed,
           last_update_at,
+          destination_lat,
+          destination_lng,
           fuel_vehicles(code, description)
         `)
         .eq('is_active', true)
@@ -93,6 +98,8 @@ export const FleetTrackingMap: React.FC = () => {
           heading: d.last_heading,
           speed: d.last_speed,
           last_update: d.last_update_at,
+          destination_lat: d.destination_lat,
+          destination_lng: d.destination_lng,
           vehicle_code: (d.fuel_vehicles as any)?.code,
           vehicle_description: (d.fuel_vehicles as any)?.description
         };
@@ -194,6 +201,46 @@ export const FleetTrackingMap: React.FC = () => {
     setMap(null);
   }, []);
 
+  const onMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (assigningDestinationFor && e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      
+      const vehicle = activeVehicles[assigningDestinationFor];
+      if (!vehicle) return;
+
+      // Optimistic update
+      setActiveVehicles(prev => ({
+        ...prev,
+        [assigningDestinationFor]: {
+          ...prev[assigningDestinationFor],
+          destination_lat: lat,
+          destination_lng: lng
+        }
+      }));
+      setAssigningDestinationFor(null);
+      
+      // Update DB
+      await supabase
+        .from('vehicle_tracking_sessions')
+        .update({ destination_lat: lat, destination_lng: lng })
+        .eq('id', vehicle.session_id);
+        
+      // Broadcast to driver
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'new_destination',
+          payload: {
+            vehicle_id: assigningDestinationFor,
+            destination_lat: lat,
+            destination_lng: lng
+          }
+        });
+      }
+    }
+  };
+
   if (loadError) {
     return (
       <div className="bg-red-50 text-red-700 p-6 rounded-lg border border-red-200 flex flex-col items-center justify-center h-full">
@@ -262,6 +309,7 @@ export const FleetTrackingMap: React.FC = () => {
                   <div 
                     key={v.vehicle_id}
                     onClick={() => {
+                      if (assigningDestinationFor) return; // Prevent selection change if assigning destination
                       setSelectedVehicle(v);
                       if (map) map.panTo({ lat: v.lat, lng: v.lng });
                     }}
@@ -287,11 +335,12 @@ export const FleetTrackingMap: React.FC = () => {
         {/* Mapa */}
         <div className="flex-1 relative">
           <GoogleMap
-            mapContainerStyle={containerStyle}
+            mapContainerStyle={{...containerStyle, cursor: assigningDestinationFor ? 'crosshair' : 'default'}}
             center={defaultCenter}
             zoom={12}
             onLoad={onLoad}
             onUnmount={onUnmount}
+            onClick={onMapClick}
             options={{
               disableDefaultUI: false,
               zoomControl: true,
@@ -299,6 +348,11 @@ export const FleetTrackingMap: React.FC = () => {
               mapTypeControl: true,
             }}
           >
+            {assigningDestinationFor && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg font-bold text-sm z-10 animate-pulse pointer-events-none">
+                Hacé clic en el mapa para marcar el destino...
+              </div>
+            )}
             {vehiclesList.map((v) => (
               <Marker
                 key={v.vehicle_id}
@@ -315,6 +369,20 @@ export const FleetTrackingMap: React.FC = () => {
                   rotation: v.heading || 0
                 }}
               />
+            ))}
+
+            {/* Renderizar destinos */}
+            {vehiclesList.map((v) => (
+              v.destination_lat && v.destination_lng && (
+                <Marker
+                  key={`dest-${v.vehicle_id}`}
+                  position={{ lat: v.destination_lat, lng: v.destination_lng }}
+                  icon={{
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                  }}
+                  title={`Destino: ${v.vehicle_code || 'Unidad'}`}
+                />
+              )
             ))}
 
             {Object.entries(routes).map(([vehicleId, path]) => 
@@ -359,6 +427,15 @@ export const FleetTrackingMap: React.FC = () => {
                       </span>
                     </p>
                   </div>
+                  <button
+                    onClick={() => {
+                      setAssigningDestinationFor(selectedVehicle.vehicle_id);
+                      setSelectedVehicle(null);
+                    }}
+                    className="mt-3 w-full bg-indigo-600 text-white text-xs font-bold py-1.5 rounded hover:bg-indigo-700 transition-colors"
+                  >
+                    Asignar Destino
+                  </button>
                 </div>
               </InfoWindow>
             )}

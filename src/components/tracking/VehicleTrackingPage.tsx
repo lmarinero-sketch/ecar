@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, ECAR_TENANT_ID } from '../../lib/supabase';
-import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, ShieldCheck, Map as MapIcon } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import type { FuelVehicle } from '../../lib/types';
 
 interface TrackingPoint {
@@ -26,6 +27,15 @@ export const VehicleTrackingPage: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState<TrackingPoint | null>(null);
   const [isWakeLockActive, setIsWakeLockActive] = useState(false);
   
+  const [destination, setDestination] = useState<{lat: number, lng: number} | null>(null);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [directionsFetchedFor, setDirectionsFetchedFor] = useState<{lat: number, lng: number} | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+  });
+  
   const wakeLockRef = useRef<any>(null);
   const watchIdRef = useRef<number | null>(null);
   const channelRef = useRef<any>(null);
@@ -38,6 +48,30 @@ export const VehicleTrackingPage: React.FC = () => {
       stopTracking(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (destination && currentLocation && isLoaded && window.google) {
+      if (directionsFetchedFor?.lat === destination.lat && directionsFetchedFor?.lng === destination.lng) {
+        return; // Ya calculamos la ruta para este destino
+      }
+      
+      const directionsService = new window.google.maps.DirectionsService();
+      
+      directionsService.route(
+        {
+          origin: { lat: currentLocation.lat, lng: currentLocation.lng },
+          destination: destination,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === window.google.maps.DirectionsStatus.OK) {
+            setDirections(result);
+            setDirectionsFetchedFor(destination);
+          }
+        }
+      );
+    }
+  }, [destination, currentLocation, isLoaded, directionsFetchedFor]);
 
   const loadVehicles = async () => {
     try {
@@ -146,6 +180,14 @@ export const VehicleTrackingPage: React.FC = () => {
           console.log('Connectado al canal realtime');
         }
       });
+      
+      channel.on('broadcast', { event: 'new_destination' }, (payload) => {
+        const data = payload.payload;
+        if (data.vehicle_id === selectedVehicleId) {
+          setDestination({ lat: data.destination_lat, lng: data.destination_lng });
+        }
+      });
+      
       channelRef.current = channel;
       
       // 5. Iniciar tracking GPS
@@ -259,6 +301,9 @@ export const VehicleTrackingPage: React.FC = () => {
     
     setSessionId(null);
     setCurrentLocation(null);
+    setDestination(null);
+    setDirections(null);
+    setDirectionsFetchedFor(null);
     setStep('setup');
   };
 
@@ -402,6 +447,48 @@ export const VehicleTrackingPage: React.FC = () => {
                   </div>
                 )}
                 
+                {isLoaded && destination && (
+                  <div className="h-64 w-full rounded-xl overflow-hidden mt-4 mb-4 border border-gray-200">
+                    <GoogleMap
+                      mapContainerStyle={{ width: '100%', height: '100%' }}
+                      center={currentLocation || { lat: -31.5375, lng: -68.5363 }}
+                      zoom={14}
+                      options={{ disableDefaultUI: true }}
+                    >
+                      {currentLocation && (
+                        <Marker 
+                          position={currentLocation} 
+                          icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
+                          zIndex={5}
+                        />
+                      )}
+                      {directions && (
+                        <DirectionsRenderer 
+                          directions={directions} 
+                          options={{ suppressMarkers: false }} 
+                        />
+                      )}
+                    </GoogleMap>
+                  </div>
+                )}
+
+                {destination && currentLocation && (
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 text-left shadow-inner">
+                    <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                      <MapIcon className="w-5 h-5" /> Nuevo Destino Asignado
+                    </h3>
+                    <p className="text-sm text-indigo-700 mb-3">La base te ha marcado una nueva ruta.</p>
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`}
+                      target="_blank" rel="noreferrer"
+                      className="w-full bg-white border border-indigo-200 text-indigo-600 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors shadow-sm"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      Abrir en Google Maps
+                    </a>
+                  </div>
+                )}
+
                 <button
                   onClick={() => stopTracking(true)}
                   className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
