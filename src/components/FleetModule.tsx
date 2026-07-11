@@ -265,58 +265,58 @@ export const FleetModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-slate-500" /> Total Vehículos</div>
-          <p className="text-2xl font-black text-slate-600 font-mono">{vehicles.length}</p>
+          <p className="text-2xl font-black text-slate-600 font-mono relative z-10">{vehicles.length}</p>
         </div>
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${maintenanceDue.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
+        <div className={`kpi-card ${maintenanceDue.length > 0 ? '!border-red-200 !bg-red-50/70' : ''}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Mant. Vencido</div>
-          <p className="text-2xl font-black text-red-600 font-mono">{maintenanceDue.length}</p>
+          <p className="text-2xl font-black text-red-600 font-mono relative z-10">{maintenanceDue.length}</p>
         </div>
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${maintenanceSoon.length > 0 ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
+        <div className={`kpi-card ${maintenanceSoon.length > 0 ? '!border-yellow-200 !bg-yellow-50/70' : ''}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Clock size={16} className="text-yellow-500" /> Próx. 7 días</div>
-          <p className="text-2xl font-black text-yellow-600 font-mono">{maintenanceSoon.length}</p>
+          <p className="text-2xl font-black text-yellow-600 font-mono relative z-10">{maintenanceSoon.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Wrench size={16} className="text-amber-500" /> Con Mant. Prog.</div>
-          <p className="text-2xl font-black text-amber-600 font-mono">{allMaintenance.length}</p>
+          <p className="text-2xl font-black text-amber-600 font-mono relative z-10">{allMaintenance.length}</p>
         </div>
       </div>
 
       {/* Sub-modules */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button onClick={() => setView('maintenance')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-amber-300 hover:shadow-md hover:bg-amber-50/30 transition-all group cursor-pointer relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onClick={() => setView('maintenance')} className="light-card p-6 text-center group cursor-pointer relative">
           {maintenanceDue.length > 0 && (
             <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold animate-pulse">
               <Bell size={10} /> {maintenanceDue.length} HOY
             </span>
           )}
-          <Wrench size={48} className="mx-auto mb-3 text-amber-400 group-hover:text-amber-500 group-hover:scale-110 transition-all" />
-          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-amber-700 transition-colors">Mantenimiento</h4>
-          <p className="text-sm text-gray-500">Calendario de service por equipo</p>
+          <Wrench size={48} className="mx-auto mb-3 text-amber-400 group-hover:text-amber-500 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-amber-700 transition-colors relative z-10">Mantenimiento</h4>
+          <p className="text-sm text-gray-500 relative z-10">Calendario de service por equipo</p>
         </button>
-        <button onClick={() => setView('fuel')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-sky-300 hover:shadow-md hover:bg-sky-50/30 transition-all group cursor-pointer">
-          <Fuel size={48} className="mx-auto mb-3 text-sky-400 group-hover:text-sky-500 group-hover:scale-110 transition-all" />
-          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-sky-700 transition-colors">Combustible</h4>
-          <p className="text-sm text-gray-500">Registro de cargas y consumo por km.</p>
+        <button onClick={() => setView('fuel')} className="light-card p-6 text-center group cursor-pointer relative">
+          <Fuel size={48} className="mx-auto mb-3 text-sky-400 group-hover:text-sky-500 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-sky-700 transition-colors relative z-10">Combustible</h4>
+          <p className="text-sm text-gray-500 relative z-10">Registro de cargas y consumo por km.</p>
         </button>
-        <button onClick={() => setView('daily_report')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-indigo-300 hover:shadow-md hover:bg-indigo-50/30 transition-all group cursor-pointer">
-          <ClipboardCheck size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all" />
-          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors">Parte Diario</h4>
-          <p className="text-sm text-gray-500">Inspección diaria con QR y checklist.</p>
+        <button onClick={() => setView('daily_report')} className="light-card p-6 text-center group cursor-pointer relative">
+          <ClipboardCheck size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors relative z-10">Parte Diario</h4>
+          <p className="text-sm text-gray-500 relative z-10">Inspección diaria con QR y checklist.</p>
         </button>
-        <button onClick={() => setView('tracking')} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:border-emerald-300 hover:shadow-md hover:bg-emerald-50/30 transition-all group cursor-pointer">
-          <Navigation size={48} className="mx-auto mb-3 text-emerald-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all" />
-          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-emerald-700 transition-colors">Mapa en Vivo</h4>
-          <p className="text-sm text-gray-500">Rastreo satelital de vehículos activos.</p>
+        <button onClick={() => setView('tracking')} className="light-card p-6 text-center group cursor-pointer relative">
+          <Navigation size={48} className="mx-auto mb-3 text-emerald-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-emerald-700 transition-colors relative z-10">Mapa en Vivo</h4>
+          <p className="text-sm text-gray-500 relative z-10">Rastreo satelital de vehículos activos.</p>
         </button>
       </div>
 
       {/* Vehicle List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-gray-800">Vehículos Registrados</h3>
-          <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+      <div className="light-card overflow-hidden">
+        <div className="p-4 border-b border-white/40 bg-white/40 flex items-center justify-between">
+          <h3 className="font-bold text-gray-800 relative z-10">Vehículos Registrados</h3>
+          <button onClick={() => setShowNew(true)} className="btn-primary">
             <Plus size={16} /> Nuevo Vehículo
           </button>
         </div>
