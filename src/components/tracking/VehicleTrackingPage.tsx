@@ -331,9 +331,9 @@ export const VehicleTrackingPage: React.FC = () => {
         </div>
       </header>
       
-      <div className="flex-1 overflow-auto p-4 flex flex-col max-w-md mx-auto w-full">
+      <div className={`flex-1 flex flex-col w-full ${step === 'setup' ? 'p-4 max-w-md mx-auto overflow-auto' : 'relative overflow-hidden'}`}>
         {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 mb-6 shadow-sm border border-red-100">
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 m-4 shadow-sm border border-red-100 absolute z-50 top-0 left-0 right-0">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-sm font-medium">{error}</p>
           </div>
@@ -396,108 +396,110 @@ export const VehicleTrackingPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col justify-center">
-            
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-              
-              <div className="p-6 text-center">
-                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 relative">
-                  <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                  <Navigation className="w-8 h-8 text-green-600" />
+          <>
+            {/* Full Screen Map */}
+            <div className="absolute inset-0 z-0 bg-gray-100">
+              {isLoaded && currentLocation ? (
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={currentLocation}
+                  zoom={16}
+                  options={{ disableDefaultUI: true, gestureHandling: 'greedy' }}
+                >
+                  <Marker 
+                    position={currentLocation} 
+                    icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
+                    zIndex={5}
+                  />
+                  {directions && (
+                    <DirectionsRenderer 
+                      directions={directions} 
+                      options={{ suppressMarkers: false, polylineOptions: { strokeColor: '#2563EB', strokeWeight: 6 } }} 
+                    />
+                  )}
+                </GoogleMap>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+                  <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p>Obteniendo ubicación GPS...</p>
                 </div>
-                
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Transmitiendo</h2>
-                <p className="text-gray-500 text-sm mb-6">Tu ubicación está siendo enviada en tiempo real.</p>
-                
-                <div className="grid grid-cols-2 gap-3 mb-8">
-                  <div className="bg-gray-50 rounded-xl p-3 text-left">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Vehículo</p>
-                    <p className="text-sm font-bold text-gray-700 truncate">
-                      {vehicles.find(v => v.id === selectedVehicleId)?.code || '-'}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-left">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Conductor</p>
-                    <p className="text-sm font-bold text-gray-700 truncate">{driverName}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-left">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Velocidad</p>
-                    <p className="text-sm font-bold text-gray-700">
-                      {currentLocation?.speed ? Math.round(currentLocation.speed * 3.6) : 0} km/h
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-left">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Precisión</p>
-                    <p className="text-sm font-bold text-gray-700">
-                      ±{currentLocation?.accuracy ? Math.round(currentLocation.accuracy) : '-'}m
-                    </p>
-                  </div>
-                </div>
-                
-                {isWakeLockActive ? (
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-amber-600 bg-amber-50 py-2 px-3 rounded-full mx-auto w-max mb-6">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>La pantalla se mantendrá encendida</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-red-500 bg-red-50 py-2 px-3 rounded-full mx-auto w-max mb-6">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>Tu dispositivo podría apagar la pantalla</span>
-                  </div>
-                )}
-                
-                {isLoaded && currentLocation && (
-                  <div className="h-64 w-full rounded-xl overflow-hidden mt-4 mb-4 border border-gray-200">
-                    <GoogleMap
-                      mapContainerStyle={{ width: '100%', height: '100%' }}
-                      center={currentLocation}
-                      zoom={16}
-                      options={{ disableDefaultUI: true }}
-                    >
-                      <Marker 
-                        position={currentLocation} 
-                        icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
-                        zIndex={5}
-                      />
-                      {directions && (
-                        <DirectionsRenderer 
-                          directions={directions} 
-                          options={{ suppressMarkers: false }} 
-                        />
-                      )}
-                    </GoogleMap>
-                  </div>
-                )}
+              )}
+            </div>
 
+            {/* Destination Alert Overlay */}
+            {destination && (
+              <div className="absolute top-4 left-4 right-4 z-10 animate-in slide-in-from-top-4">
+                <div className="bg-indigo-600 text-white rounded-xl shadow-lg p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-lg">
+                      <MapPin className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-indigo-100">Nuevo Destino</p>
+                      <p className="font-bold text-sm">Dirígete a la ruta marcada</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Floating Info Panel at Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border border-gray-100 w-full max-w-md mx-auto relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+                
+                <div className="flex items-center justify-between mb-5 mt-1">
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">En Viaje</h2>
+                    <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5 mt-0.5">
+                      <Truck className="w-3.5 h-3.5" />
+                      {vehicles.find(v => v.id === selectedVehicleId)?.code || 'Unidad'} • {driverName}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center relative shadow-sm">
+                    <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                    <Navigation className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                
                 {destination && currentLocation && (
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 text-left shadow-inner">
-                    <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
-                      <MapIcon className="w-5 h-5" /> Nuevo Destino Asignado
-                    </h3>
-                    <p className="text-sm text-indigo-700 mb-3">La base te ha marcado una nueva ruta.</p>
-                    <a 
-                      href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`}
-                      target="_blank" rel="noreferrer"
-                      className="w-full bg-white border border-indigo-200 text-indigo-600 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors shadow-sm"
-                    >
-                      <Navigation className="w-4 h-4" />
-                      Abrir en Google Maps
-                    </a>
-                  </div>
+                  <a 
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`}
+                    target="_blank" rel="noreferrer"
+                    className="w-full mb-4 bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+                  >
+                    <Navigation className="w-5 h-5 fill-current" />
+                    Navegación Asistida (GPS)
+                  </a>
                 )}
-
+                
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                    <p className="text-xs text-gray-400 font-medium mb-1">Velocidad</p>
+                    <p className="font-bold text-gray-800 text-lg">{currentLocation?.speed ? Math.round(currentLocation.speed * 3.6) : 0} <span className="text-sm font-normal text-gray-500">km/h</span></p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100 flex flex-col justify-center">
+                    <p className="text-xs text-gray-400 font-medium mb-1">Estado Pantalla</p>
+                    <p className={`font-bold text-sm flex items-center justify-center gap-1.5 ${isWakeLockActive ? 'text-amber-600' : 'text-red-500'}`}>
+                      {isWakeLockActive ? (
+                        <><ShieldCheck className="w-4 h-4" /> Activa</>
+                      ) : (
+                        <><AlertTriangle className="w-4 h-4" /> Sin Bloqueo</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                
                 <button
                   onClick={() => stopTracking(true)}
-                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-red-100"
                 >
                   <Square className="w-5 h-5 fill-current" />
-                  FINALIZAR VIAJE
+                  Finalizar Recorrido
                 </button>
               </div>
             </div>
-            
-          </div>
+          </>
         )}
       </div>
     </div>
