@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check } from 'lucide-react';
+import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone } from 'lucide-react';
 
 const VEHICLE_COLORS = [
   '#4F46E5', '#E11D48', '#059669', '#D97706', '#7C3AED', 
@@ -55,6 +55,7 @@ export const FleetTrackingMap: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const channelRef = useRef<any>(null);
 
@@ -276,6 +277,13 @@ export const FleetTrackingMap: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button 
+            onClick={() => setShowTutorial(true)}
+            className="text-xs flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm font-medium"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            ¿Cómo asignar rutas?
+          </button>
+          <button 
             onClick={handleCopyLink}
             className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
           >
@@ -442,6 +450,68 @@ export const FleetTrackingMap: React.FC = () => {
           </GoogleMap>
         </div>
       </div>
+
+      {/* Tutorial Onboarding Modal */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-indigo-600 p-6 text-white relative">
+              <button 
+                onClick={() => setShowTutorial(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                <Navigation className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold">Cómo Asignar un Destino</h3>
+              <p className="text-indigo-100 text-sm mt-1">Guía rápida para despachar vehículos y enviar rutas automáticamente.</p>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-1">1. Seleccioná el vehículo</h4>
+                  <p className="text-sm text-gray-600">Haz clic en un vehículo de la lista lateral o directamente sobre su ícono en el mapa.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                  <MousePointerClick className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-1">2. Activa la Asignación</h4>
+                  <p className="text-sm text-gray-600">En la tarjeta de información del vehículo, presiona el botón azul <strong className="text-indigo-600 font-bold">"Asignar Destino"</strong>.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+                  <Smartphone className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-1">3. Marca el punto en el mapa</h4>
+                  <p className="text-sm text-gray-600">Haz clic en cualquier calle o punto del mapa. ¡Listo! El celular del conductor calculará la ruta automáticamente al instante.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button 
+                onClick={() => setShowTutorial(false)}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
+              >
+                Entendido, ¡probar ahora!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
