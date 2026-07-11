@@ -6,6 +6,12 @@
   body {
     @apply text-slate-800 font-sans min-h-screen relative overflow-x-hidden antialiased;
     background-color: #F8FAFC;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(11, 34, 64, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(210, 32, 39, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(11, 34, 64, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(210, 32, 39, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
     letter-spacing: -0.011em;
   }
 
@@ -25,21 +31,32 @@
 
   /* ─── Cards ─── */
   .light-card {
-    @apply bg-white border border-slate-200/70 rounded-xl transition-all duration-250 shadow-[0_1px_3px_rgba(0,0,0,0.04)];
+    @apply bg-white/70 backdrop-blur-md border border-white/60 rounded-xl transition-all duration-300 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)];
   }
   .light-card:hover {
-    @apply border-slate-300/80 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.07)] -translate-y-0.5;
+    @apply border-white/80 shadow-[0_8px_30px_-4px_rgba(11,34,64,0.08)] -translate-y-0.5 bg-white/80;
   }
   .light-card-flat {
-    @apply bg-white border border-slate-200/60 rounded-xl;
+    @apply bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl;
   }
 
   /* ─── Botones ─── */
   .btn-primary {
-    @apply bg-ecar-blue text-white rounded-lg font-semibold text-sm px-4 py-2 transition-all duration-200
-           shadow-[0_1px_3px_rgba(17,92,156,0.3)] flex items-center justify-center gap-2
-           hover:bg-ecar-blueDark hover:shadow-[0_4px_12px_rgba(17,92,156,0.25)] hover:-translate-y-px
-           active:scale-[0.97] active:shadow-sm;
+    @apply text-white rounded-lg font-semibold text-sm px-4 py-2 transition-all duration-300
+           flex items-center justify-center gap-2 relative;
+    background: linear-gradient(135deg, #0B2240 0%, #D22027 100%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    box-shadow: 0 4px 15px -3px rgba(11, 34, 64, 0.3), 0 2px 6px -2px rgba(210, 32, 39, 0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .btn-primary:hover {
+    @apply -translate-y-px;
+    background-position: 100% 50%;
+    box-shadow: 0 6px 20px -4px rgba(11, 34, 64, 0.4), 0 4px 10px -2px rgba(210, 32, 39, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .btn-primary:active {
+    @apply scale-[0.97];
+    box-shadow: 0 2px 8px -2px rgba(11, 34, 64, 0.4);
   }
   .btn-secondary {
     @apply bg-white text-slate-700 border border-slate-200 rounded-lg font-semibold text-sm px-4 py-2
@@ -131,13 +148,21 @@
 
   /* ─── KPI Card ─── */
   .kpi-card {
-    @apply bg-white border border-slate-200/60 rounded-xl p-5 transition-all duration-250
-           hover:shadow-[0_8px_24px_-6px_rgba(0,0,0,0.06)] hover:-translate-y-0.5
+    @apply bg-white/70 backdrop-blur-md border border-white/60 rounded-xl p-5 transition-all duration-300
            relative overflow-hidden;
+    box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .kpi-card:hover {
+    @apply -translate-y-0.5 bg-white/80 border-white/80;
+    box-shadow: 0 10px 30px -4px rgba(11,34,64,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
   }
   .kpi-card::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-transparent to-slate-50/50 pointer-events-none;
+    @apply absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-50;
+    background: linear-gradient(135deg, rgba(11,34,64,0.03) 0%, rgba(210,32,39,0.03) 100%);
+  }
+  .kpi-card:hover::before {
+    @apply opacity-100;
   }
 
   /* ─── Focus Rings ─── */
