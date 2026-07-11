@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
 import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check } from 'lucide-react';
 
@@ -38,8 +38,31 @@ export const FleetTrackingMap: React.FC = () => {
   const [activeVehicles, setActiveVehicles] = useState<Record<string, ActiveVehicle>>({});
   const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
   const [copied, setCopied] = useState(false);
+  const [routePath, setRoutePath] = useState<{lat: number, lng: number}[]>([]);
 
   const channelRef = useRef<any>(null);
+  const selectedVehicleRef = useRef<ActiveVehicle | null>(null);
+
+  useEffect(() => {
+    selectedVehicleRef.current = selectedVehicle;
+    if (selectedVehicle) {
+      const fetchRoute = async () => {
+        const { data } = await supabase
+          .from('vehicle_tracking_points')
+          .select('lat, lng')
+          .eq('session_id', selectedVehicle.session_id)
+          .order('recorded_at', { ascending: true });
+        
+        if (data) {
+          const currentPoint = { lat: selectedVehicle.lat, lng: selectedVehicle.lng };
+          setRoutePath([...data.map(d => ({ lat: d.lat, lng: d.lng })), currentPoint]);
+        }
+      };
+      fetchRoute();
+    } else {
+      setRoutePath([]);
+    }
+  }, [selectedVehicle]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.origin + '/tracking');
@@ -128,6 +151,10 @@ export const FleetTrackingMap: React.FC = () => {
           last_update: data.timestamp
         }
       }));
+
+      if (selectedVehicleRef.current?.vehicle_id === data.vehicle_id) {
+        setRoutePath(prev => [...prev, { lat: data.lat, lng: data.lng }]);
+      }
     }).subscribe();
 
     channelRef.current = channel;
@@ -266,6 +293,17 @@ export const FleetTrackingMap: React.FC = () => {
                 }}
               />
             ))}
+
+            {routePath.length > 0 && (
+              <Polyline
+                path={routePath}
+                options={{
+                  strokeColor: '#4F46E5', // indigo-600
+                  strokeOpacity: 0.8,
+                  strokeWeight: 4,
+                }}
+              />
+            )}
 
             {selectedVehicle && (
               <InfoWindow
