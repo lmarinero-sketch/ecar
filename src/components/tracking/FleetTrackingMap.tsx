@@ -190,6 +190,8 @@ export const FleetTrackingMap: React.FC = () => {
           [data.vehicle_id]: [...vehicleRoutes, { lat: data.lat, lng: data.lng }]
         };
       });
+    });
+
     channel.on('broadcast', { event: 'new_destination' }, (payload) => {
       const data = payload.payload;
       setActiveVehicles(prev => {
