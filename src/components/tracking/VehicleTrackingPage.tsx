@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, ECAR_TENANT_ID } from '../../lib/supabase';
-import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, ShieldCheck, Map as MapIcon } from 'lucide-react';
+import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import type { FuelVehicle } from '../../lib/types';
 
