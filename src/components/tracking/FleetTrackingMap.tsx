@@ -42,7 +42,7 @@ export const FleetTrackingMap: React.FC = () => {
   const channelRef = useRef<any>(null);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(window.location.origin + '/tracking');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
