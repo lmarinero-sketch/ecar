@@ -51,7 +51,8 @@ export const FleetTrackingMap: React.FC = () => {
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeVehicles, setActiveVehicles] = useState<Record<string, ActiveVehicle>>({});
-  const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const selectedVehicle = selectedVehicleId ? activeVehicles[selectedVehicleId] : null;
   const [copied, setCopied] = useState(false);
   const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
@@ -187,6 +188,19 @@ export const FleetTrackingMap: React.FC = () => {
         return {
           ...prev,
           [data.vehicle_id]: [...vehicleRoutes, { lat: data.lat, lng: data.lng }]
+        };
+      });
+    channel.on('broadcast', { event: 'new_destination' }, (payload) => {
+      const data = payload.payload;
+      setActiveVehicles(prev => {
+        if (!prev[data.vehicle_id]) return prev;
+        return {
+          ...prev,
+          [data.vehicle_id]: {
+            ...prev[data.vehicle_id],
+            destination_lat: data.destination_lat,
+            destination_lng: data.destination_lng
+          }
         };
       });
     }).subscribe();
@@ -350,11 +364,11 @@ export const FleetTrackingMap: React.FC = () => {
                   <div 
                     key={v.vehicle_id}
                     onClick={() => {
-                      if (assigningDestinationFor) return; // Prevent selection change if assigning destination
-                      setSelectedVehicle(v);
+                      if (assigningDestinationFor) return; 
+                      setSelectedVehicleId(v.vehicle_id);
                       if (map) map.panTo({ lat: v.lat, lng: v.lng });
                     }}
-                    className={`p-3 cursor-pointer hover:bg-indigo-50 transition-colors ${selectedVehicle?.vehicle_id === v.vehicle_id ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'}`}
+                    className={`p-3 cursor-pointer hover:bg-indigo-50 transition-colors ${selectedVehicleId === v.vehicle_id ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'}`}
                   >
                     <div className="flex justify-between items-start mb-1">
                       <span className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
@@ -415,7 +429,7 @@ export const FleetTrackingMap: React.FC = () => {
               <Marker
                 key={v.vehicle_id}
                 position={{ lat: v.lat, lng: v.lng }}
-                onClick={() => setSelectedVehicle(v)}
+                onClick={() => setSelectedVehicleId(v.vehicle_id)}
                 icon={{
                   // window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW == 4
                   path: 4,
@@ -451,8 +465,8 @@ export const FleetTrackingMap: React.FC = () => {
                   options={{
                     strokeColor: getColorForVehicle(vehicleId),
                     strokeOpacity: 0.8,
-                    strokeWeight: selectedVehicle?.vehicle_id === vehicleId ? 6 : 4,
-                    zIndex: selectedVehicle?.vehicle_id === vehicleId ? 10 : 1
+                    strokeWeight: selectedVehicleId === vehicleId ? 6 : 4,
+                    zIndex: selectedVehicleId === vehicleId ? 10 : 1
                   }}
                 />
               )
@@ -468,11 +482,16 @@ export const FleetTrackingMap: React.FC = () => {
             {selectedVehicle && (
               <InfoWindow
                 position={{ lat: selectedVehicle.lat, lng: selectedVehicle.lng }}
-                onCloseClick={() => setSelectedVehicle(null)}
+                onCloseClick={() => setSelectedVehicleId(null)}
               >
                 <div className="p-1 max-w-[200px]">
-                  <h4 className="font-bold text-gray-900 border-b pb-1 mb-2">
+                  <h4 className="font-bold text-gray-900 border-b pb-1 mb-2 flex items-center justify-between">
                     {selectedVehicle.vehicle_code || 'Unidad'}
+                    {selectedVehicle.destination_lat && (
+                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-bold ml-2">
+                        EN RUTA
+                      </span>
+                    )}
                   </h4>
                   <div className="space-y-1.5 text-sm">
                     <p className="flex justify-between gap-4">
@@ -496,11 +515,11 @@ export const FleetTrackingMap: React.FC = () => {
                     onClick={() => {
                       setAssigningDestinationFor(selectedVehicle.vehicle_id);
                       setTempDestination(null);
-                      setSelectedVehicle(null);
+                      setSelectedVehicleId(null);
                     }}
                     className="mt-3 w-full bg-indigo-600 text-white text-xs font-bold py-1.5 rounded hover:bg-indigo-700 transition-colors"
                   >
-                    Asignar Destino
+                    {selectedVehicle.destination_lat ? 'Reasignar Destino' : 'Asignar Destino'}
                   </button>
                 </div>
               </InfoWindow>
