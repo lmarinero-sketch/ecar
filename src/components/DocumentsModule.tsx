@@ -81,7 +81,7 @@ export const DocumentsModule: React.FC = () => {
           {requests.map(req => {
             const cfg = statusConfig[req.status] || statusConfig.gathering;
             return (
-              <div key={req.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all">
+              <div key={req.id} className="light-card p-5 hover:shadow-md transition-all">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-bold text-gray-900">{req.title}</h4>

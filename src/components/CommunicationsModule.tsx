@@ -105,7 +105,7 @@ export const CommunicationsModule: React.FC = () => {
       </div>
 
       {/* WhatsApp Web Layout */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style={{ height: 'calc(100vh - 260px)', minHeight: '500px' }}>
+      <div className="light-card overflow-hidden" style={{ height: 'calc(100vh - 260px)', minHeight: '500px' }}>
         <div className="flex h-full">
 
           {/* LEFT PANEL - Conversation list */}

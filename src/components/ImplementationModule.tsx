@@ -782,7 +782,7 @@ const SectionBlock: React.FC<{
   const Icon = section.icon;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div className="light-card overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setOpen(!open)}
@@ -1218,7 +1218,7 @@ export const ImplementationModule: React.FC = () => {
           {/* Progress overview */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
             {/* Total */}
-            <div className="bg-white border border-gray-200 rounded-xl p-3 md:p-5 shadow-sm col-span-2 md:col-span-1">
+            <div className="light-card p-3 md:p-5 shadow-sm col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
                 <Trophy size={14} className="text-amber-500 md:w-4 md:h-4" /> Progreso Total
               </div>
@@ -1242,7 +1242,7 @@ export const ImplementationModule: React.FC = () => {
                 <button
                   key={p.id}
                   onClick={() => setActivePhase(p.id)}
-                  className={`bg-white border rounded-xl p-3 md:p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
+                  className={`light-card p-3 md:p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
                   <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
                     <User size={14} className={`md:w-4 md:h-4 ${p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-teal-500' : p.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}`} />
@@ -1380,7 +1380,7 @@ export const ImplementationModule: React.FC = () => {
 
           {/* Formulario de Carga / Edición */}
           {(isAddingMeeting || editingMeeting) && (
-            <form onSubmit={handleSaveMeeting} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
+            <form onSubmit={handleSaveMeeting} className="light-card p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h5 className="font-bold text-gray-800 text-sm">
                   {editingMeeting ? 'Editar Registro de Reunión' : 'Registrar Nueva Reunión'}
@@ -1524,7 +1524,7 @@ export const ImplementationModule: React.FC = () => {
               <p className="text-sm">Cargando registros de reuniones...</p>
             </div>
           ) : sortedMeetings.length === 0 ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm text-gray-400 flex flex-col items-center justify-center">
+            <div className="light-card p-8 text-center shadow-sm text-gray-400 flex flex-col items-center justify-center">
               <Calendar size={48} className="text-gray-300 mb-3" />
               <h5 className="font-bold text-gray-700 text-sm">No hay reuniones registradas</h5>
               <p className="text-xs text-gray-400 max-w-sm mt-1">Registra las reuniones llevadas a cabo con el equipo para llevar un historial ordenado del proceso de implementación.</p>
@@ -1543,7 +1543,7 @@ export const ImplementationModule: React.FC = () => {
                 const displayDate = meeting.date.split('-').reverse().join('/'); // DD/MM/YYYY
 
                 return (
-                  <div key={meeting.id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:border-gray-300 transition-all">
+                  <div key={meeting.id} className="light-card overflow-hidden hover:border-gray-300 transition-all">
                     {/* Header de la tarjeta */}
                     <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1 space-y-2">

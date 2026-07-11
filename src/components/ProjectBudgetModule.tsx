@@ -252,7 +252,7 @@ export const ProjectBudgetModule: React.FC = () => {
           { icon: Check, label: 'Aprobados', value: approvedCount, color: 'green', iconColor: 'text-green-500' },
           { icon: DollarSign, label: 'Valor Total', value: fmt(totalValue), color: 'emerald', iconColor: 'text-emerald-500', isMoney: true },
         ].map((kpi, i) => (
-          <div key={i} className={`bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 ${kpi.color === 'blue' ? 'border-blue-200 bg-blue-50/20' : kpi.color === 'green' ? 'border-green-200 bg-green-50/20' : 'border-gray-200'}`}>
+          <div key={i} className={`light-card p-5 hover:shadow-md transition-all duration-300 ${kpi.color === 'blue' ? 'border-blue-200 bg-blue-50/20' : kpi.color === 'green' ? 'border-green-200 bg-green-50/20' : 'border-gray-200'}`}>
             <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
               <kpi.icon size={16} className={kpi.iconColor} />{kpi.label}
             </div>
@@ -375,7 +375,7 @@ export const ProjectBudgetModule: React.FC = () => {
       )}
 
       {/* Budget List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50/80">
           <h3 className="font-bold text-gray-800">Presupuestos Registrados</h3>
         </div>
@@ -963,7 +963,7 @@ const BudgetDetailView: React.FC<{
       {/* TAB: GENERAL & ALCANCE */}
       {activeTab === 'general' && (
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="light-card overflow-hidden shadow-sm">
             <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
               <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><Info size={14} className="text-cyan-600" /> Detalles del Alcance</span>
               {showInfo ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
@@ -986,7 +986,7 @@ const BudgetDetailView: React.FC<{
           )}
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="light-card p-4">
             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><Layers size={14} className="text-cyan-600" /> Información Adicional</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1083,19 +1083,19 @@ const BudgetDetailView: React.FC<{
         <div className="space-y-4">
           {/* Quick KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-[10px] font-bold text-gray-500 uppercase">Costo Directo</p>
           <p className="text-lg font-black text-gray-800 font-mono">{fmt(directTotal)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-[10px] font-bold text-gray-500 uppercase">GG ({fmtPct(budget.gastos_generales_pct)})</p>
           <p className="text-lg font-black text-gray-800 font-mono">{fmt(gg)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-[10px] font-bold text-gray-500 uppercase">Beneficio ({fmtPct(budget.beneficio_pct)})</p>
           <p className="text-lg font-black text-green-700 font-mono">{fmt(beneficio)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-[10px] font-bold text-gray-500 uppercase">IVA + IIBB + Fin.</p>
           <p className="text-lg font-black text-gray-800 font-mono">{fmt(financiero + iva + iibb)}</p>
         </div>
@@ -1107,7 +1107,7 @@ const BudgetDetailView: React.FC<{
 
       {/* Cost breakdown chart */}
       {Object.keys(costBreakdown).length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Tag size={14} className="text-cyan-600" /> Composición de Costos</h4>
           <div className="flex gap-0.5 h-8 rounded-xl overflow-hidden bg-gray-100">
             {Object.entries(costBreakdown).map(([type, val]) => {
@@ -1375,7 +1375,7 @@ const BudgetDetailView: React.FC<{
       )}
 
       {/* Items Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
             <Calculator size={16} className="text-cyan-600" /> Cómputo Métrico & Análisis de Precios
@@ -1553,7 +1553,7 @@ const BudgetDetailView: React.FC<{
       {/* TAB: ADJUNTOS */}
       {activeTab === 'adjuntos' && (
         <div className="space-y-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+          <div className="light-card p-5">
             <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><FileText size={16} className="text-cyan-600" /> Documentos y Planos</h4>
             <div className="flex gap-2 items-start mb-6">
               <input type="text" placeholder="Título corto (ej. Plano Eléctrico)" value={fileTitle} onChange={e => setFileTitle(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm" />
@@ -1605,7 +1605,7 @@ const BudgetDetailView: React.FC<{
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="light-card p-4">
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
@@ -1658,7 +1658,7 @@ const BudgetDetailView: React.FC<{
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <div className="light-card p-4">
               <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-4"><DollarSign size={14} className="text-cyan-600" /> Cierre Post-Obra</h4>
               <label className="block text-xs font-bold text-gray-500 mb-1">Costo Real Final (ARS) — Ingreso Manual</label>
               <input type="number" value={budget.actual_cost_ars || ''} 
@@ -1672,7 +1672,7 @@ const BudgetDetailView: React.FC<{
                 </div>
               )}
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <div className="light-card p-4">
               <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><AlertTriangle size={14} className="text-amber-500" /> Lecciones Aprendidas</h4>
               <textarea value={budget.lessons_learned || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, lessons_learned: e.target.value })}
@@ -1943,7 +1943,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       )}
 
       {/* Resources Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between">
           <h3 className="font-bold text-gray-800">Recursos Registrados</h3>
           <span className="text-xs text-gray-500 font-mono bg-gray-200 px-2 py-0.5 rounded-full">{filtered.length} recursos</span>

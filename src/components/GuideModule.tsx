@@ -318,7 +318,7 @@ export const GuideModule: React.FC = () => {
       {/* Stats Cards / KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* KPI 1 */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-start justify-between">
+        <div className="light-card p-5 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Smartphone size={15} className="text-ecar-blue" /> Celular de Rombo
@@ -335,7 +335,7 @@ export const GuideModule: React.FC = () => {
         </div>
 
         {/* KPI 2 */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-start justify-between">
+        <div className="light-card p-5 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Sparkles size={15} className="text-violet-500" /> Tecnología de IA
@@ -349,7 +349,7 @@ export const GuideModule: React.FC = () => {
         </div>
 
         {/* KPI 3 */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-start justify-between">
+        <div className="light-card p-5 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               <Layers size={15} className="text-emerald-500" /> Cobertura del ERP
@@ -396,7 +396,7 @@ export const GuideModule: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left panel: Info & prompt groups */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+            <div className="light-card p-6 space-y-4">
               <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2 border-b border-gray-100 pb-3">
                 <Bot size={20} className="text-ecar-blue" /> ¿Cómo funciona el bot de WhatsApp?
               </h3>
@@ -433,7 +433,7 @@ export const GuideModule: React.FC = () => {
                 {WHATSAPP_PROMPTS.map((group, gi) => {
                   const CategoryIcon = group.icon;
                   return (
-                    <div key={gi} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div key={gi} className="light-card overflow-hidden">
                       <div className={`px-4 py-3 border-b flex items-center gap-2 font-bold text-xs uppercase tracking-wider ${group.color}`}>
                         <CategoryIcon size={14} />
                         <span>{group.category}</span>
@@ -562,7 +562,7 @@ export const GuideModule: React.FC = () => {
       {/* Tab 2: Guía de Módulos Web */}
       {activeTab === 'web' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+          <div className="light-card p-6 space-y-4">
             <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2 border-b border-gray-100 pb-3">
               <Layers size={20} className="text-ecar-blue" /> Módulos del Sistema Web
             </h3>
@@ -575,7 +575,7 @@ export const GuideModule: React.FC = () => {
             {SYSTEM_MODULES.map((module, mi) => (
               <div
                 key={mi}
-                className={`bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all border-l-4 ${module.color}`}
+                className={`light-card p-5 hover:shadow-md transition-all border-l-4 ${module.color}`}
               >
                 <div className="flex items-center gap-2.5 mb-3">
                   <span className="text-xl">{module.icon}</span>
@@ -603,7 +603,7 @@ export const GuideModule: React.FC = () => {
       {activeTab === 'faq' && (
         <div className="space-y-4 max-w-4xl mx-auto">
           {/* FAQ 1 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+          <div className="light-card p-5 space-y-2">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿Cómo corrijo un error detectado por el OCR?
             </h4>
@@ -613,7 +613,7 @@ export const GuideModule: React.FC = () => {
           </div>
 
           {/* FAQ 2 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+          <div className="light-card p-5 space-y-2">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿Cómo elimino un cheque cargado erróneamente por WhatsApp?
             </h4>
@@ -623,7 +623,7 @@ export const GuideModule: React.FC = () => {
           </div>
 
           {/* FAQ 3 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+          <div className="light-card p-5 space-y-2">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿Quiénes reciben las alertas impositivas por WhatsApp?
             </h4>
@@ -633,7 +633,7 @@ export const GuideModule: React.FC = () => {
           </div>
 
           {/* FAQ 4 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-2">
+          <div className="light-card p-5 space-y-2">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿La IA me avisa si hay riesgo financiero?
             </h4>

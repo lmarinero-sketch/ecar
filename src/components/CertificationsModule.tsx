@@ -120,19 +120,19 @@ export const CertificationsModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Building2 size={16} className="text-rose-500" /> Obras con Contrato</div>
           <p className="text-2xl font-black text-rose-600 font-mono">{contractProjects.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><FileSignature size={16} className="text-blue-500" /> Certificados Emitidos</div>
           <p className="text-2xl font-black text-blue-600 font-mono">{(certificates || []).length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-green-500" /> Total Certificado</div>
           <p className="text-2xl font-black text-green-600 font-mono">{fmtM((certificates || []).reduce((s, c) => s + (c.total_certified || 0), 0))}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Banknote size={16} className="text-emerald-500" /> Depositado Neto</div>
           <p className="text-2xl font-black text-emerald-600 font-mono">{fmtM((certificates || []).reduce((s, c) => s + (c.net_deposit || 0), 0))}</p>
         </div>
@@ -150,7 +150,7 @@ export const CertificationsModule: React.FC = () => {
             const isExpanded = expandedProject === proj.id;
 
             return (
-              <div key={proj.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div key={proj.id} className="light-card overflow-hidden">
                 {/* Project header */}
                 <div className="p-5 cursor-pointer hover:bg-gray-50 transition-all" onClick={() => setExpandedProject(isExpanded ? null : proj.id)}>
                   <div className="flex items-center justify-between">

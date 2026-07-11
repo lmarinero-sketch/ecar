@@ -193,7 +193,7 @@ export const NotificationPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+      <div className="flex gap-2 light-card p-1 shadow-sm">
         {([
           { id: 'reminders', label: 'Recordatorios', icon: Bell },
           { id: 'contacts', label: 'Contactos', icon: MessageSquare },
@@ -248,7 +248,7 @@ export const NotificationPanel: React.FC = () => {
                 const triggerInfo = TRIGGER_TYPES.find(t => t.id === r.trigger_type);
                 const TriggerIcon = triggerInfo?.icon || Bell;
                 return (
-                  <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all">
+                  <div key={r.id} className="light-card p-5 hover:shadow-md transition-all">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -319,7 +319,7 @@ export const NotificationPanel: React.FC = () => {
 
       {/* TAB: LOG */}
       {tab === 'log' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
             <h4 className="font-bold text-gray-800 flex items-center gap-2">
               <History size={16} className="text-ecar-blue" /> Historial de Mensajes Enviados

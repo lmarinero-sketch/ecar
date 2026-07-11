@@ -278,7 +278,7 @@ export const AccountantNovedadesPanel: React.FC = () => {
       </div>
 
       {/* Novedades List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <h4 className="font-bold text-gray-800 flex items-center gap-2">
             <FileSpreadsheet size={16} className="text-ecar-blue" />
@@ -333,7 +333,7 @@ export const AccountantNovedadesPanel: React.FC = () => {
       </div>
 
       {/* Detailed Attendance Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
           <h4 className="font-bold text-gray-800 flex items-center gap-2">
             <Users size={16} className="text-ecar-blue" />

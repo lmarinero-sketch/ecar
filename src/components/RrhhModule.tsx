@@ -113,7 +113,7 @@ export const RrhhModule: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+      <div className="flex gap-2 light-card p-1 shadow-sm">
         {([
           { id: 'roster', label: 'Nómina', icon: Users },
           { id: 'add', label: 'Nuevo Empleado', icon: UserPlus },
@@ -151,7 +151,7 @@ export const RrhhModule: React.FC = () => {
               <button onClick={() => setTab('add')} className="mt-3 text-ecar-blue font-bold text-sm">+ Agregar primer empleado</button>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="light-card overflow-hidden">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                   <tr>
@@ -206,7 +206,7 @@ export const RrhhModule: React.FC = () => {
 
       {/* TAB: Add Employee */}
       {tab === 'add' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-4xl">
+        <div className="light-card p-6 max-w-4xl">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} /> Nuevo Empleado</h3>
           
           {/* Datos personales */}
@@ -723,7 +723,7 @@ const LegajoView: React.FC<{
     const activeEmps = employees.filter(e => e.employment_status === 'active');
     const inactiveEmps = employees.filter(e => e.employment_status !== 'active');
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="light-card p-6">
         <h3 className="font-bold text-lg mb-4">Seleccionar Empleado</h3>
         {activeEmps.length > 0 && (
           <>
@@ -794,7 +794,7 @@ const LegajoView: React.FC<{
   return (
     <div className="space-y-4">
       <button onClick={onBack} className="text-ecar-blue text-sm font-bold hover:underline">← Volver a nómina</button>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="bg-indigo-50 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -872,7 +872,7 @@ const LegajoView: React.FC<{
       </div>
 
       {/* Documents */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <div className="light-card p-5">
         <div className="flex justify-between items-center mb-4">
           <h4 className="font-bold text-gray-900 flex items-center gap-2"><FileText size={16} /> Documentos del Legajo</h4>
           <button
@@ -998,7 +998,7 @@ const LegajoView: React.FC<{
 
       {/* Letter Templates */}
       {templates.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="light-card p-5">
           <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><Printer size={16} /> Cartas Documento Disponibles</h4>
           <p className="text-xs text-gray-400 mb-3">Formato oficial Correo Argentino. Se genera con los datos del empleado ya cargados, listo para imprimir.</p>
           <div className="space-y-2">

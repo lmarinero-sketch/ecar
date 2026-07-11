@@ -96,7 +96,7 @@ export const LogisticsModule: React.FC = () => {
       </div>
 
       {/* Intro Accordion */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
+      <div className="light-card overflow-hidden transition-all duration-300">
         <button
           onClick={() => setShowIntro(!showIntro)}
           className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
@@ -160,7 +160,7 @@ export const LogisticsModule: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px]">
+      <div className="light-card min-h-[400px]">
         {activeTab === 'dashboard' && (
           <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}

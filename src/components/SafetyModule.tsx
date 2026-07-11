@@ -332,7 +332,7 @@ const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) =
   }, [selectedZone, onSelectZone]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col items-center">
+    <div className="light-card p-4 flex flex-col items-center">
       <div className="w-full flex justify-between items-center px-1 mb-2">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mapa Corporal 3D</span>
         <span className="text-[10px] text-gray-400">Arrastrá para rotar</span>
@@ -385,7 +385,7 @@ const EmployeeCombobox: React.FC<{
         <Search size={14} className="text-gray-400 flex-shrink-0" />
       </div>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full light-card shadow-lg max-h-56 overflow-hidden">
           <div className="p-2 border-b border-gray-100">
             <input
               autoFocus
@@ -483,19 +483,19 @@ export const SafetyModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><ShieldAlert size={16} className="text-green-500" /> Días sin Accidente</div>
           <p className="text-2xl font-black font-mono text-green-600">{diasSinIncidente}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><AlertTriangle size={16} className="text-red-500" /> Incidentes Abiertos</div>
           <p className="text-2xl font-black font-mono text-red-600">{incAbiertos}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Eye size={16} className="text-orange-500" /> Obs. Alto Riesgo</div>
           <p className="text-2xl font-black font-mono text-orange-600">{obsAltas}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Activity size={16} className="text-gray-500" /> Días Perdidos</div>
           <p className="text-2xl font-black font-mono text-gray-700">{totalDiasPerdidos}</p>
         </div>
@@ -511,7 +511,7 @@ export const SafetyModule: React.FC = () => {
       </div>
 
       {tab !== 'comunicar' && (
-        <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'incidentes' ? 'Registrar Incidente' : 'Nueva Observación'}</>}
         </button>
       )}
@@ -519,7 +519,7 @@ export const SafetyModule: React.FC = () => {
       {/* Forms */}
       {showForm && tab === 'incidentes' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+          <div className="lg:col-span-2 light-card p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formInc.obra_id} onChange={e => setFormInc({...formInc, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha</label><input type="date" value={formInc.fecha} onChange={e => setFormInc({...formInc, fecha: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
@@ -554,7 +554,7 @@ export const SafetyModule: React.FC = () => {
       )}
 
       {showForm && tab === 'observaciones' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="light-card p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formObs.obra_id} onChange={e => setFormObs({...formObs, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Observador *</label><EmployeeCombobox value={formObs.observador} onChange={name => setFormObs({...formObs, observador: name})} employees={employees} placeholder="Seleccioná observador..." /></div>
@@ -575,7 +575,7 @@ export const SafetyModule: React.FC = () => {
 
       {/* Incidentes List */}
       {tab === 'incidentes' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Incidentes</h3></div>
           {loadingInc ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-red-500 rounded-full animate-spin mx-auto" /></div> :
             incidentes.length === 0 ? <div className="text-center py-16 text-gray-400"><ShieldAlert size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin incidentes registrados</p><p className="text-sm">¡Mantené el registro actualizado para cumplir con la SRT!</p></div> :
@@ -597,7 +597,7 @@ export const SafetyModule: React.FC = () => {
 
       {/* Observaciones List */}
       {tab === 'observaciones' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Observaciones de Seguridad</h3></div>
           {loadingObs ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-orange-500 rounded-full animate-spin mx-auto" /></div> :
             observaciones.length === 0 ? <div className="text-center py-16 text-gray-400"><Eye size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin observaciones</p><p className="text-sm">Registrá observaciones de riesgo para prevenir incidentes.</p></div> :
@@ -621,7 +621,7 @@ export const SafetyModule: React.FC = () => {
       {/* Comunicar Siniestro tab */}
       {tab === 'comunicar' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="light-card p-6">
             <h3 className="font-bold text-lg text-gray-800 mb-2 flex items-center gap-2"><MessageSquare size={20} /> Canal de Comunicación de Siniestros</h3>
             <p className="text-sm text-gray-500 mb-6">Cuando ocurra un siniestro, la comunicación debe ser inmediata. Usá estos canales para reportar:</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

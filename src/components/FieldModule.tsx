@@ -136,7 +136,7 @@ export const FieldModule: React.FC = () => {
           { label: 'Enviados', value: kpis.enviados, icon: Eye, color: 'text-yellow-600' },
           { label: 'Aprobados', value: kpis.aprobados, icon: Check, color: 'text-green-600' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div key={kpi.label} className="light-card p-4">
             <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><kpi.icon size={16} className={kpi.color} /> {kpi.label}</div>
             <p className={`text-2xl font-black font-mono ${kpi.color}`}>{kpi.value}</p>
           </div>
@@ -150,7 +150,7 @@ export const FieldModule: React.FC = () => {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 md:p-6 shadow-sm space-y-4">
+        <div className="light-card p-5 md:p-6 shadow-sm space-y-4">
           <h4 className="font-bold text-gray-800 flex items-center gap-2"><ClipboardList size={18} className="text-cyan-600" /> Crear Parte Diario</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -270,7 +270,7 @@ export const FieldModule: React.FC = () => {
       )}
 
       {/* Partes List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Partes Diarios</h3></div>
         {isLoading ? (
           <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-cyan-600 rounded-full animate-spin mx-auto" /></div>
@@ -381,7 +381,7 @@ const ParteDetailView: React.FC<{
 
 /* ── Actividad Tab ── */
 const ActividadTab: React.FC<{ parte: ParteDiario }> = ({ parte }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+  <div className="light-card p-5 space-y-4">
     <div>
       <p className="text-xs font-bold text-gray-500 uppercase mb-1">Trabajo Realizado</p>
       <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-lg p-3">{parte.trabajo_realizado}</p>
@@ -437,7 +437,7 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
   return (
     <div className="space-y-4">
       {isBorrador && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-cyan-600" /> Subir Foto</h4>
           <div className="flex flex-wrap gap-2">
             {(['avance', 'entrega', 'incidente', 'otro'] as const).map(t => (
@@ -501,7 +501,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
   return (
     <div className="space-y-4">
       {isBorrador && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Users size={16} className="text-indigo-600" /> Agregar Personal</h4>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -522,7 +522,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
       )}
 
       {personal.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
             <span className="text-sm font-bold text-gray-700">Personal Presente ({personal.length})</span>
             <span className="text-xs font-mono text-gray-500">{personal.reduce((s, p) => s + p.horas_trabajadas, 0)} hs totales</span>
@@ -582,7 +582,7 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
   return (
     <div className="space-y-4">
       {isBorrador && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Package size={16} className="text-orange-600" /> Solicitar Material</h4>
           <select value={itemId} onChange={e => handleItemSelect(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm">
             <option value="">Elegir del inventario (opcional)</option>
@@ -605,7 +605,7 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
       )}
 
       {solicitudes.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 bg-gray-50 border-b border-gray-100">
             <span className="text-sm font-bold text-gray-700">Solicitudes de Materiales ({solicitudes.length})</span>
           </div>
@@ -663,7 +663,7 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
   return (
     <div className="space-y-4">
       {isBorrador && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Truck size={16} className="text-slate-600" /> Agregar Equipo / Maquinaria</h4>
           <select value={vehicleId} onChange={e => setVehicleId(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm">
             <option value="">Seleccioná equipo</option>
@@ -680,7 +680,7 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
       )}
 
       {equipos.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
             <span className="text-sm font-bold text-gray-700">Equipos en Obra ({equipos.length})</span>
             <span className="text-xs font-mono text-gray-500">{equipos.reduce((s, e) => s + e.horas_uso, 0)} hs totales</span>
@@ -763,7 +763,7 @@ const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
   const pendingCount = workOrders.filter(w => w.status === 'pendiente').length;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="light-card overflow-hidden">
       <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 flex items-center justify-between">
         <div>
           <h3 className="font-bold text-gray-800 flex items-center gap-2"><Hammer size={18} className="text-amber-600" /> Órdenes de Trabajo Interna (OTI)</h3>

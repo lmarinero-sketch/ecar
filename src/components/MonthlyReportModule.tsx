@@ -78,7 +78,7 @@ export const MonthlyReportModule: React.FC = () => {
       </div>
 
       {/* Flujo del mes - replica Excel Vista 3 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50">
           <h3 className="font-bold text-gray-800 text-lg">📊 Resumen {monthLabel}</h3>
         </div>
@@ -102,7 +102,7 @@ export const MonthlyReportModule: React.FC = () => {
       {breakdownEntries.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico barras */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="light-card p-6">
             <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><PieChart size={16} /> Distribución de Gastos</h4>
             <div className="space-y-3">
               {breakdownEntries.map(([key, value]) => {
@@ -124,7 +124,7 @@ export const MonthlyReportModule: React.FC = () => {
           </div>
 
           {/* Tabla de categorías */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="light-card overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50"><h4 className="font-bold text-gray-800">Detalle por Categoría</h4></div>
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
@@ -154,7 +154,7 @@ export const MonthlyReportModule: React.FC = () => {
       )}
 
       {/* Evolución multi-mes */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="light-card p-6">
         <h4 className="font-bold text-gray-800 mb-4">📈 Evolución Mensual</h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

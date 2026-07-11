@@ -160,7 +160,7 @@ export const LiquidityDashboard: React.FC = () => {
           { label: 'Inversiones', value: investBalance, icon: TrendingUp, color: 'purple', type: 'investment' },
           { label: 'Disponibilidad Total', value: totalLiquidity, icon: DollarSign, color: 'amber', type: 'total' },
         ].map(kpi => (
-          <div key={kpi.label} className={`bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${kpi.type === 'total' ? 'ring-2 ring-amber-200' : ''}`}>
+          <div key={kpi.label} className={`light-card p-5 hover:shadow-md transition-all ${kpi.type === 'total' ? 'ring-2 ring-amber-200' : ''}`}>
             <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
               <kpi.icon size={16} className={`text-${kpi.color}-500`} /> {kpi.label}
             </div>
@@ -175,7 +175,7 @@ export const LiquidityDashboard: React.FC = () => {
       {/* Alerts + Chart row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Alertas de Caja */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <h3 className="font-bold text-gray-800 flex items-center gap-2"><AlertTriangle size={16} className="text-amber-500" /> Alertas de Caja (7 días)</h3>
           </div>
@@ -238,7 +238,7 @@ export const LiquidityDashboard: React.FC = () => {
         </div>
 
         {/* Chart Evolución */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-indigo-500" /> Evolución de Caja</h3>
           </div>
@@ -300,7 +300,7 @@ export const LiquidityDashboard: React.FC = () => {
 
       {/* Gráfico de Línea - Cheques a Cubrir */}
       {chequesChartData.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <h3 className="font-bold text-gray-800 flex items-center gap-2">
               <TrendingUp size={16} className="text-red-500" /> Proyección de Cheques a Cubrir (Próximos 45 días)
@@ -354,7 +354,7 @@ export const LiquidityDashboard: React.FC = () => {
       )}
 
       {/* Flujo de Caja */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <div>
             <h3 className="font-bold text-gray-800 flex items-center gap-2"><DollarSign size={18} className="text-emerald-600" /> Flujo de Caja — Ingresos y Egresos</h3>

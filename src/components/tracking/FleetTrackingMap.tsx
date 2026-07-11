@@ -349,7 +349,7 @@ export const FleetTrackingMap: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex relative">
+      <div className="flex-1 light-card overflow-hidden flex relative">
         {/* Sidebar Lista */}
         <div className="w-64 border-r border-gray-200 bg-gray-50 flex flex-col">
           <div className="p-3 border-b border-gray-200 bg-white">

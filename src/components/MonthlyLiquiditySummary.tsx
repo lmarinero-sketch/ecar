@@ -129,7 +129,7 @@ export const MonthlyLiquiditySummary: React.FC = () => {
   const monthLabel = currentDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }).toUpperCase();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mt-6 mb-6">
+    <div className="light-card overflow-hidden mt-6 mb-6">
       <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 p-4 text-white flex justify-between items-center">
         <button 
           onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}

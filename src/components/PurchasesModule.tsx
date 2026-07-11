@@ -169,7 +169,7 @@ const BancoPreciosTab: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>
@@ -529,7 +529,7 @@ export const PurchasesModule: React.FC = () => {
           <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-violet-600' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex justify-between items-center mb-3">
             <h4 className="font-bold text-gray-900">Proveedores ({suppliers.length})</h4>
             <button onClick={() => setShowSupplierForm(!showSupplierForm)} className="text-ecar-blue text-sm font-bold flex items-center gap-1"><Plus size={14} /> Nuevo</button>
@@ -663,7 +663,7 @@ export const PurchasesModule: React.FC = () => {
       ) : activeTab === 'razones_sociales' ? (
         <LegalEntitiesPanel />
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
           <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
           <div className="flex items-center gap-2 flex-wrap">

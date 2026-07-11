@@ -137,7 +137,7 @@ export const AccountingModule: React.FC = () => {
       )}
 
       {/* Invoices table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Facturas Emitidas</h3></div>
         {invoices.length === 0 ? (
           <div className="text-center py-12 text-gray-400"><AlertCircle size={36} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Sin facturas. Emití la primera.</p></div>

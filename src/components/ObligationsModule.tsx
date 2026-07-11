@@ -152,7 +152,7 @@ export const ObligationsModule: React.FC = () => {
           {obligations.map(obl => {
             const payments = (obl as any).payments || [];
             return (
-              <div key={obl.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+              <div key={obl.id} className="light-card hover:shadow-md transition-all overflow-hidden">
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-3">
                     <h4 className="font-bold text-gray-900">{obl.name}</h4>

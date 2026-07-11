@@ -204,15 +204,15 @@ export const InventoryModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Boxes size={16} className="text-blue-500" /> Ítems Registrados</div>
           <p className="text-2xl font-black text-blue-600 font-mono">{(items || []).length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Wrench size={16} className="text-purple-500" /> Herramientas Asignadas</div>
           <p className="text-2xl font-black text-purple-600 font-mono">{activeAssignments.length}</p>
         </div>
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${lowStockItems.length > 0 ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
+        <div className={`light-card p-5 ${lowStockItems.length > 0 ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Stock Bajo</div>
           <p className="text-2xl font-black text-red-600 font-mono">{lowStockItems.length}</p>
           {lowStockItems.length > 0 && (
@@ -224,7 +224,7 @@ export const InventoryModule: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Depósito</div>
           <p className="text-2xl font-black text-emerald-600 font-mono">{fmt(totalValue)}</p>
         </div>
@@ -239,7 +239,7 @@ export const InventoryModule: React.FC = () => {
 
       {/* Stock tab */}
       {tab === 'stock' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-[200px] relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -254,7 +254,7 @@ export const InventoryModule: React.FC = () => {
             <button onClick={() => setShowScanner(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
               <Barcode size={16} /> Escanear Código
             </button>
-            <button onClick={() => setShowNewItem(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+            <button onClick={() => setShowNewItem(true)} className="btn-primary">
               <Plus size={16} /> Nuevo Ítem
             </button>
           </div>
@@ -325,7 +325,7 @@ export const InventoryModule: React.FC = () => {
 
       {/* Tools tab */}
       {tab === 'tools' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <h3 className="font-bold text-gray-800 flex items-center gap-2"><Wrench size={16} /> Asignaciones Activas</h3>
           </div>
@@ -371,7 +371,7 @@ export const InventoryModule: React.FC = () => {
 
       {/* Movements tab */}
       {tab === 'movements' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <h3 className="font-bold text-gray-800">Historial de Movimientos</h3>
           </div>
@@ -533,10 +533,10 @@ export const InventoryModule: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Diagrama Visual del Depósito */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="light-card overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2"><LayoutGrid size={16} /> Plano del Depósito</h3>
-                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="btn-primary">
                   <Plus size={16} /> Nueva Estantería
                 </button>
               </div>
@@ -623,7 +623,7 @@ export const InventoryModule: React.FC = () => {
             </div>
 
             {/* Lista de estanterías */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="light-card overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50">
                 <h3 className="font-bold text-gray-800">Detalle de Estanterías</h3>
               </div>

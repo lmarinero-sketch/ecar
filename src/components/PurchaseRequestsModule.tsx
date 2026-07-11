@@ -148,22 +148,22 @@ export const PurchaseRequestsModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${pendingCount > 0 ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
+        <div className={`light-card p-5 ${pendingCount > 0 ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Clock size={16} className="text-yellow-500" /> Pendientes</div>
           <p className="text-2xl font-black text-yellow-600 font-mono">{pendingCount}</p>
         </div>
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${urgentCount > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
+        <div className={`light-card p-5 ${urgentCount > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Urgentes</div>
           <p className="text-2xl font-black text-red-600 font-mono">{urgentCount}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ShoppingBag size={16} className="text-violet-500" /> Total Pedidos</div>
           <p className="text-2xl font-black text-violet-600 font-mono">{(requests || []).length}</p>
         </div>
       </div>
 
       {/* WhatsApp Authorization Card */}
-      <div className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all ${phoneConfigured ? 'border-green-200' : 'border-orange-200'}`}>
+      <div className={`light-card overflow-hidden transition-all ${phoneConfigured ? 'border-green-200' : 'border-orange-200'}`}>
         <div className="p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${phoneConfigured ? 'bg-green-100' : 'bg-orange-100'}`}>
@@ -252,7 +252,7 @@ export const PurchaseRequestsModule: React.FC = () => {
         </select>
         <div className="flex-1" />
         {activeTab === 'obra' && (
-          <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+          <button onClick={() => setShowNew(true)} className="btn-primary">
             <Plus size={16} /> Nuevo Pedido
           </button>
         )}
@@ -268,7 +268,7 @@ export const PurchaseRequestsModule: React.FC = () => {
           const urg = URGENCY_LABEL[req.urgency] || URGENCY_LABEL.normal;
           const stat = STATUS_LABEL[req.status] || STATUS_LABEL.pending;
           return (
-            <div key={req.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div key={req.id} className="light-card overflow-hidden">
               <div className="p-4 flex items-start gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -429,7 +429,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                           <CheckCircle2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
                         )}
                         {item.showDropdown && !item.inventoryItemId && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                          <div className="absolute top-full left-0 right-0 mt-1 light-card shadow-lg z-50 max-h-48 overflow-y-auto">
                             {filtered.length === 0 ? (
                               <div className="px-3 py-3 text-xs text-gray-400 text-center">
                                 {q ? `No se encontró "${item.searchText}" en inventario` : 'Escribí para buscar...'}

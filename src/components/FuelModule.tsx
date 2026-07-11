@@ -106,7 +106,7 @@ export const FuelModule: React.FC = () => {
 
 /* ── KPI Card ── */
 const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; color: string }> = ({ icon: Icon, label, value, color }) => (
-  <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+  <div className="light-card p-5">
     <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Icon size={16} className={`text-${color}-500`} /> {label}</div>
     <p className={`text-xl font-black text-${color}-600 font-mono`}>{value}</p>
   </div>
@@ -172,7 +172,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       </div>
 
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
+        <div className="light-card p-5 space-y-4">
           <h4 className="font-bold text-gray-700 text-sm">📝 Registrar Carga de Combustible</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
@@ -274,7 +274,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>
@@ -333,7 +333,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
 /* ── Batán Tab ── */
 const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Control de Batán</h3></div>
     <table className="w-full text-sm text-left">
       <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
@@ -360,7 +360,7 @@ const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements 
 
 /* ── Reconciliation Tab ── */
 const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Conciliación Mensual con Proveedor</h3></div>
     <table className="w-full text-sm text-left">
       <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
@@ -385,7 +385,7 @@ const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
 
 /* ── Fleet Tab ── */
 const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Flota Registrada ({vehicles.length} unidades)</h3></div>
     <table className="w-full text-sm text-left">
       <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
@@ -569,7 +569,7 @@ const Batan3dTank: React.FC<{ balance: number; capacity?: number }> = ({ balance
   }, [balance, capacity]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3 flex flex-col items-center">
+    <div className="light-card p-4 space-y-3 flex flex-col items-center">
       <div className="w-full flex justify-between items-center px-1">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tanque Batán 3D</span>
         <div className="flex items-center gap-1.5">

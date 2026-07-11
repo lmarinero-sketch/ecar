@@ -300,24 +300,24 @@ export const ExpensesModule: React.FC = () => {
 
       {/* Nuevo Gasto Button */}
       <div className="flex justify-end">
-        <button onClick={() => setShowGlobalAdd(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+        <button onClick={() => setShowGlobalAdd(true)} className="btn-primary">
           <Plus size={16} /> Nuevo Gasto
         </button>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Wallet size={16} className="text-emerald-500" /> Total Visible</div>
           <p className="text-xl font-black font-mono text-emerald-600">{formatARS(totalAllMonths)}</p>
           <p className="text-xs text-gray-400 mt-1">{visibleMonths.length} meses • {year}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Receipt size={16} className="text-blue-500" /> Mes Actual</div>
           <p className="text-xl font-black font-mono text-blue-600">{formatARS(currentTotal)}</p>
           <p className="text-xs text-gray-400 mt-1">{MONTHS_LABELS[now.getMonth()]} {year}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1">
             {diff >= 0 ? <TrendingUp size={16} className="text-red-500" /> : <TrendingDown size={16} className="text-green-500" />}
             Var. vs Mes Anterior
@@ -327,7 +327,7 @@ export const ExpensesModule: React.FC = () => {
           </p>
           <p className="text-xs text-gray-400 mt-1">{diffPct >= 0 ? '+' : ''}{diffPct.toFixed(1)}%</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Package size={16} className="text-gray-500" /> Rubros</div>
           <p className="text-xl font-black font-mono text-gray-700">{items.length}</p>
           <p className="text-xs text-gray-400 mt-1">{Object.keys(grouped).length} categorías</p>
@@ -370,7 +370,7 @@ export const ExpensesModule: React.FC = () => {
       {isLoading ? (
         <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-emerald-500 rounded-full animate-spin mx-auto" /></div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               {/* Header row */}

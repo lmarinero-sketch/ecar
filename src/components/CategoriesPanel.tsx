@@ -77,7 +77,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
           <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2"><Tag size={20} className="text-indigo-500" /> Categorías UOCRA</h3>
           <p className="text-sm text-gray-400 mt-0.5">Gestioná las categorías y valores hora del convenio. Los cambios aplican solo hacia adelante.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+        <button onClick={() => setShowCreate(true)} className="btn-primary">
           <Plus size={16} /> Nueva Categoría
         </button>
       </div>
@@ -88,7 +88,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
           const increases = getIncreaseIndex(cat.name);
           const lastIncrease = increases.length > 0 ? increases[increases.length - 1] : null;
           return (
-            <div key={cat.id} className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+            <div key={cat.id} className="light-card hover:shadow-md transition-all overflow-hidden">
               <div className="p-4">
                 <div className="flex justify-between items-start">
                   <div>

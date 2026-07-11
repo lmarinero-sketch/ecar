@@ -582,7 +582,7 @@ export const RomboChat: React.FC = () => {
         >
           {/* Speech bubble */}
           {showPhrase && (
-            <div className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-lg text-xs font-bold text-gray-600 rombo-speech">
+            <div className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 light-card shadow-lg text-xs font-bold text-gray-600 rombo-speech">
               {phrase}
               <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45" />
             </div>
@@ -651,7 +651,7 @@ export const RomboChat: React.FC = () => {
             {showQuickActions && (
               <div className="grid grid-cols-2 gap-2 pt-2">
                 {quickActions.map((qa, i) => (
-                  <button key={i} onClick={() => sendMessage(qa.prompt)} className="flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:border-ecar-blue/40 hover:text-ecar-blue hover:shadow-sm transition-all text-left">
+                  <button key={i} onClick={() => sendMessage(qa.prompt)} className="flex items-center gap-2 px-3 py-2.5 light-card text-xs font-medium text-gray-600 hover:border-ecar-blue/40 hover:text-ecar-blue hover:shadow-sm transition-all text-left">
                     <qa.icon size={14} className="text-ecar-blue shrink-0" /> {qa.label}
                   </button>
                 ))}

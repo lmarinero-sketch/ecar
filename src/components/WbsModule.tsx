@@ -384,7 +384,7 @@ export const WbsModule: React.FC = () => {
               { label: 'Avance Global', value: `${kpis.avgProgress}%`, icon: TrendingUp, color: 'text-cyan-600' },
               { label: 'Presupuesto', value: formatARS(kpis.totalBudget), icon: BarChart3, color: 'text-purple-600' },
             ].map(k => (
-              <div key={k.label} className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm">
+              <div key={k.label} className="light-card p-3.5 shadow-sm">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1"><k.icon size={14} className={k.color} /> {k.label}</div>
                 <p className={`text-xl font-black font-mono ${k.color}`}>{k.value}</p>
               </div>
@@ -763,7 +763,7 @@ const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: (
       <button onClick={onNew} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 shadow-md"><Plus size={16} /> Nueva Tarea</button>
     </div>
     {wbs.length > 0 ? (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>
@@ -855,7 +855,7 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any }> = ({ wbs, project 
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="light-card overflow-hidden">
       <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
         <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-indigo-600" /> Diagrama de Gantt</h3>
         <span className="text-xs text-gray-400 font-mono">{tasksWithDates.length} tareas programadas</span>
@@ -948,15 +948,15 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
     <div className="space-y-4">
       {/* SPI & KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className={`bg-white border rounded-xl p-4 shadow-sm ${atrasadas.length > 0 ? 'border-red-200 bg-red-50/50' : 'border-gray-200'}`}>
+        <div className={`light-card p-4 ${atrasadas.length > 0 ? 'border-red-200 bg-red-50/50' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><AlertTriangle size={14} className="text-red-500" /> Tareas Atrasadas</div>
           <p className="text-2xl font-black font-mono text-red-600">{atrasadas.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Clock size={14} className="text-green-500" /> En Ejecución</div>
           <p className="text-2xl font-black font-mono text-green-600">{enEjecucion.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={14} className="text-indigo-500" /> Avance Global</div>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${avgProgress}%` }} /></div>
@@ -966,7 +966,7 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
       </div>
 
       {/* Tasks with progress controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-3 bg-gray-50 border-b border-gray-100"><span className="text-sm font-bold text-gray-700">Control de Avance</span></div>
         <div className="divide-y divide-gray-100">
           {wbs.map(task => (
@@ -1028,7 +1028,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
       </div>
 
       {showNew && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+        <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><MessageSquare size={16} className="text-indigo-600" /> Nuevo Registro de Retroalimentación</h4>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Tipo *</label>
@@ -1055,7 +1055,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
       )}
 
       {feedbacks.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 bg-gray-50 border-b border-gray-100"><span className="text-sm font-bold text-gray-700">Historial de Retroalimentación ({feedbacks.length})</span></div>
           <div className="divide-y divide-gray-100">
             {feedbacks.map(fb => (
@@ -1156,7 +1156,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
             {projectEmployees.map((emp: Employee) => {
               const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
               return (
-                <div key={emp.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                <div key={emp.id} className="light-card p-4 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
                     {initials}
                   </div>
@@ -1198,7 +1198,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
         {loadingAssignments ? (
           <div className="text-center py-6 text-gray-400 text-sm">Cargando herramientas asignadas...</div>
         ) : toolAssignments.length > 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="light-card overflow-hidden">
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                 <tr>
@@ -1401,7 +1401,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           {loadingMovements ? (
             <div className="text-center py-6 text-gray-400 text-sm">Cargando movimientos...</div>
           ) : movements.length > 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="light-card overflow-hidden">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                   <tr>
@@ -1462,7 +1462,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           {loadingFuel ? (
             <div className="text-center py-6 text-gray-400 text-sm">Cargando consumos de combustible...</div>
           ) : fuelLoads.length > 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="light-card overflow-hidden">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                   <tr>
@@ -1708,7 +1708,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             const estimatedTotal = requestItems.reduce((acc, it) => acc + (it.quantity * (it.estimated_unit_cost || 0)), 0);
 
             return (
-              <div key={req.id} className={`bg-white border rounded-xl p-5 shadow-sm transition-all space-y-3 relative overflow-hidden ${
+              <div key={req.id} className={`light-card p-5 transition-all space-y-3 relative overflow-hidden ${
                 req.urgency === 'urgent' ? 'border-red-200' : 'border-gray-200'
               }`}>
                 {req.urgency === 'urgent' && (
@@ -1971,7 +1971,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
       {loadingCerts ? (
         <div className="text-center py-6 text-gray-400 text-sm">Cargando certificados...</div>
       ) : certificates.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
               <tr>

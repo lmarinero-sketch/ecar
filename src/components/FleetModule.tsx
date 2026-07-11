@@ -213,7 +213,7 @@ export const FleetModule: React.FC = () => {
         )}
 
         {/* Full list */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Calendario de Mantenimiento</h3></div>
           {allMaintenance.length === 0 ? (
             <div className="text-center py-12 text-gray-400"><Wrench size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay mantenimientos programados</p><p className="text-sm">Editá un vehículo para agendar su próximo service</p></div>
@@ -446,7 +446,7 @@ export const FleetModule: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <button onClick={saveEdit} disabled={updateVehicle.isPending} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all disabled:opacity-50">
+                    <button onClick={saveEdit} disabled={updateVehicle.isPending} className="btn-primary disabled:opacity-50">
                       {updateVehicle.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Cambios</>}
                     </button>
                   </div>

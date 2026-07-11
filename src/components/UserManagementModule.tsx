@@ -281,7 +281,7 @@ export const UserManagementModule: React.FC = () => {
       </div>
 
       {/* Guide / Manual de Uso */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
+      <div className="light-card overflow-hidden transition-all duration-300">
         <button
           onClick={() => setShowGuide(!showGuide)}
           className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
@@ -491,7 +491,7 @@ export const UserManagementModule: React.FC = () => {
 
       {/* Create User Form */}
       {showCreateForm && (
-        <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm space-y-4">
+        <div className="light-card p-4 md:p-6 shadow-sm space-y-4">
           <h4 className="font-bold text-gray-800 flex items-center gap-2">
             <UserPlus size={18} className="text-ecar-blue" /> Crear Nuevo Usuario
           </h4>
@@ -574,7 +574,7 @@ export const UserManagementModule: React.FC = () => {
           <p className="text-sm">Cargando usuarios...</p>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm text-gray-400">
+        <div className="light-card p-8 text-center shadow-sm text-gray-400">
           <Users size={48} className="text-gray-300 mx-auto mb-3" />
           <h5 className="font-bold text-gray-700 text-sm">No se encontraron usuarios</h5>
         </div>
@@ -586,7 +586,7 @@ export const UserManagementModule: React.FC = () => {
             const storedPerms = userPermissions[profile.id] || [];
 
             return (
-              <div key={profile.id} className={`bg-white border rounded-xl shadow-sm overflow-hidden transition-all ${isEditing ? 'border-ecar-blue ring-2 ring-ecar-blue/10' : 'border-gray-200 hover:border-gray-300'}`}>
+              <div key={profile.id} className={`light-card overflow-hidden transition-all ${isEditing ? 'border-ecar-blue ring-2 ring-ecar-blue/10' : 'border-gray-200 hover:border-gray-300'}`}>
                 <div className="p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${profile.role === 'admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-ecar-blue to-blue-600'}`}>

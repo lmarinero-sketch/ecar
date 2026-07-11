@@ -30,7 +30,7 @@ export const EmployeeCostPanel: React.FC<Props> = ({ employee }) => {
   const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+    <div className="light-card p-5">
       <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
         <Calculator size={16} className="text-emerald-600" /> Costo Salarial & F.931
       </h4>

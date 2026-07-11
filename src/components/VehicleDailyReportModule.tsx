@@ -65,7 +65,7 @@ const QRCodeDisplay: React.FC<{ vehicleId: string; vehicle: FuelVehicle }> = ({ 
   }, [qrUrl]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center space-y-4 max-w-md mx-auto">
+    <div className="light-card p-6 text-center space-y-4 max-w-md mx-auto">
       <div className="flex items-center justify-center gap-2 text-lg font-bold text-gray-800">
         <QrCode size={24} className="text-ecar-blue" />
         QR — Parte Diario
@@ -449,7 +449,7 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; onClose: () => void }
         <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a listado
       </button>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
+      <div className="light-card p-6 space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -575,7 +575,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
         <button onClick={() => { onBack ? onBack() : setView('list'); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver
         </button>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="light-card p-6">
           <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
             <ClipboardCheck size={20} className="text-ecar-blue" /> Nuevo Parte Diario Vehicular
           </h3>
@@ -604,19 +604,19 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ClipboardCheck size={16} className="text-indigo-500" /> Reportes Hoy</div>
           <p className="text-2xl font-black text-indigo-600 font-mono">{todayReports.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-sky-500" /> Vehículos Reportados</div>
           <p className="text-2xl font-black text-sky-600 font-mono">{vehiclesReportedToday.size} <span className="text-sm font-medium text-gray-400">/ {vehicles.length}</span></p>
         </div>
-        <div className={`bg-white border rounded-xl p-5 shadow-sm ${damageReports.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
+        <div className={`light-card p-5 ${damageReports.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Con Daños</div>
           <p className="text-2xl font-black text-red-600 font-mono">{damageReports.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Calendar size={16} className="text-emerald-500" /> Total Reportes</div>
           <p className="text-2xl font-black text-emerald-600 font-mono">{reports.length}</p>
         </div>
@@ -656,7 +656,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
       </div>
 
       {/* Quick QR buttons */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <div className="light-card p-4">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><QrCode size={16} className="text-violet-500" /> Generar QR por Vehículo</h4>
         </div>
@@ -681,7 +681,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
       </div>
 
       {/* Reports Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50">
           <h3 className="font-bold text-gray-800">Historial de Reportes ({filteredReports.length})</h3>
         </div>

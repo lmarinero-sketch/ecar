@@ -153,7 +153,7 @@ export const ScopeChangesModule: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>

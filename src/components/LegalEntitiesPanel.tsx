@@ -84,7 +84,7 @@ export const LegalEntitiesPanel: React.FC = () => {
       </div>
 
       {showAdd && (
-        <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+        <div className="light-card border-indigo-100 p-6">
           <h3 className="font-bold text-gray-800 mb-4">Registrar Nueva Razón Social</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>

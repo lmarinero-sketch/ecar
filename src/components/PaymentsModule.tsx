@@ -212,15 +212,15 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-xs font-bold text-gray-500 mb-1">Total a Pagar</p>
           <p className="text-xl font-black font-mono text-gray-800">{formatARS(total)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-xs font-bold text-gray-500 mb-1">Restos Pendientes</p>
           <p className="text-xl font-black font-mono text-amber-600">{formatARS(totalResto)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <p className="text-xs font-bold text-gray-500 mb-1">Pagados</p>
           <p className="text-xl font-black font-mono text-green-600">{pagados} / {items.length}</p>
         </div>
@@ -382,7 +382,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         {isLoading ? (
           <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin mx-auto" /></div>
         ) : items.length === 0 ? (

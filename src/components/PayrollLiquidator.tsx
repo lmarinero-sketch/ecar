@@ -224,7 +224,7 @@ export const PayrollLiquidator: React.FC<{
       </div>
 
       <div className="flex-1 overflow-hidden p-6 flex flex-col">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
+        <div className="light-card overflow-hidden flex flex-col flex-1">
           <div className="overflow-auto flex-1">
             <table className="w-full text-left min-w-[1000px] border-collapse">
               <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">

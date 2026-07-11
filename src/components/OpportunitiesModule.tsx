@@ -479,7 +479,7 @@ export const OpportunitiesModule: React.FC = () => {
         </div>
       ) : (
         /* List View */
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
               <tr>
@@ -618,7 +618,7 @@ export const OpportunitiesModule: React.FC = () => {
               </div>
 
               {/* Sección 2: Detalles Comerciales */}
-              <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <div className="light-card p-4">
                 <h4 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
                   <div className="bg-gray-100 p-1.5 rounded-lg text-gray-600"><Briefcase size={16} /></div>
                   Detalles Comerciales
@@ -952,7 +952,7 @@ export const OpportunitiesModule: React.FC = () => {
               {loadingBudgets ? (
                 <div className="text-center py-6 text-gray-400">Cargando presupuestos...</div>
               ) : oppBudgets && oppBudgets.length > 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="light-card overflow-hidden">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
                       <tr>

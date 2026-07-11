@@ -87,7 +87,7 @@ export const BiDashboard: React.FC = () => {
           { label: 'Cheques a Cobrar', value: formatARS(chequesACobrar), icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Flota Operativa', value: `${fleetOperative}/${vehicles.length}`, icon: Truck, color: 'text-slate-600', bg: 'bg-slate-50' },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div key={i} className="light-card p-4">
             <div className={`${kpi.bg} w-8 h-8 rounded-lg flex items-center justify-center mb-2`}>
               <kpi.icon size={16} className={kpi.color} />
             </div>
@@ -100,7 +100,7 @@ export const BiDashboard: React.FC = () => {
       {/* Sección por Gerencia */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gerencia de Proyectos y Presupuestos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-3 flex items-center gap-2">
             <Briefcase size={16} />
             <span className="font-bold text-sm">Gerencia de Proyectos y Presupuestos</span>
@@ -134,7 +134,7 @@ export const BiDashboard: React.FC = () => {
         </div>
 
         {/* Gerencia de Compras */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="bg-gradient-to-r from-violet-600 to-purple-500 text-white px-5 py-3 flex items-center gap-2">
             <FileSignature size={16} />
             <span className="font-bold text-sm">Gerencia de Compras</span>
@@ -162,7 +162,7 @@ export const BiDashboard: React.FC = () => {
         </div>
 
         {/* Gerencia de Obras */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="bg-gradient-to-r from-amber-600 to-orange-500 text-white px-5 py-3 flex items-center gap-2">
             <ShieldAlert size={16} />
             <span className="font-bold text-sm">Gerencia de Obras — Calidad</span>
@@ -192,7 +192,7 @@ export const BiDashboard: React.FC = () => {
         </div>
 
         {/* Gerencia de Logística */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white px-5 py-3 flex items-center gap-2">
             <Package size={16} />
             <span className="font-bold text-sm">Gerencia de Logística</span>
@@ -223,7 +223,7 @@ export const BiDashboard: React.FC = () => {
       </div>
 
       {/* Projects table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50">
           <h3 className="font-bold text-gray-800">Obras en Curso</h3>
         </div>

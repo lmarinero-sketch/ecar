@@ -743,7 +743,7 @@ export function MesaTecnicaPresentation() {
               <button
                 key={btn.id}
                 onClick={() => navigateTo(btn.id as ScreenId)}
-                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-blue-400 mt-animate-slide-left mt-delay-${idx + 1}`}
+                className={`mt-btn-card w-full group flex items-stretch light-card overflow-hidden shadow-sm text-left hover:border-blue-400 mt-animate-slide-left mt-delay-${idx + 1}`}
               >
                 <div className="mt-btn-number w-14 bg-[#1a4a76] text-white flex items-center justify-center text-2xl font-bold transition-colors duration-300 group-hover:bg-blue-600">
                   {btn.id}
@@ -789,7 +789,7 @@ export function MesaTecnicaPresentation() {
               <button
                 key={btn.id}
                 onClick={() => navigateTo(btn.id as ScreenId)}
-                className={`mt-btn-card w-full group flex items-stretch bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm text-left hover:border-emerald-400 mt-animate-slide-right mt-delay-${idx + 1}`}
+                className={`mt-btn-card w-full group flex items-stretch light-card overflow-hidden shadow-sm text-left hover:border-emerald-400 mt-animate-slide-right mt-delay-${idx + 1}`}
               >
                 <div className="mt-btn-number w-14 bg-[#2d7667] text-white flex items-center justify-center text-2xl font-bold transition-colors duration-300 group-hover:bg-emerald-600">
                   {btn.id}

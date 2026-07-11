@@ -78,7 +78,7 @@ export const NotificationContacts: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {contacts.map(c => (
-            <div key={c.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-all">
+            <div key={c.id} className="light-card p-4 flex items-start gap-3 hover:shadow-md transition-all">
               <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
                 {c.name.charAt(0)}
               </div>

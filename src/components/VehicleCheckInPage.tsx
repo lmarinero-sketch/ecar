@@ -388,7 +388,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
             </div>
 
             {/* Damage */}
-            <div className={`bg-white border rounded-xl p-4 transition-all ${hasDamage ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}>
+            <div className={`light-card p-4 transition-all ${hasDamage ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"

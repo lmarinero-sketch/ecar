@@ -377,7 +377,7 @@ export const FinancesModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div className="light-card p-5 relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-red-50 to-transparent pointer-events-none" />
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingDown size={16} className="text-red-500" /> Cheques a Pagar</div>
           <p className="text-2xl font-black text-red-600 font-mono">{formatARS(totalPayable)}</p>
@@ -389,12 +389,12 @@ export const FinancesModule: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-green-500" /> Cheques a Cobrar</div>
           <p className="text-2xl font-black text-green-600 font-mono">{formatARS(totalReceivable)}</p>
           <p className="text-xs text-gray-400 mt-1">{receivable.length} pendientes</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CreditCard size={16} className="text-purple-500" /> Gastos Fijos Mes</div>
           <p className="text-2xl font-black text-purple-700 font-mono">{formatARS(totalFixed)}</p>
           <p className="text-xs text-gray-400 mt-1">{expenses.filter(e => e.status === 'active').length} activos</p>
@@ -520,7 +520,7 @@ export const FinancesModule: React.FC = () => {
           )}
 
           {/* Cheques table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="light-card overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h3 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h3>
               <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
@@ -653,7 +653,7 @@ export const FinancesModule: React.FC = () => {
           </div>
 
           {/* Receipts Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="light-card overflow-hidden">
             {isLoadingPayments ? (
               <div className="text-center py-12 text-gray-400 text-sm">Cargando comprobantes...</div>
             ) : paymentRecords.length === 0 ? (

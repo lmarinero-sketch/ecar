@@ -508,7 +508,7 @@ const DeviceInfoCell: React.FC<{
       </button>
 
       {expanded && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white border border-gray-200 rounded-xl shadow-xl p-4 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
+        <div className="absolute right-0 top-full mt-1 z-50 w-72 light-card shadow-xl p-4 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
           <div className="flex items-center justify-between">
             <h5 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
               <Smartphone size={12} className="text-indigo-500" />

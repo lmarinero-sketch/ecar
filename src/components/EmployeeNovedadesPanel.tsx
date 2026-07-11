@@ -65,7 +65,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
   return (
     <div className="space-y-4">
       {/* Ausencias */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <div className="light-card p-5">
         <div className="flex justify-between items-center mb-4">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
             <CalendarDays size={16} /> Ausencias y Licencias
@@ -153,7 +153,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
       </div>
 
       {/* Adelantos */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <div className="light-card p-5">
         <div className="flex justify-between items-center mb-4">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
             <Banknote size={16} /> Adelantos

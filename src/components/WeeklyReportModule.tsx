@@ -94,22 +94,22 @@ export const WeeklyReportModule: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Building2 size={16} className="text-blue-500" /> Obras Activas</div>
           <p className="text-3xl font-black text-gray-800">{obrasActivas}</p>
           <p className="text-xs text-gray-400 mt-1">{weekPartes.length} partes diarios</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Clock size={16} className="text-green-500" /> Horas Trabajadas</div>
           <p className="text-3xl font-black text-green-700">{totalHoras}</p>
           <p className="text-xs text-gray-400 mt-1">horas esta semana</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={16} className="text-cyan-500" /> Avance Prom.</div>
           <p className="text-3xl font-black text-cyan-700">{avgAvance.toFixed(0)}%</p>
           <p className="text-xs text-gray-400 mt-1">promedio del período</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><AlertTriangle size={16} className="text-red-500" /> Incidentes</div>
           <p className="text-3xl font-black text-red-600">{partesConIncidentes.length}</p>
           <p className="text-xs text-gray-400 mt-1">partes con novedades</p>
@@ -117,7 +117,7 @@ export const WeeklyReportModule: React.FC = () => {
       </div>
 
       {/* Section: Avance por Obra */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <Building2 size={16} className="text-blue-600" />
           <h3 className="font-bold text-gray-800">Avance por Obra</h3>
@@ -161,7 +161,7 @@ export const WeeklyReportModule: React.FC = () => {
       {/* Grid: Compras + No Conformidades + Cambios de Alcance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Pedidos de Compra */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <Package size={14} className="text-purple-600" />
             <h4 className="font-bold text-gray-700 text-sm">Pedidos de Compra</h4>
@@ -181,7 +181,7 @@ export const WeeklyReportModule: React.FC = () => {
         </div>
 
         {/* No Conformidades */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <ShieldAlert size={14} className="text-red-600" />
             <h4 className="font-bold text-gray-700 text-sm">No Conformidades</h4>
@@ -200,7 +200,7 @@ export const WeeklyReportModule: React.FC = () => {
         </div>
 
         {/* Cambios de Alcance */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <Target size={14} className="text-amber-600" />
             <h4 className="font-bold text-gray-700 text-sm">Adicionales & Cambios</h4>
@@ -215,7 +215,7 @@ export const WeeklyReportModule: React.FC = () => {
       {/* Grid: Pipeline + Presupuestos + Flota */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Pipeline */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <TrendingUp size={14} className="text-blue-600" />
             <h4 className="font-bold text-gray-700 text-sm">Pipeline Comercial</h4>
@@ -227,7 +227,7 @@ export const WeeklyReportModule: React.FC = () => {
         </div>
 
         {/* Presupuestos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <DollarSign size={14} className="text-green-600" />
             <h4 className="font-bold text-gray-700 text-sm">Presupuestos</h4>
@@ -240,7 +240,7 @@ export const WeeklyReportModule: React.FC = () => {
         </div>
 
         {/* Flota */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
             <Truck size={14} className="text-sky-600" />
             <h4 className="font-bold text-gray-700 text-sm">Flota & Logística</h4>

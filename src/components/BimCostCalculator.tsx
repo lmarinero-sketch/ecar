@@ -214,7 +214,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
   return (
     <div className="space-y-4">
       {/* Currency & Rate Controls */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-wrap items-center gap-4">
+      <div className="light-card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Moneda</span>
           <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -243,25 +243,25 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Layers size={14} className="text-indigo-500" /> Elementos</div>
           <p className="text-2xl font-black text-indigo-600 font-mono">{elements.length}</p>
           <p className="text-[10px] text-gray-400">{categories.length} rubros</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Ruler size={14} className="text-cyan-500" /> Superficie</div>
           <p className="text-2xl font-black text-cyan-600 font-mono">{totalArea.toFixed(1)}<span className="text-sm ml-1">m²</span></p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Box size={14} className="text-amber-500" /> Volumen</div>
           <p className="text-2xl font-black text-amber-600 font-mono">{totalVolume.toFixed(1)}<span className="text-sm ml-1">m³</span></p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><DollarSign size={14} className="text-emerald-500" /> Presupuesto</div>
           <p className="text-lg font-black text-emerald-600 font-mono">{fmt(grandTotal)}</p>
           <p className="text-[10px] text-gray-400">con {markupPct}% GG</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><BarChart3 size={14} className="text-violet-500" /> Costo/m²</div>
           <p className="text-lg font-black text-violet-600 font-mono">{fmt(costPerM2)}</p>
           <p className="text-[10px] text-gray-400">incl. GG</p>
@@ -269,7 +269,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
       </div>
 
       {/* Cost Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 size={18} className="text-indigo-600" />

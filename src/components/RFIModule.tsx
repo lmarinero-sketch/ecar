@@ -56,32 +56,32 @@ export const RFIModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><MessageSquareText size={16} className="text-purple-500" /> Total RFI</div>
           <p className="text-2xl font-black font-mono text-purple-600">{consultas.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Clock size={16} className="text-yellow-500" /> Abiertas</div>
           <p className="text-2xl font-black font-mono text-yellow-600">{abiertas}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><DollarSign size={16} className="text-red-500" /> Impacto Costo</div>
           <p className="text-2xl font-black font-mono text-red-600">{conImpactoCosto}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Calendar size={16} className="text-orange-500" /> Impacto Crono</div>
           <p className="text-2xl font-black font-mono text-orange-600">{conImpactoCrono}</p>
         </div>
       </div>
 
       {/* New Button */}
-      <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+      <button onClick={() => setShowForm(!showForm)} className="btn-primary">
         {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> Nueva Consulta (RFI)</>}
       </button>
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="light-card p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={form.obra_id} onChange={e => setForm({...form, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Consultado por *</label><input value={form.consultado_por} onChange={e => setForm({...form, consultado_por: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Quién formula la consulta" /></div>
@@ -107,7 +107,7 @@ export const RFIModule: React.FC = () => {
       )}
 
       {/* List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Consultas (RFI)</h3></div>
         {isLoading ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin mx-auto" /></div> :
           consultas.length === 0 ? <div className="text-center py-16 text-gray-400"><MessageSquareText size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin consultas</p><p className="text-sm">Creá la primera RFI para formalizar consultas técnicas.</p></div> :

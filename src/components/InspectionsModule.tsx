@@ -53,19 +53,19 @@ export const InspectionsModule: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><ClipboardCheck size={16} className="text-teal-500" /> Total Inspecciones</div>
           <p className="text-2xl font-black font-mono text-teal-600">{inspecciones.length}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><CheckCircle2 size={16} className="text-green-500" /> Aprobadas</div>
           <p className="text-2xl font-black font-mono text-green-600">{inspAprobadas}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><AlertCircle size={16} className="text-red-500" /> Rechazadas</div>
           <p className="text-2xl font-black font-mono text-red-600">{inspRechazadas}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><CircleDot size={16} className="text-orange-500" /> Punch Abiertos</div>
           <p className="text-2xl font-black font-mono text-orange-600">{punchAbiertos}</p>
         </div>
@@ -81,13 +81,13 @@ export const InspectionsModule: React.FC = () => {
         </button>
       </div>
 
-      <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all">
+      <button onClick={() => setShowForm(!showForm)} className="btn-primary">
         {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'inspecciones' ? 'Nueva Inspección' : 'Nuevo Item'}</>}
       </button>
 
       {/* Form Inspeccion */}
       {showForm && tab === 'inspecciones' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="light-card p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formInsp.obra_id} onChange={e => setFormInsp({...formInsp, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Tipo</label><select value={formInsp.tipo} onChange={e => setFormInsp({...formInsp, tipo: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">{Object.entries(TIPO_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}</select></div>
@@ -105,7 +105,7 @@ export const InspectionsModule: React.FC = () => {
 
       {/* Form Punch */}
       {showForm && tab === 'punch' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="light-card p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Obra *</label><select value={formPunch.obra_id} onChange={e => setFormPunch({...formPunch, obra_id: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Seleccioná</option>{projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Título *</label><input value={formPunch.titulo} onChange={e => setFormPunch({...formPunch, titulo: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej: Fisura en muro P2" /></div>
@@ -125,7 +125,7 @@ export const InspectionsModule: React.FC = () => {
 
       {/* Inspecciones Table */}
       {tab === 'inspecciones' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Inspecciones</h3></div>
           {loadingInsp ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-teal-500 rounded-full animate-spin mx-auto" /></div> :
             inspecciones.length === 0 ? <div className="text-center py-16 text-gray-400"><ClipboardCheck size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin inspecciones</p><p className="text-sm">Creá la primera inspección para controlar la calidad.</p></div> :
@@ -146,7 +146,7 @@ export const InspectionsModule: React.FC = () => {
 
       {/* Punch List */}
       {tab === 'punch' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Punch List — No Conformidades</h3></div>
           {loadingPunch ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-teal-500 rounded-full animate-spin mx-auto" /></div> :
             punchItems.length === 0 ? <div className="text-center py-16 text-gray-400"><ListChecks size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin items de punch list</p><p className="text-sm">Agregá items cuando detectes no conformidades.</p></div> :
