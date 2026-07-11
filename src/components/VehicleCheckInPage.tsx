@@ -161,13 +161,17 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-gradient-to-r from-indigo-800 to-violet-600 px-4 py-4 shadow-md">
-        <div className="flex items-center justify-center gap-3">
-          <ClipboardCheck size={24} className="text-white" />
-          <div className="text-center">
-            <h1 className="text-white text-lg font-bold">Parte Diario Vehicular</h1>
-            <p className="text-indigo-200 text-xs">ECAR · Inspección por QR</p>
+      <header className="bg-ecar-blueDark p-6 text-center relative overflow-hidden shadow-md shrink-0 z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-700/30 via-transparent to-transparent opacity-60 pointer-events-none" />
+        <div className="bg-white rounded-xl p-2 inline-block mb-3 relative z-10 shadow-md">
+          <img src="/rombo.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 text-white relative z-10">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck size={20} className="text-blue-300" />
+            <h1 className="text-lg font-bold tracking-wide">Parte Diario Vehicular</h1>
           </div>
+          <p className="text-blue-200 text-xs">Inspección por código QR</p>
         </div>
       </header>
 

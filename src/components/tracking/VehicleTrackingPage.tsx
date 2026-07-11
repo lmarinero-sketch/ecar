@@ -275,12 +275,16 @@ export const VehicleTrackingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <div className="bg-indigo-700 text-white p-4 shadow-md flex items-center justify-between z-10">
-        <div className="flex items-center gap-2">
-          <Navigation className="w-6 h-6" />
-          <h1 className="font-bold text-lg">GPS Flota ECAR</h1>
+      <header className="bg-ecar-blueDark p-6 text-center relative overflow-hidden shadow-md shrink-0 z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-700/30 via-transparent to-transparent opacity-60 pointer-events-none" />
+        <div className="bg-white rounded-xl p-2 inline-block mb-3 relative z-10 shadow-md">
+          <img src="/rombo.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
         </div>
-      </div>
+        <div className="flex items-center justify-center gap-2 text-white relative z-10">
+          <Navigation size={20} className="text-blue-300" />
+          <h1 className="text-lg font-bold tracking-wide">GPS Flota ECAR</h1>
+        </div>
+      </header>
       
       <div className="flex-1 overflow-auto p-4 flex flex-col max-w-md mx-auto w-full">
         {error && (
