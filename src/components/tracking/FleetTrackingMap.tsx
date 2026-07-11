@@ -4,6 +4,19 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-
 import { supabase } from '../../lib/supabase';
 import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check } from 'lucide-react';
 
+const VEHICLE_COLORS = [
+  '#4F46E5', '#E11D48', '#059669', '#D97706', '#7C3AED', 
+  '#2563EB', '#DC2626', '#16A34A', '#CA8A04', '#9333EA'
+];
+
+const getColorForVehicle = (vehicleId: string) => {
+  let hash = 0;
+  for (let i = 0; i < vehicleId.length; i++) {
+    hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return VEHICLE_COLORS[Math.abs(hash) % VEHICLE_COLORS.length];
+};
+
 const containerStyle = {
   width: '100%',
   height: '100%',
@@ -38,31 +51,9 @@ export const FleetTrackingMap: React.FC = () => {
   const [activeVehicles, setActiveVehicles] = useState<Record<string, ActiveVehicle>>({});
   const [selectedVehicle, setSelectedVehicle] = useState<ActiveVehicle | null>(null);
   const [copied, setCopied] = useState(false);
-  const [routePath, setRoutePath] = useState<{lat: number, lng: number}[]>([]);
+  const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
 
   const channelRef = useRef<any>(null);
-  const selectedVehicleRef = useRef<ActiveVehicle | null>(null);
-
-  useEffect(() => {
-    selectedVehicleRef.current = selectedVehicle;
-    if (selectedVehicle) {
-      const fetchRoute = async () => {
-        const { data } = await supabase
-          .from('vehicle_tracking_points')
-          .select('lat, lng')
-          .eq('session_id', selectedVehicle.session_id)
-          .order('recorded_at', { ascending: true });
-        
-        if (data) {
-          const currentPoint = { lat: selectedVehicle.lat, lng: selectedVehicle.lng };
-          setRoutePath([...data.map(d => ({ lat: d.lat, lng: d.lng })), currentPoint]);
-        }
-      };
-      fetchRoute();
-    } else {
-      setRoutePath([]);
-    }
-  }, [selectedVehicle]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.origin + '/tracking');
@@ -109,6 +100,33 @@ export const FleetTrackingMap: React.FC = () => {
 
       setActiveVehicles(sessions);
       
+      if (data && data.length > 0) {
+        const sessionIds = data.map(d => d.id);
+        const { data: pointsData } = await supabase
+          .from('vehicle_tracking_points')
+          .select('vehicle_id, lat, lng')
+          .in('session_id', sessionIds)
+          .order('recorded_at', { ascending: true });
+          
+        const groupedRoutes: Record<string, {lat: number, lng: number}[]> = {};
+        
+        if (pointsData) {
+          pointsData.forEach(p => {
+             if (!groupedRoutes[p.vehicle_id]) groupedRoutes[p.vehicle_id] = [];
+             groupedRoutes[p.vehicle_id].push({lat: p.lat, lng: p.lng});
+          });
+        }
+        
+        data.forEach(d => {
+          if (!groupedRoutes[d.vehicle_id]) groupedRoutes[d.vehicle_id] = [];
+          if (d.last_lat && d.last_lng) {
+            groupedRoutes[d.vehicle_id].push({ lat: d.last_lat, lng: d.last_lng });
+          }
+        });
+        
+        setRoutes(groupedRoutes);
+      }
+      
       // Auto-center on first load if vehicles exist and map exists
       if (data && data.length > 0 && map && window.google) {
         try {
@@ -152,9 +170,13 @@ export const FleetTrackingMap: React.FC = () => {
         }
       }));
 
-      if (selectedVehicleRef.current?.vehicle_id === data.vehicle_id) {
-        setRoutePath(prev => [...prev, { lat: data.lat, lng: data.lng }]);
-      }
+      setRoutes(prev => {
+        const vehicleRoutes = prev[data.vehicle_id] || [];
+        return {
+          ...prev,
+          [data.vehicle_id]: [...vehicleRoutes, { lat: data.lat, lng: data.lng }]
+        };
+      });
     }).subscribe();
 
     channelRef.current = channel;
@@ -246,7 +268,8 @@ export const FleetTrackingMap: React.FC = () => {
                     className={`p-3 cursor-pointer hover:bg-indigo-50 transition-colors ${selectedVehicle?.vehicle_id === v.vehicle_id ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'}`}
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-gray-800 text-sm">
+                      <span className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getColorForVehicle(v.vehicle_id) }}></div>
                         {v.vehicle_code || 'Unidad'}
                       </span>
                       <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
@@ -294,15 +317,19 @@ export const FleetTrackingMap: React.FC = () => {
               />
             ))}
 
-            {routePath.length > 0 && (
-              <Polyline
-                path={routePath}
-                options={{
-                  strokeColor: '#4F46E5', // indigo-600
-                  strokeOpacity: 0.8,
-                  strokeWeight: 4,
-                }}
-              />
+            {Object.entries(routes).map(([vehicleId, path]) => 
+              path.length > 0 && (
+                <Polyline
+                  key={`route-${vehicleId}`}
+                  path={path}
+                  options={{
+                    strokeColor: getColorForVehicle(vehicleId),
+                    strokeOpacity: 0.8,
+                    strokeWeight: selectedVehicle?.vehicle_id === vehicleId ? 6 : 4,
+                    zIndex: selectedVehicle?.vehicle_id === vehicleId ? 10 : 1
+                  }}
+                />
+              )
             )}
 
             {selectedVehicle && (
