@@ -55,6 +55,7 @@ export const FleetTrackingMap: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
+  const [tempDestination, setTempDestination] = useState<{lat: number, lng: number} | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
@@ -229,41 +230,48 @@ export const FleetTrackingMap: React.FC = () => {
 
   const onMapClick = async (e: google.maps.MapMouseEvent) => {
     if (assigningDestinationFor && e.latLng) {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      
-      const vehicle = activeVehicles[assigningDestinationFor];
-      if (!vehicle) return;
+      setTempDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+    }
+  };
 
-      // Optimistic update
-      setActiveVehicles(prev => ({
-        ...prev,
-        [assigningDestinationFor]: {
-          ...prev[assigningDestinationFor],
+  const handleConfirmDestination = async (lat: number, lng: number) => {
+    if (!assigningDestinationFor) return;
+    
+    const vehicle = activeVehicles[assigningDestinationFor];
+    const vehicleId = assigningDestinationFor;
+    
+    if (!vehicle) return;
+
+    // Optimistic update
+    setActiveVehicles(prev => ({
+      ...prev,
+      [vehicleId]: {
+        ...prev[vehicleId],
+        destination_lat: lat,
+        destination_lng: lng
+      }
+    }));
+    
+    setAssigningDestinationFor(null);
+    setTempDestination(null);
+    
+    // Update DB
+    await supabase
+      .from('vehicle_tracking_sessions')
+      .update({ destination_lat: lat, destination_lng: lng })
+      .eq('id', vehicle.session_id);
+      
+    // Broadcast to driver
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'new_destination',
+        payload: {
+          vehicle_id: vehicleId,
           destination_lat: lat,
           destination_lng: lng
         }
-      }));
-      setAssigningDestinationFor(null);
-      
-      // Update DB
-      await supabase
-        .from('vehicle_tracking_sessions')
-        .update({ destination_lat: lat, destination_lng: lng })
-        .eq('id', vehicle.session_id);
-        
-      // Broadcast to driver
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'new_destination',
-          payload: {
-            vehicle_id: assigningDestinationFor,
-            destination_lat: lat,
-            destination_lng: lng
-          }
-        });
-      }
+      });
     }
   };
 
@@ -386,6 +394,23 @@ export const FleetTrackingMap: React.FC = () => {
                 Hacé clic en el mapa para marcar el destino...
               </div>
             )}
+            {assigningDestinationFor && tempDestination && (
+              <InfoWindow
+                position={tempDestination}
+                onCloseClick={() => setTempDestination(null)}
+              >
+                <div className="p-2 text-center">
+                  <p className="text-sm font-medium text-gray-800 mb-2">¿Confirmar destino?</p>
+                  <button
+                    onClick={() => handleConfirmDestination(tempDestination.lat, tempDestination.lng)}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 w-full"
+                  >
+                    Ir aquí
+                  </button>
+                </div>
+              </InfoWindow>
+            )}
+
             {vehiclesList.map((v) => (
               <Marker
                 key={v.vehicle_id}
@@ -470,6 +495,7 @@ export const FleetTrackingMap: React.FC = () => {
                   <button
                     onClick={() => {
                       setAssigningDestinationFor(selectedVehicle.vehicle_id);
+                      setTempDestination(null);
                       setSelectedVehicle(null);
                     }}
                     className="mt-3 w-full bg-indigo-600 text-white text-xs font-bold py-1.5 rounded hover:bg-indigo-700 transition-colors"
@@ -528,7 +554,7 @@ export const FleetTrackingMap: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 mb-1">3. Marca el punto en el mapa</h4>
-                  <p className="text-sm text-gray-600">Haz clic en cualquier calle o punto del mapa. ¡Listo! El celular del conductor calculará la ruta automáticamente al instante.</p>
+                  <p className="text-sm text-gray-600">Haz clic en cualquier calle para colocar un marcador y luego presiona el botón <strong className="text-indigo-600 font-bold">"Ir aquí"</strong> para confirmar. ¡Listo! El celular del conductor calculará la ruta automáticamente al instante.</p>
                 </div>
               </div>
             </div>
