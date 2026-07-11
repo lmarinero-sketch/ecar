@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
 import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone } from 'lucide-react';
 
@@ -56,6 +56,9 @@ export const FleetTrackingMap: React.FC = () => {
   const [routes, setRoutes] = useState<Record<string, {lat: number, lng: number}[]>>({});
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [directionsFetchedFor, setDirectionsFetchedFor] = useState<string | null>(null);
 
   const channelRef = useRef<any>(null);
 
@@ -193,6 +196,28 @@ export const FleetTrackingMap: React.FC = () => {
       supabase.removeChannel(channel);
     };
   }, [map]);
+
+  useEffect(() => {
+    if (selectedVehicle && selectedVehicle.destination_lat && selectedVehicle.destination_lng && isLoaded && window.google) {
+      const destString = `${selectedVehicle.vehicle_id}-${selectedVehicle.destination_lat}-${selectedVehicle.destination_lng}`;
+      if (directionsFetchedFor === destString) return; 
+
+      const directionsService = new window.google.maps.DirectionsService();
+      directionsService.route({
+        origin: { lat: selectedVehicle.lat, lng: selectedVehicle.lng },
+        destination: { lat: selectedVehicle.destination_lat, lng: selectedVehicle.destination_lng },
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      }, (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+          setDirectionsFetchedFor(destString);
+        }
+      });
+    } else if (!selectedVehicle || !selectedVehicle.destination_lat) {
+       setDirections(null);
+       setDirectionsFetchedFor(null);
+    }
+  }, [selectedVehicle, isLoaded, directionsFetchedFor]);
 
   const onLoad = useCallback(function callback(mapInstance: google.maps.Map) {
     setMap(mapInstance);
@@ -406,6 +431,13 @@ export const FleetTrackingMap: React.FC = () => {
                   }}
                 />
               )
+            )}
+
+            {directions && (
+               <DirectionsRenderer 
+                  directions={directions} 
+                  options={{ suppressMarkers: false }} 
+               />
             )}
 
             {selectedVehicle && (

@@ -447,21 +447,19 @@ export const VehicleTrackingPage: React.FC = () => {
                   </div>
                 )}
                 
-                {isLoaded && destination && (
+                {isLoaded && currentLocation && (
                   <div className="h-64 w-full rounded-xl overflow-hidden mt-4 mb-4 border border-gray-200">
                     <GoogleMap
                       mapContainerStyle={{ width: '100%', height: '100%' }}
-                      center={currentLocation || { lat: -31.5375, lng: -68.5363 }}
-                      zoom={14}
+                      center={currentLocation}
+                      zoom={16}
                       options={{ disableDefaultUI: true }}
                     >
-                      {currentLocation && (
-                        <Marker 
-                          position={currentLocation} 
-                          icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
-                          zIndex={5}
-                        />
-                      )}
+                      <Marker 
+                        position={currentLocation} 
+                        icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
+                        zIndex={5}
+                      />
                       {directions && (
                         <DirectionsRenderer 
                           directions={directions} 
