@@ -167,7 +167,9 @@ export const CertificationsModule: React.FC = () => {
                               contract_amount: proj.contract_amount || 0,
                               advance_pct: proj.advance_pct || 30,
                               advance_amount: proj.advance_amount || 0,
-                              advance_redetermination: proj.advance_redetermination || 0
+                              advance_redetermination: proj.advance_redetermination || 0,
+                              advance_deposit: proj.advance_deposit || (proj.advance_amount * 0.95),
+                              advance_redetermination_deposit: proj.advance_redetermination_deposit || (proj.advance_redetermination * 0.95)
                             });
                           }}
                           className="p-1 text-gray-400 hover:text-ecar-blue transition-colors ml-2"
@@ -293,11 +295,10 @@ export const CertificationsModule: React.FC = () => {
                         <tr>
                           <td className="border border-gray-300 p-2 font-bold text-gray-700 uppercase">Deposito Banco</td>
                           <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
-                            {/* Assuming full advance was deposited as per spreadsheet example */}
-                            {fmt(proj.advance_amount * 0.95)}
+                            {fmt(proj.advance_deposit || (proj.advance_amount * 0.95))}
                           </td>
                           <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
-                            {fmt(proj.advance_redetermination * 0.95)}
+                            {fmt(proj.advance_redetermination_deposit || (proj.advance_redetermination * 0.95))}
                           </td>
                           {certs.map(c => {
                             let bgClass = 'bg-white';
@@ -510,6 +511,16 @@ export const CertificationsModule: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500">Redeterminación Anticipo ($)</label>
                 <input type="number" value={editingProject.advance_redetermination} onChange={e => setEditingProject({ ...editingProject, advance_redetermination: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-green-50" />
               </div>
+              <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-1">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Depósito Anticipo ($)</label>
+                  <input type="number" value={editingProject.advance_deposit} onChange={e => setEditingProject({ ...editingProject, advance_deposit: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-blue-50" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Depósito Redet. ($)</label>
+                  <input type="number" value={editingProject.advance_redetermination_deposit} onChange={e => setEditingProject({ ...editingProject, advance_redetermination_deposit: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-blue-50" />
+                </div>
+              </div>
             </div>
             <button
               onClick={async () => {
@@ -520,7 +531,9 @@ export const CertificationsModule: React.FC = () => {
                       contract_amount: editingProject.contract_amount,
                       advance_pct: editingProject.advance_pct,
                       advance_amount: editingProject.advance_amount,
-                      advance_redetermination: editingProject.advance_redetermination
+                      advance_redetermination: editingProject.advance_redetermination,
+                      advance_deposit: editingProject.advance_deposit,
+                      advance_redetermination_deposit: editingProject.advance_redetermination_deposit
                     }
                   });
                   setEditingProject(null);

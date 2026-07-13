@@ -38,6 +38,12 @@ export type Project = {
   created_at: string;
   manager_id?: string | null;
   startup_folder_notes?: string | null;
+  contract_amount?: number;
+  advance_pct?: number;
+  advance_amount?: number;
+  advance_redetermination?: number;
+  advance_deposit?: number;
+  advance_redetermination_deposit?: number;
 };
 
 export type Employee = {
