@@ -3,7 +3,7 @@ import {
   FileSignature, Plus, X, TrendingUp, Banknote,
   ChevronDown, ChevronUp, Building2, Upload, Pencil, Trash2
 } from 'lucide-react';
-import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate } from '../hooks/useData';
+import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate, useUpdateProject } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 import { ImageViewer } from './ImageViewer';
@@ -17,9 +17,10 @@ export const CertificationsModule: React.FC = () => {
   const { data: certificates, isLoading: loadingCerts } = useProjectCertificates();
   const createCert = useCreateProjectCertificate();
   const updateCert = useUpdateProjectCertificate();
-  const deleteCert = useDeleteProjectCertificate();
+  const updateProject = useUpdateProject();
 
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<any>(null);
   const [showNewCert, setShowNewCert] = useState<string | null>(null);
   const [form, setForm] = useState({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
   
@@ -158,6 +159,22 @@ export const CertificationsModule: React.FC = () => {
                       <h4 className="font-bold text-gray-800 text-lg flex items-center gap-2">
                         <Building2 size={18} className="text-rose-500" />
                         {proj.name}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProject({
+                              id: proj.id,
+                              contract_amount: proj.contract_amount || 0,
+                              advance_pct: proj.advance_pct || 30,
+                              advance_amount: proj.advance_amount || 0,
+                              advance_redetermination: proj.advance_redetermination || 0
+                            });
+                          }}
+                          className="p-1 text-gray-400 hover:text-ecar-blue transition-colors ml-2"
+                          title="Editar contrato de obra"
+                        >
+                          <Pencil size={14} />
+                        </button>
                       </h4>
                       <p className="text-xs text-gray-400 mt-0.5">{proj.contractor || '—'} · Contrato: {fmtM(proj.contract_amount)} · Anticipo {proj.advance_pct || 30}%: {fmtM(proj.advance_amount || 0)}</p>
                     </div>
@@ -462,6 +479,58 @@ export const CertificationsModule: React.FC = () => {
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
               >Eliminar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Contract Modal */}
+      {editingProject && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-lg text-gray-800">Contrato de Obra</h3>
+              <button onClick={() => setEditingProject(null)} className="text-gray-400 hover:text-gray-800"><X size={20}/></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Monto Contrato ($)</label>
+                <input type="number" value={editingProject.contract_amount} onChange={e => setEditingProject({ ...editingProject, contract_amount: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">% Anticipo</label>
+                  <input type="number" value={editingProject.advance_pct} onChange={e => { const pct = parseFloat(e.target.value) || 0; setEditingProject({ ...editingProject, advance_pct: pct, advance_amount: Math.round(editingProject.contract_amount * (pct / 100)) }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Monto Anticipo ($)</label>
+                  <input type="number" value={editingProject.advance_amount} onChange={e => setEditingProject({ ...editingProject, advance_amount: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-green-50" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Redeterminación Anticipo ($)</label>
+                <input type="number" value={editingProject.advance_redetermination} onChange={e => setEditingProject({ ...editingProject, advance_redetermination: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-green-50" />
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await updateProject.mutateAsync({
+                    id: editingProject.id,
+                    updates: {
+                      contract_amount: editingProject.contract_amount,
+                      advance_pct: editingProject.advance_pct,
+                      advance_amount: editingProject.advance_amount,
+                      advance_redetermination: editingProject.advance_redetermination
+                    }
+                  });
+                  setEditingProject(null);
+                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
+              }}
+              disabled={updateProject.isPending}
+              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
+            >
+              {updateProject.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+            </button>
           </div>
         </div>
       )}

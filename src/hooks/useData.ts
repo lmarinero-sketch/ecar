@@ -48,6 +48,18 @@ export function useCreateProject() {
   });
 }
 
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { id: string, updates: Partial<Project> }) => {
+      const { data, error } = await supabase.from('projects').update(params.updates).eq('id', params.id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
+  });
+}
+
 // ========== EMPLOYEES ==========
 export function useEmployees() {
   return useQuery({
