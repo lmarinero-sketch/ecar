@@ -55,6 +55,7 @@ IMPORTANTE sobre MONTOS:
 - El campo "neto_gravado" corresponde a la base imponible antes de impuestos (suele decir "Neto" o "Neto gravado").
 - ¡ATENCIÓN! No confundas la columna "Total" de los ítems individuales con el "total" final de la factura.
 - Revisa cuidadosamente la fila inferior de resumen: el "Neto" es el subtotal sin IVA, y el "Total" es el valor final a pagar con todos los impuestos incluidos. NUNCA los inviertas.
+- SI LA FACTURA ES TIPO "B": En Argentina las Facturas B no discriminan el IVA en la imagen, el Total ya incluye el IVA. Para estas facturas, DEBES calcular matemáticamente el neto y el IVA asumiendo un 21%: Neto = Total / 1.21, y el IVA_21 = Total - Neto. NUNCA devuelvas IVA 0 en una Factura B a menos que especifique "exento".
 - Todos los montos son numéricos con decimales (ej: 12100.50, NO 12100)
 - ATENCIÓN: En Argentina se usa el punto (.) para los miles y la coma (,) para los decimales en las imágenes. Si ves "2.525.983,00", el número es de millones (2525983.00), NO devuelvas "2525.983".
 - Devuelve SIEMPRE un número float válido en JSON (usando punto para decimales y sin separador de miles). Ej: 2525983.00.
