@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone } from 'lucide-react';
+import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Clock, Calendar, Truck } from 'lucide-react';
 
 const VEHICLE_COLORS = [
   '#4F46E5', '#E11D48', '#059669', '#D97706', '#7C3AED', 
@@ -43,6 +43,8 @@ interface ActiveVehicle {
   destination_lng?: number | null;
 }
 
+const SPEED_LIMIT = 110;
+
 export const FleetTrackingMap: React.FC = () => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -58,6 +60,12 @@ export const FleetTrackingMap: React.FC = () => {
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
   const [tempDestination, setTempDestination] = useState<{lat: number, lng: number} | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  
+  // History State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historySessions, setHistorySessions] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<{ session: any, points: {lat: number, lng: number}[] } | null>(null);
   
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsFetchedFor, setDirectionsFetchedFor] = useState<string | null>(null);
@@ -157,6 +165,58 @@ export const FleetTrackingMap: React.FC = () => {
       
     } catch (err) {
       console.error('Error cargando sesiones activas:', err);
+    }
+  };
+
+  const loadHistorySessions = async () => {
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_tracking_sessions')
+        .select(`
+          id,
+          vehicle_id,
+          driver_name,
+          started_at,
+          ended_at,
+          total_distance_km,
+          fuel_vehicles(code, description)
+        `)
+        .order('started_at', { ascending: false })
+        .limit(30);
+        
+      if (error) throw error;
+      setHistorySessions(data || []);
+    } catch (err) {
+      console.error('Error loading history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleSelectHistorySession = async (session: any) => {
+    setShowHistoryModal(false);
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_tracking_points')
+        .select('lat, lng')
+        .eq('session_id', session.id)
+        .order('recorded_at', { ascending: true });
+        
+      if (error) throw error;
+      
+      setSelectedHistory({
+        session,
+        points: data.map((p: any) => ({ lat: p.lat, lng: p.lng }))
+      });
+      
+      if (data && data.length > 0 && map && window.google) {
+        const bounds = new window.google.maps.LatLngBounds();
+        data.forEach((p: any) => bounds.extend({ lat: p.lat, lng: p.lng }));
+        map.fitBounds(bounds);
+      }
+    } catch(err) {
+      console.error(err);
     }
   };
 
@@ -326,6 +386,16 @@ export const FleetTrackingMap: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button 
+            onClick={() => {
+              setShowHistoryModal(true);
+              loadHistorySessions();
+            }}
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-purple-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Historial
+          </button>
+          <button 
             onClick={() => setShowTutorial(true)}
             className="text-xs flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm font-medium"
           >
@@ -362,28 +432,42 @@ export const FleetTrackingMap: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {vehiclesList.map(v => (
-                  <div 
-                    key={v.vehicle_id}
-                    onClick={() => {
-                      if (assigningDestinationFor) return; 
-                      setSelectedVehicleId(v.vehicle_id);
-                      if (map) map.panTo({ lat: v.lat, lng: v.lng });
-                    }}
-                    className={`p-3 cursor-pointer hover:bg-indigo-50 transition-colors ${selectedVehicleId === v.vehicle_id ? 'bg-indigo-50 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getColorForVehicle(v.vehicle_id) }}></div>
-                        {v.vehicle_code || 'Unidad'}
-                      </span>
-                      <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
-                        {v.speed ? Math.round(v.speed * 3.6) : 0} km/h
-                      </span>
+                {vehiclesList.map(v => {
+                  const speedKmh = v.speed ? Math.round(v.speed * 3.6) : 0;
+                  const isOverSpeed = speedKmh > SPEED_LIMIT;
+                  
+                  return (
+                    <div 
+                      key={v.vehicle_id}
+                      onClick={() => {
+                        if (assigningDestinationFor) return; 
+                        setSelectedVehicleId(v.vehicle_id);
+                        if (map) map.panTo({ lat: v.lat, lng: v.lng });
+                      }}
+                      className={`p-3 cursor-pointer transition-colors ${
+                        selectedVehicleId === v.vehicle_id 
+                          ? (isOverSpeed ? 'bg-red-50 border-l-4 border-red-500' : 'bg-indigo-50 border-l-4 border-indigo-500')
+                          : (isOverSpeed ? 'bg-red-50/50 border-l-4 border-transparent hover:bg-red-50' : 'border-l-4 border-transparent hover:bg-indigo-50')
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                          <div className={`w-2.5 h-2.5 rounded-full ${isOverSpeed ? 'bg-red-600 animate-pulse' : ''}`} style={{ backgroundColor: isOverSpeed ? undefined : getColorForVehicle(v.vehicle_id) }}></div>
+                          {v.vehicle_code || 'Unidad'}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isOverSpeed ? 'bg-red-100 text-red-700 animate-pulse border border-red-200' : 'bg-green-100 text-green-700'}`}>
+                          {speedKmh} km/h
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600">{v.driver_name}</p>
+                      {isOverSpeed && (
+                        <p className="text-[10px] text-red-600 font-bold mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> Exceso de velocidad
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-600">{v.driver_name}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -391,6 +475,34 @@ export const FleetTrackingMap: React.FC = () => {
         
         {/* Mapa */}
         <div className="flex-1 relative">
+          {selectedHistory && (
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-20 flex items-center gap-4 animate-in slide-in-from-top">
+              <span className="flex items-center gap-2">
+                <Clock className="w-4 h-4" /> 
+                Historial: {(selectedHistory.session.fuel_vehicles as any)?.code || 'Unidad'} 
+                <span className="font-normal opacity-80">
+                  ({new Date(selectedHistory.session.started_at).toLocaleString()})
+                </span>
+              </span>
+              <button 
+                onClick={() => {
+                  setSelectedHistory(null);
+                  if (map && vehiclesList.length > 0 && window.google) {
+                    const bounds = new window.google.maps.LatLngBounds();
+                    vehiclesList.forEach(v => {
+                      if (v.lat && v.lng) bounds.extend({ lat: v.lat, lng: v.lng });
+                    });
+                    map.fitBounds(bounds);
+                  }
+                }} 
+                className="bg-purple-800 hover:bg-purple-900 rounded-full p-1.5 transition-colors"
+                title="Cerrar historial"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <GoogleMap
             mapContainerStyle={{...containerStyle, cursor: assigningDestinationFor ? 'crosshair' : 'default'}}
             center={defaultCenter}
@@ -410,6 +522,7 @@ export const FleetTrackingMap: React.FC = () => {
                 Hacé clic en el mapa para marcar el destino...
               </div>
             )}
+            
             {assigningDestinationFor && tempDestination && (
               <InfoWindow
                 position={tempDestination}
@@ -427,26 +540,56 @@ export const FleetTrackingMap: React.FC = () => {
               </InfoWindow>
             )}
 
-            {vehiclesList.map((v) => (
-              <Marker
-                key={v.vehicle_id}
-                position={{ lat: v.lat, lng: v.lng }}
-                onClick={() => setSelectedVehicleId(v.vehicle_id)}
-                icon={{
-                  // window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW == 4
-                  path: 4,
-                  scale: 5,
-                  fillColor: v.speed && v.speed > 0 ? '#10B981' : '#F59E0B',
-                  fillOpacity: 1,
-                  strokeWeight: 2,
-                  strokeColor: '#FFFFFF',
-                  rotation: v.heading || 0
-                }}
-              />
-            ))}
+            {/* Historical Path Rendering */}
+            {selectedHistory && selectedHistory.points.length > 0 && (
+              <>
+                <Polyline
+                  path={selectedHistory.points}
+                  options={{
+                    strokeColor: '#8B5CF6',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 6,
+                    zIndex: 50
+                  }}
+                />
+                <Marker 
+                  position={selectedHistory.points[0]}
+                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
+                  title="Inicio"
+                />
+                <Marker 
+                  position={selectedHistory.points[selectedHistory.points.length - 1]}
+                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
+                  title="Fin"
+                />
+              </>
+            )}
+
+            {/* Live Vehicles */}
+            {!selectedHistory && vehiclesList.map((v) => {
+              const speedKmh = v.speed ? Math.round(v.speed * 3.6) : 0;
+              const isOverSpeed = speedKmh > SPEED_LIMIT;
+              return (
+                <Marker
+                  key={v.vehicle_id}
+                  position={{ lat: v.lat, lng: v.lng }}
+                  onClick={() => setSelectedVehicleId(v.vehicle_id)}
+                  icon={{
+                    // window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW == 4
+                    path: 4,
+                    scale: isOverSpeed ? 6 : 5,
+                    fillColor: isOverSpeed ? '#DC2626' : (speedKmh > 0 ? '#10B981' : '#F59E0B'),
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: '#FFFFFF',
+                    rotation: v.heading || 0
+                  }}
+                />
+              );
+            })}
 
             {/* Renderizar destinos */}
-            {vehiclesList.map((v) => (
+            {!selectedHistory && vehiclesList.map((v) => (
               v.destination_lat && v.destination_lng && (
                 <Marker
                   key={`dest-${v.vehicle_id}`}
@@ -459,7 +602,8 @@ export const FleetTrackingMap: React.FC = () => {
               )
             ))}
 
-            {Object.entries(routes).map(([vehicleId, path]) => 
+            {/* Líneas de ruta para vehículos en vivo */}
+            {!selectedHistory && Object.entries(routes).map(([vehicleId, path]) => 
               path.length > 0 && (
                 <Polyline
                   key={`route-${vehicleId}`}
@@ -474,14 +618,14 @@ export const FleetTrackingMap: React.FC = () => {
               )
             )}
 
-            {directions && (
+            {!selectedHistory && directions && (
                <DirectionsRenderer 
                   directions={directions} 
                   options={{ suppressMarkers: false }} 
                />
             )}
 
-            {selectedVehicle && (
+            {!selectedHistory && selectedVehicle && (
               <InfoWindow
                 position={{ lat: selectedVehicle.lat, lng: selectedVehicle.lng }}
                 onCloseClick={() => setSelectedVehicleId(null)}
@@ -529,6 +673,80 @@ export const FleetTrackingMap: React.FC = () => {
           </GoogleMap>
         </div>
       </div>
+      
+      {/* History Selection Modal */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[85vh] flex flex-col">
+            <div className="bg-purple-600 p-6 text-white relative shrink-0">
+              <button 
+                onClick={() => setShowHistoryModal(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold">Historial de Recorridos</h3>
+              <p className="text-purple-100 text-sm mt-1">Selecciona una sesión pasada para visualizar el recorrido exacto en el mapa.</p>
+            </div>
+            
+            <div className="p-0 overflow-y-auto bg-gray-50 flex-1">
+              {loadingHistory ? (
+                <div className="p-10 flex flex-col items-center justify-center text-gray-500">
+                  <Loader2 className="w-8 h-8 animate-spin mb-3 text-purple-600" />
+                  <p>Cargando sesiones históricas...</p>
+                </div>
+              ) : historySessions.length === 0 ? (
+                <div className="p-10 text-center text-gray-500">
+                  No hay sesiones de recorrido registradas aún.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {historySessions.map(session => (
+                    <div 
+                      key={session.id} 
+                      onClick={() => handleSelectHistorySession(session)}
+                      className="p-4 bg-white hover:bg-purple-50 cursor-pointer transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                          <Truck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">
+                            {(session.fuel_vehicles as any)?.code || 'Unidad'} - {(session.fuel_vehicles as any)?.description || ''}
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-1.5 mt-0.5">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {new Date(session.started_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-800">{session.driver_name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {session.ended_at ? 'Finalizado' : 'Activo o Incompleto'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+              <button 
+                onClick={() => setShowHistoryModal(false)}
+                className="w-full bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tutorial Onboarding Modal */}
       {showTutorial && (

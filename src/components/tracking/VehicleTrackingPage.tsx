@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, ECAR_TENANT_ID } from '../../lib/supabase';
-import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { MapPin, Navigation, Truck, User, Play, Square, AlertTriangle, Timer } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import type { FuelVehicle } from '../../lib/types';
 
@@ -11,6 +11,8 @@ interface TrackingPoint {
   speed: number | null;
   accuracy: number;
 }
+
+const SPEED_LIMIT = 110;
 
 export const VehicleTrackingPage: React.FC = () => {
   const [step, setStep] = useState<'setup' | 'tracking'>('setup');
@@ -25,7 +27,11 @@ export const VehicleTrackingPage: React.FC = () => {
   // Tracking State
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<TrackingPoint | null>(null);
-  const [isWakeLockActive, setIsWakeLockActive] = useState(false);
+  
+  // Stats
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+  const [maxSpeed, setMaxSpeed] = useState<number>(0);
+  const [elapsedTimeStr, setElapsedTimeStr] = useState<string>('00:00');
   
   const [destination, setDestination] = useState<{lat: number, lng: number} | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
@@ -49,6 +55,27 @@ export const VehicleTrackingPage: React.FC = () => {
     };
   }, []);
 
+  // Update elapsed time
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (step === 'tracking' && sessionStartTime) {
+      interval = setInterval(() => {
+        const diff = Math.floor((Date.now() - sessionStartTime) / 1000);
+        const mins = Math.floor(diff / 60).toString().padStart(2, '0');
+        const secs = (diff % 60).toString().padStart(2, '0');
+        const hrs = Math.floor(diff / 3600);
+        if (hrs > 0) {
+           setElapsedTimeStr(`${hrs}:${mins.padStart(2, '0')}:${secs}`);
+        } else {
+           setElapsedTimeStr(`${mins}:${secs}`);
+        }
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, sessionStartTime]);
+
   useEffect(() => {
     if (destination && currentLocation && isLoaded && window.google) {
       if (directionsFetchedFor?.lat === destination.lat && directionsFetchedFor?.lng === destination.lng) {
@@ -63,7 +90,7 @@ export const VehicleTrackingPage: React.FC = () => {
           destination: destination,
           travelMode: window.google.maps.TravelMode.DRIVING,
         },
-        (result, status) => {
+        (result: any, status: any) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
             setDirections(result);
             setDirectionsFetchedFor(destination);
@@ -84,7 +111,7 @@ export const VehicleTrackingPage: React.FC = () => {
       if (error) throw error;
       setVehicles(data || []);
       
-      // Intentar cargar el nombre del conductor guardado previamente (opcional)
+      // Intentar cargar el nombre del conductor guardado previamente
       const savedDriver = localStorage.getItem('fleet_driver_name');
       if (savedDriver) setDriverName(savedDriver);
       
@@ -100,11 +127,6 @@ export const VehicleTrackingPage: React.FC = () => {
       if ('wakeLock' in navigator) {
         // @ts-ignore
         wakeLockRef.current = await navigator.wakeLock.request('screen');
-        setIsWakeLockActive(true);
-        
-        wakeLockRef.current.addEventListener('release', () => {
-          setIsWakeLockActive(false);
-        });
       }
     } catch (err) {
       console.warn('Wake Lock no soportado o bloqueado:', err);
@@ -170,6 +192,11 @@ export const VehicleTrackingPage: React.FC = () => {
         setSessionId(sessionData.id);
       }
       
+      // Reset Stats
+      setSessionStartTime(Date.now());
+      setMaxSpeed(0);
+      setElapsedTimeStr('00:00');
+      
       // 3. Activar Wake Lock
       await requestWakeLock();
       
@@ -177,7 +204,7 @@ export const VehicleTrackingPage: React.FC = () => {
       const channel = supabase.channel(`fleet-tracking`);
       channel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Connectado al canal realtime');
+          console.log('Conectado al canal realtime');
         }
       });
       
@@ -218,6 +245,8 @@ export const VehicleTrackingPage: React.FC = () => {
           accuracy: position.coords.accuracy // meters
         };
         
+        const speedKmh = pt.speed ? Math.round(pt.speed * 3.6) : 0;
+        setMaxSpeed(prev => Math.max(prev, speedKmh));
         setCurrentLocation(pt);
         
         // Broadcast inmediato (alta frecuencia, baja latencia, no se guarda)
@@ -239,7 +268,6 @@ export const VehicleTrackingPage: React.FC = () => {
         if (sid && (now - lastDbInsertRef.current > DB_INSERT_INTERVAL)) {
           lastDbInsertRef.current = now;
           
-          // Background insert (no esperamos el resultado)
           supabase.from('vehicle_tracking_points').insert({
             session_id: sid,
             vehicle_id: selectedVehicleId,
@@ -304,6 +332,7 @@ export const VehicleTrackingPage: React.FC = () => {
     setDestination(null);
     setDirections(null);
     setDirectionsFetchedFor(null);
+    setSessionStartTime(null);
     setStep('setup');
   };
 
@@ -317,19 +346,24 @@ export const VehicleTrackingPage: React.FC = () => {
       </div>
     );
   }
+  
+  const currentSpeedKmh = currentLocation?.speed ? Math.round(currentLocation.speed * 3.6) : 0;
+  const isOverSpeed = currentSpeedKmh > SPEED_LIMIT;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-ecar-blueDark p-6 text-center relative overflow-hidden shadow-md shrink-0 z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-700/30 via-transparent to-transparent opacity-60 pointer-events-none" />
-        <div className="bg-white rounded-xl p-2 inline-block mb-3 relative z-10 shadow-md">
-          <img src="/rombo.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
-        </div>
-        <div className="flex items-center justify-center gap-2 text-white relative z-10">
-          <Navigation size={20} className="text-blue-300" />
-          <h1 className="text-lg font-bold tracking-wide">GPS Flota ECAR</h1>
-        </div>
-      </header>
+    <div className={`min-h-screen flex flex-col ${step === 'tracking' ? 'bg-black' : 'bg-gray-100'}`}>
+      {step === 'setup' && (
+        <header className="bg-ecar-blueDark p-6 text-center relative overflow-hidden shadow-md shrink-0 z-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-700/30 via-transparent to-transparent opacity-60 pointer-events-none" />
+          <div className="bg-white rounded-xl p-2 inline-block mb-3 relative z-10 shadow-md">
+            <img src="/rombo.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
+          </div>
+          <div className="flex items-center justify-center gap-2 text-white relative z-10">
+            <Navigation size={20} className="text-blue-300" />
+            <h1 className="text-lg font-bold tracking-wide">GPS Flota ECAR</h1>
+          </div>
+        </header>
+      )}
       
       <div className={`flex-1 flex flex-col w-full ${step === 'setup' ? 'p-4 max-w-md mx-auto overflow-auto' : 'relative overflow-hidden'}`}>
         {error && (
@@ -398,17 +432,35 @@ export const VehicleTrackingPage: React.FC = () => {
         ) : (
           <>
             {/* Full Screen Map */}
-            <div className="absolute inset-0 z-0 bg-gray-100">
+            <div className="absolute inset-0 z-0 bg-gray-900">
               {isLoaded && currentLocation ? (
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '100%' }}
                   center={currentLocation}
                   zoom={16}
-                  options={{ disableDefaultUI: true, gestureHandling: 'greedy' }}
+                  options={{ 
+                    disableDefaultUI: true, 
+                    gestureHandling: 'greedy',
+                    styles: [
+                      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                      { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+                      { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+                      { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+                      { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+                      { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+                    ]
+                  }}
                 >
                   <Marker 
                     position={currentLocation} 
-                    icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
+                    icon={{ path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: isOverSpeed ? '#ef4444' : '#3b82f6', fillOpacity: 1, strokeWeight: 2, strokeColor: 'white', rotation: currentLocation.heading || 0 }} 
                     zIndex={5}
                   />
                   {directions && (
@@ -443,56 +495,64 @@ export const VehicleTrackingPage: React.FC = () => {
               </div>
             )}
 
-            {/* Floating Info Panel at Bottom */}
-            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
-              <div className="bg-white rounded-2xl shadow-2xl p-5 border border-gray-100 w-full max-w-md mx-auto relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+            {/* Floating Info Panel at Bottom - DARK MODE */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+              <div className={`rounded-2xl shadow-2xl p-5 w-full max-w-md mx-auto relative overflow-hidden transition-colors duration-300 ${isOverSpeed ? 'bg-red-900 border-2 border-red-500' : 'bg-gray-900 border border-gray-700'}`}>
+                <div className={`absolute top-0 left-0 w-full h-1 ${isOverSpeed ? 'bg-red-500 animate-pulse' : 'bg-indigo-500'}`}></div>
                 
                 <div className="flex items-center justify-between mb-5 mt-1">
                   <div>
-                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">En Viaje</h2>
-                    <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5 mt-0.5">
+                    <h2 className="text-2xl font-black text-white tracking-tight">En Viaje</h2>
+                    <p className="text-sm font-medium text-gray-400 flex items-center gap-1.5 mt-0.5">
                       <Truck className="w-3.5 h-3.5" />
                       {vehicles.find(v => v.id === selectedVehicleId)?.code || 'Unidad'} • {driverName}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center relative shadow-sm">
-                    <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                    <Navigation className="w-5 h-5 text-green-600" />
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center relative shadow-sm ${isOverSpeed ? 'bg-red-950' : 'bg-gray-800'}`}>
+                    <div className={`absolute inset-0 border-4 border-t-transparent rounded-full ${isOverSpeed ? 'border-red-500 animate-ping' : 'border-indigo-500 animate-spin'}`}></div>
+                    <Navigation className={`w-5 h-5 ${isOverSpeed ? 'text-red-500' : 'text-indigo-400'}`} />
                   </div>
                 </div>
+                
+                {isOverSpeed && (
+                  <div className="mb-4 bg-red-500/20 border border-red-500 text-red-100 p-3 rounded-xl flex items-center gap-3 animate-pulse">
+                     <AlertTriangle className="w-6 h-6 text-red-500 shrink-0" />
+                     <div>
+                       <p className="font-bold">¡Exceso de Velocidad!</p>
+                       <p className="text-xs">Reduzca la velocidad (Límite {SPEED_LIMIT} km/h)</p>
+                     </div>
+                  </div>
+                )}
                 
                 {destination && currentLocation && (
                   <a 
                     href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`}
                     target="_blank" rel="noreferrer"
-                    className="w-full mb-4 bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
+                    className="w-full mb-4 bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 active:scale-95"
                   >
                     <Navigation className="w-5 h-5 fill-current" />
                     Navegación Asistida (GPS)
                   </a>
                 )}
                 
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
-                    <p className="text-xs text-gray-400 font-medium mb-1">Velocidad</p>
-                    <p className="font-bold text-gray-800 text-lg">{currentLocation?.speed ? Math.round(currentLocation.speed * 3.6) : 0} <span className="text-sm font-normal text-gray-500">km/h</span></p>
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className={`rounded-xl p-3 text-center border ${isOverSpeed ? 'bg-red-950 border-red-500/50' : 'bg-gray-800 border-gray-700'}`}>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Velocidad</p>
+                    <p className={`font-black text-xl ${isOverSpeed ? 'text-red-400' : 'text-white'}`}>{currentSpeedKmh} <span className="text-xs font-normal text-gray-500">km/h</span></p>
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100 flex flex-col justify-center">
-                    <p className="text-xs text-gray-400 font-medium mb-1">Estado Pantalla</p>
-                    <p className={`font-bold text-sm flex items-center justify-center gap-1.5 ${isWakeLockActive ? 'text-amber-600' : 'text-red-500'}`}>
-                      {isWakeLockActive ? (
-                        <><ShieldCheck className="w-4 h-4" /> Activa</>
-                      ) : (
-                        <><AlertTriangle className="w-4 h-4" /> Sin Bloqueo</>
-                      )}
-                    </p>
+                  <div className="bg-gray-800 rounded-xl p-3 text-center border border-gray-700">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Vel. Max</p>
+                    <p className="font-bold text-white text-lg">{maxSpeed} <span className="text-xs font-normal text-gray-500">km/h</span></p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-3 text-center border border-gray-700 flex flex-col justify-center">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1 flex justify-center items-center gap-1"><Timer size={10} /> Tiempo</p>
+                    <p className="font-bold text-white text-lg font-mono">{elapsedTimeStr}</p>
                   </div>
                 </div>
                 
                 <button
                   onClick={() => stopTracking(true)}
-                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-red-100"
+                  className="w-full bg-red-950 hover:bg-red-900 text-red-400 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-red-900/50"
                 >
                   <Square className="w-5 h-5 fill-current" />
                   Finalizar Recorrido

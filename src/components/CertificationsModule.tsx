@@ -17,6 +17,7 @@ export const CertificationsModule: React.FC = () => {
   const { data: certificates, isLoading: loadingCerts } = useProjectCertificates();
   const createCert = useCreateProjectCertificate();
   const updateCert = useUpdateProjectCertificate();
+  const deleteCert = useDeleteProjectCertificate();
   const updateProject = useUpdateProject();
 
   const [expandedProject, setExpandedProject] = useState<string | null>(null);

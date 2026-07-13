@@ -558,12 +558,12 @@ export const InventoryModule: React.FC = () => {
                           bounds="parent"
                           position={{ x: shelf.grid_col, y: shelf.grid_row }}
                           size={{ width: shelf.grid_width, height: shelf.grid_height }}
-                          onDragStop={(_e, d) => {
+                          onDragStop={(_e: any, d: any) => {
                             if (d.x !== shelf.grid_col || d.y !== shelf.grid_row) {
                               updateShelf.mutate({ id: shelf.id, grid_col: d.x, grid_row: d.y });
                             }
                           }}
-                          onResizeStop={(_e, _direction, ref, _delta, position) => {
+                          onResizeStop={(_e: any, _direction: any, ref: any, _delta: any, position: any) => {
                             const newWidth = parseInt(ref.style.width, 10);
                             const newHeight = parseInt(ref.style.height, 10);
                             updateShelf.mutate({
