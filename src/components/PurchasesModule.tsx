@@ -1135,6 +1135,11 @@ export const PurchasesModule: React.FC = () => {
                   const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
                   const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
                   if (error) throw error;
+                  
+                  if (editingInvoice.supplier_id) {
+                    await supabase.from('suppliers').update({ name: editForm.supplier_name, cuit: editForm.supplier_cuit }).eq('id', editingInvoice.supplier_id);
+                  }
+                  
                   setEditingInvoice(null);
                   refetch();
                 } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
