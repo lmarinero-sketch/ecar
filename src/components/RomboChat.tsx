@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useStore';
 import { MODULE_LABELS } from '../lib/types';
 import type { ModuleId } from '../lib/types';
+import { useAITokenUsage } from '../hooks/useData';
 
 interface Message { role: 'user' | 'assistant'; content: string; }
 
@@ -206,6 +207,9 @@ export const RomboChat: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevModuleRef = useRef<ModuleId>(activeModule);
   const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open, activeModule);
+  const { data: aiUsage } = useAITokenUsage();
+  
+  const tokenLimitReached = (aiUsage?.costUsd || 0) >= 10;
 
   // Build the contextual greeting based on the active module
   // Rich context per module — Rombo explains what the user can do HERE
@@ -503,8 +507,10 @@ export const RomboChat: React.FC = () => {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => { const t = setTimeout(() => setBounce(false), 8000); return () => clearTimeout(t); }, []);
 
-  const sendMessage = async (text: string) => {
-    if (!text.trim() || loading) return;
+  const sendMessage = async (e?: React.FormEvent | string) => {
+    if (typeof e !== 'string' && e?.preventDefault) e.preventDefault();
+    const text = typeof e === 'string' ? e : input;
+    if (!text.trim() || tokenLimitReached || loading) return;
     setInput('');
     const userMsg: Message = { role: 'user', content: text.trim() };
     const newMessages = [...messages, userMsg];
@@ -524,10 +530,6 @@ export const RomboChat: React.FC = () => {
       setMessages([...newMessages, { role: 'assistant', content: '⚠️ Error de conexión.' }]);
     }
     setLoading(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
   const renderContent = (text: string) => text.split('\n').map((line, i) => (
@@ -629,7 +631,14 @@ export const RomboChat: React.FC = () => {
               <img src="/rombo.jpeg" alt="Rombo" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-white font-bold text-sm flex items-center gap-1.5">Rombo <span className="text-[9px] font-normal bg-white/20 px-1.5 py-0.5 rounded-full">GPT-5.4 mini</span></h4>
+              <h4 className="text-white font-bold text-sm flex items-center gap-1.5">
+                Rombo <span className="text-[9px] font-normal bg-white/20 px-1.5 py-0.5 rounded-full">GPT-5.4 mini</span>
+                {aiUsage && (
+                  <span className={`text-[9px] font-normal px-1.5 py-0.5 rounded-full ${tokenLimitReached ? 'bg-red-500/80 text-white' : 'bg-green-500/80 text-white'}`} title={`${aiUsage.total.toLocaleString()} tokens`}>
+                    ${aiUsage.costUsd.toFixed(2)} / $10
+                  </span>
+                )}
+              </h4>
               <p className="text-blue-200 text-[10px]">📍 {moduleLabel}</p>
             </div>
             <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white transition-colors"><Minimize2 size={18} /></button>
@@ -675,12 +684,31 @@ export const RomboChat: React.FC = () => {
             <div ref={bottomRef} />
           </div>
 
-          <div className="p-3 border-t border-gray-100 bg-white shrink-0">
-            <div className="flex gap-2">
-              <input value={input} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder="Ej: ¿Cuántos cheques vencen esta semana?" className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" disabled={loading} />
-              <button onClick={() => sendMessage(input)} disabled={!input.trim() || loading} className="px-4 py-2.5 bg-ecar-blue text-white rounded-xl hover:bg-ecar-blueDark transition-all disabled:opacity-40 shrink-0"><Send size={16} /></button>
-            </div>
-            <p className="text-[9px] text-gray-300 text-center mt-2">Potenciado por GPT-5.4 mini · Consulta y ejecuta sobre datos reales</p>
+          <div className="p-3 bg-white border-t border-gray-100">
+            {tokenLimitReached ? (
+              <div className="text-xs text-red-500 font-medium text-center p-2 bg-red-50 rounded-lg border border-red-100">
+                Límite de $10 USD alcanzado. Por favor, contacte al administrador.
+              </div>
+            ) : (
+              <form onSubmit={sendMessage} className="relative flex items-center">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Escribí tu consulta acá..."
+                  disabled={loading}
+                  className="w-full pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || loading}
+                  className="absolute right-1 w-8 h-8 flex items-center justify-center bg-ecar-blue text-white rounded-full disabled:bg-gray-300 disabled:text-gray-500 hover:bg-ecar-blueDark transition-colors"
+                >
+                  <Send size={14} className={input.trim() && !loading ? 'translate-x-[1px]' : ''} />
+                </button>
+              </form>
+            )}
+            <p className="text-[10px] text-gray-400 text-center mt-2">Rombo puede cometer errores. Verificá los datos importantes.</p>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import type {
   Employee, Project, UnionCategory, Shift, AttendanceRecord,
@@ -785,7 +785,7 @@ export function useUpdateProfile() {
   });
 }
 
-// Needed for TypeScript — re-export for invoice items
+// Needed for TypeScript â€” re-export for invoice items
 type InvoiceItem = {
   description: string;
   quantity: number;
@@ -2501,7 +2501,7 @@ export function useCreateVehicleDailyReport() {
         if (report.odometer_km) {
           vehicleUpdates.current_km = report.odometer_km;
         }
-        // 3. If damage → set maintenance
+        // 3. If damage â†’ set maintenance
         if (report.has_damage && report.damage_description) {
           const today = new Date().toISOString().slice(0, 10);
           vehicleUpdates.next_maintenance_date = today;
@@ -2722,7 +2722,7 @@ export function useDeleteOpportunityFile() {
   });
 }
 
-// ========== ÓRDENES DE COMPRA ==========
+// ========== Ã“RDENES DE COMPRA ==========
 export function usePurchaseOrders() {
   return useQuery({
     queryKey: ['purchase_orders'],
@@ -2862,7 +2862,7 @@ export function useCreateSupplierEvaluation() {
   });
 }
 
-/* ── WhatsApp Conversations (CRM) ── */
+/* â”€â”€ WhatsApp Conversations (CRM) â”€â”€ */
 export function useWhatsappConversations() {
   return useQuery({
     queryKey: ['whatsapp_conversations'],
@@ -2880,7 +2880,7 @@ export function useWhatsappConversations() {
 
 
 
-// ─── Weekly Payments ───
+// â”€â”€â”€ Weekly Payments â”€â”€â”€
 export function useWeeklyPayments() {
   return useQuery({
     queryKey: ['weekly_payments'],
@@ -2979,7 +2979,7 @@ export function useDeleteWeeklyPaymentItem() {
   });
 }
 
-// ─── Weekly Payroll Details ───
+// â”€â”€â”€ Weekly Payroll Details â”€â”€â”€
 export function useWeeklyPayrollDetails(weeklyPaymentItemId: string | null) {
   return useQuery({
     queryKey: ['weekly_payroll_details', weeklyPaymentItemId],
@@ -3253,3 +3253,21 @@ export function useUpdateLogisticsMaintenanceLog() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['logistics_maintenance_log'] }),
   });
 }
+
+export function useAITokenUsage() {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ['ai_token_usage'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('ai_token_usage').select('total_tokens, prompt_tokens, completion_tokens');
+      if (error) throw error;
+      const total = data?.reduce((acc, curr) => acc + curr.total_tokens, 0) || 0;
+      const prompt = data?.reduce((acc, curr) => acc + curr.prompt_tokens, 0) || 0;
+      const completion = data?.reduce((acc, curr) => acc + curr.completion_tokens, 0) || 0;
+      const costUsd = (prompt / 1000000) * 0.15 + (completion / 1000000) * 0.60;
+      return { total, prompt, completion, costUsd };
+    },
+    refetchInterval: 30000
+  });
+}
+

@@ -36,7 +36,8 @@ const MODULE_CONTEXT: Record<string, string> = {
   
   purchases: `## CONTEXTO ACTUAL: El usuario está en Compras & Libro IVA
 - Este módulo permite subir fotos/PDFs de facturas de compra. La IA extrae los datos con OCR automáticamente.
-- El usuario puede ver el Libro IVA (compras y ventas), filtrar por fechas, y descargar el libro en Excel.
+- El usuario puede ver el Libro IVA (compras y ventas), filtrar por fechas, y descargar el libro en Excel. Ahora el libro se descarga de forma separada por empresa (Razón Social: ECAR SAS o CARLOS ADOLFO REGALADO).
+- También se calcula automáticamente la Posición IVA mensual (IVA Ventas - IVA Compras) por empresa de forma automática en la pantalla.
 - Ayudalo a: revisar facturas pendientes de validación, calcular IVA crédito fiscal del mes, buscar facturas por proveedor.
 - Datos clave: proveedor, CUIT, tipo/número factura, neto gravado, IVA 21%, total, estado (Revisar/Validado).
 - Sugerí: "¿Querés que revise las facturas sin validar?" o "Puedo calcular tu posición de IVA este mes".`,
@@ -58,6 +59,7 @@ const MODULE_CONTEXT: Record<string, string> = {
   
   rrhh: `## CONTEXTO ACTUAL: El usuario está en RRHH & Legajos
 - Gestiona la nómina de personal con datos completos para alta: nombre, CUIL, DNI, fecha nacimiento, sexo, estado civil, cantidad de hijos con edades, nivel de estudios.
+- Talles de Indumentaria: Ahora se pueden registrar los talles de Camisa/Remera, Pantalón y Calzado de los operarios para la entrega de elementos de protección personal (EPP).
 - Cada empleado puede tener: convenio/sindicato (default UOCRA), categoría UOCRA, obra asignada, modo liquidación (mensual/quincenal/jornalizado), retribución pactada.
 - Registro de horas extras: si hace o no, y al 50% o 100%.
 - Casilla de observaciones generales y registro de deuda al empleado (monto + detalle).
@@ -930,6 +932,9 @@ serve(async (req) => {
     }
 
     let data = await response.json()
+    
+    let totalPromptTokens = data.usage?.prompt_tokens || 0
+    let totalCompletionTokens = data.usage?.completion_tokens || 0
 
     // Handle tool calls (up to 3 rounds)
     let rounds = 0
@@ -959,7 +964,24 @@ serve(async (req) => {
 
       if (!response.ok) break
       data = await response.json()
+      
+      totalPromptTokens += data.usage?.prompt_tokens || 0
+      totalCompletionTokens += data.usage?.completion_tokens || 0
     }
+    
+    // Log token usage asynchronously to Supabase
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    sb.from('tenants').select('id').limit(1).single().then(({ data: tenant }) => {
+      if (tenant) {
+        sb.from('ai_token_usage').insert({
+          tenant_id: tenant.id,
+          module: activeModule || 'unknown',
+          prompt_tokens: totalPromptTokens,
+          completion_tokens: totalCompletionTokens,
+          total_tokens: totalPromptTokens + totalCompletionTokens
+        }).then(() => {}) // fire and forget
+      }
+    })
 
     // Extract text reply
     const reply = data.output_text || data.output?.find((o: any) => o.type === 'message')?.content?.[0]?.text || 'No pude generar una respuesta.'
