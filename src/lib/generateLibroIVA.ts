@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 
 interface InvoiceRow {
   id: string;
+  legal_entity_id?: string | null;
   issue_date: string | null;
   invoice_type: string | null;
   point_of_sale: string | null;
@@ -26,20 +27,26 @@ export function generateLibroIVA(
   invoices: InvoiceRow[],
   periodoDesde: string,
   periodoHasta: string,
+  legalEntity?: { id: string; name: string; cuit: string | null }
 ) {
   const wb = XLSX.utils.book_new();
 
+  // Filter by company if provided
+  const targetInvoices = legalEntity ? invoices.filter(i => i.legal_entity_id === legalEntity.id) : invoices;
+
   // Separate compras and ventas
-  const compras = invoices.filter(i => !i.ocr_raw_data?.tipo || i.ocr_raw_data?.tipo === 'compra');
-  const ventas = invoices.filter(i => i.ocr_raw_data?.tipo === 'venta');
+  const compras = targetInvoices.filter(i => !i.ocr_raw_data?.tipo || i.ocr_raw_data?.tipo === 'compra');
+  const ventas = targetInvoices.filter(i => i.ocr_raw_data?.tipo === 'venta');
+
+  const empresaName = legalEntity?.name ? legalEntity.name.toUpperCase() : 'ECAR ( REGALADO CARLOS ADOLFO )';
 
   // ── SHEET: COMPRAS ──
   if (compras.length > 0 || ventas.length === 0) {
     const wsData: (string | number | null)[][] = [];
 
     // Header rows
-    wsData.push(['', 'SUB DIARIO IVA COMPRAS EMPRESA ECAR']);
-    wsData.push(['DENOM. O APELLIDO', '', 'ECAR ( REGALADO CARLOS ADOLFO )', '', '', `PERIODO INFORM. DESDE: ${periodoDesde}`]);
+    wsData.push(['', `SUB DIARIO IVA COMPRAS EMPRESA ${empresaName.split(' ')[0]}`]);
+    wsData.push(['DENOM. O APELLIDO', '', empresaName, '', '', `PERIODO INFORM. DESDE: ${periodoDesde}`]);
     wsData.push(['', '', '', '', '', `PERIODO INFORM. HASTA: ${periodoHasta}`]);
     wsData.push([]); // blank row
 
@@ -130,8 +137,9 @@ export function generateLibroIVA(
   if (ventas.length > 0) {
     const wsData: (string | number | null)[][] = [];
 
-    wsData.push(['', 'SUB DIARIO IVA VENTAS EMPRESA ECAR']);
-    wsData.push(['DENOM. O APELLIDO', '', 'ECAR ( REGALADO CARLOS ADOLFO )', '', '', `PERIODO INFORM. DESDE: ${periodoDesde}`]);
+    // Header rows
+    wsData.push(['', `SUB DIARIO IVA VENTAS EMPRESA ${empresaName.split(' ')[0]}`]);
+    wsData.push(['DENOM. O APELLIDO', '', empresaName, '', '', `PERIODO INFORM. DESDE: ${periodoDesde}`]);
     wsData.push(['', '', '', '', '', `PERIODO INFORM. HASTA: ${periodoHasta}`]);
     wsData.push([]);
 
@@ -207,6 +215,6 @@ export function generateLibroIVA(
 
   // Download
 
-  const fileName = `Libro_IVA_ECAR_${periodoDesde.replace(/\//g, '-')}_${periodoHasta.replace(/\//g, '-')}.xlsx`;
+  const fileName = `Libro_IVA_${legalEntity?.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'General'}_${periodoDesde.replace(/-/g, '')}_${periodoHasta.replace(/-/g, '')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

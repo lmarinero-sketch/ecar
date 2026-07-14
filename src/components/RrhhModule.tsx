@@ -52,6 +52,7 @@ export const RrhhModule: React.FC = () => {
     gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA',
     observations: '', debt_to_employee: '', debt_notes: '',
     does_overtime: false, overtime_rate: '50',
+    shirt_size: '', pants_size: '', shoe_size: '',
   });
 
   const activeEmployees = employees.filter(e => e.employment_status === 'active');
@@ -89,9 +90,12 @@ export const RrhhModule: React.FC = () => {
       debt_notes: form.debt_notes || null,
       does_overtime: form.does_overtime,
       overtime_rate: (form.does_overtime ? form.overtime_rate : null) as any,
+      shirt_size: form.shirt_size || null,
+      pants_size: form.pants_size || null,
+      shoe_size: form.shoe_size || null,
     });
     useImplementationStore.getState().completeItem('e2-21');
-    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50' });
+    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50', shirt_size: '', pants_size: '', shoe_size: '' });
     setTab('roster');
   };
 
@@ -191,7 +195,7 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
-                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
                           <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
                         </div>
                       </td>
@@ -276,6 +280,23 @@ export const RrhhModule: React.FC = () => {
             </div>
             <div className="md:col-span-3">
               <ChildrenInput value={form.children_info} onChange={(v) => setForm({ ...form, children_info: v })} />
+            </div>
+          </div>
+
+          {/* Talles de Indumentaria */}
+          <p className="text-xs font-bold uppercase tracking-wider bg-gray-50 text-gray-700 px-3 py-2 rounded-lg border border-gray-100 flex items-center gap-2 shadow-sm mt-8 mb-4"><Tag size={14} /> Talles de Indumentaria</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Camisa / Remera</label>
+              <input value={form.shirt_size} onChange={e => setForm({ ...form, shirt_size: e.target.value })} placeholder="Ej: L, XL, 42" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Pantalón</label>
+              <input value={form.pants_size} onChange={e => setForm({ ...form, pants_size: e.target.value })} placeholder="Ej: 42, 44, M" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Calzado</label>
+              <input value={form.shoe_size} onChange={e => setForm({ ...form, shoe_size: e.target.value })} placeholder="Ej: 41, 42" className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
           </div>
 
@@ -398,7 +419,7 @@ export const RrhhModule: React.FC = () => {
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
-          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50' }); }}
+          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }}
           calcAntiguedad={calcAntiguedad}
         />
       )}
@@ -499,6 +520,22 @@ export const RrhhModule: React.FC = () => {
               </div>
               <div className="md:col-span-3">
                 <ChildrenInput value={editForm.children_info} onChange={(v) => setEditForm({ ...editForm, children_info: v })} />
+              </div>
+            </div>
+
+            <p className="text-xs font-bold uppercase tracking-wider bg-gray-50 text-gray-700 px-3 py-2 rounded-lg border border-gray-100 flex items-center gap-2 shadow-sm mt-6 mb-2"><Tag size={14} /> Talles de Indumentaria</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Camisa / Remera</label>
+                <input value={editForm.shirt_size} onChange={e => setEditForm({ ...editForm, shirt_size: e.target.value })} placeholder="Ej: L, XL, 42" className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Pantalón</label>
+                <input value={editForm.pants_size} onChange={e => setEditForm({ ...editForm, pants_size: e.target.value })} placeholder="Ej: 42, 44, M" className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Calzado</label>
+                <input value={editForm.shoe_size} onChange={e => setEditForm({ ...editForm, shoe_size: e.target.value })} placeholder="Ej: 41, 42" className="w-full px-3 py-2 border rounded-xl text-sm" />
               </div>
             </div>
 
@@ -621,6 +658,9 @@ export const RrhhModule: React.FC = () => {
                     debt_notes: editForm.debt_notes || null,
                     does_overtime: editForm.does_overtime || false,
                     overtime_rate: editForm.does_overtime ? editForm.overtime_rate : null,
+                    shirt_size: editForm.shirt_size || null,
+                    pants_size: editForm.pants_size || null,
+                    shoe_size: editForm.shoe_size || null,
                   });
                   useImplementationStore.getState().completeItem('e2-24');
                   setEditingEmployee(null);

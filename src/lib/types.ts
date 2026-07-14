@@ -86,6 +86,9 @@ export type Employee = {
   debt_notes: string | null;
   does_overtime: boolean;
   overtime_rate: '50' | '100' | null;
+  shirt_size: string | null;
+  pants_size: string | null;
+  shoe_size: string | null;
   created_at: string;
   // Joined
   category?: UnionCategory | null;

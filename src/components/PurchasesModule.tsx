@@ -268,6 +268,7 @@ export const PurchasesModule: React.FC = () => {
   const [ocrError, setOcrError] = useState('');
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [supplierForm, setSupplierForm] = useState({ name: '', cuit: '', tax_condition: 'RI' });
+  const [selectedLegalEntityLibro, setSelectedLegalEntityLibro] = useState<string>('');
   const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
   const [editingSupplierForm, setEditingSupplierForm] = useState({ name: '', cuit: '' });
   const updateSupplier = useUpdateSupplier();
@@ -439,11 +440,20 @@ export const PurchasesModule: React.FC = () => {
   const ventas = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'venta');
   const currentList = activeTab === 'compras' ? compras : ventas;
 
-  // Totals
   const getMultiplier = (inv: any) => isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) ? -1 : 1;
   const totNeto = currentList.reduce((s: number, i: any) => s + (Number(i.net_amount_ars || 0) * getMultiplier(i)), 0);
   const totIva = currentList.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
   const totTotal = currentList.reduce((s: number, i: any) => s + (Number(i.total_ars || 0) * getMultiplier(i)), 0);
+
+  const calculatePosicionIva = (companyId: string) => {
+    const compVentas = ventas.filter((i: any) => i.legal_entity_id === companyId);
+    const compCompras = compras.filter((i: any) => i.legal_entity_id === companyId);
+
+    const ivaVentas = compVentas.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
+    const ivaCompras = compCompras.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
+
+    return ivaVentas - ivaCompras;
+  };
 
   const statusColor: Record<string, string> = {
     pending_review: 'bg-yellow-100 text-yellow-700',
@@ -639,6 +649,29 @@ export const PurchasesModule: React.FC = () => {
         </button>
       </div>
 
+      {/* Posicion IVA - Sutil */}
+      {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+          {legalEntities.map((entity: any) => {
+            const posicion = calculatePosicionIva(entity.id);
+            const isToPay = posicion >= 0;
+            return (
+              <div key={entity.id} className="bg-white/60 border border-gray-100 rounded-lg p-3 flex justify-between items-center shadow-sm">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Posición IVA — {entity.name}</p>
+                  <p className={`text-lg font-mono font-bold ${isToPay ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    {isToPay ? 'A Pagar: ' : 'Saldo a Favor: '}{formatARS(Math.abs(posicion))}
+                  </p>
+                </div>
+                <div className={`p-2 rounded-full ${isToPay ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                  {isToPay ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Totals bar (Only for invoices) */}
       {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
         <div className="grid grid-cols-3 gap-3">
@@ -667,9 +700,24 @@ export const PurchasesModule: React.FC = () => {
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
           <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
           <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={selectedLegalEntityLibro}
+              onChange={e => setSelectedLegalEntityLibro(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white text-gray-700 focus:outline-none focus:border-ecar-blue shadow-sm"
+            >
+              <option value="">Seleccionar Empresa...</option>
+              {legalEntities.map((e: any) => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
             <button
               onClick={() => {
-                generateLibroIVA(filteredInvoices as any, periodoDesde, periodoHasta);
+                if (!selectedLegalEntityLibro) {
+                  useModalStore.getState().showAlert('Atención', 'Debe seleccionar una empresa para descargar el libro IVA.');
+                  return;
+                }
+                const selectedEntity = legalEntities.find((e: any) => e.id === selectedLegalEntityLibro);
+                generateLibroIVA(filteredInvoices as any, periodoDesde, periodoHasta, selectedEntity);
                 useImplementationStore.getState().completeItem('e2-11');
                 useImplementationStore.getState().completeItem('c2-6');
               }}
