@@ -9,6 +9,17 @@ const VEHICLE_COLORS = [
   '#2563EB', '#DC2626', '#16A34A', '#CA8A04', '#9333EA'
 ];
 
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 const getColorForVehicle = (vehicleId: string) => {
   let hash = 0;
   for (let i = 0; i < vehicleId.length; i++) {
@@ -65,7 +76,11 @@ export const FleetTrackingMap: React.FC = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historySessions, setHistorySessions] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [selectedHistory, setSelectedHistory] = useState<{ session: any, points: {lat: number, lng: number}[] } | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<{ 
+    session: any, 
+    points: {lat: number, lng: number}[],
+    kpis?: { distance: string, time: string, avgSpeed: number, maxSpeed: number, violations: number }
+  } | null>(null);
   
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsFetchedFor, setDirectionsFetchedFor] = useState<string | null>(null);
@@ -199,15 +214,59 @@ export const FleetTrackingMap: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('vehicle_tracking_points')
-        .select('lat, lng')
+        .select('lat, lng, speed, recorded_at')
         .eq('session_id', session.id)
         .order('recorded_at', { ascending: true });
         
       if (error) throw error;
       
+      let totalDistance = 0;
+      let maxSpeed = 0;
+      let violations = 0;
+      let sumSpeed = 0;
+      let validSpeedCount = 0;
+
+      const points = data.map((p: any, index: number) => {
+        if (index > 0) {
+          totalDistance += calculateDistance(data[index-1].lat, data[index-1].lng, p.lat, p.lng);
+        }
+        
+        const speedKmh = p.speed ? p.speed * 3.6 : 0;
+        if (speedKmh > 0) {
+          sumSpeed += speedKmh;
+          validSpeedCount++;
+        }
+        
+        if (speedKmh > maxSpeed) maxSpeed = speedKmh;
+        if (speedKmh > SPEED_LIMIT) violations++;
+        
+        return p;
+      });
+      
+      const avgSpeed = validSpeedCount > 0 ? (sumSpeed / validSpeedCount) : 0;
+      
+      let totalTimeStr = "00:00:00";
+      if (data.length > 0) {
+        const start = new Date(data[0].recorded_at).getTime();
+        const end = new Date(data[data.length - 1].recorded_at).getTime();
+        const diffSeconds = Math.floor((end - start) / 1000);
+        
+        const h = Math.floor(diffSeconds / 3600);
+        const m = Math.floor((diffSeconds % 3600) / 60);
+        const s = diffSeconds % 60;
+        totalTimeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      
       setSelectedHistory({
         session,
-        points: data.map((p: any) => ({ lat: p.lat, lng: p.lng }))
+        points: points.map((p: any) => ({ lat: p.lat, lng: p.lng })),
+        kpis: {
+          distance: totalDistance.toFixed(2),
+          time: totalTimeStr,
+          avgSpeed: Math.round(avgSpeed),
+          maxSpeed: Math.round(maxSpeed),
+          violations
+        }
       });
       
       if (data && data.length > 0 && map && window.google) {
@@ -575,12 +634,11 @@ export const FleetTrackingMap: React.FC = () => {
                   position={{ lat: v.lat, lng: v.lng }}
                   onClick={() => setSelectedVehicleId(v.vehicle_id)}
                   icon={{
-                    // window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW == 4
-                    path: 4,
-                    scale: isOverSpeed ? 6 : 5,
+                    path: 'M 0 -1 L 1 0 L 0 1 L -1 0 Z', // Rombo
+                    scale: isOverSpeed ? 12 : 10,
                     fillColor: isOverSpeed ? '#DC2626' : (speedKmh > 0 ? '#10B981' : '#F59E0B'),
                     fillOpacity: 1,
-                    strokeWeight: 2,
+                    strokeWeight: 1.5,
                     strokeColor: '#FFFFFF',
                     rotation: v.heading || 0
                   }}
@@ -671,6 +729,32 @@ export const FleetTrackingMap: React.FC = () => {
               </InfoWindow>
             )}
           </GoogleMap>
+          
+          {/* History KPIs Panel */}
+          {selectedHistory && selectedHistory.kpis && (
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-20 w-[90%] max-w-4xl flex gap-4 animate-in slide-in-from-bottom">
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Distancia</p>
+                <p className="font-black text-xl text-indigo-600">{selectedHistory.kpis.distance} <span className="text-sm font-normal text-gray-500">km</span></p>
+              </div>
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Duración</p>
+                <p className="font-black text-xl text-gray-800 font-mono">{selectedHistory.kpis.time}</p>
+              </div>
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Vel. Promedio</p>
+                <p className="font-black text-xl text-gray-800">{selectedHistory.kpis.avgSpeed} <span className="text-sm font-normal text-gray-500">km/h</span></p>
+              </div>
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Vel. Máx</p>
+                <p className="font-black text-xl text-gray-800">{selectedHistory.kpis.maxSpeed} <span className="text-sm font-normal text-gray-500">km/h</span></p>
+              </div>
+              <div className={`flex-1 rounded-xl p-3 text-center ${selectedHistory.kpis.violations > 0 ? 'bg-red-50 border border-red-100' : 'bg-green-50 border border-green-100'}`}>
+                <p className={`text-[10px] font-bold uppercase mb-1 ${selectedHistory.kpis.violations > 0 ? 'text-red-600' : 'text-green-600'}`}>Infracciones (+110)</p>
+                <p className={`font-black text-xl ${selectedHistory.kpis.violations > 0 ? 'text-red-600' : 'text-green-600'}`}>{selectedHistory.kpis.violations}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
