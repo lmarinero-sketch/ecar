@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer, OverlayView } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
 import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Clock, Calendar, Truck } from 'lucide-react';
 
@@ -625,20 +625,20 @@ export const FleetTrackingMap: React.FC = () => {
               const speedKmh = v.speed ? Math.round(v.speed * 3.6) : 0;
               const isOverSpeed = speedKmh > SPEED_LIMIT;
               return (
-                <Marker
+                <OverlayView
                   key={v.vehicle_id}
                   position={{ lat: v.lat, lng: v.lng }}
-                  onClick={() => setSelectedVehicleId(v.vehicle_id)}
-                  icon={{
-                    path: 'M 0 -1 L 1 0 L 0 1 L -1 0 Z', // Rombo
-                    scale: isOverSpeed ? 12 : 10,
-                    fillColor: isOverSpeed ? '#DC2626' : (speedKmh > 0 ? '#10B981' : '#F59E0B'),
-                    fillOpacity: 1,
-                    strokeWeight: 1.5,
-                    strokeColor: '#FFFFFF',
-                    rotation: v.heading || 0
-                  }}
-                />
+                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                  getPixelPositionOffset={(width, height) => ({ x: -(width / 2), y: -(height / 2) })}
+                >
+                  <div 
+                    onClick={() => setSelectedVehicleId(v.vehicle_id)} 
+                    className={`relative flex items-center justify-center w-12 h-12 rounded-full border-[4px] shadow-xl cursor-pointer transform transition-transform hover:scale-110 ${isOverSpeed ? 'border-red-600 animate-pulse' : (speedKmh > 0 ? 'border-emerald-500' : 'border-amber-500')} bg-white overflow-hidden`}
+                  >
+                    <img src="/rombo.jpeg" alt="vehiculo" className="w-full h-full object-cover" />
+                    {isOverSpeed && <div className="absolute inset-0 bg-red-500/30 rounded-full" />}
+                  </div>
+                </OverlayView>
               );
             })}
 
