@@ -160,11 +160,11 @@ export const PurchaseOrdersModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-violet-800 via-purple-700 to-indigo-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><FileSignature size={120} /></div>
+      <div className="bg-white border-l-4 border-ecar-blue rounded-xl p-6 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><FileSignature size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><FileSignature size={24} /> Órdenes de Compra / Trabajo</h3>
-          <p className="text-violet-100 text-sm mt-1">Gerencia de Compras — Doc PR-GC-01</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><FileSignature size={24} className="text-ecar-blue" /> Órdenes de Compra / Trabajo</h3>
+          <p className="text-gray-500 text-sm mt-1">Gerencia de Compras — Doc PR-GC-01</p>
         </div>
       </div>
 
