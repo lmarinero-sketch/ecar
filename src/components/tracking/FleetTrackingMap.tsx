@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer, OverlayView } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Clock, Calendar, Truck } from 'lucide-react';
+import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Clock, Calendar, Truck, User, Gauge } from 'lucide-react';
 
 const VEHICLE_COLORS = [
   '#4F46E5', '#E11D48', '#059669', '#D97706', '#7C3AED', 
@@ -684,42 +684,59 @@ export const FleetTrackingMap: React.FC = () => {
                 position={{ lat: selectedVehicle.lat, lng: selectedVehicle.lng }}
                 onCloseClick={() => setSelectedVehicleId(null)}
               >
-                <div className="p-1 max-w-[200px]">
-                  <h4 className="font-bold text-gray-900 border-b pb-1 mb-2 flex items-center justify-between">
-                    {selectedVehicle.vehicle_code || 'Unidad'}
-                    {selectedVehicle.destination_lat && (
-                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-bold ml-2">
-                        EN RUTA
+                <div className="w-[240px] p-1 font-sans">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center shadow-inner border border-indigo-100/50">
+                        <Truck className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-gray-900 text-[15px] leading-tight">
+                          {selectedVehicle.vehicle_code || 'Unidad'}
+                        </h4>
+                        {selectedVehicle.destination_lat && (
+                          <span className="inline-block mt-0.5 text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border border-emerald-200">
+                            En Ruta
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm mb-4">
+                    <div className="flex items-center text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100/50">
+                      <User className="w-4 h-4 mr-2.5 text-indigo-400" />
+                      <span className="font-semibold text-gray-800 truncate">{selectedVehicle.driver_name}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100/50">
+                      <Gauge className="w-4 h-4 mr-2.5 text-indigo-400" />
+                      <span className="font-semibold text-gray-800">
+                        {selectedVehicle.speed ? Math.round(selectedVehicle.speed * 3.6) : 0} <span className="text-xs text-gray-500 font-normal">km/h</span>
                       </span>
-                    )}
-                  </h4>
-                  <div className="space-y-1.5 text-sm">
-                    <p className="flex justify-between gap-4">
-                      <span className="text-gray-500">Conductor:</span>
-                      <span className="font-medium text-gray-800">{selectedVehicle.driver_name}</span>
-                    </p>
-                    <p className="flex justify-between gap-4">
-                      <span className="text-gray-500">Velocidad:</span>
-                      <span className="font-medium text-gray-800">
-                        {selectedVehicle.speed ? Math.round(selectedVehicle.speed * 3.6) : 0} km/h
-                      </span>
-                    </p>
-                    <p className="flex justify-between gap-4">
-                      <span className="text-gray-500">Act:</span>
-                      <span className="font-medium text-gray-800">
+                    </div>
+                    
+                    <div className="flex items-center text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100/50">
+                      <Clock className="w-4 h-4 mr-2.5 text-indigo-400" />
+                      <span className="font-semibold text-gray-800">
                         {new Date(selectedVehicle.last_update).toLocaleTimeString()}
                       </span>
-                    </p>
+                    </div>
                   </div>
+                  
                   <button
                     onClick={() => {
                       setAssigningDestinationFor(selectedVehicle.vehicle_id);
                       setTempDestination(null);
                       setSelectedVehicleId(null);
                     }}
-                    className="mt-3 w-full bg-indigo-600 text-white text-xs font-bold py-1.5 rounded hover:bg-indigo-700 transition-colors"
+                    className="w-full relative group overflow-hidden bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-bold py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 border border-indigo-500"
                   >
-                    {selectedVehicle.destination_lat ? 'Reasignar Destino' : 'Asignar Destino'}
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      {selectedVehicle.destination_lat ? 'Reasignar Destino' : 'Asignar Destino'}
+                    </span>
+                    <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-indigo-500 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </button>
                 </div>
               </InfoWindow>
