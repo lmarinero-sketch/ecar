@@ -107,8 +107,6 @@ export const FleetTrackingMap: React.FC = () => {
           last_heading,
           last_speed,
           last_update_at,
-          destination_lat,
-          destination_lng,
           fuel_vehicles(code, description)
         `)
         .eq('is_active', true)
@@ -127,8 +125,6 @@ export const FleetTrackingMap: React.FC = () => {
           heading: d.last_heading,
           speed: d.last_speed,
           last_update: d.last_update_at,
-          destination_lat: d.destination_lat,
-          destination_lng: d.destination_lng,
           vehicle_code: (d.fuel_vehicles as any)?.code,
           vehicle_description: (d.fuel_vehicles as any)?.description
         };
