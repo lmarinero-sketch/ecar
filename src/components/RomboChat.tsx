@@ -694,7 +694,7 @@ export const RomboChat: React.FC = () => {
                 <input
                   type="text"
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={handleInputChange}
                   placeholder="Escribí tu consulta acá..."
                   disabled={loading}
                   className="w-full pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all disabled:opacity-60"

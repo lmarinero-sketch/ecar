@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import type {
   Employee, Project, UnionCategory, Shift, AttendanceRecord,
@@ -3255,7 +3255,6 @@ export function useUpdateLogisticsMaintenanceLog() {
 }
 
 export function useAITokenUsage() {
-  const qc = useQueryClient();
   return useQuery({
     queryKey: ['ai_token_usage'],
     queryFn: async () => {
