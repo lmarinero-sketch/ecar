@@ -4,7 +4,7 @@ import {
   AlertTriangle, X, CreditCard
 } from 'lucide-react';
 import { useBankAccounts, useCashMovements, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
-
+import { MonthlyLiquiditySummary } from './MonthlyLiquiditySummary';
 import { useImplementationStore } from '../store/useImplementationStore';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -293,6 +293,8 @@ export const LiquidityDashboard: React.FC = () => {
       )}
 
 
+
+        <MonthlyLiquiditySummary />
 
         {/* Modal Nuevo Movimiento */}
         {showNewMovement && (
