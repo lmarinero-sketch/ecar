@@ -315,7 +315,9 @@ export const FinancesModule: React.FC = () => {
           return d >= startOfWeek && d <= endOfWeek;
         });
 
-        const totalDueThisWeek = dueThisWeek.reduce((s, c) => s + c.amount_ars, 0);
+        const toPay = dueThisWeek.filter(c => c.direction === 'payable').reduce((s, c) => s + c.amount_ars, 0);
+        const toReceive = dueThisWeek.filter(c => c.direction === 'receivable').reduce((s, c) => s + c.amount_ars, 0);
+        const netAmount = toReceive - toPay;
 
         if (dueThisWeek.length === 0) return null;
 
@@ -337,9 +339,23 @@ export const FinancesModule: React.FC = () => {
                     <p className="text-white/80 text-xs">Semana del {startOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} al {endOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-white/70 font-bold">TOTAL A CUBRIR</p>
-                  <p className="text-2xl font-black font-mono tracking-tight">{formatARS(totalDueThisWeek)}</p>
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 justify-end">
+                  {toReceive > 0 && (
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/70 font-bold tracking-wider">A COBRAR</p>
+                      <p className="text-base font-bold font-mono tracking-tight text-green-100">+{formatARS(toReceive)}</p>
+                    </div>
+                  )}
+                  {toPay > 0 && (
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/70 font-bold tracking-wider">A PAGAR</p>
+                      <p className="text-base font-bold font-mono tracking-tight text-red-100">-{formatARS(toPay)}</p>
+                    </div>
+                  )}
+                  <div className="text-right border-l border-white/20 pl-4 sm:pl-6 ml-2">
+                    <p className="text-xs text-white/70 font-bold">{netAmount >= 0 ? 'SALDO A FAVOR' : 'DÉFICIT A CUBRIR'}</p>
+                    <p className="text-2xl font-black font-mono tracking-tight">{formatARS(Math.abs(netAmount))}</p>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
