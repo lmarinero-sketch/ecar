@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, Landmark, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight,
-  Calendar, AlertTriangle, X, CreditCard
+  AlertTriangle, X, CreditCard
 } from 'lucide-react';
-import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
+import { useBankAccounts, useCashMovements, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
 
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -13,7 +13,7 @@ const fmtShort = (n: number) => {
   if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
   return fmt(n);
 };
-const monthName = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+
 
 const CATEGORIES = [
   'Sueldos/Honorarios', 'Seguros', 'Servicios', 'Impuestos ARCA',
@@ -29,7 +29,7 @@ export const LiquidityDashboard: React.FC = () => {
     useImplementationStore.getState().completeItem('c2-21');
   }, []);
   const { isLoading: loadingMovements } = useCashMovements();
-  const { data: snapshots } = useMonthlySnapshots();
+
   const { data: cheques } = useCheques();
   const { data: certificates } = useProjectCertificates();
   const createMovement = useCreateCashMovement();
@@ -68,9 +68,6 @@ export const LiquidityDashboard: React.FC = () => {
   }, [certificates]);
   const totalCerts = upcomingCerts.reduce((s, c) => s + (c.net_deposit || 0), 0);
 
-  // Chart data from snapshots
-  const chartData = useMemo(() => (snapshots || []).slice(-6), [snapshots]);
-  const chartMax = useMemo(() => Math.max(...chartData.map(s => Math.max(s.real_closing, s.projected_closing, s.total_expenses)), 1), [chartData]);
 
   // Cheques a cubrir (Line Chart Data) - Próximos 45 días
   const chequesChartData = useMemo(() => {
@@ -237,65 +234,7 @@ export const LiquidityDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Chart Evolución */}
-        <div className="light-card overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-ecar-blue" /> Evolución de Caja</h3>
-          </div>
-          <div className="p-4">
-            {chartData.length > 0 ? (
-              <div className="space-y-3">
-                {/* Mini bar chart */}
-                <div className="flex items-end gap-2 h-32">
-                  {chartData.map(s => {
-                    const h = Math.max((s.real_closing / chartMax) * 100, 4);
-                    const ph = Math.max((s.projected_closing / chartMax) * 100, 4);
-                    return (
-                      <div key={s.month} className="flex-1 flex flex-col items-center gap-1 h-full">
-                        <div className="w-full flex-1 flex gap-0.5 items-end justify-center">
-                          <div className="w-3 bg-ecar-blueLight rounded-t transition-all" style={{ height: `${ph}%` }} title={`Proy: ${fmtShort(s.projected_closing)}`} />
-                          <div className="w-3 bg-emerald-500 rounded-t transition-all" style={{ height: `${h}%` }} title={`Real: ${fmtShort(s.real_closing)}`} />
-                        </div>
-                        <span className="text-[10px] text-gray-400 font-medium">{monthName(s.month)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-ecar-blueLight" /> Proyectado</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Real</span>
-                </div>
-                {/* Último mes stats */}
-                {chartData.length > 0 && (() => {
-                  const last = chartData[chartData.length - 1];
-                  return (
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
-                      <div className="text-center">
-                        <p className="text-[10px] text-gray-400 uppercase font-bold">Ingresos</p>
-                        <p className="font-mono font-bold text-green-600 text-sm">{fmtShort(last.total_income)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[10px] text-gray-400 uppercase font-bold">Egresos</p>
-                        <p className="font-mono font-bold text-red-500 text-sm">{fmtShort(last.total_expenses)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[10px] text-gray-400 uppercase font-bold">Desvío</p>
-                        <p className={`font-mono font-bold text-sm ${last.deviation >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                          {last.deviation >= 0 ? '+' : ''}{fmtShort(last.deviation)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <Calendar size={32} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Sin datos de evolución aún</p>
-              </div>
-            )}
-          </div>
-        </div>
+
       </div>
 
       {/* Gráfico de Línea - Cheques a Cubrir */}
