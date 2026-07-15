@@ -136,9 +136,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'finances', requires: true },
       { id: 'obligations', requires: true },
-      { id: 'invoicing', requires: true },
       { id: 'certifications', requires: true },
-      { id: 'monthly_report' },
       { id: 'expenses', requires: true },
       { id: 'payments', requires: true },
     ],
