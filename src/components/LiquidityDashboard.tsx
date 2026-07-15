@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, Landmark, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight,
-  Calendar, AlertTriangle, Plus, X, CreditCard, ChevronDown, ChevronUp
+  Calendar, AlertTriangle, X, CreditCard
 } from 'lucide-react';
 import { useBankAccounts, useCashMovements, useMonthlySnapshots, useCheques, useCreateCashMovement, useProjectCertificates } from '../hooks/useData';
-import { MonthlyLiquiditySummary } from './MonthlyLiquiditySummary';
+
 import { useImplementationStore } from '../store/useImplementationStore';
 
 const fmt = (n: number) => `$${Math.abs(n).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -28,14 +28,14 @@ export const LiquidityDashboard: React.FC = () => {
   useEffect(() => {
     useImplementationStore.getState().completeItem('c2-21');
   }, []);
-  const { data: movements, isLoading: loadingMovements } = useCashMovements();
+  const { isLoading: loadingMovements } = useCashMovements();
   const { data: snapshots } = useMonthlySnapshots();
   const { data: cheques } = useCheques();
   const { data: certificates } = useProjectCertificates();
   const createMovement = useCreateCashMovement();
 
   const [showNewMovement, setShowNewMovement] = useState(false);
-  const [showAllMovements, setShowAllMovements] = useState(false);
+
   const [form, setForm] = useState({ type: 'expense' as 'income' | 'expense', category: '', description: '', amount: '', counterpart: '', bank_account_id: '' });
 
   // KPIs
@@ -139,7 +139,7 @@ export const LiquidityDashboard: React.FC = () => {
     );
   }
 
-  const displayedMovements = showAllMovements ? (movements || []) : (movements || []).slice(0, 8);
+
 
   return (
     <div className="space-y-6">
@@ -353,72 +353,7 @@ export const LiquidityDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Flujo de Caja */}
-      <div className="light-card overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-gray-800 flex items-center gap-2"><DollarSign size={18} className="text-emerald-600" /> Flujo de Caja — Ingresos y Egresos</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Registro de todas las entradas y salidas de dinero de la empresa</p>
-          </div>
-          <button onClick={() => setShowNewMovement(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark hover:shadow-lg transition-all">
-            <Plus size={16} /> Nuevo Ingreso/Egreso
-          </button>
-        </div>
 
-        {(movements || []).length > 0 ? (
-          <>
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                <tr>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Categoría</th>
-                  <th className="px-4 py-3">Descripción</th>
-                  <th className="px-4 py-3">Contraparte</th>
-                  <th className="px-4 py-3 text-right">Monto</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {displayedMovements.map(m => (
-                  <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{new Date(m.movement_date).toLocaleDateString('es-AR')}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {m.type === 'income' ? '📥 Ingreso' : '📤 Egreso'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.type === 'income' ? 'bg-emerald-50 text-emerald-700' : m.type === 'transfer' ? 'bg-blue-100 text-blue-700' : 'bg-orange-50 text-orange-700'}`}>
-                        {m.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{m.description || '—'}</td>
-                    <td className="px-4 py-3 text-gray-500">{m.counterpart || '—'}</td>
-                    <td className={`px-4 py-3 text-right font-mono font-bold ${m.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {m.type === 'income' ? '+' : '-'}{fmt(m.amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {(movements || []).length > 8 && (
-              <div className="p-3 border-t border-gray-100 text-center">
-                <button onClick={() => setShowAllMovements(!showAllMovements)} className="text-sm text-ecar-blue font-bold flex items-center gap-1 mx-auto hover:underline">
-                  {showAllMovements ? <><ChevronUp size={14} /> Mostrar menos</> : <><ChevronDown size={14} /> Ver todos ({(movements || []).length})</>}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12 text-gray-400">
-            <ArrowDownRight size={48} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Sin registros en el flujo de caja</p>
-            <p className="text-sm">Cargá tu primer ingreso o egreso, o pedíselo a Rombo por WhatsApp 📱</p>
-          </div>
-        )}
-        </div>
-
-        <MonthlyLiquiditySummary />
 
         {/* Modal Nuevo Movimiento */}
         {showNewMovement && (
