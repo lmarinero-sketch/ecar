@@ -3,7 +3,7 @@ import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import type {
   Employee, Project, UnionCategory, Shift, AttendanceRecord,
   Obligation, Invoice, Supplier, PurchaseInvoice, Cheque,
-  PayrollPeriod, FixedExpense, EmployeeDocument, LetterTemplate,
+  PayrollPeriod, FixedExpense, EmployeeDocument, ProjectDocument, LetterTemplate,
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting, PaymentRecord,
@@ -649,6 +649,59 @@ export function useUploadDocument() {
       if (dbError) throw dbError;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_documents'] }),
+  });
+}
+
+// ========== PROJECT DOCUMENTS ==========
+export function useProjectDocuments(projectId: string) {
+  return useQuery({
+    queryKey: ['project_documents', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('project_documents').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as ProjectDocument[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useUploadProjectDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, file, category }: { projectId: string; file: File; category: string }) => {
+      const filePath = `${projectId}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      const { error: uploadError } = await supabase.storage.from('project-documents').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase.from('project_documents').insert({
+        project_id: projectId,
+        file_path: filePath,
+        file_name: file.name,
+        file_type: file.type || null,
+        file_size: file.size,
+        category,
+        tenant_id: ECAR_TENANT_ID
+      });
+      if (dbError) throw dbError;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_documents'] }),
+  });
+}
+
+export function useDeleteProjectDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, filePath }: { id: string; filePath: string }) => {
+      const { error: storageError } = await supabase.storage.from('project-documents').remove([filePath]);
+      if (storageError) throw storageError;
+
+      const { error } = await supabase.from('project_documents').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project_documents'] }),
   });
 }
 

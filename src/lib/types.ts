@@ -405,6 +405,18 @@ export type EmployeeDocument = {
   created_at: string;
 };
 
+export type ProjectDocument = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  file_path: string;
+  file_name: string;
+  file_type: string | null;
+  file_size: number;
+  category: string;
+  created_at: string;
+};
+
 export type LetterTemplate = {
   id: string;
   tenant_id: string;

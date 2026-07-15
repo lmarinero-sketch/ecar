@@ -11,6 +11,7 @@ import {
   useProjects, useCreateProject, useWbsElements, useCreateWbsElement,
   useUpdateWbsElement, useDeleteWbsElement, useEmployees,
   useProjectFeedback, useCreateProjectFeedback, useUpdateProjectFeedback,
+  useProjectDocuments, useUploadProjectDocument, useDeleteProjectDocument,
   // Project-Hub specific resource/financial hooks:
   useProjectEmployees, useProjectInventoryMovements, useProjectToolAssignments,
   useProjectFuelLoads, useProjectPurchaseRequests, useProjectCertificates,
@@ -449,6 +450,7 @@ export const WbsModule: React.FC = () => {
           {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}
           {tab === 'pedidos' && <PedidosTab projectId={selectedProjectId} />}
           {tab === 'certificados' && <CertificadosTab projectId={selectedProjectId} />}
+          {tab === 'documentos' && <DocumentosTab projectId={selectedProjectId} />}
           {tab === 'retroalimentacion' && <RetroTab projectId={selectedProjectId} wbs={wbs} />}
         </>
       )}
@@ -1040,6 +1042,93 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
           ))}
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════ DOCUMENTOS TAB ═══════════════════════ */
+const DocumentosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
+  const { data: documents = [], isLoading } = useProjectDocuments(projectId);
+  const uploadDoc = useUploadProjectDocument();
+  const deleteDoc = useDeleteProjectDocument();
+  const [isUploading, setIsUploading] = useState(false);
+  const [category, setCategory] = useState('general');
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    try {
+      setIsUploading(true);
+      await uploadDoc.mutateAsync({ projectId, file, category });
+      e.target.value = ''; // Reset
+    } catch (err) {
+      console.error(err);
+      alert('Error subiendo documento');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const getPublicUrl = (path: string) => supabase.storage.from('project-documents').getPublicUrl(path).data.publicUrl;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+        <h4 className="font-bold text-gray-700 flex items-center gap-2">
+          <FolderTree size={16} className="text-ecar-blue" /> Archivos y Documentos de Obra
+        </h4>
+        <div className="flex gap-2">
+          <select value={category} onChange={e => setCategory(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:outline-none">
+            <option value="general">General</option>
+            <option value="planos">Planos</option>
+            <option value="presupuestos">Presupuestos</option>
+            <option value="contratos">Contratos</option>
+            <option value="fotos">Fotos</option>
+          </select>
+          <label className="bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer transition-colors shadow-sm">
+            <Plus size={16} /> Subir
+            <input type="file" onChange={handleUpload} className="hidden" disabled={isUploading} />
+          </label>
+        </div>
+      </div>
+
+      {isUploading && <p className="text-sm text-ecar-blue font-bold animate-pulse">Subiendo archivo...</p>}
+
+      {isLoading ? (
+        <p className="text-gray-400">Cargando documentos...</p>
+      ) : documents.length === 0 ? (
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center justify-center text-gray-500">
+          <FolderTree size={48} className="mb-3 opacity-20" />
+          <p className="font-bold">No hay documentos de obra</p>
+          <p className="text-sm mt-1">Sube el primer archivo utilizando el botón superior</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {documents.map(doc => (
+            <div key={doc.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-all">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="bg-blue-50 p-2.5 rounded-xl shrink-0">
+                    <FileCheck size={20} className="text-ecar-blue" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-gray-800 text-sm truncate" title={doc.file_name}>{doc.file_name}</p>
+                    <p className="text-xs text-gray-400 capitalize">{doc.category} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                </div>
+                <button onClick={() => { if (confirm('¿Eliminar documento?')) deleteDoc.mutate({ id: doc.id, filePath: doc.file_path }); }} className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors shrink-0">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <a href={getPublicUrl(doc.file_path)} target="_blank" rel="noopener noreferrer" className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-1.5 rounded-lg text-xs font-bold text-center transition-colors">
+                  Ver/Descargar
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
