@@ -389,7 +389,7 @@ export const UserManagementModule: React.FC = () => {
 
                 {guideStep === 4 && (
                   <div className="space-y-3">
-                    <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Paso 4: Administrar la Lista</span>
+                    <span className="text-[10px] font-bold text-ecar-blue bg-slate-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Paso 4: Administrar la Lista</span>
                     <h5 className="font-bold text-gray-800 text-lg">Modificar o Dar de Baja usuarios</h5>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       En el panel inferior tenés la lista completa de todos los usuarios registrados en tu organización:

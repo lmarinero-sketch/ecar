@@ -43,19 +43,19 @@ export const InspectionsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 to-teal-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardCheck size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardCheck size={24} /> Inspecciones & Calidad</h3>
-          <p className="text-teal-100 text-sm mt-1">Control de calidad, checklists de inspección y seguimiento de no conformidades (Punch List)</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Control de calidad, checklists de inspección y seguimiento de no conformidades (Punch List)</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><ClipboardCheck size={16} className="text-teal-500" /> Total Inspecciones</div>
-          <p className="text-2xl font-black font-mono text-teal-600">{inspecciones.length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><ClipboardCheck size={16} className="text-ecar-blue" /> Total Inspecciones</div>
+          <p className="text-2xl font-black font-mono text-ecar-blue">{inspecciones.length}</p>
         </div>
         <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><CheckCircle2 size={16} className="text-green-500" /> Aprobadas</div>
@@ -73,10 +73,10 @@ export const InspectionsModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        <button onClick={() => setTab('inspecciones')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === 'inspecciones' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setTab('inspecciones')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === 'inspecciones' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <ClipboardCheck size={16} /> Inspecciones ({inspecciones.length})
         </button>
-        <button onClick={() => setTab('punch')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === 'punch' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setTab('punch')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === 'punch' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <ListChecks size={16} /> Punch List ({punchItems.length})
         </button>
       </div>
@@ -97,7 +97,7 @@ export const InspectionsModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Ubicación</label><input value={formInsp.ubicacion} onChange={e => setFormInsp({...formInsp, ubicacion: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Piso, sector, zona..." /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Observaciones</label><input value={formInsp.observaciones} onChange={e => setFormInsp({...formInsp, observaciones: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Notas generales..." /></div>
           </div>
-          <button onClick={handleSubmitInsp} disabled={createInspeccion.isPending} className="bg-teal-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-teal-700 transition-all">
+          <button onClick={handleSubmitInsp} disabled={createInspeccion.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
             {createInspeccion.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Crear Inspección
           </button>
         </div>
@@ -117,7 +117,7 @@ export const InspectionsModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha Límite</label><input type="date" value={formPunch.fecha_limite} onChange={e => setFormPunch({...formPunch, fecha_limite: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500 uppercase">Descripción</label><textarea value={formPunch.descripcion} onChange={e => setFormPunch({...formPunch, descripcion: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Detalle del defecto o no conformidad..." /></div>
-          <button onClick={handleSubmitPunch} disabled={createPunchItem.isPending} className="bg-teal-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-teal-700 transition-all">
+          <button onClick={handleSubmitPunch} disabled={createPunchItem.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
             {createPunchItem.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Agregar Item
           </button>
         </div>
@@ -127,7 +127,7 @@ export const InspectionsModule: React.FC = () => {
       {tab === 'inspecciones' && (
         <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Inspecciones</h3></div>
-          {loadingInsp ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-teal-500 rounded-full animate-spin mx-auto" /></div> :
+          {loadingInsp ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div> :
             inspecciones.length === 0 ? <div className="text-center py-16 text-gray-400"><ClipboardCheck size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin inspecciones</p><p className="text-sm">Creá la primera inspección para controlar la calidad.</p></div> :
             <table className="w-full text-sm text-left"><thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase"><tr><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Obra</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Inspector</th><th className="px-4 py-3">Resultado</th><th className="px-4 py-3">Acción</th></tr></thead>
               <tbody className="divide-y divide-gray-100">{inspecciones.map(i => (
@@ -148,7 +148,7 @@ export const InspectionsModule: React.FC = () => {
       {tab === 'punch' && (
         <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Punch List — No Conformidades</h3></div>
-          {loadingPunch ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-teal-500 rounded-full animate-spin mx-auto" /></div> :
+          {loadingPunch ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div> :
             punchItems.length === 0 ? <div className="text-center py-16 text-gray-400"><ListChecks size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin items de punch list</p><p className="text-sm">Agregá items cuando detectes no conformidades.</p></div> :
             <div className="divide-y divide-gray-100">{punchItems.map(p => (
               <div key={p.id} className="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 transition-colors">

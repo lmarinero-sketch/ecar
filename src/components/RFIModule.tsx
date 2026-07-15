@@ -46,19 +46,19 @@ export const RFIModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-800 to-purple-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><MessageSquareText size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><MessageSquareText size={24} /> Consultas de Obra (RFI)</h3>
-          <p className="text-purple-100 text-sm mt-1">Solicitudes formales de información técnica — trazabilidad de consultas y respuestas</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Solicitudes formales de información técnica — trazabilidad de consultas y respuestas</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><MessageSquareText size={16} className="text-purple-500" /> Total RFI</div>
-          <p className="text-2xl font-black font-mono text-purple-600">{consultas.length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><MessageSquareText size={16} className="text-ecar-blue" /> Total RFI</div>
+          <p className="text-2xl font-black font-mono text-ecar-blue">{consultas.length}</p>
         </div>
         <div className="light-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><Clock size={16} className="text-yellow-500" /> Abiertas</div>
@@ -100,7 +100,7 @@ export const RFIModule: React.FC = () => {
               {form.impacto_cronograma && <input value={form.impacto_cronograma_dias} onChange={e => setForm({...form, impacto_cronograma_dias: e.target.value})} className="w-20 px-2 py-1 border rounded-lg text-sm font-mono" placeholder="Días" />}
             </div>
           </div>
-          <button onClick={handleSubmit} disabled={createConsulta.isPending} className="bg-purple-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all">
+          <button onClick={handleSubmit} disabled={createConsulta.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
             {createConsulta.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={16} />} Enviar Consulta
           </button>
         </div>
@@ -109,14 +109,14 @@ export const RFIModule: React.FC = () => {
       {/* List */}
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Consultas (RFI)</h3></div>
-        {isLoading ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin mx-auto" /></div> :
+        {isLoading ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div> :
           consultas.length === 0 ? <div className="text-center py-16 text-gray-400"><MessageSquareText size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin consultas</p><p className="text-sm">Creá la primera RFI para formalizar consultas técnicas.</p></div> :
           <div className="divide-y divide-gray-100">{consultas.map(c => {
             const isExpanded = expanded === c.id;
             return (
               <div key={c.id}>
                 <div className="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setExpanded(isExpanded ? null : c.id)}>
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-black font-mono text-sm">#{c.numero}</div>
+                  <div className="w-10 h-10 rounded-lg bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-black font-mono text-sm">#{c.numero}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-800">{c.asunto}</p>
                     <p className="text-xs text-gray-500">{(c.obra as any)?.name} — {c.consultado_por} {c.asignado_a ? `→ ${c.asignado_a}` : ''}</p>
@@ -133,13 +133,13 @@ export const RFIModule: React.FC = () => {
                     <div><p className="text-xs font-bold text-gray-500 uppercase mb-1">Pregunta</p><p className="text-sm text-gray-700 whitespace-pre-wrap">{c.pregunta}</p></div>
                     {c.respuesta_oficial && <div className="bg-blue-50 rounded-lg p-3 border border-blue-100"><p className="text-xs font-bold text-blue-600 uppercase mb-1">Respuesta Oficial</p><p className="text-sm text-blue-800 whitespace-pre-wrap">{c.respuesta_oficial}</p>{c.respondido_en && <p className="text-xs text-blue-500 mt-1">— {new Date(c.respondido_en).toLocaleDateString('es-AR')}</p>}</div>}
                     {c.estado === 'abierta' && !respuestaForm && (
-                      <button onClick={() => setRespuestaForm({ id: c.id, respuesta: '' })} className="text-sm text-purple-600 font-bold hover:underline flex items-center gap-1"><CheckCircle2 size={14} /> Responder esta consulta</button>
+                      <button onClick={() => setRespuestaForm({ id: c.id, respuesta: '' })} className="text-sm text-ecar-blue font-bold hover:underline flex items-center gap-1"><CheckCircle2 size={14} /> Responder esta consulta</button>
                     )}
                     {respuestaForm?.id === c.id && (
                       <div className="space-y-2">
                         <textarea value={respuestaForm.respuesta} onChange={e => setRespuestaForm({...respuestaForm, respuesta: e.target.value})} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Escribí la respuesta oficial..." />
                         <div className="flex gap-2">
-                          <button onClick={handleResponder} className="bg-purple-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 transition-all flex items-center gap-1"><Check size={14} /> Enviar Respuesta</button>
+                          <button onClick={handleResponder} className="bg-ecar-blue text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-ecar-blue transition-all flex items-center gap-1"><Check size={14} /> Enviar Respuesta</button>
                           <button onClick={() => setRespuestaForm(null)} className="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold">Cancelar</button>
                         </div>
                       </div>

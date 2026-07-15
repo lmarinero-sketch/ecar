@@ -42,8 +42,8 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
 const COST_TYPE_LABELS: Record<string, { label: string; color: string; gradient: string }> = {
   material:      { label: 'Material',     color: 'bg-blue-50 text-blue-700',     gradient: 'from-blue-400 to-blue-600' },
   mano_obra:     { label: 'Mano de Obra', color: 'bg-orange-50 text-orange-700', gradient: 'from-orange-400 to-orange-600' },
-  equipo:        { label: 'Equipo',       color: 'bg-purple-50 text-purple-700', gradient: 'from-purple-400 to-purple-600' },
-  subcontrato:   { label: 'Subcontrato',  color: 'bg-teal-50 text-teal-700',     gradient: 'from-teal-400 to-teal-600' },
+  equipo:        { label: 'Equipo',       color: 'bg-slate-50 text-ecar-blue', gradient: 'from-ecar-blue to-ecar-blue' },
+  subcontrato:   { label: 'Subcontrato',  color: 'bg-slate-50 text-ecar-blue',     gradient: 'from-ecar-blue to-ecar-blue' },
   gasto_general: { label: 'Gasto Gral',   color: 'bg-gray-100 text-gray-600',    gradient: 'from-gray-400 to-gray-600' },
   financiero:    { label: 'Financiero',   color: 'bg-red-50 text-red-600',       gradient: 'from-red-400 to-red-600' },
 };
@@ -194,7 +194,7 @@ export const ProjectBudgetModule: React.FC = () => {
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-10 h-10 border-4 border-gray-200 border-t-cyan-600 rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" />
     </div>
   );
 
@@ -224,7 +224,7 @@ export const ProjectBudgetModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-cyan-800 via-cyan-700 to-teal-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute -top-8 -right-8 opacity-[0.07]"><HardHat size={180} strokeWidth={1} /></div>
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-white/0 via-white/30 to-white/0" />
         <div className="relative z-10">
@@ -232,12 +232,12 @@ export const ProjectBudgetModule: React.FC = () => {
             <div className="bg-white/15 backdrop-blur-sm p-2 rounded-xl"><HardHat size={22} /></div>
             Proyectos & Presupuestos
           </h3>
-          <p className="text-cyan-100 text-sm mt-1.5">Cómputos métricos, análisis de precios, versiones y control presupuestario <span className="text-cyan-200/60 font-mono text-xs">(PR-GPP-01)</span></p>
+          <p className="text-ecar-blueLight text-sm mt-1.5">Cómputos métricos, análisis de precios, versiones y control presupuestario <span className="text-ecar-blueLight/60 font-mono text-xs">(PR-GPP-01)</span></p>
           <div className="flex gap-2 mt-4">
-            <button onClick={() => setView('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'list' ? 'bg-white text-cyan-800 shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+            <button onClick={() => setView('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'list' ? 'bg-white text-ecar-blueDark shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
               <FileText size={13} className="inline mr-1" />Presupuestos
             </button>
-            <button onClick={() => setView('resources')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'resources' ? 'bg-white text-cyan-800 shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+            <button onClick={() => setView('resources')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'resources' ? 'bg-white text-ecar-blueDark shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
               <Database size={13} className="inline mr-1" />Banco de Precios
             </button>
           </div>
@@ -247,7 +247,7 @@ export const ProjectBudgetModule: React.FC = () => {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: FileText, label: 'Total', value: totalBudgets, color: 'cyan', iconColor: 'text-cyan-500' },
+          { icon: FileText, label: 'Total', value: totalBudgets, color: 'cyan', iconColor: 'text-ecar-blue' },
           { icon: Edit2, label: 'Borradores', value: draftCount, color: 'blue', iconColor: 'text-blue-500' },
           { icon: Check, label: 'Aprobados', value: approvedCount, color: 'green', iconColor: 'text-green-500' },
           { icon: DollarSign, label: 'Valor Total', value: fmt(totalValue), color: 'emerald', iconColor: 'text-emerald-500', isMoney: true },
@@ -256,7 +256,7 @@ export const ProjectBudgetModule: React.FC = () => {
             <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2">
               <kpi.icon size={16} className={kpi.iconColor} />{kpi.label}
             </div>
-            <p className={`${kpi.isMoney ? 'text-xl' : 'text-2xl'} font-black ${kpi.color === 'cyan' ? 'text-cyan-600' : kpi.color === 'blue' ? 'text-blue-600' : kpi.color === 'green' ? 'text-green-600' : 'text-gray-800'} font-mono`}>
+            <p className={`${kpi.isMoney ? 'text-xl' : 'text-2xl'} font-black ${kpi.color === 'cyan' ? 'text-ecar-blue' : kpi.color === 'blue' ? 'text-blue-600' : kpi.color === 'green' ? 'text-green-600' : 'text-gray-800'} font-mono`}>
               {kpi.value}
             </p>
           </div>
@@ -269,7 +269,7 @@ export const ProjectBudgetModule: React.FC = () => {
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre o proyecto..."
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all" />
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
             className="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white hover:border-gray-400 transition-all cursor-pointer">
@@ -278,21 +278,21 @@ export const ProjectBudgetModule: React.FC = () => {
           </select>
         </div>
         <button onClick={() => setShowNew(true)}
-          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] transition-all active:scale-[0.98]">
+          className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-ecar-blue/20 hover:shadow-ecar-blue/40 hover:scale-[1.02] transition-all active:scale-[0.98]">
           <Plus size={16} /> Nuevo Presupuesto
         </button>
       </div>
 
       {/* New Budget Form */}
       {showNew && (
-        <div className="bg-white border-2 border-cyan-200 rounded-2xl p-6 shadow-lg space-y-4 animate-in">
-          <h4 className="font-bold text-gray-800 flex items-center gap-2 text-lg"><Plus size={18} className="text-cyan-600" /> Nuevo Presupuesto</h4>
+        <div className="bg-white border-2 border-ecar-blueLight rounded-2xl p-6 shadow-lg space-y-4 animate-in">
+          <h4 className="font-bold text-gray-800 flex items-center gap-2 text-lg"><Plus size={18} className="text-ecar-blue" /> Nuevo Presupuesto</h4>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="md:col-span-2">
               <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nombre *</label>
               <input value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all" placeholder="Ej: Presupuesto Barrio Norte - Etapa 1" />
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" placeholder="Ej: Presupuesto Barrio Norte - Etapa 1" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Proyecto</label>
@@ -304,7 +304,7 @@ export const ProjectBudgetModule: React.FC = () => {
               </select>
               {newForm.project_id === '___new___' && (
                 <input value={newProjectName} onChange={e => setNewProjectName(e.target.value)}
-                  className="w-full mt-2 px-3 py-2 border border-dashed border-cyan-400 rounded-xl text-sm bg-cyan-50/30 focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500"
+                  className="w-full mt-2 px-3 py-2 border border-dashed border-ecar-blue rounded-xl text-sm bg-slate-50/30 focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue"
                   placeholder="Nombre del nuevo proyecto..." autoFocus />
               )}
             </div>
@@ -364,7 +364,7 @@ export const ProjectBudgetModule: React.FC = () => {
 
           <div className="flex gap-2 pt-2">
             <button onClick={handleCreateBudget} disabled={createBudget.isPending || !newForm.name.trim()}
-              className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 shadow-md hover:shadow-lg transition-all">
+              className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-6 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 shadow-md hover:shadow-lg transition-all">
               <Check size={14} className="inline mr-1.5" />Crear Presupuesto
             </button>
             <button onClick={() => setShowNew(false)} className="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-200 transition-all">
@@ -398,7 +398,7 @@ export const ProjectBudgetModule: React.FC = () => {
               {filtered.map(budget => {
                 const stat = STATUS_MAP[budget.status] || STATUS_MAP.draft;
                 return (
-                  <tr key={budget.id} className="hover:bg-cyan-50/30 cursor-pointer transition-colors" onClick={() => openDetail(budget.id)}>
+                  <tr key={budget.id} className="hover:bg-slate-50/30 cursor-pointer transition-colors" onClick={() => openDetail(budget.id)}>
                     <td className="px-4 py-3 font-medium text-gray-800">
                       <div className="flex flex-col">
                         <span className="font-semibold">{budget.name}</span>
@@ -406,7 +406,7 @@ export const ProjectBudgetModule: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {budget.project?.name ? (<span className="flex items-center gap-1.5"><FolderOpen size={14} className="text-cyan-600" />{budget.project.name}</span>) : budget.opportunity?.client_name ? (<span className="flex items-center gap-1.5"><Layers size={14} className="text-amber-500" />{budget.opportunity.client_name} - Oportunidad</span>) : (<span className="text-gray-400 text-xs">Sin asignar</span>)}
+                      {budget.project?.name ? (<span className="flex items-center gap-1.5"><FolderOpen size={14} className="text-ecar-blue" />{budget.project.name}</span>) : budget.opportunity?.client_name ? (<span className="flex items-center gap-1.5"><Layers size={14} className="text-amber-500" />{budget.opportunity.client_name} - Oportunidad</span>) : (<span className="text-gray-400 text-xs">Sin asignar</span>)}
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
@@ -430,7 +430,7 @@ export const ProjectBudgetModule: React.FC = () => {
                     <td className="px-3 py-3 text-center text-xs text-gray-500">{fmtDate(budget.created_at)}</td>
                     <td className="px-3 py-3 text-center" onClick={e => e.stopPropagation()}>
                       <button onClick={(e) => handleDuplicate(budget.id, e)} title="Duplicar como nueva versión"
-                        className="text-gray-400 hover:text-cyan-600 transition-colors p-1 rounded-lg hover:bg-cyan-50">
+                        className="text-gray-400 hover:text-ecar-blue transition-colors p-1 rounded-lg hover:bg-slate-50">
                         <Copy size={14} />
                       </button>
                     </td>
@@ -810,10 +810,10 @@ const BudgetDetailView: React.FC<{
 
     if (isEditing && editItem) {
       return (
-        <tr key={item.id} className="bg-cyan-50/50 border-l-2 border-cyan-400">
+        <tr key={item.id} className="bg-slate-50/50 border-l-2 border-ecar-blue">
           <td className="px-4 py-2">
             <input value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })}
-              className="w-full px-2 py-1.5 border border-cyan-300 rounded-lg text-sm" />
+              className="w-full px-2 py-1.5 border border-ecar-blueLight rounded-lg text-sm" />
             <input value={editItem.notes} onChange={e => setEditItem({ ...editItem, notes: e.target.value })}
               placeholder="Notas..." className="w-full px-2 py-1 border border-gray-200 rounded-lg text-[10px] mt-1" />
           </td>
@@ -837,7 +837,7 @@ const BudgetDetailView: React.FC<{
             <input type="number" value={editItem.unit_price_ars} onChange={e => setEditItem({ ...editItem, unit_price_ars: e.target.value })}
               className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm font-mono text-right" style={{ width: '100px' }} />
           </td>
-          <td className="px-3 py-2 text-right font-mono font-bold text-sm text-cyan-700">
+          <td className="px-3 py-2 text-right font-mono font-bold text-sm text-ecar-blue">
             {fmt((parseFloat(editItem.quantity) || 0) * (parseFloat(editItem.unit_price_ars) || 0))}
           </td>
           <td className="px-2 py-2">
@@ -872,7 +872,7 @@ const BudgetDetailView: React.FC<{
         <td className="px-3 py-2.5 text-center">
           {!isLocked && (
             <div className="flex gap-0.5 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => startEditItem(item)} className="text-gray-400 hover:text-cyan-600 p-1 rounded hover:bg-cyan-50"><Edit2 size={13} /></button>
+              <button onClick={() => startEditItem(item)} className="text-gray-400 hover:text-ecar-blue p-1 rounded hover:bg-slate-50"><Edit2 size={13} /></button>
               <button onClick={() => deleteItem.mutate(item.id)} className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50"><Trash2 size={13} /></button>
             </div>
           )}
@@ -889,7 +889,7 @@ const BudgetDetailView: React.FC<{
       </button>
 
       {/* Header Card */}
-      <div className="bg-gradient-to-br from-cyan-800 via-cyan-700 to-teal-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute -top-6 -right-6 opacity-[0.07]"><HardHat size={160} strokeWidth={1} /></div>
         <div className="absolute top-3 right-3 flex gap-2">
           {isLocked && <div className="bg-white/20 backdrop-blur-sm rounded-full p-2"><Lock size={16} /></div>}
@@ -920,13 +920,13 @@ const BudgetDetailView: React.FC<{
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20 text-white font-mono">v{budget.version}</span>
             )}
             {(budget as any).work_type && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/10 text-cyan-100">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/10 text-ecar-blueLight">
                 {WORK_TYPE_LABELS[(budget as any).work_type] || 'Obra Nueva'}
               </span>
             )}
           </div>
-          {budget.description && <p className="text-cyan-100 text-sm mt-2">{budget.description}</p>}
-          <div className="flex gap-4 mt-2 text-cyan-200 text-xs flex-wrap items-center">
+          {budget.description && <p className="text-ecar-blueLight text-sm mt-2">{budget.description}</p>}
+          <div className="flex gap-4 mt-2 text-ecar-blueLight text-xs flex-wrap items-center">
             {budget.project?.name ? (
               <span className="flex items-center gap-1"><FolderOpen size={12} /> {budget.project.name}</span>
             ) : (
@@ -953,7 +953,7 @@ const BudgetDetailView: React.FC<{
         ].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id as any)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center ${
-              activeTab === t.id ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
+              activeTab === t.id ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200/50'
             }`}>
             <t.icon size={16} /> {t.label}
           </button>
@@ -965,7 +965,7 @@ const BudgetDetailView: React.FC<{
         <div className="space-y-4">
           <div className="light-card overflow-hidden shadow-sm">
             <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><Info size={14} className="text-cyan-600" /> Detalles del Alcance</span>
+              <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><Info size={14} className="text-ecar-blue" /> Detalles del Alcance</span>
               {showInfo ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
             </button>
           {showInfo && (
@@ -987,7 +987,7 @@ const BudgetDetailView: React.FC<{
           </div>
           
           <div className="light-card p-4">
-            <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><Layers size={14} className="text-cyan-600" /> Información Adicional</h4>
+            <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><Layers size={14} className="text-ecar-blue" /> Información Adicional</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Días de Validez</label>
@@ -1066,14 +1066,14 @@ const BudgetDetailView: React.FC<{
              <textarea value={budget.risks || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, risks: e.target.value })}
                 placeholder="Describir riesgos técnicos, climáticos, logísticos o financieros..."
-                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30" />
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><HelpCircle size={14} className="text-cyan-600" /> Información Faltante</h4>
+             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><HelpCircle size={14} className="text-ecar-blue" /> Información Faltante</h4>
              <textarea value={budget.missing_info || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, missing_info: e.target.value })}
                 placeholder="Detallar información faltante o consultas a ingeniería..."
-                className="w-full h-24 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                className="w-full h-24 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30" />
           </div>
         </div>
       )}
@@ -1099,16 +1099,16 @@ const BudgetDetailView: React.FC<{
           <p className="text-[10px] font-bold text-gray-500 uppercase">IVA + IIBB + Fin.</p>
           <p className="text-lg font-black text-gray-800 font-mono">{fmt(financiero + iva + iibb)}</p>
         </div>
-        <div className="bg-white border border-cyan-200 rounded-xl p-4 shadow-sm bg-gradient-to-br from-cyan-50 to-teal-50">
-          <p className="text-[10px] font-bold text-cyan-600 uppercase">Total Final</p>
-          <p className="text-xl font-black text-cyan-700 font-mono">{fmt(totalFinal)}</p>
+        <div className="bg-white border border-ecar-blueLight rounded-xl p-4 shadow-sm bg-gradient-to-br from-slate-50 to-slate-50">
+          <p className="text-[10px] font-bold text-ecar-blue uppercase">Total Final</p>
+          <p className="text-xl font-black text-ecar-blue font-mono">{fmt(totalFinal)}</p>
         </div>
       </div>
 
       {/* Cost breakdown chart */}
       {Object.keys(costBreakdown).length > 0 && (
         <div className="light-card p-4">
-          <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Tag size={14} className="text-cyan-600" /> Composición de Costos</h4>
+          <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Tag size={14} className="text-ecar-blue" /> Composición de Costos</h4>
           <div className="flex gap-0.5 h-8 rounded-xl overflow-hidden bg-gray-100">
             {Object.entries(costBreakdown).map(([type, val]) => {
               const pct = directTotal > 0 ? (val / directTotal) * 100 : 0;
@@ -1142,7 +1142,7 @@ const BudgetDetailView: React.FC<{
             <button onClick={() => setShowNewSection(true)} className="bg-gray-100 text-gray-700 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-gray-200 transition-all">
               <Layers size={14} /> + Rubro
             </button>
-            <button onClick={() => setShowNewItem(true)} className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all">
+            <button onClick={() => setShowNewItem(true)} className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all">
               <Plus size={14} /> + Ítem
             </button>
           </>
@@ -1151,7 +1151,7 @@ const BudgetDetailView: React.FC<{
 
       {/* Entregables e Interconexiones */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-4 mt-2">
-        <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Download size={14} className="text-cyan-600" /> Generar Entregables e Interconexiones</h4>
+        <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Download size={14} className="text-ecar-blue" /> Generar Entregables e Interconexiones</h4>
         <div className="flex flex-wrap gap-3">
           <button onClick={() => exportToObra(budget, items, sections)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-200 hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm">
             <FileText size={16} /> Carpeta de Obra (PDF)
@@ -1168,10 +1168,10 @@ const BudgetDetailView: React.FC<{
 
           <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
-          <button onClick={() => exportToLogistica(budget, items, sections)} className="bg-purple-50 text-purple-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-purple-200 hover:bg-purple-100 flex items-center gap-1.5 transition-all shadow-sm">
+          <button onClick={() => exportToLogistica(budget, items, sections)} className="bg-slate-50 text-ecar-blue px-4 py-2.5 rounded-xl text-xs font-bold border border-ecar-blueLight hover:bg-ecar-blueLight flex items-center gap-1.5 transition-all shadow-sm">
             <HardHat size={16} /> Planilla Logística (Excel)
           </button>
-          <button onClick={handleSendToLogistica} className="bg-purple-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-purple-700 flex items-center gap-1.5 transition-all shadow-sm">
+          <button onClick={handleSendToLogistica} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-ecar-blue flex items-center gap-1.5 transition-all shadow-sm">
             <Check size={16} /> Solicitar Equipos a Logística
           </button>
         </div>
@@ -1246,14 +1246,14 @@ const BudgetDetailView: React.FC<{
       {/* New Section Form */}
       {showNewSection && (
         <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
-          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Layers size={14} className="text-cyan-600" /> Nuevo Rubro / Sección</h4>
+          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Layers size={14} className="text-ecar-blue" /> Nuevo Rubro / Sección</h4>
           {sectionDict.length > 0 && (
             <div>
               <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block flex items-center gap-1"><Database size={10} /> Usar rubro existente del diccionario</label>
               <select onChange={e => {
                 const sel = sectionDict.find((s: any) => s.name === e.target.value);
                 if (sel) setNewSection({ ordinal: sel.ordinal || '', name: sel.name });
-              }} className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-xl text-sm bg-gray-50/50 focus:ring-2 focus:ring-cyan-500/30">
+              }} className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-xl text-sm bg-gray-50/50 focus:ring-2 focus:ring-ecar-blue/30">
                 <option value="">— Escribir manualmente —</option>
                 {sectionDict.map((s: any, i: number) => <option key={i} value={s.name}>{s.ordinal ? `${s.ordinal} — ` : ''}{s.name}</option>)}
               </select>
@@ -1261,15 +1261,15 @@ const BudgetDetailView: React.FC<{
           )}
           <div className="grid grid-cols-4 gap-3">
             <input value={newSection.ordinal} onChange={e => setNewSection({ ...newSection, ordinal: e.target.value })} placeholder="Ej: 1.1"
-              className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500/30" />
+              className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-ecar-blue/30" />
             <input value={newSection.name} onChange={e => setNewSection({ ...newSection, name: e.target.value })} placeholder="Nombre del rubro..."
-              className="col-span-2 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30"
+              className="col-span-2 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30"
               list="section-dict" />
             <datalist id="section-dict">
               {sectionDict.map((s: any, i: number) => <option key={i} value={s.name} />)}
             </datalist>
             <div className="flex gap-2">
-              <button onClick={handleCreateSection} className="bg-cyan-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex-1 hover:bg-cyan-700 transition-all"><Check size={14} /></button>
+              <button onClick={handleCreateSection} className="bg-ecar-blue text-white px-4 py-2 rounded-xl font-bold text-sm flex-1 hover:bg-ecar-blue transition-all"><Check size={14} /></button>
               <button onClick={() => setShowNewSection(false)} className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-sm hover:bg-gray-200"><X size={14} /></button>
             </div>
           </div>
@@ -1278,8 +1278,8 @@ const BudgetDetailView: React.FC<{
 
       {/* New Item Form */}
       {showNewItem && (
-        <div className="bg-white border-2 border-cyan-200 rounded-xl p-4 shadow-sm space-y-3">
-          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Plus size={14} className="text-cyan-600" /> Nuevo Ítem de Presupuesto</h4>
+        <div className="bg-white border-2 border-ecar-blueLight rounded-xl p-4 shadow-sm space-y-3">
+          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Plus size={14} className="text-ecar-blue" /> Nuevo Ítem de Presupuesto</h4>
           {/* Unified autocomplete: Resources + Item Dictionary */}
           {(allResources.length > 0 || itemDict.length > 0) && (
             <div>
@@ -1296,7 +1296,7 @@ const BudgetDetailView: React.FC<{
                   handleResourceSelect(val);
                 }
               }}
-                className="w-full px-3 py-2 border border-dashed border-cyan-300 rounded-xl text-sm bg-cyan-50/30 focus:ring-2 focus:ring-cyan-500/30">
+                className="w-full px-3 py-2 border border-dashed border-ecar-blueLight rounded-xl text-sm bg-slate-50/30 focus:ring-2 focus:ring-ecar-blue/30">
                 <option value="">— Escribir manualmente —</option>
                 {itemDict.length > 0 && <optgroup label="📖 Diccionario de Ítems (usados antes)">
                   {itemDict.map((d: any, i: number) => <option key={`d${i}`} value={`dict__${d.description}`}>{d.description} — {d.unit} — {fmt(d.unit_price_ars)}</option>)}
@@ -1325,7 +1325,7 @@ const BudgetDetailView: React.FC<{
             }}
               className="px-3 py-2 border border-gray-300 rounded-xl text-sm">
               <option value="">Rubro...</option>
-              <option value="NEW_RUBRO" className="font-bold text-cyan-700 bg-cyan-50">+ Crear nuevo rubro...</option>
+              <option value="NEW_RUBRO" className="font-bold text-ecar-blue bg-slate-50">+ Crear nuevo rubro...</option>
               {sections.map((s: any) => <option key={s.id} value={s.id}>{s.ordinal} — {s.name}</option>)}
             </select>
             <select value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })}
@@ -1350,15 +1350,15 @@ const BudgetDetailView: React.FC<{
                 {machineryList.map((m, i) => (
                   <li key={i} className="flex items-center gap-2 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
                     <span className="font-bold flex-1 text-gray-700">{m.name}</span>
-                    <span className="text-cyan-600 font-mono font-bold bg-cyan-50 px-1.5 py-0.5 rounded">{m.hours} hs</span>
+                    <span className="text-ecar-blue font-mono font-bold bg-slate-50 px-1.5 py-0.5 rounded">{m.hours} hs</span>
                     <button onClick={() => setMachineryList(machineryList.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700"><X size={12}/></button>
                   </li>
                 ))}
               </ul>
             )}
             <div className="flex gap-2">
-              <input value={newMachinery.name} onChange={e => setNewMachinery({ ...newMachinery, name: e.target.value })} placeholder="Ej: Retroexcavadora..." className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-cyan-500/30" />
-              <input type="number" value={newMachinery.hours} onChange={e => setNewMachinery({ ...newMachinery, hours: e.target.value })} placeholder="Horas..." className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-cyan-500/30" />
+              <input value={newMachinery.name} onChange={e => setNewMachinery({ ...newMachinery, name: e.target.value })} placeholder="Ej: Retroexcavadora..." className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-ecar-blue/30" />
+              <input type="number" value={newMachinery.hours} onChange={e => setNewMachinery({ ...newMachinery, hours: e.target.value })} placeholder="Horas..." className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-ecar-blue/30" />
               <button onClick={() => { if(newMachinery.name && newMachinery.hours) { setMachineryList([...machineryList, newMachinery]); setNewMachinery({name: '', hours: ''}); } }} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><Plus size={14}/></button>
             </div>
           </div>
@@ -1366,7 +1366,7 @@ const BudgetDetailView: React.FC<{
             <input value={newItem.notes} onChange={e => setNewItem({ ...newItem, notes: e.target.value })} placeholder="Notas / supuestos..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm" />
             <button onClick={handleCreateItem} disabled={createItem.isPending}
-              className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-1 shadow-md">
+              className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-1 shadow-md">
               <Check size={14} /> Agregar
             </button>
             <button onClick={() => setShowNewItem(false)} className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-sm"><X size={14} /></button>
@@ -1378,7 +1378,7 @@ const BudgetDetailView: React.FC<{
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <Calculator size={16} className="text-cyan-600" /> Cómputo Métrico & Análisis de Precios
+            <Calculator size={16} className="text-ecar-blue" /> Cómputo Métrico & Análisis de Precios
           </h3>
           <span className="text-xs text-gray-500 font-mono bg-gray-200 px-2 py-0.5 rounded-full">{items.length} ítems</span>
         </div>
@@ -1420,12 +1420,12 @@ const BudgetDetailView: React.FC<{
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 group/sec">
-                            <Layers size={14} className="text-cyan-600" />
+                            <Layers size={14} className="text-ecar-blue" />
                             <span className="font-bold text-gray-700">{sec.ordinal} — {sec.name}</span>
                             <span className="text-[10px] text-gray-400 ml-1">({(itemsBySection[sec.id] || []).length} ítems)</span>
                             {!isLocked && (
                               <div className="opacity-0 group-hover/sec:opacity-100 transition-opacity flex gap-0.5 ml-2">
-                                <button onClick={() => startEditSection(sec)} className="text-gray-400 hover:text-cyan-600 p-0.5"><Edit2 size={12} /></button>
+                                <button onClick={() => startEditSection(sec)} className="text-gray-400 hover:text-ecar-blue p-0.5"><Edit2 size={12} /></button>
                                 <button onClick={() => handleDeleteSection(sec.id)} className="text-gray-400 hover:text-red-500 p-0.5"><Trash2 size={12} /></button>
                               </div>
                             )}
@@ -1509,7 +1509,7 @@ const BudgetDetailView: React.FC<{
                     <tr className="bg-gray-50">
                       <td colSpan={5} className="px-4 py-1.5 text-right text-gray-500 text-xs">
                         Gastos Generales ({fmtPct(budget.gastos_generales_pct)})
-                        {!isLocked && <button onClick={startEditPcts} className="ml-2 text-cyan-500 hover:text-cyan-700"><Edit2 size={10} className="inline" /></button>}
+                        {!isLocked && <button onClick={startEditPcts} className="ml-2 text-ecar-blue hover:text-ecar-blue"><Edit2 size={10} className="inline" /></button>}
                       </td>
                       <td className="px-3 py-1.5 text-right font-mono text-gray-600 text-xs">{fmt(gg)}</td>
                       <td colSpan={2}></td>
@@ -1537,9 +1537,9 @@ const BudgetDetailView: React.FC<{
                   </>
                 )}
 
-                <tr className="bg-gradient-to-r from-cyan-50 to-teal-50 border-t-2 border-cyan-300 font-black">
-                  <td colSpan={5} className="px-4 py-3 text-right text-cyan-700 uppercase text-sm">Total Final</td>
-                  <td className="px-3 py-3 text-right font-mono text-cyan-800 text-lg">{fmt(totalFinal)}</td>
+                <tr className="bg-gradient-to-r from-slate-50 to-slate-50 border-t-2 border-ecar-blueLight font-black">
+                  <td colSpan={5} className="px-4 py-3 text-right text-ecar-blue uppercase text-sm">Total Final</td>
+                  <td className="px-3 py-3 text-right font-mono text-ecar-blueDark text-lg">{fmt(totalFinal)}</td>
                   <td colSpan={2}></td>
                 </tr>
               </tbody>
@@ -1554,7 +1554,7 @@ const BudgetDetailView: React.FC<{
       {activeTab === 'adjuntos' && (
         <div className="space-y-4">
           <div className="light-card p-5">
-            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><FileText size={16} className="text-cyan-600" /> Documentos y Planos</h4>
+            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><FileText size={16} className="text-ecar-blue" /> Documentos y Planos</h4>
             <div className="flex gap-2 items-start mb-6">
               <input type="text" placeholder="Título corto (ej. Plano Eléctrico)" value={fileTitle} onChange={e => setFileTitle(e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm" />
               <select value={fileCategory} onChange={e => setFileCategory(e.target.value)} className="w-40 px-3 py-2 border rounded-lg text-sm">
@@ -1563,7 +1563,7 @@ const BudgetDetailView: React.FC<{
                 <option value="Cotizaciones">Cotizaciones</option>
                 <option value="Especificaciones">Especificaciones</option>
               </select>
-              <label className="cursor-pointer bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-cyan-700 transition-colors">
+              <label className="cursor-pointer bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-ecar-blue transition-colors">
                 {uploading ? <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : <UploadCloud size={16} />}
                 {uploading ? 'Subiendo...' : 'Subir Archivo'}
                 <input type="file" className="hidden" disabled={uploading || !fileTitle.trim()} onChange={async e => {
@@ -1590,14 +1590,14 @@ const BudgetDetailView: React.FC<{
               ) : budgetFiles.map((f: any) => (
                 <div key={f.id} className="border border-gray-200 rounded-lg p-3 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div className="flex gap-3 items-center min-w-0">
-                    <div className="bg-cyan-100 text-cyan-700 p-2 rounded-lg flex-shrink-0"><File size={16} /></div>
+                    <div className="bg-ecar-blueLight text-ecar-blue p-2 rounded-lg flex-shrink-0"><File size={16} /></div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{f.file_name}</p>
                       <p className="text-[10px] text-gray-500">{f.file_type} • {(f.file_size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <a href={f.file_path} target="_blank" rel="noopener noreferrer" className="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded"><Download size={14} /></a>
+                    <a href={f.file_path} target="_blank" rel="noopener noreferrer" className="p-1.5 text-ecar-blue hover:bg-slate-50 rounded"><Download size={14} /></a>
                     {!isLocked && <button onClick={() => deleteFile.mutate(f.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 size={14} /></button>}
                   </div>
                 </div>
@@ -1606,7 +1606,7 @@ const BudgetDetailView: React.FC<{
           </div>
           
           <div className="light-card p-4">
-             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-cyan-600" /> Gestión con Compras (PR-GPP-01)</h4>
+             <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><ShoppingCart size={14} className="text-ecar-blue" /> Gestión con Compras (PR-GPP-01)</h4>
              <p className="text-xs text-gray-600 mb-3">Las solicitudes de cotización de materiales críticos deben enviarse a Compras antes de cerrar el presupuesto.</p>
              <button onClick={async () => {
                  const materialItems = items.filter((i: any) => i.cost_type === 'material');
@@ -1631,7 +1631,7 @@ const BudgetDetailView: React.FC<{
                    }))
                  } as any);
                  useModalStore.getState().showAlert('Éxito', 'Solicitud de cotización enviada a Compras correctamente.');
-             }} disabled={createPurchaseRequest.isPending} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-700 transition-colors disabled:opacity-50">
+             }} disabled={createPurchaseRequest.isPending} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-ecar-blue transition-colors disabled:opacity-50">
                 {createPurchaseRequest.isPending ? 'Enviando...' : 'Solicitar Cotización a Compras'}
              </button>
           </div>
@@ -1659,7 +1659,7 @@ const BudgetDetailView: React.FC<{
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="light-card p-4">
-              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-4"><DollarSign size={14} className="text-cyan-600" /> Cierre Post-Obra</h4>
+              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-4"><DollarSign size={14} className="text-ecar-blue" /> Cierre Post-Obra</h4>
               <label className="block text-xs font-bold text-gray-500 mb-1">Costo Real Final (ARS) — Ingreso Manual</label>
               <input type="number" value={budget.actual_cost_ars || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, actual_cost_ars: parseFloat(e.target.value) || null })}
@@ -1677,7 +1677,7 @@ const BudgetDetailView: React.FC<{
               <textarea value={budget.lessons_learned || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, lessons_learned: e.target.value })}
                 placeholder="Documentar qué salió bien y qué salió mal para futuros presupuestos..."
-                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30" />
             </div>
           </div>
         </div>
@@ -1718,7 +1718,7 @@ const BudgetDetailView: React.FC<{
             </>
           )}
         </div>
-        <button onClick={onDuplicate} className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-50 hover:border-cyan-400 transition-all">
+        <button onClick={onDuplicate} className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-50 hover:border-ecar-blue transition-all">
           <Copy size={16} /> Crear Nueva Versión
         </button>
       </div>
@@ -1865,21 +1865,21 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const RESOURCE_TYPE_LABELS: Record<string, { label: string; color: string }> = {
     material: { label: 'Material', color: 'bg-blue-100 text-blue-700' },
     mano_obra: { label: 'Mano de Obra', color: 'bg-orange-100 text-orange-700' },
-    equipo: { label: 'Equipo', color: 'bg-purple-100 text-purple-700' },
-    subcontrato: { label: 'Subcontrato', color: 'bg-teal-100 text-teal-700' },
+    equipo: { label: 'Equipo', color: 'bg-ecar-blueLight text-ecar-blue' },
+    subcontrato: { label: 'Subcontrato', color: 'bg-ecar-blueLight text-ecar-blue' },
   };
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="bg-gradient-to-br from-cyan-800 via-cyan-700 to-teal-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
         <div className="absolute -top-6 -right-6 opacity-[0.07]"><Database size={160} strokeWidth={1} /></div>
         <div className="relative z-10">
           <h3 className="font-black text-2xl flex items-center gap-3">
             <div className="bg-white/15 backdrop-blur-sm p-2 rounded-xl"><Database size={22} /></div>
             Banco de Precios / Catálogo de Recursos
           </h3>
-          <p className="text-cyan-100 text-sm mt-1.5">Base global de materiales, mano de obra, equipos y subcontratos con precios actualizados</p>
+          <p className="text-ecar-blueLight text-sm mt-1.5">Base global de materiales, mano de obra, equipos y subcontratos con precios actualizados</p>
           <div className="flex gap-2 mt-4">
             <button onClick={onBack} className="bg-white/10 text-white hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
               <ArrowLeft size={13} className="inline mr-1" />Presupuestos
@@ -1894,7 +1894,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar recurso..."
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500" />
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue" />
           </div>
           <select value={filterType} onChange={e => setFilterType(e.target.value)}
             className="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white">
@@ -1903,15 +1903,15 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </select>
         </div>
         <button onClick={() => setShowNew(true)}
-          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all">
+          className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-ecar-blue/20 hover:shadow-ecar-blue/40 transition-all">
           <Plus size={16} /> Nuevo Recurso
         </button>
       </div>
 
       {/* New Resource Form */}
       {showNew && (
-        <div className="bg-white border-2 border-cyan-200 rounded-xl p-4 shadow-sm space-y-3">
-          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Plus size={14} className="text-cyan-600" /> Nuevo Recurso</h4>
+        <div className="bg-white border-2 border-ecar-blueLight rounded-xl p-4 shadow-sm space-y-3">
+          <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2"><Plus size={14} className="text-ecar-blue" /> Nuevo Recurso</h4>
           <div className="grid grid-cols-1 md:grid-cols-8 gap-3">
             <input value={newRes.code} onChange={e => setNewRes({ ...newRes, code: e.target.value })} placeholder="Código"
               className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
@@ -1936,7 +1936,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <input value={newRes.notes} onChange={e => setNewRes({ ...newRes, notes: e.target.value })} placeholder="Notas..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm" />
             <button onClick={handleCreate} disabled={createResource.isPending}
-              className="bg-cyan-600 text-white px-5 py-2 rounded-xl font-bold text-sm"><Check size={14} className="inline mr-1" /> Crear</button>
+              className="bg-ecar-blue text-white px-5 py-2 rounded-xl font-bold text-sm"><Check size={14} className="inline mr-1" /> Crear</button>
             <button onClick={() => setShowNew(false)} className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-sm"><X size={14} /></button>
           </div>
         </div>
@@ -1949,7 +1949,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <span className="text-xs text-gray-500 font-mono bg-gray-200 px-2 py-0.5 rounded-full">{filtered.length} recursos</span>
         </div>
         {isLoading ? (
-          <div className="flex items-center justify-center py-12"><div className="w-8 h-8 border-4 border-gray-200 border-t-cyan-600 rounded-full animate-spin" /></div>
+          <div className="flex items-center justify-center py-12"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>
         ) : filtered.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -1971,7 +1971,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   const rt = RESOURCE_TYPE_LABELS[r.resource_type] || RESOURCE_TYPE_LABELS.material;
                   if (editingId === r.id && editData) {
                     return (
-                      <tr key={r.id} className="bg-cyan-50/50">
+                      <tr key={r.id} className="bg-slate-50/50">
                         <td className="px-4 py-2"><input value={editData.code} onChange={e => setEditData({ ...editData, code: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono" /></td>
                         <td className="px-4 py-2"><input value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
                         <td className="px-2 py-2"><select value={editData.resource_type} onChange={e => setEditData({ ...editData, resource_type: e.target.value })} className="w-full px-1 py-1 border rounded text-[10px]">{Object.entries(RESOURCE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
@@ -2002,7 +2002,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <td className="px-3 py-2.5 text-center text-[10px] text-gray-400">{fmtDate(r.last_price_update)}</td>
                       <td className="px-3 py-2.5 text-center">
                         <div className="flex gap-0.5 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => startEdit(r)} className="text-gray-400 hover:text-cyan-600 p-1 rounded hover:bg-cyan-50"><Edit2 size={13} /></button>
+                          <button onClick={() => startEdit(r)} className="text-gray-400 hover:text-ecar-blue p-1 rounded hover:bg-slate-50"><Edit2 size={13} /></button>
                           <button onClick={() => deleteResource.mutate(r.id)} className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50"><Trash2 size={13} /></button>
                         </div>
                       </td>

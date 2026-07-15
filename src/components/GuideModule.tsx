@@ -176,7 +176,7 @@ export const GuideModule: React.FC = () => {
     {
       category: 'Compras y Facturas OCR',
       icon: ShoppingCart,
-      color: 'bg-violet-50 text-violet-700 border-violet-100',
+      color: 'bg-slate-50 text-ecar-blue border-ecar-blueLight',
       items: [
         { text: '[Enviar foto de factura] Carga esta factura de compra por favor', type: 'invoice_ocr' },
         { text: '¿Cuántas facturas tengo sin validar?', type: 'info' },
@@ -195,7 +195,7 @@ export const GuideModule: React.FC = () => {
     {
       category: 'Personal y Obra',
       icon: Users,
-      color: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+      color: 'bg-slate-50 text-ecar-blue border-ecar-blueLight',
       items: [
         { text: '¿Quién faltó hoy a la obra?', type: 'attendance' },
         { text: 'Registrar parte diario obra Alvear: Hormigonado completado. Clima soleado, 4 operarios.', type: 'info' }
@@ -207,7 +207,7 @@ export const GuideModule: React.FC = () => {
   const SYSTEM_MODULES = [
     {
       name: 'Compras & Libro IVA',
-      color: 'border-l-violet-500',
+      color: 'border-l-ecar-blue',
       icon: '🧾',
       description: 'Carga automática de facturas mediante fotos/PDFs procesados con inteligencia artificial (OCR). Gestión del Libro IVA Compras digital.',
       features: ['Extracción OCR en segundos', 'Validación de CUITs contra base AFIP', 'Exportación de Libro IVA Excel/TXT', 'Dashboard de IVA Crédito Fiscal']
@@ -235,7 +235,7 @@ export const GuideModule: React.FC = () => {
     },
     {
       name: 'RRHH & Asistencia',
-      color: 'border-l-indigo-500',
+      color: 'border-l-ecar-blue',
       icon: '👷',
       description: 'Fichajes de entrada/salida mediante códigos QR geolocalizados desde el celular. Legajo digital de personal y novedades de liquidación.',
       features: ['Fichadas QR seguras y en vivo', 'Legajo digital completo (DNI, Recibos)', 'Exportación de novedades para el contador', 'Cálculo automático de horas trabajadas']
@@ -270,7 +270,7 @@ export const GuideModule: React.FC = () => {
     },
     {
       name: 'Órdenes de Compra / OT',
-      color: 'border-l-violet-500',
+      color: 'border-l-ecar-blue',
       icon: '📋',
       description: 'OC/OT formales con numeración automática, ítems detallados, flujo de aprobación por monto y seguimiento de entregas.',
       features: ['Numeración automática (OC-0001)', 'Aprobación por umbral $5M', 'Flag de urgencia', 'Integración con proveedores']
@@ -291,7 +291,7 @@ export const GuideModule: React.FC = () => {
     },
     {
       name: 'Evaluación de Proveedores',
-      color: 'border-l-teal-500',
+      color: 'border-l-ecar-blue',
       icon: '⭐',
       description: 'Calificación periódica de proveedores con 5 criterios estandarizados y recomendación automática basada en puntaje.',
       features: ['Rating con estrellas 1-5', 'Recomendación automática', 'Historial por proveedor', 'Vinculación con NC']
@@ -338,13 +338,13 @@ export const GuideModule: React.FC = () => {
         <div className="light-card p-5 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              <Sparkles size={15} className="text-violet-500" /> Tecnología de IA
+              <Sparkles size={15} className="text-ecar-blue" /> Tecnología de IA
             </div>
             <p className="text-lg font-bold text-slate-800">Procesamiento Natural</p>
             <p className="text-xs text-gray-400 mt-2 font-mono">GPT-4o / OCR / Whisper</p>
           </div>
-          <div className="bg-violet-50 p-2.5 rounded-lg">
-            <Sparkles size={22} className="text-violet-600" />
+          <div className="bg-slate-50 p-2.5 rounded-lg">
+            <Sparkles size={22} className="text-ecar-blue" />
           </div>
         </div>
 
@@ -486,7 +486,7 @@ export const GuideModule: React.FC = () => {
               <div className="w-full h-full bg-[#efeae2] rounded-[2.2rem] overflow-hidden flex flex-col relative border border-slate-850">
                 {/* Whatsapp Header */}
                 <div className="bg-[#075E54] text-white pt-8 px-4 pb-3 flex items-center gap-2.5 z-10 shrink-0 shadow-md">
-                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-extrabold text-sm shrink-0 border border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blueDark font-extrabold text-sm shrink-0 border border-white/10">
                     R
                   </div>
                   <div className="flex-1 min-w-0">
@@ -494,7 +494,7 @@ export const GuideModule: React.FC = () => {
                       Rombo Asistente
                       <span className="w-2 h-2 rounded-full bg-green-400 border border-[#075E54] animate-pulse" />
                     </h4>
-                    <p className="text-[10px] text-teal-100/80 truncate">En línea • Chat corporativo</p>
+                    <p className="text-[10px] text-ecar-blueLight/80 truncate">En línea • Chat corporativo</p>
                   </div>
                   <button
                     onClick={clearSimulation}

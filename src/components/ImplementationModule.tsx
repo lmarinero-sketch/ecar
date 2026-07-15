@@ -80,9 +80,9 @@ const PHASES: Phase[] = [
     person: 'Enrico',
     device: 'PC (Navegador)',
     deviceIcon: Monitor,
-    color: 'from-indigo-800',
-    colorTo: 'to-indigo-600',
-    textColor: 'text-indigo-100',
+    color: 'from-ecar-blueDark',
+    colorTo: 'to-ecar-blue',
+    textColor: 'text-ecar-blueLight',
     meetingDate: '03/06',
     sections: [
       {
@@ -239,9 +239,9 @@ const PHASES: Phase[] = [
     person: 'Carlos',
     device: 'PC (Navegador)',
     deviceIcon: Monitor,
-    color: 'from-teal-800',
-    colorTo: 'to-teal-600',
-    textColor: 'text-teal-100',
+    color: 'from-ecar-blueDark',
+    colorTo: 'to-ecar-blue',
+    textColor: 'text-ecar-blueLight',
     meetingDate: '10/06',
     meetingTime: '16:00 hs',
     sections: [
@@ -406,9 +406,9 @@ const PHASES: Phase[] = [
     person: 'Carlos (08/06)',
     device: 'Celular (WhatsApp)',
     deviceIcon: Smartphone,
-    color: 'from-teal-800',
-    colorTo: 'to-teal-600',
-    textColor: 'text-teal-100',
+    color: 'from-ecar-blueDark',
+    colorTo: 'to-ecar-blue',
+    textColor: 'text-ecar-blueLight',
     sections: [
       {
         id: 'c2-cheque', title: 'Cargar Cheque — WhatsApp', icon: Landmark, duration: '15 min',
@@ -452,9 +452,9 @@ const PHASES: Phase[] = [
     person: 'Enrico (08/06)',
     device: 'PC (Navegador)',
     deviceIcon: Monitor,
-    color: 'from-violet-800',
-    colorTo: 'to-violet-600',
-    textColor: 'text-violet-100',
+    color: 'from-ecar-blueDark',
+    colorTo: 'to-ecar-blue',
+    textColor: 'text-ecar-blueLight',
     sections: [
       {
         id: 'e2-cheque', title: 'Cargar Cheque — Sistema', icon: Landmark, duration: '15 min',
@@ -1245,7 +1245,7 @@ export const ImplementationModule: React.FC = () => {
                   className={`light-card p-3 md:p-5 shadow-sm text-left transition-all hover:shadow-md ${activePhase === p.id ? 'border-ecar-blue ring-2 ring-ecar-blue/20' : 'border-gray-200'}`}
                 >
                   <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-gray-500 mb-1.5 md:mb-2">
-                    <User size={14} className={`md:w-4 md:h-4 ${p.id === 'enrico' ? 'text-indigo-500' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-teal-500' : p.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}`} />
+                    <User size={14} className={`md:w-4 md:h-4 ${p.id === 'enrico' ? 'text-ecar-blue' : p.id === 'gustavo' ? 'text-amber-500' : p.id === 'carlos-0608' ? 'text-ecar-blue' : p.id === 'enrico-0608' ? 'text-ecar-blue' : 'text-emerald-500'}`} />
                     {p.person}
                     {p.meetingDate && (
                       <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">({p.meetingDate})</span>
@@ -1260,7 +1260,7 @@ export const ImplementationModule: React.FC = () => {
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-indigo-500' : p.id === 'gustavo' ? 'bg-amber-500' : p.id === 'carlos-0608' ? 'bg-teal-500' : p.id === 'enrico-0608' ? 'bg-violet-500' : 'bg-emerald-500'}`}
+                      className={`h-full rounded-full transition-all duration-500 ${pPct === 100 ? 'bg-emerald-500' : p.id === 'enrico' ? 'bg-ecar-blue' : p.id === 'gustavo' ? 'bg-amber-500' : p.id === 'carlos-0608' ? 'bg-ecar-blue' : p.id === 'enrico-0608' ? 'bg-ecar-blue' : 'bg-emerald-500'}`}
                       style={{ width: `${pPct}%` }}
                     />
                   </div>
@@ -1335,7 +1335,7 @@ export const ImplementationModule: React.FC = () => {
                 onToggle={toggleCheck}
                 onNote={setNote}
                 onGoToModule={handleGoToModule}
-                accentColor={phase.id === 'enrico' ? 'text-indigo-500' : phase.id === 'gustavo' ? 'text-amber-500' : phase.id === 'carlos-0608' ? 'text-teal-500' : phase.id === 'enrico-0608' ? 'text-violet-500' : 'text-emerald-500'}
+                accentColor={phase.id === 'enrico' ? 'text-ecar-blue' : phase.id === 'gustavo' ? 'text-amber-500' : phase.id === 'carlos-0608' ? 'text-ecar-blue' : phase.id === 'enrico-0608' ? 'text-ecar-blue' : 'text-emerald-500'}
               />
             ))}
           </div>

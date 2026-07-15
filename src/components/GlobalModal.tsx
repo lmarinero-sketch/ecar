@@ -16,7 +16,7 @@ export const GlobalModal: React.FC = () => {
       >
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full shrink-0 ${type === 'alert' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>
+            <div className={`p-3 rounded-full shrink-0 ${type === 'alert' ? 'bg-amber-100 text-amber-600' : 'bg-ecar-blueLight text-ecar-blue'}`}>
               {type === 'alert' ? <AlertCircle size={24} /> : <HelpCircle size={24} />}
             </div>
             <div className="flex-1 min-w-0">
@@ -41,7 +41,7 @@ export const GlobalModal: React.FC = () => {
             className={`px-6 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-sm ${
               type === 'alert' 
                 ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' 
-                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20'
+                : 'bg-ecar-blue hover:bg-ecar-blue shadow-ecar-blue/20'
             }`}
           >
             {type === 'confirm' ? 'Confirmar' : 'Entendido'}

@@ -74,11 +74,11 @@ export const WeeklyReportModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><FileText size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><FileText size={24} /> Reporte Semanal a GG</h3>
-          <p className="text-indigo-100 text-sm mt-1">Resumen ejecutivo consolidado — PR-GO-01 §20</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Resumen ejecutivo consolidado — PR-GO-01 §20</p>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export const WeeklyReportModule: React.FC = () => {
       <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
         <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-600 transition-all">← Semana Anterior</button>
         <div className="text-center">
-          <p className="text-lg font-black text-gray-800 flex items-center gap-2"><Calendar size={18} className="text-indigo-600" /> Semana: {weekRange.label}</p>
+          <p className="text-lg font-black text-gray-800 flex items-center gap-2"><Calendar size={18} className="text-ecar-blue" /> Semana: {weekRange.label}</p>
           {weekOffset === 0 && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Semana Actual</span>}
         </div>
         <button onClick={() => setWeekOffset(w => Math.max(0, w - 1))} disabled={weekOffset === 0} className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-600 transition-all disabled:opacity-30">Semana Siguiente →</button>
@@ -105,8 +105,8 @@ export const WeeklyReportModule: React.FC = () => {
           <p className="text-xs text-gray-400 mt-1">horas esta semana</p>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={16} className="text-cyan-500" /> Avance Prom.</div>
-          <p className="text-3xl font-black text-cyan-700">{avgAvance.toFixed(0)}%</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={16} className="text-ecar-blue" /> Avance Prom.</div>
+          <p className="text-3xl font-black text-ecar-blue">{avgAvance.toFixed(0)}%</p>
           <p className="text-xs text-gray-400 mt-1">promedio del período</p>
         </div>
         <div className="light-card p-5">
@@ -138,9 +138,9 @@ export const WeeklyReportModule: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all" style={{ width: `${Math.min(100, avgAv)}%` }} />
+                      <div className="h-full bg-gradient-to-r from-ecar-blue to-blue-500 rounded-full transition-all" style={{ width: `${Math.min(100, avgAv)}%` }} />
                     </div>
-                    <span className="text-sm font-bold text-cyan-700 w-12 text-right">{avgAv.toFixed(0)}%</span>
+                    <span className="text-sm font-bold text-ecar-blue w-12 text-right">{avgAv.toFixed(0)}%</span>
                   </div>
                   {incidents.length > 0 && (
                     <div className="mt-1.5">
@@ -163,7 +163,7 @@ export const WeeklyReportModule: React.FC = () => {
         {/* Pedidos de Compra */}
         <div className="light-card overflow-hidden">
           <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-            <Package size={14} className="text-purple-600" />
+            <Package size={14} className="text-ecar-blue" />
             <h4 className="font-bold text-gray-700 text-sm">Pedidos de Compra</h4>
           </div>
           <div className="p-4 space-y-2">
@@ -274,7 +274,7 @@ export const WeeklyReportModule: React.FC = () => {
 
       {/* Print Button */}
       <div className="flex justify-end">
-        <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg hover:bg-indigo-700 transition-all">
+        <button onClick={() => window.print()} className="bg-ecar-blue text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg hover:bg-ecar-blue transition-all">
           <Printer size={16} /> Imprimir Reporte Semanal
         </button>
       </div>

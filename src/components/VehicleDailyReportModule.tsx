@@ -594,19 +594,19 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-800 to-violet-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardCheck size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardCheck size={24} /> Parte Diario Vehicular</h3>
-          <p className="text-indigo-100 text-sm mt-1">Inspección diaria con checklist, estado y generación de QR por vehículo.</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Inspección diaria con checklist, estado y generación de QR por vehículo.</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ClipboardCheck size={16} className="text-indigo-500" /> Reportes Hoy</div>
-          <p className="text-2xl font-black text-indigo-600 font-mono">{todayReports.length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ClipboardCheck size={16} className="text-ecar-blue" /> Reportes Hoy</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{todayReports.length}</p>
         </div>
         <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-sky-500" /> Vehículos Reportados</div>
@@ -658,7 +658,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
       {/* Quick QR buttons */}
       <div className="light-card p-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><QrCode size={16} className="text-violet-500" /> Generar QR por Vehículo</h4>
+          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><QrCode size={16} className="text-ecar-blue" /> Generar QR por Vehículo</h4>
         </div>
         <div className="flex flex-wrap gap-2">
           {vehicles.map(v => (
@@ -668,7 +668,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all hover:shadow-sm ${
                 vehiclesReportedToday.has(v.id)
                   ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-violet-300 hover:bg-violet-50'
+                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-ecar-blueLight hover:bg-slate-50'
               }`}
             >
               <span>{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>

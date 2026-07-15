@@ -20,10 +20,10 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
   approved: { label: 'Aprobado', color: 'bg-green-100 text-green-700' },
   consolidated: { label: 'Consolidado', color: 'bg-blue-100 text-blue-700' },
-  ordered: { label: 'Pedido', color: 'bg-purple-100 text-purple-700' },
+  ordered: { label: 'Pedido', color: 'bg-ecar-blueLight text-ecar-blue' },
   received: { label: 'Recibido', color: 'bg-emerald-100 text-emerald-700' },
   rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-700' },
-  quoted: { label: 'Cotizado', color: 'bg-teal-100 text-teal-700' },
+  quoted: { label: 'Cotizado', color: 'bg-ecar-blueLight text-ecar-blue' },
   returned: { label: 'Devuelto', color: 'bg-orange-100 text-orange-700' },
 };
 
@@ -123,7 +123,7 @@ export const PurchaseRequestsModule: React.FC = () => {
     setTimeout(() => setPhoneSaved(false), 3000);
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-violet-500 rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
 
   const phoneConfigured = !!(whatsappSetting?.value);
 
@@ -157,8 +157,8 @@ export const PurchaseRequestsModule: React.FC = () => {
           <p className="text-2xl font-black text-red-600 font-mono">{urgentCount}</p>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ShoppingBag size={16} className="text-violet-500" /> Total Pedidos</div>
-          <p className="text-2xl font-black text-violet-600 font-mono">{(requests || []).length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ShoppingBag size={16} className="text-ecar-blue" /> Total Pedidos</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{(requests || []).length}</p>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export const PurchaseRequestsModule: React.FC = () => {
               </p>
             </div>
           </div>
-          <button onClick={() => setShowWhatsappConfig(!showWhatsappConfig)} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showWhatsappConfig ? 'bg-gray-100 text-gray-600' : 'bg-violet-100 text-violet-700 hover:bg-violet-200'}`}>
+          <button onClick={() => setShowWhatsappConfig(!showWhatsappConfig)} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showWhatsappConfig ? 'bg-gray-100 text-gray-600' : 'bg-ecar-blueLight text-ecar-blue hover:bg-ecar-blueLight'}`}>
             {showWhatsappConfig ? <><X size={14} /> Cerrar</> : <><Shield size={14} /> Configurar</>}
           </button>
         </div>
@@ -202,14 +202,14 @@ export const PurchaseRequestsModule: React.FC = () => {
                     <input
                       value={whatsappPhone}
                       onChange={e => { setWhatsappPhone(e.target.value); setPhoneSaved(false); }}
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all"
+                      className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all"
                       placeholder="Ej: 5492641234567"
                     />
                   </div>
                   <button
                     onClick={handleSavePhone}
                     disabled={upsertSetting.isPending}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm ${phoneSaved ? 'bg-green-500 text-white' : 'bg-violet-600 text-white hover:bg-violet-700'} disabled:opacity-50`}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm ${phoneSaved ? 'bg-green-500 text-white' : 'bg-ecar-blue text-white hover:bg-ecar-blue'} disabled:opacity-50`}
                   >
                     {upsertSetting.isPending ? (
                       <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando...</>
@@ -221,13 +221,13 @@ export const PurchaseRequestsModule: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="bg-violet-50 rounded-lg p-3 border border-violet-100">
-                <p className="text-xs text-violet-700 font-medium flex items-center gap-1.5">
+              <div className="bg-slate-50 rounded-lg p-3 border border-ecar-blueLight">
+                <p className="text-xs text-ecar-blue font-medium flex items-center gap-1.5">
                   <Shield size={14} /> <span className="font-bold">¿Cómo funciona?</span>
                 </p>
-                <ul className="text-xs text-violet-600 mt-1.5 space-y-1 ml-5">
+                <ul className="text-xs text-ecar-blue mt-1.5 space-y-1 ml-5">
                   <li>• Solo este número podrá crear pedidos de compra vía WhatsApp con Rombo</li>
-                  <li>• El encargado manda un mensaje como <span className="font-mono bg-violet-100 px-1 rounded">"necesito 50 bolsas de cemento urgente"</span></li>
+                  <li>• El encargado manda un mensaje como <span className="font-mono bg-ecar-blueLight px-1 rounded">"necesito 50 bolsas de cemento urgente"</span></li>
                   <li>• Rombo crea automáticamente el pedido en el sistema</li>
                   <li>• Si otro número intenta hacer un pedido, será rechazado</li>
                   <li>• Dejá el campo vacío para deshabilitar pedidos por WhatsApp</li>
@@ -240,8 +240,8 @@ export const PurchaseRequestsModule: React.FC = () => {
 
       {/* TABS */}
       <div className="flex border-b border-gray-200">
-        <button onClick={() => { setActiveTab('obra'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'obra' ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Pedidos de Obra</button>
-        <button onClick={() => { setActiveTab('quote'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'quote' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Cotizaciones de Presupuestos</button>
+        <button onClick={() => { setActiveTab('obra'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'obra' ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Pedidos de Obra</button>
+        <button onClick={() => { setActiveTab('quote'); setFilterStatus(''); }} className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'quote' ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Cotizaciones de Presupuestos</button>
       </div>
 
       {/* Toolbar */}
@@ -304,7 +304,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                   </div>
                 )}
                 {req.status === 'approved' && activeTab === 'obra' && (
-                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 text-xs font-bold hover:bg-purple-200 transition-all">Marcar Pedido</button>
+                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="px-3 py-1.5 rounded-lg bg-ecar-blueLight text-ecar-blue text-xs font-bold hover:bg-ecar-blueLight transition-all">Marcar Pedido</button>
                 )}
                 {req.status === 'ordered' && activeTab === 'obra' && (
                   <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'received' })} className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-all">Recibido ✅</button>
@@ -317,7 +317,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                     items.forEach(i => { initialPrices[i.id] = i.estimated_unit_cost || 0; });
                     setQuotePrices(initialPrices);
                     setEditingQuoteId(req.id);
-                  }} className="px-4 py-2 rounded-lg bg-teal-100 text-teal-700 text-xs font-bold hover:bg-teal-200 transition-all">Cotizar</button>
+                  }} className="px-4 py-2 rounded-lg bg-ecar-blueLight text-ecar-blue text-xs font-bold hover:bg-ecar-blueLight transition-all">Cotizar</button>
                 )}
               </div>
               
@@ -334,7 +334,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-sm">$</span>
                           <input 
                             type="number" 
-                            className="w-full pl-7 pr-3 py-1.5 text-sm font-mono border border-gray-300 rounded-md focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full pl-7 pr-3 py-1.5 text-sm font-mono border border-gray-300 rounded-md focus:ring-1 focus:ring-ecar-blue focus:border-ecar-blue"
                             value={quotePrices[item.id] || ''} 
                             onChange={e => setQuotePrices({...quotePrices, [item.id]: parseFloat(e.target.value) || 0})}
                           />
@@ -352,7 +352,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                         setEditingQuoteId(null);
                       }} 
                       disabled={updateQuoteItems.isPending || updateRequest.isPending}
-                      className="px-4 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                      className="px-4 py-2 bg-ecar-blue text-white text-sm font-bold rounded-lg hover:bg-ecar-blue disabled:opacity-50"
                     >
                       {(updateQuoteItems.isPending || updateRequest.isPending) ? 'Guardando...' : 'Enviar Cotización a Presupuestos'}
                     </button>
@@ -443,9 +443,9 @@ export const PurchaseRequestsModule: React.FC = () => {
                                     type="button"
                                     onMouseDown={e => e.preventDefault()}
                                     onClick={() => selectInventoryItem(i, inv)}
-                                    className="w-full text-left px-3 py-2 hover:bg-violet-50 flex items-center gap-2 text-sm transition-colors border-b border-gray-50 last:border-0"
+                                    className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-sm transition-colors border-b border-gray-50 last:border-0"
                                   >
-                                    <Package size={14} className={isTool ? 'text-amber-500' : 'text-violet-400'} />
+                                    <Package size={14} className={isTool ? 'text-amber-500' : 'text-ecar-blue'} />
                                     <div className="flex-1 min-w-0">
                                       <span className="font-medium text-gray-800 truncate block">{inv.name}</span>
                                       <span className="text-[10px] text-gray-400">
@@ -473,7 +473,7 @@ export const PurchaseRequestsModule: React.FC = () => {
 
               <div><label className="text-xs font-bold text-gray-500">Notas</label><textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" rows={2} placeholder="Notas adicionales" /></div>
 
-              <button type="submit" disabled={createRequest.isPending || !formItems.some(fi => fi.inventoryItemId)} className="w-full bg-violet-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-violet-700 transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createRequest.isPending || !formItems.some(fi => fi.inventoryItemId)} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-all shadow-md disabled:opacity-50">
                 {createRequest.isPending ? 'Creando...' : '🛒 Crear Pedido de Compra'}
               </button>
             </form>

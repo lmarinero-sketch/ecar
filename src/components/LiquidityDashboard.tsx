@@ -240,7 +240,7 @@ export const LiquidityDashboard: React.FC = () => {
         {/* Chart Evolución */}
         <div className="light-card overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-indigo-500" /> Evolución de Caja</h3>
+            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-ecar-blue" /> Evolución de Caja</h3>
           </div>
           <div className="p-4">
             {chartData.length > 0 ? (
@@ -253,7 +253,7 @@ export const LiquidityDashboard: React.FC = () => {
                     return (
                       <div key={s.month} className="flex-1 flex flex-col items-center gap-1 h-full">
                         <div className="w-full flex-1 flex gap-0.5 items-end justify-center">
-                          <div className="w-3 bg-indigo-200 rounded-t transition-all" style={{ height: `${ph}%` }} title={`Proy: ${fmtShort(s.projected_closing)}`} />
+                          <div className="w-3 bg-ecar-blueLight rounded-t transition-all" style={{ height: `${ph}%` }} title={`Proy: ${fmtShort(s.projected_closing)}`} />
                           <div className="w-3 bg-emerald-500 rounded-t transition-all" style={{ height: `${h}%` }} title={`Real: ${fmtShort(s.real_closing)}`} />
                         </div>
                         <span className="text-[10px] text-gray-400 font-medium">{monthName(s.month)}</span>
@@ -262,7 +262,7 @@ export const LiquidityDashboard: React.FC = () => {
                   })}
                 </div>
                 <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-200" /> Proyectado</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-ecar-blueLight" /> Proyectado</span>
                   <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Real</span>
                 </div>
                 {/* Último mes stats */}

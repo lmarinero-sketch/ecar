@@ -74,7 +74,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2"><Tag size={20} className="text-indigo-500" /> Categorías UOCRA</h3>
+          <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2"><Tag size={20} className="text-ecar-blue" /> Categorías UOCRA</h3>
           <p className="text-sm text-gray-400 mt-0.5">Gestioná las categorías y valores hora del convenio. Los cambios aplican solo hacia adelante.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary">
@@ -93,7 +93,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-bold text-gray-900">{cat.name}</h4>
-                    <p className="text-2xl font-black font-mono text-indigo-600 mt-1">{formatARS(cat.hourly_rate_ars)}<span className="text-sm font-normal text-gray-400">/hora</span></p>
+                    <p className="text-2xl font-black font-mono text-ecar-blue mt-1">{formatARS(cat.hourly_rate_ars)}<span className="text-sm font-normal text-gray-400">/hora</span></p>
                     {cat.daily_rate_ars > 0 && (
                       <p className="text-sm font-mono text-gray-500">{formatARS(cat.daily_rate_ars)}/día</p>
                     )}

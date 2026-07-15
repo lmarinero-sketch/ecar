@@ -407,7 +407,7 @@ const EmployeeCombobox: React.FC<{
                     value === emp.full_name ? 'bg-blue-50 text-ecar-blue font-bold' : 'text-gray-700'
                   }`}
                 >
-                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-[10px] flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-[10px] flex-shrink-0">
                     {emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
                   {emp.full_name}

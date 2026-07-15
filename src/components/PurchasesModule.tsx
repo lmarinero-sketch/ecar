@@ -483,7 +483,7 @@ export const PurchasesModule: React.FC = () => {
         <div className="space-y-3">
           {/* Tipo selector */}
           <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-            <button onClick={() => setUploadTipo('compra')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'compra' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={() => setUploadTipo('compra')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'compra' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               <TrendingDown size={14} /> Compra
             </button>
             <button onClick={() => setUploadTipo('venta')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'venta' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -536,7 +536,7 @@ export const PurchasesModule: React.FC = () => {
           )}
           <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
           </label>
-          <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-violet-600' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
+          <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-ecar-blue' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
         </div>
 
         <div className="light-card p-5">
@@ -615,10 +615,10 @@ export const PurchasesModule: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <div className="text-sm font-bold text-gray-700">Filtro de período</div>
           <div className="flex bg-gray-100 rounded-lg p-1">
-            <button onClick={() => applyQuickFilter('current')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'current' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Mes Actual</button>
-            <button onClick={() => applyQuickFilter('last_month')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_month' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Mes Pasado</button>
-            <button onClick={() => applyQuickFilter('last_3_months')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_3_months' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>Últ. 3 Meses</button>
-            <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'custom' ? 'bg-white shadow-sm text-violet-700' : 'text-gray-500'}`}>Personalizado</div>
+            <button onClick={() => applyQuickFilter('current')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'current' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Mes Actual</button>
+            <button onClick={() => applyQuickFilter('last_month')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_month' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Mes Pasado</button>
+            <button onClick={() => applyQuickFilter('last_3_months')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_3_months' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Últ. 3 Meses</button>
+            <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'custom' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500'}`}>Personalizado</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -635,7 +635,7 @@ export const PurchasesModule: React.FC = () => {
 
       {/* Tabs: Compras / Ventas / Banco */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        <button onClick={() => setActiveTab('compras')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setActiveTab('compras')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <TrendingDown size={16} /> Compras ({compras.length})
         </button>
         <button onClick={() => setActiveTab('ventas')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'ventas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -644,7 +644,7 @@ export const PurchasesModule: React.FC = () => {
         <button onClick={() => setActiveTab('banco')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'banco' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <Database size={16} /> Banco de Precios
         </button>
-        <button onClick={() => setActiveTab('razones_sociales')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'razones_sociales' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setActiveTab('razones_sociales')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'razones_sociales' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <Building2 size={16} /> Razones Sociales
         </button>
       </div>
@@ -685,7 +685,7 @@ export const PurchasesModule: React.FC = () => {
           </div>
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
             <p className="text-xs text-gray-400 font-bold uppercase">Total</p>
-            <p className="text-lg font-bold text-violet-700 font-mono">{formatARS(totTotal)}</p>
+            <p className="text-lg font-bold text-ecar-blue font-mono">{formatARS(totTotal)}</p>
           </div>
         </div>
       )}
@@ -757,7 +757,7 @@ export const PurchasesModule: React.FC = () => {
                   const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
                   return (
                   <tr key={inv.id} className={`hover:bg-gray-50 ${isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}`}>
-                    <td className="px-4 py-3 text-xs font-bold text-indigo-700">
+                    <td className="px-4 py-3 text-xs font-bold text-ecar-blue">
                       {inv.legal_entity?.name || '-'}
                     </td>
                     <td className="px-4 py-3 font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>

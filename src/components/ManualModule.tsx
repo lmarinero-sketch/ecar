@@ -131,9 +131,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Compras & Libro IVA',
     section: 'Administración',
     icon: ShoppingCart,
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
-    borderColor: 'border-violet-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Gestionar la recepción y validación de facturas de compra mediante OCR con Inteligencia Artificial, generando el Libro IVA Compras digital.',
     scope: 'Toda factura de compra recibida de proveedores debe ser registrada en este módulo. Genera el registro para AFIP.',
     responsible: 'Administrativo de Compras / Contador',
@@ -277,9 +277,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'RRHH & Legajos',
     section: 'Personal',
     icon: Users,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Gestión integral del personal: legajos digitales, asistencia por QR, liquidación de haberes, documentos y novedades.',
     scope: 'Todo el personal en relación de dependencia. Fichajes, legajos, liquidaciones, vacaciones, ausencias y documentos legales.',
     responsible: 'RRHH / Administrador',
@@ -301,9 +301,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Inventario & Pañol',
     section: 'Logística',
     icon: Package,
-    color: 'text-teal-600',
-    bgColor: 'bg-teal-50',
-    borderColor: 'border-teal-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Controlar el stock de materiales, herramientas y consumibles del pañol con gestión de ubicaciones por estantería y movimientos auditables.',
     scope: 'Todo material, herramienta y consumible en posesión de la empresa. Altas, bajas, asignaciones y devoluciones.',
     responsible: 'Pañolero / Logística',
@@ -326,9 +326,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Pedidos de Compra',
     section: 'Logística',
     icon: ShoppingBag,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Gestionar el ciclo de pedidos de compra de materiales desde la solicitud en obra hasta la aprobación y recepción.',
     scope: 'Toda solicitud de compra originada en las obras o en el pañol. Estados: Pendiente → Aprobado → Consolidado → Ordenado → Recibido.',
     responsible: 'Jefe de Obra / Administración',
@@ -375,9 +375,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Planificación WBS & Gantt',
     section: 'Operaciones',
     icon: Target,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-50',
-    borderColor: 'border-cyan-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Planificar, programar y controlar el avance de obras mediante estructura de desglose del trabajo (WBS) con visualización en Gantt.',
     scope: 'Todo proyecto activo de la empresa. Estructura jerárquica de tareas con dependencias, asignaciones y fechas.',
     responsible: 'Gerente de Proyectos / Jefe de Obra',
@@ -499,9 +499,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Proyectos & Presupuestos',
     section: 'Operaciones',
     icon: HardHat,
-    color: 'text-cyan-700',
-    bgColor: 'bg-cyan-50',
-    borderColor: 'border-cyan-500',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Gestionar el ciclo de vida de proyectos y elaborar presupuestos de obra detallados con estructura de APU (Análisis de Precios Unitarios).',
     scope: 'Todos los proyectos activos de la empresa. Presupuestos con recursos (materiales, mano de obra, equipos, subcontratos).',
     responsible: 'Gerente de Proyectos / Dirección',
@@ -547,9 +547,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Resumen Mensual',
     section: 'Tableros',
     icon: Calendar,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Generar el informe ejecutivo mensual consolidado con todas las métricas financieras y operativas de la empresa.',
     scope: 'Cierre mensual de todos los módulos. Resumen de facturación, gastos, asistencia, certificaciones y avance de obra.',
     responsible: 'Gerencia / Administración',
@@ -594,9 +594,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Órdenes de Compra / OT',
     section: 'Administración',
     icon: FileSignature,
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
-    borderColor: 'border-violet-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Emitir OC/OT formales con numeración automática, detalle de ítems, flujo de aprobación por monto y seguimiento de entregas.',
     scope: 'Toda compra o contratación que supere caja chica. Tipos: compra de material, servicio/OT, alquiler de equipo.',
     responsible: 'Gerente de Compras / GG (aprobación)',
@@ -664,9 +664,9 @@ const MODULES_DATA: ModuleDoc[] = [
     name: 'Evaluación de Proveedores',
     section: 'Administración',
     icon: ClipboardCheck,
-    color: 'text-teal-600',
-    bgColor: 'bg-teal-50',
-    borderColor: 'border-teal-400',
+    color: 'text-ecar-blue',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-ecar-blue',
     purpose: 'Calificar proveedores periódicamente según 5 criterios estandarizados con recomendación automática basada en puntaje.',
     scope: 'Todo proveedor operado en el período. Evaluación mensual recomendada.',
     responsible: 'Gerente de Compras',
@@ -701,7 +701,7 @@ const AI_INTEGRATIONS = [
   {
     name: 'OCR de Facturas',
     icon: FileText,
-    color: 'bg-violet-500',
+    color: 'bg-ecar-blue',
     description: 'Edge Function "process-invoice" que usa Gemini AI para extraer datos estructurados de fotos y PDFs de facturas.',
     capabilities: [
       'Extracción de CUIT del proveedor',
@@ -731,7 +731,7 @@ const AI_INTEGRATIONS = [
 const ARCH_ITEMS = [
   { icon: Globe, label: 'Frontend', desc: 'React 18 + Vite + TypeScript', color: 'bg-blue-500' },
   { icon: Database, label: 'Base de Datos', desc: 'Supabase (PostgreSQL)', color: 'bg-green-500' },
-  { icon: Server, label: 'Edge Functions', desc: 'Deno (TypeScript)', color: 'bg-purple-500' },
+  { icon: Server, label: 'Edge Functions', desc: 'Deno (TypeScript)', color: 'bg-ecar-blue' },
   { icon: Cpu, label: 'IA / ML', desc: 'Gemini AI + GPT-4o', color: 'bg-orange-500' },
   { icon: Lock, label: 'Seguridad', desc: 'RLS + JWT + Row Level Security', color: 'bg-red-500' },
   { icon: Zap, label: 'Notificaciones', desc: 'WhatsApp API + Scheduler', color: 'bg-amber-500' },
@@ -1587,14 +1587,14 @@ export const ManualModule: React.FC = () => {
 
   const sectionGroups = [
     { id: 'intro', label: 'Introducción', icon: BookOpen, color: 'text-blue-600' },
-    { id: 'arch', label: 'Arquitectura', icon: Server, color: 'text-purple-600' },
+    { id: 'arch', label: 'Arquitectura', icon: Server, color: 'text-ecar-blue' },
     { id: 'roles', label: 'Roles & Accesos', icon: Key, color: 'text-amber-600' },
     { id: 'ai', label: 'Inteligencia Artificial', icon: Bot, color: 'text-green-600' },
     { id: 'Tableros', label: 'Tableros', icon: LayoutDashboard, color: 'text-blue-500' },
-    { id: 'Administración', label: 'Administración', icon: Calculator, color: 'text-violet-500' },
-    { id: 'Personal', label: 'Personal', icon: Users, color: 'text-indigo-500' },
-    { id: 'Logística', label: 'Logística', icon: Warehouse, color: 'text-teal-500' },
-    { id: 'Operaciones', label: 'Operaciones', icon: HardHat, color: 'text-cyan-600' },
+    { id: 'Administración', label: 'Administración', icon: Calculator, color: 'text-ecar-blue' },
+    { id: 'Personal', label: 'Personal', icon: Users, color: 'text-ecar-blue' },
+    { id: 'Logística', label: 'Logística', icon: Warehouse, color: 'text-ecar-blue' },
+    { id: 'Operaciones', label: 'Operaciones', icon: HardHat, color: 'text-ecar-blue' },
     { id: 'security', label: 'Seguridad', icon: Shield, color: 'text-red-600' },
   ];
 
@@ -1680,7 +1680,7 @@ export const ManualModule: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Módulos documentados', value: MODULES_DATA.length, icon: BarChart3, color: 'from-blue-500 to-blue-600' },
-          { label: 'Edge Functions IA', value: 6, icon: Zap, color: 'from-violet-500 to-purple-600' },
+          { label: 'Edge Functions IA', value: 6, icon: Zap, color: 'from-ecar-blue to-ecar-blue' },
           { label: 'Procesos detallados', value: MODULES_DATA.reduce((a, m) => a + m.process.length, 0), icon: CheckCircle, color: 'from-emerald-500 to-green-600' },
           { label: 'Indicadores KPI', value: MODULES_DATA.reduce((a, m) => a + m.kpis.length, 0), icon: Activity, color: 'from-amber-500 to-orange-500' },
         ].map((stat, i) => {
@@ -1780,8 +1780,8 @@ export const ManualModule: React.FC = () => {
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Server size={20} className="text-purple-600" />
+                  <div className="w-10 h-10 bg-ecar-blueLight rounded-xl flex items-center justify-center">
+                    <Server size={20} className="text-ecar-blue" />
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">2. Arquitectura Técnica</h3>
@@ -1806,7 +1806,7 @@ export const ManualModule: React.FC = () => {
 
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Zap size={16} className="text-violet-500" /> Edge Functions (Serverless)
+                  <Zap size={16} className="text-ecar-blue" /> Edge Functions (Serverless)
                 </h4>
                 <div className="space-y-3">
                   {[
@@ -1818,12 +1818,12 @@ export const ManualModule: React.FC = () => {
                     { name: 'process-reminders', desc: 'Scheduler automático de obligaciones', badge: 'Cron' },
                   ].map((fn, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="w-7 h-7 bg-violet-100 rounded-lg flex items-center justify-center shrink-0">
-                        <Zap size={12} className="text-violet-600" />
+                      <div className="w-7 h-7 bg-ecar-blueLight rounded-lg flex items-center justify-center shrink-0">
+                        <Zap size={12} className="text-ecar-blue" />
                       </div>
                       <div className="font-mono text-sm font-bold text-gray-800">{fn.name}</div>
                       <div className="text-xs text-gray-500 flex-1">{fn.desc}</div>
-                      <span className="text-xs font-bold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">{fn.badge}</span>
+                      <span className="text-xs font-bold bg-ecar-blueLight text-ecar-blue px-2 py-0.5 rounded-full">{fn.badge}</span>
                     </div>
                   ))}
                 </div>
@@ -1934,7 +1934,7 @@ export const ManualModule: React.FC = () => {
                   { title: 'Autorización (RLS)', icon: Lock, desc: 'Row Level Security activa en todas las tablas. Cada consulta es filtrada automáticamente por tenant_id y rol.', color: 'bg-amber-50 border-amber-200' },
                   { title: 'Cifrado en Tránsito', icon: Globe, desc: 'TLS 1.3 obligatorio. Certificados SSL gestionados automáticamente por Supabase (Let\'s Encrypt).', color: 'bg-green-50 border-green-200' },
                   { title: 'Multi-Tenancy', icon: Shield, desc: 'Datos completamente aislados por tenant_id. Es imposible acceder a datos de otra empresa.', color: 'bg-red-50 border-red-200' },
-                  { title: 'Almacenamiento', icon: Database, desc: 'Buckets de Supabase Storage con políticas RLS. Solo el tenant propietario puede acceder a sus archivos.', color: 'bg-purple-50 border-purple-200' },
+                  { title: 'Almacenamiento', icon: Database, desc: 'Buckets de Supabase Storage con políticas RLS. Solo el tenant propietario puede acceder a sus archivos.', color: 'bg-slate-50 border-ecar-blueLight' },
                   { title: 'Auditoría', icon: FileText, desc: 'Logs de acceso y cambios en PostgreSQL WAL. Trazabilidad completa de operaciones críticas.', color: 'bg-slate-50 border-slate-200' },
                 ].map((sec, i) => {
                   const SecIcon = sec.icon;

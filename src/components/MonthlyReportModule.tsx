@@ -12,14 +12,14 @@ const fmtM = (n: number) => {
 
 const CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
   personal_sueldos: { label: 'Sueldos Obreros', emoji: '👷', color: 'bg-blue-500' },
-  personal_honorarios: { label: 'Honorarios', emoji: '💼', color: 'bg-indigo-500' },
-  seguros: { label: 'Seguros', emoji: '🛡️', color: 'bg-teal-500' },
+  personal_honorarios: { label: 'Honorarios', emoji: '💼', color: 'bg-ecar-blue' },
+  seguros: { label: 'Seguros', emoji: '🛡️', color: 'bg-ecar-blue' },
   servicios: { label: 'Servicios', emoji: '⚡', color: 'bg-yellow-500' },
   impuestos_arca: { label: 'Impuestos ARCA', emoji: '🏛️', color: 'bg-red-500' },
-  gremios: { label: 'Gremios', emoji: '🤝', color: 'bg-purple-500' },
+  gremios: { label: 'Gremios', emoji: '🤝', color: 'bg-ecar-blue' },
   combustibles: { label: 'Combustibles', emoji: '⛽', color: 'bg-orange-500' },
   cheques_echeq: { label: 'Cheques/Echeqs', emoji: '📝', color: 'bg-pink-500' },
-  pagos_terceros: { label: 'Pagos a Terceros', emoji: '🤝', color: 'bg-cyan-500' },
+  pagos_terceros: { label: 'Pagos a Terceros', emoji: '🤝', color: 'bg-ecar-blue' },
   servicios_contratados: { label: 'Servicios Contratados', emoji: '🏗️', color: 'bg-lime-500' },
   viandas: { label: 'Viandas ECAR', emoji: '🍽️', color: 'bg-amber-500' },
   varios: { label: 'Varios', emoji: '📦', color: 'bg-gray-500' },

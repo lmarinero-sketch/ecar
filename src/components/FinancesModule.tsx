@@ -395,8 +395,8 @@ export const FinancesModule: React.FC = () => {
           <p className="text-xs text-gray-400 mt-1">{receivable.length} pendientes</p>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CreditCard size={16} className="text-purple-500" /> Gastos Fijos Mes</div>
-          <p className="text-2xl font-black text-purple-700 font-mono">{formatARS(totalFixed)}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CreditCard size={16} className="text-ecar-blue" /> Gastos Fijos Mes</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{formatARS(totalFixed)}</p>
           <p className="text-xs text-gray-400 mt-1">{expenses.filter(e => e.status === 'active').length} activos</p>
         </div>
       </div>
@@ -626,7 +626,7 @@ export const FinancesModule: React.FC = () => {
                               </button>
                             )}
                             <button onClick={() => handleEdit(ch)} disabled={!canWrite} className={`p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canWrite ? 'Sin permisos de edición' : 'Editar'}><Pencil size={14} /></button>
-                            <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="Historial"><History size={14} /></button>
+                            <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-slate-50 text-gray-400 hover:text-ecar-blue transition-colors" title="Historial"><History size={14} /></button>
                             <button onClick={() => setDeleteTarget(ch)} disabled={!canDelete} className={`p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar'}><Trash2 size={14} /></button>
                           </div>
                         </td>
@@ -997,11 +997,11 @@ const ChequeAuditModal: React.FC<{ chequeId: string; onClose: () => void }> = ({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center">
-          <h3 className="font-bold text-lg flex items-center gap-2"><History size={18} className="text-purple-500" /> Historial de Cambios</h3>
+          <h3 className="font-bold text-lg flex items-center gap-2"><History size={18} className="text-ecar-blue" /> Historial de Cambios</h3>
           <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
         </div>
         {isLoading ? (
-          <div className="text-center py-8"><div className="w-6 h-6 border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin mx-auto" /></div>
+          <div className="text-center py-8"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div>
         ) : logs.length === 0 ? (
           <p className="text-center text-gray-400 text-sm py-8">Sin registros de auditoría</p>
         ) : (

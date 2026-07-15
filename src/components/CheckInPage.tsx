@@ -171,11 +171,11 @@ export const CheckInPage: React.FC = () => {
       <header className="px-4 pt-6 pb-4">
         <div className="flex items-center justify-center gap-3">
           <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/20">
-            <HardHat size={22} className="text-cyan-300" />
+            <HardHat size={22} className="text-ecar-blueLight" />
           </div>
           <div className="text-center">
             <h1 className="text-white text-lg font-bold tracking-tight">ECAR Asistencia</h1>
-            <p className="text-cyan-300/80 text-[10px] font-semibold uppercase tracking-widest">Control de fichaje digital</p>
+            <p className="text-ecar-blueLight/80 text-[10px] font-semibold uppercase tracking-widest">Control de fichaje digital</p>
           </div>
         </div>
       </header>
@@ -192,7 +192,7 @@ export const CheckInPage: React.FC = () => {
         {/* Validating */}
         {status === 'validating' && (
           <div className="text-center space-y-4 mt-8">
-            <Loader2 size={48} className="mx-auto text-cyan-400 animate-spin" />
+            <Loader2 size={48} className="mx-auto text-ecar-blue animate-spin" />
             <p className="text-slate-400 text-sm font-medium">Verificando código QR...</p>
           </div>
         )}
@@ -232,7 +232,7 @@ export const CheckInPage: React.FC = () => {
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nombre o DNI..."
                 autoFocus
-                className="w-full bg-white/10 backdrop-blur border border-white/20 rounded-xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/50 transition-all"
+                className="w-full bg-white/10 backdrop-blur border border-white/20 rounded-xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue/50 transition-all"
               />
             </div>
 
@@ -245,9 +245,9 @@ export const CheckInPage: React.FC = () => {
                   <button
                     key={emp.id}
                     onClick={() => handleSelectEmployee(emp)}
-                    className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/30 rounded-xl transition-all active:scale-[0.98] group"
+                    className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ecar-blue/30 rounded-xl transition-all active:scale-[0.98] group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center text-cyan-300 font-bold text-sm shrink-0 border border-cyan-500/20">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-ecar-blue/30 to-blue-500/30 flex items-center justify-center text-ecar-blueLight font-bold text-sm shrink-0 border border-ecar-blue/20">
                       {emp.full_name.charAt(0)}
                     </div>
                     <div className="text-left flex-1 min-w-0">
@@ -257,7 +257,7 @@ export const CheckInPage: React.FC = () => {
                         {emp.category?.name ? ` · ${emp.category.name}` : ''}
                       </p>
                     </div>
-                    <UserCheck size={18} className="text-slate-600 group-hover:text-cyan-400 transition-colors shrink-0" />
+                    <UserCheck size={18} className="text-slate-600 group-hover:text-ecar-blue transition-colors shrink-0" />
                   </button>
                 ))
               )}
@@ -275,8 +275,8 @@ export const CheckInPage: React.FC = () => {
         {status === 'confirming' && selectedEmployee && (
           <div className="max-w-sm w-full mt-2">
             <div className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
-                <span className="text-3xl font-bold text-cyan-300">{selectedEmployee.full_name.charAt(0)}</span>
+              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-ecar-blue/20 to-blue-500/20 flex items-center justify-center border border-ecar-blue/30">
+                <span className="text-3xl font-bold text-ecar-blueLight">{selectedEmployee.full_name.charAt(0)}</span>
               </div>
 
               <div>
@@ -326,7 +326,7 @@ export const CheckInPage: React.FC = () => {
                   className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm shadow-lg active:scale-[0.97] transition-all ${
                     isClockOut
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
-                      : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-600 hover:to-cyan-600'
+                      : 'bg-gradient-to-r from-emerald-500 to-ecar-blue text-white hover:from-emerald-600 hover:to-ecar-blue'
                   }`}
                 >
                   {isClockOut ? 'Fichar Salida' : 'Fichar Entrada'}
@@ -355,7 +355,7 @@ export const CheckInPage: React.FC = () => {
               </div>
 
               {/* Large Time Display */}
-              <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl p-6 border border-emerald-500/20">
+              <div className="bg-gradient-to-br from-emerald-500/10 to-ecar-blue/10 rounded-2xl p-6 border border-emerald-500/20">
                 <p className="text-[10px] uppercase tracking-widest text-emerald-400/80 font-bold mb-1">
                   {isClockOut ? 'Salida registrada' : 'Entrada registrada'}
                 </p>

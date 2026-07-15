@@ -264,12 +264,12 @@ export const NotificationPanel: React.FC = () => {
                           {r.trigger_type !== 'manual' && (
                             <span className="px-2 py-1 bg-blue-50 rounded-lg text-blue-600 font-medium">{r.trigger_days_before} días antes</span>
                           )}
-                          <span className="px-2 py-1 bg-purple-50 rounded-lg text-purple-600 font-medium capitalize">{r.recurrence === 'once' ? 'Una vez' : r.recurrence === 'daily' ? 'Diario' : r.recurrence === 'weekly' ? 'Semanal' : 'Mensual'}</span>
+                          <span className="px-2 py-1 bg-slate-50 rounded-lg text-ecar-blue font-medium capitalize">{r.recurrence === 'once' ? 'Una vez' : r.recurrence === 'daily' ? 'Diario' : r.recurrence === 'weekly' ? 'Semanal' : 'Mensual'}</span>
                           {r.schedule_time && r.recurrence !== 'once' && (
                             <span className="px-2 py-1 bg-amber-50 rounded-lg text-amber-700 font-medium font-mono">{r.schedule_time?.slice(0, 5)} hs</span>
                           )}
                           {(r.schedule_days?.length ?? 0) > 0 && r.recurrence === 'weekly' && (
-                            <span className="px-2 py-1 bg-indigo-50 rounded-lg text-indigo-600 font-medium">
+                            <span className="px-2 py-1 bg-slate-50 rounded-lg text-ecar-blue font-medium">
                               {(r.schedule_days as number[]).map((d: number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}
                             </span>
                           )}

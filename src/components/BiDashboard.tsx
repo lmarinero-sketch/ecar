@@ -70,7 +70,7 @@ export const BiDashboard: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 via-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><LayoutDashboard size={140} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400" />
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-blue-400 to-ecar-blue" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><LayoutDashboard size={24} /> Dashboard Ejecutivo — ECAR</h3>
           <p className="text-blue-200 text-sm mt-1">Vista consolidada por gerencia · Actualización en tiempo real</p>
@@ -81,8 +81,8 @@ export const BiDashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {[
           { label: 'Obras Activas', value: String(activeProjects), icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Pipeline Activo', value: formatARS(pipelineValue), icon: Target, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-          { label: 'Personal', value: String(activeEmployees), icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Pipeline Activo', value: formatARS(pipelineValue), icon: Target, color: 'text-ecar-blue', bg: 'bg-slate-50' },
+          { label: 'Personal', value: String(activeEmployees), icon: Users, color: 'text-ecar-blue', bg: 'bg-slate-50' },
           { label: 'Facturación', value: formatARS(facturacionMes), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Cheques a Cobrar', value: formatARS(chequesACobrar), icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Flota Operativa', value: `${fleetOperative}/${vehicles.length}`, icon: Truck, color: 'text-slate-600', bg: 'bg-slate-50' },
@@ -101,7 +101,7 @@ export const BiDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gerencia de Proyectos y Presupuestos */}
         <div className="light-card overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-3 flex items-center gap-2">
+          <div className="bg-gradient-to-r from-blue-600 to-ecar-blue text-white px-5 py-3 flex items-center gap-2">
             <Briefcase size={16} />
             <span className="font-bold text-sm">Gerencia de Proyectos y Presupuestos</span>
           </div>
@@ -111,9 +111,9 @@ export const BiDashboard: React.FC = () => {
                 <p className="text-[10px] font-bold text-blue-400 uppercase">Pipeline</p>
                 <p className="text-xl font-black text-blue-700">{pipelineActive} <span className="text-xs font-medium text-blue-400">oportunidades</span></p>
               </div>
-              <div className="bg-cyan-50/50 border border-cyan-100 rounded-lg p-3">
-                <p className="text-[10px] font-bold text-cyan-400 uppercase">Conversión</p>
-                <p className="text-xl font-black text-cyan-700">{conversionRate}% <span className="text-xs font-medium text-cyan-400">({pipelineWon} ganadas)</span></p>
+              <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
+                <p className="text-[10px] font-bold text-ecar-blue uppercase">Conversión</p>
+                <p className="text-xl font-black text-ecar-blue">{conversionRate}% <span className="text-xs font-medium text-ecar-blue">({pipelineWon} ganadas)</span></p>
               </div>
               <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
                 <p className="text-[10px] font-bold text-emerald-400 uppercase">Presupuesto Total</p>
@@ -135,23 +135,23 @@ export const BiDashboard: React.FC = () => {
 
         {/* Gerencia de Compras */}
         <div className="light-card overflow-hidden">
-          <div className="bg-gradient-to-r from-violet-600 to-purple-500 text-white px-5 py-3 flex items-center gap-2">
+          <div className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-5 py-3 flex items-center gap-2">
             <FileSignature size={16} />
             <span className="font-bold text-sm">Gerencia de Compras</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-violet-50/50 border border-violet-100 rounded-lg p-3">
-                <p className="text-[10px] font-bold text-violet-400 uppercase">OC Abiertas</p>
-                <p className="text-xl font-black text-violet-700">{openPOs}</p>
+              <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
+                <p className="text-[10px] font-bold text-ecar-blue uppercase">OC Abiertas</p>
+                <p className="text-xl font-black text-ecar-blue">{openPOs}</p>
               </div>
-              <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-3">
-                <p className="text-[10px] font-bold text-purple-400 uppercase">Monto Comprometido</p>
-                <p className="text-xl font-black text-purple-700">{formatARS(poTotal)}</p>
+              <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
+                <p className="text-[10px] font-bold text-ecar-blue uppercase">Monto Comprometido</p>
+                <p className="text-xl font-black text-ecar-blue">{formatARS(poTotal)}</p>
               </div>
-              <div className="bg-teal-50/50 border border-teal-100 rounded-lg p-3">
-                <p className="text-[10px] font-bold text-teal-400 uppercase">Score Proveedores</p>
-                <p className="text-xl font-black text-teal-700">{avgScore} <span className="text-xs font-medium text-teal-400">/ 5.0</span></p>
+              <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
+                <p className="text-[10px] font-bold text-ecar-blue uppercase">Score Proveedores</p>
+                <p className="text-xl font-black text-ecar-blue">{avgScore} <span className="text-xs font-medium text-ecar-blue">/ 5.0</span></p>
               </div>
               <div className={`rounded-lg p-3 ${urgentPOs > 0 ? 'bg-red-50/50 border border-red-200' : 'bg-green-50/50 border border-green-100'}`}>
                 <p className={`text-[10px] font-bold uppercase ${urgentPOs > 0 ? 'text-red-400' : 'text-green-400'}`}>OC Urgentes</p>
@@ -193,15 +193,15 @@ export const BiDashboard: React.FC = () => {
 
         {/* Gerencia de Logística */}
         <div className="light-card overflow-hidden">
-          <div className="bg-gradient-to-r from-teal-600 to-emerald-500 text-white px-5 py-3 flex items-center gap-2">
+          <div className="bg-gradient-to-r from-ecar-blue to-emerald-500 text-white px-5 py-3 flex items-center gap-2">
             <Package size={16} />
             <span className="font-bold text-sm">Gerencia de Logística</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-teal-50/50 border border-teal-100 rounded-lg p-3">
-                <p className="text-[10px] font-bold text-teal-400 uppercase">Valor Inventario</p>
-                <p className="text-xl font-black text-teal-700">{formatARS(totalInventoryValue)}</p>
+              <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
+                <p className="text-[10px] font-bold text-ecar-blue uppercase">Valor Inventario</p>
+                <p className="text-xl font-black text-ecar-blue">{formatARS(totalInventoryValue)}</p>
               </div>
               <div className={`rounded-lg p-3 ${lowStockItems > 0 ? 'bg-red-50/50 border border-red-200' : 'bg-green-50/50 border border-green-100'}`}>
                 <p className={`text-[10px] font-bold uppercase ${lowStockItems > 0 ? 'text-red-400' : 'text-green-400'}`}>Stock Bajo</p>

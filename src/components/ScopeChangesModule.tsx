@@ -10,7 +10,7 @@ const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits
 
 const CHANGE_TYPES: Record<string, { label: string; color: string }> = {
   adicional: { label: 'Adicional', color: 'bg-blue-100 text-blue-700' },
-  cambio_alcance: { label: 'Cambio de Alcance', color: 'bg-purple-100 text-purple-700' },
+  cambio_alcance: { label: 'Cambio de Alcance', color: 'bg-ecar-blueLight text-ecar-blue' },
   desvio: { label: 'Desvío', color: 'bg-orange-100 text-orange-700' },
   interferencia: { label: 'Interferencia', color: 'bg-red-100 text-red-700' },
 };

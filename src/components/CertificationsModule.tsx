@@ -258,7 +258,7 @@ export const CertificationsModule: React.FC = () => {
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">ANTICIPO ({proj.advance_pct || 30}%)</th>
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">REDETERMINACION ANTICIPO</th>
                           {certs.map(c => (
-                            <th key={c.id} className="border border-gray-300 p-2 bg-cyan-400 text-black text-center text-xs whitespace-nowrap">
+                            <th key={c.id} className="border border-gray-300 p-2 bg-ecar-blue text-black text-center text-xs whitespace-nowrap">
                               CERT REDETER.<br/>{c.period_description || '-'}
                             </th>
                           ))}
@@ -280,7 +280,7 @@ export const CertificationsModule: React.FC = () => {
                         <tr>
                           <td colSpan={3} className="border border-gray-300 p-2 bg-gray-50"></td>
                           {certs.map(c => (
-                            <td key={c.id} className="border border-gray-300 p-2 bg-cyan-300 text-right font-mono font-medium">{fmt(c.redetermination || 0)}</td>
+                            <td key={c.id} className="border border-gray-300 p-2 bg-ecar-blueLight text-right font-mono font-medium">{fmt(c.redetermination || 0)}</td>
                           ))}
                           <td className="border border-gray-300 p-2 bg-gray-50"></td>
                         </tr>

@@ -209,8 +209,8 @@ export const InventoryModule: React.FC = () => {
           <p className="text-2xl font-black text-blue-600 font-mono">{(items || []).length}</p>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Wrench size={16} className="text-purple-500" /> Herramientas Asignadas</div>
-          <p className="text-2xl font-black text-purple-600 font-mono">{activeAssignments.length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Wrench size={16} className="text-ecar-blue" /> Herramientas Asignadas</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{activeAssignments.length}</p>
         </div>
         <div className={`light-card p-5 ${lowStockItems.length > 0 ? 'border-red-200 bg-red-50' : 'border-gray-200'}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Stock Bajo</div>
@@ -275,7 +275,7 @@ export const InventoryModule: React.FC = () => {
                 <tr key={item.id} className={`hover:bg-gray-50 ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-gray-800">{item.name}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${item.category === 'herramienta' ? 'bg-purple-100 text-purple-700' : item.category === 'consumible' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${item.category === 'herramienta' ? 'bg-ecar-blueLight text-ecar-blue' : item.category === 'consumible' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
                       {item.category}
                     </span>
                   </td>
@@ -300,7 +300,7 @@ export const InventoryModule: React.FC = () => {
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
-                      {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-purple-600" /></button>}
+                      {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
                       {item.shelf ? (
                         <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
                       ) : null}
@@ -346,7 +346,7 @@ export const InventoryModule: React.FC = () => {
                     <td className="px-4 py-3 font-medium">{(a.item as any)?.name || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
+                        <div className="w-7 h-7 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs uppercase">
                           {((a.employee as any)?.full_name || '?')[0]}
                         </div>
                         {(a.employee as any)?.full_name}
@@ -492,7 +492,7 @@ export const InventoryModule: React.FC = () => {
               <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
-              <button type="submit" disabled={createAssignment.isPending} className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-purple-700 transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createAssignment.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-all shadow-md disabled:opacity-50">
                 {createAssignment.isPending ? 'Asignando...' : '🔧 Asignar Herramienta'}
               </button>
             </form>

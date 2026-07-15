@@ -244,13 +244,13 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Layers size={14} className="text-indigo-500" /> Elementos</div>
-          <p className="text-2xl font-black text-indigo-600 font-mono">{elements.length}</p>
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Layers size={14} className="text-ecar-blue" /> Elementos</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{elements.length}</p>
           <p className="text-[10px] text-gray-400">{categories.length} rubros</p>
         </div>
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Ruler size={14} className="text-cyan-500" /> Superficie</div>
-          <p className="text-2xl font-black text-cyan-600 font-mono">{totalArea.toFixed(1)}<span className="text-sm ml-1">m²</span></p>
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Ruler size={14} className="text-ecar-blue" /> Superficie</div>
+          <p className="text-2xl font-black text-ecar-blue font-mono">{totalArea.toFixed(1)}<span className="text-sm ml-1">m²</span></p>
         </div>
         <div className="light-card p-4">
           <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><Box size={14} className="text-amber-500" /> Volumen</div>
@@ -262,8 +262,8 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
           <p className="text-[10px] text-gray-400">con {markupPct}% GG</p>
         </div>
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><BarChart3 size={14} className="text-violet-500" /> Costo/m²</div>
-          <p className="text-lg font-black text-violet-600 font-mono">{fmt(costPerM2)}</p>
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1"><BarChart3 size={14} className="text-ecar-blue" /> Costo/m²</div>
+          <p className="text-lg font-black text-ecar-blue font-mono">{fmt(costPerM2)}</p>
           <p className="text-[10px] text-gray-400">incl. GG</p>
         </div>
       </div>
@@ -272,14 +272,14 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BarChart3 size={18} className="text-indigo-600" />
+            <BarChart3 size={18} className="text-ecar-blue" />
             <h3 className="font-bold text-gray-800">Cómputo Métrico y Presupuesto</h3>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs">
               <span className="text-gray-500 font-bold">GG%</span>
               <input type="number" value={markupPct} onChange={e => setMarkupPct(Number(e.target.value) || 0)}
-                className="w-14 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                className="w-14 px-2 py-1 border border-gray-300 rounded-lg text-xs text-center font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blueLight" />
             </div>
             <button onClick={exportCSV} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-1.5">
               <FileSpreadsheet size={13} /> Exportar CSV
@@ -323,7 +323,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
                   <td className="px-4 py-3 text-right">
                     <input type="number" value={Math.round(getDisplayCost(cat.unitCost))}
                       onChange={e => updateCost(cat.typeName, Number(e.target.value) || 0)}
-                      className="w-28 px-2 py-1 border border-gray-300 rounded-lg text-xs text-right font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                      className="w-28 px-2 py-1 border border-gray-300 rounded-lg text-xs text-right font-mono font-bold focus:outline-none focus:ring-2 focus:ring-ecar-blueLight" />
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmtUnit(cat.subtotal)}</td>
                   <td className="px-4 py-3">
@@ -366,9 +366,9 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
               <td className="px-4 py-2 text-right font-mono font-bold text-gray-500">{fmt(totalMarkup)}</td>
               <td></td>
             </tr>
-            <tr className="bg-indigo-50 border-t border-indigo-200">
-              <td colSpan={5} className="px-4 py-3 text-right text-sm font-bold text-indigo-800">PRESUPUESTO TOTAL</td>
-              <td className="px-4 py-3 text-right font-mono font-black text-indigo-700 text-lg">{fmt(grandTotal)}</td>
+            <tr className="bg-slate-50 border-t border-ecar-blueLight">
+              <td colSpan={5} className="px-4 py-3 text-right text-sm font-bold text-ecar-blueDark">PRESUPUESTO TOTAL</td>
+              <td className="px-4 py-3 text-right font-mono font-black text-ecar-blue text-lg">{fmt(grandTotal)}</td>
               <td></td>
             </tr>
             {currency === 'USD' && (

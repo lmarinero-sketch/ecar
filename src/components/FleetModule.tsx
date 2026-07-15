@@ -301,8 +301,8 @@ export const FleetModule: React.FC = () => {
           <p className="text-sm text-gray-500 relative z-10">Registro de cargas y consumo por km.</p>
         </button>
         <button onClick={() => setView('daily_report')} className="light-card p-6 text-center group cursor-pointer relative">
-          <ClipboardCheck size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all relative z-10" />
-          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors relative z-10">Parte Diario</h4>
+          <ClipboardCheck size={48} className="mx-auto mb-3 text-ecar-blue group-hover:text-ecar-blue group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-ecar-blue transition-colors relative z-10">Parte Diario</h4>
           <p className="text-sm text-gray-500 relative z-10">Inspección diaria con QR y checklist.</p>
         </button>
         <button onClick={() => setView('tracking')} className="light-card p-6 text-center group cursor-pointer relative">

@@ -64,7 +64,7 @@ export const PayrollPDFButton: React.FC<{
     <button 
       onClick={downloadPDF} 
       disabled={loading}
-      className="p-1 rounded text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors"
+      className="p-1 rounded text-ecar-blue hover:text-ecar-blue hover:bg-slate-50 transition-colors"
       title="Descargar PDF para Carlos"
     >
       {loading ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}

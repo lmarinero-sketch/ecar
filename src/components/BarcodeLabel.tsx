@@ -156,7 +156,7 @@ export const BarcodeLabel: React.FC<BarcodeLabelProps> = ({ item, onClose }) => 
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
               <span className="text-sm font-bold text-ecar-blue tracking-wider">ECAR</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                item.category === 'herramienta' ? 'bg-purple-100 text-purple-700' :
+                item.category === 'herramienta' ? 'bg-ecar-blueLight text-ecar-blue' :
                 item.category === 'consumible' ? 'bg-blue-100 text-blue-700' :
                 'bg-orange-100 text-orange-700'
               }`}>

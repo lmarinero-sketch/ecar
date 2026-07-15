@@ -418,7 +418,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
         {/* Loading overlay */}
         {loading && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
-            <Loader2 size={40} className="text-indigo-600 animate-spin mb-3" />
+            <Loader2 size={40} className="text-ecar-blue animate-spin mb-3" />
             <p className="text-sm font-bold text-gray-700">{loadProgress || 'Cargando modelo...'}</p>
           </div>
         )}
@@ -435,12 +435,12 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
         {!fileName && !loading && (
           <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
             <label className="pointer-events-auto cursor-pointer">
-              <div className="bg-white/95 backdrop-blur border-2 border-dashed border-indigo-300 rounded-2xl p-10 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group">
-                <Upload size={48} className="mx-auto mb-3 text-indigo-400 group-hover:text-indigo-600 transition-colors" />
+              <div className="bg-white/95 backdrop-blur border-2 border-dashed border-ecar-blueLight rounded-2xl p-10 text-center hover:border-ecar-blue hover:bg-slate-50/50 transition-all group">
+                <Upload size={48} className="mx-auto mb-3 text-ecar-blue group-hover:text-ecar-blue transition-colors" />
                 <p className="font-bold text-gray-800 text-lg">Cargá un archivo IFC</p>
                 <p className="text-sm text-gray-500 mt-1">Arrastrá o hacé click para subir</p>
                 <p className="text-xs text-gray-400 mt-3">Formatos: .ifc (Revit, ArchiCAD, AutoCAD exportado)</p>
-                <div className="mt-4 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2 group-hover:bg-indigo-700 transition-all shadow-md">
+                <div className="mt-4 bg-ecar-blue text-white px-6 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2 group-hover:bg-ecar-blue transition-all shadow-md">
                   <Upload size={16} /> Seleccionar Archivo
                 </div>
               </div>
@@ -475,7 +475,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
                 { mode: 'xray' as const, icon: Eye, label: 'Rayos X' },
               ]).map(({ mode, icon: Icon, label }) => (
                 <button key={mode} onClick={() => setViewMode(mode)}
-                  className={`p-2 transition-colors flex items-center gap-1.5 text-[10px] font-bold first:rounded-t-xl last:rounded-b-xl ${viewMode === mode ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-100 text-gray-500'}`}
+                  className={`p-2 transition-colors flex items-center gap-1.5 text-[10px] font-bold first:rounded-t-xl last:rounded-b-xl ${viewMode === mode ? 'bg-slate-50 text-ecar-blue' : 'hover:bg-gray-100 text-gray-500'}`}
                   title={label}
                 >
                   <Icon size={14} /> {label}
@@ -503,8 +503,8 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
             <button onClick={() => setShowHelp(true)}
               className="backdrop-blur border border-gray-200 bg-white/95 hover:bg-gray-50 rounded-xl shadow-md p-2 text-center transition-colors"
               title="Ver Ayuda de Cómputo">
-              <HelpCircle size={14} className="mx-auto text-indigo-500" />
-              <span className="text-[9px] font-bold text-indigo-500 block mt-0.5">Ayuda</span>
+              <HelpCircle size={14} className="mx-auto text-ecar-blue" />
+              <span className="text-[9px] font-bold text-ecar-blue block mt-0.5">Ayuda</span>
             </button>
           </div>
         )}
@@ -515,7 +515,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
         <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 bg-slate-900 text-white p-5 flex flex-col">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <span className="text-[9px] font-bold tracking-wider text-cyan-400 uppercase">Elemento BIM</span>
+              <span className="text-[9px] font-bold tracking-wider text-ecar-blue uppercase">Elemento BIM</span>
               <h5 className="font-bold text-sm text-white mt-0.5">{selectedElement.name}</h5>
             </div>
             <button onClick={() => setSelectedElement(null)} className="text-slate-400 hover:text-white transition-colors"><X size={16} /></button>
@@ -528,7 +528,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
             </div>
             <div className="bg-white/5 p-3 rounded-xl border border-white/5">
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Express ID</span>
-              <span className="text-sm font-mono text-cyan-400">{selectedElement.id}</span>
+              <span className="text-sm font-mono text-ecar-blue">{selectedElement.id}</span>
             </div>
             <div className="bg-white/5 p-3 rounded-xl border border-white/5">
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Vincular a Tarea WBS</span>
@@ -550,7 +550,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <HelpCircle className="text-indigo-600" size={20} /> ¿Cómo calcula las medidas el Visor BIM?
+                <HelpCircle className="text-ecar-blue" size={20} /> ¿Cómo calcula las medidas el Visor BIM?
               </h3>
               <button onClick={() => setShowHelp(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
@@ -558,9 +558,9 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
             </div>
 
             <div className="space-y-4 text-sm text-gray-600">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                <p className="font-medium text-indigo-900 mb-1">Cómputo Métrico Real e Instantáneo</p>
-                <p className="text-xs text-indigo-700 leading-relaxed">
+              <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4">
+                <p className="font-medium text-ecar-blueDark mb-1">Cómputo Métrico Real e Instantáneo</p>
+                <p className="text-xs text-ecar-blue leading-relaxed">
                   Al subir un archivo IFC, el sistema no estima los valores ni usa placeholders. Lee directamente la geometría del modelo en 3D utilizando un motor WebAssembly de alto rendimiento y calcula las medidas reales en base a su representación física en el espacio tridimensional.
                 </p>
               </div>
@@ -573,7 +573,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
-                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Metros Cúbicos (Volumen)</span>
+                  <span className="text-[10px] font-bold text-ecar-blue uppercase tracking-wider">Metros Cúbicos (Volumen)</span>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Se calcula multiplicando las dimensiones tridimensionales (ancho, alto y profundidad) de la caja contenedora del objeto en base a su escala real en el modelo:
                   </p>
@@ -583,7 +583,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
                 </div>
 
                 <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
-                  <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-wider">Metros Cuadrados (Superficie)</span>
+                  <span className="text-[10px] font-bold text-ecar-blue uppercase tracking-wider">Metros Cuadrados (Superficie)</span>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Corresponde al área superficial exterior de la caja contenedora calculada a partir de las caras del elemento:
                   </p>

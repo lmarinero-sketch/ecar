@@ -51,12 +51,12 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
     <div className="light-card p-5 mt-6">
       <div className="flex justify-between items-center mb-4">
         <h4 className="font-bold text-gray-900 flex items-center gap-2">
-          <PackageOpen size={16} className="text-indigo-600" />
+          <PackageOpen size={16} className="text-ecar-blue" />
           Entrega de Ropa y EPP
         </h4>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center gap-1"
+          className="bg-slate-50 text-ecar-blue px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-ecar-blueLight transition-colors flex items-center gap-1"
         >
           {showAdd ? 'Cancelar' : <><Plus size={14} /> Registrar Entrega</>}
         </button>
@@ -94,7 +94,7 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
             <button
               onClick={handleSubmit}
               disabled={!form.size || createDelivery.isPending}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue disabled:opacity-50"
             >
               {createDelivery.isPending ? 'Guardando...' : 'Guardar Entrega'}
             </button>
@@ -127,7 +127,7 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
                     <div className="flex items-center gap-1"><Calendar size={12} /> {d.delivery_date}</div>
                   </td>
                   <td className="px-4 py-2 font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
-                  <td className="px-4 py-2 text-indigo-700 font-bold">{d.size}</td>
+                  <td className="px-4 py-2 text-ecar-blue font-bold">{d.size}</td>
                   <td className="px-4 py-2">{d.quantity}</td>
                   <td className="px-4 py-2 text-xs text-gray-500">{d.notes || '—'}</td>
                   <td className="px-4 py-2 text-right">

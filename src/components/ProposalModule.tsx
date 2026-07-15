@@ -104,7 +104,7 @@ export const ProposalModule: React.FC = () => {
               </div>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
                 Propuesta Técnica y Comercial:<br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-teal-500">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-ecar-blue">
                   Desarrollo de ERP Modular
                 </span>
               </h1>
@@ -205,12 +205,12 @@ export const ProposalModule: React.FC = () => {
                <p className="text-xs text-gray-500 leading-relaxed">Gestión de ingresos/egresos, transferencias entre obras, control de herramientas críticas y alertas de stock mínimo automáticas.</p>
              </div>
              <div className="bg-white p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-               <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-4 text-teal-600"><Users/></div>
+               <div className="w-10 h-10 bg-ecar-blueLight rounded-lg flex items-center justify-center mb-4 text-ecar-blue"><Users/></div>
                <h3 className="font-bold text-gray-800 mb-2">Gestión de Obra</h3>
                <p className="text-xs text-gray-500 leading-relaxed">Creación de centros de costo por proyecto (WBS) y seguimiento de partes de avance diario desde el terreno.</p>
              </div>
              <div className="bg-white p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4 text-purple-600"><FileSignature/></div>
+               <div className="w-10 h-10 bg-ecar-blueLight rounded-lg flex items-center justify-center mb-4 text-ecar-blue"><FileSignature/></div>
                <h3 className="font-bold text-gray-800 mb-2">Proveedores & Compras</h3>
                <p className="text-xs text-gray-500 leading-relaxed">Registro de facturas, comparativa de precios y trazabilidad de materiales (desde el pedido hasta el acopio en obra).</p>
              </div>
@@ -279,7 +279,7 @@ export const ProposalModule: React.FC = () => {
                  </div>
                </div>
                <div className="flex gap-4 items-start">
-                 <div className="p-2 md:p-3 bg-purple-50 text-purple-600 rounded-lg md:rounded-xl"><BrainCircuit size={20}/></div>
+                 <div className="p-2 md:p-3 bg-slate-50 text-ecar-blue rounded-lg md:rounded-xl"><BrainCircuit size={20}/></div>
                  <div>
                    <h4 className="font-bold text-sm md:text-base text-gray-800">OpenAI (Motor IA)</h4>
                    <p className="text-xs md:text-sm text-gray-500 mt-1">Lógica de inteligencia subyacente para procesar reportes en lenguaje natural.</p>

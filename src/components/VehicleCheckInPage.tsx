@@ -181,7 +181,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
         {status === 'loading' && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-4">
-              <Loader2 size={48} className="mx-auto text-indigo-500 animate-spin" />
+              <Loader2 size={48} className="mx-auto text-ecar-blue animate-spin" />
               <p className="text-gray-500 text-sm font-medium">Cargando vehículo...</p>
             </div>
           </div>
@@ -198,7 +198,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
               <p className="text-gray-500 text-sm">{error}</p>
               <button
                 onClick={() => { setStatus('loading'); setError(''); loadData(); }}
-                className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all"
+                className="w-full py-3 rounded-xl bg-ecar-blue text-white font-bold text-sm hover:bg-ecar-blue transition-all"
               >
                 Reintentar
               </button>
@@ -237,7 +237,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
           <div className="space-y-5">
             {/* Vehicle Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-indigo-100 flex items-center justify-center text-3xl shrink-0">
+              <div className="w-14 h-14 rounded-xl bg-ecar-blueLight flex items-center justify-center text-3xl shrink-0">
                 {VEHICLE_ICON[vehicle.vehicle_type] || '🚐'}
               </div>
               <div className="flex-1 min-w-0">
@@ -260,7 +260,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                   value={driverName}
                   onChange={e => setDriverName(e.target.value)}
                   placeholder="Tu nombre"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blueLight focus:border-ecar-blue"
                   required
                 />
               </div>
@@ -289,7 +289,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                   className={`w-full px-4 py-3 border rounded-xl text-sm font-mono ${
                     kmInvalid
                       ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-300 focus:border-red-400'
-                      : 'border-gray-300 focus:ring-indigo-300 focus:border-indigo-400'
+                      : 'border-gray-300 focus:ring-ecar-blueLight focus:border-ecar-blue'
                   }`}
                 />
                 {kmInvalid && (
@@ -317,7 +317,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                     onClick={() => setFuelLevel(fl.value)}
                     className={`py-3 rounded-xl text-center transition-all border-2 ${
                       fuelLevel === fl.value
-                        ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                        ? 'border-ecar-blue bg-slate-50 shadow-sm'
                         : 'border-gray-200 bg-white'
                     }`}
                   >
@@ -344,7 +344,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                 className="w-full p-4 flex items-center justify-between bg-gray-50 active:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <ClipboardCheck size={18} className="text-indigo-600" />
+                  <ClipboardCheck size={18} className="text-ecar-blue" />
                   <span className="font-bold text-gray-800 text-sm">Checklist</span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faultsCount > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {faultsCount > 0 ? `${faultsCount} falla${faultsCount > 1 ? 's' : ''}` : 'Todo OK'}
@@ -462,7 +462,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
             <button
               onClick={handleSubmit}
               disabled={saving || !driverName.trim() || kmInvalid}
-              className="w-full bg-gradient-to-r from-indigo-700 to-violet-600 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-ecar-blue to-ecar-blue text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {saving ? (
                 <><Loader2 size={20} className="animate-spin" /> Guardando...</>

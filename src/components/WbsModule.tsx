@@ -353,22 +353,22 @@ export const WbsModule: React.FC = () => {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-800 via-indigo-700 to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark via-ecar-blue to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-cyan-400" />
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-ecar-blue to-ecar-blue" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gestión de Proyectos</h3>
-          <p className="text-indigo-200 text-sm mt-1">Doc PR-GPP-01 — Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GPP-01 — Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
         </div>
       </div>
 
       {/* Project Selector + New */}
       <div className="flex flex-wrap items-center gap-3">
-        <select value={selectedProjectId || ''} onChange={e => setSelectedProjectId(e.target.value || null)} className="flex-1 min-w-[200px] px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/30">
+        <select value={selectedProjectId || ''} onChange={e => setSelectedProjectId(e.target.value || null)} className="flex-1 min-w-[200px] px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-ecar-blue/30">
           <option value="">Seleccioná una obra</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name} — {p.client_name || 'Sin cliente'}</option>)}
         </select>
-        <button onClick={() => setShowForm(true)} className="bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-md">
+        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all shadow-md">
           <Plus size={16} /> Nueva Obra
         </button>
       </div>
@@ -378,11 +378,11 @@ export const WbsModule: React.FC = () => {
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
-              { label: 'Tareas', value: kpis.total, icon: FolderTree, color: 'text-indigo-600' },
+              { label: 'Tareas', value: kpis.total, icon: FolderTree, color: 'text-ecar-blue' },
               { label: 'En Ejecución', value: kpis.enEjecucion, icon: Clock, color: 'text-green-600' },
               { label: 'Completadas', value: kpis.completadas, icon: CheckCircle2, color: 'text-emerald-600' },
-              { label: 'Avance Global', value: `${kpis.avgProgress}%`, icon: TrendingUp, color: 'text-cyan-600' },
-              { label: 'Presupuesto', value: formatARS(kpis.totalBudget), icon: BarChart3, color: 'text-purple-600' },
+              { label: 'Avance Global', value: `${kpis.avgProgress}%`, icon: TrendingUp, color: 'text-ecar-blue' },
+              { label: 'Presupuesto', value: formatARS(kpis.totalBudget), icon: BarChart3, color: 'text-ecar-blue' },
             ].map(k => (
               <div key={k.label} className="light-card p-3.5 shadow-sm">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1"><k.icon size={14} className={k.color} /> {k.label}</div>
@@ -394,7 +394,7 @@ export const WbsModule: React.FC = () => {
           {/* Tabs */}
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
             {tabs.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[90px] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${tab === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[90px] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${tab === t.id ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 <span className="md:hidden text-base">{t.emoji}</span>
                 <span className="hidden md:inline">{t.emoji} {t.label}</span>
               </button>
@@ -435,7 +435,7 @@ export const WbsModule: React.FC = () => {
               <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm col-span-2" />
             </div>
-            <button onClick={handleCreateProject} disabled={!form.name || createProject.isPending} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreateProject} disabled={!form.name || createProject.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
               {createProject.isPending ? 'Creando...' : '✅ Crear Obra'}
             </button>
           </div>
@@ -760,7 +760,7 @@ export const WbsModule: React.FC = () => {
 const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: () => void; onEdit: (el: WbsElement) => void; onDelete: (id: string) => void }> = ({ wbs, onNew, onEdit, onDelete }) => (
   <div className="space-y-4">
     <div className="flex justify-end">
-      <button onClick={onNew} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 shadow-md"><Plus size={16} /> Nueva Tarea</button>
+      <button onClick={onNew} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md"><Plus size={16} /> Nueva Tarea</button>
     </div>
     {wbs.length > 0 ? (
       <div className="light-card overflow-hidden">
@@ -788,7 +788,7 @@ const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: (
                 <td className="px-4 py-3 text-xs text-gray-600">{(el.employee as any)?.full_name || '—'}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2 justify-center">
-                    <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${el.progress_pct}%` }} /></div>
+                    <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-ecar-blue rounded-full" style={{ width: `${el.progress_pct}%` }} /></div>
                     <span className="text-xs font-mono font-bold text-gray-500">{el.progress_pct}%</span>
                   </div>
                 </td>
@@ -857,7 +857,7 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any }> = ({ wbs, project 
   return (
     <div className="light-card overflow-hidden">
       <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-        <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-indigo-600" /> Diagrama de Gantt</h3>
+        <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-ecar-blue" /> Diagrama de Gantt</h3>
         <span className="text-xs text-gray-400 font-mono">{tasksWithDates.length} tareas programadas</span>
       </div>
 
@@ -957,10 +957,10 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
           <p className="text-2xl font-black font-mono text-green-600">{enEjecucion.length}</p>
         </div>
         <div className="light-card p-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={14} className="text-indigo-500" /> Avance Global</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-1"><TrendingUp size={14} className="text-ecar-blue" /> Avance Global</div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${avgProgress}%` }} /></div>
-            <span className="font-mono font-bold text-indigo-600 text-sm">{avgProgress}%</span>
+            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-ecar-blue rounded-full transition-all" style={{ width: `${avgProgress}%` }} /></div>
+            <span className="font-mono font-bold text-ecar-blue text-sm">{avgProgress}%</span>
           </div>
         </div>
       </div>
@@ -982,7 +982,7 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
                   <div className="flex-1 max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${task.progress_pct}%`, background: task.color || '#3b82f6' }} />
                   </div>
-                  <input type="range" min="0" max="100" step="5" value={task.progress_pct} onChange={e => onUpdateProgress(task.id, Number(e.target.value))} className="w-24 h-1.5 accent-indigo-600" />
+                  <input type="range" min="0" max="100" step="5" value={task.progress_pct} onChange={e => onUpdateProgress(task.id, Number(e.target.value))} className="w-24 h-1.5 accent-ecar-blue" />
                   <span className="text-xs font-mono font-bold text-gray-600 w-8">{task.progress_pct}%</span>
                 </div>
               </div>
@@ -1022,14 +1022,14 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setShowNew(!showNew)} className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 shadow-md">
+        <button onClick={() => setShowNew(!showNew)} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md">
           {showNew ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> Nuevo Registro</>}
         </button>
       </div>
 
       {showNew && (
         <div className="light-card p-4 space-y-3">
-          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><MessageSquare size={16} className="text-indigo-600" /> Nuevo Registro de Retroalimentación</h4>
+          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><MessageSquare size={16} className="text-ecar-blue" /> Nuevo Registro de Retroalimentación</h4>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Tipo *</label>
               <select value={fbForm.tipo} onChange={e => setFbForm({...fbForm, tipo: e.target.value as any})} className="w-full px-3 py-2.5 border rounded-xl text-sm">
@@ -1048,7 +1048,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
             <div><label className="text-xs font-bold text-gray-500">Responsable</label><input value={fbForm.responsable} onChange={e => setFbForm({...fbForm, responsable: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500">Acción Correctiva</label><textarea value={fbForm.accion_correctiva} onChange={e => setFbForm({...fbForm, accion_correctiva: e.target.value})} rows={2} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
+          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
             <Check size={16} className="inline mr-1" /> Registrar
           </button>
         </div>
@@ -1144,7 +1144,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <Users size={20} className="text-indigo-600" /> Personal Asignado
+            <Users size={20} className="text-ecar-blue" /> Personal Asignado
           </h3>
           <span className="text-xs text-gray-500 font-medium">Asignados en el módulo de RRHH</span>
         </div>
@@ -1157,7 +1157,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
               const initials = emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
               return (
                 <div key={emp.id} className="light-card p-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1168,7 +1168,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
                   {emp.category?.daily_rate_ars && (
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Jornal</p>
-                      <p className="text-sm font-bold font-mono text-indigo-600">${emp.category.daily_rate_ars.toLocaleString('es-AR')}</p>
+                      <p className="text-sm font-bold font-mono text-ecar-blue">${emp.category.daily_rate_ars.toLocaleString('es-AR')}</p>
                     </div>
                   )}
                 </div>
@@ -1188,9 +1188,9 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <Wrench size={20} className="text-indigo-600" /> Herramientas y Equipamiento
+            <Wrench size={20} className="text-ecar-blue" /> Herramientas y Equipamiento
           </h3>
-          <button onClick={() => setShowAssignModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+          <button onClick={() => setShowAssignModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
             <Plus size={14} /> Asignar Herramienta
           </button>
         </div>
@@ -1262,7 +1262,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <Wrench size={18} className="text-indigo-600" /> Asignar Herramienta a Obra
+                <Wrench size={18} className="text-ecar-blue" /> Asignar Herramienta a Obra
               </h3>
               <button onClick={() => setShowAssignModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -1270,7 +1270,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Seleccioná la Herramienta *</label>
-                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20">
                   <option value="">Seleccionar herramienta...</option>
                   {tools.map(t => (
                     <option key={t.id} value={t.id}>{t.name} (Stock: {t.current_stock} {t.unit})</option>
@@ -1280,7 +1280,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
 
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Responsable (Empleado) *</label>
-                <select value={selectedEmployeeId} onChange={e => setSelectedEmployeeId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                <select value={selectedEmployeeId} onChange={e => setSelectedEmployeeId(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20">
                   <option value="">Seleccionar responsable...</option>
                   {globalEmployees.map((emp: Employee) => (
                     <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.category?.name || 'Operario'})</option>
@@ -1290,10 +1290,10 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
 
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Notas / Observaciones</label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" placeholder="Ej: Estado al entregar, accesorios incluidos..." />
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20" placeholder="Ej: Estado al entregar, accesorios incluidos..." />
               </div>
 
-              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
                 {createToolAssignment.isPending ? 'Asignando...' : 'Confirmar Asignación'}
               </button>
             </div>
@@ -1381,10 +1381,10 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     <div className="space-y-4">
       {/* Sub Tabs Toggle */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 max-w-md">
-        <button onClick={() => setActiveSubTab('materiales')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'materiales' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setActiveSubTab('materiales')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'materiales' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           📦 Materiales / Consumibles
         </button>
-        <button onClick={() => setActiveSubTab('combustible')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'combustible' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+        <button onClick={() => setActiveSubTab('combustible')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${activeSubTab === 'combustible' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           ⛽ Carga de Combustible
         </button>
       </div>
@@ -1393,7 +1393,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Historial de Movimientos de Material</h3>
-            <button onClick={() => setShowMovModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+            <button onClick={() => setShowMovModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
               <Plus size={14} /> Registrar Movimiento
             </button>
           </div>
@@ -1454,7 +1454,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Planillas de Carga de Combustible</h3>
-            <button onClick={() => setShowFuelModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+            <button onClick={() => setShowFuelModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
               <Plus size={14} /> Cargar Combustible
             </button>
           </div>
@@ -1487,7 +1487,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                       <td className="px-4 py-3 font-mono text-gray-700">
                         {load.liters ? `${load.liters.toLocaleString('es-AR')} L` : '-'}
                       </td>
-                      <td className="px-4 py-3 font-mono font-bold text-indigo-600">
+                      <td className="px-4 py-3 font-mono font-bold text-ecar-blue">
                         {load.total_amount ? `$${load.total_amount.toLocaleString('es-AR')}` : '-'}
                       </td>
                       <td className="px-4 py-3 text-gray-600 text-xs">
@@ -1520,7 +1520,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <ArrowLeftRight size={18} className="text-indigo-600" /> Registrar Movimiento de Material
+                <ArrowLeftRight size={18} className="text-ecar-blue" /> Registrar Movimiento de Material
               </h3>
               <button onClick={() => setShowMovModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -1555,7 +1555,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={movNotes} onChange={e => setMovNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Motivo o detalle del movimiento..." />
               </div>
 
-              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
                 {createMovement.isPending ? 'Procesando...' : 'Confirmar Movimiento'}
               </button>
             </div>
@@ -1569,7 +1569,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <Truck size={18} className="text-indigo-600" /> Registrar Consumo de Combustible
+                <Truck size={18} className="text-ecar-blue" /> Registrar Consumo de Combustible
               </h3>
               <button onClick={() => setShowFuelModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -1612,7 +1612,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={obs} onChange={e => setObs(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Detalles de la carga..." />
               </div>
 
-              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
                 {createFuelLoad.isPending ? 'Guardando planilla...' : 'Guardar Planilla de Carga'}
               </button>
             </div>
@@ -1694,7 +1694,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Pedidos de Materiales y Suministros</h3>
-        <button onClick={() => setShowNewOrderModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+        <button onClick={() => setShowNewOrderModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
           <Plus size={14} /> Nuevo Pedido
         </button>
       </div>
@@ -1726,7 +1726,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       req.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                       req.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                      req.status === 'ordered' ? 'bg-purple-100 text-purple-700' :
+                      req.status === 'ordered' ? 'bg-ecar-blueLight text-ecar-blue' :
                       req.status === 'received' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                     }`}>
                       {req.status === 'pending' ? 'Pendiente' :
@@ -1735,7 +1735,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                        req.status === 'received' ? 'Recibido' : 'Rechazado'}
                     </span>
                     {estimatedTotal > 0 && (
-                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                      <span className="text-xs font-mono font-bold text-ecar-blue bg-slate-50 px-2 py-0.5 rounded-md">
                         Total Est.: ${estimatedTotal.toLocaleString('es-AR')}
                       </span>
                     )}
@@ -1780,7 +1780,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <ShoppingCart size={18} className="text-indigo-600" /> Crear Pedido de Compras
+                <ShoppingCart size={18} className="text-ecar-blue" /> Crear Pedido de Compras
               </h3>
               <button onClick={() => setShowNewOrderModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -1869,7 +1869,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               </div>
             )}
 
-            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
               {createRequest.isPending ? 'Enviando pedido...' : 'Registrar Pedido y Enviar'}
             </button>
           </div>
@@ -1963,7 +1963,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Certificaciones e Ingresos</h3>
-        <button onClick={() => setShowNewCertModal(true)} className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-indigo-700 transition-all">
+        <button onClick={() => setShowNewCertModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
           <Plus size={14} /> Registrar Certificado
         </button>
       </div>
@@ -2006,7 +2006,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                     <td className="px-4 py-3 text-right text-red-500">
                       -${totalRetentions.toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-indigo-600">
+                    <td className="px-4 py-3 text-right font-bold text-ecar-blue">
                       ${cert.net_deposit.toLocaleString('es-AR')}
                     </td>
                     <td className="px-4 py-3 font-sans">
@@ -2056,7 +2056,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <FileCheck size={18} className="text-indigo-600" /> Registrar Certificado de Obra
+                <FileCheck size={18} className="text-ecar-blue" /> Registrar Certificado de Obra
               </h3>
               <button onClick={() => setShowNewCertModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -2101,7 +2101,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
                 {createCert.isPending ? 'Guardando...' : 'Guardar y Registrar Certificado'}
               </button>
             </div>
@@ -2120,7 +2120,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               <button onClick={() => setShowPayModal(null)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
 
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-800">
+            <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 text-sm text-ecar-blueDark">
               <p>Monto Neto a Acreditar (Original): <strong className="font-mono">${showPayModal.net_deposit.toLocaleString('es-AR')}</strong></p>
             </div>
 

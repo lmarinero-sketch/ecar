@@ -49,9 +49,9 @@ export const EmployeeCostPanel: React.FC<Props> = ({ employee }) => {
               <p className="text-xs font-bold text-amber-600 mb-1">Cargas Sociales</p>
               <p className="text-lg font-black font-mono text-amber-700">{formatARS(cargasSociales)}</p>
             </div>
-            <div className="bg-indigo-50 rounded-lg p-3 text-center">
-              <p className="text-xs font-bold text-indigo-600 mb-1">Costo Total</p>
-              <p className="text-lg font-black font-mono text-indigo-700">{formatARS(costoTotal)}</p>
+            <div className="bg-slate-50 rounded-lg p-3 text-center">
+              <p className="text-xs font-bold text-ecar-blue mb-1">Costo Total</p>
+              <p className="text-lg font-black font-mono text-ecar-blue">{formatARS(costoTotal)}</p>
             </div>
           </div>
 
@@ -70,11 +70,11 @@ export const EmployeeCostPanel: React.FC<Props> = ({ employee }) => {
                   </div>
                 </div>
               ))}
-              <div className="flex justify-between px-4 py-2 bg-indigo-50 font-bold">
-                <span className="text-indigo-700">Total cargas patronales</span>
+              <div className="flex justify-between px-4 py-2 bg-slate-50 font-bold">
+                <span className="text-ecar-blue">Total cargas patronales</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-indigo-400 text-xs">{(TOTAL_CARGAS * 100).toFixed(2)}%</span>
-                  <span className="font-mono text-indigo-700 w-28 text-right">{formatARS(cargasSociales)}</span>
+                  <span className="text-ecar-blue text-xs">{(TOTAL_CARGAS * 100).toFixed(2)}%</span>
+                  <span className="font-mono text-ecar-blue w-28 text-right">{formatARS(cargasSociales)}</span>
                 </div>
               </div>
             </div>

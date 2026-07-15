@@ -34,19 +34,19 @@ const EntregasProgramadas: React.FC<{ projectId: string }> = ({ projectId }) => 
   if (entregas.length === 0) return null;
 
   return (
-    <div className="mt-4 border border-indigo-200 rounded-xl p-4 bg-indigo-50/50 shadow-sm">
-      <h4 className="text-sm font-bold text-indigo-700 flex items-center gap-2 mb-3">
+    <div className="mt-4 border border-ecar-blueLight rounded-xl p-4 bg-slate-50/50 shadow-sm">
+      <h4 className="text-sm font-bold text-ecar-blue flex items-center gap-2 mb-3">
         <Package size={16} /> Entregas Programadas de Compras
       </h4>
       <div className="space-y-2">
         {entregas.map((o) => (
-          <div key={o.id} className="bg-white border border-indigo-100 rounded-lg p-3 flex justify-between items-center text-sm shadow-sm">
+          <div key={o.id} className="bg-white border border-ecar-blueLight rounded-lg p-3 flex justify-between items-center text-sm shadow-sm">
             <div>
               <p className="font-bold text-gray-800">{o.supplier_name}</p>
               <p className="text-xs text-gray-500 line-clamp-1">{o.items?.map(i => `${i.quantity} ${i.unit} ${i.description}`).join(', ')}</p>
             </div>
             <div className="text-right shrink-0">
-              <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">
+              <span className="bg-ecar-blueLight text-ecar-blue px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">
                 Llega: {new Date(o.delivery_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -119,19 +119,19 @@ export const FieldModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-800 via-cyan-700 to-teal-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-300 to-teal-300" />
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-ecar-blueLight to-ecar-blueLight" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardList size={24} /> Parte Diario de Obra</h3>
-          <p className="text-cyan-200 text-sm mt-1">Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales</p>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Total Partes', value: kpis.total, icon: ClipboardList, color: 'text-cyan-600' },
+          { label: 'Total Partes', value: kpis.total, icon: ClipboardList, color: 'text-ecar-blue' },
           { label: 'Borradores', value: kpis.borradores, icon: Clock, color: 'text-gray-500' },
           { label: 'Enviados', value: kpis.enviados, icon: Eye, color: 'text-yellow-600' },
           { label: 'Aprobados', value: kpis.aprobados, icon: Check, color: 'text-green-600' },
@@ -151,11 +151,11 @@ export const FieldModule: React.FC = () => {
       {/* Form */}
       {showForm && (
         <div className="light-card p-5 md:p-6 shadow-sm space-y-4">
-          <h4 className="font-bold text-gray-800 flex items-center gap-2"><ClipboardList size={18} className="text-cyan-600" /> Crear Parte Diario</h4>
+          <h4 className="font-bold text-gray-800 flex items-center gap-2"><ClipboardList size={18} className="text-ecar-blue" /> Crear Parte Diario</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Obra *</label>
-              <select value={form.obra_id} onChange={e => setForm({...form, obra_id: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500">
+              <select value={form.obra_id} onChange={e => setForm({...form, obra_id: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue">
                 <option value="">Seleccioná una obra</option>
                 {projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -170,13 +170,13 @@ export const FieldModule: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Fecha *</label>
-              <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500" />
+              <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Clima</label>
               <div className="flex gap-1 mt-1">
                 {Object.entries(CLIMA_ICONS).map(([key, Icon]) => (
-                  <button key={key} onClick={() => setForm({...form, clima: key})} className={`p-2.5 rounded-lg border transition-all ${form.clima === key ? 'bg-cyan-100 border-cyan-400 text-cyan-700 shadow-sm' : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`} title={CLIMA_LABELS[key]}>
+                  <button key={key} onClick={() => setForm({...form, clima: key})} className={`p-2.5 rounded-lg border transition-all ${form.clima === key ? 'bg-ecar-blueLight border-ecar-blue text-ecar-blue shadow-sm' : 'border-gray-200 text-gray-400 hover:bg-gray-50'}`} title={CLIMA_LABELS[key]}>
                     <Icon size={18} />
                   </button>
                 ))}
@@ -224,15 +224,15 @@ export const FieldModule: React.FC = () => {
 
           {/* 📸 Fotos del Parte */}
           <div className="border border-dashed border-gray-300 rounded-xl p-4 space-y-3 bg-gray-50/50">
-            <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-cyan-600" /> 📸 Fotos de Avance</h4>
+            <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-ecar-blue" /> 📸 Fotos de Avance</h4>
             <div className="flex flex-wrap gap-2">
               {(['avance', 'entrega', 'incidente', 'otro'] as const).map(t => (
-                <button key={t} onClick={() => setFotoTipoForm(t)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${fotoTipoForm === t ? 'bg-cyan-100 text-cyan-700 ring-2 ring-offset-1 ring-cyan-300' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                <button key={t} onClick={() => setFotoTipoForm(t)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${fotoTipoForm === t ? 'bg-ecar-blueLight text-ecar-blue ring-2 ring-offset-1 ring-ecar-blueLight' : 'bg-white text-gray-500 border border-gray-200'}`}>
                   {t === 'avance' ? '📊 Avance' : t === 'entrega' ? '📦 Entrega' : t === 'incidente' ? '⚠️ Incidente' : '📎 Otro'}
                 </button>
               ))}
             </div>
-            <label className="flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-cyan-400 hover:bg-cyan-50/50 transition-all">
+            <label className="flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-ecar-blue hover:bg-slate-50/50 transition-all">
               <Camera size={20} className="text-gray-400" />
               <span className="text-sm font-medium text-gray-500">Tomar foto o elegir archivo</span>
               <input type="file" accept="image/*" capture="environment" onChange={e => {
@@ -258,12 +258,12 @@ export const FieldModule: React.FC = () => {
           </div>
 
           {/* Info about post-creation tabs */}
-          <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-3 flex items-start gap-3">
+          <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-3 flex items-start gap-3">
             <span className="text-lg">💡</span>
-            <p className="text-xs text-cyan-700"><strong>Tip:</strong> Al crear el parte podrás agregar <strong>personal presente</strong>, <strong>solicitar materiales</strong> del pañol y registrar <strong>equipos/maquinaria</strong> usados.</p>
+            <p className="text-xs text-ecar-blue"><strong>Tip:</strong> Al crear el parte podrás agregar <strong>personal presente</strong>, <strong>solicitar materiales</strong> del pañol y registrar <strong>equipos/maquinaria</strong> usados.</p>
           </div>
 
-          <button onClick={handleSubmit} disabled={createParte.isPending || !form.obra_id || !form.trabajo_realizado} className="w-full md:w-auto bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 transition-all disabled:opacity-50 justify-center">
+          <button onClick={handleSubmit} disabled={createParte.isPending || !form.obra_id || !form.trabajo_realizado} className="w-full md:w-auto bg-ecar-blue text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all disabled:opacity-50 justify-center">
             {createParte.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Crear Parte y Continuar
           </button>
         </div>
@@ -273,7 +273,7 @@ export const FieldModule: React.FC = () => {
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Partes Diarios</h3></div>
         {isLoading ? (
-          <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-cyan-600 rounded-full animate-spin mx-auto" /></div>
+          <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div>
         ) : partes.length === 0 ? (
           <div className="text-center py-16 text-gray-400"><ClipboardList size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">No hay partes diarios</p><p className="text-sm">Creá el primer parte para registrar el avance de obra.</p></div>
         ) : (
@@ -282,18 +282,18 @@ export const FieldModule: React.FC = () => {
               const ClimaIcon = p.clima ? CLIMA_ICONS[p.clima] || Sun : Sun;
               return (
                 <button key={p.id} onClick={() => setSelectedParte(p)} className="w-full px-4 py-3.5 flex items-center gap-4 hover:bg-gray-50/50 transition-colors text-left group">
-                  <div className="w-11 h-11 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
-                    <ClimaIcon size={20} className="text-cyan-600" />
+                  <div className="w-11 h-11 rounded-xl bg-ecar-blueLight flex items-center justify-center shrink-0">
+                    <ClimaIcon size={20} className="text-ecar-blue" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-gray-800 truncate group-hover:text-cyan-700 transition-colors">{(p.obra as any)?.name || 'Sin obra'} — {new Date(p.fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                    <p className="font-bold text-sm text-gray-800 truncate group-hover:text-ecar-blue transition-colors">{(p.obra as any)?.name || 'Sin obra'} — {new Date(p.fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                     <p className="text-xs text-gray-500 truncate">{p.trabajo_realizado.substring(0, 80)}...</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {p.avance_porcentual > 0 && <span className="text-xs font-mono font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">{p.avance_porcentual}%</span>}
+                    {p.avance_porcentual > 0 && <span className="text-xs font-mono font-bold text-ecar-blue bg-slate-50 px-2 py-0.5 rounded-full">{p.avance_porcentual}%</span>}
                     <span className="font-mono text-xs text-gray-500">{p.horas_trabajadas}hs</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${ESTADO_COLORS[p.estado]}`}>{p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}</span>
-                    <ChevronDown size={16} className="text-gray-300 group-hover:text-cyan-500 transition-colors" />
+                    <ChevronDown size={16} className="text-gray-300 group-hover:text-ecar-blue transition-colors" />
                   </div>
                 </button>
               );
@@ -330,15 +330,15 @@ const ParteDetailView: React.FC<{
   return (
     <div className="space-y-4">
       {/* Back + Header */}
-      <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-cyan-600 transition-colors group">
+      <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
         <ChevronUp size={16} className="rotate-[-90deg] group-hover:-translate-x-0.5 transition-transform" /> Volver a Partes Diarios
       </button>
 
-      <div className="bg-gradient-to-r from-cyan-800 to-cyan-600 rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-5 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-10"><ClimaIcon size={80} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-xl">{(parte.obra as any)?.name || 'Sin obra'}</h3>
-          <p className="text-cyan-100 text-sm mt-0.5 flex items-center gap-3">
+          <p className="text-ecar-blueLight text-sm mt-0.5 flex items-center gap-3">
             <span>{new Date(parte.fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
             <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">{CLIMA_LABELS[parte.clima || 'despejado']}</span>
             <span className="font-mono">{parte.horas_trabajadas}hs</span>
@@ -362,7 +362,7 @@ const ParteDetailView: React.FC<{
       {/* Tabs - Mobile-friendly */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[80px] py-2.5 rounded-lg text-xs font-bold flex flex-col md:flex-row items-center justify-center gap-1 transition-all ${tab === t.id ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[80px] py-2.5 rounded-lg text-xs font-bold flex flex-col md:flex-row items-center justify-center gap-1 transition-all ${tab === t.id ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             <span className="text-base md:text-xs">{t.emoji}</span>
             <span className="hidden md:inline">{t.label}</span>
           </button>
@@ -390,8 +390,8 @@ const ActividadTab: React.FC<{ parte: ParteDiario }> = ({ parte }) => (
       <div>
         <p className="text-xs font-bold text-gray-500 uppercase mb-1">Avance del Día</p>
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${Math.min(parte.avance_porcentual, 100)}%` }} /></div>
-          <span className="font-mono font-bold text-cyan-600 text-sm">{parte.avance_porcentual}%</span>
+          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-ecar-blue rounded-full transition-all" style={{ width: `${Math.min(parte.avance_porcentual, 100)}%` }} /></div>
+          <span className="font-mono font-bold text-ecar-blue text-sm">{parte.avance_porcentual}%</span>
         </div>
       </div>
     )}
@@ -432,22 +432,22 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
     e.target.value = '';
   };
 
-  const TIPO_COLORS: Record<string, string> = { avance: 'bg-cyan-100 text-cyan-700', entrega: 'bg-green-100 text-green-700', incidente: 'bg-red-100 text-red-700', otro: 'bg-gray-100 text-gray-600' };
+  const TIPO_COLORS: Record<string, string> = { avance: 'bg-ecar-blueLight text-ecar-blue', entrega: 'bg-green-100 text-green-700', incidente: 'bg-red-100 text-red-700', otro: 'bg-gray-100 text-gray-600' };
 
   return (
     <div className="space-y-4">
       {isBorrador && (
         <div className="light-card p-4 space-y-3">
-          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-cyan-600" /> Subir Foto</h4>
+          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Camera size={16} className="text-ecar-blue" /> Subir Foto</h4>
           <div className="flex flex-wrap gap-2">
             {(['avance', 'entrega', 'incidente', 'otro'] as const).map(t => (
-              <button key={t} onClick={() => setFotoTipo(t)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${fotoTipo === t ? TIPO_COLORS[t] + ' ring-2 ring-offset-1 ring-cyan-300' : 'bg-gray-100 text-gray-500'}`}>
+              <button key={t} onClick={() => setFotoTipo(t)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${fotoTipo === t ? TIPO_COLORS[t] + ' ring-2 ring-offset-1 ring-ecar-blueLight' : 'bg-gray-100 text-gray-500'}`}>
                 {t === 'avance' ? '📊 Avance' : t === 'entrega' ? '📦 Entrega' : t === 'incidente' ? '⚠️ Incidente' : '📎 Otro'}
               </button>
             ))}
           </div>
-          <label className={`flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-all ${uploading ? 'border-cyan-300 bg-cyan-50' : 'border-gray-300 hover:border-cyan-400 hover:bg-cyan-50/50'}`}>
-            {uploading ? <div className="w-5 h-5 border-2 border-cyan-300 border-t-cyan-600 rounded-full animate-spin" /> : <Camera size={20} className="text-gray-400" />}
+          <label className={`flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed rounded-xl cursor-pointer transition-all ${uploading ? 'border-ecar-blueLight bg-slate-50' : 'border-gray-300 hover:border-ecar-blue hover:bg-slate-50/50'}`}>
+            {uploading ? <div className="w-5 h-5 border-2 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin" /> : <Camera size={20} className="text-gray-400" />}
             <span className="text-sm font-medium text-gray-500">{uploading ? 'Subiendo...' : 'Tomar foto o elegir archivo'}</span>
             <input type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" disabled={uploading} />
           </label>
@@ -502,7 +502,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
     <div className="space-y-4">
       {isBorrador && (
         <div className="light-card p-4 space-y-3">
-          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Users size={16} className="text-indigo-600" /> Agregar Personal</h4>
+          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Users size={16} className="text-ecar-blue" /> Agregar Personal</h4>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar empleado..." className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm" />
@@ -515,7 +515,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
             <div><label className="text-xs font-bold text-gray-500">Horas</label><input type="number" value={horas} onChange={e => setHoras(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tarea} onChange={e => setTarea(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Opcional" /></div>
           </div>
-          <button onClick={handleAdd} disabled={!selEmp || createPersonal.isPending} className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={handleAdd} disabled={!selEmp || createPersonal.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
             <Plus size={16} /> Agregar
           </button>
         </div>
@@ -530,7 +530,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
           <div className="divide-y divide-gray-100">
             {personal.map(p => (
               <div key={p.id} className="px-4 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
+                <div className="w-9 h-9 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                   {((p.employee as any)?.full_name || '?')[0]}
                 </div>
                 <div className="flex-1 min-w-0">

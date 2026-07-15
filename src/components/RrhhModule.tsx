@@ -106,11 +106,11 @@ export const RrhhModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-800 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Users size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Users size={24} /> Gerencia de RRHH</h3>
-          <p className="text-indigo-100 text-sm mt-1">
+          <p className="text-ecar-blueLight text-sm mt-1">
             {activeEmployees.length} empleados activos · Categorías UOCRA · Parte diario de asistencia
           </p>
         </div>
@@ -173,7 +173,7 @@ export const RrhhModule: React.FC = () => {
                     <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${emp.employment_status === 'active' ? 'bg-indigo-100 text-indigo-700' : 'bg-red-100 text-red-600'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${emp.employment_status === 'active' ? 'bg-ecar-blueLight text-ecar-blue' : 'bg-red-100 text-red-600'}`}>
                             {emp.full_name.charAt(0)}
                           </div>
                           <div>
@@ -190,7 +190,7 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
                       <td className="px-4 py-3 text-gray-700">{emp.category?.name || '—'}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{emp.project?.name || '—'}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-indigo-600">{calcAntiguedad(emp.hire_date)}</td>
+                      <td className="px-4 py-3 text-xs font-bold text-ecar-blue">{calcAntiguedad(emp.hire_date)}</td>
                       <td className="px-4 py-3 text-xs text-gray-500">{emp.bank_alias_cbu || emp.bank_name || '—'}</td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -214,7 +214,7 @@ export const RrhhModule: React.FC = () => {
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} /> Nuevo Empleado</h3>
           
           {/* Datos personales */}
-          <p className="text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg border border-indigo-100 flex items-center gap-2 shadow-sm mb-4"><User size={14} /> Datos Personales</p>
+          <p className="text-xs font-bold uppercase tracking-wider bg-slate-50 text-ecar-blue px-3 py-2 rounded-lg border border-ecar-blueLight flex items-center gap-2 shadow-sm mb-4"><User size={14} /> Datos Personales</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="md:col-span-3">
               <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
@@ -352,7 +352,7 @@ export const RrhhModule: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 block mb-1">Horas Extras</label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.does_overtime} onChange={e => setForm({ ...form, does_overtime: e.target.checked })} className="accent-indigo-600 w-4 h-4" />
+                  <input type="checkbox" checked={form.does_overtime} onChange={e => setForm({ ...form, does_overtime: e.target.checked })} className="accent-ecar-blue w-4 h-4" />
                   <span className="text-sm text-gray-700 font-medium">Realiza horas extras</span>
                 </label>
                 {form.does_overtime && (
@@ -454,7 +454,7 @@ export const RrhhModule: React.FC = () => {
               <button onClick={() => setEditingEmployee(null)}><X size={20} className="text-gray-400" /></button>
             </div>
 
-            <p className="text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg border border-indigo-100 flex items-center gap-2 shadow-sm mb-2"><User size={14} /> Datos Personales</p>
+            <p className="text-xs font-bold uppercase tracking-wider bg-slate-50 text-ecar-blue px-3 py-2 rounded-lg border border-ecar-blueLight flex items-center gap-2 shadow-sm mb-2"><User size={14} /> Datos Personales</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="md:col-span-3">
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
@@ -590,7 +590,7 @@ export const RrhhModule: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500 block mb-1">Horas Extras</label>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={editForm.does_overtime || false} onChange={e => setEditForm({ ...editForm, does_overtime: e.target.checked })} className="accent-indigo-600 w-4 h-4" />
+                    <input type="checkbox" checked={editForm.does_overtime || false} onChange={e => setEditForm({ ...editForm, does_overtime: e.target.checked })} className="accent-ecar-blue w-4 h-4" />
                     <span className="text-sm text-gray-700 font-medium">Realiza horas extras</span>
                   </label>
                   {editForm.does_overtime && (
@@ -770,7 +770,7 @@ const LegajoView: React.FC<{
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Activos ({activeEmps.length})</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
               {activeEmps.map(e => (
-                <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-all">
+                <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border rounded-lg hover:bg-slate-50 hover:border-ecar-blueLight transition-all">
                   <p className="font-bold text-sm text-gray-900">{e.full_name}</p>
                   <p className="text-xs text-gray-400 font-mono">{e.cuil || 'Sin CUIL'}</p>
                 </button>
@@ -835,16 +835,16 @@ const LegajoView: React.FC<{
     <div className="space-y-4">
       <button onClick={onBack} className="text-ecar-blue text-sm font-bold hover:underline">← Volver a nómina</button>
       <div className="light-card overflow-hidden">
-        <div className="bg-indigo-50 p-6">
+        <div className="bg-slate-50 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-xl">
+              <div className="w-16 h-16 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xl">
                 {employee.full_name.charAt(0)}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900">{employee.full_name}</h3>
                 <p className="text-sm text-gray-500">CUIL: {employee.cuil || '—'} · DNI: {employee.dni || '—'}</p>
-                <p className="text-xs text-indigo-600 font-bold mt-1">{employee.category?.name || 'Sin categoría'} · {employee.project?.name || 'Sin obra asignada'}</p>
+                <p className="text-xs text-ecar-blue font-bold mt-1">{employee.category?.name || 'Sin categoría'} · {employee.project?.name || 'Sin obra asignada'}</p>
               </div>
             </div>
             <button
@@ -874,12 +874,12 @@ const LegajoView: React.FC<{
             <div><span className="text-xs font-bold text-gray-400 block">Alta ARCA</span>{employee.hire_date || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Período Prueba</span>{employee.trial_start_date || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Emergencia</span>{employee.emergency_contact || '—'}</div>
-            <div><span className="text-xs font-bold text-gray-400 block">Antigüedad</span><span className="text-indigo-600 font-bold">{calcAntiguedad(employee.hire_date)}</span></div>
+            <div><span className="text-xs font-bold text-gray-400 block">Antigüedad</span><span className="text-ecar-blue font-bold">{calcAntiguedad(employee.hire_date)}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Convenio / Sindicato</span><span className="font-bold">{employee.union_name || '—'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Modo Liquidación</span>{employee.modo_liquidacion || '—'}</div>
             <div><span className="text-xs font-bold text-gray-400 block">Empresa Registrada</span><span className="font-bold text-gray-800">{employee.employer_entity || 'ECAR SAS'}</span></div>
             <div><span className="text-xs font-bold text-gray-400 block">Retribución</span>{employee.retribucion_pactada ? `$ ${Number(employee.retribucion_pactada).toLocaleString('es-AR')}` : '—'}</div>
-            <div><span className="text-xs font-bold text-gray-400 block">Horas Extras</span>{employee.does_overtime ? <span className="font-bold text-indigo-600">Sí — al {employee.overtime_rate || '50'}%</span> : <span className="text-gray-400">No</span>}</div>
+            <div><span className="text-xs font-bold text-gray-400 block">Horas Extras</span>{employee.does_overtime ? <span className="font-bold text-ecar-blue">Sí — al {employee.overtime_rate || '50'}%</span> : <span className="text-gray-400">No</span>}</div>
           </div>
 
           {/* Banco y Cobertura */}
@@ -1181,7 +1181,7 @@ const ChildrenInput: React.FC<{ value: string; onChange: (v: string) => void }> 
       <label className="text-xs font-bold text-gray-500 block mb-1">Hijos ({children.length})</label>
       <div className="flex flex-wrap items-center gap-2">
         {children.map((child, idx) => (
-          <div key={idx} className="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+          <div key={idx} className="flex items-center gap-1 bg-slate-50 border border-ecar-blueLight rounded-lg px-2 py-1">
             <input
               type="number"
               min={0}
@@ -1194,7 +1194,7 @@ const ChildrenInput: React.FC<{ value: string; onChange: (v: string) => void }> 
             <button onClick={() => removeChild(idx)} className="text-red-400 hover:text-red-600 ml-1" type="button">×</button>
           </div>
         ))}
-        <button onClick={addChild} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-2 py-1 border border-dashed border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors" type="button">
+        <button onClick={addChild} className="text-xs font-bold text-ecar-blue hover:text-ecar-blueDark px-2 py-1 border border-dashed border-ecar-blueLight rounded-lg hover:bg-slate-50 transition-colors" type="button">
           + Agregar hijo
         </button>
       </div>

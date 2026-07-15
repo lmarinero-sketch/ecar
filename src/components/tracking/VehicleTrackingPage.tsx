@@ -348,7 +348,7 @@ export const VehicleTrackingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-ecar-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">Cargando...</p>
         </div>
       </div>
@@ -383,14 +383,14 @@ export const VehicleTrackingPage: React.FC = () => {
         
         {step === 'setup' ? (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-4">
-            <div className="p-6 bg-gradient-to-b from-indigo-50 to-white">
+            <div className="p-6 bg-gradient-to-b from-slate-50 to-white">
               <h2 className="text-xl font-bold text-gray-800 mb-1">Iniciar Viaje</h2>
               <p className="text-sm text-gray-500 mb-6">Asignate un vehículo y comenzá a transmitir tu ubicación al tablero central.</p>
               
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                    <User className="w-4 h-4 text-indigo-500" />
+                    <User className="w-4 h-4 text-ecar-blue" />
                     Tu Nombre
                   </label>
                   <input
@@ -398,19 +398,19 @@ export const VehicleTrackingPage: React.FC = () => {
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
                     placeholder="Ej. Juan Pérez"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ecar-blue focus:border-transparent outline-none transition-all"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-indigo-500" />
+                    <Truck className="w-4 h-4 text-ecar-blue" />
                     Vehículo
                   </label>
                   <select
                     value={selectedVehicleId}
                     onChange={(e) => setSelectedVehicleId(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all appearance-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ecar-blue focus:border-transparent outline-none transition-all appearance-none"
                   >
                     <option value="">Seleccioná un vehículo...</option>
                     {vehicles.map(v => (
@@ -424,7 +424,7 @@ export const VehicleTrackingPage: React.FC = () => {
                 <button
                   onClick={startTracking}
                   disabled={loading || !driverName || !selectedVehicleId}
-                  className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+                  className="w-full mt-6 bg-ecar-blue hover:bg-ecar-blue text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-ecar-blueLight flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
                 >
                   <Play className="w-5 h-5 fill-current" />
                   COMENZAR TRACKING
@@ -480,7 +480,7 @@ export const VehicleTrackingPage: React.FC = () => {
                 </GoogleMap>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
-                  <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <div className="w-12 h-12 border-4 border-ecar-blue border-t-transparent rounded-full animate-spin mb-4"></div>
                   <p>Obteniendo ubicación GPS...</p>
                 </div>
               )}
@@ -489,13 +489,13 @@ export const VehicleTrackingPage: React.FC = () => {
             {/* Destination Alert Overlay */}
             {destination && (
               <div className="absolute top-4 left-4 right-4 z-10 animate-in slide-in-from-top-4">
-                <div className="bg-indigo-600 text-white rounded-xl shadow-lg p-3 flex items-center justify-between">
+                <div className="bg-ecar-blue text-white rounded-xl shadow-lg p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-lg">
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-indigo-100">Nuevo Destino</p>
+                      <p className="text-xs font-medium text-ecar-blueLight">Nuevo Destino</p>
                       <p className="font-bold text-sm">Dirígete a la ruta marcada</p>
                     </div>
                   </div>
@@ -506,7 +506,7 @@ export const VehicleTrackingPage: React.FC = () => {
             {/* Floating Info Panel at Bottom - DARK MODE */}
             <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-6 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
               <div className={`rounded-2xl shadow-2xl p-5 w-full max-w-md mx-auto relative overflow-hidden transition-colors duration-300 ${isOverSpeed ? 'bg-red-900 border-2 border-red-500' : 'bg-gray-900 border border-gray-700'}`}>
-                <div className={`absolute top-0 left-0 w-full h-1 ${isOverSpeed ? 'bg-red-500 animate-pulse' : 'bg-indigo-500'}`}></div>
+                <div className={`absolute top-0 left-0 w-full h-1 ${isOverSpeed ? 'bg-red-500 animate-pulse' : 'bg-ecar-blue'}`}></div>
                 
                 <div className="flex items-center justify-between mb-5 mt-1">
                   <div>
@@ -517,8 +517,8 @@ export const VehicleTrackingPage: React.FC = () => {
                     </p>
                   </div>
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center relative shadow-sm ${isOverSpeed ? 'bg-red-950' : 'bg-gray-800'}`}>
-                    <div className={`absolute inset-0 border-4 border-t-transparent rounded-full ${isOverSpeed ? 'border-red-500 animate-ping' : 'border-indigo-500 animate-spin'}`}></div>
-                    <Navigation className={`w-5 h-5 ${isOverSpeed ? 'text-red-500' : 'text-indigo-400'}`} />
+                    <div className={`absolute inset-0 border-4 border-t-transparent rounded-full ${isOverSpeed ? 'border-red-500 animate-ping' : 'border-ecar-blue animate-spin'}`}></div>
+                    <Navigation className={`w-5 h-5 ${isOverSpeed ? 'text-red-500' : 'text-ecar-blue'}`} />
                   </div>
                 </div>
                 
@@ -536,7 +536,7 @@ export const VehicleTrackingPage: React.FC = () => {
                   <a 
                     href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination.lat},${destination.lng}&travelmode=driving`}
                     target="_blank" rel="noreferrer"
-                    className="w-full mb-4 bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/30 active:scale-95"
+                    className="w-full mb-4 bg-ecar-blue text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-ecar-blue transition-all shadow-lg shadow-ecar-blue/30 active:scale-95"
                   >
                     <Navigation className="w-5 h-5 fill-current" />
                     Navegación Asistida (GPS)

@@ -110,16 +110,16 @@ export const SupplierEvalModule: React.FC = () => {
     });
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-teal-600 rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark via-ecar-blue to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardCheck size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardCheck size={24} /> Evaluación de Proveedores</h3>
-          <p className="text-teal-100 text-sm mt-1">Gerencia de Compras — Doc PR-GC-01 §4.5</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Gerencia de Compras — Doc PR-GC-01 §4.5</p>
         </div>
       </div>
 
@@ -151,10 +151,10 @@ export const SupplierEvalModule: React.FC = () => {
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar proveedor o período..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30" />
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="bg-teal-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-teal-700 transition-all">
+          className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
           <Plus size={16} /> Nueva Evaluación
         </button>
       </div>
@@ -215,7 +215,7 @@ export const SupplierEvalModule: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <ClipboardCheck size={20} className="text-teal-600" /> Nueva Evaluación de Proveedor
+                <ClipboardCheck size={20} className="text-ecar-blue" /> Nueva Evaluación de Proveedor
               </h3>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
@@ -242,7 +242,7 @@ export const SupplierEvalModule: React.FC = () => {
 
               {/* Criteria Ratings */}
               <div className="border-t border-gray-200 pt-4">
-                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><BarChart3 size={16} className="text-teal-500" /> Calificación por Criterio (1-5)</h4>
+                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"><BarChart3 size={16} className="text-ecar-blue" /> Calificación por Criterio (1-5)</h4>
                 <div className="space-y-3">
                   {CRITERIA.map(c => (
                     <div key={c.key} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
@@ -257,13 +257,13 @@ export const SupplierEvalModule: React.FC = () => {
               </div>
 
               {/* Overall Score */}
-              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-200 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-slate-50 to-emerald-50 rounded-xl p-4 border border-ecar-blueLight flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-teal-600">PUNTAJE GENERAL</div>
-                  <div className="text-3xl font-bold text-teal-800">{overallScore}</div>
+                  <div className="text-xs font-bold text-ecar-blue">PUNTAJE GENERAL</div>
+                  <div className="text-3xl font-bold text-ecar-blueDark">{overallScore}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-bold text-teal-600">RECOMENDACIÓN AUTOMÁTICA</div>
+                  <div className="text-xs font-bold text-ecar-blue">RECOMENDACIÓN AUTOMÁTICA</div>
                   <span className={`mt-1 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${RECOMMENDATIONS[autoRecommendation]?.color}`}>
                     {RECOMMENDATIONS[autoRecommendation]?.icon} {RECOMMENDATIONS[autoRecommendation]?.label}
                   </span>
@@ -292,7 +292,7 @@ export const SupplierEvalModule: React.FC = () => {
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-end gap-3 rounded-b-2xl">
               <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
               <button onClick={handleSubmit} disabled={!form.supplier_name || createEval.isPending}
-                className="bg-teal-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-teal-700 disabled:opacity-50 transition-all">
+                className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue disabled:opacity-50 transition-all">
                 <Save size={16} /> Registrar Evaluación
               </button>
             </div>

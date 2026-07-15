@@ -224,12 +224,12 @@ export const AccountantNovedadesPanel: React.FC = () => {
   const novedadConfig: Record<NovedadType, { label: string; icon: React.ReactNode; classes: string }> = {
     alta: { label: 'Alta', icon: <UserPlus size={14} />, classes: 'bg-green-100 text-green-700' },
     baja: { label: 'Baja', icon: <UserMinus size={14} />, classes: 'bg-red-100 text-red-700' },
-    cambio_categoria: { label: 'Cambio Cat.', icon: <Briefcase size={14} />, classes: 'bg-purple-100 text-purple-700' },
+    cambio_categoria: { label: 'Cambio Cat.', icon: <Briefcase size={14} />, classes: 'bg-ecar-blueLight text-ecar-blue' },
     asistencia_perfecta: { label: 'Asist. Perfecta', icon: <CheckCircle2 size={14} />, classes: 'bg-emerald-100 text-emerald-700' },
     ausencia: { label: 'Ausencia', icon: <XCircle size={14} />, classes: 'bg-red-100 text-red-700' },
     tardanza: { label: 'Tardanza', icon: <AlertTriangle size={14} />, classes: 'bg-yellow-100 text-yellow-700' },
     vacaciones: { label: 'Vacaciones', icon: <Calendar size={14} />, classes: 'bg-blue-100 text-blue-700' },
-    medico: { label: 'Médico', icon: <Clock size={14} />, classes: 'bg-cyan-100 text-cyan-700' },
+    medico: { label: 'Médico', icon: <Clock size={14} />, classes: 'bg-ecar-blueLight text-ecar-blue' },
   };
 
   return (
@@ -293,7 +293,7 @@ export const AccountantNovedadesPanel: React.FC = () => {
               <button
                 key={f.id}
                 onClick={() => setFilterType(f.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${filterType === f.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${filterType === f.id ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 {f.label}
               </button>
@@ -369,7 +369,7 @@ export const AccountantNovedadesPanel: React.FC = () => {
                   <tr key={s.employee.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                           {s.employee.full_name.charAt(0)}
                         </div>
                         <span className="font-bold text-gray-900">{s.employee.full_name}</span>
@@ -398,13 +398,13 @@ export const AccountantNovedadesPanel: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {s.daysMedical > 0 ? (
-                        <span className="font-mono font-bold text-cyan-700">{s.daysMedical}</span>
+                        <span className="font-mono font-bold text-ecar-blue">{s.daysMedical}</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{s.totalWorkedHours}h</td>
                     <td className="px-4 py-3 text-right">
                       {s.overtimeHours > 0 ? (
-                        <span className="font-mono font-bold text-purple-700">{s.overtimeHours}h</span>
+                        <span className="font-mono font-bold text-ecar-blue">{s.overtimeHours}h</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-600">
@@ -453,7 +453,7 @@ const KPICard: React.FC<{
   color: string;
 }> = ({ icon, label, value, suffix, color }) => {
   const colors: Record<string, { bg: string; text: string; iconBg: string; border: string }> = {
-    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', iconBg: 'bg-indigo-100', border: 'border-indigo-200' },
+    indigo: { bg: 'bg-slate-50', text: 'text-ecar-blue', iconBg: 'bg-ecar-blueLight', border: 'border-ecar-blueLight' },
     green: { bg: 'bg-green-50', text: 'text-green-700', iconBg: 'bg-green-100', border: 'border-green-200' },
     red: { bg: 'bg-red-50', text: 'text-red-700', iconBg: 'bg-red-100', border: 'border-red-200' },
     yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', iconBg: 'bg-yellow-100', border: 'border-yellow-200' },

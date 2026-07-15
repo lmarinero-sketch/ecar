@@ -465,7 +465,7 @@ export const FleetTrackingMap: React.FC = () => {
   if (!isLoaded) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500">
-        <Loader2 className="w-8 h-8 animate-spin mb-3 text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin mb-3 text-ecar-blue" />
         <p>Cargando mapas...</p>
       </div>
     );
@@ -478,7 +478,7 @@ export const FleetTrackingMap: React.FC = () => {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <Navigation className="w-5 h-5 text-indigo-600" />
+            <Navigation className="w-5 h-5 text-ecar-blue" />
             Rastreo Satelital en Vivo
           </h2>
           <p className="text-sm text-gray-500">
@@ -491,28 +491,28 @@ export const FleetTrackingMap: React.FC = () => {
               setShowHistoryModal(true);
               loadHistorySessions();
             }}
-            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-purple-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-ecar-blue transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
           >
             <Clock className="w-3.5 h-3.5" />
             Historial
           </button>
           <button 
             onClick={() => setShowTutorial(true)}
-            className="text-xs flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm font-medium"
+            className="text-xs flex items-center gap-1.5 text-ecar-blue hover:text-ecar-blueDark transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-ecar-blueLight shadow-sm font-medium"
           >
             <HelpCircle className="w-3.5 h-3.5" />
             ¿Cómo asignar rutas?
           </button>
           <button 
             onClick={handleCopyLink}
-            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-ecar-blue transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Share2 className="w-3.5 h-3.5" />}
             {copied ? 'Copiado' : 'Compartir'}
           </button>
           <button 
             onClick={loadActiveSessions}
-            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
+            className="text-xs flex items-center gap-1.5 text-gray-500 hover:text-ecar-blue transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Sincronizar
@@ -547,8 +547,8 @@ export const FleetTrackingMap: React.FC = () => {
                       }}
                       className={`p-3 cursor-pointer transition-colors ${
                         selectedVehicleId === v.vehicle_id 
-                          ? (isOverSpeed ? 'bg-red-50 border-l-4 border-red-500' : 'bg-indigo-50 border-l-4 border-indigo-500')
-                          : (isOverSpeed ? 'bg-red-50/50 border-l-4 border-transparent hover:bg-red-50' : 'border-l-4 border-transparent hover:bg-indigo-50')
+                          ? (isOverSpeed ? 'bg-red-50 border-l-4 border-red-500' : 'bg-slate-50 border-l-4 border-ecar-blue')
+                          : (isOverSpeed ? 'bg-red-50/50 border-l-4 border-transparent hover:bg-red-50' : 'border-l-4 border-transparent hover:bg-slate-50')
                       }`}
                     >
                       <div className="flex justify-between items-start mb-1">
@@ -577,7 +577,7 @@ export const FleetTrackingMap: React.FC = () => {
         {/* Mapa */}
         <div className="flex-1 relative">
           {selectedHistory && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-20 flex items-center gap-4 animate-in slide-in-from-top">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-ecar-blue text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm z-20 flex items-center gap-4 animate-in slide-in-from-top">
               <span className="flex items-center gap-2">
                 <Clock className="w-4 h-4" /> 
                 Historial: {(selectedHistory.session.fuel_vehicles as any)?.code || 'Unidad'} 
@@ -597,7 +597,7 @@ export const FleetTrackingMap: React.FC = () => {
                     map.fitBounds(bounds);
                   }
                 }} 
-                className="bg-purple-800 hover:bg-purple-900 rounded-full p-1.5 transition-colors"
+                className="bg-ecar-blueDark hover:bg-ecar-blueDark rounded-full p-1.5 transition-colors"
                 title="Cerrar historial"
               >
                 <X className="w-4 h-4" />
@@ -634,7 +634,7 @@ export const FleetTrackingMap: React.FC = () => {
                   <p className="text-sm font-medium text-gray-800 mb-2">¿Confirmar destino?</p>
                   <button
                     onClick={() => handleConfirmDestination(tempDestination.lat, tempDestination.lng)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 w-full"
+                    className="bg-ecar-blue text-white px-4 py-2 rounded font-bold hover:bg-ecar-blue w-full"
                   >
                     Ir aquí
                   </button>
@@ -805,7 +805,7 @@ export const FleetTrackingMap: React.FC = () => {
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-20 w-[90%] max-w-4xl flex gap-4 animate-in slide-in-from-bottom">
               <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Distancia</p>
-                <p className="font-black text-xl text-indigo-600">{selectedHistory.kpis.distance} <span className="text-sm font-normal text-gray-500">km</span></p>
+                <p className="font-black text-xl text-ecar-blue">{selectedHistory.kpis.distance} <span className="text-sm font-normal text-gray-500">km</span></p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Duración</p>
@@ -826,7 +826,7 @@ export const FleetTrackingMap: React.FC = () => {
               <div className="flex items-center justify-center">
                 <button 
                   onClick={() => setShowHistoryTable(!showHistoryTable)}
-                  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors h-full"
+                  className="bg-ecar-blueLight hover:bg-ecar-blueLight text-ecar-blue px-4 py-2 rounded-lg text-sm font-bold transition-colors h-full"
                 >
                   {showHistoryTable ? 'Ocultar Tabla' : 'Ver Tabla'}
                 </button>
@@ -884,7 +884,7 @@ export const FleetTrackingMap: React.FC = () => {
       {showHistoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[85vh] flex flex-col">
-            <div className="bg-purple-600 p-6 text-white relative shrink-0">
+            <div className="bg-ecar-blue p-6 text-white relative shrink-0">
               <button 
                 onClick={() => setShowHistoryModal(false)}
                 className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
@@ -895,13 +895,13 @@ export const FleetTrackingMap: React.FC = () => {
                 <Clock className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold">Historial de Recorridos</h3>
-              <p className="text-purple-100 text-sm mt-1">Selecciona una sesión pasada para visualizar el recorrido exacto en el mapa.</p>
+              <p className="text-ecar-blueLight text-sm mt-1">Selecciona una sesión pasada para visualizar el recorrido exacto en el mapa.</p>
             </div>
             
             <div className="p-0 overflow-y-auto bg-gray-50 flex-1">
               {loadingHistory ? (
                 <div className="p-10 flex flex-col items-center justify-center text-gray-500">
-                  <Loader2 className="w-8 h-8 animate-spin mb-3 text-purple-600" />
+                  <Loader2 className="w-8 h-8 animate-spin mb-3 text-ecar-blue" />
                   <p>Cargando sesiones históricas...</p>
                 </div>
               ) : historySessions.length === 0 ? (
@@ -914,10 +914,10 @@ export const FleetTrackingMap: React.FC = () => {
                     <div 
                       key={session.id} 
                       onClick={() => handleSelectHistorySession(session)}
-                      className="p-4 bg-white hover:bg-purple-50 cursor-pointer transition-colors flex items-center justify-between group"
+                      className="p-4 bg-white hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue shrink-0">
                           <Truck className="w-5 h-5" />
                         </div>
                         <div>
@@ -958,7 +958,7 @@ export const FleetTrackingMap: React.FC = () => {
       {showTutorial && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-indigo-600 p-6 text-white relative">
+            <div className="bg-ecar-blue p-6 text-white relative">
               <button 
                 onClick={() => setShowTutorial(false)}
                 className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
@@ -969,7 +969,7 @@ export const FleetTrackingMap: React.FC = () => {
                 <Navigation className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold">Cómo Asignar un Destino</h3>
-              <p className="text-indigo-100 text-sm mt-1">Guía rápida para despachar vehículos y enviar rutas automáticamente.</p>
+              <p className="text-ecar-blueLight text-sm mt-1">Guía rápida para despachar vehículos y enviar rutas automáticamente.</p>
             </div>
             
             <div className="p-6 space-y-6">
@@ -989,7 +989,7 @@ export const FleetTrackingMap: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 mb-1">2. Activa la Asignación</h4>
-                  <p className="text-sm text-gray-600">En la tarjeta de información del vehículo, presiona el botón azul <strong className="text-indigo-600 font-bold">"Asignar Destino"</strong>.</p>
+                  <p className="text-sm text-gray-600">En la tarjeta de información del vehículo, presiona el botón azul <strong className="text-ecar-blue font-bold">"Asignar Destino"</strong>.</p>
                 </div>
               </div>
               
@@ -999,7 +999,7 @@ export const FleetTrackingMap: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 mb-1">3. Marca el punto en el mapa</h4>
-                  <p className="text-sm text-gray-600">Haz clic en cualquier calle para colocar un marcador y luego presiona el botón <strong className="text-indigo-600 font-bold">"Ir aquí"</strong> para confirmar. ¡Listo! El celular del conductor calculará la ruta automáticamente al instante.</p>
+                  <p className="text-sm text-gray-600">Haz clic en cualquier calle para colocar un marcador y luego presiona el botón <strong className="text-ecar-blue font-bold">"Ir aquí"</strong> para confirmar. ¡Listo! El celular del conductor calculará la ruta automáticamente al instante.</p>
                 </div>
               </div>
             </div>
@@ -1007,7 +1007,7 @@ export const FleetTrackingMap: React.FC = () => {
             <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
               <button 
                 onClick={() => setShowTutorial(false)}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
+                className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold hover:bg-ecar-blue transition-colors"
               >
                 Entendido, ¡probar ahora!
               </button>

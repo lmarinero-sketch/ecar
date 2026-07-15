@@ -49,7 +49,7 @@ export const PayrollViewerModal: React.FC<{
         <div className="flex justify-between items-center border-b pb-3">
           <div>
             <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-              <Users size={20} className="text-indigo-600" />
+              <Users size={20} className="text-ecar-blue" />
               Detalle de {concepto}
             </h4>
             <p className="text-sm text-gray-500 mt-1">Listado de obreros y sus alias para transferencias</p>
@@ -62,7 +62,7 @@ export const PayrollViewerModal: React.FC<{
         <div className="flex-1 overflow-auto border rounded-lg bg-gray-50">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-indigo-500" />
+              <Loader2 size={32} className="animate-spin text-ecar-blue" />
             </div>
           ) : (
             <table className="w-full text-sm text-left">
@@ -79,7 +79,7 @@ export const PayrollViewerModal: React.FC<{
                 {details.map((row) => {
                   const alias = row.employee?.bank_alias_cbu || '';
                   return (
-                    <tr key={row.id} className="hover:bg-indigo-50/50 transition-colors">
+                    <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3 font-bold text-gray-800">
                         {row.employee?.full_name || 'Desconocido'}
                       </td>
@@ -93,7 +93,7 @@ export const PayrollViewerModal: React.FC<{
                       <td className="px-4 py-3 text-center text-gray-600">
                         {row.worked_hours} hs
                       </td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-indigo-700">
+                      <td className="px-4 py-3 text-right font-mono font-bold text-ecar-blue">
                         {formatARS(Number(row.final_amount))}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -120,7 +120,7 @@ export const PayrollViewerModal: React.FC<{
                   <td colSpan={3} className="px-4 py-3 text-right uppercase text-slate-700">
                     Total a Transferir
                   </td>
-                  <td className="px-4 py-3 text-right text-lg text-indigo-700 font-mono">
+                  <td className="px-4 py-3 text-right text-lg text-ecar-blue font-mono">
                     {formatARS(total)}
                   </td>
                   <td></td>

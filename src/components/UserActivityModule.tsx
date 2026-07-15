@@ -75,14 +75,14 @@ export const UserActivityModule: React.FC = () => {
   }
 
   if (isLoading) {
-    return <div className="flex justify-center p-20"><div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div></div>;
+    return <div className="flex justify-center p-20"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>;
   }
 
   return (
     <div className="space-y-6">
       {/* Resumen Diario */}
       <div className="light-card p-5">
-        <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4"><Calendar size={18} className="text-violet-600" /> Resumen de Actividad (Hoy)</h3>
+        <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4"><Calendar size={18} className="text-ecar-blue" /> Resumen de Actividad (Hoy)</h3>
         {stats.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-5">No hay actividad registrada el día de hoy.</p>
         ) : (
@@ -111,7 +111,7 @@ export const UserActivityModule: React.FC = () => {
       {/* Log detallado */}
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2"><Activity size={18} className="text-violet-600" /> Log de Auditoría</h3>
+          <h3 className="font-bold text-gray-800 flex items-center gap-2"><Activity size={18} className="text-ecar-blue" /> Log de Auditoría</h3>
           <div className="relative w-full md:w-64">
             <input 
               type="text" 

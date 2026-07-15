@@ -320,7 +320,7 @@ export const AttendancePanel: React.FC = () => {
                     <tr key={record.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                             {(emp as any)?.full_name?.charAt(0) || '?'}
                           </div>
                           <div>
@@ -450,8 +450,8 @@ function getStatusConfig(status: string) {
     case 'late': return { label: 'Tardanza', classes: 'bg-yellow-100 text-yellow-700', icon: <AlertTriangle size={12} /> };
     case 'absent': return { label: 'Ausente', classes: 'bg-red-100 text-red-700', icon: <XCircle size={12} /> };
     case 'half_day': return { label: 'Medio Día', classes: 'bg-blue-100 text-blue-700', icon: <Coffee size={12} /> };
-    case 'vacation': return { label: 'Vacaciones', classes: 'bg-purple-100 text-purple-700', icon: <Calendar size={12} /> };
-    case 'medical': return { label: 'Médico', classes: 'bg-cyan-100 text-cyan-700', icon: <Calendar size={12} /> };
+    case 'vacation': return { label: 'Vacaciones', classes: 'bg-ecar-blueLight text-ecar-blue', icon: <Calendar size={12} /> };
+    case 'medical': return { label: 'Médico', classes: 'bg-ecar-blueLight text-ecar-blue', icon: <Calendar size={12} /> };
     default: return { label: status, classes: 'bg-gray-100 text-gray-600', icon: null };
   }
 }
@@ -498,12 +498,12 @@ const DeviceInfoCell: React.FC<{
     <div className="relative">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100 transition-all"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-ecar-blueLight text-ecar-blue text-[11px] font-bold hover:bg-ecar-blueLight transition-all"
         title="Ver detalles del dispositivo"
       >
         <Smartphone size={11} />
         <span>{osEmoji} {device.os || '?'}</span>
-        <span className="text-indigo-400">·</span>
+        <span className="text-ecar-blue">·</span>
         <span>{device.browser || '?'}</span>
       </button>
 
@@ -511,7 +511,7 @@ const DeviceInfoCell: React.FC<{
         <div className="absolute right-0 top-full mt-1 z-50 w-72 light-card shadow-xl p-4 space-y-3 text-left animate-in fade-in slide-in-from-top-1">
           <div className="flex items-center justify-between">
             <h5 className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Smartphone size={12} className="text-indigo-500" />
+              <Smartphone size={12} className="text-ecar-blue" />
               Dispositivo
             </h5>
             <button onClick={() => setExpanded(false)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>

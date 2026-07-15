@@ -143,7 +143,7 @@ export const UserProfileModal: React.FC<{ onClose: () => void }> = ({ onClose })
               value={dni} 
               onChange={e => setDni(e.target.value)} 
               placeholder="Ingresa tu número de DNI"
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" 
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue outline-none transition-all" 
             />
           </div>
           
@@ -197,7 +197,7 @@ export const UserProfileModal: React.FC<{ onClose: () => void }> = ({ onClose })
           <button 
             onClick={handleSave} 
             disabled={updateProfile.isPending}
-            className="px-4 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 shadow-sm disabled:opacity-50"
+            className="px-4 py-2 font-bold bg-ecar-blue hover:bg-ecar-blue text-white rounded-lg transition-colors text-sm flex items-center gap-2 shadow-sm disabled:opacity-50"
           >
             <Save size={16} /> 
             {updateProfile.isPending ? 'Guardando...' : 'Guardar Perfil'}

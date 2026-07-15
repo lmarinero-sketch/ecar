@@ -57,7 +57,7 @@ export const LegalEntitiesPanel: React.FC = () => {
       <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <div>
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Building2 className="text-indigo-600" />
+            <Building2 className="text-ecar-blue" />
             Razones Sociales
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -66,14 +66,14 @@ export const LegalEntitiesPanel: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2"
+          className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-colors flex items-center gap-2"
         >
           {showAdd ? 'Cancelar' : <><Plus size={16} /> Nueva Razón Social</>}
         </button>
       </div>
 
-      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-sm text-indigo-800 flex gap-3 items-start">
-        <Building2 className="shrink-0 mt-0.5 text-indigo-500" size={18} />
+      <div className="bg-slate-50 border border-ecar-blueLight rounded-lg p-4 text-sm text-ecar-blueDark flex gap-3 items-start">
+        <Building2 className="shrink-0 mt-0.5 text-ecar-blue" size={18} />
         <div>
           <p className="font-bold mb-1">¿Para qué sirven las Razones Sociales?</p>
           <p>
@@ -84,7 +84,7 @@ export const LegalEntitiesPanel: React.FC = () => {
       </div>
 
       {showAdd && (
-        <div className="light-card border-indigo-100 p-6">
+        <div className="light-card border-ecar-blueLight p-6">
           <h3 className="font-bold text-gray-800 mb-4">Registrar Nueva Razón Social</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -116,9 +116,9 @@ export const LegalEntitiesPanel: React.FC = () => {
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Constancia de Inscripción (PDF/Img)</label>
-              <label className="flex items-center justify-center w-full h-10 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
+              <label className="flex items-center justify-center w-full h-10 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-ecar-blue hover:bg-slate-50 transition-colors">
                 {selectedFile ? (
-                  <span className="text-xs font-bold text-indigo-700 truncate px-4">{selectedFile.name}</span>
+                  <span className="text-xs font-bold text-ecar-blue truncate px-4">{selectedFile.name}</span>
                 ) : (
                   <span className="text-xs text-gray-500 flex items-center gap-2"><Upload size={14} /> Adjuntar archivo</span>
                 )}
@@ -138,7 +138,7 @@ export const LegalEntitiesPanel: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={!form.name || !form.cuit || isUploading}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue disabled:opacity-50"
             >
               {isUploading ? 'Guardando...' : 'Guardar Razón Social'}
             </button>
@@ -161,7 +161,7 @@ export const LegalEntitiesPanel: React.FC = () => {
               <Trash2 size={16} />
             </button>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg">
+              <div className="w-10 h-10 rounded-lg bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-lg">
                 {entity.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -182,7 +182,7 @@ export const LegalEntitiesPanel: React.FC = () => {
                     href={entity.constancia_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-800 font-bold text-xs flex items-center gap-1"
+                    className="text-ecar-blue hover:text-ecar-blueDark font-bold text-xs flex items-center gap-1"
                   >
                     <Download size={12} /> Descargar
                   </a>
@@ -197,7 +197,7 @@ export const LegalEntitiesPanel: React.FC = () => {
           <div className="col-span-full text-center py-12 bg-white border border-gray-200 border-dashed rounded-xl">
             <Building2 size={32} className="mx-auto text-gray-300 mb-2" />
             <p className="text-gray-500 font-medium">No hay razones sociales registradas.</p>
-            <button onClick={() => setShowAdd(true)} className="text-indigo-600 font-bold text-sm mt-2 hover:underline">
+            <button onClick={() => setShowAdd(true)} className="text-ecar-blue font-bold text-sm mt-2 hover:underline">
               Crear la primera
             </button>
           </div>

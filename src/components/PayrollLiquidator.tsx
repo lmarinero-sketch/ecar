@@ -176,7 +176,7 @@ export const PayrollLiquidator: React.FC<{
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
           <div className="flex justify-between items-center mb-4 border-b pb-3">
-            <h3 className="font-bold text-lg flex items-center gap-2"><Users size={20} className="text-indigo-600"/> Liquidación de Obreros</h3>
+            <h3 className="font-bold text-lg flex items-center gap-2"><Users size={20} className="text-ecar-blue"/> Liquidación de Obreros</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
           </div>
           
@@ -195,7 +195,7 @@ export const PayrollLiquidator: React.FC<{
             <button 
               onClick={fetchAttendanceAndCalculate} 
               disabled={isLoadingAtt || isLoadingEmployees}
-              className="w-full bg-indigo-600 text-white font-bold rounded-xl py-3 mt-4 disabled:opacity-50"
+              className="w-full bg-ecar-blue text-white font-bold rounded-xl py-3 mt-4 disabled:opacity-50"
             >
               {isLoadingAtt ? 'Calculando...' : 'Calcular Devengado'}
             </button>
@@ -210,13 +210,13 @@ export const PayrollLiquidator: React.FC<{
       <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Users className="text-indigo-600" /> Detalle de Nómina y Pagos
+            <Users className="text-ecar-blue" /> Detalle de Nómina y Pagos
           </h2>
           <p className="text-sm text-gray-500">Período: {new Date(startDate + 'T12:00:00').toLocaleDateString()} al {new Date(endDate + 'T12:00:00').toLocaleDateString()}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={() => setStep(1)} className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Volver a Calcular</button>
-          <button onClick={handleSave} className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 shadow-sm">
+          <button onClick={handleSave} className="bg-ecar-blue text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-ecar-blue shadow-sm">
             <Save size={16} /> Aprobar y Crear Pago
           </button>
           <button onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-gray-600"><X size={24} /></button>
@@ -250,7 +250,7 @@ export const PayrollLiquidator: React.FC<{
                       step="0.1"
                       value={ob.worked_hours} 
                       onChange={e => updateObrero(i, 'worked_hours', e.target.value)}
-                      className="w-full text-center border rounded px-2 py-1 text-sm font-mono font-bold text-indigo-700 bg-indigo-50"
+                      className="w-full text-center border rounded px-2 py-1 text-sm font-mono font-bold text-ecar-blue bg-slate-50"
                     />
                   </td>
                   <td className="px-4 py-2 text-right">
@@ -293,7 +293,7 @@ export const PayrollLiquidator: React.FC<{
             <tfoot className="bg-gray-50 font-bold border-t border-gray-200">
               <tr>
                 <td colSpan={5} className="px-4 py-3 text-right text-gray-600">TOTAL NÓMINA A PAGAR</td>
-                <td className="px-4 py-3 text-right text-lg text-indigo-700">
+                <td className="px-4 py-3 text-right text-lg text-ecar-blue">
                   {formatARS(obreros.reduce((a,b) => a + b.final_amount, 0))}
                 </td>
               </tr>

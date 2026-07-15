@@ -410,13 +410,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <div className="space-y-5 animate-fade-in">
               {/* Item Summary Card */}
               <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-5 flex items-start gap-4">
-                <div className={`p-3 rounded-lg ${matchedItem.is_tool ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                <div className={`p-3 rounded-lg ${matchedItem.is_tool ? 'bg-ecar-blueLight text-ecar-blue' : 'bg-orange-100 text-orange-700'}`}>
                   {matchedItem.is_tool ? <Wrench size={24} /> : <Barcode size={24} />}
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      matchedItem.category === 'herramienta' ? 'bg-purple-100 text-purple-700' :
+                      matchedItem.category === 'herramienta' ? 'bg-ecar-blueLight text-ecar-blue' :
                       matchedItem.category === 'consumible' ? 'bg-blue-100 text-blue-700' :
                       'bg-orange-100 text-orange-700'
                     } uppercase`}>
@@ -473,7 +473,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         onClick={() => setActionType('assignment')}
                         className={`py-3 px-2 rounded-xl border-2 text-sm font-bold flex flex-col items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                           actionType === 'assignment'
-                            ? 'border-purple-500 bg-purple-50/20 text-purple-800 shadow-sm'
+                            ? 'border-ecar-blue bg-slate-50/20 text-ecar-blueDark shadow-sm'
                             : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
@@ -606,7 +606,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       value={assignForm.notes}
                       onChange={(e) => setAssignForm({ ...assignForm, notes: e.target.value })}
                       placeholder="Ej: Se entrega con caja y 2 discos de corte..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20"
                     />
                   </div>
 
@@ -621,7 +621,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     <button
                       type="submit"
                       disabled={createAssignment.isPending}
-                      className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition-all shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="flex-1 py-3 bg-ecar-blue text-white rounded-xl font-bold text-sm hover:bg-ecar-blue transition-all shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                     >
                       {createAssignment.isPending ? 'Asignando...' : '🔧 Confirmar Asignación'}
                     </button>
@@ -701,9 +701,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
                   <button
                     onClick={() => setShowAssociateConfirm(true)}
-                    className="p-5 border border-gray-200 rounded-2xl text-center space-y-2 hover:border-purple-500 hover:bg-purple-50/10 transition-all"
+                    className="p-5 border border-gray-200 rounded-2xl text-center space-y-2 hover:border-ecar-blue hover:bg-slate-50/10 transition-all"
                   >
-                    <div className="w-10 h-10 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center mx-auto">
+                    <div className="w-10 h-10 bg-ecar-blueLight text-ecar-blue rounded-full flex items-center justify-center mx-auto">
                       <ArrowRight size={20} />
                     </div>
                     <span className="font-bold text-sm text-gray-800 block">Asociar a Existente</span>
@@ -725,7 +725,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         value={associateSearch}
                         onChange={(e) => setAssociateSearch(e.target.value)}
                         placeholder="Buscá por nombre de herramienta o material..."
-                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20"
                       />
                     </div>
 
@@ -736,7 +736,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                           type="button"
                           onClick={() => setAssociateItemId(item.id)}
                           className={`w-full px-4 py-2.5 text-left text-xs flex justify-between items-center transition-all ${
-                            associateItemId === item.id ? 'bg-purple-100 text-purple-800 font-bold' : 'hover:bg-gray-100'
+                            associateItemId === item.id ? 'bg-ecar-blueLight text-ecar-blueDark font-bold' : 'hover:bg-gray-100'
                           }`}
                         >
                           <div>
@@ -757,7 +757,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   <button
                     disabled={!associateItemId}
                     onClick={handleAssociateCode}
-                    className="w-full py-3 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md"
+                    className="w-full py-3 bg-ecar-blue text-white font-bold text-sm rounded-xl hover:bg-ecar-blue transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md"
                   >
                     <Check size={16} /> Confirmar Asociación
                   </button>

@@ -100,7 +100,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <button
             onClick={() => setViewType('isometric')}
             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${
-              viewType === 'isometric' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              viewType === 'isometric' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             <Box size={15} /> Vista Isométrica
@@ -108,7 +108,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <button
             onClick={() => setViewType('bim')}
             className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${
-              viewType === 'bim' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              viewType === 'bim' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             <Upload size={15} /> Visor BIM (IFC)
@@ -154,7 +154,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
             >
               {/* Grid floor */}
               <div
-                className="absolute border border-indigo-200/30"
+                className="absolute border border-ecar-blueLight/30"
                 style={{
                   width: 400, height: 400, left: -200, top: -200,
                   backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(99,102,241,0.08) 39px, rgba(99,102,241,0.08) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(99,102,241,0.08) 39px, rgba(99,102,241,0.08) 40px)',
@@ -189,7 +189,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
                   >
                     {/* Top face */}
                     <div
-                      className={`absolute inset-0 transition-all duration-300 ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                      className={`absolute inset-0 transition-all duration-300 ${isSelected ? 'ring-2 ring-ecar-blue ring-offset-1' : ''}`}
                       style={{
                         background: color,
                         opacity,
@@ -227,7 +227,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
                     {/* Wireframe outline */}
                     <div
                       className={`absolute inset-0 border-2 transition-all duration-300 rounded ${
-                        isSelected ? 'border-indigo-400' : 'border-gray-300/40'
+                        isSelected ? 'border-ecar-blue' : 'border-gray-300/40'
                       }`}
                       style={{ transform: `translateZ(${dims.h * (progress / 100)}px)` }}
                     />
@@ -260,7 +260,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <button
             onClick={() => setAutoRotate(!autoRotate)}
             className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border shadow-md flex items-center gap-1.5 transition-all ${
-              autoRotate ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600'
+              autoRotate ? 'bg-slate-50 border-ecar-blueLight text-ecar-blue' : 'bg-white border-gray-200 text-gray-600'
             }`}
           >
             <RefreshCw size={10} className={autoRotate ? 'animate-spin' : ''} />
@@ -286,7 +286,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <button
             onClick={() => { if (timelineProgress >= 100) setTimelineProgress(0); setIsPlaying(!isPlaying); }}
             className={`p-2 rounded-lg text-white transition-all shadow ${
-              isPlaying ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
+              isPlaying ? 'bg-amber-600 hover:bg-amber-700' : 'bg-ecar-blue hover:bg-ecar-blue'
             }`}
           >
             {isPlaying ? <Pause size={14} /> : <Play size={14} />}
@@ -294,9 +294,9 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <div className="flex-1 flex flex-col gap-1">
             <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-wide">
               <span className="flex items-center gap-1">
-                <Calendar size={11} className="text-indigo-600" /> Simulación de Avance
+                <Calendar size={11} className="text-ecar-blue" /> Simulación de Avance
               </span>
-              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-mono font-bold text-xs border border-indigo-100">
+              <span className="bg-slate-50 text-ecar-blue px-2 py-0.5 rounded-full font-mono font-bold text-xs border border-ecar-blueLight">
                 {getTimelineDate()}
               </span>
             </div>
@@ -304,7 +304,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
               <span className="text-[10px] text-gray-400 font-mono">{dateBounds.start.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
               <input type="range" min="0" max="100" value={timelineProgress}
                 onChange={e => { setAutoRotate(false); setTimelineProgress(parseInt(e.target.value)); }}
-                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-ecar-blue"
               />
               <span className="text-[10px] text-gray-400 font-mono">{dateBounds.end.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
             </div>
@@ -319,7 +319,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
             <h4 className="font-bold text-sm text-gray-800">Estructura WBS Activa</h4>
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-0.5">Avance y Selección 3D</p>
           </div>
-          <span className="text-[10px] font-mono bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold">{wbs.length} elementos</span>
+          <span className="text-[10px] font-mono bg-ecar-blueLight text-ecar-blue px-2 py-0.5 rounded-md font-bold">{wbs.length} elementos</span>
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
@@ -329,11 +329,11 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
             return (
               <div key={task.id} onClick={() => { setSelectedTask(task); setAutoRotate(false); }}
                 className={`p-3.5 cursor-pointer transition-all ${
-                  isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-600' : 'hover:bg-gray-50/30'
+                  isSelected ? 'bg-slate-50/70 border-l-4 border-ecar-blue' : 'hover:bg-gray-50/30'
                 }`}
               >
                 <div className="flex justify-between items-start gap-1">
-                  <h5 className={`font-bold text-xs leading-tight ${isSelected ? 'text-indigo-900' : 'text-gray-700'}`}>{task.name}</h5>
+                  <h5 className={`font-bold text-xs leading-tight ${isSelected ? 'text-ecar-blueDark' : 'text-gray-700'}`}>{task.name}</h5>
                   <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${PHASE_LABEL[task.phase] || 'bg-gray-100 text-gray-700'}`}>{vp}%</span>
                 </div>
                 <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-2">
@@ -355,7 +355,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           <div className="p-4 border-t border-gray-200 bg-slate-900 text-white space-y-3.5">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[9px] font-bold tracking-wider text-cyan-400 uppercase">Inspección de Objeto</span>
+                <span className="text-[9px] font-bold tracking-wider text-ecar-blue uppercase">Inspección de Objeto</span>
                 <h5 className="font-bold text-sm leading-tight text-white mt-0.5">{selectedTask.name}</h5>
               </div>
               <button onClick={() => setSelectedTask(null)} className="text-slate-400 hover:text-white transition-colors"><X size={16} /></button>
@@ -371,11 +371,11 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
               </div>
               <div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Presupuesto</span>
-                <span className="font-mono text-cyan-400 font-bold block mt-0.5">${selectedTask.budget_cost_ars ? selectedTask.budget_cost_ars.toLocaleString('es-AR') : '0'} ARS</span>
+                <span className="font-mono text-ecar-blue font-bold block mt-0.5">${selectedTask.budget_cost_ars ? selectedTask.budget_cost_ars.toLocaleString('es-AR') : '0'} ARS</span>
               </div>
             </div>
             <div className="flex gap-2 items-center bg-white/5 rounded-lg p-2.5 border border-white/5 mt-1">
-              <div className="w-8 h-8 rounded-full bg-cyan-950 border border-cyan-800 flex items-center justify-center text-cyan-300 font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-ecar-blueDark border border-ecar-blueDark flex items-center justify-center text-ecar-blueLight font-bold text-xs">
                 {selectedTask.assigned_to ? '👤' : '👥'}
               </div>
               <div>
@@ -386,7 +386,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
           </div>
         ) : (
           <div className="p-8 text-center text-gray-400 border-t border-gray-100 bg-gray-50/20">
-            <Sparkles size={24} className="mx-auto mb-2 opacity-20 text-indigo-600 animate-pulse" />
+            <Sparkles size={24} className="mx-auto mb-2 opacity-20 text-ecar-blue animate-pulse" />
             <p className="text-xs font-medium">Seleccioná un elemento en el listado para ver detalles.</p>
           </div>
         )}

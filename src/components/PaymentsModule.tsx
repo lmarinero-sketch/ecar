@@ -228,7 +228,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
 
       {/* Actions */}
       <div className="flex gap-2">
-        <button onClick={() => setShowAdd(true)} className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+        <button onClick={() => setShowAdd(true)} className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
           <Plus size={14} /> Agregar Pago
         </button>
         {pendingGastos.length > 0 && (
@@ -269,38 +269,38 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
-              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Plus size={18} className="text-indigo-600" /> Nuevo Pago</h4>
+              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Plus size={18} className="text-ecar-blue" /> Nuevo Pago</h4>
               <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Concepto</label>
-                <input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} placeholder="Ej: TANKITO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} placeholder="Ej: TANKITO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Monto</label>
-                <input value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Alias / CBU</label>
-                <input value={form.alias_cbu} onChange={e => setForm({ ...form, alias_cbu: e.target.value })} placeholder="ALIAS.CUENTA" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.alias_cbu} onChange={e => setForm({ ...form, alias_cbu: e.target.value })} placeholder="ALIAS.CUENTA" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
-                <input value={form.titular_cuenta} onChange={e => setForm({ ...form, titular_cuenta: e.target.value })} placeholder="NOMBRE TITULAR" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.titular_cuenta} onChange={e => setForm({ ...form, titular_cuenta: e.target.value })} placeholder="NOMBRE TITULAR" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nro. Factura / Periodo</label>
-                <input value={form.nro_factura} onChange={e => setForm({ ...form, nro_factura: e.target.value })} placeholder="71103" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.nro_factura} onChange={e => setForm({ ...form, nro_factura: e.target.value })} placeholder="71103" className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Observaciones</label>
-                <input value={form.observaciones} onChange={e => setForm({ ...form, observaciones: e.target.value })} placeholder="CANCELACIÓN, etc." className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={form.observaciones} onChange={e => setForm({ ...form, observaciones: e.target.value })} placeholder="CANCELACIÓN, etc." className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setShowAdd(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-2">
+              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md flex items-center gap-2">
                 <Save size={16} /> Guardar Pago
               </button>
             </div>
@@ -321,7 +321,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 Importe pendiente para <span className="font-bold text-gray-800">{importGasto.item_desc}</span>: <br/><span className="font-mono font-bold text-amber-600">{formatARS(importGasto.pendiente)}</span>
               </p>
               <label className="text-xs font-bold text-gray-500 uppercase block mb-1">¿Cuánto desea cargar en este pago?</label>
-              <input value={importMonto} onChange={e => setImportMonto(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-lg font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" autoFocus />
+              <input value={importMonto} onChange={e => setImportMonto(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-lg font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" autoFocus />
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setImportGasto(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
@@ -338,42 +338,42 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
-              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Edit2 size={18} className="text-indigo-600" /> Editar Pago</h4>
+              <h4 className="font-bold text-lg text-gray-800 flex items-center gap-2"><Edit2 size={18} className="text-ecar-blue" /> Editar Pago</h4>
               <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Concepto</label>
-                <input value={editForm.concepto} onChange={e => setEditForm({ ...editForm, concepto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.concepto} onChange={e => setEditForm({ ...editForm, concepto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Monto</label>
-                <input value={editForm.monto} onChange={e => setEditForm({ ...editForm, monto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.monto} onChange={e => setEditForm({ ...editForm, monto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Alias / CBU</label>
-                <input value={editForm.alias_cbu} onChange={e => setEditForm({ ...editForm, alias_cbu: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.alias_cbu} onChange={e => setEditForm({ ...editForm, alias_cbu: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Titular Cuenta</label>
-                <input value={editForm.titular_cuenta} onChange={e => setEditForm({ ...editForm, titular_cuenta: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.titular_cuenta} onChange={e => setEditForm({ ...editForm, titular_cuenta: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nro. Factura / Periodo</label>
-                <input value={editForm.nro_factura} onChange={e => setEditForm({ ...editForm, nro_factura: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.nro_factura} onChange={e => setEditForm({ ...editForm, nro_factura: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Resto (Pendiente)</label>
-                <input value={editForm.resto} onChange={e => setEditForm({ ...editForm, resto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.resto} onChange={e => setEditForm({ ...editForm, resto: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm font-mono bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Observaciones</label>
-                <input value={editForm.observaciones} onChange={e => setEditForm({ ...editForm, observaciones: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={editForm.observaciones} onChange={e => setEditForm({ ...editForm, observaciones: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setEditId(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleSaveEdit} disabled={!editForm.concepto?.trim() || !editForm.monto} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-2">
+              <button onClick={handleSaveEdit} disabled={!editForm.concepto?.trim() || !editForm.monto} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md flex items-center gap-2">
                 <Save size={16} /> Guardar Cambios
               </button>
             </div>
@@ -384,7 +384,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
       {/* Table */}
       <div className="light-card overflow-hidden">
         {isLoading ? (
-          <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin mx-auto" /></div>
+          <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div>
         ) : items.length === 0 ? (
           <div className="text-center py-16 text-gray-400 text-sm">Sin ítems. Agregá pagos o importá desde gastos operativos.</div>
         ) : (
@@ -422,7 +422,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                   return (
                     <tr key={item.id} className={`hover:bg-gray-50 ${isPartial ? 'bg-amber-50/50' : item.pagado ? 'bg-green-50/30' : ''}`}>
                       <td 
-                        className={`px-3 py-2.5 font-bold text-xs ${isPayroll ? 'cursor-pointer text-indigo-700 hover:text-indigo-800 underline decoration-indigo-300 underline-offset-2' : 'text-gray-800'}`}
+                        className={`px-3 py-2.5 font-bold text-xs ${isPayroll ? 'cursor-pointer text-ecar-blue hover:text-ecar-blueDark underline decoration-ecar-blueLight underline-offset-2' : 'text-gray-800'}`}
                         onClick={() => isPayroll && setViewPayrollItem({id: item.id, concepto: item.concepto})}
                         title={isPayroll ? "Ver detalle de alias" : ""}
                       >
@@ -519,17 +519,17 @@ export const PaymentsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-indigo-900 to-slate-800 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-800 via-ecar-blueDark to-slate-800 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Banknote size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Banknote size={24} /> Control de Pagos Semanales</h3>
-          <p className="text-indigo-200 text-sm mt-1">Planilla de pagos con alias, titulares y exportación PDF — similar a la planilla de Adolfo</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Planilla de pagos con alias, titulares y exportación PDF — similar a la planilla de Adolfo</p>
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end">
-        <button onClick={() => setShowNew(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-indigo-700 transition-all">
+        <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
           <Plus size={16} /> Nueva Planilla de Pagos
         </button>
       </div>
@@ -545,20 +545,20 @@ export const PaymentsModule: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Fecha de Pago</label>
-                <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Responsable</label>
-                <input value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="ADOLFO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="ADOLFO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div className="sm:col-span-3">
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Notas (opcional)</label>
-                <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Pagos semana 1 de junio" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-indigo-200 transition-all" />
+                <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Pagos semana 1 de junio" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setShowNew(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-indigo-700 transition-colors shadow-md">
+              <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md">
                 Crear Planilla
               </button>
             </div>
@@ -568,7 +568,7 @@ export const PaymentsModule: React.FC = () => {
 
       {/* Payments list */}
       {isLoading ? (
-        <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-500 rounded-full animate-spin mx-auto" /></div>
+        <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div>
       ) : payments.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
           <Banknote size={48} className="mx-auto text-gray-300 mb-3" />
@@ -579,11 +579,11 @@ export const PaymentsModule: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {payments.map(p => (
             <button key={p.id} onClick={() => setSelectedPayment(p)}
-              className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all text-left group">
+              className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-ecar-blueLight transition-all text-left group">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
-                    <Calendar size={16} className="text-indigo-600" />
+                  <div className="w-9 h-9 rounded-lg bg-ecar-blueLight flex items-center justify-center">
+                    <Calendar size={16} className="text-ecar-blue" />
                   </div>
                   <div>
                     <p className="font-bold text-gray-800 text-sm">
@@ -599,7 +599,7 @@ export const PaymentsModule: React.FC = () => {
                 }`}>{p.status === 'executed' ? 'Ejecutado' : p.status === 'approved' ? 'Aprobado' : 'Borrador'}</span>
               </div>
               {p.notes && <p className="text-xs text-gray-400 truncate">{p.notes}</p>}
-              <div className="mt-2 flex items-center gap-1 text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-2 flex items-center gap-1 text-xs font-bold text-ecar-blue opacity-0 group-hover:opacity-100 transition-opacity">
                 Ver detalle <ChevronRight size={12} />
               </div>
             </button>

@@ -32,11 +32,11 @@ export const DocumentsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-700 to-teal-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blue to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><FolderOpen size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><FolderOpen size={24} /> Documentos & Correo</h3>
-          <p className="text-teal-100 text-sm mt-1">Requerimientos de documentación, certificados fiscales, F931 y envío por email integrado.</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Requerimientos de documentación, certificados fiscales, F931 y envío por email integrado.</p>
         </div>
       </div>
 

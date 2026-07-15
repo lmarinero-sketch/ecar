@@ -16,8 +16,8 @@ const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits
 
 const STAGES: { id: OpportunityStage; label: string; color: string; bgColor: string }[] = [
   { id: 'oportunidad', label: 'Oportunidad', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
-  { id: 'relevamiento', label: 'Relevamiento', color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200' },
-  { id: 'en_presupuesto', label: 'En Presupuesto', color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200' },
+  { id: 'relevamiento', label: 'Relevamiento', color: 'text-ecar-blue', bgColor: 'bg-slate-50 border-ecar-blueLight' },
+  { id: 'en_presupuesto', label: 'En Presupuesto', color: 'text-ecar-blue', bgColor: 'bg-slate-50 border-ecar-blueLight' },
   { id: 'propuesta_enviada', label: 'Propuesta Enviada', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' },
   { id: 'negociacion', label: 'Negociación', color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200' },
   { id: 'adjudicada', label: 'Adjudicada', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200' },
@@ -319,7 +319,7 @@ export const OpportunitiesModule: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-cyan-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" />
       </div>
     );
   }
@@ -327,11 +327,11 @@ export const OpportunitiesModule: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-800 via-blue-700 to-indigo-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark via-blue-700 to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Pipeline de Oportunidades</h3>
-          <p className="text-cyan-100 text-sm mt-1">Gerencia de Proyectos y Presupuestos — Doc PR-GPP-01</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Gerencia de Proyectos y Presupuestos — Doc PR-GPP-01</p>
         </div>
       </div>
 
@@ -341,8 +341,8 @@ export const OpportunitiesModule: React.FC = () => {
           { label: 'Total', value: stats.total, icon: <FileText size={20} />, color: 'text-gray-600', bgColor: 'bg-gray-100', ring: 'ring-gray-100', gradient: 'from-gray-50 to-white' },
           { label: 'Activas', value: stats.activas, icon: <Clock size={20} />, color: 'text-blue-600', bgColor: 'bg-blue-100', ring: 'ring-blue-100', gradient: 'from-blue-50/50 to-white' },
           { label: 'Monto Pipeline', value: fmt(stats.montoTotal), icon: <DollarSign size={20} />, color: 'text-emerald-600', bgColor: 'bg-emerald-100', ring: 'ring-emerald-100', gradient: 'from-emerald-50/50 to-white' },
-          { label: 'Adjudicadas', value: stats.adjudicadas, icon: <CheckCircle2 size={20} />, color: 'text-teal-600', bgColor: 'bg-teal-100', ring: 'ring-teal-100', gradient: 'from-teal-50/50 to-white' },
-          { label: 'Tasa Conversión', value: `${stats.tasa}%`, icon: <BarChart3 size={20} />, color: 'text-indigo-600', bgColor: 'bg-indigo-100', ring: 'ring-indigo-100', gradient: 'from-indigo-50/50 to-white' },
+          { label: 'Adjudicadas', value: stats.adjudicadas, icon: <CheckCircle2 size={20} />, color: 'text-ecar-blue', bgColor: 'bg-ecar-blueLight', ring: 'ring-ecar-blueLight', gradient: 'from-slate-50/50 to-white' },
+          { label: 'Tasa Conversión', value: `${stats.tasa}%`, icon: <BarChart3 size={20} />, color: 'text-ecar-blue', bgColor: 'bg-ecar-blueLight', ring: 'ring-ecar-blueLight', gradient: 'from-slate-50/50 to-white' },
         ].map(kpi => (
           <div key={kpi.label} className={`relative bg-gradient-to-br ${kpi.gradient} rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 group overflow-hidden ring-1 ${kpi.ring}`}>
             <div className={`absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 pointer-events-none transform group-hover:scale-110 ${kpi.color}`}>
@@ -367,7 +367,7 @@ export const OpportunitiesModule: React.FC = () => {
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar cliente, descripción o ubicación..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 transition-all" />
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
           </div>
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
             <button onClick={() => setViewMode('pipeline')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'pipeline' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}>Pipeline</button>
@@ -376,12 +376,12 @@ export const OpportunitiesModule: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <select value={filterStage} onChange={e => setFilterStage(e.target.value as OpportunityStage | 'all')}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
             <option value="all">Todas las etapas</option>
             {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
           <button onClick={() => { resetForm(); setSelectedOpp(null); setActiveTab('general'); setShowForm(true); }}
-            className="bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 hover:shadow-lg transition-all">
+            className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue hover:shadow-lg transition-all">
             <Plus size={16} /> Nueva Oportunidad
           </button>
         </div>
@@ -393,7 +393,7 @@ export const OpportunitiesModule: React.FC = () => {
           <div className="flex gap-3 min-w-max h-full">
             {pipelineData.map(stage => (
               <div key={stage.id} 
-                className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col h-full transition-all ${dragOverStage === stage.id ? 'ring-2 ring-cyan-500 bg-opacity-80 scale-[1.01]' : ''}`}
+                className={`w-72 rounded-xl border shadow-sm ${stage.bgColor} flex flex-col h-full transition-all ${dragOverStage === stage.id ? 'ring-2 ring-ecar-blue bg-opacity-80 scale-[1.01]' : ''}`}
                 onDragOver={e => { e.preventDefault(); setDragOverStage(stage.id); }}
                 onDragLeave={() => setDragOverStage(null)}
                 onDrop={async e => {
@@ -427,7 +427,7 @@ export const OpportunitiesModule: React.FC = () => {
                         setDraggedOppId(null);
                         setDragOverStage(null);
                       }}
-                      className={`bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group ${draggedOppId === opp.id ? 'opacity-50 scale-95 ring-2 ring-cyan-500' : ''}`}>
+                      className={`bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group ${draggedOppId === opp.id ? 'opacity-50 scale-95 ring-2 ring-ecar-blue' : ''}`}>
                       <div className="flex items-start justify-between mb-1">
                         <span className="font-bold text-sm text-gray-800 leading-tight">{opp.client_name}</span>
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${PRIORITIES[opp.priority].color}`}>
@@ -516,10 +516,10 @@ export const OpportunitiesModule: React.FC = () => {
                     <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={e => handleExportPdf(e, opp)} disabled={isExporting === opp.id} className={`text-gray-400 hover:text-cyan-600 p-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`} title="Descargar PDF">
-                          {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
+                        <button onClick={e => handleExportPdf(e, opp)} disabled={isExporting === opp.id} className={`text-gray-400 hover:text-ecar-blue p-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`} title="Descargar PDF">
+                          {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-ecar-blue border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
                         </button>
-                        <button onClick={() => openEdit(opp)} className="text-cyan-600 hover:text-cyan-800 p-1" title="Ver / Editar"><Eye size={16} /></button>
+                        <button onClick={() => openEdit(opp)} className="text-ecar-blue hover:text-ecar-blueDark p-1" title="Ver / Editar"><Eye size={16} /></button>
                         <button onClick={e => handleDeleteOpp(e, opp.id)} className="text-red-600 hover:text-red-800 p-1" title="Eliminar"><Trash2 size={16} /></button>
                       </div>
                     </td>
@@ -565,21 +565,21 @@ export const OpportunitiesModule: React.FC = () => {
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
               <div className="flex flex-col">
                 <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                  <Target size={20} className="text-cyan-600" />
+                  <Target size={20} className="text-ecar-blue" />
                   {selectedOpp ? 'Editar Oportunidad' : 'Nueva Oportunidad'}
                 </h3>
                 <div className="flex gap-4 mt-2">
                   <button onClick={() => setActiveTab('general')}
-                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                     General
                   </button>
                   <button onClick={() => setActiveTab('archivos')}
-                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'archivos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                    className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'archivos' ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                     Archivos Adjuntos ({selectedOpp ? (selectedOpp.files?.length || 0) : pendingFiles.length})
                   </button>
                   {selectedOpp && (
                     <button onClick={() => setActiveTab('presupuestos')}
-                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'presupuestos' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                      className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeTab === 'presupuestos' ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                       Presupuestos ({oppBudgets?.length || 0})
                     </button>
                   )}
@@ -604,7 +604,7 @@ export const OpportunitiesModule: React.FC = () => {
                       <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Razón social o nombre completo)</span>
                     </label>
                     <input value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Nombre del cliente" />
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Nombre del cliente" />
                   </div>
                   <div>
                     <label className="block mb-1">
@@ -612,7 +612,7 @@ export const OpportunitiesModule: React.FC = () => {
                       <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Teléfono, email, cargo o área)</span>
                     </label>
                     <input value={form.client_contact} onChange={e => setForm({ ...form, client_contact: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Teléfono, email" />
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Teléfono, email" />
                   </div>
                 </div>
               </div>
@@ -640,7 +640,7 @@ export const OpportunitiesModule: React.FC = () => {
                             ? 'bg-red-100 text-red-600 hover:bg-red-200 animate-pulse border border-red-200' 
                             : isTranscribing
                               ? 'bg-amber-100 text-amber-600 border border-amber-200'
-                              : 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100 border border-cyan-100'
+                              : 'bg-slate-50 text-ecar-blue hover:bg-ecar-blueLight border border-ecar-blueLight'
                         }`}
                         title={isRecording ? "Detener grabación" : "Grabar descripción por voz (AI)"}
                       >
@@ -654,7 +654,7 @@ export const OpportunitiesModule: React.FC = () => {
                       </button>
                     </div>
                     <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Obra, servicio o necesidad..." />
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Obra, servicio o necesidad..." />
                   </div>
 
                   {/* Row 3: Tipo + Monto + Plazo */}
@@ -665,7 +665,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Obra, Adicional, Licitación, etc.)</span>
                       </label>
                       <select value={form.work_type} onChange={e => setForm({ ...form, work_type: e.target.value as Opportunity['work_type'] })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
                         {Object.entries(WORK_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                     </div>
@@ -680,7 +680,7 @@ export const OpportunitiesModule: React.FC = () => {
                           const val = e.target.value.replace(/\D/g, '');
                           setForm({ ...form, estimated_amount: val === '' ? '' : Number(val) });
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="0" />
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="0" />
                     </div>
                     <div>
                       <label className="block mb-1">
@@ -688,7 +688,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fecha prevista de inicio/adjudicación)</span>
                       </label>
                       <DateInput value={form.estimated_deadline} onChange={v => setForm({ ...form, estimated_deadline: v })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" />
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
                     </div>
                   </div>
 
@@ -700,7 +700,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Fase comercial actual)</span>
                       </label>
                       <select value={form.stage} onChange={e => setForm({ ...form, stage: e.target.value as OpportunityStage })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
                         {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                       </select>
                     </div>
@@ -710,7 +710,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Importancia estratégica)</span>
                       </label>
                       <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as Opportunity['priority'] })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
                         <option value="baja">Baja</option><option value="media">Media</option>
                         <option value="alta">Alta</option><option value="critica">Crítica</option>
                       </select>
@@ -721,7 +721,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Nivel de riesgo operativo/financiero)</span>
                       </label>
                       <select value={form.risk_level} onChange={e => setForm({ ...form, risk_level: e.target.value as Opportunity['risk_level'] })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
                         <option value="bajo">Bajo</option><option value="medio">Medio</option><option value="alto">Alto</option>
                       </select>
                     </div>
@@ -731,7 +731,7 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Provincia, ciudad o zona)</span>
                       </label>
                       <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30" placeholder="Ciudad / zona" />
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ciudad / zona" />
                     </div>
                   </div>
 
@@ -742,7 +742,7 @@ export const OpportunitiesModule: React.FC = () => {
                       <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Si corresponde a una obra en ejecución)</span>
                     </label>
                     <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30">
                       <option value="">Sin proyecto</option>
                       {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
@@ -813,10 +813,10 @@ export const OpportunitiesModule: React.FC = () => {
                 <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><Upload size={16} /> Subir Nuevo Archivo</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                   <div className="col-span-2">
-                    <input type="text" placeholder="Título del archivo" value={fileForm.title} onChange={e => setFileForm({...fileForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                    <input type="text" placeholder="Título del archivo" value={fileForm.title} onChange={e => setFileForm({...fileForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30" />
                   </div>
                   <div>
-                    <select value={fileForm.category} onChange={e => setFileForm({...fileForm, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30">
+                    <select value={fileForm.category} onChange={e => setFileForm({...fileForm, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30">
                       <option value="adicional">Adicional</option>
                       <option value="planos">Planos</option>
                       <option value="pliego">Pliego</option>
@@ -826,11 +826,11 @@ export const OpportunitiesModule: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <input type="file" onChange={e => setFileForm({...fileForm, file: e.target.files?.[0] || null})} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100" />
+                    <input type="file" onChange={e => setFileForm({...fileForm, file: e.target.files?.[0] || null})} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-50 file:text-ecar-blue hover:file:bg-ecar-blueLight" />
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <input type="text" placeholder="Observaciones (opcional)" value={fileForm.observations} onChange={e => setFileForm({...fileForm, observations: e.target.value})} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500/30" />
+                  <input type="text" placeholder="Observaciones (opcional)" value={fileForm.observations} onChange={e => setFileForm({...fileForm, observations: e.target.value})} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30" />
                   <button disabled={!fileForm.file || !fileForm.title || uploadFile.isPending}
                     onClick={async () => {
                       if (selectedOpp && fileForm.file) {
@@ -858,7 +858,7 @@ export const OpportunitiesModule: React.FC = () => {
                         if (fileInput) fileInput.value = '';
                       }
                     }}
-                    className="bg-cyan-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-cyan-700 disabled:opacity-50 flex items-center gap-2">
+                    className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-ecar-blue disabled:opacity-50 flex items-center gap-2">
                     {uploadFile.isPending ? 'Subiendo...' : <><Upload size={16} /> Subir</>}
                   </button>
                 </div>
@@ -867,8 +867,8 @@ export const OpportunitiesModule: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {selectedOpp ? (
                   selectedOpp.files?.map(f => (
-                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
-                      <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
+                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-ecar-blueLight transition-colors">
+                      <div className="bg-slate-50 p-2 rounded-lg text-ecar-blue shrink-0">
                         {f.file_type?.match(/pdf/i) ? <FileText size={24} /> :
                          f.file_type?.match(/png|jpg|jpeg/i) ? <ImageIcon size={24} /> :
                          <File size={24} />}
@@ -884,10 +884,10 @@ export const OpportunitiesModule: React.FC = () => {
                             {(f.file_size || 0) > 1024 * 1024 ? `${(f.file_size! / (1024*1024)).toFixed(1)} MB` : `${Math.round(f.file_size! / 1024)} KB`} • {f.file_type?.toUpperCase()}
                           </span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.preventDefault(); setViewerUrl(f.file_url); }} className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Ver archivo">
+                            <button onClick={(e) => { e.preventDefault(); setViewerUrl(f.file_url); }} className="text-ecar-blue hover:bg-slate-50 p-1.5 rounded transition-colors" title="Ver archivo">
                               <Eye size={14} />
                             </button>
-                            <a href={f.file_url} target="_blank" rel="noreferrer" className="text-cyan-600 hover:bg-cyan-50 p-1.5 rounded transition-colors" title="Descargar">
+                            <a href={f.file_url} target="_blank" rel="noreferrer" className="text-ecar-blue hover:bg-slate-50 p-1.5 rounded transition-colors" title="Descargar">
                               <Download size={14} />
                             </a>
                             <button onClick={async () => { if(await useModalStore.getState().showConfirm('Eliminar archivo', '¿Seguro que querés borrar este archivo?')) deleteFile.mutate(f.id) }} className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Eliminar">
@@ -900,8 +900,8 @@ export const OpportunitiesModule: React.FC = () => {
                   ))
                 ) : (
                   pendingFiles.map(f => (
-                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-cyan-200 transition-colors">
-                      <div className="bg-cyan-50 p-2 rounded-lg text-cyan-600 shrink-0">
+                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-ecar-blueLight transition-colors">
+                      <div className="bg-slate-50 p-2 rounded-lg text-ecar-blue shrink-0">
                         {f.file.type.match(/pdf/i) ? <FileText size={24} /> :
                          f.file.type.match(/image/i) ? <ImageIcon size={24} /> :
                          <File size={24} />}
@@ -938,11 +938,11 @@ export const OpportunitiesModule: React.FC = () => {
 
             {/* Presupuestos Tab */}
             <div className={`p-5 space-y-4 ${activeTab === 'presupuestos' ? 'block' : 'hidden'}`}>
-              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-4 flex items-start gap-3">
-                <Target size={20} className="text-cyan-600 shrink-0 mt-0.5" />
+              <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 flex items-start gap-3">
+                <Target size={20} className="text-ecar-blue shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-cyan-800 text-sm">Presupuestos Analíticos</h4>
-                  <p className="text-cyan-700 text-xs mt-1">
+                  <h4 className="font-bold text-ecar-blueDark text-sm">Presupuestos Analíticos</h4>
+                  <p className="text-ecar-blue text-xs mt-1">
                     Esta oportunidad está integrada con el módulo principal de Presupuestos. 
                     Cualquier presupuesto detallado asociado a esta oportunidad aparecerá aquí.
                   </p>
@@ -995,7 +995,7 @@ export const OpportunitiesModule: React.FC = () => {
                 {selectedOpp && (
                   <>
                   <button onClick={() => exportOpportunityPdf(selectedOpp, projects?.find(p => p.id === selectedOpp.project_id)?.name)} 
-                    className="text-cyan-600 hover:text-cyan-800 font-bold text-sm flex items-center gap-2">
+                    className="text-ecar-blue hover:text-ecar-blueDark font-bold text-sm flex items-center gap-2">
                     <Download size={16} /> Descargar PDF
                   </button>
                   <button onClick={e => handleDeleteOpp(e, selectedOpp.id)} className="text-red-600 hover:text-red-800 font-bold text-sm flex items-center gap-2">
@@ -1007,7 +1007,7 @@ export const OpportunitiesModule: React.FC = () => {
               <div className="flex items-center gap-3">
                 <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
                 <button onClick={handleSubmit} disabled={!form.client_name || !form.description || createOpp.isPending || updateOpp.isPending}
-                  className="bg-cyan-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-cyan-700 disabled:opacity-50 transition-all">
+                  className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue disabled:opacity-50 transition-all">
                   <Save size={16} /> {selectedOpp ? 'Guardar Cambios' : 'Crear Oportunidad'}
                 </button>
               </div>

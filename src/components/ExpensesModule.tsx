@@ -128,14 +128,14 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
 
 // ─── Category config ───
 const CATEGORIA_CONFIG: Record<GastoItemCategoria, { label: string; icon: React.ElementType; color: string; bgColor: string }> = {
-  personal: { label: 'Personal ECAR - Honorarios', icon: Users, color: 'text-indigo-700', bgColor: 'bg-indigo-50' },
+  personal: { label: 'Personal ECAR - Honorarios', icon: Users, color: 'text-ecar-blue', bgColor: 'bg-slate-50' },
   seguros: { label: 'Seguros', icon: Shield, color: 'text-blue-700', bgColor: 'bg-blue-50' },
   servicios: { label: 'Servicios', icon: Zap, color: 'text-amber-700', bgColor: 'bg-amber-50' },
   impuestos: { label: 'Impuestos ARCA / Provincia', icon: Receipt, color: 'text-red-700', bgColor: 'bg-red-50' },
   gremios: { label: 'Gremios', icon: Hammer, color: 'text-orange-700', bgColor: 'bg-orange-50' },
   combustibles: { label: 'Combustibles', icon: Fuel, color: 'text-emerald-700', bgColor: 'bg-emerald-50' },
-  terceros: { label: 'Pagos a Terceros / Préstamos', icon: HandCoins, color: 'text-purple-700', bgColor: 'bg-purple-50' },
-  servicios_contratados: { label: 'Servicios HyS Contratados', icon: Wrench, color: 'text-cyan-700', bgColor: 'bg-cyan-50' },
+  terceros: { label: 'Pagos a Terceros / Préstamos', icon: HandCoins, color: 'text-ecar-blue', bgColor: 'bg-slate-50' },
+  servicios_contratados: { label: 'Servicios HyS Contratados', icon: Wrench, color: 'text-ecar-blue', bgColor: 'bg-slate-50' },
   viandas: { label: 'Viandas ECAR', icon: UtensilsCrossed, color: 'text-lime-700', bgColor: 'bg-lime-50' },
   varios: { label: 'Varios', icon: Package, color: 'text-gray-700', bgColor: 'bg-gray-100' },
 };

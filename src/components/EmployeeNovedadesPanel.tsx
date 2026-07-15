@@ -6,8 +6,8 @@ const ABSENCE_TYPES = [
   { value: 'vacation', label: 'Vacaciones', icon: CalendarDays, color: 'text-blue-600 bg-blue-50' },
   { value: 'medical', label: 'Enfermedad', icon: Thermometer, color: 'text-red-600 bg-red-50' },
   { value: 'suspension', label: 'Suspensión', icon: AlertTriangle, color: 'text-amber-600 bg-amber-50' },
-  { value: 'art_leave', label: 'ART', icon: Shield, color: 'text-purple-600 bg-purple-50' },
-  { value: 'half_day', label: 'Medio Día', icon: Clock, color: 'text-teal-600 bg-teal-50' },
+  { value: 'art_leave', label: 'ART', icon: Shield, color: 'text-ecar-blue bg-slate-50' },
+  { value: 'half_day', label: 'Medio Día', icon: Clock, color: 'text-ecar-blue bg-slate-50' },
 ] as const;
 
 interface Props {

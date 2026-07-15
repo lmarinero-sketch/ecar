@@ -80,7 +80,7 @@ export const LogisticsModule: React.FC = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 to-teal-600 rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
           <Warehouse size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
@@ -88,7 +88,7 @@ export const LogisticsModule: React.FC = () => {
           <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
             <Warehouse size={24} className="md:w-7 md:h-7" /> Gerencia de Logística
           </h3>
-          <p className="text-teal-100 text-xs md:text-sm mt-1 max-w-2xl">
+          <p className="text-ecar-blueLight text-xs md:text-sm mt-1 max-w-2xl">
             Aseguramos que cada obra cuente con los recursos físicos necesarios en tiempo y forma.
             Administramos inventarios, pañol, herramientas y la flota para evitar interrupciones operativas.
           </p>
@@ -102,7 +102,7 @@ export const LogisticsModule: React.FC = () => {
           className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700 shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-ecar-blueLight flex items-center justify-center text-ecar-blue shrink-0">
               <PackageCheck size={20} />
             </div>
             <div>
@@ -117,27 +117,27 @@ export const LogisticsModule: React.FC = () => {
         {showIntro && (
           <div className="p-4 md:p-6 border-t border-gray-100 bg-white grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito & Stock</h5>
+              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito & Stock</h5>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Logística debe conocer exactamente qué tenemos, dónde está y su estado.
                 Definimos <span className="font-semibold text-gray-800">Alertas de Reposición</span> antes de que el material se agote.
               </p>
             </div>
             <div className="space-y-2">
-              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos</h5>
+              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos</h5>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Cada salida tiene un responsable y una fecha de devolución.
                 La trazabilidad previene pérdidas económicas.
               </p>
             </div>
             <div className="space-y-2">
-              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota</h5>
+              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota</h5>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Control de horas y km nos permite anticipar mantenimientos preventivos, services y VTV.
               </p>
             </div>
             <div className="space-y-2">
-              <h5 className="font-bold text-teal-700 text-sm flex items-center gap-2"><MapPin size={16} /> 4. Entregas a Obra</h5>
+              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><MapPin size={16} /> 4. Entregas a Obra</h5>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Programamos qué materiales y herramientas van a cada obra, con qué vehículo y quién es el responsable.
               </p>
@@ -152,7 +152,7 @@ export const LogisticsModule: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-xs md:text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`pb-3 text-xs md:text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -202,7 +202,7 @@ const DashboardTab: React.FC<{
   return (
     <div className="p-4 md:p-6 space-y-6">
       <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-        <TrendingUp className="text-teal-600" /> Panel de Control Logístico
+        <TrendingUp className="text-ecar-blue" /> Panel de Control Logístico
       </h3>
 
       {/* KPI Cards */}
@@ -220,7 +220,7 @@ const DashboardTab: React.FC<{
           gradient="from-emerald-50 to-emerald-100" border="border-emerald-200" text="text-emerald-700" valueText="text-emerald-800" subtitleText="text-emerald-600"
           icon={<Truck size={18} />} />
         <KpiCard title="Entregas" subtitle="Pendientes" value={kpis.pendingDeliveries}
-          gradient="from-violet-50 to-violet-100" border="border-violet-200" text="text-violet-700" valueText="text-violet-800" subtitleText="text-violet-600"
+          gradient="from-slate-50 to-ecar-blueLight" border="border-ecar-blueLight" text="text-ecar-blue" valueText="text-ecar-blueDark" subtitleText="text-ecar-blue"
           icon={<Package size={18} />} />
       </div>
 
@@ -371,7 +371,7 @@ const DeliveriesTab: React.FC<{
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-teal-600" /> Acopios & Entregas a Obra</h3>
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Acopios & Entregas a Obra</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -389,7 +389,7 @@ const DeliveriesTab: React.FC<{
             <option value="entregado">Entregados</option>
             <option value="cancelado">Cancelados</option>
           </select>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+          <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue hover:bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
             <Plus size={16} /> Nueva Entrega
           </button>
         </div>
@@ -397,9 +397,9 @@ const DeliveriesTab: React.FC<{
 
       {/* New Delivery Form */}
       {showForm && (
-        <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 md:p-6 mb-6 space-y-4">
+        <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 md:p-6 mb-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h4 className="font-bold text-teal-800 text-sm">Programar Entrega a Obra</h4>
+            <h4 className="font-bold text-ecar-blueDark text-sm">Programar Entrega a Obra</h4>
             <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -488,13 +488,13 @@ const DeliveriesTab: React.FC<{
                 )}
               </div>
             ))}
-            <button onClick={() => setForm({ ...form, items: [...form.items, { item_id: '', description: '', quantity: 1, unit: 'u' }] })} className="text-teal-600 text-xs font-bold hover:underline flex items-center gap-1 mt-1">
+            <button onClick={() => setForm({ ...form, items: [...form.items, { item_id: '', description: '', quantity: 1, unit: 'u' }] })} className="text-ecar-blue text-xs font-bold hover:underline flex items-center gap-1 mt-1">
               <Plus size={14} /> Agregar ítem
             </button>
           </div>
 
           <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createDelivery.isPending} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={createDelivery.isPending} className="bg-ecar-blue hover:bg-ecar-blue text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
               <Save size={16} /> {createDelivery.isPending ? 'Guardando...' : 'Programar Entrega'}
             </button>
           </div>
@@ -503,7 +503,7 @@ const DeliveriesTab: React.FC<{
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -599,7 +599,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ veh
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Truck className="text-teal-600" /> Flota y Maquinaria</h3>
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Truck className="text-ecar-blue" /> Flota y Maquinaria</h3>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -625,7 +625,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ veh
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -709,7 +709,7 @@ const StockTab: React.FC<{ items: any[]; loading: boolean; toolAssignments: any[
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Package className="text-teal-600" /> Pañol & Stock</h3>
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Package className="text-ecar-blue" /> Pañol & Stock</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -748,7 +748,7 @@ const StockTab: React.FC<{ items: any[]; loading: boolean; toolAssignments: any[
       )}
 
       {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -849,8 +849,8 @@ const MaintenanceTab: React.FC<{
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Wrench className="text-teal-600" /> Mantenimiento</h3>
-        <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Wrench className="text-ecar-blue" /> Mantenimiento</h3>
+        <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue hover:bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
           <Plus size={16} /> Registrar Mantenimiento
         </button>
       </div>
@@ -885,9 +885,9 @@ const MaintenanceTab: React.FC<{
 
       {/* New Maintenance Form */}
       {showForm && (
-        <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 md:p-6 space-y-4">
+        <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 md:p-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h4 className="font-bold text-teal-800 text-sm">Registrar Service / Mantenimiento</h4>
+            <h4 className="font-bold text-ecar-blueDark text-sm">Registrar Service / Mantenimiento</h4>
             <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -932,7 +932,7 @@ const MaintenanceTab: React.FC<{
             </div>
           </div>
           <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createLog.isPending} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={createLog.isPending} className="bg-ecar-blue hover:bg-ecar-blue text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
               <Save size={16} /> {createLog.isPending ? 'Guardando...' : 'Registrar'}
             </button>
           </div>
@@ -943,7 +943,7 @@ const MaintenanceTab: React.FC<{
       <div>
         <h4 className="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2"><FileText size={14} /> Historial de Mantenimientos</h4>
         {loading ? (
-          <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div></div>
+          <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
         ) : logs.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">

@@ -12,7 +12,7 @@ const PO_STATUSES: Record<string, { label: string; color: string }> = {
   borrador: { label: 'Borrador', color: 'bg-gray-100 text-gray-700' },
   pendiente_aprobacion: { label: 'Pend. Aprobación', color: 'bg-yellow-100 text-yellow-700' },
   aprobada: { label: 'Aprobada', color: 'bg-blue-100 text-blue-700' },
-  emitida: { label: 'Emitida', color: 'bg-indigo-100 text-indigo-700' },
+  emitida: { label: 'Emitida', color: 'bg-ecar-blueLight text-ecar-blue' },
   entregada_parcial: { label: 'Entrega Parcial', color: 'bg-orange-100 text-orange-700' },
   entregada: { label: 'Entregada', color: 'bg-green-100 text-green-700' },
   cerrada: { label: 'Cerrada', color: 'bg-emerald-100 text-emerald-700' },
@@ -155,7 +155,7 @@ export const PurchaseOrdersModule: React.FC = () => {
     setShowForm(true);
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-violet-600 rounded-full animate-spin" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-6">
@@ -188,7 +188,7 @@ export const PurchaseOrdersModule: React.FC = () => {
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por número o proveedor..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
         </div>
         <div className="flex items-center gap-2">
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
@@ -197,7 +197,7 @@ export const PurchaseOrdersModule: React.FC = () => {
             {Object.entries(PO_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
           <button onClick={() => { resetForm(); setSelectedPO(null); setForm(f => ({ ...f, po_number: nextPONumber })); setShowForm(true); }}
-            className="bg-violet-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-violet-700 transition-all">
+            className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
             <Plus size={16} /> Nueva OC / OT
           </button>
         </div>
@@ -236,7 +236,7 @@ export const PurchaseOrdersModule: React.FC = () => {
                 </td>
                 <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(po.total_amount)}</td>
                 <td className="px-4 py-3 text-center">
-                  <button onClick={() => openEdit(po)} className="text-violet-600 hover:text-violet-800 p-1"><Eye size={16} /></button>
+                  <button onClick={() => openEdit(po)} className="text-ecar-blue hover:text-ecar-blueDark p-1"><Eye size={16} /></button>
                 </td>
               </tr>
             ))}
@@ -257,7 +257,7 @@ export const PurchaseOrdersModule: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-200 p-5 flex items-center justify-between rounded-t-2xl z-10">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <FileSignature size={20} className="text-violet-600" />
+                <FileSignature size={20} className="text-ecar-blue" />
                 {selectedPO ? `Editar ${form.po_number}` : 'Nueva Orden de Compra / Trabajo'}
               </h3>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
@@ -316,7 +316,7 @@ export const PurchaseOrdersModule: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Solicitud Origen (Trazabilidad)</label>
                   <select value={form.request_id} onChange={e => setForm({ ...form, request_id: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-violet-700 bg-violet-50 focus:border-violet-300 focus:ring-violet-300">
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-ecar-blue bg-slate-50 focus:border-ecar-blueLight focus:ring-ecar-blueLight">
                     <option value="">Sin solicitud vinculada</option>
                     {(purchaseRequests || []).filter(r => r.status === 'approved' || r.id === form.request_id).map(r => (
                       <option key={r.id} value={r.id}>
@@ -331,7 +331,7 @@ export const PurchaseOrdersModule: React.FC = () => {
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-bold text-gray-700">Ítems de la Orden</h4>
-                  <button onClick={addLineItem} className="text-violet-600 hover:text-violet-800 text-xs font-bold flex items-center gap-1">
+                  <button onClick={addLineItem} className="text-ecar-blue hover:text-ecar-blueDark text-xs font-bold flex items-center gap-1">
                     <Plus size={14} /> Agregar Ítem
                   </button>
                 </div>
@@ -405,7 +405,7 @@ export const PurchaseOrdersModule: React.FC = () => {
               {/* Cuadro Comparativo (PR-GC-01 §4.5) */}
               <div className="border-t border-gray-200 pt-4">
                 <h4 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <BarChart3 size={16} className="text-violet-500" /> Cuadro Comparativo de Cotizaciones
+                  <BarChart3 size={16} className="text-ecar-blue" /> Cuadro Comparativo de Cotizaciones
                 </h4>
                 <p className="text-[10px] text-gray-400 mb-3">Documentar al menos 3 cotizaciones para compras {'>'} $500.000 (PR-GC-01 §4.5)</p>
                 <div className="grid grid-cols-3 gap-3">
@@ -433,7 +433,7 @@ export const PurchaseOrdersModule: React.FC = () => {
                 <div className="flex gap-2">
                   <button onClick={() => setShowForm(false)} className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold text-sm transition-all">Cancelar</button>
                   <button onClick={handleSubmit} disabled={createPO.isPending || updatePO.isPending}
-                    className="bg-violet-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-violet-700 shadow-md transition-all disabled:opacity-50">
+                    className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md transition-all disabled:opacity-50">
                     {createPO.isPending || updatePO.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando</> : <><Save size={16} /> Guardar OC</>}
                   </button>
                 </div>

@@ -7,9 +7,9 @@ import { useNonConformities, useCreateNonConformity, useUpdateNonConformity, use
 import type { NonConformity } from '../lib/types';
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {
-  compra: { label: 'Compra', color: 'bg-violet-100 text-violet-700' },
-  obra: { label: 'Obra', color: 'bg-cyan-100 text-cyan-700' },
-  logistica: { label: 'Logística', color: 'bg-teal-100 text-teal-700' },
+  compra: { label: 'Compra', color: 'bg-ecar-blueLight text-ecar-blue' },
+  obra: { label: 'Obra', color: 'bg-ecar-blueLight text-ecar-blue' },
+  logistica: { label: 'Logística', color: 'bg-ecar-blueLight text-ecar-blue' },
   proveedor: { label: 'Proveedor', color: 'bg-orange-100 text-orange-700' },
   documental: { label: 'Documental', color: 'bg-slate-100 text-slate-700' },
   seguridad: { label: 'Seguridad', color: 'bg-red-100 text-red-700' },
@@ -19,7 +19,7 @@ const STATUSES: Record<string, { label: string; color: string; icon: React.React
   abierta: { label: 'Abierta', color: 'bg-red-100 text-red-700', icon: <AlertTriangle size={12} /> },
   en_analisis: { label: 'En Análisis', color: 'bg-yellow-100 text-yellow-700', icon: <Clock size={12} /> },
   accion_correctiva: { label: 'Acción Correctiva', color: 'bg-blue-100 text-blue-700', icon: <FileText size={12} /> },
-  verificacion: { label: 'Verificación', color: 'bg-indigo-100 text-indigo-700', icon: <Eye size={12} /> },
+  verificacion: { label: 'Verificación', color: 'bg-ecar-blueLight text-ecar-blue', icon: <Eye size={12} /> },
   cerrada: { label: 'Cerrada', color: 'bg-green-100 text-green-700', icon: <CheckCircle2 size={12} /> },
 };
 

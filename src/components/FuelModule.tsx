@@ -781,7 +781,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       {/* ── Shareable Link + Signature Banner ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Shareable Link Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-gradient-to-br from-blue-50 to-slate-50 border border-blue-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
               <ClipboardCheck size={16} className="text-blue-600" />
@@ -1218,7 +1218,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
             </div>
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
               <p className="text-xs font-bold text-gray-500 uppercase">Litros Mes Actual</p>
-              <p className="text-2xl font-black text-purple-600 font-mono mt-1">
+              <p className="text-2xl font-black text-ecar-blue font-mono mt-1">
                 {monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].liters.toLocaleString('es-AR') : 0} L
               </p>
             </div>
