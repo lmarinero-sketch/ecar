@@ -161,7 +161,12 @@ export const ExpensesModule: React.FC = () => {
     const curr = now.getMonth();
     return [Math.max(0, curr - 2), curr];
   });
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    // Start all categories as collapsed by default
+    Object.keys(CATEGORIA_CONFIG).forEach(k => initial[k] = true);
+    return initial;
+  });
   const [editCell, setEditCell] = useState<{ itemId: string; periodo: string; monto: string } | null>(null);
   const [showAddItem, setShowAddItem] = useState<GastoItemCategoria | null>(null);
   const [newItemDesc, setNewItemDesc] = useState('');
