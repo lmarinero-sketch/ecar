@@ -33,7 +33,6 @@ const MODULE_COLOR: Partial<Record<ModuleId, string>> = {
   opportunities: 'from-blue-700 to-ecar-blue',
   purchase_orders: 'from-ecar-blueDark to-ecar-blue',
   nonconformities: 'from-red-800 to-rose-600',
-  scope_changes: 'from-amber-800 to-orange-600',
   supplier_eval: 'from-ecar-blueDark to-emerald-600',
 };
 

@@ -97,7 +97,6 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   opportunities: ['🎯 Analizando el pipeline...', '📊 Revisando oportunidades...', '💰 Calculando conversión...'],
   purchase_orders: ['📋 Revisando OC pendientes...', '🛒 Controlando entregas...', '📦 Chequeando órdenes...'],
   nonconformities: ['⚠️ Revisando NC abiertas...', '🔍 Analizando desvíos...', '✅ Verificando correctivas...'],
-  scope_changes: ['📐 Analizando adicionales...', '💰 Calculando impacto...', '📋 Revisando cambios...'],
   supplier_eval: ['⭐ Evaluando proveedores...', '📊 Analizando rankings...', '🏆 Revisando calificaciones...'],
 };
 
@@ -437,23 +436,14 @@ export const RomboChat: React.FC = () => {
     nonconformities: {
       where: 'No Conformidades (PR-GC-01 §4.6)',
       capabilities: [
-        'Ver **NC abiertas** por categoría y gravedad',
-        'Consultar **acciones correctivas** pendientes',
-        'Revisar el **historial de NC** por proyecto/proveedor',
-        'Registrar una nueva NC con evidencia',
+        'Consultar **No Conformidades** abiertas y vencidas',
+        'Ver el **costo de la No Calidad** (CNC) general',
+        'Analizar recurrencia por **tipo de desvío**',
+        'Verificar el estado de las **acciones correctivas**',
       ],
       proTip: 'Las NC se integran con la evaluación de proveedores automáticamente.',
     },
-    scope_changes: {
-      where: 'Adicionales y Cambios (PR-GO-01 §4.5)',
-      capabilities: [
-        'Ver **cambios detectados** pendientes de evaluación',
-        'Consultar el **impacto económico** acumulado de adicionales',
-        'Revisar **impacto en plazos** de cada cambio',
-        'Hacer seguimiento del **flujo de aprobación**',
-      ],
-      proTip: 'Nunca ejecutes un adicional sin registro y aprobación previa.',
-    },
+
     supplier_eval: {
       where: 'Evaluación de Proveedores (PR-GC-01 §4.7)',
       capabilities: [

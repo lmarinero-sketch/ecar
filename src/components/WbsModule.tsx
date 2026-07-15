@@ -5,10 +5,12 @@ import {
   MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
   ShoppingCart, FileCheck, DollarSign, Truck, Sparkles, Info, Mic, MicOff
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { Wbs3dView } from './Wbs3dView';
 import { useImplementationStore } from '../store/useImplementationStore';
 import {
-  useProjects, useCreateProject, useWbsElements, useCreateWbsElement,
+  useProjects, useCreateProject, useUpdateProject, useDeleteProject,
+  useWbsElements, useCreateWbsElement,
   useUpdateWbsElement, useDeleteWbsElement, useEmployees,
   useProjectFeedback, useCreateProjectFeedback, useUpdateProjectFeedback,
   useProjectDocuments, useUploadProjectDocument, useDeleteProjectDocument,
@@ -23,7 +25,7 @@ import type {
   WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
 } from '../lib/types';
 
-type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d';
+type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d' | 'documentos';
 
 const PHASE_COLORS: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700',
@@ -46,14 +48,17 @@ export const WbsModule: React.FC = () => {
     useImplementationStore.getState().completeItem('g18');
   }, []);
   const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
   const { data: wbs = [] } = useWbsElements(selectedProjectId || undefined);
   const { data: employees = [] } = useEmployees();
   const [tab, setTab] = useState<MainTab>('planificacion');
   const [showForm, setShowForm] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [editTask, setEditTask] = useState<WbsElement | null>(null);
-  const [form, setForm] = useState({ name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
+  const [form, setForm] = useState({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
   const createWbs = useCreateWbsElement();
   const updateWbs = useUpdateWbsElement();
   const deleteWbs = useDeleteWbsElement();
@@ -320,10 +325,36 @@ export const WbsModule: React.FC = () => {
     budget_cost_ars: '0', notes: '', color: '#3b82f6',
   });
 
-  const handleCreateProject = async () => {
-    await createProject.mutateAsync(form as any);
+  const handleSaveProject = async () => {
+    if (form.id) {
+      await updateProject.mutateAsync({ id: form.id, updates: form as any });
+    } else {
+      await createProject.mutateAsync(form as any);
+    }
     setShowForm(false);
-    setForm({ name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
+    setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
+  };
+
+  const handleEditProject = () => {
+    if (!selectedProject) return;
+    setForm({
+      id: selectedProject.id,
+      name: selectedProject.name,
+      client_name: selectedProject.client_name || '',
+      client_cuit: selectedProject.client_cuit || '',
+      location: selectedProject.location || '',
+      budget_ars: selectedProject.budget_ars || 0,
+      start_date: selectedProject.start_date || ''
+    });
+    setShowForm(true);
+  };
+
+  const handleDeleteProject = async () => {
+    if (!selectedProjectId) return;
+    if (confirm('¿Estás seguro de que deseas eliminar esta obra y TODO su contenido? Esta acción es irreversible.')) {
+      await deleteProject.mutateAsync(selectedProjectId);
+      setSelectedProjectId(null);
+    }
   };
 
   const handleSaveTask = async () => {
@@ -364,7 +395,7 @@ export const WbsModule: React.FC = () => {
     setShowNewTask(true);
   };
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+
   const formatARS = (v: number) => v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : `$${v.toLocaleString('es-AR')}`;
 
   const kpis = useMemo(() => {
@@ -402,13 +433,25 @@ export const WbsModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Project Selector + New */}
+      {/* Project Selector + Actions */}
       <div className="flex flex-wrap items-center gap-3">
         <select value={selectedProjectId || ''} onChange={e => setSelectedProjectId(e.target.value || null)} className="flex-1 min-w-[200px] px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-ecar-blue/30">
           <option value="">Seleccioná una obra</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name} — {p.client_name || 'Sin cliente'}</option>)}
         </select>
-        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all shadow-md">
+        
+        {selectedProjectId && (
+          <div className="flex items-center gap-2 mr-2">
+            <button onClick={handleEditProject} className="p-2 text-gray-500 hover:text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100" title="Editar Obra">
+              <Pencil size={18} />
+            </button>
+            <button onClick={handleDeleteProject} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Eliminar Obra">
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )}
+
+        <button onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all shadow-md">
           <Plus size={16} /> Nueva Obra
         </button>
       </div>
@@ -467,7 +510,7 @@ export const WbsModule: React.FC = () => {
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nueva Obra</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{form.id ? 'Editar Obra' : 'Nueva Obra'}</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
             <input placeholder="Nombre de la obra *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2.5 border rounded-xl text-sm" />
             <div className="grid grid-cols-2 gap-3">
               <input placeholder="Cliente" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
@@ -476,8 +519,8 @@ export const WbsModule: React.FC = () => {
               <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm col-span-2" />
             </div>
-            <button onClick={handleCreateProject} disabled={!form.name || createProject.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
-              {createProject.isPending ? 'Creando...' : '✅ Crear Obra'}
+            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
+              {createProject.isPending || updateProject.isPending ? 'Guardando...' : (form.id ? '✅ Guardar Cambios' : '✅ Crear Obra')}
             </button>
           </div>
         </div>

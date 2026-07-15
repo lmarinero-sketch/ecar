@@ -413,21 +413,6 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Las lecciones aprendidas se incorporan a la mejora continua del sistema.',
     ],
   },
-  scope_changes: {
-    title: 'Adicionales y Cambios de Alcance',
-    description: 'Registro de adicionales, cambios de alcance, desvíos e interferencias. Evaluación de impacto técnico y económico con flujo de aprobación.',
-    steps: [
-      'Detectá un cambio y registralo indicando origen (cliente, inspección, obra, interno).',
-      'Evaluá el impacto técnico, económico y en plazo.',
-      'Enviá a aprobación de GG cuando corresponda.',
-      'Ejecutá solo después de la aprobación formal.',
-    ],
-    tips: [
-      'Nunca ejecutes un adicional sin registro previo.',
-      'Vinculá cada cambio con el presupuesto original para defensa de reclamos.',
-      'Los cambios rechazados quedan documentados para referencia futura.',
-    ],
-  },
   supplier_eval: {
     title: 'Evaluación de Proveedores',
     description: 'Calificación periódica de proveedores según criterios de plazo, calidad, precio, documentación y respuesta a reclamos.',

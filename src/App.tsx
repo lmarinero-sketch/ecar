@@ -36,7 +36,6 @@ import { ProjectBudgetModule } from './components/ProjectBudgetModule';
 import { BudgetLandingModule } from './components/BudgetLandingModule';
 import { OpportunitiesModule } from './components/OpportunitiesModule';
 import { NonConformitiesModule } from './components/NonConformitiesModule';
-import { ScopeChangesModule } from './components/ScopeChangesModule';
 import { PurchaseOrdersModule } from './components/PurchaseOrdersModule';
 import { SupplierEvalModule } from './components/SupplierEvalModule';
 import { GuideModule } from './components/GuideModule';
@@ -142,7 +141,6 @@ function AppContent() {
       case 'opportunities': return <OpportunitiesModule />;
       case 'budget_landing': return <BudgetLandingModule />;
       case 'nonconformities': return <NonConformitiesModule />;
-      case 'scope_changes': return <ScopeChangesModule />;
       case 'purchase_orders': return <PurchaseOrdersModule />;
       case 'supplier_eval': return <SupplierEvalModule />;
 
