@@ -3,7 +3,7 @@ import {
   FileSignature, Plus, X, TrendingUp, Banknote,
   ChevronDown, ChevronUp, Building2, Upload, Pencil, Trash2
 } from 'lucide-react';
-import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate, useUpdateProject } from '../hooks/useData';
+import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate, useUpdateProject, useCreateProject } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 import { ImageViewer } from './ImageViewer';
@@ -19,9 +19,61 @@ export const CertificationsModule: React.FC = () => {
   const updateCert = useUpdateProjectCertificate();
   const deleteCert = useDeleteProjectCertificate();
   const updateProject = useUpdateProject();
+  const createProject = useCreateProject();
 
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: string; val: string } | null>(null);
+
+  const handleNewProject = async () => {
+    const name = prompt('Nombre del nuevo proyecto:');
+    if (!name) return;
+    try {
+      await createProject.mutateAsync({ name, contract_amount: 1 } as any);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', 'No se pudo crear el proyecto: ' + err.message);
+    }
+  };
+
+  const renderEditableCell = (projId: string, field: string, value: number, className: string) => {
+    const isEditing = inlineEdit?.id === projId && inlineEdit?.field === field;
+    return (
+      <td 
+        className={`cursor-pointer hover:opacity-80 transition-opacity ${className}`}
+        onClick={(e) => { e.stopPropagation(); setInlineEdit({ id: projId, field, val: value.toString() }); }}
+      >
+        {isEditing ? (
+          <input 
+            type="number"
+            autoFocus
+            className="w-full min-w-[80px] px-1 py-0.5 text-black rounded border-2 border-ecar-blue bg-white"
+            value={inlineEdit.val}
+            onChange={e => setInlineEdit({ ...inlineEdit, val: e.target.value })}
+            onBlur={async () => {
+               const numericValue = parseFloat(inlineEdit.val) || 0;
+               if (numericValue !== value) {
+                 await updateProject.mutateAsync({ id: projId, [field]: numericValue } as any);
+               }
+               setInlineEdit(null);
+            }}
+            onKeyDown={async (e) => {
+               if (e.key === 'Enter') {
+                 const numericValue = parseFloat(inlineEdit.val) || 0;
+                 if (numericValue !== value) {
+                   await updateProject.mutateAsync({ id: projId, [field]: numericValue } as any);
+                 }
+                 setInlineEdit(null);
+               }
+               if (e.key === 'Escape') setInlineEdit(null);
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          fmt(value)
+        )}
+      </td>
+    );
+  };
   const [showNewCert, setShowNewCert] = useState<string | null>(null);
   const [form, setForm] = useState({ certificate_number: '', gross_amount: '', redetermination: '', period_description: '' });
   
@@ -107,24 +159,31 @@ export const CertificationsModule: React.FC = () => {
     }
   };
 
-  if (loadingProjects || loadingCerts) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-rose-500 rounded-full animate-spin" /></div>;
+  if (loadingProjects || loadingCerts) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rose-800 to-rose-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><FileSignature size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><FileSignature size={24} /> Certificaciones de Obra</h3>
-          <p className="text-rose-100 text-sm mt-1">Seguimiento de certificados, redeterminaciones y depósitos por obra</p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="font-bold text-2xl flex items-center gap-2"><FileSignature size={24} /> Certificaciones de Obra</h3>
+              <p className="text-blue-100 text-sm mt-1">Seguimiento de certificados, redeterminaciones y depósitos por obra</p>
+            </div>
+            <button onClick={handleNewProject} className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-2 px-4 rounded-xl flex items-center gap-2 transition-colors">
+              <Plus size={18} /> Nuevo Proyecto
+            </button>
+          </div>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Building2 size={16} className="text-rose-500" /> Obras con Contrato</div>
-          <p className="text-2xl font-black text-rose-600 font-mono">{contractProjects.length}</p>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Building2 size={16} className="text-ecar-blue" /> Obras con Contrato</div>
+          <p className="text-2xl font-black text-ecar-blueDark font-mono">{contractProjects.length}</p>
         </div>
         <div className="light-card p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><FileSignature size={16} className="text-blue-500" /> Certificados Emitidos</div>
@@ -158,7 +217,7 @@ export const CertificationsModule: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                        <Building2 size={18} className="text-rose-500" />
+                        <Building2 size={18} className="text-ecar-blue" />
                         {proj.name}
                         <button
                           onClick={(e) => {
@@ -191,7 +250,7 @@ export const CertificationsModule: React.FC = () => {
                   </div>
                   {/* Progress bar */}
                   <div className="mt-3 w-full bg-gray-100 rounded-full h-3">
-                    <div className="bg-gradient-to-r from-rose-500 to-rose-400 h-3 rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%` }} />
+                    <div className="bg-gradient-to-r from-ecar-blue to-ecar-blueLight h-3 rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%` }} />
                   </div>
                   <div className="flex justify-between text-xs text-gray-400 mt-1">
                     <span>Certificado: {fmtM(totalCertified)}</span>
@@ -239,7 +298,7 @@ export const CertificationsModule: React.FC = () => {
                                     e.stopPropagation();
                                     setDeleteTarget(c);
                                   }}
-                                  className="p-1 bg-white/70 hover:bg-rose-100 rounded text-amber-800 hover:text-rose-600 transition-colors"
+                                  className="p-1 bg-white/70 hover:bg-red-100 rounded text-amber-800 hover:text-red-600 transition-colors"
                                   title="Eliminar certificado"
                                 >
                                   <Trash2 size={13} />
@@ -268,9 +327,9 @@ export const CertificationsModule: React.FC = () => {
                       <tbody>
                         {/* Base Amount Row */}
                         <tr>
-                          <td className="border border-gray-300 p-2 text-right font-mono font-medium">{fmt(proj.contract_amount)}</td>
-                          <td className="border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium">{fmt(proj.advance_amount)}</td>
-                          <td className="border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium">{fmt(proj.advance_redetermination)}</td>
+                          {renderEditableCell(proj.id, 'contract_amount', proj.contract_amount, "border border-gray-300 p-2 text-right font-mono font-medium")}
+                          {renderEditableCell(proj.id, 'advance_amount', proj.advance_amount, "border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium")}
+                          {renderEditableCell(proj.id, 'advance_redetermination', proj.advance_redetermination, "border border-gray-300 p-2 bg-green-400/50 text-right font-mono font-medium")}
                           {certs.map(c => (
                             <td key={c.id} className="border border-gray-300 p-2 bg-amber-300 text-right font-mono font-medium">{fmt(c.gross_amount)}</td>
                           ))}
@@ -295,12 +354,8 @@ export const CertificationsModule: React.FC = () => {
                         {/* Bank Deposit Row */}
                         <tr>
                           <td className="border border-gray-300 p-2 font-bold text-gray-700 uppercase">Deposito Banco</td>
-                          <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
-                            {fmt(proj.advance_deposit || (proj.advance_amount * 0.95))}
-                          </td>
-                          <td className="border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold">
-                            {fmt(proj.advance_redetermination_deposit || (proj.advance_redetermination * 0.95))}
-                          </td>
+                          {renderEditableCell(proj.id, 'advance_deposit', proj.advance_deposit || (proj.advance_amount * 0.95), "border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold")}
+                          {renderEditableCell(proj.id, 'advance_redetermination_deposit', proj.advance_redetermination_deposit || (proj.advance_redetermination * 0.95), "border border-gray-300 p-2 bg-green-600 text-white text-right font-mono font-bold")}
                           {certs.map(c => {
                             let bgClass = 'bg-white';
                             let textClass = 'text-gray-900';
