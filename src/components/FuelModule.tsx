@@ -1173,6 +1173,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
 /* ── Dashboard Tab ── */
 const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }> = ({ loads, vehicles }) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [chartMode, setChartMode] = useState<'grouped' | 'split'>('grouped');
   
   const completedLoads = loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status);
 
@@ -1186,9 +1187,16 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
     acc[k].liters += (load.liters || 0);
     acc[k].amount += (load.total_amount || 0);
     acc[k].count += 1;
+    // For split view
+    if (load.vehicle_code) {
+      acc[k][load.vehicle_code] = (acc[k][load.vehicle_code] || 0) + (load.liters || 0);
+    }
     return acc;
   }, {} as Record<string, any>);
-  const monthlyData = Object.values(loadsByMonth).reverse(); // Assuming descending order from loads
+  const monthlyData = Object.values(loadsByMonth).reverse();
+
+  // Colors for split view
+  const COLORS = ['#0284c7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
   // Selected vehicle data
   const vehicleLoads = selectedVehicle ? completedLoads.filter(l => l.vehicle_code === selectedVehicle) : [];
@@ -1224,17 +1232,31 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
             </div>
           </div>
           
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[300px]">
-            <h4 className="font-bold text-gray-700 text-sm mb-4">Evolución de Consumo (Litros por Mes)</h4>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{fontSize: 12}} />
-                <YAxis tick={{fontSize: 12}} />
-                <RechartsTooltip formatter={(value: any) => [`${Number(value).toLocaleString('es-AR')} L`, 'Litros']} />
-                <Bar dataKey="liters" fill="#0284c7" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[350px]">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-bold text-gray-700 text-sm">Evolución de Consumo (Litros por Mes)</h4>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button onClick={() => setChartMode('grouped')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartMode === 'grouped' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Global</button>
+                <button onClick={() => setChartMode('split')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartMode === 'split' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Por Vehículo</button>
+              </div>
+            </div>
+            <div className="h-[270px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tick={{fontSize: 12}} />
+                  <YAxis tick={{fontSize: 12}} />
+                  <RechartsTooltip formatter={(value: any, name: string) => [`${Number(value).toLocaleString('es-AR')} L`, name === 'liters' ? 'Total' : name]} />
+                  {chartMode === 'grouped' ? (
+                    <Bar dataKey="liters" fill="#0284c7" radius={[4, 4, 0, 0]} />
+                  ) : (
+                    vehicles.map((v, i) => (
+                      <Bar key={v.code} dataKey={v.code} stackId="a" fill={COLORS[i % COLORS.length]} />
+                    ))
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       ) : (

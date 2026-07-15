@@ -3,7 +3,7 @@ import {
   Target, Plus, X, FolderTree, Calendar, BarChart3, RefreshCw,
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
   MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
-  ShoppingCart, FileCheck, DollarSign, Truck, Sparkles
+  ShoppingCart, FileCheck, DollarSign, Truck, Sparkles, Info, Mic, MicOff
 } from 'lucide-react';
 import { Wbs3dView } from './Wbs3dView';
 import { useImplementationStore } from '../store/useImplementationStore';
@@ -59,6 +59,32 @@ export const WbsModule: React.FC = () => {
 
   const [aiInput, setAiInput] = useState('');
   const [aiSuccessMessage, setAiSuccessMessage] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
+      return;
+    }
+    const SpeechRecognition = (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-AR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setAiInput((prev) => (prev + ' ' + transcript).trim());
+    };
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      setIsListening(false);
+    };
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+  };
 
   const calculateDuration = (start: string, end: string): string => {
     if (!start || !end) return '1';
@@ -193,8 +219,19 @@ export const WbsModule: React.FC = () => {
       return `${year}-${month}-${day}`;
     };
 
+    const relativeMatch = text.match(/(?:desde|a partir de)\s+(hoy|mañana|ma[ñn]ana)/i);
     const rangeMatch = text.match(/(?:del|desde el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))\s+(?:al|hasta el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))/i);
-    if (rangeMatch) {
+    if (relativeMatch) {
+      const isTomorrow = relativeMatch[1].toLowerCase().includes('ma');
+      const start = new Date();
+      if (isTomorrow) start.setDate(start.getDate() + 1);
+      start_date = start.toISOString().split('T')[0];
+      
+      const dur = parseInt(duration_days) || 1;
+      const d1 = new Date(start_date);
+      d1.setDate(d1.getDate() + dur - 1);
+      end_date = d1.toISOString().split('T')[0];
+    } else if (rangeMatch) {
       const startDay = rangeMatch[1];
       const startMonth = rangeMatch[2] || rangeMatch[3];
       const endDay = rangeMatch[4];
@@ -228,7 +265,9 @@ export const WbsModule: React.FC = () => {
     if (assigneeMatch) cleanName = cleanName.replace(assigneeMatch[0], '');
     if (notesMatch) cleanName = cleanName.replace(notesMatch[0], '');
     if (durationMatch) cleanName = cleanName.replace(durationMatch[0], '');
-    if (rangeMatch) {
+    if (relativeMatch) {
+      cleanName = cleanName.replace(relativeMatch[0], '');
+    } else if (rangeMatch) {
       cleanName = cleanName.replace(rangeMatch[0], '');
     } else {
       const singleDateMatch = text.match(/(?:el|desde el|inicio el)\s+(\d{1,2})(?:\s+de\s+([a-z]+)|\/(\d{1,2}))/i);
@@ -403,7 +442,7 @@ export const WbsModule: React.FC = () => {
 
           {/* Tab Content */}
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
-          {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} />}
+          {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
           {tab === 'avance3d' && <Wbs3dView wbs={wbs} projectId={selectedProjectId!} />}
           {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
@@ -650,11 +689,16 @@ export const WbsModule: React.FC = () => {
                   </p>
 
                   <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-blue-200 uppercase tracking-wider block">Tu frase / instrucción:</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[9px] font-bold text-blue-200 uppercase tracking-wider block">Tu frase / instrucción:</label>
+                      <button type="button" onClick={handleVoiceInput} className={`p-1.5 rounded-full transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'}`}>
+                        {isListening ? <Mic size={14} /> : <MicOff size={14} />}
+                      </button>
+                    </div>
                     <textarea
                       value={aiInput}
                       onChange={e => setAiInput(e.target.value)}
-                      placeholder="Ej: Excavación de zapatas desde el 15 de junio por 8 días con presupuesto de 1.5 millones asignado a gomez..."
+                      placeholder="Ej: Excavación de zapatas desde hoy por 8 días con presupuesto de 1.5 millones asignado a gomez..."
                       className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all resize-none h-24"
                     />
                     <button
@@ -813,7 +857,7 @@ const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: (
 );
 
 /* ═══════════════════════ GANTT TAB (CSS puro) ═══════════════════════ */
-const GanttTab: React.FC<{ wbs: WbsElement[]; project: any }> = ({ wbs, project }) => {
+const GanttTab: React.FC<{ wbs: WbsElement[]; project: any; onUpdateProgress?: (id: string, pct: number) => void }> = ({ wbs, project, onUpdateProgress }) => {
   const tasksWithDates = wbs.filter(t => t.start_date && t.end_date);
 
   const { minDate, totalDays, weeks } = useMemo(() => {
@@ -913,7 +957,10 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any }> = ({ wbs, project 
                   <div className="absolute top-2 h-5 rounded-md shadow-sm flex items-center overflow-hidden transition-all" style={{ left: `${startPct}%`, width: `${barWidth}%`, background: barColor }}>
                     {/* Progress fill */}
                     <div className="h-full rounded-md opacity-40 bg-white" style={{ width: `${100 - task.progress_pct}%`, position: 'absolute', right: 0 }} />
-                    <span className="text-[9px] font-bold text-white px-1.5 relative z-10 whitespace-nowrap">{task.progress_pct}%</span>
+                    <span className="text-[9px] font-bold text-white px-1.5 relative z-10 whitespace-nowrap pointer-events-none">{task.progress_pct}%</span>
+                    {onUpdateProgress && (
+                      <input type="range" min="0" max="100" step="5" value={task.progress_pct} onChange={(e) => onUpdateProgress(task.id, Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20 m-0 p-0" title="Ajustar %" />
+                    )}
                   </div>
                   {/* Duration label */}
                   <div className="absolute bottom-0.5 text-[8px] text-gray-400 font-mono" style={{ left: `${startPct}%` }}>
@@ -1533,6 +1580,28 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 Ingreso a Obra
               </button>
             </div>
+            
+            <div className={`text-xs p-3 rounded-lg border flex gap-2 ${movType === 'out' ? 'bg-amber-50 border-amber-100 text-amber-800' : 'bg-green-50 border-green-100 text-green-800'}`}>
+              <Info size={16} className={`shrink-0 ${movType === 'out' ? 'text-amber-500' : 'text-green-500'}`} />
+              <div>
+                {movType === 'out' ? (
+                  <>
+                    <p className="font-bold mb-1">Registro de Consumo (Salida de Pañol)</p>
+                    <p>El material se retira físicamente del pañol para ser utilizado en las tareas de esta obra. Esta acción <strong>descuenta el stock</strong> de tu inventario local de forma inmediata.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold mb-1">Registro de Ingreso Manual (Entrada a Pañol)</p>
+                    <p className="mb-1">Estás sumando stock de forma manual. <strong>Circuito formal recomendado:</strong></p>
+                    <ol className="list-decimal pl-4 space-y-0.5 opacity-90">
+                      <li>Desde la obra se carga un <strong>Pedido</strong> de materiales.</li>
+                      <li>El sector de <strong>Compras</strong> lo recibe, lo procesa y lo aprueba.</li>
+                      <li>Cuando Compras lo despacha, llegará automáticamente a la obra como un <strong>Ingreso Pendiente</strong> para que lo confirmes.</li>
+                    </ol>
+                  </>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-3">
               <div>
@@ -1963,9 +2032,6 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Certificaciones e Ingresos</h3>
-        <button onClick={() => setShowNewCertModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
-          <Plus size={14} /> Registrar Certificado
-        </button>
       </div>
 
       {loadingCerts ? (

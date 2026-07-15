@@ -1218,6 +1218,7 @@ export function useCreateInventoryMovement() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inventory_movements'] });
       qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['project_inventory_movements'] });
     },
   });
 }
@@ -1241,7 +1242,10 @@ export function useCreateToolAssignment() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tool_assignments'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tool_assignments'] });
+      qc.invalidateQueries({ queryKey: ['project_tool_assignments'] });
+    },
   });
 }
 
@@ -1255,6 +1259,7 @@ export function useUpdateToolAssignment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tool_assignments'] });
       qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['project_tool_assignments'] });
     },
   });
 }
@@ -1283,7 +1288,10 @@ export function useCreatePurchaseRequest() {
       }
       return request;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_requests'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
+    },
   });
 }
 
@@ -1294,7 +1302,10 @@ export function useUpdatePurchaseRequest() {
       const { error } = await supabase.from('purchase_requests').update(updates).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchase_requests'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
+    },
   });
 }
 
@@ -1313,6 +1324,7 @@ export function useUpdatePurchaseRequestItems() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
       qc.invalidateQueries({ queryKey: ['budgets'] });
       qc.invalidateQueries({ queryKey: ['budget_items'] });
     },
