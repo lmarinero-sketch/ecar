@@ -870,6 +870,7 @@ export const FleetTrackingMap: React.FC = () => {
                 </table>
               </div>
             </div>
+          )}
         </div>
       </div>
       
