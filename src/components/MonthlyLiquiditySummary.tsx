@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Save, Edit2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
   useMonthlySnapshots, 
   useUpsertMonthlySnapshot, 
@@ -35,7 +35,7 @@ export const MonthlyLiquiditySummary: React.FC = () => {
   const prevSnap = (snapshots || []).find(s => s.month.startsWith(prevMonthStr));
 
   // Edit states
-  const [isEditing, setIsEditing] = useState(false);
+  const [inlineEdit, setInlineEdit] = useState<string | null>(null);
   const [form, setForm] = useState({
     apoyoFinanciero: 0,
     cajaFinalReal: 0,
@@ -86,44 +86,86 @@ export const MonthlyLiquiditySummary: React.FC = () => {
         otrosGastosObs: ''
       });
     }
-    setIsEditing(false);
+    setInlineEdit(null);
   }, [currentSnap, monthStr]);
 
   // Derived values for display
-  const displayApoyo = isEditing ? form.apoyoFinanciero : (currentSnap?.other_income || 0);
-  const displayCajaReal = isEditing ? form.cajaFinalReal : (currentSnap?.real_closing || 0);
-  const displayOtrosIngresosAmount = isEditing ? form.otrosIngresosAmount : (currentSnap?.expense_breakdown?.otros_ingresos?.amount || 0);
-  const displayOtrosGastosAmount = isEditing ? form.otrosGastosAmount : (currentSnap?.expense_breakdown?.otros_gastos?.amount || 0);
+  const displayApoyo = form.apoyoFinanciero;
+  const displayCajaReal = form.cajaFinalReal;
+  const displayOtrosIngresosAmount = form.otrosIngresosAmount;
+  const displayOtrosGastosAmount = form.otrosGastosAmount;
 
   const totalRecibido = cajaInicial + totalCobrado + displayApoyo + displayOtrosIngresosAmount;
   const totalGastosSum = totalGastos + displayOtrosGastosAmount;
   const cajaEsperada = totalRecibido - totalGastosSum;
   const diferencia = displayCajaReal - cajaEsperada;
 
-  const handleSave = async () => {
+  const handleInlineSave = async (field: keyof typeof form, value: string | number) => {
     try {
+      const newForm = { ...form, [field]: typeof value === 'string' ? value : (parseFloat(value.toString()) || 0) };
+      setForm(newForm);
+      
+      const newApoyo = field === 'apoyoFinanciero' ? Number(value) : form.apoyoFinanciero;
+      const newOtrosIngresos = field === 'otrosIngresosAmount' ? Number(value) : form.otrosIngresosAmount;
+      const newOtrosGastos = field === 'otrosGastosAmount' ? Number(value) : form.otrosGastosAmount;
+      const newCajaFinal = field === 'cajaFinalReal' ? Number(value) : form.cajaFinalReal;
+      const newOtrosIngresosObs = field === 'otrosIngresosObs' ? String(value) : form.otrosIngresosObs;
+      const newOtrosGastosObs = field === 'otrosGastosObs' ? String(value) : form.otrosGastosObs;
+
+      const totalRecibidoNow = cajaInicial + totalCobrado + newApoyo + newOtrosIngresos;
+      const totalGastosSumNow = totalGastos + newOtrosGastos;
+      const cajaEsperadaNow = totalRecibidoNow - totalGastosSumNow;
+
       const snapData = {
         month: `${monthStr}-01`,
         opening_balance: cajaInicial,
         total_income: totalCobrado,
-        other_income: form.apoyoFinanciero,
-        total_expenses: totalGastosSum,
-        projected_closing: cajaEsperada,
-        real_closing: form.cajaFinalReal,
-        deviation: form.cajaFinalReal - cajaEsperada,
+        other_income: newApoyo,
+        total_expenses: totalGastosSumNow,
+        projected_closing: cajaEsperadaNow,
+        real_closing: newCajaFinal,
+        deviation: newCajaFinal - cajaEsperadaNow,
         expense_breakdown: {
           ...currentSnap?.expense_breakdown,
-          otros_ingresos: { amount: form.otrosIngresosAmount, obs: form.otrosIngresosObs },
-          otros_gastos: { amount: form.otrosGastosAmount, obs: form.otrosGastosObs }
+          otros_ingresos: { amount: newOtrosIngresos, obs: newOtrosIngresosObs },
+          otros_gastos: { amount: newOtrosGastos, obs: newOtrosGastosObs }
         }
       };
 
       await upsertSnapshot.mutateAsync(snapData);
-      setIsEditing(false);
-      useModalStore.getState().showAlert('Éxito', 'Resumen guardado correctamente');
+      setInlineEdit(null);
     } catch (e: any) {
       useModalStore.getState().showAlert('Error', e.message);
     }
+  };
+
+  const renderEditableCell = (field: keyof typeof form, type: 'number' | 'text' = 'number', widthClass = 'w-32', isLarge = false) => {
+    if (inlineEdit === field) {
+      return (
+        <input
+          autoFocus
+          type={type}
+          defaultValue={form[field]}
+          onBlur={(e) => handleInlineSave(field, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+            if (e.key === 'Escape') setInlineEdit(null);
+          }}
+          className={`${widthClass} px-2 py-1 ${isLarge ? 'border-2 border-ecar-blue focus:ring-2 focus:ring-ecar-blue/30 rounded font-mono text-right text-lg' : 'border border-gray-300 rounded font-mono text-right text-sm'} focus:outline-none focus:border-ecar-blue`}
+        />
+      );
+    }
+    return (
+      <div 
+        onClick={() => setInlineEdit(field)}
+        className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors inline-block min-w-[3rem]"
+      >
+        {type === 'number' ? <span className={`font-mono ${isLarge ? 'text-lg' : ''}`}>{fmt(form[field] as number)}</span> : (form[field] || <span className="text-gray-400 italic text-xs">Ajustes manuales</span>)}
+      </div>
+    );
   };
 
   const monthLabel = currentDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }).toUpperCase();
@@ -165,46 +207,18 @@ export const MonthlyLiquiditySummary: React.FC = () => {
                 APOYO FINANCIERO ECAR SAS
               </td>
               <td className="px-6 py-2 text-right">
-                {isEditing ? (
-                  <input 
-                    type="number" 
-                    value={form.apoyoFinanciero || ''} 
-                    onChange={e => setForm({...form, apoyoFinanciero: parseFloat(e.target.value) || 0})}
-                    className="w-32 px-2 py-1 border border-gray-300 rounded font-mono text-right"
-                  />
-                ) : (
-                  <span className="font-mono">{fmt(displayApoyo)}</span>
-                )}
+                {renderEditableCell('apoyoFinanciero')}
               </td>
             </tr>
             <tr className="hover:bg-gray-50">
               <td className="px-6 py-2 font-medium text-gray-700">
                 <div className="flex flex-col">
                   <span>OTROS INGRESOS (Ajustes manuales)</span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      placeholder="Observaciones..."
-                      value={form.otrosIngresosObs} 
-                      onChange={e => setForm({...form, otrosIngresosObs: e.target.value})}
-                      className="text-xs px-2 py-1 mt-1 border border-gray-300 rounded text-gray-600"
-                    />
-                  ) : (
-                    form.otrosIngresosObs && <span className="text-xs text-gray-500 italic">{form.otrosIngresosObs}</span>
-                  )}
+                  <div className="mt-1">{renderEditableCell('otrosIngresosObs', 'text', 'w-full')}</div>
                 </div>
               </td>
               <td className="px-6 py-2 text-right">
-                {isEditing ? (
-                  <input 
-                    type="number" 
-                    value={form.otrosIngresosAmount || ''} 
-                    onChange={e => setForm({...form, otrosIngresosAmount: parseFloat(e.target.value) || 0})}
-                    className="w-32 px-2 py-1 border border-gray-300 rounded font-mono text-right"
-                  />
-                ) : (
-                  <span className="font-mono">{fmt(displayOtrosIngresosAmount)}</span>
-                )}
+                {renderEditableCell('otrosIngresosAmount')}
               </td>
             </tr>
 
@@ -223,30 +237,11 @@ export const MonthlyLiquiditySummary: React.FC = () => {
               <td className="px-6 py-2 font-medium text-gray-700">
                 <div className="flex flex-col">
                   <span>OTROS GASTOS (Ajustes manuales)</span>
-                  {isEditing ? (
-                    <input 
-                      type="text" 
-                      placeholder="Observaciones..."
-                      value={form.otrosGastosObs} 
-                      onChange={e => setForm({...form, otrosGastosObs: e.target.value})}
-                      className="text-xs px-2 py-1 mt-1 border border-gray-300 rounded text-gray-600"
-                    />
-                  ) : (
-                    form.otrosGastosObs && <span className="text-xs text-gray-500 italic">{form.otrosGastosObs}</span>
-                  )}
+                  <div className="mt-1">{renderEditableCell('otrosGastosObs', 'text', 'w-full')}</div>
                 </div>
               </td>
               <td className="px-6 py-2 text-right">
-                {isEditing ? (
-                  <input 
-                    type="number" 
-                    value={form.otrosGastosAmount || ''} 
-                    onChange={e => setForm({...form, otrosGastosAmount: parseFloat(e.target.value) || 0})}
-                    className="w-32 px-2 py-1 border border-gray-300 rounded font-mono text-right"
-                  />
-                ) : (
-                  <span className="font-mono">{fmt(displayOtrosGastosAmount)}</span>
-                )}
+                {renderEditableCell('otrosGastosAmount')}
               </td>
             </tr>
 
@@ -260,16 +255,7 @@ export const MonthlyLiquiditySummary: React.FC = () => {
             <tr className="hover:bg-gray-50">
               <td className="px-6 py-3 font-bold text-gray-800 uppercase">CAJA FINAL {monthLabel} REAL</td>
               <td className="px-6 py-2 text-right font-mono font-bold">
-                {isEditing ? (
-                  <input 
-                    type="number" 
-                    value={form.cajaFinalReal || ''} 
-                    onChange={e => setForm({...form, cajaFinalReal: parseFloat(e.target.value) || 0})}
-                    className="w-36 px-2 py-1 border-2 border-emerald-400 focus:ring-2 focus:ring-emerald-200 rounded font-mono text-right text-lg"
-                  />
-                ) : (
-                  <span className="text-lg">{fmt(displayCajaReal)}</span>
-                )}
+                {renderEditableCell('cajaFinalReal', 'number', 'w-36', true)}
               </td>
             </tr>
 
@@ -277,39 +263,14 @@ export const MonthlyLiquiditySummary: React.FC = () => {
             <tr className="bg-sky-500 text-white">
               <td className="px-6 py-4 font-bold uppercase">DIFERENCIA</td>
               <td className="px-6 py-4 text-right font-mono font-bold text-lg">
-                {displayCajaReal === 0 && !isEditing && cajaEsperada !== 0 ? '-' : fmt(diferencia)}
+                {displayCajaReal === 0 && !inlineEdit && cajaEsperada !== 0 ? '-' : fmt(diferencia)}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div className="bg-gray-50 p-4 flex justify-end gap-3 border-t border-gray-200">
-        {isEditing ? (
-          <>
-            <button 
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 font-bold text-sm text-gray-600 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button 
-              onClick={handleSave}
-              disabled={upsertSnapshot.isPending}
-              className="px-4 py-2 font-bold text-sm text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700 flex items-center gap-2"
-            >
-              <Save size={16} /> {upsertSnapshot.isPending ? 'Guardando...' : 'Guardar Resumen'}
-            </button>
-          </>
-        ) : (
-          <button 
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 font-bold text-sm text-ecar-blue bg-white border border-ecar-blue rounded-lg shadow-sm hover:bg-blue-50 flex items-center gap-2"
-          >
-            <Edit2 size={16} /> Editar Valores Manuales
-          </button>
-        )}
-      </div>
+
     </div>
   );
 };
