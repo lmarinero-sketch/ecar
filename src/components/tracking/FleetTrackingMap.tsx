@@ -78,9 +78,11 @@ export const FleetTrackingMap: React.FC = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<{ 
     session: any, 
-    points: {lat: number, lng: number}[],
+    points: {lat: number, lng: number, speed?: number, recorded_at?: string}[],
     kpis?: { distance: string, time: string, avgSpeed: number, maxSpeed: number, violations: number }
   } | null>(null);
+  
+  const [showHistoryTable, setShowHistoryTable] = useState(false);
   
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsFetchedFor, setDirectionsFetchedFor] = useState<string | null>(null);
@@ -255,7 +257,7 @@ export const FleetTrackingMap: React.FC = () => {
       
       setSelectedHistory({
         session,
-        points: points.map((p: any) => ({ lat: p.lat, lng: p.lng })),
+        points: points.map((p: any) => ({ lat: p.lat, lng: p.lng, speed: p.speed, recorded_at: p.recorded_at })),
         kpis: {
           distance: totalDistance.toFixed(2),
           time: totalTimeStr,
@@ -406,6 +408,44 @@ export const FleetTrackingMap: React.FC = () => {
     }
   };
 
+  const handleTurnOffGps = async (vehicle: ActiveVehicle) => {
+    if (!window.confirm(`¿Seguro que querés apagar el GPS de ${vehicle.vehicle_code || 'esta unidad'}?`)) {
+      return;
+    }
+
+    try {
+      // 1. Update DB
+      await supabase
+        .from('vehicle_tracking_sessions')
+        .update({ is_active: false, ended_at: new Date().toISOString() })
+        .eq('id', vehicle.session_id);
+
+      // 2. Broadcast to driver app
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'force_stop',
+          payload: {
+            vehicle_id: vehicle.vehicle_id
+          }
+        });
+      }
+
+      // 3. Update local state
+      setActiveVehicles(prev => {
+        const copy = { ...prev };
+        delete copy[vehicle.vehicle_id];
+        return copy;
+      });
+      setSelectedVehicleId(null);
+      setDirections(null);
+      
+    } catch (err) {
+      console.error('Error apagando GPS:', err);
+      alert('Hubo un error al intentar apagar el GPS.');
+    }
+  };
+
   if (loadError) {
     return (
       <div className="bg-red-50 text-red-700 p-6 rounded-lg border border-red-200 flex flex-col items-center justify-center h-full">
@@ -542,6 +582,7 @@ export const FleetTrackingMap: React.FC = () => {
               <button 
                 onClick={() => {
                   setSelectedHistory(null);
+                  setShowHistoryTable(false);
                   if (map && vehiclesList.length > 0 && window.google) {
                     const bounds = new window.google.maps.LatLngBounds();
                     vehiclesList.forEach(v => {
@@ -724,20 +765,30 @@ export const FleetTrackingMap: React.FC = () => {
                     </div>
                   </div>
                   
-                  <button
-                    onClick={() => {
-                      setAssigningDestinationFor(selectedVehicle.vehicle_id);
-                      setTempDestination(null);
-                      setSelectedVehicleId(null);
-                    }}
-                    className="w-full relative group overflow-hidden bg-gradient-to-r from-blue-800 via-blue-600 to-red-600 text-white text-sm font-bold py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/40 transform hover:-translate-y-0.5"
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {selectedVehicle.destination_lat ? 'Reasignar Destino' : 'Asignar Destino'}
-                    </span>
-                    <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-red-600 via-blue-600 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setAssigningDestinationFor(selectedVehicle.vehicle_id);
+                        setTempDestination(null);
+                        setSelectedVehicleId(null);
+                      }}
+                      className="flex-1 relative group overflow-hidden bg-gradient-to-r from-blue-800 via-blue-600 to-red-600 text-white text-sm font-bold py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/40 transform hover:-translate-y-0.5"
+                    >
+                      <span className="relative z-10 flex items-center justify-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {selectedVehicle.destination_lat ? 'Reasignar' : 'Destino'}
+                      </span>
+                      <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-red-600 via-blue-600 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </button>
+                    
+                    <button
+                      onClick={() => handleTurnOffGps(selectedVehicle)}
+                      className="flex-1 bg-white text-red-600 border border-red-200 text-sm font-bold py-2.5 rounded-xl transition-all duration-300 hover:bg-red-50 hover:border-red-300 flex items-center justify-center gap-1"
+                    >
+                      <X className="w-4 h-4" />
+                      Apagar
+                    </button>
+                  </div>
                 </div>
               </InfoWindow>
             )}
@@ -766,8 +817,59 @@ export const FleetTrackingMap: React.FC = () => {
                 <p className={`text-[10px] font-bold uppercase mb-1 ${selectedHistory.kpis.violations > 0 ? 'text-red-600' : 'text-green-600'}`}>Infracciones (+110)</p>
                 <p className={`font-black text-xl ${selectedHistory.kpis.violations > 0 ? 'text-red-600' : 'text-green-600'}`}>{selectedHistory.kpis.violations}</p>
               </div>
+              <div className="flex items-center justify-center">
+                <button 
+                  onClick={() => setShowHistoryTable(!showHistoryTable)}
+                  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors h-full"
+                >
+                  {showHistoryTable ? 'Ocultar Tabla' : 'Ver Tabla'}
+                </button>
+              </div>
             </div>
           )}
+          
+          {/* History Data Table */}
+          {selectedHistory && showHistoryTable && (
+            <div className="absolute bottom-[90px] left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-20 w-[90%] max-w-4xl h-[40vh] flex flex-col animate-in slide-in-from-bottom">
+              <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 className="font-bold text-gray-800">Registros Tabulados de Posición (GPS)</h3>
+                <button onClick={() => setShowHistoryTable(false)} className="text-gray-500 hover:text-gray-800">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-0">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-100 sticky top-0 shadow-sm text-gray-600 uppercase text-xs">
+                    <tr>
+                      <th className="px-4 py-3">Fecha y Hora</th>
+                      <th className="px-4 py-3">Velocidad</th>
+                      <th className="px-4 py-3">Latitud</th>
+                      <th className="px-4 py-3">Longitud</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {selectedHistory.points.map((p, i) => {
+                      const speedKmh = p.speed ? Math.round(p.speed * 3.6) : 0;
+                      const isOverSpeed = speedKmh > SPEED_LIMIT;
+                      return (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 font-mono text-gray-600">
+                            {p.recorded_at ? new Date(p.recorded_at).toLocaleString() : '-'}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${isOverSpeed ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                              {speedKmh} km/h
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 font-mono text-xs text-gray-500">{p.lat.toFixed(6)}</td>
+                          <td className="px-4 py-2 font-mono text-xs text-gray-500">{p.lng.toFixed(6)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
         </div>
       </div>
       

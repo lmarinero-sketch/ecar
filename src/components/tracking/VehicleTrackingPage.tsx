@@ -215,6 +215,14 @@ export const VehicleTrackingPage: React.FC = () => {
         }
       });
       
+      channel.on('broadcast', { event: 'force_stop' }, (payload) => {
+        const data = payload.payload;
+        if (data.vehicle_id === selectedVehicleId) {
+          stopTracking(false);
+          setError('El administrador ha finalizado el recorrido.');
+        }
+      });
+      
       channelRef.current = channel;
       
       // 5. Iniciar tracking GPS
