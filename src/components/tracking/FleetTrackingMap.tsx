@@ -71,6 +71,7 @@ export const FleetTrackingMap: React.FC = () => {
   const [assigningDestinationFor, setAssigningDestinationFor] = useState<string | null>(null);
   const [tempDestination, setTempDestination] = useState<{lat: number, lng: number} | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [vehicleToTurnOff, setVehicleToTurnOff] = useState<ActiveVehicle | null>(null);
   
   // History State
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -408,10 +409,13 @@ export const FleetTrackingMap: React.FC = () => {
     }
   };
 
-  const handleTurnOffGps = async (vehicle: ActiveVehicle) => {
-    if (!window.confirm(`¿Seguro que querés apagar el GPS de ${vehicle.vehicle_code || 'esta unidad'}?`)) {
-      return;
-    }
+  const handleTurnOffGps = (vehicle: ActiveVehicle) => {
+    setVehicleToTurnOff(vehicle);
+  };
+
+  const confirmTurnOffGps = async () => {
+    if (!vehicleToTurnOff) return;
+    const vehicle = vehicleToTurnOff;
 
     try {
       // 1. Update DB
@@ -440,6 +444,8 @@ export const FleetTrackingMap: React.FC = () => {
       setSelectedVehicleId(null);
       setDirections(null);
       
+      
+      setVehicleToTurnOff(null);
     } catch (err) {
       console.error('Error apagando GPS:', err);
       alert('Hubo un error al intentar apagar el GPS.');
@@ -1005,6 +1011,45 @@ export const FleetTrackingMap: React.FC = () => {
               >
                 Entendido, ¡probar ahora!
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Turn Off GPS Modal */}
+      {vehicleToTurnOff && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-blue-600 p-5 text-white flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold">Apagar GPS</h3>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-gray-700 text-center text-lg mb-2">
+                ¿Seguro que querés apagar el GPS de <span className="font-bold text-gray-900">{vehicleToTurnOff.vehicle_code || 'esta unidad'}</span>?
+              </p>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                Esto finalizará el recorrido actual y el conductor dejará de transmitir su ubicación.
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setVehicleToTurnOff(null)}
+                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={confirmTurnOffGps}
+                  className="flex-1 bg-red-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                >
+                  <X className="w-5 h-5" />
+                  Sí, Apagar
+                </button>
+              </div>
             </div>
           </div>
         </div>
