@@ -3381,7 +3381,7 @@ export function useCreateFleetMaintenanceOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<FleetMaintenanceOrder>) => {
-      const { data, error } = await supabase.from('fleet_maintenance_orders').insert([payload]).select().single();
+      const { data, error } = await supabase.from('fleet_maintenance_orders').insert([{ ...payload, tenant_id: payload.tenant_id || ECAR_TENANT_ID }]).select().single();
       if (error) throw error;
       return data;
     },
@@ -3420,7 +3420,7 @@ export function useCreateFleetTire() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<FleetTire>) => {
-      const { data, error } = await supabase.from('fleet_tires').insert([payload]).select().single();
+      const { data, error } = await supabase.from('fleet_tires').insert([{ ...payload, tenant_id: payload.tenant_id || ECAR_TENANT_ID }]).select().single();
       if (error) throw error;
       return data;
     },

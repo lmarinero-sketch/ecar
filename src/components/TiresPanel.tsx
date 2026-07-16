@@ -47,30 +47,30 @@ export const TiresPanel: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Código/Serie *</label>
-              <input required type="text" className="input" value={formData.code || ''} onChange={e => setFormData({ ...formData, code: e.target.value })} />
+              <input required type="text" className="input-field" value={formData.code || ''} onChange={e => setFormData({ ...formData, code: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Marca y Modelo</label>
-              <input type="text" className="input" value={formData.brand || ''} onChange={e => setFormData({ ...formData, brand: e.target.value })} placeholder="Ej: FateO Miler" />
+              <input type="text" className="input-field" value={formData.brand || ''} onChange={e => setFormData({ ...formData, brand: e.target.value })} placeholder="Ej: FateO Miler" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Medida</label>
-              <input type="text" className="input" value={formData.size || ''} onChange={e => setFormData({ ...formData, size: e.target.value })} placeholder="Ej: 295/80 R22.5" />
+              <input type="text" className="input-field" value={formData.size || ''} onChange={e => setFormData({ ...formData, size: e.target.value })} placeholder="Ej: 295/80 R22.5" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Vehículo Instalado</label>
-              <select className="input" value={formData.vehicle_id || ''} onChange={e => setFormData({ ...formData, vehicle_id: e.target.value, status: e.target.value ? 'en_uso' : 'stock' })}>
+              <select className="input-field" value={formData.vehicle_id || ''} onChange={e => setFormData({ ...formData, vehicle_id: e.target.value, status: e.target.value ? 'en_uso' : 'stock' })}>
                 <option value="">(En Stock)</option>
                 {vehicles.map(v => <option key={v.id} value={v.id}>{v.code}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Posición</label>
-              <input type="text" className="input" value={formData.position || ''} onChange={e => setFormData({ ...formData, position: e.target.value })} placeholder="Ej: Eje 2 Der Ext" />
+              <input type="text" className="input-field" value={formData.position || ''} onChange={e => setFormData({ ...formData, position: e.target.value })} placeholder="Ej: Eje 2 Der Ext" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Vida Útil (Km)</label>
-              <input type="number" className="input" value={formData.expected_lifespan_km || ''} onChange={e => setFormData({ ...formData, expected_lifespan_km: parseInt(e.target.value) })} />
+              <input type="number" className="input-field" value={formData.expected_lifespan_km || ''} onChange={e => setFormData({ ...formData, expected_lifespan_km: parseInt(e.target.value) })} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t">

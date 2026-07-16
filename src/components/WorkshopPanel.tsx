@@ -43,30 +43,30 @@ export const WorkshopPanel: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Vehículo *</label>
-              <select required className="input" value={formData.vehicle_id || ''} onChange={e => setFormData({ ...formData, vehicle_id: e.target.value })}>
+              <select required className="input-field" value={formData.vehicle_id || ''} onChange={e => setFormData({ ...formData, vehicle_id: e.target.value })}>
                 <option value="">Seleccionar...</option>
                 {vehicles.map(v => <option key={v.id} value={v.id}>{v.code} - {v.description}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Título de Tarea *</label>
-              <input required type="text" className="input" value={formData.title || ''} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Ej: Cambio de aceite" />
+              <input required type="text" className="input-field" value={formData.title || ''} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Ej: Cambio de aceite" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Mecánico Asignado</label>
-              <input type="text" className="input" value={formData.mechanic_assigned || ''} onChange={e => setFormData({ ...formData, mechanic_assigned: e.target.value })} />
+              <input type="text" className="input-field" value={formData.mechanic_assigned || ''} onChange={e => setFormData({ ...formData, mechanic_assigned: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Fecha Inicio</label>
-              <input type="date" className="input" value={formData.start_date || ''} onChange={e => setFormData({ ...formData, start_date: e.target.value })} />
+              <input type="date" className="input-field" value={formData.start_date || ''} onChange={e => setFormData({ ...formData, start_date: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Costo Materiales</label>
-              <input type="number" className="input" value={formData.cost_materials || 0} onChange={e => setFormData({ ...formData, cost_materials: parseFloat(e.target.value) })} />
+              <input type="number" className="input-field" value={formData.cost_materials || 0} onChange={e => setFormData({ ...formData, cost_materials: parseFloat(e.target.value) })} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">Costo Mano de Obra</label>
-              <input type="number" className="input" value={formData.cost_labor || 0} onChange={e => setFormData({ ...formData, cost_labor: parseFloat(e.target.value) })} />
+              <input type="number" className="input-field" value={formData.cost_labor || 0} onChange={e => setFormData({ ...formData, cost_labor: parseFloat(e.target.value) })} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t">
