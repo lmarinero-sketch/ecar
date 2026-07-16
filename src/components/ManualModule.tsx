@@ -1007,21 +1007,72 @@ export const ManualModule: React.FC = () => {
       const WHITE: [number, number, number] = [255, 255, 255];
       const GREEN = [34, 197, 94] as [number, number, number];
 
+      const DARK_BLUE = [15, 45, 82] as [number, number, number];
+      const RED_COLOR = [200, 30, 30] as [number, number, number];
+
+      const removeWhiteBackground = (imgSrc: string): Promise<string> => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.src = imgSrc;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return resolve(imgSrc);
+            
+            ctx.drawImage(img, 0, 0);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i+1];
+              const b = data[i+2];
+              if (r > 240 && g > 240 && b > 240) {
+                data[i+3] = 0;
+              }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = () => resolve(imgSrc);
+        });
+      };
+
       let currentPage = 1;
       const addNewPage = () => {
         pdf.addPage();
         currentPage++;
-        // Page header strip
-        pdf.setFillColor(...BLUE);
-        pdf.rect(0, 0, pageW, 8, 'F');
-        pdf.setFillColor(...LIGHT);
-        pdf.rect(0, pageH - 12, pageW, 12, 'F');
-        pdf.setTextColor(...GRAY);
-        pdf.setFontSize(7);
+        
+        pdf.setFillColor(250, 251, 252);
+        pdf.rect(0, 0, pageW, pageH, 'F');
+
+        // Banners Superiores (Escalados)
+        pdf.setFillColor(...DARK_BLUE);
+        pdf.triangle(0, 0, pageW, 0, pageW, 12, 'F');
+        pdf.triangle(0, 0, pageW, 12, 0, 8, 'F');
+
+        pdf.setFillColor(...RED_COLOR);
+        pdf.triangle(0, 8, pageW, 12, pageW, 16, 'F');
+        pdf.triangle(0, 8, pageW, 16, 0, 12, 'F');
+
+        // Banners Inferiores (Escalados)
+        pdf.setFillColor(...DARK_BLUE);
+        pdf.triangle(0, pageH, 0, pageH - 6, pageW, pageH - 12, 'F');
+        pdf.triangle(0, pageH, pageW, pageH - 12, pageW, pageH, 'F');
+
+        pdf.setFillColor(...RED_COLOR);
+        pdf.triangle(0, pageH - 6, 0, pageH - 12, pageW, pageH - 16, 'F');
+        pdf.triangle(0, pageH - 6, pageW, pageH - 16, pageW, pageH - 12, 'F');
+
+        // Textos del Footer
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(6.5);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(t('ECAR ERP - Manual de Procedimientos del Sistema'), margin, pageH - 6);
-        pdf.text(`PRO-ECAR-SYS-001 | Rev. 1.0 | ${new Date().toLocaleDateString('es-AR')}`, pageW - margin, pageH - 6, { align: 'right' });
-        pdf.text(t(`Pag. ${currentPage}`), pageW / 2, pageH - 6, { align: 'center' });
+        pdf.text(t('ECAR ERP - Manual de Procedimientos del Sistema'), margin, pageH - 4);
+        pdf.text(`PRO-ECAR-SYS-001 | Rev. 1.0 | ${new Date().toLocaleDateString('es-AR')}`, pageW - margin, pageH - 4, { align: 'right' });
+        pdf.text(t(`Pag. ${currentPage}`), pageW / 2, pageH - 4, { align: 'center' });
       };
 
       // ════════════ PORTADA NUEVA (DISEÑO PREMIUM) ════════════
@@ -1029,8 +1080,6 @@ export const ManualModule: React.FC = () => {
       pdf.setFillColor(250, 251, 252);
       pdf.rect(0, 0, pageW, pageH, 'F');
 
-      const DARK_BLUE: [number, number, number] = [15, 45, 82];
-      const RED_COLOR: [number, number, number] = [200, 30, 30];
       const FONT_NAME = 'helvetica'; // Fallback limpio para Calibri
 
       // Banners Superiores
@@ -1141,13 +1190,14 @@ export const ManualModule: React.FC = () => {
       );
       pdf.text(crText.map(t), 20, crY + 12);
 
-      // Logo Rombo Mascota
+      // Logo Rombo Mascota sin fondo
+      const transparentRombo = await removeWhiteBackground('/rombo.jpeg');
       const romboImg = new Image();
-      romboImg.src = '/rombo.jpeg';
+      romboImg.src = transparentRombo;
       await new Promise<void>((resolve) => {
         romboImg.onload = () => {
           // colocar a la derecha, encima del banner inferior
-          pdf.addImage(romboImg, 'JPEG', 125, 175, 75, 95);
+          pdf.addImage(romboImg, 'PNG', 125, 175, 75, 95);
           resolve();
         };
         romboImg.onerror = () => resolve();
