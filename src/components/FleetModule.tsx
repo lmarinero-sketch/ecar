@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users
 } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
@@ -12,7 +12,10 @@ import type { FuelVehicle } from '../lib/types';
 import { FleetTrackingMap } from './tracking/FleetTrackingMap';
 // const FleetTrackingMap = React.lazy(() => import('./tracking/FleetTrackingMap').then(m => ({ default: m.FleetTrackingMap })));
 
-type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking';
+import { DriversRegistryModule } from './DriversRegistryModule';
+import { VehiclesRegistryModule } from './VehiclesRegistryModule';
+
+type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking' | 'drivers' | 'vehicle_kpis';
 
 const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
   operativo: { icon: '🟢', cls: 'bg-green-100 text-green-700' },
@@ -160,6 +163,28 @@ export const FleetModule: React.FC = () => {
     );
   }
 
+  if (view === 'drivers') {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setView('overview')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota
+        </button>
+        <DriversRegistryModule />
+      </div>
+    );
+  }
+
+  if (view === 'vehicle_kpis') {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setView('overview')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota
+        </button>
+        <VehiclesRegistryModule />
+      </div>
+    );
+  }
+
   if (view === 'maintenance') {
     return (
       <div className="space-y-4">
@@ -284,7 +309,7 @@ export const FleetModule: React.FC = () => {
       </div>
 
       {/* Sub-modules */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <button onClick={() => setView('maintenance')} className="light-card p-6 text-center group cursor-pointer relative">
           {maintenanceDue.length > 0 && (
             <span className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold animate-pulse">
@@ -293,22 +318,32 @@ export const FleetModule: React.FC = () => {
           )}
           <Wrench size={48} className="mx-auto mb-3 text-amber-400 group-hover:text-amber-500 group-hover:scale-110 transition-all relative z-10" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-amber-700 transition-colors relative z-10">Mantenimiento</h4>
-          <p className="text-sm text-gray-500 relative z-10">Calendario de service por equipo</p>
+          <p className="text-sm text-gray-500 relative z-10">Calendario de service</p>
         </button>
         <button onClick={() => setView('fuel')} className="light-card p-6 text-center group cursor-pointer relative">
           <Fuel size={48} className="mx-auto mb-3 text-sky-400 group-hover:text-sky-500 group-hover:scale-110 transition-all relative z-10" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-sky-700 transition-colors relative z-10">Combustible</h4>
-          <p className="text-sm text-gray-500 relative z-10">Registro de cargas y consumo por km.</p>
+          <p className="text-sm text-gray-500 relative z-10">Registro de cargas</p>
         </button>
         <button onClick={() => setView('daily_report')} className="light-card p-6 text-center group cursor-pointer relative">
           <ClipboardCheck size={48} className="mx-auto mb-3 text-ecar-blue group-hover:text-ecar-blue group-hover:scale-110 transition-all relative z-10" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-ecar-blue transition-colors relative z-10">Parte Diario</h4>
-          <p className="text-sm text-gray-500 relative z-10">Inspección diaria con QR y checklist.</p>
+          <p className="text-sm text-gray-500 relative z-10">Inspección con QR</p>
         </button>
         <button onClick={() => setView('tracking')} className="light-card p-6 text-center group cursor-pointer relative">
           <Navigation size={48} className="mx-auto mb-3 text-emerald-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all relative z-10" />
           <h4 className="font-bold text-gray-800 mb-1 group-hover:text-emerald-700 transition-colors relative z-10">Mapa en Vivo</h4>
-          <p className="text-sm text-gray-500 relative z-10">Rastreo satelital de vehículos activos.</p>
+          <p className="text-sm text-gray-500 relative z-10">Rastreo satelital</p>
+        </button>
+        <button onClick={() => setView('drivers')} className="light-card p-6 text-center group cursor-pointer relative">
+          <Users size={48} className="mx-auto mb-3 text-blue-500 group-hover:text-blue-600 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-blue-700 transition-colors relative z-10">Choferes</h4>
+          <p className="text-sm text-gray-500 relative z-10">Desempeño y KPIs</p>
+        </button>
+        <button onClick={() => setView('vehicle_kpis')} className="light-card p-6 text-center group cursor-pointer relative">
+          <Gauge size={48} className="mx-auto mb-3 text-indigo-500 group-hover:text-indigo-600 group-hover:scale-110 transition-all relative z-10" />
+          <h4 className="font-bold text-gray-800 mb-1 group-hover:text-indigo-700 transition-colors relative z-10">KPIs Flota</h4>
+          <p className="text-sm text-gray-500 relative z-10">Análisis de unidades</p>
         </button>
       </div>
 
