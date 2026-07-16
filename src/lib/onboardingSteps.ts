@@ -1,4 +1,4 @@
-import { Step } from 'react-joyride';
+import type { Step } from 'react-joyride';
 
 export const ONBOARDING_STEPS: Record<string, Step[]> = {
   // Ejemplos básicos para empezar, luego se pueden expandir para todos los módulos
@@ -7,7 +7,7 @@ export const ONBOARDING_STEPS: Record<string, Step[]> = {
       target: 'body',
       placement: 'center',
       content: '¡Bienvenido al módulo de Liquidez! Aquí podrás ver el estado financiero general, ingresos, egresos y proyecciones de fondos.',
-      disableBeacon: true,
+      skipBeacon: true,
     },
     {
       target: '.liquidity-kpi-cards',
@@ -23,7 +23,7 @@ export const ONBOARDING_STEPS: Record<string, Step[]> = {
       target: 'body',
       placement: 'center',
       content: 'Bienvenido a Recursos Humanos. Administra tu personal, sueldos y asistencia.',
-      disableBeacon: true,
+      skipBeacon: true,
     }
   ],
   // Agregar un fallback global para módulos sin pasos definidos todavía
@@ -32,7 +32,7 @@ export const ONBOARDING_STEPS: Record<string, Step[]> = {
       target: 'body',
       placement: 'center',
       content: 'Bienvenido a este módulo. Pronto agregaremos una guía detallada para esta sección.',
-      disableBeacon: true,
+      skipBeacon: true,
     }
   ]
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Joyride, { CallBackProps, STATUS } from 'react-joyride';
+import { Joyride, STATUS, type EventData } from 'react-joyride';
 import { useOnboardingStore } from '../../store/useOnboardingStore';
 import { CustomTooltip } from './CustomTooltip';
 import { ONBOARDING_STEPS } from '../../lib/onboardingSteps';
@@ -13,8 +13,7 @@ export const GlobalOnboarding: React.FC<GlobalOnboardingProps> = ({ activeModule
     completedModules, 
     activeTourModule, 
     markTourCompleted, 
-    stopTour,
-    startTour 
+    stopTour
   } = useOnboardingStore();
 
   const [run, setRun] = useState(false);
@@ -40,7 +39,7 @@ export const GlobalOnboarding: React.FC<GlobalOnboardingProps> = ({ activeModule
     }
   }, [activeModule, activeTourModule, completedModules]);
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
+  const handleJoyrideCallback = (data: EventData) => {
     const { status } = data;
     const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
@@ -55,19 +54,15 @@ export const GlobalOnboarding: React.FC<GlobalOnboardingProps> = ({ activeModule
 
   return (
     <Joyride
-      callback={handleJoyrideCallback}
+      onEvent={handleJoyrideCallback}
       continuous
-      hideCloseButton
       run={run}
       scrollToFirstStep
-      showProgress
-      showSkipButton
       steps={steps}
       tooltipComponent={CustomTooltip}
-      styles={{
-        options: {
-          zIndex: 10000,
-        },
+      options={{
+        zIndex: 10000,
+        showProgress: true,
       }}
     />
   );

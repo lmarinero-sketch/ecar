@@ -1,12 +1,11 @@
 import React from 'react';
-import { TooltipRenderProps } from 'react-joyride';
+import type { TooltipRenderProps } from 'react-joyride';
 
 export const CustomTooltip: React.FC<TooltipRenderProps> = ({
   continuous,
   index,
   step,
   backProps,
-  closeProps,
   primaryProps,
   skipProps,
   tooltipProps,
