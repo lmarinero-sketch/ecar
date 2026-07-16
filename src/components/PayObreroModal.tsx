@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Search, ChevronDown } from 'lucide-react';
 import { useEmployees, useCreateWeeklyPaymentItem } from '../hooks/useData';
 
 interface Props {
@@ -17,12 +17,25 @@ export const PayObreroModal: React.FC<Props> = ({ paymentId, onClose, onSuccess,
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [monto, setMonto] = useState('');
   const [observaciones, setObservaciones] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filtrar obreros (pueden ser todos o los que tengan type/category obrero, por ahora filtramos por búsqueda general)
-  const filteredEmployees = employees.filter(emp => 
-    emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    emp.cuil?.includes(searchTerm)
-  );
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtrar obreros: si no hay búsqueda, mostramos todos
+  const filteredEmployees = employees.filter(emp => {
+    if (!searchTerm) return true;
+    return (emp.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+           (emp.cuil || '').includes(searchTerm);
+  });
 
   const selectedEmployee = employees.find(e => e.id === selectedEmployeeId);
 
@@ -55,31 +68,46 @@ export const PayObreroModal: React.FC<Props> = ({ paymentId, onClose, onSuccess,
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Buscar Obrero</label>
+          <div className="relative" ref={dropdownRef}>
+            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Buscar y Seleccionar Obrero</label>
             <div className="relative">
               <Search size={16} className="absolute left-3 top-3 text-gray-400" />
               <input 
                 value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-                placeholder="Nombre o CUIL..." 
-                className="w-full pl-9 pr-4 py-2 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-blue-100 transition-all" 
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setSelectedEmployeeId('');
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder="Escribe el Nombre o CUIL..." 
+                className="w-full pl-9 pr-8 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-blue-100 transition-all" 
               />
+              <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 cursor-pointer" onClick={() => setShowDropdown(!showDropdown)} />
             </div>
-          </div>
 
-          <div>
-            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Seleccionar Obrero</label>
-            <select 
-              value={selectedEmployeeId} 
-              onChange={e => setSelectedEmployeeId(e.target.value)} 
-              className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-blue-100 transition-all"
-            >
-              <option value="">-- Seleccionar --</option>
-              {filteredEmployees.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.full_name} {emp.cuil ? `(${emp.cuil})` : ''}</option>
-              ))}
-            </select>
+            {showDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                {filteredEmployees.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-gray-500">No se encontraron resultados</div>
+                ) : (
+                  filteredEmployees.map(emp => (
+                    <div 
+                      key={emp.id}
+                      className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-50 last:border-0"
+                      onClick={() => {
+                        setSelectedEmployeeId(emp.id);
+                        setSearchTerm(emp.full_name || '');
+                        setShowDropdown(false);
+                      }}
+                    >
+                      <span className="font-bold text-gray-800">{emp.full_name}</span>
+                      {emp.cuil && <span className="ml-2 text-xs text-gray-500">({emp.cuil})</span>}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {selectedEmployee && (

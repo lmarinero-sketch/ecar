@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
-import { useLegalEntities, useCreateLegalEntity, useDeleteLegalEntity } from '../hooks/useData';
+import { useLegalEntities, useCreateLegalEntity, useDeleteLegalEntity, usePurchaseInvoices } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { Building2, Plus, Trash2, Upload, Download } from 'lucide-react';
 
 export const LegalEntitiesPanel: React.FC = () => {
   const { data: entities = [], isLoading } = useLegalEntities();
+  const { data: invoices = [] } = usePurchaseInvoices();
+  const formatARS = (v: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v);
   const createEntity = useCreateLegalEntity();
   const deleteEntity = useDeleteLegalEntity();
   
@@ -146,8 +148,26 @@ export const LegalEntitiesPanel: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {entities.map(entity => (
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800">
+        <span className="font-bold">Info:</span> Los saldos de IVA (Venta y Compra) se calculan automáticamente sumando los comprobantes ingresados en el módulo de Compras que estén asigandos a cada Razón Social. Se incluyen comprobantes validados, pagados o pendientes (se excluyen los rechazados).
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {entities.map(entity => {
+          const entityInvoices = invoices.filter(inv => inv.legal_entity_id === entity.id && inv.status !== 'rejected');
+          let ivaVenta = 0;
+          let ivaCompra = 0;
+          entityInvoices.forEach(inv => {
+            const iva = (Number(inv.iva_21_ars) || 0) + (Number(inv.iva_105_ars) || 0) + (Number(inv.iva_27_ars) || 0);
+            if (inv.ocr_raw_data?.tipo === 'venta') {
+              ivaVenta += iva;
+            } else {
+              ivaCompra += iva;
+            }
+          });
+          const saldo = ivaVenta - ivaCompra;
+
+          return (
           <div key={entity.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
             <button
               onClick={() => {
@@ -191,8 +211,26 @@ export const LegalEntitiesPanel: React.FC = () => {
                 )}
               </div>
             </div>
+            
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Posición IVA (Aprox)</p>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100 flex-1 text-center">
+                  <span className="block text-[10px] opacity-70">IVA Venta</span>
+                  <span className="font-bold font-mono">{formatARS(ivaVenta)}</span>
+                </div>
+                <div className="bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-100 flex-1 text-center">
+                  <span className="block text-[10px] opacity-70">IVA Compra</span>
+                  <span className="font-bold font-mono">{formatARS(ivaCompra)}</span>
+                </div>
+              </div>
+              <div className={`mt-2 text-center text-xs font-bold py-1 rounded ${saldo > 0 ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                {saldo > 0 ? 'A Pagar: ' : 'Saldo a Favor: '} {formatARS(Math.abs(saldo))}
+              </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
         {entities.length === 0 && !showAdd && (
           <div className="col-span-full text-center py-12 bg-white border border-gray-200 border-dashed rounded-xl">
             <Building2 size={32} className="mx-auto text-gray-300 mb-2" />
