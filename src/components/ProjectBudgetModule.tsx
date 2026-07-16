@@ -344,7 +344,7 @@ export const ProjectBudgetModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             {[
               { key: 'gastos_generales_pct', label: 'GG %' },
               { key: 'beneficio_pct', label: 'Beneficio %' },
@@ -1259,7 +1259,7 @@ const BudgetDetailView: React.FC<{
               </select>
             </div>
           )}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <input value={newSection.ordinal} onChange={e => setNewSection({ ...newSection, ordinal: e.target.value })} placeholder="Ej: 1.1"
               className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-ecar-blue/30" />
             <input value={newSection.name} onChange={e => setNewSection({ ...newSection, name: e.target.value })} placeholder="Nombre del rubro..."

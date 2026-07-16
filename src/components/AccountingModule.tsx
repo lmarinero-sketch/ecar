@@ -99,7 +99,7 @@ export const AccountingModule: React.FC = () => {
                 <span>{errorMsg}</span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <select value={form.invoice_type} onChange={e => setForm({ ...form, invoice_type: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
                 {['FA','FB','FC','FE','NCA','NCB','NCC'].map(t => <option key={t} value={t}>{invoiceTypeLabel[t] || t}</option>)}
               </select>

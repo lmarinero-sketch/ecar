@@ -383,7 +383,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
             {/* Fuel Level */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Nivel de Combustible</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                 {FUEL_LEVELS.map(fl => (
                   <button
                     key={fl.value}

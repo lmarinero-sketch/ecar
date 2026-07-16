@@ -56,7 +56,7 @@ export const DocumentsModule: React.FC = () => {
               <button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button>
             </div>
             <input placeholder="Título (ej: Documentación Obra Ruta 40)" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input placeholder="Solicitante" value={form.requester_name} onChange={e => setForm({ ...form, requester_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               <input placeholder="Email" type="email" value={form.requester_email} onChange={e => setForm({ ...form, requester_email: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>

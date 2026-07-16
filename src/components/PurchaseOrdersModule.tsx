@@ -264,7 +264,7 @@ export const PurchaseOrdersModule: React.FC = () => {
             </div>
             <div className="p-5 space-y-4">
               {/* Header row */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Número OC</label>
                   <input value={form.po_number} readOnly className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50" />
@@ -292,7 +292,7 @@ export const PurchaseOrdersModule: React.FC = () => {
               </div>
 
               {/* Supplier + Project + Request */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Proveedor *</label>
                   <select value={form.supplier_id} onChange={e => {
@@ -370,7 +370,7 @@ export const PurchaseOrdersModule: React.FC = () => {
               </div>
 
               {/* Delivery + Payment */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Fecha de Entrega</label>
                   <input type="date" value={form.delivery_date} onChange={e => setForm({ ...form, delivery_date: e.target.value })}
@@ -408,7 +408,7 @@ export const PurchaseOrdersModule: React.FC = () => {
                   <BarChart3 size={16} className="text-ecar-blue" /> Cuadro Comparativo de Cotizaciones
                 </h4>
                 <p className="text-[10px] text-gray-400 mb-3">Documentar al menos 3 cotizaciones para compras {'>'} $500.000 (PR-GC-01 §4.5)</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {[1, 2, 3].map(n => (
                     <div key={n} className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
                       <p className="text-xs font-bold text-gray-600">Cotización #{n}</p>

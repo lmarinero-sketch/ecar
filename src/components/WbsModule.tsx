@@ -512,7 +512,7 @@ export const WbsModule: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{form.id ? 'Editar Obra' : 'Nueva Obra'}</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
             <input placeholder="Nombre de la obra *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2.5 border rounded-xl text-sm" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input placeholder="Cliente" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input placeholder="CUIT Cliente" value={form.client_cuit} onChange={e => setForm({ ...form, client_cuit: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input placeholder="Ubicación" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
@@ -588,7 +588,7 @@ export const WbsModule: React.FC = () => {
                       Fechas & Duración Sincronizadas
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Fecha de Inicio</label>
                       <input 
@@ -608,7 +608,7 @@ export const WbsModule: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200/60">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-200/60">
                     <div>
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Duración (días corridos)</label>
                       <input 
@@ -634,11 +634,11 @@ export const WbsModule: React.FC = () => {
                   </div>
                 </div>
                 {/* Prioridad + Fase en una fila */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Prioridad */}
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Prioridad</label>
-                    <div className="grid grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
                       {(['baja', 'media', 'alta', 'critica'] as const).map(p => {
                         const isSelected = taskForm.priority === p;
                         const activeStyles = {
@@ -660,7 +660,7 @@ export const WbsModule: React.FC = () => {
                   {/* Fase */}
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Fase del WBS</label>
-                    <div className="grid grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
                       {(['planificacion', 'programacion', 'ejecucion', 'completado'] as const).map(f => {
                         const isSelected = taskForm.phase === f;
                         const labels: Record<string, string> = { planificacion: 'Planif.', programacion: 'Program.', ejecucion: 'Ejecuc.', completado: 'Complet.' };
@@ -677,7 +677,7 @@ export const WbsModule: React.FC = () => {
                 </div>
 
                 {/* Responsable, Color & Notas en fila compacta */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Responsable</label>
                     <select 
@@ -1209,7 +1209,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
       {showNew && (
         <div className="light-card p-4 space-y-3">
           <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><MessageSquare size={16} className="text-ecar-blue" /> Nuevo Registro de Retroalimentación</h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Tipo *</label>
               <select value={fbForm.tipo} onChange={e => setFbForm({...fbForm, tipo: e.target.value as any})} className="w-full px-3 py-2.5 border rounded-xl text-sm">
                 <option value="desviacion">⚠️ Desviación</option><option value="leccion">📖 Lección Aprendida</option><option value="mejora">💡 Mejora</option><option value="riesgo">🔴 Riesgo</option>
@@ -1222,7 +1222,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
             </div>
           </div>
           <div><label className="text-xs font-bold text-gray-500">Descripción *</label><textarea value={fbForm.descripcion} onChange={e => setFbForm({...fbForm, descripcion: e.target.value})} rows={2} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Impacto</label><input value={fbForm.impacto} onChange={e => setFbForm({...fbForm, impacto: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" placeholder="Impacto en costo, plazo..." /></div>
             <div><label className="text-xs font-bold text-gray-500">Responsable</label><input value={fbForm.responsable} onChange={e => setFbForm({...fbForm, responsable: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
           </div>
@@ -1704,7 +1704,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               <button onClick={() => setShowMovModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 bg-gray-100 rounded-lg p-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-gray-100 rounded-lg p-1">
               <button onClick={() => setMovType('out')} className={`py-1.5 rounded text-xs font-bold transition-all ${movType === 'out' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500'}`}>
                 Consumo / Salida
               </button>
@@ -1786,7 +1786,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Litros cargados *</label>
                   <input type="number" min="0.1" step="any" value={liters} onChange={e => setLiters(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
@@ -1797,7 +1797,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Odómetro (Km)</label>
                   <input type="number" value={odometer} onChange={e => setOdometer(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
@@ -2027,7 +2027,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad *</label>
                   <input type="number" min="0.01" step="any" value={quantity} onChange={e => setQuantity(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white" />
@@ -2260,7 +2260,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">N° Certificado *</label>
                   <input type="number" value={certNumber} onChange={e => setCertNumber(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
@@ -2271,7 +2271,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Monto Bruto Básico *</label>
                   <input type="number" min="0" step="any" value={gross} onChange={e => setGross(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
@@ -2284,7 +2284,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
 
               <p className="text-xs font-bold text-gray-700 uppercase tracking-wider border-t border-gray-100 pt-3">Retenciones Impositivas y de Garantía</p>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Ret. IIBB</label>
                   <input type="number" min="0" step="any" value={retIibb} onChange={e => setRetIibb(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />

@@ -363,7 +363,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
             {selectedTask.description && (
               <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-2 rounded-lg border border-white/5">{selectedTask.description}</p>
             )}
-            <div className="grid grid-cols-2 gap-2 text-xs border-t border-white/5 pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs border-t border-white/5 pt-3">
               <div>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cronología</span>
                 <span className="font-mono text-slate-200 block mt-0.5">{new Date(selectedTask.start_date || '').toLocaleDateString('es-AR')}</span>

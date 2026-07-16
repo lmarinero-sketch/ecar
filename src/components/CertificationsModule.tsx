@@ -399,11 +399,11 @@ export const CertificationsModule: React.FC = () => {
               <button onClick={() => { setShowNewCert(null); setSelectedFile(null); }}><X size={20} className="text-gray-400" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Certificado N°</label><input type="number" value={form.certificate_number} onChange={e => setForm({ ...form, certificate_number: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Período</label><input value={form.period_description} onChange={e => setForm({ ...form, period_description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej: Abril 2026" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">🟡 Monto Bruto ($)</label><input type="number" value={form.gross_amount} onChange={e => setForm({ ...form, gross_amount: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-300/50" /></div>
                 <div><label className="text-xs font-bold text-gray-500">🟠 Redeterminación ($)</label><input type="number" value={form.redetermination} onChange={e => setForm({ ...form, redetermination: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-300/50" placeholder="0" /></div>
               </div>
@@ -451,7 +451,7 @@ export const CertificationsModule: React.FC = () => {
               <h3 className="font-bold text-lg">Editar Certificado #{editForm.certificate_number}</h3>
               <button onClick={() => setEditingCert(null)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500">Certificado N°</label>
                 <input type="number" value={editForm.certificate_number} onChange={e => setEditForm({ ...editForm, certificate_number: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
@@ -553,7 +553,7 @@ export const CertificationsModule: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500">Monto Contrato ($)</label>
                 <input type="number" value={editingProject.contract_amount} onChange={e => setEditingProject({ ...editingProject, contract_amount: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500">% Anticipo</label>
                   <input type="number" value={editingProject.advance_pct} onChange={e => { const pct = parseFloat(e.target.value) || 0; setEditingProject({ ...editingProject, advance_pct: pct, advance_amount: Math.round(editingProject.contract_amount * (pct / 100)) }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
@@ -567,7 +567,7 @@ export const CertificationsModule: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500">Redeterminación Anticipo ($)</label>
                 <input type="number" value={editingProject.advance_redetermination} onChange={e => setEditingProject({ ...editingProject, advance_redetermination: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-green-50" />
               </div>
-              <div className="grid grid-cols-2 gap-3 border-t pt-3 mt-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3 mt-1">
                 <div>
                   <label className="text-xs font-bold text-gray-500">Depósito Anticipo ($)</label>
                   <input type="number" value={editingProject.advance_deposit} onChange={e => setEditingProject({ ...editingProject, advance_deposit: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono bg-blue-50" />

@@ -477,7 +477,7 @@ export const FinancesModule: React.FC = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <select
                     value={form.direction}
                     onChange={e => {
@@ -792,7 +792,7 @@ export const FinancesModule: React.FC = () => {
                 setIsUploadingReceipt(false);
               }
             }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="col-span-2">
                   <label className="text-xs font-bold text-gray-500 block mb-1">Concepto / Nota</label>
                   <input
@@ -913,7 +913,7 @@ export const FinancesModule: React.FC = () => {
               <h3 className="font-bold text-lg">Editar Cheque #{editForm.cheque_number}</h3>
               <button onClick={() => setEditingCheque(null)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <select value={editForm.direction} onChange={e => setEditForm({ ...editForm, direction: e.target.value })} className="px-3 py-2 border rounded-lg text-sm col-span-2 font-medium">
                 <option value="receivable">↓ A Cobrar</option>
                 <option value="payable">↑ A Pagar</option>

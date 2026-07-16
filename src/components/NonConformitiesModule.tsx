@@ -273,7 +273,7 @@ export const NonConformitiesModule: React.FC = () => {
             </div>
             <div className="p-5 space-y-4">
               {/* Row 1: NC Number + Category + Area */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Número NC</label>
                   <input value={form.nc_number} onChange={e => setForm({ ...form, nc_number: e.target.value })} readOnly={!!selectedNC}
@@ -301,7 +301,7 @@ export const NonConformitiesModule: React.FC = () => {
               </div>
 
               {/* Impact + Status + Project */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Impacto</label>
                   <select value={form.impact} onChange={e => setForm({ ...form, impact: e.target.value as NonConformity['impact'] })}
@@ -327,7 +327,7 @@ export const NonConformitiesModule: React.FC = () => {
               </div>
 
               {/* Detected by + Responsible */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Detectado por</label>
                   <input value={form.detected_by} onChange={e => setForm({ ...form, detected_by: e.target.value })}

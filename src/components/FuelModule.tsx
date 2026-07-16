@@ -1026,7 +1026,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
 
       {!selectedVehicle ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
               <p className="text-xs font-bold text-gray-500 uppercase">Litros Totales Históricos</p>
               <p className="text-2xl font-black text-sky-600 font-mono mt-1">{totalLitersAll.toLocaleString('es-AR')} L</p>
@@ -1072,7 +1072,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-sky-500">
               <p className="text-xs font-bold text-gray-500 uppercase">Última Carga</p>
               <p className="text-xl font-bold text-gray-800 mt-1">{vehicleLoads[0] ? new Date(vehicleLoads[0].load_date).toLocaleDateString('es-AR') : 'N/A'}</p>

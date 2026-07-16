@@ -451,7 +451,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <div className="space-y-4">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Acción a Registrar</label>
                 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setActionType('movement')}
@@ -517,7 +517,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-bold text-gray-500">Cantidad *</label>
                       <input
@@ -682,7 +682,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
 
               {!showAssociateConfirm ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <button
                     onClick={() => {
                       if (onNewItemRequest) {

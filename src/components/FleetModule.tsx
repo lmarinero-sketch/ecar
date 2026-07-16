@@ -530,22 +530,22 @@ export const FleetModule: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Vehículo</h3><button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleCreate} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={newForm.code} onChange={e => setNewForm({ ...newForm, code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="C-002" required /></div>
                 <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={newForm.vehicle_type} onChange={e => setNewForm({ ...newForm, vehicle_type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="camion">Camión</option><option value="camioneta">Camioneta</option><option value="auto">Auto</option><option value="maquinaria">Maquinaria</option><option value="moto">Moto</option><option value="otro">Otro</option></select></div>
               </div>
               <div><label className="text-xs font-bold text-gray-500">Descripción *</label><input value={newForm.description} onChange={e => setNewForm({ ...newForm, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Toyota Hilux 2.4 DX" required /></div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Marca</label><input value={newForm.brand} onChange={e => setNewForm({ ...newForm, brand: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Toyota" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Modelo</label><input value={newForm.model} onChange={e => setNewForm({ ...newForm, model: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Hilux 2.4" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Año</label><input type="number" value={newForm.year} onChange={e => setNewForm({ ...newForm, year: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="2024" /></div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Patente</label><input value={newForm.plate} onChange={e => setNewForm({ ...newForm, plate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono uppercase" placeholder="ABC123" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Combustible</label><select value={newForm.preferred_fuel} onChange={e => setNewForm({ ...newForm, preferred_fuel: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="diesel">Diesel</option><option value="nafta_super">Nafta Súper</option><option value="nafta_premium">Nafta Premium</option><option value="gnc">GNC</option></select></div>
                 <div><label className="text-xs font-bold text-gray-500">Tanque (L)</label><input type="number" value={newForm.tank_capacity_liters} onChange={e => setNewForm({ ...newForm, tank_capacity_liters: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="80" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Área</label><input value={newForm.area} onChange={e => setNewForm({ ...newForm, area: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Obra Norte" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Chofer Habitual</label><input value={newForm.default_driver} onChange={e => setNewForm({ ...newForm, default_driver: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Juan Pérez" /></div>
               </div>

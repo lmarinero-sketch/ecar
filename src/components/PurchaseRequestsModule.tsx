@@ -370,7 +370,7 @@ export const PurchaseRequestsModule: React.FC = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Pedido de Compra</h3><button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleCreate} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Obra *</label><select required value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
                 <div><label className="text-xs font-bold text-gray-500">Urgencia *</label><select required value={form.urgency} onChange={e => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="low">Baja</option><option value="normal">Normal</option><option value="urgent">Urgente</option></select></div>
               </div>

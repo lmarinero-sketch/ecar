@@ -245,7 +245,7 @@ export function MesaTecnicaPresentation() {
           </div>
 
           {/* Meta info */}
-          <div className="grid grid-cols-3 gap-4 mb-12 mt-animate-hero mt-delay-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12 mt-animate-hero mt-delay-5">
             <div className="bg-white/5 border border-white/10 rounded-lg p-3">
               <p className="text-blue-300/60 text-xs uppercase tracking-wider mb-1">Destinatario</p>
               <p className="text-white/90 text-sm font-medium">Empresa oferente</p>
@@ -286,7 +286,7 @@ export function MesaTecnicaPresentation() {
             La obra no debe presentarse como una simple repavimentación.
           </p>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
               <p className="text-sm text-blue-600 font-bold uppercase tracking-wider mb-1">Presupuesto Oficial</p>
               <p className="text-2xl font-black text-blue-900">$9.995.558.079</p>
@@ -301,7 +301,7 @@ export function MesaTecnicaPresentation() {
 
           <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
             <h3 className="font-semibold text-slate-800 mb-4">Puntos Críticos Técnicos:</h3>
-            <ul className="grid grid-cols-2 gap-4">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <li className="flex items-start text-slate-600">
                 <CheckCircle2 className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
                 <span><strong className="text-slate-700">3 Rotondas:</strong> RP1-RP5, Virginia Palace y Bv. Los Ciruelos.</span>
@@ -365,7 +365,7 @@ export function MesaTecnicaPresentation() {
       icon: Layers,
       content: (
         <div className="space-y-8">
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-xl border-2 border-blue-200 shadow-sm">
               <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold inline-block mb-4">Fase Licitatoria</div>
               <h3 className="text-xl font-bold text-slate-800 mb-4">Proyecto Base</h3>
@@ -402,7 +402,7 @@ export function MesaTecnicaPresentation() {
       icon: Compass,
       content: (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               "Revisión técnica del pliego",
               "Anteproyecto vial base",
@@ -511,7 +511,7 @@ export function MesaTecnicaPresentation() {
       icon: PackageCheck,
       content: (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               "Informe de revisión del pliego",
               "Memoria técnica del proyecto base",

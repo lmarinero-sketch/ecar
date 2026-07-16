@@ -123,7 +123,7 @@ export const ObligationsModule: React.FC = () => {
             </div>
             <input placeholder="Nombre (ej: IERIC)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             <input placeholder="Descripción" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500">Día de vencimiento</label>
                 <input type="number" min={1} max={31} value={form.due_day_of_month} onChange={e => setForm({ ...form, due_day_of_month: parseInt(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
@@ -224,7 +224,7 @@ export const ObligationsModule: React.FC = () => {
               <h3 className="font-bold text-lg">Registrar Pago — {payingObl.name}</h3>
               <button onClick={() => setPayingObl(null)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Mes</label>
                 <select value={payMonth} onChange={e => setPayMonth(parseInt(e.target.value))} className="w-full px-3 py-2 border rounded-xl text-sm">
@@ -262,7 +262,7 @@ export const ObligationsModule: React.FC = () => {
             </div>
             <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Nombre" />
             <input value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Descripción" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500">Día Vencimiento</label>
                 <input type="number" min={1} max={31} value={editForm.due_day_of_month} onChange={e => setEditForm({ ...editForm, due_day_of_month: parseInt(e.target.value) })} className="w-full px-3 py-2 border rounded-xl text-sm" />

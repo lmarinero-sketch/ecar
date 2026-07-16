@@ -185,7 +185,7 @@ export const FuelRequestPage: React.FC = () => {
             </div>
 
             {/* Row: Litros + Odómetro */}
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 mb-2">
                   <Droplets size={16} className="text-ecar-red" /> Litros <span className="text-ecar-red">*</span>

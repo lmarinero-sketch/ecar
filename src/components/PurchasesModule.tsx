@@ -224,7 +224,7 @@ const BancoPreciosTab: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500">Descripción</label>
                 <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Ej: Cemento Loma Negra 50kg" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500">Unidad</label>
                   <input type="text" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="bl, m2, m3, un" />
@@ -674,7 +674,7 @@ export const PurchasesModule: React.FC = () => {
 
       {/* Totals bar (Only for invoices) */}
       {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
             <p className="text-xs text-gray-400 font-bold uppercase">Neto Gravado</p>
             <p className="text-lg font-bold text-gray-800 font-mono">{formatARS(totNeto)}</p>
@@ -872,14 +872,14 @@ export const PurchasesModule: React.FC = () => {
               </button>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><p className="text-xs text-gray-500 font-bold uppercase">Proveedor</p><p className="font-medium text-gray-800">{ocrResult.proveedor_cliente}</p></div>
               <div><p className="text-xs text-gray-500 font-bold uppercase">CUIT</p><p className="font-mono text-sm">{ocrResult.cuit || 'No detectado'}</p></div>
               <div><p className="text-xs text-gray-500 font-bold uppercase">Nro Factura</p><p className="font-mono text-sm">{ocrResult.tipo_factura || 'A'} {ocrResult.punto_venta || '0000'}-{ocrResult.numero_factura}</p></div>
               <div><p className="text-xs text-gray-500 font-bold uppercase">Fecha Emisión</p><p className="font-mono text-sm">{ocrResult.fecha_emision || 'No detectada'}</p></div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-3 gap-4 border border-gray-100">
+            <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-100">
               <div><p className="text-xs text-gray-500 font-bold uppercase">Neto Gravado</p><p className="font-mono font-medium text-gray-800">${(ocrResult.neto_gravado || 0).toLocaleString('es-AR')}</p></div>
               <div><p className="text-xs text-gray-500 font-bold uppercase">IVA (Total)</p><p className="font-mono font-medium text-gray-800">${((ocrResult.iva_21 || 0) + (ocrResult.iva_105 || 0) + (ocrResult.iva_27 || 0)).toLocaleString('es-AR')}</p></div>
               <div><p className="text-xs text-gray-500 font-bold uppercase">Total Factura</p><p className="font-mono font-bold text-ecar-blue text-lg">${(ocrResult.total || 0).toLocaleString('es-AR')}</p></div>
@@ -1050,7 +1050,7 @@ export const PurchasesModule: React.FC = () => {
               <h3 className="font-bold text-lg">Editar Factura</h3>
               <button onClick={() => setEditingInvoice(null)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500">Proveedor / Cliente</label>
                 <input value={editForm.supplier_name} onChange={e => setEditForm({ ...editForm, supplier_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />

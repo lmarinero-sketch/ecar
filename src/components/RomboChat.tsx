@@ -648,7 +648,7 @@ export const RomboChat: React.FC = () => {
               </div>
             ))}
             {showQuickActions && (
-              <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2">
                 {quickActions.map((qa, i) => (
                   <button key={i} onClick={() => sendMessage(qa.prompt)} className="flex items-center gap-2 px-3 py-2.5 light-card text-xs font-medium text-gray-600 hover:border-ecar-blue/40 hover:text-ecar-blue hover:shadow-sm transition-all text-left">
                     <qa.icon size={14} className="text-ecar-blue shrink-0" /> {qa.label}

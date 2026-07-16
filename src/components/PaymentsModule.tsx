@@ -211,7 +211,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="light-card p-4">
           <p className="text-xs font-bold text-gray-500 mb-1">Total a Pagar</p>
           <p className="text-xl font-black font-mono text-gray-800">{formatARS(total)}</p>

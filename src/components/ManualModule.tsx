@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import {
   BookOpen, Download, FileText, Shield, Users, Package,
-  LayoutDashboard, Calculator, ShoppingCart, Landmark, Bell,
+  Banknote, Rocket, Mail, PieChart, LayoutDashboard, Calculator, ShoppingCart, Landmark, Bell,
   Warehouse, FileSignature, Smartphone, ShieldAlert, ClipboardCheck,
   MessageSquareText, Wallet, FolderOpen, HardHat, Target, Fuel,
   DollarSign, Calendar, ShoppingBag, Bot, CheckCircle, AlertCircle,
   Lock, Database, Zap, ArrowRight, Star, Activity, BarChart3,
-  ChevronRight, Globe, Cpu, Server, Key
+  ChevronRight, Globe, Cpu, Server, Key, Truck
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -679,8 +679,227 @@ const MODULES_DATA: ModuleDoc[] = [
     ],
     records: ['Evaluaciones por proveedor/período', 'Historial de puntajes', 'Ranking de proveedores', 'NC vinculadas'],
     kpis: ['Proveedores evaluados', 'Puntaje promedio', 'Proveedores bloqueados', 'NC por proveedor'],
-    features: ['Calificación con estrellas 1-5', 'Recomendación automática', 'Resumen por proveedor', 'Historial de evaluaciones']
+    features: ['Calificación con estrellas 1-5', 'Recomendación automática', 'Resumen por proveedor', 'Historial de evaluaciones']  },
+  {
+    id: 'logistics',
+    code: 'MOD-05A',
+    name: 'Logística y Acopios',
+    section: 'Gerencia Logística',
+    icon: Warehouse,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-400',
+    purpose: 'Gestión centralizada de depósitos, recepción de mercadería y transferencias a obras, asegurando trazabilidad física del inventario.',
+    scope: 'Gerencia de Logística y Encargados de Pañol.',
+    responsible: 'Gerencia de Logística',
+    process: [
+      'Se configuran los depósitos centrales y pañoles de obra.',
+      'Se reciben los remitos físicos y se ingresan al sistema, actualizando el stock.',
+      'Se gestionan transferencias de materiales entre depósitos usando remitos internos.',
+      'Se audita el layout 3D del depósito para optimización de espacios.'
+    ],
+    records: ['Remitos de Recepción', 'Remitos de Transferencia', 'Historial de Movimientos'],
+    kpis: ['Tiempo de procesamiento de remitos', 'Precisión de inventario', 'Rotación de stock'],
+    features: ['Recepción con códigos QR', 'Transferencias inter-depósitos', 'Mapeo 3D de almacenes']
+  },
+  {
+    id: 'fleet',
+    code: 'MOD-05B',
+    name: 'Gestión de Flota y Taller',
+    section: 'Gerencia Logística',
+    icon: Truck,
+    color: 'text-sky-600',
+    bgColor: 'bg-sky-50',
+    borderColor: 'border-sky-400',
+    purpose: 'Control integral del parque automotor, mantenimientos (preventivos y correctivos) y ciclo de vida de neumáticos.',
+    scope: 'Gerencia de Logística, Responsables de Taller y Choferes.',
+    responsible: 'Jefe de Taller / Logística',
+    process: [
+      'Los choferes realizan reportes diarios de estado (Check-in) desde sus celulares, indicando km y novedades.',
+      'El taller recibe alertas de mantenimiento y genera Órdenes de Trabajo (OT).',
+      'Se gestiona el inventario de neumáticos por serie, posición y recapado.',
+      'Se controla el consumo de combustible cruzando litros cargados vs km recorridos.'
+    ],
+    records: ['Reportes diarios de vehículos', 'Órdenes de Trabajo de Taller', 'Ficha histórica de neumáticos'],
+    kpis: ['Costo por KM', 'Disponibilidad de flota', 'Desgaste prematuro de neumáticos'],
+    features: ['Check-in móvil de vehículos', 'Gestión de OT', 'Trazabilidad de neumáticos (serie, posición)']
+  },
+  {
+    id: 'communications',
+    code: 'MOD-10',
+    name: 'Comunicaciones',
+    section: 'Comunicaciones',
+    icon: Mail,
+    color: 'text-sky-600',
+    bgColor: 'bg-sky-50',
+    borderColor: 'border-sky-400',
+    purpose: 'Centralizar y trazar comunicaciones formales como Cartas Documento y Notas de Pedido, resguardando la evidencia legal.',
+    scope: 'Asesoría Legal, Administración y Gerencia General.',
+    responsible: 'Asesoría Legal / Gerencia',
+    process: [
+      'Se registra la emisión o recepción de Cartas Documento con su respectivo tracking ID.',
+      'Se adjunta el PDF escaneado del documento original.',
+      'Se definen plazos de vencimiento para contestaciones legales.',
+      'Se emiten notas de pedido formales hacia proveedores o subcontratistas.'
+    ],
+    records: ['Cartas Documento emitidas/recibidas', 'Notas de Pedido', 'Acuses de recibo'],
+    kpis: ['CDs sin responder en plazo', 'Volumen de comunicaciones formales'],
+    features: ['Trazabilidad de correo legal', 'Adjuntos PDF', 'Alertas de vencimiento']
+  },
+  {
+    id: 'payments',
+    code: 'MOD-03E',
+    name: 'Pagos y Egresos',
+    section: 'Gerencia Adm y Finanzas',
+    icon: Banknote,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-400',
+    purpose: 'Gestión de órdenes de pago, salida de fondos y conciliación directa con las proyecciones del Tablero de Liquidez.',
+    scope: 'Tesorería y Administración Financiera.',
+    responsible: 'Tesorero / Gerente Financiero',
+    process: [
+      'Se reciben las facturas conformadas desde el módulo de Gastos o Compras.',
+      'Se arman las Órdenes de Pago (OP) seleccionando el medio de pago (Transferencia, Cheque, Efectivo).',
+      'Se autorizan las OP según los montos y niveles de autorización jerárquica.',
+      'Al ejecutar el pago, se debita del saldo bancario del Tablero de Liquidez automáticamente.'
+    ],
+    records: ['Órdenes de Pago emitidas', 'Comprobantes de transferencia/cheque', 'Flujo de salida de caja'],
+    kpis: ['Días promedio de pago', 'Pagos fuera de término', 'Efectividad de conciliación'],
+    features: ['Generación de OP', 'Multi-medio de pago', 'Integración con Liquidez']
+  },
+  {
+    id: 'budget_landing',
+    code: 'MOD-02A',
+    name: 'Introducción GPP',
+    section: 'Gerencia Presupuestos',
+    icon: HardHat,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-400',
+    purpose: 'Importar y estructurar presupuestos de obras desde formatos estándar para su control operativo.',
+    scope: 'Gerencia de Presupuestos y Licitaciones.',
+    responsible: 'Gerente de Presupuestos',
+    process: [
+      'Se recibe el presupuesto oficial o licitado en formato Excel/CSV.',
+      'El sistema mapea los ítems, unidades y costos directos.',
+      'Se genera la estructura base para el WBS y el control de costos (BIM/Project Budget).',
+      'Se establecen los márgenes esperados y curvas de inversión.'
+    ],
+    records: ['Presupuestos importados', 'Estructuras de costos base'],
+    kpis: ['Precisión de importación', 'Desviación inicial de costos'],
+    features: ['Importador inteligente', 'Mapeo de rubros', 'Generación de WBS base']
+  },
+  {
+    id: 'weekly_report',
+    code: 'MOD-11',
+    name: 'Reporte Gerencia General',
+    section: 'Tableros',
+    icon: PieChart,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-400',
+    purpose: 'Generar consolidados semanales automatizados para la toma de decisiones del directorio, cruzando finanzas, obras y recursos humanos.',
+    scope: 'Directorio y Gerencia General.',
+    responsible: 'Gerente General',
+    process: [
+      'El sistema compila al cierre de la semana los KPIs críticos de todas las áreas.',
+      'Se generan gráficos de avance físico vs financiero de las obras activas.',
+      'Se destaca la posición de liquidez a 7 y 30 días.',
+      'Se resumen las incidencias críticas (accidentes, desvíos presupuestarios).',
+      'Se exporta a PDF para presentación al Directorio.'
+    ],
+    records: ['Reportes Semanales Históricos', 'Actas de Directorio'],
+    kpis: ['Cumplimiento de objetivos semanales', 'Desvíos críticos detectados'],
+    features: ['Consolidación multi-módulo', 'Generación automática PDF', 'Gráficos ejecutivos']
+  },
+  {
+    id: 'guide',
+    code: 'MOD-98',
+    name: 'Guía Rápida',
+    section: 'Sistema',
+    icon: BookOpen,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-400',
+    purpose: 'Asistir al usuario en la operatoria diaria mediante tutoriales y guías paso a paso dentro de la plataforma.',
+    scope: 'Todos los usuarios del sistema.',
+    responsible: 'Administrador del Sistema',
+    process: [
+      'Los usuarios acceden a la guía desde el menú superior o atajos de teclado.',
+      'Encuentran artículos y flujos de trabajo sobre cómo usar cada módulo.',
+      'El Asistente de IA puede referenciar estas guías automáticamente.'
+    ],
+    records: ['Artículos de ayuda', 'Registro de búsquedas'],
+    kpis: ['Consultas resueltas por la guía', 'Uso del módulo de ayuda'],
+    features: ['Buscador de ayuda', 'Tutoriales interactivos', 'Integración IA']
+  },
+  {
+    id: 'implementation',
+    code: 'MOD-97',
+    name: 'Implementación',
+    section: 'Sistema',
+    icon: Rocket,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-400',
+    purpose: 'Trazar y gestionar el avance del despliegue del ERP ECAR en la organización.',
+    scope: 'Equipo de Implementación y Consultores.',
+    responsible: 'Líder de Proyecto',
+    process: [
+      'Se definen las fases de implementación (Relevamiento, Configuración, Capacitación, Go-Live).',
+      'Se asignan tareas a los key users de cada gerencia.',
+      'Se mide el nivel de adopción del sistema por módulo.',
+      'Se firman actas de conformidad por fase superada.'
+    ],
+    records: ['Plan de Implementación', 'Actas de Hito', 'Encuestas de Adopción'],
+    kpis: ['% de Avance de Implementación', 'Horas de capacitación dictadas'],
+    features: ['Gantt de implementación', 'Checklists de Go-Live']
+  },
+  {
+    id: 'user_management',
+    code: 'MOD-99A',
+    name: 'Gestión de Usuarios',
+    section: 'Sistema',
+    icon: Users,
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-400',
+    purpose: 'Administrar el acceso, los roles y los permisos de los empleados dentro de la plataforma ECAR.',
+    scope: 'Administradores de Sistema y RRHH.',
+    responsible: 'Administrador IT',
+    process: [
+      'Se da de alta al empleado en RRHH y luego se le provisiona usuario de sistema.',
+      'Se asignan roles granulares (Ej: Solo lectura, Aprobador, Carga de datos).',
+      'Se restringe el acceso por módulos o por Centros de Costo (Obras).',
+      'Se gestiona el reseteo de contraseñas y bloqueos por inactividad.'
+    ],
+    records: ['Padrón de Usuarios', 'Matriz de Permisos'],
+    kpis: ['Usuarios activos vs inactivos', 'Incidentes de acceso'],
+    features: ['Roles y permisos granulares', 'Sincronización con legajos']
+  },
+  {
+    id: 'user_activity',
+    code: 'MOD-99B',
+    name: 'Actividad de Usuarios',
+    section: 'Sistema',
+    icon: Activity,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-400',
+    purpose: 'Registrar y auditar todas las transacciones y accesos al sistema para fines legales y de seguridad (Norma ISO 27001).',
+    scope: 'Auditoría Interna y Administradores IT.',
+    responsible: 'Auditor IT',
+    process: [
+      'El sistema guarda automáticamente un log inmutable de cada acción de creación, modificación o borrado.',
+      'El log incluye timestamp, usuario, IP, módulo y detalle del cambio (antes/después).',
+      'El administrador puede filtrar logs para investigaciones de seguridad o errores humanos.'
+    ],
+    records: ['Logs de Auditoría Inmutables', 'Alertas de accesos sospechosos'],
+    kpis: ['Intentos de acceso fallidos', 'Volumen de transacciones'],
+    features: ['Trazabilidad total', 'Cumplimiento normativo ISO', 'Búsqueda avanzada de logs']
   }
+
 ];
 
 const AI_INTEGRATIONS = [
@@ -913,34 +1132,52 @@ export const ManualModule: React.FC = () => {
         { num: '2.', title: 'Arquitectura Técnica', pg: '4' },
         { num: '3.', title: 'Gestión de Accesos y Roles', pg: '5' },
         { num: '4.', title: 'Integración con Inteligencia Artificial', pg: '6' },
+        
         { num: '5.', title: 'TABLEROS', pg: '' },
         { num: '5.1', title: 'Dashboard BI (MOD-01)', pg: '7' },
         { num: '5.2', title: 'Tablero de Liquidez (MOD-02)', pg: '8' },
         { num: '5.3', title: 'Resumen Mensual (MOD-20)', pg: '9' },
-        { num: '6.', title: 'ADMINISTRACIÓN', pg: '' },
-        { num: '6.1', title: 'Compras & Libro IVA (MOD-03)', pg: '10' },
-        { num: '6.2', title: 'Finanzas & Tesorería (MOD-04)', pg: '11' },
-        { num: '6.3', title: 'Alertas & Obligaciones (MOD-05)', pg: '12' },
-        { num: '6.4', title: 'Facturación ARCA (MOD-06)', pg: '13' },
-        { num: '6.5', title: 'Gastos Operativos (MOD-07)', pg: '14' },
-        { num: '6.6', title: 'Certificaciones ICC (MOD-08)', pg: '15' },
-        { num: '7.', title: 'PERSONAL', pg: '' },
-        { num: '7.1', title: 'RRHH & Legajos (MOD-09)', pg: '16' },
-        { num: '8.', title: 'LOGÍSTICA', pg: '' },
-        { num: '8.1', title: 'Inventario & Pañol (MOD-10)', pg: '17' },
-        { num: '8.2', title: 'Pedidos de Compra (MOD-11)', pg: '18' },
-        { num: '8.3', title: 'Combustible (MOD-17)', pg: '19' },
-        { num: '9.', title: 'OPERACIONES', pg: '' },
-        { num: '9.1', title: 'Parte Diario de Obra (MOD-12)', pg: '20' },
-        { num: '9.2', title: 'Planificación WBS & Gantt (MOD-13)', pg: '21' },
-        { num: '9.3', title: 'Seguridad & Incidentes (MOD-14)', pg: '22' },
-        { num: '9.4', title: 'Inspecciones & Calidad (MOD-15)', pg: '23' },
-        { num: '9.5', title: 'Consultas de Obra RFI (MOD-16)', pg: '24' },
-        { num: '9.6', title: 'Proyectos & Presupuestos (MOD-18)', pg: '25' },
-        { num: '9.7', title: 'Documentos & Correo (MOD-19)', pg: '26' },
-        { num: '10.', title: 'Seguridad de la Información', pg: '27' },
-        { num: '11.', title: 'Control de Documentos', pg: '28' },
-        { num: '12.', title: 'Glosario y Referencias', pg: '29' },
+        { num: '5.4', title: 'Reporte Gerencia General (MOD-11)', pg: '10' },
+        
+        { num: '6.', title: 'ADMINISTRACIÓN Y FINANZAS', pg: '' },
+        { num: '6.1', title: 'Compras & Libro IVA (MOD-03)', pg: '11' },
+        { num: '6.2', title: 'Finanzas & Tesorería (MOD-04)', pg: '12' },
+        { num: '6.3', title: 'Alertas & Obligaciones (MOD-05)', pg: '13' },
+        { num: '6.4', title: 'Facturación ARCA (MOD-06)', pg: '14' },
+        { num: '6.5', title: 'Gastos Operativos (MOD-07)', pg: '15' },
+        { num: '6.6', title: 'Certificaciones ICC (MOD-08)', pg: '16' },
+        { num: '6.7', title: 'Pagos y Egresos (MOD-03E)', pg: '17' },
+        
+        { num: '7.', title: 'PERSONAL Y RRHH', pg: '' },
+        { num: '7.1', title: 'RRHH & Legajos (MOD-09)', pg: '18' },
+        
+        { num: '8.', title: 'LOGÍSTICA Y FLOTA', pg: '' },
+        { num: '8.1', title: 'Inventario & Pañol (MOD-10)', pg: '19' },
+        { num: '8.2', title: 'Pedidos de Compra (MOD-11)', pg: '20' },
+        { num: '8.3', title: 'Combustible (MOD-17)', pg: '21' },
+        { num: '8.4', title: 'Logística y Acopios (MOD-05A)', pg: '22' },
+        { num: '8.5', title: 'Gestión de Flota y Taller (MOD-05B)', pg: '23' },
+        
+        { num: '9.', title: 'OPERACIONES Y PROYECTOS', pg: '' },
+        { num: '9.1', title: 'Parte Diario de Obra (MOD-12)', pg: '24' },
+        { num: '9.2', title: 'Planificación WBS & Gantt (MOD-13)', pg: '25' },
+        { num: '9.3', title: 'Seguridad & Incidentes (MOD-14)', pg: '26' },
+        { num: '9.4', title: 'Inspecciones & Calidad (MOD-15)', pg: '27' },
+        { num: '9.5', title: 'Consultas de Obra RFI (MOD-16)', pg: '28' },
+        { num: '9.6', title: 'Proyectos & Presupuestos (MOD-18)', pg: '29' },
+        { num: '9.7', title: 'Documentos & Correo (MOD-19)', pg: '30' },
+        { num: '9.8', title: 'Introducción GPP (MOD-02A)', pg: '31' },
+        
+        { num: '10.', title: 'COMUNICACIONES Y SISTEMA', pg: '' },
+        { num: '10.1', title: 'Comunicaciones (MOD-10)', pg: '32' },
+        { num: '10.2', title: 'Guía Rápida (MOD-98)', pg: '33' },
+        { num: '10.3', title: 'Implementación (MOD-97)', pg: '34' },
+        { num: '10.4', title: 'Gestión de Usuarios (MOD-99A)', pg: '35' },
+        { num: '10.5', title: 'Actividad de Usuarios (MOD-99B)', pg: '36' },
+
+        { num: '11.', title: 'Seguridad de la Información', pg: '37' },
+        { num: '12.', title: 'Control de Documentos', pg: '38' },
+        { num: '13.', title: 'Glosario y Referencias', pg: '39' },
       ];
 
       tocSections.forEach((item) => {

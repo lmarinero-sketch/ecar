@@ -511,7 +511,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
             <option value="">Seleccioná un empleado</option>
             {available.map(e => <option key={e.id} value={e.id}>{e.full_name} — {e.dni}</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Horas</label><input type="number" value={horas} onChange={e => setHoras(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tarea} onChange={e => setTarea(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Opcional" /></div>
           </div>
@@ -589,7 +589,7 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
             {(items || []).map(i => <option key={i.id} value={i.id}>{i.name} — Stock: {i.current_stock} {i.unit}</option>)}
           </select>
           <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descripción del material *" className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Cantidad *</label><input type="number" value={cant} onChange={e => setCant(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Unidad</label><input value={unidad} onChange={e => setUnidad(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" /></div>
             <div><label className="text-xs font-bold text-gray-500">Urgencia</label>
@@ -669,7 +669,7 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
             <option value="">Seleccioná equipo</option>
             {available.map(v => <option key={v.id} value={v.id}>{v.code} — {v.description} ({v.vehicle_type})</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><label className="text-xs font-bold text-gray-500">Horas de Uso</label><input type="number" value={horasUso} onChange={e => setHorasUso(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tareaEq} onChange={e => setTareaEq(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Qué hizo el equipo" /></div>
           </div>

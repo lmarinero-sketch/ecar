@@ -220,7 +220,7 @@ export const SupplierEvalModule: React.FC = () => {
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Proveedor *</label>
                   <select value={form.supplier_id} onChange={e => {
@@ -271,7 +271,7 @@ export const SupplierEvalModule: React.FC = () => {
               </div>
 
               {/* NC Count + Notes */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">Cant. NC en el Período</label>
                   <input type="number" value={form.nc_count} onChange={e => setForm({ ...form, nc_count: Number(e.target.value) })}

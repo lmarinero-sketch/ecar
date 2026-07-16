@@ -438,12 +438,12 @@ export const InventoryModule: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
                 <div><label className="text-xs font-bold text-gray-500">Estantería</label><select value={newItem.shelf_id} onChange={e => setNewItem({ ...newItem, shelf_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Sin asignar</option>{(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}</select></div>
                 <div><label className="text-xs font-bold text-gray-500">Unidad</label><input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="unidad, kg, m3" /></div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Stock Actual</label><input type="number" value={newItem.current_stock} onChange={e => setNewItem({ ...newItem, current_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Stock Mínimo</label><input type="number" value={newItem.min_stock} onChange={e => setNewItem({ ...newItem, min_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label><input type="number" value={newItem.unit_cost} onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
@@ -470,7 +470,7 @@ export const InventoryModule: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Cantidad *</label><input type="number" value={movForm.quantity} onChange={e => setMovForm({ ...movForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={movForm.project_id} onChange={e => setMovForm({ ...movForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               </div>
@@ -660,11 +660,11 @@ export const InventoryModule: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
                   <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingShelf ? 'Editar' : 'Nueva'} Estantería</h3><button onClick={() => { setShowNewShelf(false); setEditingShelf(null); }}><X size={20} className="text-gray-400" /></button></div>
                   <form onSubmit={handleSaveShelf} className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={shelfForm.code} onChange={e => setShelfForm({ ...shelfForm, code: e.target.value.toUpperCase() })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="EST-01" /></div>
                       <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={shelfForm.name} onChange={e => setShelfForm({ ...shelfForm, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Estantería Principal" /></div>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={shelfForm.shelf_type} onChange={e => setShelfForm({ ...shelfForm, shelf_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">{Object.entries(SHELF_TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}</select></div>
                       <div><label className="text-xs font-bold text-gray-500">Niveles</label><input type="number" min="1" max="10" value={shelfForm.rows_count} onChange={e => setShelfForm({ ...shelfForm, rows_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                       <div><label className="text-xs font-bold text-gray-500">Divisiones</label><input type="number" min="1" max="10" value={shelfForm.columns_count} onChange={e => setShelfForm({ ...shelfForm, columns_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>

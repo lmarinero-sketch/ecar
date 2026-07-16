@@ -40,7 +40,7 @@ export const EmployeeCostPanel: React.FC<Props> = ({ employee }) => {
       ) : (
         <div className="space-y-4">
           {/* KPIs */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="bg-emerald-50 rounded-lg p-3 text-center">
               <p className="text-xs font-bold text-emerald-600 mb-1">Bruto</p>
               <p className="text-lg font-black font-mono text-emerald-700">{formatARS(bruto)}</p>

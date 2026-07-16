@@ -322,7 +322,7 @@ export const LiquidityDashboard: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500">Monto ($) *</label>
                   <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required placeholder="1500000" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />

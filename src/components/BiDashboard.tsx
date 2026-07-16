@@ -106,7 +106,7 @@ export const BiDashboard: React.FC = () => {
             <span className="font-bold text-sm">Gerencia de Proyectos y Presupuestos</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3">
                 <p className="text-[10px] font-bold text-blue-400 uppercase">Pipeline</p>
                 <p className="text-xl font-black text-blue-700">{pipelineActive} <span className="text-xs font-medium text-blue-400">oportunidades</span></p>
@@ -140,7 +140,7 @@ export const BiDashboard: React.FC = () => {
             <span className="font-bold text-sm">Gerencia de Compras</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
                 <p className="text-[10px] font-bold text-ecar-blue uppercase">OC Abiertas</p>
                 <p className="text-xl font-black text-ecar-blue">{openPOs}</p>
@@ -168,7 +168,7 @@ export const BiDashboard: React.FC = () => {
             <span className="font-bold text-sm">Gerencia de Obras — Calidad</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className={`rounded-lg p-3 ${openNC > 0 ? 'bg-red-50/50 border border-red-200' : 'bg-green-50/50 border border-green-100'}`}>
                 <p className={`text-[10px] font-bold uppercase ${openNC > 0 ? 'text-red-400' : 'text-green-400'}`}>NC Abiertas</p>
                 <p className={`text-xl font-black ${openNC > 0 ? 'text-red-700' : 'text-green-700'}`}>{openNC}</p>
@@ -198,7 +198,7 @@ export const BiDashboard: React.FC = () => {
             <span className="font-bold text-sm">Gerencia de Logística</span>
           </div>
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="bg-slate-50/50 border border-ecar-blueLight rounded-lg p-3">
                 <p className="text-[10px] font-bold text-ecar-blue uppercase">Valor Inventario</p>
                 <p className="text-xl font-black text-ecar-blue">{formatARS(totalInventoryValue)}</p>

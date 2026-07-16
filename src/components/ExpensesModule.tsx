@@ -43,7 +43,7 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
           {/* Formulario de Datos */}
           <div className="flex-1 space-y-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
             <h4 className="font-bold text-sm text-emerald-800 border-b pb-2">Datos para Transferencia y Setup</h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">CBU / Alias</label>
                 <input value={form.alias_cbu} onChange={e => setForm({...form, alias_cbu: e.target.value})} className="w-full px-2 py-1.5 border rounded-lg text-xs font-mono bg-gray-50" placeholder="Ej: EMPRESA.MP" />

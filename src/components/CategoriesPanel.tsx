@@ -178,7 +178,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nombre de Categoría *</label>
                 <input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" placeholder="Ej: Medio Oficial" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Valor Hora ($)</label>
                   <input type="number" value={createForm.hourly_rate_ars} onChange={e => setCreateForm({ ...createForm, hourly_rate_ars: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" placeholder="0" />
@@ -212,7 +212,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
               <p className="text-xs text-gray-400 mb-1">Valor actual</p>
               <p className="font-mono font-bold text-gray-600">{formatARS(editingCat.hourly_rate_ars)}/hora · {formatARS(editingCat.daily_rate_ars)}/día</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nuevo Valor Hora ($)</label>
                 <input type="number" value={editRate.hourly_rate_ars} onChange={e => setEditRate({ ...editRate, hourly_rate_ars: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />

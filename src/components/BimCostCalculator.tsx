@@ -335,7 +335,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
                 {expandedCat === cat.typeName && (
                   <tr>
                     <td colSpan={7} className="bg-gray-50/80 px-6 py-3">
-                      <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                         <div className="bg-white p-2.5 rounded-lg border border-gray-200">
                           <span className="text-gray-400 font-bold block text-[10px] uppercase">Superficie Total</span>
                           <span className="font-mono font-bold text-gray-800">{cat.totalArea.toFixed(2)} m²</span>

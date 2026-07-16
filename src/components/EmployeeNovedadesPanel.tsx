@@ -170,7 +170,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
 
         {showAdvForm && (
           <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-dashed border-gray-300 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">Monto ($) *</label>
                 <input type="number" value={advForm.amount_ars} onChange={e => setAdvForm({ ...advForm, amount_ars: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono" />
