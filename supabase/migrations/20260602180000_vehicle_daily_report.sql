@@ -36,10 +36,18 @@ CREATE TABLE IF NOT EXISTS vehicle_daily_reports (
 
 -- ═══════════════ 3. RLS ═══════════════
 ALTER TABLE vehicle_daily_reports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "vehicle_daily_reports_all" ON vehicle_daily_reports;
 CREATE POLICY "vehicle_daily_reports_all" ON vehicle_daily_reports FOR ALL USING (true) WITH CHECK (true);
 
 -- ═══════════════ 4. INDICES ═══════════════
+DROP INDEX IF EXISTS idx_vdr_vehicle;
 CREATE INDEX idx_vdr_vehicle ON vehicle_daily_reports(vehicle_id);
+
+DROP INDEX IF EXISTS idx_vdr_date;
 CREATE INDEX idx_vdr_date ON vehicle_daily_reports(report_date);
+
+DROP INDEX IF EXISTS idx_vdr_project;
 CREATE INDEX idx_vdr_project ON vehicle_daily_reports(project_id);
+
+DROP INDEX IF EXISTS idx_vdr_damage;
 CREATE INDEX idx_vdr_damage ON vehicle_daily_reports(has_damage) WHERE has_damage = true;
