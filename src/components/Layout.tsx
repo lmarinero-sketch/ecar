@@ -15,6 +15,9 @@ import { MODULE_LABELS } from '../lib/types';
 import { TutorialPanel } from './TutorialPanel';
 import { GlobalModal } from './GlobalModal';
 import { UserProfileModal } from './UserProfileModal';
+import { GlobalOnboarding } from './onboarding/GlobalOnboarding';
+import { useOnboardingStore } from '../store/useOnboardingStore';
+import { HelpCircle } from 'lucide-react';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
@@ -177,6 +180,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+
+  const { startTour } = useOnboardingStore();
 
   // Trigger content animation on module change
   useEffect(() => {
@@ -398,6 +403,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <kbd className="ml-auto text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200/80 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
             </div>
 
+            {/* Tour toggle */}
+            <button
+              onClick={() => startTour(activeModule)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold transition-all bg-slate-50 text-slate-500 border-slate-200/80 hover:bg-slate-100 hover:text-ecar-blue"
+              title="Ver Guía del Módulo"
+            >
+              <HelpCircle size={13} />
+              <span className="hidden sm:inline">Guía</span>
+            </button>
+
             {/* Tutorial toggle */}
             <button
               onClick={() => setTutorialMode(!tutorialMode)}
@@ -428,6 +443,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Tutorial Panel */}
       <TutorialPanel />
+
+      {/* Global Onboarding Tour */}
+      <GlobalOnboarding activeModule={activeModule} />
 
       {/* Password Change Modal */}
       {showPasswordModal && (

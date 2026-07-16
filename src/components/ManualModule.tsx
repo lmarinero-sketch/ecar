@@ -1024,94 +1024,134 @@ export const ManualModule: React.FC = () => {
         pdf.text(t(`Pag. ${currentPage}`), pageW / 2, pageH - 6, { align: 'center' });
       };
 
-      // ════════════ PORTADA ════════════
-      pdf.setFillColor(...BLUE);
+      // ════════════ PORTADA NUEVA (DISEÑO PREMIUM) ════════════
+      // Fondo muy claro / blanco
+      pdf.setFillColor(250, 251, 252);
       pdf.rect(0, 0, pageW, pageH, 'F');
 
-      // White geometric accent
-      pdf.setFillColor(255, 255, 255, 0.05);
-      pdf.setDrawColor(255, 255, 255);
-      pdf.setLineWidth(0.3);
-      for (let i = 0; i < 8; i++) {
-        pdf.circle(pageW - 20, 60 + i * 25, 15 + i * 8, 'S');
-      }
+      const DARK_BLUE: [number, number, number] = [15, 45, 82];
+      const RED_COLOR: [number, number, number] = [200, 30, 30];
+      const FONT_NAME = 'helvetica'; // Fallback limpio para Calibri
 
-      // Logo area — embed logoECAR.png
+      // Banners Superiores
+      pdf.setFillColor(...DARK_BLUE);
+      pdf.triangle(0, 0, pageW, 0, pageW, 55, 'F');
+      pdf.triangle(0, 0, pageW, 55, 0, 40, 'F');
+
+      pdf.setFillColor(...RED_COLOR);
+      pdf.triangle(0, 40, pageW, 55, pageW, 70, 'F');
+      pdf.triangle(0, 40, pageW, 70, 0, 55, 'F');
+
+      // Banners Inferiores
+      pdf.setFillColor(...DARK_BLUE);
+      pdf.triangle(0, pageH, 0, pageH - 20, pageW, pageH - 35, 'F');
+      pdf.triangle(0, pageH, pageW, pageH - 35, pageW, pageH, 'F');
+
+      pdf.setFillColor(...RED_COLOR);
+      pdf.triangle(0, pageH - 20, 0, pageH - 35, pageW, pageH - 50, 'F');
+      pdf.triangle(0, pageH - 20, pageW, pageH - 50, pageW, pageH - 35, 'F');
+
+      // Logo ECAR
       const logoImg = new Image();
       logoImg.src = '/logoECAR.png';
       await new Promise<void>((resolve) => {
         logoImg.onload = () => {
+          // Sombra
+          pdf.setFillColor(0, 0, 0, 0.05);
+          pdf.roundedRect(16, 16, 75, 45, 3, 3, 'F');
+          // Caja blanca
           pdf.setFillColor(255, 255, 255);
-          pdf.roundedRect(margin, 28, 70, 22, 3, 3, 'F');
-          pdf.addImage(logoImg, 'PNG', margin + 2, 30, 66, 18);
+          pdf.roundedRect(15, 15, 75, 45, 3, 3, 'F');
+          pdf.addImage(logoImg, 'PNG', 18, 20, 69, 35);
           resolve();
         };
-        logoImg.onerror = () => {
-          // Fallback text si no carga la imagen
-          pdf.setFillColor(255, 255, 255, 0.15);
-          pdf.roundedRect(margin, 30, 60, 20, 3, 3, 'F');
-          pdf.setTextColor(...WHITE);
-          pdf.setFontSize(18);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(t('ECAR'), margin + 8, 44);
-          pdf.setFontSize(7);
-          pdf.setFont('helvetica', 'normal');
-          pdf.text(t('EMPRESA CONSTRUCTORA'), margin + 8, 50);
-          resolve();
-        };
+        logoImg.onerror = () => resolve();
       });
 
+      // Título Principal
+      pdf.setTextColor(...DARK_BLUE);
+      pdf.setFontSize(22);
+      pdf.setFont(FONT_NAME, 'bold');
+      pdf.text(t('MANUAL DE'), 15, 90);
+      pdf.text(t('ORGANIZACIÓN, ÍNDICE'), 15, 100);
+      pdf.setTextColor(...RED_COLOR);
+      pdf.text(t('Y MAPA DE PROCESOS'), 15, 110);
+
+      // Divisor
+      pdf.setDrawColor(...DARK_BLUE);
+      pdf.setLineWidth(0.8);
+      pdf.line(15, 118, 140, 118);
+
+      // Subtítulos
+      pdf.setTextColor(100, 110, 125);
       pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(180, 210, 240);
-      pdf.text(t('Sistema ERP - Gestion Integral de Obras'), pageW - margin, 44, { align: 'right' });
+      pdf.setFont(FONT_NAME, 'bold');
+      pdf.text(t('Gerencia General - Proyectos y Presupuestos - Compras - Logística - Obras'), 15, 128);
 
-      // Title
-      pdf.setTextColor(...WHITE);
-      pdf.setFontSize(28);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(t('MANUAL DE'), margin, 100);
-      pdf.text(t('PROCEDIMIENTOS'), margin, 116);
-      pdf.text(t('DEL SISTEMA'), margin, 132);
+      pdf.setFontSize(8);
+      pdf.setFont(FONT_NAME, 'normal');
+      const subtitleDesc = pdf.splitTextToSize(
+        'Primera etapa: arquitectura del sistema, mapa general de procesos y lógica de comunicación entre gerencias.',
+        150
+      );
+      pdf.text(subtitleDesc.map(t), 15, 134);
 
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(180, 210, 240);
-      pdf.text(t('Sistema ERP ECAR - Gestion Integral'), margin, 148);
-      pdf.text(t('de Empresas Constructoras'), margin, 158);
+      // Función para dibujar cajas de información
+      const drawInfoBox = (x: number, y: number, w: number, h: number, title: string, value: string) => {
+        pdf.setFillColor(0, 0, 0, 0.03);
+        pdf.roundedRect(x + 1, y + 1, w, h, 2, 2, 'F');
+        pdf.setDrawColor(220, 225, 230);
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(x, y, w, h, 2, 2, 'FD');
+        pdf.setTextColor(...RED_COLOR);
+        pdf.setFontSize(6.5);
+        pdf.setFont(FONT_NAME, 'bold');
+        pdf.text(t(title), x + 4, y + 5);
+        pdf.setTextColor(...DARK_BLUE);
+        pdf.setFontSize(7.5);
+        pdf.setFont(FONT_NAME, 'bold');
+        const lines = pdf.splitTextToSize(t(value), w - 8);
+        pdf.text(lines, x + 4, y + 10);
+      };
 
-      // Divider
-      pdf.setDrawColor(255, 255, 255, 0.3);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, 168, pageW - margin, 168);
+      drawInfoBox(15, 150, 62, 14, 'CÓDIGO', 'ECAR-MAN-GG-001');
+      drawInfoBox(82, 150, 62, 14, 'VERSIÓN', 'v2.0 - Normalizado');
+      drawInfoBox(15, 168, 62, 14, 'ENFOQUE', 'Procesos - trazabilidad - mejora continua');
+      drawInfoBox(82, 168, 62, 14, 'USO', 'Documento interno de conducción');
 
-      // Metadata
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...WHITE);
-      const metaItems = [
-        ['Código:', 'PRO-ECAR-SYS-001'],
-        ['Versión:', '1.0'],
-        ['Fecha de emisión:', new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })],
-        ['Estado:', 'VIGENTE'],
-        ['Módulos documentados:', `${MODULES_DATA.length}`],
-      ];
-
-      metaItems.forEach(([label, value], i) => {
-        const y = 178 + i * 10;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(180, 210, 240);
-        pdf.text(t(label), margin, y);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(...WHITE);
-        pdf.text(t(value), margin + 55, y);
-      });
-
-      // Bottom disclaimer
+      // Caja Criterio Rector
+      const crY = 195;
+      pdf.setFillColor(0, 0, 0, 0.03);
+      pdf.roundedRect(16, crY + 1, 128, 28, 2, 2, 'F');
+      pdf.setDrawColor(220, 225, 230);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(15, crY, 128, 28, 2, 2, 'FD');
+      
+      pdf.setTextColor(...RED_COLOR);
       pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'italic');
-      pdf.setTextColor(160, 190, 220);
-      pdf.text(t('Documento de uso interno. ECAR Sistema ERP. Prohibida su reproduccion sin autorizacion expresa.'), pageW / 2, pageH - 12, { align: 'center' });
+      pdf.setFont(FONT_NAME, 'bold');
+      pdf.text(t('CRITERIO RECTOR'), 20, crY + 6);
+      
+      pdf.setTextColor(...DARK_BLUE);
+      pdf.setFontSize(8.5);
+      pdf.setFont(FONT_NAME, 'normal');
+      const crText = pdf.splitTextToSize(
+        'Cada gerencia debe saber qué recibe, qué transforma, qué entrega, a quién se lo entrega, con qué evidencia y bajo qué criterio será evaluada.',
+        118
+      );
+      pdf.text(crText.map(t), 20, crY + 12);
+
+      // Logo Rombo Mascota
+      const romboImg = new Image();
+      romboImg.src = '/rombo.jpeg';
+      await new Promise<void>((resolve) => {
+        romboImg.onload = () => {
+          // colocar a la derecha, encima del banner inferior
+          pdf.addImage(romboImg, 'JPEG', 125, 175, 75, 95);
+          resolve();
+        };
+        romboImg.onerror = () => resolve();
+      });
 
       setProgress(10);
 
