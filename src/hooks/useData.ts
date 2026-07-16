@@ -20,9 +20,9 @@ import type {
   Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange,
   WorkOrder,
   LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog,
-  EmployeePPEDelivery, LegalEntity
+  EmployeePPEDelivery, LegalEntity,
+  FleetMaintenanceOrder, FleetTire
 } from '../lib/types';
-
 
 // ========== PROJECTS ==========
 export function useProjects() {
@@ -3357,6 +3357,86 @@ export function useAITokenUsage() {
       return { total, prompt, completion, costUsd };
     },
     refetchInterval: 30000
+  });
+}
+
+// ── Fleet Maintenance & Tires ──
+
+export function useFleetMaintenanceOrders() {
+  return useQuery({
+    queryKey: ['fleet_maintenance_orders', ECAR_TENANT_ID],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fleet_maintenance_orders')
+        .select('*, vehicle:fuel_vehicles(*)')
+        .eq('tenant_id', ECAR_TENANT_ID)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as FleetMaintenanceOrder[];
+    },
+  });
+}
+
+export function useCreateFleetMaintenanceOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<FleetMaintenanceOrder>) => {
+      const { data, error } = await supabase.from('fleet_maintenance_orders').insert([payload]).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => queryClient.invalidateQueries({ queryKey: ['fleet_maintenance_orders', data.tenant_id] }),
+  });
+}
+
+export function useUpdateFleetMaintenanceOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<FleetMaintenanceOrder> & { id: string }) => {
+      const { data, error } = await supabase.from('fleet_maintenance_orders').update(payload).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => queryClient.invalidateQueries({ queryKey: ['fleet_maintenance_orders', data.tenant_id] }),
+  });
+}
+
+export function useFleetTires() {
+  return useQuery({
+    queryKey: ['fleet_tires', ECAR_TENANT_ID],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fleet_tires')
+        .select('*, vehicle:fuel_vehicles(*)')
+        .eq('tenant_id', ECAR_TENANT_ID)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as FleetTire[];
+    },
+  });
+}
+
+export function useCreateFleetTire() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<FleetTire>) => {
+      const { data, error } = await supabase.from('fleet_tires').insert([payload]).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => queryClient.invalidateQueries({ queryKey: ['fleet_tires', data.tenant_id] }),
+  });
+}
+
+export function useUpdateFleetTire() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<FleetTire> & { id: string }) => {
+      const { data, error } = await supabase.from('fleet_tires').update(payload).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => queryClient.invalidateQueries({ queryKey: ['fleet_tires', data.tenant_id] }),
   });
 }
 

@@ -15,8 +15,7 @@ if (!PROJECT_REF || !ACCESS_TOKEN) {
 }
 
 const queries = [
-  fs.readFileSync('supabase/migrations/20260624_weekly_payments_init.sql', 'utf-8'),
-  fs.readFileSync('supabase/migrations/20260624_weekly_payroll_details.sql', 'utf-8')
+  fs.readFileSync('supabase/migrations/20260716000000_fleet_maintenance.sql', 'utf-8')
 ];
 
 async function main() {

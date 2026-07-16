@@ -14,7 +14,8 @@ import { FleetTrackingMap } from './tracking/FleetTrackingMap';
 
 import { DriversRegistryModule } from './DriversRegistryModule';
 import { VehiclesRegistryModule } from './VehiclesRegistryModule';
-
+import { WorkshopPanel } from './WorkshopPanel';
+import { TiresPanel } from './TiresPanel';
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking' | 'drivers' | 'vehicle_kpis';
 
 const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
@@ -61,6 +62,7 @@ export const FleetModule: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
   const [showNew, setShowNew] = useState(false);
+  const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
   const [deleteTarget, setDeleteTarget] = useState<FuelVehicle | null>(null);
   const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
 
@@ -191,71 +193,99 @@ export const FleetModule: React.FC = () => {
         <button onClick={() => setView('overview')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota
         </button>
+
+        {/* Header and Tabs */}
         <div className="bg-gradient-to-r from-amber-700 to-amber-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-6 opacity-10"><Wrench size={120} /></div>
           <div className="relative z-10">
-            <h3 className="font-bold text-2xl flex items-center gap-2"><Wrench size={24} /> Mantenimiento Programado</h3>
-            <p className="text-amber-100 text-sm mt-1">Control de service y mantenimiento preventivo de la flota</p>
+            <h3 className="font-bold text-2xl flex items-center gap-2"><Wrench size={24} /> Taller y Mantenimiento</h3>
+            <p className="text-amber-100 text-sm mt-1">Control de service, taller interno y neumáticos</p>
+          </div>
+          
+          <div className="flex gap-4 mt-6 border-b border-amber-400/50 relative z-10">
+            <button 
+              onClick={() => setMaintenanceTab('schedule')} 
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'schedule' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+            >
+              Cronograma Service
+            </button>
+            <button 
+              onClick={() => setMaintenanceTab('workshop')} 
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'workshop' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+            >
+              Órdenes de Taller
+            </button>
+            <button 
+              onClick={() => setMaintenanceTab('tires')} 
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'tires' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+            >
+              Neumáticos
+            </button>
           </div>
         </div>
 
-        {/* Alerts */}
-        {maintenanceDue.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
-            <p className="text-sm font-bold text-red-700 flex items-center gap-2"><AlertTriangle size={16} /> Mantenimiento vencido o para hoy</p>
-            {maintenanceDue.map(v => (
-              <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-100">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
-                  <div>
-                    <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
-                    <p className="text-xs text-red-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
-                  </div>
-                </div>
-                <button onClick={() => completeMaintenance(v)} className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600 transition-all flex items-center gap-1">
-                  <CheckCircle2 size={14} /> Completado
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {maintenanceTab === 'workshop' && <WorkshopPanel />}
+        {maintenanceTab === 'tires' && <TiresPanel />}
 
-        {maintenanceSoon.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-2">
-            <p className="text-sm font-bold text-yellow-700 flex items-center gap-2"><Clock size={16} /> Próximos 7 días</p>
-            {maintenanceSoon.map(v => (
-              <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-yellow-100">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
-                  <div>
-                    <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
-                    <p className="text-xs text-yellow-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
+        {maintenanceTab === 'schedule' && (
+          <div className="space-y-4">
+            {/* Alerts */}
+            {maintenanceDue.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-bold text-red-700 flex items-center gap-2"><AlertTriangle size={16} /> Mantenimiento vencido o para hoy</p>
+                {maintenanceDue.map(v => (
+                  <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-100">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                      <div>
+                        <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
+                        <p className="text-xs text-red-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => completeMaintenance(v)} className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600 transition-all flex items-center gap-1">
+                      <CheckCircle2 size={14} /> Completado
+                    </button>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {/* Full list */}
-        <div className="light-card overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Calendario de Mantenimiento</h3></div>
-          {allMaintenance.length === 0 ? (
-            <div className="text-center py-12 text-gray-400"><Wrench size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay mantenimientos programados</p><p className="text-sm">Editá un vehículo para agendar su próximo service</p></div>
-          ) : (
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                <tr><th className="px-4 py-3">Vehículo</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Km</th><th className="px-4 py-3">Notas</th><th className="px-4 py-3">Estado</th></tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {allMaintenance.map(v => {
-                  const overdue = isDueOrOverdue(v.next_maintenance_date);
-                  const soon = isDueSoon(v.next_maintenance_date, 7);
-                  return (
-                    <tr key={v.id} className={overdue ? 'bg-red-50/50' : soon ? 'bg-yellow-50/50' : 'hover:bg-gray-50'}>
-                      <td className="px-4 py-3 font-medium">{VEHICLE_ICON[v.vehicle_type] || '🚐'} {v.code} — {v.description}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_date}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_km ? `${v.next_maintenance_km.toLocaleString()} km` : '—'}</td>
+            {maintenanceSoon.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-bold text-yellow-700 flex items-center gap-2"><Clock size={16} /> Próximos 7 días</p>
+                {maintenanceSoon.map(v => (
+                  <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-yellow-100">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                      <div>
+                        <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
+                        <p className="text-xs text-yellow-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Full list */}
+            <div className="light-card overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Calendario de Mantenimiento</h3></div>
+              {allMaintenance.length === 0 ? (
+                <div className="text-center py-12 text-gray-400"><Wrench size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay mantenimientos programados</p><p className="text-sm">Editá un vehículo para agendar su próximo service</p></div>
+              ) : (
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                    <tr><th className="px-4 py-3">Vehículo</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Km</th><th className="px-4 py-3">Notas</th><th className="px-4 py-3">Estado</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {allMaintenance.map(v => {
+                      const overdue = isDueOrOverdue(v.next_maintenance_date);
+                      const soon = isDueSoon(v.next_maintenance_date, 7);
+                      return (
+                        <tr key={v.id} className={overdue ? 'bg-red-50/50' : soon ? 'bg-yellow-50/50' : 'hover:bg-gray-50'}>
+                          <td className="px-4 py-3 font-medium">{VEHICLE_ICON[v.vehicle_type] || '🚐'} {v.code} — {v.description}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_date}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_km ? `${v.next_maintenance_km.toLocaleString()} km` : '—'}</td>
                       <td className="px-4 py-3 text-xs text-gray-500">{v.maintenance_notes || '—'}</td>
                       <td className="px-4 py-3">
                         {overdue ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Vencido</span>
@@ -269,6 +299,8 @@ export const FleetModule: React.FC = () => {
             </table>
           )}
         </div>
+      </div>
+        )}
       </div>
     );
   }

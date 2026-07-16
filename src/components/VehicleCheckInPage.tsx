@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import {
   ClipboardCheck, CheckCircle2, Loader2, AlertTriangle,
-  CircleCheck, CircleX, ChevronDown, ChevronUp
+  CircleCheck, CircleX, ChevronDown, ChevronUp, WifiOff
 } from 'lucide-react';
 import type { FuelVehicle, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
+import { useOfflineStore } from '../store/useOfflineStore';
+
+// ... (skipping some constants) ...
 
 const DEFAULT_CHECKLIST: VehicleChecklistItem[] = [
   { item: 'Luces delanteras y traseras', estado: 'ok' },
@@ -36,7 +39,7 @@ const VEHICLE_ICON: Record<string, string> = {
   'Camioneta': '🛻', 'Camión': '🚛', 'Equipo': '🏗️', 'Mini cargadora': '🏗️', 'Retroexcavadora': '🏗️', 'Batán': '🛢️',
 };
 
-type PageStatus = 'loading' | 'form' | 'success' | 'error';
+type PageStatus = 'loading' | 'form' | 'success' | 'error' | 'offline_saved';
 
 export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId }) => {
   const [status, setStatus] = useState<PageStatus>('loading');
@@ -44,6 +47,9 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const [projects, setProjects] = useState<any[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  const addDailyReport = useOfflineStore((s) => s.addDailyReport);
 
   // Form state
   const [driverName, setDriverName] = useState('');
@@ -58,10 +64,31 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const [showChecklist, setShowChecklist] = useState(false);
 
   useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
     loadData();
   }, [vehicleId]);
 
   const loadData = async () => {
+    if (!navigator.onLine) {
+      // Si estamos offline desde el inicio y queremos leer datos, podemos intentar con cache
+      // Pero para este MVP asumimos que el código QR tiene info o el service worker lo cachea.
+      // Acá lo ideal sería cargar los datos del vehículo desde un cache local.
+      // Por simplicidad en este MVP, fallamos elegantemente o permitimos carga parcial.
+      setError('Necesitás internet al menos una vez para cargar los datos del vehículo.');
+      setStatus('error');
+      return;
+    }
+
     try {
       // Load vehicle
       const { data: v, error: vErr } = await supabase
@@ -112,30 +139,42 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const handleSubmit = async () => {
     if (!driverName.trim() || kmInvalid) return;
     setSaving(true);
+    const today = new Date().toISOString().slice(0, 10);
+
+    const reportPayload = {
+      tenant_id: ECAR_TENANT_ID,
+      vehicle_id: vehicleId,
+      report_date: today,
+      report_time: null,
+      driver_name: driverName.trim(),
+      project_id: projectId || null,
+      odometer_km: odometerKm ? parseInt(odometerKm) : null,
+      fuel_level: fuelLevel,
+      checklist,
+      has_damage: hasDamage,
+      damage_description: hasDamage ? damageDescription : null,
+      damage_photos: [],
+      observations: observations.trim() || null,
+      signed_by: signedBy.trim() || driverName.trim(),
+      vehicle_condition_after: computedCondition,
+      source: 'qr' as const,
+    };
+
+    if (!isOnline) {
+      // Guardar localmente
+      addDailyReport({
+        ...reportPayload,
+        offline_id: crypto.randomUUID(),
+        saved_at: new Date().toISOString(),
+      });
+      setStatus('offline_saved');
+      setSaving(false);
+      return;
+    }
 
     try {
-      const today = new Date().toISOString().slice(0, 10);
-
       // 1. Insert report
-      const { error: insertErr } = await supabase
-        .from('vehicle_daily_reports')
-        .insert({
-          tenant_id: ECAR_TENANT_ID,
-          vehicle_id: vehicleId,
-          report_date: today,
-          driver_name: driverName.trim(),
-          project_id: projectId || null,
-          odometer_km: odometerKm ? parseInt(odometerKm) : null,
-          fuel_level: fuelLevel,
-          checklist,
-          has_damage: hasDamage,
-          damage_description: hasDamage ? damageDescription : null,
-          damage_photos: [],
-          observations: observations.trim() || null,
-          signed_by: signedBy.trim() || driverName.trim(),
-          vehicle_condition_after: computedCondition,
-          source: 'qr',
-        });
+      const { error: insertErr } = await supabase.from('vehicle_daily_reports').insert(reportPayload);
       if (insertErr) throw insertErr;
 
       // 2. Update vehicle
@@ -232,9 +271,44 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
           </div>
         )}
 
+        {/* Offline Saved */}
+        {status === 'offline_saved' && (
+          <div className="py-12">
+            <div className="bg-white border border-yellow-200 rounded-2xl p-8 text-center space-y-5 shadow-lg">
+              <div className="w-24 h-24 mx-auto rounded-full bg-yellow-100 flex items-center justify-center">
+                <WifiOff size={56} className="text-yellow-600" />
+              </div>
+              <h2 className="text-xl font-bold text-yellow-700">Guardado sin conexión</h2>
+              <p className="text-gray-600 text-sm font-medium">
+                Tu reporte se guardó en este celular.
+              </p>
+              <p className="text-gray-500 text-xs px-4">
+                Se enviará automáticamente en cuanto recuperes la señal de internet. No borres el historial del navegador.
+              </p>
+              <div className="pt-4">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-2 bg-yellow-100 text-yellow-700 font-bold rounded-lg hover:bg-yellow-200"
+                >
+                  Nuevo reporte
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         {status === 'form' && vehicle && (
           <div className="space-y-5">
+            {!isOnline && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 flex items-center gap-3 shadow-sm rounded-r-lg">
+                <WifiOff size={20} className="text-yellow-600 shrink-0" />
+                <p className="text-xs text-yellow-800 font-medium leading-tight">
+                  Estás sin conexión. El reporte se guardará en tu dispositivo y se enviará luego.
+                </p>
+              </div>
+            )}
+            
             {/* Vehicle Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-ecar-blueLight flex items-center justify-center text-3xl shrink-0">

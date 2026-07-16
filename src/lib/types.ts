@@ -857,6 +857,43 @@ export type ParteDiarioEquipo = {
   vehicle?: FuelVehicle;
 };
 
+export type FleetMaintenanceOrder = {
+  id: string;
+  tenant_id: string;
+  vehicle_id: string;
+  title: string;
+  description: string | null;
+  mechanic_assigned: string | null;
+  status: 'pendiente' | 'en_taller' | 'terminado';
+  start_date: string | null;
+  completion_date: string | null;
+  cost_materials: number;
+  cost_labor: number;
+  total_cost: number;
+  odometer_at_entry: number | null;
+  created_at: string;
+  created_by: string | null;
+  vehicle?: FuelVehicle;
+};
+
+export type FleetTire = {
+  id: string;
+  tenant_id: string;
+  vehicle_id: string | null;
+  code: string;
+  brand: string | null;
+  model: string | null;
+  size: string | null;
+  position: string | null;
+  status: 'en_uso' | 'en_recapado' | 'baja' | 'stock';
+  km_installed: number | null;
+  expected_lifespan_km: number | null;
+  tread_depth_mm: number | null;
+  created_at: string;
+  created_by: string | null;
+  vehicle?: FuelVehicle;
+};
+
 // ========== SEGURIDAD E INCIDENTES ==========
 
 export type SeguridadIncidente = {

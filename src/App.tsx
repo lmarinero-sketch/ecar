@@ -46,6 +46,7 @@ import { UserActivityModule } from './components/UserActivityModule';
 import { CommunicationsModule } from './components/CommunicationsModule';
 import { WeeklyReportModule } from './components/WeeklyReportModule';
 import { ActivityTracker } from './components/ActivityTracker';
+import { useOfflineSync } from './hooks/useOfflineSync';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,9 @@ function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_veh
 function AppContent() {
   const { user, loading } = useAuth();
   const { activeModule } = useAppStore();
+  
+  // Activate background sync for offline daily reports
+  useOfflineSync();
 
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
