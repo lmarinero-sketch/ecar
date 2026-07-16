@@ -317,7 +317,8 @@ export const PurchasesModule: React.FC = () => {
     setOcrResult(null);
     try {
       // 1. Upload to storage
-      const path = `scans/${Date.now()}_${file.name}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const path = `scans/${Date.now()}_${safeName}`;
       const { error: uploadError } = await supabase.storage.from('purchase-scans').upload(path, file);
       if (uploadError) throw uploadError;
 
