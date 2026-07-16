@@ -50,7 +50,7 @@ export const DriversRegistryModule: React.FC = () => {
           <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
             <tr>
               <th className="px-4 py-3">Chofer</th>
-              <th className="px-4 py-3">Vehículo Asignado</th>
+              <th className="px-4 py-3 text-center">Carnet (Venc.)</th>
               <th className="px-4 py-3 text-center">Safety Score</th>
               <th className="px-4 py-3 text-center">Eficiencia</th>
               <th className="px-4 py-3 text-center">Alertas</th>
@@ -58,22 +58,51 @@ export const DriversRegistryModule: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {drivers.map((driver, i) => {
-              // Valores mockeados
-              const safetyScore = 95 - (i * 5);
+              // TODO: Fetch from actual RPC functions
+              const safetyScore = 95 - (i * 5); 
               const efficiency = (9.2 - (i * 0.4)).toFixed(1);
               
+              // Lógica de Vencimiento
+              let isExpired = false;
+              let isExpiringSoon = false;
+              if (driver.driver_license_expiry) {
+                const expiry = new Date(driver.driver_license_expiry);
+                const today = new Date();
+                const diffTime = Math.abs(expiry.getTime() - today.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (expiry < today) {
+                  isExpired = true;
+                } else if (diffDays <= 30) {
+                  isExpiringSoon = true;
+                }
+              }
+
               return (
                 <tr key={driver.id || i} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-gray-800">{driver.full_name || `Chofer ${i + 1}`}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">Camioneta {i + 1} (AB{123+i}CD)</td>
+                  <td className="px-4 py-3">
+                    <div className="font-bold text-gray-800">{driver.full_name || `Chofer ${i + 1}`}</div>
+                    <div className="text-xs text-gray-500">{driver.dni ? `DNI: ${driver.dni}` : ''}</div>
+                  </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${safetyScore > 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <div className="font-bold">{driver.driver_license_category || 'N/A'}</div>
+                    <div className={`text-xs ${isExpired ? 'text-red-500 font-bold' : isExpiringSoon ? 'text-yellow-600 font-bold' : 'text-gray-500'}`}>
+                      {driver.driver_license_expiry || 'Sin fecha'}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${safetyScore >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                       {safetyScore}/100
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center font-mono text-gray-600">{efficiency} Km/L</td>
                   <td className="px-4 py-3 text-center">
-                    {i === 2 ? <span className="flex justify-center text-red-500" title="Exceso de velocidad registrado"><AlertTriangle size={16} /></span> : <span className="text-gray-300">-</span>}
+                    <div className="flex flex-col items-center gap-1">
+                      {isExpired && <span className="flex items-center gap-1 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Vencido</span>}
+                      {isExpiringSoon && <span className="flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Vence pronto</span>}
+                      {safetyScore < 80 && <span className="flex items-center gap-1 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Peligro</span>}
+                      {!isExpired && !isExpiringSoon && safetyScore >= 80 && <span className="text-gray-300">-</span>}
+                    </div>
                   </td>
                 </tr>
               );
