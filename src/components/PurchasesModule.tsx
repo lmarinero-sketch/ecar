@@ -452,7 +452,11 @@ export const PurchasesModule: React.FC = () => {
     const ivaVentas = compVentas.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
     const ivaCompras = compCompras.reduce((s: number, i: any) => s + ((Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)) * getMultiplier(i)), 0);
 
-    return ivaVentas - ivaCompras;
+    return { 
+      posicion: ivaVentas - ivaCompras,
+      ivaVentas,
+      ivaCompras
+    };
   };
 
   const statusColor: Record<string, string> = {
@@ -653,18 +657,28 @@ export const PurchasesModule: React.FC = () => {
       {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
           {legalEntities.map((entity: any) => {
-            const posicion = calculatePosicionIva(entity.id);
+            const { posicion, ivaVentas, ivaCompras } = calculatePosicionIva(entity.id);
             const isToPay = posicion >= 0;
             return (
-              <div key={entity.id} className="bg-white/60 border border-gray-100 rounded-lg p-3 flex justify-between items-center shadow-sm">
+              <div key={entity.id} className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Posición IVA — {entity.name}</p>
-                  <p className={`text-lg font-mono font-bold ${isToPay ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Posición IVA — {entity.name}</p>
+                  <p className={`text-xl font-mono font-bold ${isToPay ? 'text-rose-600' : 'text-emerald-600'}`}>
                     {isToPay ? 'A Pagar: ' : 'Saldo a Favor: '}{formatARS(Math.abs(posicion))}
                   </p>
+                  <div className="flex gap-4 mt-2">
+                    <div className="flex items-center gap-1.5 text-[10px] bg-gray-50 border border-gray-100 rounded-md px-2 py-0.5">
+                      <span className="text-gray-500 font-medium">IVA Venta:</span>
+                      <span className="font-mono font-bold text-emerald-700">{formatARS(ivaVentas)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] bg-gray-50 border border-gray-100 rounded-md px-2 py-0.5">
+                      <span className="text-gray-500 font-medium">IVA Compra:</span>
+                      <span className="font-mono font-bold text-ecar-blue">{formatARS(ivaCompras)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className={`p-2 rounded-full ${isToPay ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                  {isToPay ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+                <div className={`p-3 rounded-full ${isToPay ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                  {isToPay ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
                 </div>
               </div>
             );
