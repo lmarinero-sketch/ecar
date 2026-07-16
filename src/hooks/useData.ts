@@ -74,7 +74,18 @@ export function useDeleteProject() {
   });
 }
 
-// ========== EMPLOYEES ==========
+// ========== EMPLOYEES
+export function useDriverKpis() {
+  return useQuery({
+    queryKey: ['driver_kpis'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_drivers_kpis');
+      if (error) throw error;
+      return data as { driver_name: string; safety_score: number; efficiency_km_l: number }[];
+    },
+  });
+}
+
 export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],

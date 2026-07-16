@@ -1,23 +1,30 @@
 import React from 'react';
 import { Users, Shield, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { useEmployees } from '../hooks/useData';
+import { useEmployees, useDriverKpis } from '../hooks/useData';
 
 // Componente Placeholder para el Dashboard de Choferes
 export const DriversRegistryModule: React.FC = () => {
   const { data: employees = [], isLoading } = useEmployees();
-  
-  // Usamos los empleados marcados como choferes, o todos si no hay ninguno (fallback temporal)
-  const realDrivers = employees.filter(e => e.is_driver);
-  const drivers = realDrivers.length > 0 ? realDrivers : employees.slice(0, 5);
+  const { data: driverKpis = [] } = useDriverKpis();
+
+  // En un caso real, filtraríamos los empleados que tengan un rol de 'chofer'
+  const drivers = employees.filter(e => e.is_driver);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
+    return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
   }
+
+  // Calculate averages from actual KPIs
+  const validSafetyScores = driverKpis.filter(k => k.safety_score > 0).map(k => k.safety_score);
+  const avgSafetyScore = validSafetyScores.length > 0 ? (validSafetyScores.reduce((a,b) => a+b, 0) / validSafetyScores.length).toFixed(0) : '100';
+  
+  const validEfficiencies = driverKpis.filter(k => k.efficiency_km_l > 0).map(k => k.efficiency_km_l);
+  const avgEfficiency = validEfficiencies.length > 0 ? (validEfficiencies.reduce((a,b) => a+b, 0) / validEfficiencies.length).toFixed(1) : '0.0';
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-800 to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Users size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Users size={24} /> Registro de Choferes</h3>
@@ -25,15 +32,15 @@ export const DriversRegistryModule: React.FC = () => {
         </div>
       </div>
 
-      {/* KPIs Generales */}
+      {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Shield size={16} className="text-emerald-500" /> Promedio Seguridad (Flota)</div>
-          <p className="text-2xl font-black text-emerald-600 font-mono relative z-10">85/100</p>
+          <p className="text-2xl font-black text-emerald-600 font-mono relative z-10">{avgSafetyScore}/100</p>
         </div>
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-blue-500" /> Eficiencia Promedio</div>
-          <p className="text-2xl font-black text-blue-600 font-mono relative z-10">8.5 Km/L</p>
+          <p className="text-2xl font-black text-blue-600 font-mono relative z-10">{avgEfficiency} Km/L</p>
         </div>
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CheckCircle2 size={16} className="text-purple-500" /> Cumplimiento de Reportes</div>
@@ -41,26 +48,27 @@ export const DriversRegistryModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Lista de Choferes (Mock) */}
+      {/* Driver List Table */}
       <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
           <h3 className="font-bold text-gray-800">Ranking y Perfiles de Choferes</h3>
         </div>
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-            <tr>
-              <th className="px-4 py-3">Chofer</th>
-              <th className="px-4 py-3 text-center">Carnet (Venc.)</th>
-              <th className="px-4 py-3 text-center">Safety Score</th>
-              <th className="px-4 py-3 text-center">Eficiencia</th>
-              <th className="px-4 py-3 text-center">Alertas</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {drivers.map((driver, i) => {
-              // TODO: Fetch from actual RPC functions
-              const safetyScore = 95 - (i * 5); 
-              const efficiency = (9.2 - (i * 0.4)).toFixed(1);
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <tr>
+                <th className="px-4 py-3">Chofer</th>
+                <th className="px-4 py-3 text-center">Carnet (Venc.)</th>
+                <th className="px-4 py-3 text-center">Safety Score</th>
+                <th className="px-4 py-3 text-center">Eficiencia</th>
+                <th className="px-4 py-3 text-center">Alertas</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {drivers.map((driver, i) => {
+                const kpis = driverKpis.find(k => k.driver_name === driver.full_name) || { safety_score: 100, efficiency_km_l: 0 };
+                const safetyScore = kpis.safety_score;
+                const efficiency = Number(kpis.efficiency_km_l).toFixed(1);
               
               // Lógica de Vencimiento
               let isExpired = false;
@@ -114,6 +122,7 @@ export const DriversRegistryModule: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
