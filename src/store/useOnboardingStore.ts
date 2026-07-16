@@ -29,7 +29,12 @@ export const useOnboardingStore = create<OnboardingState>()(
           completedModules: state.completedModules.filter((id) => id !== moduleId),
         })),
 
-      startTour: (moduleId) => set({ activeTourModule: moduleId }),
+      startTour: (moduleId) =>
+        set((state) => ({
+          activeTourModule: moduleId,
+          // Remove from completed so the tour runs even if seen before
+          completedModules: state.completedModules.filter((id) => id !== moduleId),
+        })),
       
       stopTour: () => set({ activeTourModule: null }),
     }),
