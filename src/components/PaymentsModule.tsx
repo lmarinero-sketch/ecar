@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { PayrollLiquidator } from './PayrollLiquidator';
 import { PayrollPDFButton } from './PayrollPDFButton';
 import { PayrollViewerModal } from './PayrollViewerModal';
+import { PayObreroModal } from './PayObreroModal';
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -28,7 +29,10 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const [form, setForm] = useState({ concepto: '', monto: '', alias_cbu: '', titular_cuenta: '', nro_factura: '', observaciones: '' });
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [showPayroll, setShowPayroll] = useState(false);
+  
+  // Payroll / Obreros Modals
+  const [showPayroll, setShowPayroll] = useState(false); // Hiding old button logic but keeping state
+  const [showPayObrero, setShowPayObrero] = useState(false);
   const [viewPayrollItem, setViewPayrollItem] = useState<{id: string, concepto: string} | null>(null);
 
   // Import from gastos operativos
@@ -57,8 +61,8 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const totalResto = items.reduce((s, i) => s + Number(i.resto || 0), 0);
   const pagados = items.filter(i => i.pagado).length;
   
-  const isFriday = new Date(payment.payment_date + 'T12:00:00').getDay() === 5;
-  const hasPayroll = items.some(i => i.source_type === 'sueldos_obreros');
+  // const isFriday = new Date(payment.payment_date + 'T12:00:00').getDay() === 5;
+  // const hasPayroll = items.some(i => i.source_type === 'sueldos_obreros');
 
   const handleAdd = async () => {
     const monto = parseFloat(form.monto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
@@ -236,9 +240,14 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             <Building2 size={14} /> Importar de Gastos ({pendingGastos.length})
           </button>
         )}
+        <button onClick={() => setShowPayObrero(true)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-200 border border-blue-200 transition-all">
+          <Users size={14} /> Pagar a Obreros
+        </button>
+        {/*
         <button onClick={() => setShowPayroll(true)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-200 border border-blue-200 transition-all">
           <Users size={14} /> Liquidar Obreros
         </button>
+        */}
       </div>
 
       {/* Import from gastos */}
@@ -403,6 +412,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
+                {/* 
                 {isFriday && !hasPayroll && (
                   <tr 
                     className="hover:bg-blue-50/50 bg-blue-50/30 border-l-4 border-blue-500 cursor-pointer transition-colors"
@@ -416,6 +426,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                     </td>
                   </tr>
                 )}
+                */}
                 {items.map(item => {
                   const isPartial = item.pagado && Number(item.resto) > 0;
                   const isPayroll = item.source_type === 'sueldos_obreros';
@@ -483,6 +494,15 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           paymentItemId={viewPayrollItem.id}
           concepto={viewPayrollItem.concepto}
           onClose={() => setViewPayrollItem(null)}
+        />
+      )}
+
+      {showPayObrero && (
+        <PayObreroModal 
+          paymentId={payment.id}
+          currentItemsCount={items.length}
+          onClose={() => setShowPayObrero(false)}
+          onSuccess={() => setShowPayObrero(false)}
         />
       )}
     </div>
