@@ -659,7 +659,10 @@ export type InventoryItem = {
   id: string;
   tenant_id: string;
   name: string;
-  category: 'material' | 'herramienta' | 'consumible';
+  category: 'material' | 'herramienta' | 'consumible' | string;
+  rubro: string | null;
+  measure: string | null;
+  notes: string | null;
   unit: string;
   current_stock: number;
   min_stock: number;

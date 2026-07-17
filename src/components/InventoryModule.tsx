@@ -17,6 +17,8 @@ import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
 import { Rnd } from 'react-rnd';
+import { WarehouseExcelImporter } from './warehouse/WarehouseExcelImporter';
+import { ShelfFrontView } from './warehouse/ShelfFrontView';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -70,6 +72,8 @@ export const InventoryModule: React.FC = () => {
   const [showRepoModal, setShowRepoModal] = useState(false);
   const [repoProjectId, setRepoProjectId] = useState<string>('');
   const [repoItems, setRepoItems] = useState<RepoItem[]>([]);
+  const [showImporter, setShowImporter] = useState(false);
+  const [viewingShelf, setViewingShelf] = useState<WarehouseShelf | null>(null);
 
   const openRepoModal = (items: RepoItem[]) => {
     setRepoItems(items);
@@ -127,6 +131,9 @@ export const InventoryModule: React.FC = () => {
       qr_code: '',
       shelf_id: null,
       shelf_position: null,
+      rubro: null,
+      measure: null,
+      notes: null,
       created_at: new Date().toISOString()
     });
   };
@@ -535,11 +542,16 @@ export const InventoryModule: React.FC = () => {
             <div className="light-card overflow-hidden">
               <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2"><LayoutGrid size={16} /> Plano del Depósito</h3>
-                <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="btn-primary">
-                  <Plus size={16} /> Nueva Estantería
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowImporter(true)} className="btn-secondary">
+                    <ArrowDownToLine size={16} /> Importar Excel
+                  </button>
+                  <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="btn-primary">
+                    <Plus size={16} /> Nueva Estantería
+                  </button>
+                </div>
               </div>
-              <div className="p-6">
+              <div className="p-6 flex gap-6">
                 {shelfList.length === 0 ? (
                   <div className="text-center py-16 text-gray-400">
                     <Grid3X3 size={48} className="mx-auto mb-3 opacity-30" />
@@ -577,7 +589,7 @@ export const InventoryModule: React.FC = () => {
                           style={{ zIndex: 10 }}
                         >
                           <div 
-                            className="rounded-xl border-2 p-3 flex flex-col justify-between cursor-move hover:shadow-lg transition-shadow w-full h-full relative overflow-hidden" 
+                            className={`rounded-xl border-2 p-3 flex flex-col justify-between cursor-move hover:shadow-lg transition-shadow w-full h-full relative overflow-hidden ${viewingShelf?.id === shelf.id ? 'ring-4 ring-ecar-blue/30' : ''}`}
                             style={{ 
                               borderColor: shelf.color, 
                               background: `${shelf.color}08`,
@@ -586,12 +598,11 @@ export const InventoryModule: React.FC = () => {
                             }}
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              setEditingShelf(shelf); 
-                              setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '', rotation: String(shelf.rotation || 0) }); 
-                              setShowNewShelf(true); 
+                              setViewingShelf(shelf);
                             }}
                           >
                             <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
+                              <button onClick={(e) => { e.stopPropagation(); setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '', rotation: String(shelf.rotation || 0) }); setShowNewShelf(true); }} className="p-1 bg-blue-100 rounded-lg hover:bg-blue-200"><Edit3 size={12} className="text-blue-600" /></button>
                               <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
                             </div>
                             <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
@@ -615,6 +626,25 @@ export const InventoryModule: React.FC = () => {
                           </div>
                         </Rnd>
                       ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Inspector Front View */}
+                {viewingShelf && (
+                  <div className="w-[450px] shrink-0 bg-white border border-gray-200 rounded-xl shadow-lg flex flex-col animate-in slide-in-from-right-8 h-[600px]">
+                    <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: viewingShelf.color }} />
+                        <div>
+                          <h3 className="font-bold text-gray-800 text-sm leading-tight">{viewingShelf.name}</h3>
+                          <p className="text-xs text-gray-500 font-mono mt-0.5">{viewingShelf.code} • {SHELF_TYPES[viewingShelf.shelf_type]?.label}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setViewingShelf(null)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"><X size={16} /></button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-gray-50/50 p-4">
+                      <ShelfFrontView shelf={viewingShelf} items={(items || []).filter(i => i.shelf_id === viewingShelf.id)} />
                     </div>
                   </div>
                 )}
@@ -642,6 +672,7 @@ export const InventoryModule: React.FC = () => {
                         <td className="px-4 py-3 text-gray-400 text-xs">{s.notes || '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver estantería"><Search size={14} className="text-gray-600" /></button>
                             <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
                             <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
                           </div>
@@ -814,6 +845,16 @@ export const InventoryModule: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Excel Importer Modal */}
+      {showImporter && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl relative">
+            <button onClick={() => setShowImporter(false)} className="absolute -top-12 right-0 text-white hover:text-slate-200"><X size={24} /></button>
+            <WarehouseExcelImporter existingShelves={shelves || []} onComplete={() => { setShowImporter(false); window.location.reload(); }} />
           </div>
         </div>
       )}
