@@ -57,6 +57,7 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
       {/* Footer */}
       <div className="flex items-center justify-between px-5 pb-4">
         <button
+          type="button"
           {...skipProps}
           className="text-slate-400 hover:text-slate-600 text-xs font-semibold flex items-center gap-1 transition-colors"
         >
@@ -66,6 +67,7 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
         <div className="flex gap-2">
           {index > 0 && (
             <button
+              type="button"
               {...backProps}
               className="px-3 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 text-xs font-semibold transition-colors flex items-center gap-1"
             >
@@ -73,6 +75,7 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
             </button>
           )}
           <button
+            type="button"
             {...primaryProps}
             className="px-4 py-1.5 rounded-lg bg-ecar-blue text-white hover:bg-blue-700 text-xs font-semibold transition-colors shadow-sm flex items-center gap-1"
           >
