@@ -80,15 +80,15 @@ export const LogisticsModule: React.FC = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10">
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-5 text-ecar-blue">
           <Warehouse size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
         <div className="relative z-10">
-          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2">
-            <Warehouse size={24} className="md:w-7 md:h-7" /> Gerencia de Logística
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2 text-gray-900">
+            <Warehouse size={24} className="md:w-7 md:h-7 text-ecar-blue" /> Gerencia de Logística
           </h3>
-          <p className="text-ecar-blueLight text-xs md:text-sm mt-1 max-w-2xl">
+          <p className="text-gray-500 text-xs md:text-sm mt-1 max-w-2xl">
             Aseguramos que cada obra cuente con los recursos físicos necesarios en tiempo y forma.
             Administramos inventarios, pañol, herramientas y la flota para evitar interrupciones operativas.
           </p>
@@ -389,7 +389,7 @@ const DeliveriesTab: React.FC<{
             <option value="entregado">Entregados</option>
             <option value="cancelado">Cancelados</option>
           </select>
-          <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue hover:bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary">
             <Plus size={16} /> Nueva Entrega
           </button>
         </div>
@@ -494,7 +494,7 @@ const DeliveriesTab: React.FC<{
           </div>
 
           <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createDelivery.isPending} className="bg-ecar-blue hover:bg-ecar-blue text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={createDelivery.isPending} className="btn-primary px-6 disabled:opacity-50">
               <Save size={16} /> {createDelivery.isPending ? 'Guardando...' : 'Programar Entrega'}
             </button>
           </div>

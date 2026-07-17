@@ -110,11 +110,11 @@ export const RrhhModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Users size={120} /></div>
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Users size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Users size={24} /> Gerencia de RRHH</h3>
-          <p className="text-ecar-blueLight text-sm mt-1">
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Users size={24} className="text-ecar-blue" /> Gerencia de RRHH</h3>
+          <p className="text-gray-500 text-sm mt-1">
             {activeEmployees.length} empleados activos · Categorías UOCRA · Parte diario de asistencia
           </p>
         </div>
@@ -431,7 +431,7 @@ export const RrhhModule: React.FC = () => {
           </div>
 
           <div className="mt-2">
-            <button onClick={handleCreate} disabled={!form.full_name || createEmployee.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreate} disabled={!form.full_name || createEmployee.isPending} className="btn-primary px-6 disabled:opacity-50">
               {createEmployee.isPending ? 'Guardando...' : 'Registrar Empleado'}
             </button>
           </div>

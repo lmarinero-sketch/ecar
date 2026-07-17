@@ -193,12 +193,11 @@ export const InventoryModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-amber-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Boxes size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-orange-300" />
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Boxes size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Package size={24} /> Depósito & Inventario</h3>
-          <p className="text-orange-100 text-sm mt-1">Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Package size={24} className="text-ecar-blue" /> Depósito & Inventario</h3>
+          <p className="text-gray-500 text-sm mt-1">Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad</p>
         </div>
       </div>
 
@@ -251,7 +250,7 @@ export const InventoryModule: React.FC = () => {
               <option value="herramienta">🔧 Herramientas</option>
               <option value="consumible">🔩 Consumibles</option>
             </select>
-            <button onClick={() => setShowScanner(true)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
+            <button onClick={() => setShowScanner(true)} className="btn-secondary">
               <Barcode size={16} /> Escanear Código
             </button>
             <button onClick={() => setShowNewItem(true)} className="btn-primary">

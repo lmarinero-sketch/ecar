@@ -224,20 +224,19 @@ export const ProjectBudgetModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute -top-8 -right-8 opacity-[0.07]"><HardHat size={180} strokeWidth={1} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-white/0 via-white/30 to-white/0" />
+      <div className="clinical-module-header">
+        <div className="absolute -top-8 -right-8 opacity-5 text-ecar-blue"><HardHat size={180} strokeWidth={1} /></div>
         <div className="relative z-10">
-          <h3 className="font-black text-2xl flex items-center gap-3">
-            <div className="bg-white/15 backdrop-blur-sm p-2 rounded-xl"><HardHat size={22} /></div>
+          <h3 className="font-black text-2xl flex items-center gap-3 text-gray-900">
+            <div className="bg-blue-50 p-2 rounded-xl"><HardHat size={22} className="text-ecar-blue" /></div>
             Proyectos & Presupuestos
           </h3>
-          <p className="text-ecar-blueLight text-sm mt-1.5">Cómputos métricos, análisis de precios, versiones y control presupuestario <span className="text-ecar-blueLight/60 font-mono text-xs">(PR-GPP-01)</span></p>
+          <p className="text-gray-500 text-sm mt-1.5">Cómputos métricos, análisis de precios, versiones y control presupuestario <span className="text-gray-400 font-mono text-xs">(PR-GPP-01)</span></p>
           <div className="flex gap-2 mt-4">
-            <button onClick={() => setView('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'list' ? 'bg-white text-ecar-blueDark shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+            <button onClick={() => setView('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'list' ? 'bg-ecar-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
               <FileText size={13} className="inline mr-1" />Presupuestos
             </button>
-            <button onClick={() => setView('resources')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'resources' ? 'bg-white text-ecar-blueDark shadow-md' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+            <button onClick={() => setView('resources')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentView === 'resources' ? 'bg-ecar-blue text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
               <Database size={13} className="inline mr-1" />Banco de Precios
             </button>
           </div>
@@ -277,8 +276,7 @@ export const ProjectBudgetModule: React.FC = () => {
             {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </div>
-        <button onClick={() => setShowNew(true)}
-          className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-ecar-blue/20 hover:shadow-ecar-blue/40 hover:scale-[1.02] transition-all active:scale-[0.98]">
+        <button onClick={() => setShowNew(true)} className="btn-primary">
           <Plus size={16} /> Nuevo Presupuesto
         </button>
       </div>
@@ -363,11 +361,10 @@ export const ProjectBudgetModule: React.FC = () => {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleCreateBudget} disabled={createBudget.isPending || !newForm.name.trim()}
-              className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-6 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 shadow-md hover:shadow-lg transition-all">
+            <button onClick={handleCreateBudget} disabled={createBudget.isPending || !newForm.name.trim()} className="btn-primary px-6 disabled:opacity-50">
               <Check size={14} className="inline mr-1.5" />Crear Presupuesto
             </button>
-            <button onClick={() => setShowNew(false)} className="bg-gray-100 text-gray-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-200 transition-all">
+            <button onClick={() => setShowNew(false)} className="btn-secondary">
               <X size={14} className="inline mr-1" />Cancelar
             </button>
           </div>

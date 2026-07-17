@@ -29,34 +29,35 @@
 
 @layer components {
 
-  /* ─── Cards ─── */
+  /* ─── Cards Clínicas & Glassmorphism sutil ─── */
   .light-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/60 rounded-xl transition-all duration-300 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)];
+    @apply bg-white border border-gray-100 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)];
+    box-shadow: 0 8px 30px rgba(0,0,0,0.03);
   }
   .light-card:hover {
-    @apply border-white/80 shadow-[0_8px_30px_-4px_rgba(11,34,64,0.08)] -translate-y-0.5 bg-white/80;
+    @apply border-gray-200 -translate-y-[2px];
+    box-shadow: 0 12px 40px rgba(0,0,0,0.06);
   }
   .light-card-flat {
-    @apply bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl;
+    @apply bg-white border border-gray-100 rounded-xl;
+  }
+  
+  /* Cabeceras Unificadas (Limpio y Clínico) */
+  .clinical-module-header {
+    @apply bg-white border-l-4 border-ecar-blue rounded-xl p-6 relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)];
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
   }
 
   /* ─── Botones ─── */
   .btn-primary {
-    @apply text-white rounded-lg font-semibold text-sm px-4 py-2 transition-all duration-300
-           flex items-center justify-center gap-2 relative;
-    background: linear-gradient(135deg, #0B2240 0%, #D22027 100%);
-    background-size: 200% 200%;
-    background-position: 0% 50%;
-    box-shadow: 0 4px 15px -3px rgba(11, 34, 64, 0.3), 0 2px 6px -2px rgba(210, 32, 39, 0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+    @apply bg-ecar-blue text-white rounded-lg font-bold text-sm px-4 py-2 transition-all ease-[cubic-bezier(0.32,0.72,0,1)] duration-300
+           flex items-center justify-center gap-2 relative shadow-sm;
   }
   .btn-primary:hover {
-    @apply -translate-y-px;
-    background-position: 100% 50%;
-    box-shadow: 0 6px 20px -4px rgba(11, 34, 64, 0.4), 0 4px 10px -2px rgba(210, 32, 39, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+    @apply bg-ecar-blueDark -translate-y-[1px] shadow-md;
   }
   .btn-primary:active {
-    @apply scale-[0.97];
-    box-shadow: 0 2px 8px -2px rgba(11, 34, 64, 0.4);
+    @apply scale-[0.98] translate-y-0 shadow-sm;
   }
   .btn-secondary {
     @apply bg-white text-slate-700 border border-slate-200 rounded-lg font-semibold text-sm px-4 py-2
@@ -150,21 +151,13 @@
 
   /* ─── KPI Card ─── */
   .kpi-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/60 rounded-xl p-5 transition-all duration-300
+    @apply bg-white border border-gray-100 rounded-xl p-5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
            relative overflow-hidden;
-    box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.03);
   }
   .kpi-card:hover {
-    @apply -translate-y-0.5 bg-white/80 border-white/80;
-    box-shadow: 0 10px 30px -4px rgba(11,34,64,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
-  }
-  .kpi-card::before {
-    content: '';
-    @apply absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-50;
-    background: linear-gradient(135deg, rgba(11,34,64,0.03) 0%, rgba(210,32,39,0.03) 100%);
-  }
-  .kpi-card:hover::before {
-    @apply opacity-100;
+    @apply -translate-y-[2px] border-gray-200 bg-white;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.06);
   }
 
   /* ─── Focus Rings ─── */

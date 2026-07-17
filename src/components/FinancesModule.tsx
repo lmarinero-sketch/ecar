@@ -290,11 +290,11 @@ export const FinancesModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Landmark size={120} /></div>
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Landmark size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Landmark size={24} /> Gerencia de Administración y Finanzas</h3>
-          <p className="text-emerald-100 text-sm mt-1">Cartera de cheques, gastos fijos y flujo de caja operativo.</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Landmark size={24} className="text-ecar-blue" /> Gerencia de Administración y Finanzas</h3>
+          <p className="text-gray-500 text-sm mt-1">Cartera de cheques, gastos fijos y flujo de caja operativo.</p>
         </div>
       </div>
 
@@ -445,10 +445,10 @@ export const FinancesModule: React.FC = () => {
         <div className="space-y-6">
           {/* Action buttons */}
           <div className="flex justify-end gap-3">
-            <button onClick={() => { setScanUrl(''); setMode('form'); }} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 border hover:bg-gray-200 ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <button onClick={() => { setScanUrl(''); setMode('form'); }} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`btn-secondary ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Edit3 size={16} /> Carga Manual
             </button>
-            <button onClick={() => setMode('scan')} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <button onClick={() => setMode('scan')} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`btn-primary ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <Camera size={16} /> Escanear Cheque
             </button>
           </div>

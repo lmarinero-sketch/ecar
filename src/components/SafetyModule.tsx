@@ -380,12 +380,11 @@ export const SafetyModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-800 via-red-700 to-rose-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><ShieldAlert size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 to-orange-400" />
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><ShieldAlert size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><ShieldAlert size={24} /> Seguridad e Incidentes</h3>
-          <p className="text-red-200 text-sm mt-1">Doc PR-GO-01 §4.6 — Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><ShieldAlert size={24} className="text-ecar-blue" /> Seguridad e Incidentes</h3>
+          <p className="text-gray-500 text-sm mt-1">Doc PR-GO-01 §4.6 — Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
         </div>
       </div>
 
@@ -451,7 +450,7 @@ export const SafetyModule: React.FC = () => {
               <div><label className="text-xs font-bold text-gray-500 uppercase">Causa Raíz</label><textarea value={formInc.causa_raiz} onChange={e => setFormInc({...formInc, causa_raiz: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Análisis de causa raíz..." /></div>
               <div><label className="text-xs font-bold text-gray-500 uppercase">Acciones Correctivas</label><textarea value={formInc.acciones_correctivas} onChange={e => setFormInc({...formInc, acciones_correctivas: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Medidas a tomar..." /></div>
             </div>
-            <button onClick={handleSubmitInc} disabled={createIncidente.isPending} className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-700 transition-all">
+            <button onClick={handleSubmitInc} disabled={createIncidente.isPending} className="btn-primary px-6 disabled:opacity-50">
               {createIncidente.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Registrar Incidente
             </button>
           </div>
@@ -475,7 +474,7 @@ export const SafetyModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Riesgo (S×P)</label><div className={`text-center py-2 rounded-xl text-white font-bold text-xl font-mono ${RIESGO_COLOR(Number(formObs.severidad) * Number(formObs.probabilidad))}`}>{Number(formObs.severidad) * Number(formObs.probabilidad)}</div></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500 uppercase">Acción Sugerida</label><input value={formObs.accion_sugerida} onChange={e => setFormObs({...formObs, accion_sugerida: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Qué se debería hacer..." /></div>
-          <button onClick={handleSubmitObs} disabled={createObservacion.isPending} className="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-orange-700 transition-all">
+          <button onClick={handleSubmitObs} disabled={createObservacion.isPending} className="btn-primary px-6 disabled:opacity-50">
             {createObservacion.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Registrar Observación
           </button>
         </div>
