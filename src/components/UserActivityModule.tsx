@@ -25,13 +25,13 @@ export const UserActivityModule: React.FC = () => {
     // Group by user and module
     const userStats: Record<string, { user_name: string; total_seconds: number; clicks: number; module_times: Record<string, number> }> = {};
     
-    // Only process today's logs for stats by default
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    // Process last 24h for stats by default
+    const yesterday = new Date();
+    yesterday.setHours(yesterday.getHours() - 24);
 
     logs.forEach(log => {
       const logDate = new Date(log.created_at);
-      if (logDate < today) return; // Skip older logs for the summary
+      if (logDate < yesterday) return; // Skip older logs for the summary
 
       if (!userStats[log.user_id]) {
         userStats[log.user_id] = { user_name: log.user_name, total_seconds: 0, clicks: 0, module_times: {} };
@@ -82,9 +82,9 @@ export const UserActivityModule: React.FC = () => {
     <div className="space-y-6">
       {/* Resumen Diario */}
       <div className="light-card p-5">
-        <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4"><Calendar size={18} className="text-ecar-blue" /> Resumen de Actividad (Hoy)</h3>
+        <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4"><Calendar size={18} className="text-ecar-blue" /> Resumen de Actividad (Últimas 24hs)</h3>
         {stats.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-5">No hay actividad registrada el día de hoy.</p>
+          <p className="text-sm text-gray-400 text-center py-5">No hay actividad registrada en las últimas 24 horas.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.map(s => (

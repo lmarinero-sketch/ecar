@@ -98,6 +98,10 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   purchase_orders: ['📋 Revisando OC pendientes...', '🛒 Controlando entregas...', '📦 Chequeando órdenes...'],
   nonconformities: ['⚠️ Revisando NC abiertas...', '🔍 Analizando desvíos...', '✅ Verificando correctivas...'],
   supplier_eval: ['⭐ Evaluando proveedores...', '📊 Analizando rankings...', '🏆 Revisando calificaciones...'],
+  payments: ['💸 Autorizando pagos...', '📑 Revisando órdenes de pago...', '💰 Verificando egresos...'],
+  project_budget: ['📊 Analizando costos...', '🏗️ Revisando presupuestos de obra...', '📐 Chequeando cantidades...'],
+  communications: ['💬 Leyendo mensajes de WhatsApp...', '📨 Monitoreando comunicaciones...', '📞 Todo en orden en los chats...'],
+  weekly_report: ['📈 Compilando resumen semanal...', '📊 Consolidando partes diarios y gastos...', '📝 Escribiendo reporte...'],
 };
 
 function getIdlePhrases(moduleId: ModuleId): string[] {

@@ -881,6 +881,50 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         const totalPendiente = (data || []).filter(a => !a.deducted).reduce((s, a) => s + (a.amount_ars || 0), 0)
         return JSON.stringify({ empleado: emp.full_name, adelantos: data || [], total: (data || []).length, total_pendiente_ars: totalPendiente })
       }
+
+      // ─── PAGOS, PRESUPUESTOS Y REPORTES ───
+      case 'query_weekly_payments': {
+        let q = sb.from('weekly_payments').select('id, payment_date, title, status, total_amount_ars')
+        if (args.status) q = q.eq('status', args.status)
+        if (args.date_from) q = q.gte('payment_date', args.date_from)
+        if (args.date_to) q = q.lte('payment_date', args.date_to)
+        const { data } = await q.order('payment_date', { ascending: false }).limit(20)
+        if (!data?.length) return JSON.stringify({ payments: [], count: 0, total_amount_ars: 0 })
+        const total = data.reduce((s, p) => s + (p.total_amount_ars || 0), 0)
+        return JSON.stringify({ payments: data, count: data.length, total_amount_ars: total })
+      }
+      case 'query_budgets': {
+        let q = sb.from('budgets').select('id, name, base_date, status, total_amount_ars, projects(name)')
+        if (args.status) q = q.eq('status', args.status)
+        const { data } = await q.order('created_at', { ascending: false }).limit(20)
+        if (!data?.length) return JSON.stringify({ budgets: [], count: 0 })
+        const mapped = data.map(b => ({ ...b, project_name: b.projects?.name }))
+        return JSON.stringify({ budgets: mapped, count: mapped.length })
+      }
+      case 'query_whatsapp_conversations': {
+        let q = sb.from('whatsapp_conversations').select('id, phone_number, contact_name, last_message_at, unread_count, status').order('last_message_at', { ascending: false })
+        if (args.phone_number) q = q.ilike('phone_number', `%${args.phone_number}%`)
+        const { data } = await q.limit(args.limit || 10)
+        return JSON.stringify({ conversations: data || [], count: (data || []).length })
+      }
+      case 'generate_weekly_report': {
+        const d = new Date(today.getTime() - 7 * 86400000).toISOString().split('T')[0]
+        const [partes, incidentes, flota] = await Promise.all([
+          sb.from('partes_diarios').select('id, obra_name, fecha, trabajo_realizado, horas_trabajadas, estado').gte('fecha', d),
+          sb.from('seguridad_incidentes').select('id, tipo, gravedad, estado, fecha_incidente').gte('fecha_incidente', d),
+          sb.from('fuel_vehicles').select('code, description, next_maintenance_date').lte('next_maintenance_date', todayStr)
+        ])
+        const pd = partes.data || []
+        const inc = incidentes.data || []
+        const fl = flota.data || []
+        return JSON.stringify({
+          periodo: 'últimos 7 días',
+          partes_diarios: { total: pd.length, horas_trabajadas_total: pd.reduce((s, p) => s + (p.horas_trabajadas || 0), 0), obras_activas: [...new Set(pd.map(p => p.obra_name))].length },
+          incidentes_seguridad: { total: inc.length, graves_o_fatales: inc.filter(i => i.gravedad === 'grave' || i.gravedad === 'fatal').length },
+          flota_alertas: { vehiculos_con_service_vencido: fl.length, vehiculos: fl.map(v => v.code) }
+        })
+      }
+
       default:
         return JSON.stringify({ error: `Herramienta desconocida: ${name}` })
     }
