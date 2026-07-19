@@ -78,7 +78,7 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
             type="button"
             {...primaryProps}
             className="btn-primary 
-          >
+          ">
             {isLastStep ? (
               <><Check size={13} /> ¡Listo!</>
             ) : (

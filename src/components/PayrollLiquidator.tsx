@@ -196,7 +196,7 @@ export const PayrollLiquidator: React.FC<{
               onClick={fetchAttendanceAndCalculate} 
               disabled={isLoadingAtt || isLoadingEmployees}
               className="btn-primary w-full mt-4
-            >
+            ">
               {isLoadingAtt ? 'Calculando...' : 'Calcular Devengado'}
             </button>
           </div>

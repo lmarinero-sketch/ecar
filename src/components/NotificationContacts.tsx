@@ -59,7 +59,7 @@ export const NotificationContacts: React.FC = () => {
                 </select>
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!form.name || !form.phone || createContact.isPending} className="btn-primary w-full>
+            <button onClick={handleCreate} disabled={!form.name || !form.phone || createContact.isPending} className="btn-primary w-full">
               {createContact.isPending ? 'Guardando...' : 'Guardar Contacto'}
             </button>
           </div>

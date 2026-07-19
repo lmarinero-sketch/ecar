@@ -460,12 +460,7 @@ export const PurchasesModule: React.FC = () => {
     };
   };
 
-  const statusColor: Record<string, string> = {
-    pending_review: 'bg-yellow-100 text-yellow-700',
-    validated: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    exported: 'bg-blue-100 text-blue-700',
-  };
+
   const statusLabel: Record<string, string> = {
     pending_review: 'Revisar', validated: 'Validado', rejected: 'Rechazado', exported: 'Exportado',
   };

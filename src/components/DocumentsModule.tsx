@@ -65,7 +65,7 @@ export const DocumentsModule: React.FC = () => {
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <textarea placeholder="Notas / Documentos requeridos" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={3} />
-            <button onClick={handleCreate} disabled={!form.title} className="btn-primary w-full>Crear</button>
+            <button onClick={handleCreate} disabled={!form.title} className="btn-primary w-full">Crear</button>
           </div>
         </div>
       )}

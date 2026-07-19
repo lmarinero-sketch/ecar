@@ -519,7 +519,7 @@ export const WbsModule: React.FC = () => {
               <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm col-span-2" />
             </div>
-            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="btn-primary w-full>
+            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="btn-primary w-full">
               {createProject.isPending || updateProject.isPending ? 'Guardando...' : (form.id ? '✅ Guardar Cambios' : '✅ Crear Obra')}
             </button>
           </div>
@@ -1227,7 +1227,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
             <div><label className="text-xs font-bold text-gray-500">Responsable</label><input value={fbForm.responsable} onChange={e => setFbForm({...fbForm, responsable: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500">Acción Correctiva</label><textarea value={fbForm.accion_correctiva} onChange={e => setFbForm({...fbForm, accion_correctiva: e.target.value})} rows={2} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="btn-primary w-full>
+          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="btn-primary w-full">
             <Check size={16} className="inline mr-1" /> Registrar
           </button>
         </div>
@@ -1472,7 +1472,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
                 <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20" placeholder="Ej: Estado al entregar, accesorios incluidos..." />
               </div>
 
-              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="btn-primary w-full mt-2>
+              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="btn-primary w-full mt-2">
                 {createToolAssignment.isPending ? 'Asignando...' : 'Confirmar Asignación'}
               </button>
             </div>
@@ -1756,7 +1756,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={movNotes} onChange={e => setMovNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Motivo o detalle del movimiento..." />
               </div>
 
-              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="btn-primary w-full mt-2>
+              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="btn-primary w-full mt-2">
                 {createMovement.isPending ? 'Procesando...' : 'Confirmar Movimiento'}
               </button>
             </div>
@@ -1813,7 +1813,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={obs} onChange={e => setObs(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Detalles de la carga..." />
               </div>
 
-              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="btn-primary w-full mt-2>
+              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="btn-primary w-full mt-2">
                 {createFuelLoad.isPending ? 'Guardando planilla...' : 'Guardar Planilla de Carga'}
               </button>
             </div>
@@ -2070,7 +2070,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               </div>
             )}
 
-            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="btn-primary w-full mt-2>
+            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="btn-primary w-full mt-2">
               {createRequest.isPending ? 'Enviando pedido...' : 'Registrar Pedido y Enviar'}
             </button>
           </div>
@@ -2299,7 +2299,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="btn-primary w-full mt-2>
+              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="btn-primary w-full mt-2">
                 {createCert.isPending ? 'Guardando...' : 'Guardar y Registrar Certificado'}
               </button>
             </div>

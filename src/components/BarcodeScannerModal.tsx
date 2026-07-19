@@ -622,7 +622,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       type="submit"
                       disabled={createAssignment.isPending}
                       className="btn-primary 
-                    >
+                    ">
                       {createAssignment.isPending ? 'Asignando...' : '🔧 Confirmar Asignación'}
                     </button>
                   </div>
@@ -758,7 +758,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     disabled={!associateItemId}
                     onClick={handleAssociateCode}
                     className="btn-primary w-full
-                  >
+                  ">
                     <Check size={16} /> Confirmar Asociación
                   </button>
                 </div>

@@ -425,7 +425,7 @@ export const VehicleTrackingPage: React.FC = () => {
                   onClick={startTracking}
                   disabled={loading || !driverName || !selectedVehicleId}
                   className="btn-primary w-full mt-6
-                >
+                ">
                   <Play className="w-5 h-5 fill-current" />
                   COMENZAR TRACKING
                 </button>

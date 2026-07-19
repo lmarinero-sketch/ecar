@@ -290,15 +290,11 @@ export const FinancesModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Landmark size={120} /></div>
+      <div className="clinical-module-header">
+        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Landmark size={120} /></div>
         <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="font-bold text-2xl flex items-center gap-2"><Landmark size={24} /> Gerencia de Administración y Finanzas</h3>
-              <p className="text-blue-100 text-sm mt-1">Cartera de cheques, gastos fijos y flujo de caja operativo.</p>
-            </div>
-          </div>
+          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Landmark size={24} className="text-ecar-blue" /> Gerencia de Administración y Finanzas</h3>
+          <p className="text-gray-500 text-sm mt-1">Cartera de cheques, gastos fijos y flujo de caja operativo.</p>
         </div>
       </div>
 
@@ -399,7 +395,7 @@ export const FinancesModule: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="light-card p-5 relative overflow-hidden">
           <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-red-50 to-transparent pointer-events-none" />
-          <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider"><TrendingDown size={14} className="text-red-500" /> Cheques a Pagar</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingDown size={16} className="text-red-500" /> Cheques a Pagar</div>
           <p className="text-2xl font-black text-red-600 font-mono">{formatARS(totalPayable)}</p>
           <div className="flex justify-between items-end mt-1 relative z-10">
             <p className="text-xs text-gray-400">{payable.length} pendientes en total</p>
@@ -410,12 +406,12 @@ export const FinancesModule: React.FC = () => {
           </div>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider"><TrendingUp size={14} className="text-green-500" /> Cheques a Cobrar</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-green-500" /> Cheques a Cobrar</div>
           <p className="text-2xl font-black text-green-600 font-mono">{formatARS(totalReceivable)}</p>
           <p className="text-xs text-gray-400 mt-1">{receivable.length} pendientes</p>
         </div>
         <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-wider"><CreditCard size={14} className="text-ecar-blue" /> Gastos Fijos Mes</div>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CreditCard size={16} className="text-ecar-blue" /> Gastos Fijos Mes</div>
           <p className="text-2xl font-black text-ecar-blue font-mono">{formatARS(totalFixed)}</p>
           <p className="text-xs text-gray-400 mt-1">{expenses.filter(e => e.status === 'active').length} activos</p>
         </div>
@@ -541,8 +537,8 @@ export const FinancesModule: React.FC = () => {
 
           {/* Cheques table */}
           <div className="light-card overflow-hidden">
-            <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h4 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h4>
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h3 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h3>
               <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
                 <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm overflow-x-auto max-w-full no-scrollbar">
                   {[
@@ -578,39 +574,40 @@ export const FinancesModule: React.FC = () => {
             {filteredCheques.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">Sin cheques registrados. Escaneá o cargá el primero.</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nro</th>
-                    <th>Banco</th>
-                    <th>Dir.</th>
-                    <th>Tipo</th>
-                    <th>Beneficiario / Emisor</th>
-                    <th className="text-right">Monto</th>
-                    <th>Vto</th>
-                    <th className="text-center">Estado</th>
-                    <th className="text-center">Scan</th>
-                    <th className="text-center">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCheques.map(ch => (
-                    <tr key={ch.id}>
-                      <td className="font-mono text-xs">{ch.cheque_number}</td>
-                      <td>{ch.bank_name}</td>
-                      <td>
-                        <span className={`text-xs font-bold ${ch.direction === 'payable' ? 'text-red-500' : 'text-green-500'}`}>
-                          {ch.direction === 'payable' ? '↑ Pagar' : '↓ Cobrar'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${ch.type === 'echeq' ? 'badge-info' : 'badge-neutral'}`}>
-                          {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
-                        </span>
-                      </td>
-                      <td className="text-gray-600">{ch.beneficiary_or_issuer || '—'}</td>
-                      <td className="text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
-                      <td className="text-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3">Nro</th>
+                      <th className="px-4 py-3">Banco</th>
+                      <th className="px-4 py-3">Dir.</th>
+                      <th className="px-4 py-3">Tipo</th>
+                      <th className="px-4 py-3">Beneficiario / Emisor</th>
+                      <th className="px-4 py-3 text-right">Monto</th>
+                      <th className="px-4 py-3">Vto</th>
+                      <th className="px-4 py-3 text-center">Estado</th>
+                      <th className="px-4 py-3 text-center">Scan</th>
+                      <th className="px-4 py-3 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredCheques.map(ch => (
+                      <tr key={ch.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-mono text-xs">{ch.cheque_number}</td>
+                        <td className="px-4 py-3">{ch.bank_name}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-bold ${ch.direction === 'payable' ? 'text-red-500' : 'text-green-500'}`}>
+                            {ch.direction === 'payable' ? '↑ Pagar' : '↓ Cobrar'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${ch.type === 'echeq' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{ch.beneficiary_or_issuer || '—'}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
+                        <td className="px-4 py-3 text-xs">
                           {ch.due_date ? (
                             <div>
                               {isPostponed(ch.due_date) ? (
@@ -623,16 +620,16 @@ export const FinancesModule: React.FC = () => {
                               )}
                             </div>
                           ) : '—'}
-                      </td>
-                      <td className="text-center">
-                        <span className={`badge ${ch.status === 'pending' ? 'badge-pending' : ch.status === 'cashed' ? 'badge-success' : ch.status === 'deposited' ? 'badge-info' : ch.status === 'bounced' ? 'badge-danger' : 'badge-neutral'}`}>{ch.status}</span>
-                      </td>
-                      <td className="text-center">
-                        {(ch as any).scan_url ? (
-                          <button onClick={() => setViewerUrl((ch as any).scan_url)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors" title="Ver imagen"><Camera size={14} /></button>
-                        ) : '—'}
-                      </td>
-                      <td className="text-center">
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[ch.status]}`}>{ch.status}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {(ch as any).scan_url ? (
+                            <button onClick={() => setViewerUrl((ch as any).scan_url)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors" title="Ver imagen"><Camera size={14} /></button>
+                          ) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             {ch.status === 'pending' && (
                               <button
@@ -647,11 +644,13 @@ export const FinancesModule: React.FC = () => {
                             <button onClick={() => handleEdit(ch)} disabled={!canWrite} className={`p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canWrite ? 'Sin permisos de edición' : 'Editar'}><Pencil size={14} /></button>
                             <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-slate-50 text-gray-400 hover:text-ecar-blue transition-colors" title="Historial"><History size={14} /></button>
                             <button onClick={() => setDeleteTarget(ch)} disabled={!canDelete} className={`p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar'}><Trash2 size={14} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -659,11 +658,11 @@ export const FinancesModule: React.FC = () => {
 
       {activeTab === 'receipts' && (
         <div className="space-y-4 animate-fade-in">
-          <div className="flex justify-between items-center bg-gray-50/50 p-5 border-b border-gray-100 rounded-t-xl">
-            <h4 className="text-lg font-bold text-gray-800">Historial de Comprobantes de Pago</h4>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-800">Historial de Comprobantes de Pago</h3>
             <button
               onClick={() => setShowReceiptModal(true)}
-              className="btn-primary"
+              className="bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
             >
               <Plus size={16} /> Cargar Comprobante
             </button>
@@ -676,33 +675,34 @@ export const FinancesModule: React.FC = () => {
             ) : paymentRecords.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">No se encontraron comprobantes de pago registrados.</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Concepto / Nota</th>
-                    <th>Medio de Pago</th>
-                    <th>Banco / Caja</th>
-                    <th className="text-right">Monto</th>
-                    <th className="text-center">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentRecords.map(rec => (
-                    <tr key={rec.id}>
-                      <td className="text-gray-600 font-mono text-xs">{rec.payment_date}</td>
-                      <td className="text-gray-800 font-medium">{rec.notes || 'Sin descripción'}</td>
-                      <td>
-                        <span className="badge badge-neutral">
-                          {rec.payment_method === 'transfer' ? '⚡ Transferencia' :
-                           rec.payment_method === 'cash' ? '💵 Efectivo' :
-                           rec.payment_method === 'check' ? '📄 Cheque' :
-                           `Otro (${rec.payment_method})`}
-                        </span>
-                      </td>
-                      <td className="text-gray-500">{rec.bank_name || '—'}</td>
-                      <td className="text-right font-mono font-bold text-gray-900">{formatARS(rec.amount_ars)}</td>
-                      <td className="text-center">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-4 py-3">Fecha</th>
+                      <th className="px-4 py-3">Concepto / Nota</th>
+                      <th className="px-4 py-3">Medio de Pago</th>
+                      <th className="px-4 py-3">Banco / Caja</th>
+                      <th className="px-4 py-3 text-right">Monto</th>
+                      <th className="px-4 py-3 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {paymentRecords.map(rec => (
+                      <tr key={rec.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-600 font-mono text-xs">{rec.payment_date}</td>
+                        <td className="px-4 py-3 text-gray-800 font-medium">{rec.notes || 'Sin descripción'}</td>
+                        <td className="px-4 py-3">
+                          <span className="capitalize px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                            {rec.payment_method === 'transfer' ? '⚡ Transferencia' :
+                             rec.payment_method === 'cash' ? '💵 Efectivo' :
+                             rec.payment_method === 'check' ? '📄 Cheque' :
+                             `Otro (${rec.payment_method})`}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">{rec.bank_name || '—'}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-gray-900">{formatARS(rec.amount_ars)}</td>
+                        <td className="px-4 py-3 text-center whitespace-nowrap">
                           {rec.receipt_url ? (
                             <a
                               href={rec.receipt_url}
@@ -714,11 +714,13 @@ export const FinancesModule: React.FC = () => {
                             </a>
                           ) : (
                             <span className="text-gray-400 text-xs">—</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -958,7 +960,7 @@ export const FinancesModule: React.FC = () => {
                 </select>
               </div>
             </div>
-            <button onClick={handleSaveEdit} disabled={updateCheque.isPending} className="btn-primary w-full>
+            <button onClick={handleSaveEdit} disabled={updateCheque.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors">
               {updateCheque.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
             </button>
           </div>
@@ -975,7 +977,7 @@ export const FinancesModule: React.FC = () => {
             </p>
             <p className="text-xs text-gray-400">Esta acción quedará registrada en el historial de auditoría.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
               <button onClick={handleDelete} disabled={deleteCheque.isPending} className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50">Eliminar</button>
             </div>
           </div>

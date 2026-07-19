@@ -564,7 +564,7 @@ export const NotificationPanel: React.FC = () => {
                 onClick={handleSave}
                 disabled={!form.title || !form.message_template || form.contact_ids.length === 0 || createReminder.isPending || updateReminder.isPending}
                 className="btn-primary 
-              >
+              ">
                 {(createReminder.isPending || updateReminder.isPending) ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Recordatorio'}
               </button>
             </div>

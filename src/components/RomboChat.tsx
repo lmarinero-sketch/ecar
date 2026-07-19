@@ -697,7 +697,7 @@ export const RomboChat: React.FC = () => {
                   type="submit"
                   disabled={!input.trim() || loading}
                   className="btn-primary absolute w-8
-                >
+                ">
                   <Send size={14} className={input.trim() && !loading ? 'translate-x-[1px]' : ''} />
                 </button>
               </form>

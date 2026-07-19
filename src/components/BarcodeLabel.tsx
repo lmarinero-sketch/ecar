@@ -193,7 +193,7 @@ export const BarcodeLabel: React.FC<BarcodeLabelProps> = ({ item, onClose }) => 
           <button
             onClick={handlePrint}
             className="btn-primary 
-          >
+          ">
             <Printer size={16} />
             Imprimir Etiqueta
           </button>

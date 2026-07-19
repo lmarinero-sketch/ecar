@@ -198,7 +198,7 @@ export const UserProfileModal: React.FC<{ onClose: () => void }> = ({ onClose })
             onClick={handleSave} 
             disabled={updateProfile.isPending}
             className="btn-primary 
-          >
+          ">
             <Save size={16} /> 
             {updateProfile.isPending ? 'Guardando...' : 'Guardar Perfil'}
           </button>

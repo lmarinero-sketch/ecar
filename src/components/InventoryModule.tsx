@@ -775,7 +775,7 @@ export const InventoryModule: React.FC = () => {
               })()}
               <div className="flex gap-2">
                 {assignShelfItem.shelf_id && <button type="button" onClick={async () => { await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: null, shelf_position: null } as any); setAssignShelfItem(null); }} className="badge badge-danger">Quitar ubicación</button>}
-                <button type="submit" disabled={updateItem.isPending} className="btn-primary >
+                <button type="submit" disabled={updateItem.isPending} className="btn-primary ">
                   {updateItem.isPending ? 'Guardando...' : '📍 Asignar Ubicación'}
                 </button>
               </div>

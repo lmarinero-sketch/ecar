@@ -189,7 +189,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 </div>
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!createForm.name || createCategory.isPending} className="btn-primary w-full>
+            <button onClick={handleCreate} disabled={!createForm.name || createCategory.isPending} className="btn-primary w-full">
               {createCategory.isPending ? 'Creando...' : '✓ Crear Categoría'}
             </button>
           </div>
@@ -229,7 +229,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 </span>
               </div>
             )}
-            <button onClick={handleUpdateRate} disabled={updateCategoryRate.isPending} className="btn-primary w-full>
+            <button onClick={handleUpdateRate} disabled={updateCategoryRate.isPending} className="btn-primary w-full">
               {updateCategoryRate.isPending ? 'Actualizando...' : '✓ Aplicar Nuevo Valor'}
             </button>
           </div>

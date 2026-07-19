@@ -133,7 +133,7 @@ export const ObligationsModule: React.FC = () => {
                 <input type="number" value={form.amount_ars} onChange={e => setForm({ ...form, amount_ars: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!form.name || createObligation.isPending} className="btn-primary w-full>
+            <button onClick={handleCreate} disabled={!form.name || createObligation.isPending} className="btn-primary w-full">
               {createObligation.isPending ? 'Creando...' : 'Crear Obligación'}
             </button>
           </div>
