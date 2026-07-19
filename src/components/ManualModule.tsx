@@ -2013,7 +2013,7 @@ export const ManualModule: React.FC = () => {
         ].map((stat, i) => {
           const StatIcon = stat.icon;
           return (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={i} className="light-card p-5">
               <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center mb-3`}>
                 <StatIcon size={18} className="text-white" />
               </div>
@@ -2027,7 +2027,7 @@ export const ManualModule: React.FC = () => {
       <div className="flex gap-6">
         {/* ── SIDEBAR NAVIGATION ── */}
         <div className="w-60 shrink-0 space-y-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+          <div className="light-card p-3">
             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 mb-2">Secciones del Manual</div>
             {sectionGroups.map((sec) => {
               const SecIcon = sec.icon;
@@ -2057,7 +2057,7 @@ export const ManualModule: React.FC = () => {
           {/* === INTRODUCCIÓN === */}
           {activeSection === 'intro' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                     <BookOpen size={20} className="text-blue-600" />
@@ -2078,7 +2078,7 @@ export const ManualModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <FileText size={16} className="text-blue-500" /> Referencias Normativas
                 </h4>
@@ -2105,7 +2105,7 @@ export const ManualModule: React.FC = () => {
           {/* === ARQUITECTURA === */}
           {activeSection === 'arch' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-ecar-blueLight rounded-xl flex items-center justify-center">
                     <Server size={20} className="text-ecar-blue" />
@@ -2131,7 +2131,7 @@ export const ManualModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Zap size={16} className="text-ecar-blue" /> Edge Functions (Serverless)
                 </h4>
@@ -2150,7 +2150,7 @@ export const ManualModule: React.FC = () => {
                       </div>
                       <div className="font-mono text-sm font-bold text-gray-800">{fn.name}</div>
                       <div className="text-xs text-gray-500 flex-1">{fn.desc}</div>
-                      <span className="text-xs font-bold bg-ecar-blueLight text-ecar-blue px-2 py-0.5 rounded-full">{fn.badge}</span>
+                      <span className="badge badge-info">{fn.badge}</span>
                     </div>
                   ))}
                 </div>
@@ -2161,7 +2161,7 @@ export const ManualModule: React.FC = () => {
           {/* === ROLES === */}
           {activeSection === 'roles' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                     <Key size={20} className="text-amber-600" />
@@ -2190,7 +2190,7 @@ export const ManualModule: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <div className="light-card p-6">
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Lock size={16} className="text-red-500" /> Características de Seguridad
                 </h4>
@@ -2219,7 +2219,7 @@ export const ManualModule: React.FC = () => {
               {AI_INTEGRATIONS.map((ai, i) => {
                 const AiIcon = ai.icon;
                 return (
-                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <div key={i} className="light-card p-6">
                     <div className="flex items-start gap-4">
                       <div className={`w-12 h-12 rounded-xl ${ai.color} flex items-center justify-center shrink-0`}>
                         <AiIcon size={22} className="text-white" />
@@ -2245,7 +2245,7 @@ export const ManualModule: React.FC = () => {
 
           {/* === SECURITY === */}
           {activeSection === 'security' && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+            <div className="light-card p-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
                   <Shield size={20} className="text-red-600" />

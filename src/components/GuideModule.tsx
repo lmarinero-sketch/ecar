@@ -449,7 +449,7 @@ export const GuideModule: React.FC = () => {
                               {item.type !== 'info' && (
                                 <button
                                   onClick={() => simulateFlow(item.type as any)}
-                                  className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-[11px] hover:bg-ecar-blueDark active:scale-95 transition-all flex items-center gap-1 shadow-sm relative overflow-hidden group-hover:scale-105"
+                                  className="btn-primary"
                                   title="Simular en el celular de la derecha"
                                 >
                                   Simular <ArrowRight size={12} />

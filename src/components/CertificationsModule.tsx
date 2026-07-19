@@ -317,7 +317,7 @@ export const CertificationsModule: React.FC = () => {
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">ANTICIPO ({proj.advance_pct || 30}%)</th>
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">REDETERMINACION ANTICIPO</th>
                           {certs.map(c => (
-                            <th key={c.id} className="border border-gray-300 p-2 bg-ecar-blue text-black text-center text-xs whitespace-nowrap">
+                            <th key={c.id} className="border border-gray-300 p-2 bg-ecar-blue text-black text-center text-xs">
                               CERT REDETER.<br/>{c.period_description || '-'}
                             </th>
                           ))}
@@ -527,7 +527,7 @@ export const CertificationsModule: React.FC = () => {
               ¿Eliminás el certificado <span className="font-bold">#{deleteTarget.certificate_number}</span> por <span className="font-mono font-bold">{fmtM(deleteTarget.total_certified)}</span>?
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
               <button
                 onClick={async () => {
                   try { await deleteCert.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }

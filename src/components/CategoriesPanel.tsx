@@ -147,7 +147,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                         <span className="font-mono text-gray-500 w-20 shrink-0">{h.effective_from || '—'}</span>
                         <span className="font-mono">{formatARS(h.hourly_rate_ars)}/h</span>
                         {h.effective_to && <span className="text-gray-400">hasta {h.effective_to}</span>}
-                        {h.is_current && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Vigente</span>}
+                        {h.is_current && <span className="badge badge-success">Vigente</span>}
                       </div>
                     ))}
                   </div>
@@ -189,7 +189,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 </div>
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!createForm.name || createCategory.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors">
+            <button onClick={handleCreate} disabled={!createForm.name || createCategory.isPending} className="btn-primary w-full>
               {createCategory.isPending ? 'Creando...' : '✓ Crear Categoría'}
             </button>
           </div>
@@ -229,7 +229,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                 </span>
               </div>
             )}
-            <button onClick={handleUpdateRate} disabled={updateCategoryRate.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors">
+            <button onClick={handleUpdateRate} disabled={updateCategoryRate.isPending} className="btn-primary w-full>
               {updateCategoryRate.isPending ? 'Actualizando...' : '✓ Aplicar Nuevo Valor'}
             </button>
           </div>
@@ -245,7 +245,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
               ¿Eliminás la categoría <span className="font-bold">{deleteTarget.name}</span>? Los empleados asignados quedarán sin categoría.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
               <button
                 onClick={async () => { await deleteCategory.mutateAsync(deleteTarget.id); setDeleteTarget(null); }}
                 disabled={deleteCategory.isPending}

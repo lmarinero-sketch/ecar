@@ -190,79 +190,79 @@ export const MonthlyLiquiditySummary: React.FC = () => {
 
       <div className="p-0 overflow-x-auto">
         <table className="w-full text-sm">
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {/* CAJA INICIAL */}
             <tr className="hover:bg-gray-50">
-              <td className="px-6 py-3 font-medium text-gray-700 w-2/3">CAJA FINAL MES ANTERIOR REAL</td>
-              <td className="px-6 py-3 text-right font-mono font-bold">{fmt(cajaInicial)}</td>
+              <td className="font-medium text-gray-700 w-2/3">CAJA FINAL MES ANTERIOR REAL</td>
+              <td className="text-right font-mono font-bold">{fmt(cajaInicial)}</td>
             </tr>
 
             {/* INGRESOS */}
             <tr className="bg-blue-50/30">
-              <td className="px-6 py-3 font-medium text-blue-800">TOTAL COBRADO - FACTURACION VENTAS (Certificados depositados)</td>
-              <td className="px-6 py-3 text-right font-mono">{fmt(totalCobrado)}</td>
+              <td className="font-medium text-blue-800">TOTAL COBRADO - FACTURACION VENTAS (Certificados depositados)</td>
+              <td className="text-right font-mono">{fmt(totalCobrado)}</td>
             </tr>
             <tr className="hover:bg-gray-50">
-              <td className="px-6 py-3 font-medium text-gray-700">
+              <td className="font-medium text-gray-700">
                 APOYO FINANCIERO ECAR SAS
               </td>
-              <td className="px-6 py-2 text-right">
+              <td className="text-right">
                 {renderEditableCell('apoyoFinanciero')}
               </td>
             </tr>
             <tr className="hover:bg-gray-50">
-              <td className="px-6 py-2 font-medium text-gray-700">
+              <td className="font-medium text-gray-700">
                 <div className="flex flex-col">
                   <span>OTROS INGRESOS (Ajustes manuales)</span>
                   <div className="mt-1">{renderEditableCell('otrosIngresosObs', 'text', 'w-full')}</div>
                 </div>
               </td>
-              <td className="px-6 py-2 text-right">
+              <td className="text-right">
                 {renderEditableCell('otrosIngresosAmount')}
               </td>
             </tr>
 
             {/* TOTAL RECIBIDO */}
             <tr className="bg-gray-100 border-y-2 border-gray-300">
-              <td className="px-6 py-3 font-bold text-gray-800 uppercase">TOTAL RECIBIDO {monthLabel}</td>
-              <td className="px-6 py-3 text-right font-mono font-bold text-gray-800">{fmt(totalRecibido)}</td>
+              <td className="font-bold text-gray-800 uppercase">TOTAL RECIBIDO {monthLabel}</td>
+              <td className="text-right font-mono font-bold text-gray-800">{fmt(totalRecibido)}</td>
             </tr>
 
             {/* GASTOS */}
             <tr className="bg-rose-50/30">
-              <td className="px-6 py-3 font-medium text-rose-800">TOTAL GASTOS ECAR (Gastos Operativos cargados)</td>
-              <td className="px-6 py-3 text-right font-mono">{fmt(totalGastos)}</td>
+              <td className="font-medium text-rose-800">TOTAL GASTOS ECAR (Gastos Operativos cargados)</td>
+              <td className="text-right font-mono">{fmt(totalGastos)}</td>
             </tr>
             <tr className="hover:bg-gray-50">
-              <td className="px-6 py-2 font-medium text-gray-700">
+              <td className="font-medium text-gray-700">
                 <div className="flex flex-col">
                   <span>OTROS GASTOS (Ajustes manuales)</span>
                   <div className="mt-1">{renderEditableCell('otrosGastosObs', 'text', 'w-full')}</div>
                 </div>
               </td>
-              <td className="px-6 py-2 text-right">
+              <td className="text-right">
                 {renderEditableCell('otrosGastosAmount')}
               </td>
             </tr>
 
             {/* CAJA FINAL ESPERADA */}
             <tr className="bg-emerald-50 border-t-2 border-emerald-200">
-              <td className="px-6 py-3 font-bold text-emerald-800 uppercase">CAJA FINAL {monthLabel} ESPERADA</td>
-              <td className="px-6 py-3 text-right font-mono font-bold text-emerald-800">{fmt(cajaEsperada)}</td>
+              <td className="font-bold text-emerald-800 uppercase">CAJA FINAL {monthLabel} ESPERADA</td>
+              <td className="text-right font-mono font-bold text-emerald-800">{fmt(cajaEsperada)}</td>
             </tr>
 
             {/* CAJA FINAL REAL */}
             <tr className="hover:bg-gray-50">
-              <td className="px-6 py-3 font-bold text-gray-800 uppercase">CAJA FINAL {monthLabel} REAL</td>
-              <td className="px-6 py-2 text-right font-mono font-bold">
+              <td className="font-bold text-gray-800 uppercase">CAJA FINAL {monthLabel} REAL</td>
+              <td className="text-right font-mono font-bold">
                 {renderEditableCell('cajaFinalReal', 'number', 'w-36', true)}
               </td>
             </tr>
 
             {/* DIFERENCIA */}
             <tr className="bg-sky-500 text-white">
-              <td className="px-6 py-4 font-bold uppercase">DIFERENCIA</td>
-              <td className="px-6 py-4 text-right font-mono font-bold text-lg">
+              <td className="font-bold uppercase">DIFERENCIA</td>
+              <td className="text-right font-mono font-bold text-lg">
                 {displayCajaReal === 0 && !inlineEdit && cajaEsperada !== 0 ? '-' : fmt(diferencia)}
               </td>
             </tr>

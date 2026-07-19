@@ -97,7 +97,7 @@ export const InspectionsModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Ubicación</label><input value={formInsp.ubicacion} onChange={e => setFormInsp({...formInsp, ubicacion: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Piso, sector, zona..." /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Observaciones</label><input value={formInsp.observaciones} onChange={e => setFormInsp({...formInsp, observaciones: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Notas generales..." /></div>
           </div>
-          <button onClick={handleSubmitInsp} disabled={createInspeccion.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
+          <button onClick={handleSubmitInsp} disabled={createInspeccion.isPending} className="btn-primary">
             {createInspeccion.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Crear Inspección
           </button>
         </div>
@@ -117,7 +117,7 @@ export const InspectionsModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Fecha Límite</label><input type="date" value={formPunch.fecha_limite} onChange={e => setFormPunch({...formPunch, fecha_limite: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500 uppercase">Descripción</label><textarea value={formPunch.descripcion} onChange={e => setFormPunch({...formPunch, descripcion: e.target.value})} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Detalle del defecto o no conformidad..." /></div>
-          <button onClick={handleSubmitPunch} disabled={createPunchItem.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
+          <button onClick={handleSubmitPunch} disabled={createPunchItem.isPending} className="btn-primary">
             {createPunchItem.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Agregar Item
           </button>
         </div>
@@ -129,15 +129,15 @@ export const InspectionsModule: React.FC = () => {
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Inspecciones</h3></div>
           {loadingInsp ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div> :
             inspecciones.length === 0 ? <div className="text-center py-16 text-gray-400"><ClipboardCheck size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin inspecciones</p><p className="text-sm">Creá la primera inspección para controlar la calidad.</p></div> :
-            <table className="w-full text-sm text-left"><thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase"><tr><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Obra</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Inspector</th><th className="px-4 py-3">Resultado</th><th className="px-4 py-3">Acción</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">{inspecciones.map(i => (
+            <table className="data-table"><thead><tr><th >Fecha</th><th >Obra</th><th >Tipo</th><th >Inspector</th><th >Resultado</th><th >Acción</th></tr></thead>
+              <tbody>{inspecciones.map(i => (
                 <tr key={i.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs">{new Date(i.fecha + 'T12:00:00').toLocaleDateString('es-AR')}</td>
-                  <td className="px-4 py-3 font-medium">{(i.obra as any)?.name || '–'}</td>
-                  <td className="px-4 py-3">{TIPO_LABELS[i.tipo]}</td>
-                  <td className="px-4 py-3">{i.inspector}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${RESULTADO_COLORS[i.resultado]}`}>{i.resultado.replace(/_/g, ' ')}</span></td>
-                  <td className="px-4 py-3 flex gap-1">{i.resultado === 'pendiente' && (<><button onClick={() => updateInspeccion.mutate({ id: i.id, resultado: 'aprobada' })} className="text-xs text-green-600 font-bold hover:underline">Aprobar</button><button onClick={() => updateInspeccion.mutate({ id: i.id, resultado: 'rechazada' })} className="text-xs text-red-600 font-bold hover:underline ml-2">Rechazar</button></>)}</td>
+                  <td className="font-mono text-xs">{new Date(i.fecha + 'T12:00:00').toLocaleDateString('es-AR')}</td>
+                  <td className="font-medium">{(i.obra as any)?.name || '–'}</td>
+                  <td >{TIPO_LABELS[i.tipo]}</td>
+                  <td >{i.inspector}</td>
+                  <td ><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${RESULTADO_COLORS[i.resultado]}`}>{i.resultado.replace(/_/g, ' ')}</span></td>
+                  <td className="flex gap-1">{i.resultado === 'pendiente' && (<><button onClick={() => updateInspeccion.mutate({ id: i.id, resultado: 'aprobada' })} className="text-xs text-green-600 font-bold hover:underline">Aprobar</button><button onClick={() => updateInspeccion.mutate({ id: i.id, resultado: 'rechazada' })} className="text-xs text-red-600 font-bold hover:underline ml-2">Rechazar</button></>)}</td>
                 </tr>
               ))}</tbody></table>
           }

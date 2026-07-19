@@ -424,7 +424,7 @@ export const VehicleTrackingPage: React.FC = () => {
                 <button
                   onClick={startTracking}
                   disabled={loading || !driverName || !selectedVehicleId}
-                  className="w-full mt-6 bg-ecar-blue hover:bg-ecar-blue text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-ecar-blueLight flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+                  className="btn-primary w-full mt-6
                 >
                   <Play className="w-5 h-5 fill-current" />
                   COMENZAR TRACKING

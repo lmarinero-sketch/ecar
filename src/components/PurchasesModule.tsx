@@ -152,7 +152,7 @@ const BancoPreciosTab: React.FC = () => {
             {isImporting ? 'Importando...' : 'Importar Excel'}
             <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} disabled={isImporting} />
           </label>
-          <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material' as any, unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors">
+          <button onClick={() => { setEditItem(null); setForm({ name: '', resource_type: 'material' as any, unit: 'un', unit_price_ars: 0 }); setShowForm(true); }} className="btn-primary px-4 py-2 text-sm flex items-center gap-2">
             <Plus size={16} /> Nuevo Insumo
           </button>
         </div>
@@ -170,28 +170,28 @@ const BancoPreciosTab: React.FC = () => {
       )}
 
       <div className="light-card overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Descripción</th>
-              <th className="px-4 py-3">Unidad</th>
-              <th className="px-4 py-3 text-right">Precio Unitario</th>
-              <th className="px-4 py-3 text-center">Acciones</th>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Unidad</th>
+              <th className="text-right">Precio Unitario</th>
+              <th className="text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {isLoading ? (
-              <tr><td colSpan={5} className="text-center py-8"><Loader2 className="animate-spin mx-auto text-gray-400" /></td></tr>
+              <tr><td colSpan={5} className="text-center"><Loader2 className="animate-spin mx-auto text-gray-400" /></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} className="text-center py-8 text-gray-400">No hay insumos registrados.</td></tr>
+              <tr><td colSpan={5} className="text-center text-gray-400">No hay insumos registrados.</td></tr>
             ) : filtered.map((r: any) => (
-              <tr key={r.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-xs font-bold text-gray-500 uppercase">{r.resource_type === 'material' ? 'Material' : r.resource_type === 'mano_obra' ? 'Mano Obra' : r.resource_type === 'equipo' ? 'Equipo' : 'Subcontrato'}</td>
-                <td className="px-4 py-3 font-medium">{r.name}</td>
-                <td className="px-4 py-3 text-sm text-gray-500">{r.unit}</td>
-                <td className="px-4 py-3 text-right font-mono font-bold text-ecar-blue">{formatARS(r.unit_price_ars)}</td>
-                <td className="px-4 py-3">
+              <tr key={r.id}>
+                <td className="text-xs font-bold text-gray-500 uppercase">{r.resource_type === 'material' ? 'Material' : r.resource_type === 'mano_obra' ? 'Mano Obra' : r.resource_type === 'equipo' ? 'Equipo' : 'Subcontrato'}</td>
+                <td className="font-medium">{r.name}</td>
+                <td className="text-sm text-gray-500">{r.unit}</td>
+                <td className="text-right font-mono font-bold text-ecar-blue">{formatARS(r.unit_price_ars)}</td>
+                <td>
                   <div className="flex justify-center gap-2">
                     <button onClick={() => openEdit(r)} className="p-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100"><Pencil size={14} /></button>
                     <button onClick={() => handleDelete(r.id)} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100"><Trash2 size={14} /></button>
@@ -475,11 +475,11 @@ export const PurchasesModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border-l-4 border-ecar-blue rounded-xl p-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><ShoppingCart size={120} /></div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><ShoppingCart size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><ShoppingCart size={24} className="text-ecar-blue" /> Compras & Libro IVA</h3>
-          <p className="text-gray-500 text-sm mt-1">Subí una foto o PDF de la factura. La IA extrae automáticamente todos los datos para el Libro IVA.</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><ShoppingCart size={24} /> Compras & Libro IVA</h3>
+          <p className="text-ecar-blueLight text-sm mt-1">Subí una foto o PDF de la factura. La IA extrae automáticamente todos los datos para el Libro IVA.</p>
         </div>
       </div>
 
@@ -553,7 +553,7 @@ export const PurchasesModule: React.FC = () => {
             <div className="space-y-2 mb-3 p-3 bg-gray-50 rounded-lg">
               <input placeholder="Razón Social" value={supplierForm.name} onChange={e => setSupplierForm({ ...supplierForm, name: e.target.value })} className="w-full px-3 py-2 border rounded text-sm" />
               <input placeholder="CUIT" value={supplierForm.cuit} onChange={e => setSupplierForm({ ...supplierForm, cuit: e.target.value })} className="w-full px-3 py-2 border rounded text-sm" />
-              <button onClick={async () => { await createSupplier.mutateAsync(supplierForm); setShowSupplierForm(false); setSupplierForm({ name: '', cuit: '', tax_condition: 'RI' }); }} className="bg-ecar-blue text-white px-4 py-1.5 rounded text-sm font-bold w-full">Guardar</button>
+              <button onClick={async () => { await createSupplier.mutateAsync(supplierForm); setShowSupplierForm(false); setSupplierForm({ name: '', cuit: '', tax_condition: 'RI' }); }} className="btn-primary px-4 py-1.5 text-sm w-full">Guardar</button>
             </div>
           )}
           <div className="space-y-1 max-h-40 overflow-y-auto">
@@ -661,7 +661,7 @@ export const PurchasesModule: React.FC = () => {
             const { posicion, ivaVentas, ivaCompras } = calculatePosicionIva(entity.id);
             const isToPay = posicion >= 0;
             return (
-              <div key={entity.id} className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
+              <div key={entity.id} className="light-card p-4">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Posición IVA — {entity.name}</p>
                   <p className={`text-xl font-mono font-bold ${isToPay ? 'text-rose-600' : 'text-emerald-600'}`}>
@@ -690,15 +690,15 @@ export const PurchasesModule: React.FC = () => {
       {/* Totals bar (Only for invoices) */}
       {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
+          <div className="light-card p-4">
             <p className="text-xs text-gray-400 font-bold uppercase">Neto Gravado</p>
             <p className="text-lg font-bold text-gray-800 font-mono">{formatARS(totNeto)}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
+          <div className="light-card p-4">
             <p className="text-xs text-gray-400 font-bold uppercase">IVA Total</p>
             <p className="text-lg font-bold text-blue-700 font-mono">{formatARS(totIva)}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm text-center">
+          <div className="light-card p-4">
             <p className="text-xs text-gray-400 font-bold uppercase">Total</p>
             <p className="text-lg font-bold text-ecar-blue font-mono">{formatARS(totTotal)}</p>
           </div>
@@ -750,49 +750,49 @@ export const PurchasesModule: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Razón Social</th>
-                  <th className="px-4 py-3">{activeTab === 'compras' ? 'Proveedor' : 'Cliente'}</th>
-                  <th className="px-4 py-3">CUIT</th>
-                  <th className="px-4 py-3">Tipo/Nro</th>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3 text-right">Neto</th>
-                  <th className="px-4 py-3 text-right">IVA 21%</th>
-                  <th className="px-4 py-3 text-right">Total</th>
-                  {activeTab === 'compras' && <th className="px-4 py-3">Rubro de Gasto</th>}
-                  {activeTab === 'compras' && <th className="px-4 py-3">Centro de Costo</th>}
-                  <th className="px-4 py-3 text-center">Estado</th>
-                  <th className="px-4 py-3 text-center">Acciones</th>
+                  <th>Razón Social</th>
+                  <th>{activeTab === 'compras' ? 'Proveedor' : 'Cliente'}</th>
+                  <th>CUIT</th>
+                  <th>Tipo/Nro</th>
+                  <th>Fecha</th>
+                  <th className="text-right">Neto</th>
+                  <th className="text-right">IVA 21%</th>
+                  <th className="text-right">Total</th>
+                  {activeTab === 'compras' && <th>Rubro de Gasto</th>}
+                  {activeTab === 'compras' && <th>Centro de Costo</th>}
+                  <th className="text-center">Estado</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {currentList.map((inv: any) => {
                   const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
                   return (
-                  <tr key={inv.id} className={`hover:bg-gray-50 ${isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}`}>
-                    <td className="px-4 py-3 text-xs font-bold text-ecar-blue">
+                  <tr key={inv.id} className={isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}>
+                    <td className="text-xs font-bold text-ecar-blue">
                       {inv.legal_entity?.name || '-'}
                     </td>
-                    <td className="px-4 py-3 font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>
-                    <td className="px-4 py-3 text-gray-600">{inv.issue_date || '—'}</td>
-                    <td className="px-4 py-3 text-right font-mono">
+                    <td className="font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>
+                    <td className="font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
+                    <td className="font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>
+                    <td className="text-gray-600">{inv.issue_date || '—'}</td>
+                    <td className="text-right font-mono">
                       {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
                       {formatARS(inv.net_amount_ars)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-500">
+                    <td className="text-right font-mono text-gray-500">
                       {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
                       {formatARS(inv.iva_21_ars)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold">
+                    <td className="text-right font-mono font-bold">
                       {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
                       {formatARS(inv.total_ars)}
                     </td>
                     {activeTab === 'compras' && (
-                      <td className="px-4 py-3">
+                      <td>
                         <select
                           value={inv.gasto_item_id || ''}
                           onChange={async (e) => {
@@ -820,7 +820,7 @@ export const PurchasesModule: React.FC = () => {
                       </td>
                     )}
                     {activeTab === 'compras' && (
-                      <td className="px-4 py-3">
+                      <td>
                         <button
                           onClick={() => {
                             setDistributeInvoice(inv);
@@ -846,10 +846,10 @@ export const PurchasesModule: React.FC = () => {
                         </button>
                       </td>
                     )}
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[inv.status] || ''}`}>{statusLabel[inv.status] || inv.status}</span>
+                    <td className="text-center">
+                      <span className={`badge ${inv.status === 'pending_review' ? 'badge-warning' : inv.status === 'validated' ? 'badge-success' : inv.status === 'rejected' ? 'badge-danger' : 'badge-info'}`}>{statusLabel[inv.status] || inv.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       <div className="flex justify-center gap-1">
                         {inv.original_file_url && (
                           <a href={inv.original_file_url} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-50 rounded" title="Ver original"><Eye size={16} /></a>
@@ -1207,7 +1207,7 @@ export const PurchasesModule: React.FC = () => {
                   refetch();
                 } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
-              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-colors"
+              className="btn-primary w-full py-3 text-sm"
             >
               ✓ Guardar Cambios
             </button>
@@ -1224,7 +1224,7 @@ export const PurchasesModule: React.FC = () => {
               ¿Eliminás la factura de <span className="font-bold">{deleteTarget.ocr_raw_data?.proveedor_cliente || deleteTarget.supplier?.name || 'Sin datos'}</span> por <span className="font-mono font-bold">{formatARS(deleteTarget.total_ars)}</span>?
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
               <button
                 onClick={async () => {
                   try {

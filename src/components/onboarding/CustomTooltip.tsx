@@ -77,7 +77,7 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
           <button
             type="button"
             {...primaryProps}
-            className="px-4 py-1.5 rounded-lg bg-ecar-blue text-white hover:bg-blue-700 text-xs font-semibold transition-colors shadow-sm flex items-center gap-1"
+            className="btn-primary 
           >
             {isLastStep ? (
               <><Check size={13} /> ¡Listo!</>

@@ -143,7 +143,7 @@ export const PayObreroModal: React.FC<Props> = ({ paymentId, onClose, onSuccess,
           <button 
             onClick={handleSave} 
             disabled={!selectedEmployeeId || !monto}
-            className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-ecar-blueDark disabled:opacity-50 transition-colors"
+            className="btn-primary"
           >
             Guardar Pago
           </button>

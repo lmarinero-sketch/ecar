@@ -389,7 +389,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         <p className="text-xs font-semibold">{cameraError}</p>
                         <button
                           onClick={startCamera}
-                          className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200"
+                          className="badge badge-danger"
                         >
                           Reintentar
                         </button>
@@ -621,7 +621,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     <button
                       type="submit"
                       disabled={createAssignment.isPending}
-                      className="flex-1 py-3 bg-ecar-blue text-white rounded-xl font-bold text-sm hover:bg-ecar-blue transition-all shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="btn-primary 
                     >
                       {createAssignment.isPending ? 'Asignando...' : '🔧 Confirmar Asignación'}
                     </button>
@@ -703,7 +703,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     onClick={() => setShowAssociateConfirm(true)}
                     className="p-5 border border-gray-200 rounded-2xl text-center space-y-2 hover:border-ecar-blue hover:bg-slate-50/10 transition-all"
                   >
-                    <div className="w-10 h-10 bg-ecar-blueLight text-ecar-blue rounded-full flex items-center justify-center mx-auto">
+                    <div className="badge badge-info">
                       <ArrowRight size={20} />
                     </div>
                     <span className="font-bold text-sm text-gray-800 block">Asociar a Existente</span>
@@ -757,7 +757,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   <button
                     disabled={!associateItemId}
                     onClick={handleAssociateCode}
-                    className="w-full py-3 bg-ecar-blue text-white font-bold text-sm rounded-xl hover:bg-ecar-blue transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md"
+                    className="btn-primary w-full
                   >
                     <Check size={16} /> Confirmar Asociación
                   </button>

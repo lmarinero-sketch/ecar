@@ -42,17 +42,17 @@ export const VehiclesRegistryModule: React.FC = () => {
           <h3 className="font-bold text-gray-800">Métricas por Unidad</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3 text-right">Costo / Km</th>
-                <th className="px-4 py-3 text-right">Eficiencia (Km/L)</th>
-                <th className="px-4 py-3 text-center">Disponibilidad</th>
-                <th className="px-4 py-3 text-center">Estado</th>
+                <th >Vehículo</th>
+                <th className="text-right">Costo / Km</th>
+                <th className="text-right">Eficiencia (Km/L)</th>
+                <th className="text-center">Disponibilidad</th>
+                <th className="text-center">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {vehicles.map((v, i) => {
                 // Valores mockeados basados en el índice temporalmente
                 const costoKm = 2000 + (i * 150);
@@ -62,22 +62,22 @@ export const VehiclesRegistryModule: React.FC = () => {
 
                 return (
                   <tr key={v.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
+                    <td >
                       <div className="font-bold text-gray-800">{v.code} - {v.plate}</div>
                       <div className="text-xs text-gray-500">{v.description}</div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-700">
+                    <td className="text-right font-mono text-gray-700">
                       $ {costoKm.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-700">
+                    <td className="text-right font-mono text-gray-700">
                       {eficiencia} Km/L
                     </td>
-                    <td className="px-4 py-3 text-center font-mono">
+                    <td className="text-center font-mono">
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${disponibilidad >= 95 ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {disponibilidad}%
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {isWarning ? (
                         <span className="flex items-center justify-center gap-1 text-red-500 text-xs font-bold">
                           <AlertCircle size={14} /> Revisar
@@ -91,7 +91,7 @@ export const VehiclesRegistryModule: React.FC = () => {
               })}
               {vehicles.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">No hay vehículos registrados en la flota.</td>
+                  <td colSpan={5} className="text-center text-gray-400">No hay vehículos registrados en la flota.</td>
                 </tr>
               )}
             </tbody>

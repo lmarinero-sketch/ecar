@@ -124,7 +124,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
 
       {/* Isometric CSS View */}
       {viewType === 'isometric' && !wbs.length && (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+        <div className="light-card p-1">
           <Sparkles size={48} className="mx-auto mb-3 opacity-20" />
           <p className="font-medium">Sin tareas para visualizar</p>
           <p className="text-sm">Creá tareas en Planificación para ver el modelo 3D.</p>
@@ -319,7 +319,7 @@ export const Wbs3dView: React.FC<{ wbs: WbsElement[]; projectId: string }> = ({ 
             <h4 className="font-bold text-sm text-gray-800">Estructura WBS Activa</h4>
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-0.5">Avance y Selección 3D</p>
           </div>
-          <span className="text-[10px] font-mono bg-ecar-blueLight text-ecar-blue px-2 py-0.5 rounded-md font-bold">{wbs.length} elementos</span>
+          <span className="badge badge-info">{wbs.length} elementos</span>
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-gray-100">

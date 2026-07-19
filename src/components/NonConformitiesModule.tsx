@@ -174,7 +174,7 @@ export const NonConformitiesModule: React.FC = () => {
           { label: 'Cerradas', value: stats.cerradas, icon: <CheckCircle2 size={16} />, color: 'text-green-600' },
           { label: 'Tiempo Prom. (días)', value: stats.tiempoPromedio, icon: <Clock size={16} />, color: 'text-blue-600' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div key={kpi.label} className="light-card p-4">
             <div className={`flex items-center gap-1.5 text-xs font-medium ${kpi.color} mb-1`}>{kpi.icon} {kpi.label}</div>
             <div className="text-xl font-bold text-gray-800">{kpi.value}</div>
           </div>
@@ -208,49 +208,49 @@ export const NonConformitiesModule: React.FC = () => {
 
       {/* NC List */}
       <div className="light-card overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">NC #</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3">Descripción</th>
-              <th className="px-4 py-3 text-center">Impacto</th>
-              <th className="px-4 py-3 text-center">Estado</th>
-              <th className="px-4 py-3">Responsable</th>
-              <th className="px-4 py-3 text-center">Acciones</th>
+              <th >NC #</th>
+              <th >Categoría</th>
+              <th >Descripción</th>
+              <th className="text-center">Impacto</th>
+              <th className="text-center">Estado</th>
+              <th >Responsable</th>
+              <th className="text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {filtered.map(nc => (
               <tr key={nc.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-mono font-bold text-gray-800">{nc.nc_number}</td>
-                <td className="px-4 py-3">
+                <td className="font-mono font-bold text-gray-800">{nc.nc_number}</td>
+                <td >
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${CATEGORIES[nc.category]?.color || 'bg-gray-100 text-gray-600'}`}>
                     {CATEGORIES[nc.category]?.label || nc.category}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td >
                   <div className="text-gray-800 line-clamp-1">{nc.description}</div>
                   {nc.area && <div className="text-xs text-gray-400">{nc.area}</div>}
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-center">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${IMPACTS[nc.impact]?.color || 'bg-gray-100'}`}>
                     {IMPACTS[nc.impact]?.label || nc.impact}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-center">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1 ${STATUSES[nc.status]?.color || 'bg-gray-100'}`}>
                     {STATUSES[nc.status]?.icon} {STATUSES[nc.status]?.label || nc.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-600 text-xs">{nc.responsible || '—'}</td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-gray-600 text-xs">{nc.responsible || '—'}</td>
+                <td className="text-center">
                   <button onClick={() => openEdit(nc)} className="text-red-600 hover:text-red-800 p-1"><Eye size={16} /></button>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+              <tr><td colSpan={7} className="text-center text-gray-400">
                 <ShieldAlert size={48} className="mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No hay No Conformidades</p>
                 <p className="text-sm">Hacé clic en "Nueva NC" para registrar un desvío.</p>

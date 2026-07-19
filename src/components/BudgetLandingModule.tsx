@@ -152,7 +152,7 @@ export const BudgetLandingModule: React.FC = () => {
         <h3 className="font-bold text-gray-800 text-lg mb-3 flex items-center gap-2">
           <TrendingUp size={18} className="text-ecar-blue" /> Flujo del Proceso
         </h3>
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div className="light-card p-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {FLOW_STEPS.map((step, idx) => (
               <div key={idx} className="relative">
@@ -216,7 +216,7 @@ export const BudgetLandingModule: React.FC = () => {
       </div>
 
       {/* Responsabilidades RACI resumidas */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="light-card ">
         <div className="p-5 border-b border-gray-100">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
             <Users size={18} className="text-ecar-blue" /> Matriz de Responsabilidades (Resumen)
@@ -224,17 +224,17 @@ export const BudgetLandingModule: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-gray-500 font-bold uppercase">
+            <thead>
               <tr>
-                <th className="px-4 py-2.5 text-left">Actividad</th>
-                <th className="px-3 py-2.5 text-center">GPP</th>
-                <th className="px-3 py-2.5 text-center">GG</th>
-                <th className="px-3 py-2.5 text-center">Obras</th>
-                <th className="px-3 py-2.5 text-center">Compras</th>
-                <th className="px-3 py-2.5 text-center">Logística</th>
+                <th className="text-left">Actividad</th>
+                <th className="text-center">GPP</th>
+                <th className="text-center">GG</th>
+                <th className="text-center">Obras</th>
+                <th className="text-center">Compras</th>
+                <th className="text-center">Logística</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {[
                 { act: 'Registrar oportunidad', gpp: 'R', gg: 'I', ob: 'I', co: 'I', lo: 'I' },
                 { act: 'Relevar y analizar documentación', gpp: 'R', gg: 'C', ob: 'C', co: 'I', lo: 'I' },
@@ -246,9 +246,9 @@ export const BudgetLandingModule: React.FC = () => {
                 { act: 'Registrar adicional o cambio', gpp: 'R', gg: 'A', ob: 'C', co: 'C', lo: 'C' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium text-gray-700">{row.act}</td>
+                  <td className="font-medium text-gray-700">{row.act}</td>
                   {[row.gpp, row.gg, row.ob, row.co, row.lo].map((v, j) => (
-                    <td key={j} className="px-3 py-2 text-center">
+                    <td key={j} className="text-center">
                       <span className={`inline-block px-1.5 py-0.5 rounded font-bold text-[10px] ${
                         v.includes('R') ? 'bg-ecar-blueLight text-ecar-blue' :
                         v.includes('A') ? 'bg-amber-100 text-amber-700' :

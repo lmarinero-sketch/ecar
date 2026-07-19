@@ -100,7 +100,7 @@ export const RFIModule: React.FC = () => {
               {form.impacto_cronograma && <input value={form.impacto_cronograma_dias} onChange={e => setForm({...form, impacto_cronograma_dias: e.target.value})} className="w-20 px-2 py-1 border rounded-lg text-sm font-mono" placeholder="Días" />}
             </div>
           </div>
-          <button onClick={handleSubmit} disabled={createConsulta.isPending} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all">
+          <button onClick={handleSubmit} disabled={createConsulta.isPending} className="btn-primary">
             {createConsulta.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send size={16} />} Enviar Consulta
           </button>
         </div>
@@ -139,7 +139,7 @@ export const RFIModule: React.FC = () => {
                       <div className="space-y-2">
                         <textarea value={respuestaForm.respuesta} onChange={e => setRespuestaForm({...respuestaForm, respuesta: e.target.value})} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Escribí la respuesta oficial..." />
                         <div className="flex gap-2">
-                          <button onClick={handleResponder} className="bg-ecar-blue text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-ecar-blue transition-all flex items-center gap-1"><Check size={14} /> Enviar Respuesta</button>
+                          <button onClick={handleResponder} className="btn-primary"><Check size={14} /> Enviar Respuesta</button>
                           <button onClick={() => setRespuestaForm(null)} className="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold">Cancelar</button>
                         </div>
                       </div>

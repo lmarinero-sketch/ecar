@@ -430,7 +430,7 @@ export function MesaTecnicaPresentation() {
       icon: FolderSearch,
       content: (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="light-card ">
             <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
               <h3 className="font-semibold text-slate-800">Documentación requerida para avanzar:</h3>
             </div>

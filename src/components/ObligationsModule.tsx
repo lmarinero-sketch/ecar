@@ -100,7 +100,7 @@ export const ObligationsModule: React.FC = () => {
 
       {/* Actions */}
       <div className="flex justify-end">
-        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blueDark transition-colors">
+        <button onClick={() => setShowForm(true)} className="btn-primary">
           <Plus size={16} /> Nueva Obligación
         </button>
       </div>
@@ -133,7 +133,7 @@ export const ObligationsModule: React.FC = () => {
                 <input type="number" value={form.amount_ars} onChange={e => setForm({ ...form, amount_ars: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!form.name || createObligation.isPending} className="w-full bg-ecar-blue text-white py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreate} disabled={!form.name || createObligation.isPending} className="btn-primary w-full>
               {createObligation.isPending ? 'Creando...' : 'Crear Obligación'}
             </button>
           </div>
@@ -176,7 +176,7 @@ export const ObligationsModule: React.FC = () => {
                     <button onClick={() => { setPayingObl(obl); setPayAmount(String(obl.amount_ars)); }} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1">
                       <DollarSign size={12} /> Pagar Mes
                     </button>
-                    <label className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer hover:bg-ecar-blueDark transition-colors flex items-center gap-1">
+                    <label className="btn-primary">
                       <Upload size={12} /> Comprobante
                       <input type="file" className="hidden" accept="image/*,.pdf" onChange={e => e.target.files?.[0] && handleUploadReceipt(obl.id, e.target.files[0])} />
                     </label>
@@ -303,7 +303,7 @@ export const ObligationsModule: React.FC = () => {
               ¿Eliminás <span className="font-bold">{deleteTarget.name}</span>? Se borrarán también los pagos asociados.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
               <button
                 onClick={async () => { try { await deleteObligation.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); } }}
                 disabled={deleteObligation.isPending}

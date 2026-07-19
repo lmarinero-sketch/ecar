@@ -200,11 +200,15 @@ export const InventoryModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="clinical-module-header">
-        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Boxes size={120} /></div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><Boxes size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Package size={24} className="text-ecar-blue" /> Depósito & Inventario</h3>
-          <p className="text-gray-500 text-sm mt-1">Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2">
+            <Package size={24} /> Depósito & Inventario
+          </h3>
+          <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
+            Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad
+          </p>
         </div>
       </div>
 
@@ -264,28 +268,28 @@ export const InventoryModule: React.FC = () => {
               <Plus size={16} /> Nuevo Ítem
             </button>
           </div>
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Ítem</th>
-                <th className="px-4 py-3">Categoría</th>
-                <th className="px-4 py-3">Ubicación</th>
-                <th className="px-4 py-3 text-center">Stock</th>
-                <th className="px-4 py-3 text-center">Mínimo</th>
-                <th className="px-4 py-3 text-right">Costo Unit.</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+                <th>Ítem</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th className="text-center">Stock</th>
+                <th className="text-center">Mínimo</th>
+                <th className="text-right">Costo Unit.</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map(item => (
-                <tr key={item.id} className={`hover:bg-gray-50 ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}`}>
-                  <td className="px-4 py-3 font-medium text-gray-800">{item.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${item.category === 'herramienta' ? 'bg-ecar-blueLight text-ecar-blue' : item.category === 'consumible' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                <tr key={item.id} className={item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}>
+                  <td className="font-medium text-gray-800">{item.name}</td>
+                  <td>
+                    <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
                       {item.category}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {item.shelf ? (
                       <div className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
@@ -298,12 +302,12 @@ export const InventoryModule: React.FC = () => {
                       </button>
                     )}
                   </td>
-                  <td className={`px-4 py-3 text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                  <td className={`text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
                     {item.current_stock} {item.unit}
                   </td>
-                  <td className="px-4 py-3 text-center font-mono text-gray-400">{item.min_stock}</td>
-                  <td className="px-4 py-3 text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
+                  <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>
+                  <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
                       {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
@@ -336,21 +340,21 @@ export const InventoryModule: React.FC = () => {
             <h3 className="font-bold text-gray-800 flex items-center gap-2"><Wrench size={16} /> Asignaciones Activas</h3>
           </div>
           {activeAssignments.length > 0 ? (
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Herramienta</th>
-                  <th className="px-4 py-3">Empleado</th>
-                  <th className="px-4 py-3">Obra</th>
-                  <th className="px-4 py-3">Fecha Asignación</th>
-                  <th className="px-4 py-3 text-center">Acciones</th>
+                  <th>Herramienta</th>
+                  <th>Empleado</th>
+                  <th>Obra</th>
+                  <th>Fecha Asignación</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {activeAssignments.map(a => (
-                  <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{(a.item as any)?.name || '—'}</td>
-                    <td className="px-4 py-3">
+                  <tr key={a.id}>
+                    <td className="font-medium">{(a.item as any)?.name || '—'}</td>
+                    <td>
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs uppercase">
                           {((a.employee as any)?.full_name || '?')[0]}
@@ -358,10 +362,10 @@ export const InventoryModule: React.FC = () => {
                         {(a.employee as any)?.full_name}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{(a.project as any)?.name || '—'}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => updateAssignment.mutateAsync({ id: a.id, status: 'returned', returned_date: new Date().toISOString().split('T')[0] })} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold hover:bg-green-200 transition-all flex items-center gap-1 mx-auto">
+                    <td className="text-gray-500">{(a.project as any)?.name || '—'}</td>
+                    <td className="font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
+                    <td className="text-center">
+                      <button onClick={() => updateAssignment.mutateAsync({ id: a.id, status: 'returned', returned_date: new Date().toISOString().split('T')[0] })} className="badge badge-success">
                         <RotateCcw size={12} /> Devolver
                       </button>
                     </td>
@@ -382,23 +386,30 @@ export const InventoryModule: React.FC = () => {
             <h3 className="font-bold text-gray-800">Historial de Movimientos</h3>
           </div>
           {(movements || []).length > 0 ? (
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                <tr><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Ítem</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3 text-center">Cantidad</th><th className="px-4 py-3">Obra</th><th className="px-4 py-3">Notas</th></tr>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Ítem</th>
+                  <th>Tipo</th>
+                  <th className="text-center">Cantidad</th>
+                  <th>Obra</th>
+                  <th>Notas</th>
+                </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {(movements || []).map(m => (
-                  <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString('es-AR')}</td>
-                    <td className="px-4 py-3 font-medium">{(m.item as any)?.name || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.movement_type === 'in' ? 'bg-green-100 text-green-700' : m.movement_type === 'out' ? 'bg-red-100 text-red-700' : m.movement_type === 'return' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <tr key={m.id}>
+                    <td className="font-mono text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString('es-AR')}</td>
+                    <td className="font-medium">{(m.item as any)?.name || '—'}</td>
+                    <td>
+                      <span className={`badge ${m.movement_type === 'in' ? 'badge-success' : m.movement_type === 'out' ? 'badge-danger' : m.movement_type === 'return' ? 'badge-info' : 'badge-neutral'}`}>
                         {m.movement_type === 'in' ? 'Ingreso' : m.movement_type === 'out' ? 'Egreso' : m.movement_type === 'return' ? 'Devolución' : 'Ajuste'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center font-mono font-bold">{m.quantity}</td>
-                    <td className="px-4 py-3 text-gray-500">{(m.project as any)?.name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{m.notes || '—'}</td>
+                    <td className="text-center font-mono font-bold">{m.quantity}</td>
+                    <td className="text-gray-500">{(m.project as any)?.name || '—'}</td>
+                    <td className="text-gray-400 text-xs">{m.notes || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -437,7 +448,7 @@ export const InventoryModule: React.FC = () => {
                     type="button"
                     disabled={!newItem.barcode}
                     onClick={printTempBarcode}
-                    className="bg-ecar-blue text-white px-3 py-2 rounded-xl text-xs font-bold transition-all hover:bg-ecar-blueDark disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
+                    className="btn-primary"
                     title="Imprimir código de barras"
                   >
                     🖨️ Imprimir
@@ -454,7 +465,7 @@ export const InventoryModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">Stock Mínimo</label><input type="number" value={newItem.min_stock} onChange={e => setNewItem({ ...newItem, min_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label><input type="number" value={newItem.unit_cost} onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
               </div>
-              <button type="submit" disabled={createItem.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createItem.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                 {createItem.isPending ? 'Guardando...' : '✅ Crear Ítem'}
               </button>
             </form>
@@ -481,7 +492,7 @@ export const InventoryModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={movForm.project_id} onChange={e => setMovForm({ ...movForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               </div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={movForm.notes} onChange={e => setMovForm({ ...movForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Detalle del movimiento" /></div>
-              <button type="submit" disabled={createMovement.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createMovement.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                 {createMovement.isPending ? 'Registrando...' : '✅ Registrar'}
               </button>
             </form>
@@ -498,7 +509,7 @@ export const InventoryModule: React.FC = () => {
               <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
-              <button type="submit" disabled={createAssignment.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createAssignment.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                 {createAssignment.isPending ? 'Asignando...' : '🔧 Asignar Herramienta'}
               </button>
             </form>
@@ -657,20 +668,28 @@ export const InventoryModule: React.FC = () => {
                 <h3 className="font-bold text-gray-800">Detalle de Estanterías</h3>
               </div>
               {shelfList.length > 0 ? (
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                    <tr><th className="px-4 py-3">Código</th><th className="px-4 py-3">Nombre</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3 text-center">Posiciones</th><th className="px-4 py-3 text-center">Ítems</th><th className="px-4 py-3">Notas</th><th className="px-4 py-3 text-center">Acciones</th></tr>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Nombre</th>
+                      <th>Tipo</th>
+                      <th className="text-center">Posiciones</th>
+                      <th className="text-center">Ítems</th>
+                      <th>Notas</th>
+                      <th className="text-center">Acciones</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody>
                     {shelfList.map(s => (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="font-bold font-mono">{s.code}</span></div></td>
-                        <td className="px-4 py-3 font-medium">{s.name}</td>
-                        <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
-                        <td className="px-4 py-3 text-center font-mono">{s.rows_count} × {s.columns_count}</td>
-                        <td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">{s.notes || '—'}</td>
-                        <td className="px-4 py-3 text-center">
+                      <tr key={s.id}>
+                        <td><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="font-bold font-mono">{s.code}</span></div></td>
+                        <td className="font-medium">{s.name}</td>
+                        <td><span className="badge badge-neutral">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
+                        <td className="text-center font-mono">{s.rows_count} × {s.columns_count}</td>
+                        <td className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
+                        <td className="text-gray-400 text-xs">{s.notes || '—'}</td>
+                        <td className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver estantería"><Search size={14} className="text-gray-600" /></button>
                             <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
@@ -711,7 +730,7 @@ export const InventoryModule: React.FC = () => {
                       <div className="flex gap-2 mt-1">{SHELF_COLORS.map(c => <button key={c} type="button" onClick={() => setShelfForm({ ...shelfForm, color: c })} className={`w-7 h-7 rounded-full border-2 transition-all ${shelfForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />)}</div>
                     </div>
                     <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={shelfForm.notes} onChange={e => setShelfForm({ ...shelfForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción del contenido..." /></div>
-                    <button type="submit" disabled={createShelf.isPending || updateShelf.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+                    <button type="submit" disabled={createShelf.isPending || updateShelf.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                       {(createShelf.isPending || updateShelf.isPending) ? 'Guardando...' : editingShelf ? '💾 Guardar Cambios' : '✅ Crear Estantería'}
                     </button>
                   </form>
@@ -755,8 +774,8 @@ export const InventoryModule: React.FC = () => {
                 );
               })()}
               <div className="flex gap-2">
-                {assignShelfItem.shelf_id && <button type="button" onClick={async () => { await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: null, shelf_position: null } as any); setAssignShelfItem(null); }} className="flex-1 bg-red-100 text-red-700 py-3 rounded-lg font-bold text-sm hover:bg-red-200 transition-all">Quitar ubicación</button>}
-                <button type="submit" disabled={updateItem.isPending} className="flex-1 bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+                {assignShelfItem.shelf_id && <button type="button" onClick={async () => { await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: null, shelf_position: null } as any); setAssignShelfItem(null); }} className="badge badge-danger">Quitar ubicación</button>}
+                <button type="submit" disabled={updateItem.isPending} className="btn-primary >
                   {updateItem.isPending ? 'Guardando...' : '📍 Asignar Ubicación'}
                 </button>
               </div>
@@ -817,7 +836,7 @@ export const InventoryModule: React.FC = () => {
                         </div>
                         <div className="text-right shrink-0 ml-2">
                           <span className="font-mono font-bold text-orange-700">{qty} {item.unit}</span>
-                          {item.current_stock === 0 && <span className="ml-1 px-1 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-bold">SIN STOCK</span>}
+                          {item.current_stock === 0 && <span className="badge badge-danger">SIN STOCK</span>}
                         </div>
                       </div>
                     );

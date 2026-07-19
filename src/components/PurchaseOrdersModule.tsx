@@ -9,14 +9,14 @@ import type { PurchaseOrder } from '../lib/types';
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 const PO_STATUSES: Record<string, { label: string; color: string }> = {
-  borrador: { label: 'Borrador', color: 'bg-gray-100 text-gray-700' },
-  pendiente_aprobacion: { label: 'Pend. Aprobación', color: 'bg-yellow-100 text-yellow-700' },
-  aprobada: { label: 'Aprobada', color: 'bg-blue-100 text-blue-700' },
-  emitida: { label: 'Emitida', color: 'bg-ecar-blueLight text-ecar-blue' },
-  entregada_parcial: { label: 'Entrega Parcial', color: 'bg-orange-100 text-orange-700' },
-  entregada: { label: 'Entregada', color: 'bg-green-100 text-green-700' },
-  cerrada: { label: 'Cerrada', color: 'bg-emerald-100 text-emerald-700' },
-  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-700' },
+  borrador: { label: 'Borrador', color: 'badge-neutral' },
+  pendiente_aprobacion: { label: 'Pend. Aprobación', color: 'badge-warning' },
+  aprobada: { label: 'Aprobada', color: 'badge-info' },
+  emitida: { label: 'Emitida', color: 'badge-pending' },
+  entregada_parcial: { label: 'Entrega Parcial', color: 'badge-warning' },
+  entregada: { label: 'Entregada', color: 'badge-success' },
+  cerrada: { label: 'Cerrada', color: 'badge-success' },
+  cancelada: { label: 'Cancelada', color: 'badge-danger' },
 };
 
 const ORDER_TYPES: Record<string, string> = {
@@ -160,11 +160,11 @@ export const PurchaseOrdersModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border-l-4 border-ecar-blue rounded-xl p-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><FileSignature size={120} /></div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><FileSignature size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><FileSignature size={24} className="text-ecar-blue" /> Órdenes de Compra / Trabajo</h3>
-          <p className="text-gray-500 text-sm mt-1">Gerencia de Compras — Doc PR-GC-01</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><FileSignature size={24} /> Órdenes de Compra / Trabajo</h3>
+          <p className="text-ecar-blueLight text-sm mt-1">Gerencia de Compras — Doc PR-GC-01</p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export const PurchaseOrdersModule: React.FC = () => {
           { label: 'Monto Abierto', value: fmt(stats.montoTotal), icon: <DollarSign size={16} />, color: 'text-emerald-600' },
           { label: 'Urgentes', value: stats.urgentes, icon: <AlertTriangle size={16} />, color: 'text-red-600' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div key={kpi.label} className="light-card p-4">
             <div className={`flex items-center gap-1.5 text-xs font-medium ${kpi.color} mb-1`}>{kpi.icon} {kpi.label}</div>
             <div className="text-xl font-bold text-gray-800">{kpi.value}</div>
           </div>
@@ -197,7 +197,7 @@ export const PurchaseOrdersModule: React.FC = () => {
             {Object.entries(PO_STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
           <button onClick={() => { resetForm(); setSelectedPO(null); setForm(f => ({ ...f, po_number: nextPONumber })); setShowForm(true); }}
-            className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
+            className="btn-primary px-4 py-2 text-sm flex items-center gap-2">
             <Plus size={16} /> Nueva OC / OT
           </button>
         </div>
@@ -205,43 +205,43 @@ export const PurchaseOrdersModule: React.FC = () => {
 
       {/* Table */}
       <div className="light-card overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">OC #</th>
-              <th className="px-4 py-3">Proveedor</th>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Proyecto</th>
-              <th className="px-4 py-3 text-center">Estado</th>
-              <th className="px-4 py-3 text-right">Monto</th>
-              <th className="px-4 py-3 text-center">Acciones</th>
+              <th>OC #</th>
+              <th>Proveedor</th>
+              <th>Tipo</th>
+              <th>Proyecto</th>
+              <th className="text-center">Estado</th>
+              <th className="text-right">Monto</th>
+              <th className="text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {filtered.map(po => (
-              <tr key={po.id} className={`hover:bg-gray-50 ${po.urgency ? 'border-l-4 border-l-red-500' : ''}`}>
-                <td className="px-4 py-3 font-mono font-bold text-gray-800">
+              <tr key={po.id} className={po.urgency ? 'border-l-4 border-l-red-500' : ''}>
+                <td className="font-mono font-bold text-gray-800">
                   <div className="flex items-center gap-1.5">
                     {po.urgency && <AlertTriangle size={14} className="text-red-500" />}
                     {po.po_number}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-gray-700">{po.supplier_name}</td>
-                <td className="px-4 py-3 text-xs text-gray-600">{ORDER_TYPES[po.order_type] || po.order_type}</td>
-                <td className="px-4 py-3 text-xs text-gray-500">{po.project?.name || '—'}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${PO_STATUSES[po.status]?.color || 'bg-gray-100'}`}>
+                <td className="text-gray-700">{po.supplier_name}</td>
+                <td className="text-xs text-gray-600">{ORDER_TYPES[po.order_type] || po.order_type}</td>
+                <td className="text-xs text-gray-500">{po.project?.name || '—'}</td>
+                <td className="text-center">
+                  <span className={`badge ${PO_STATUSES[po.status]?.color || 'badge-neutral'}`}>
                     {PO_STATUSES[po.status]?.label || po.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(po.total_amount)}</td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-right font-mono font-bold text-gray-800">{fmt(po.total_amount)}</td>
+                <td className="text-center">
                   <button onClick={() => openEdit(po)} className="text-ecar-blue hover:text-ecar-blueDark p-1"><Eye size={16} /></button>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+              <tr><td colSpan={7} className="text-center text-gray-400">
                 <Package size={48} className="mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No hay órdenes de compra</p>
                 <p className="text-sm">Hacé clic en "Nueva OC / OT" para emitir una.</p>
@@ -433,7 +433,7 @@ export const PurchaseOrdersModule: React.FC = () => {
                 <div className="flex gap-2">
                   <button onClick={() => setShowForm(false)} className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold text-sm transition-all">Cancelar</button>
                   <button onClick={handleSubmit} disabled={createPO.isPending || updatePO.isPending}
-                    className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md transition-all disabled:opacity-50">
+                    className="btn-primary px-6 py-2 text-sm flex items-center gap-2">
                     {createPO.isPending || updatePO.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando</> : <><Save size={16} /> Guardar OC</>}
                   </button>
                 </div>

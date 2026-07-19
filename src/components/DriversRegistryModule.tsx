@@ -54,17 +54,17 @@ export const DriversRegistryModule: React.FC = () => {
           <h3 className="font-bold text-gray-800">Ranking y Perfiles de Choferes</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Chofer</th>
-                <th className="px-4 py-3 text-center">Carnet (Venc.)</th>
-                <th className="px-4 py-3 text-center">Safety Score</th>
-                <th className="px-4 py-3 text-center">Eficiencia</th>
-                <th className="px-4 py-3 text-center">Alertas</th>
+                <th >Chofer</th>
+                <th className="text-center">Carnet (Venc.)</th>
+                <th className="text-center">Safety Score</th>
+                <th className="text-center">Eficiencia</th>
+                <th className="text-center">Alertas</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {drivers.map((driver, i) => {
                 const kpis = driverKpis.find(k => k.driver_name === driver.full_name) || { safety_score: 100, efficiency_km_l: 0 };
                 const safetyScore = kpis.safety_score;
@@ -88,27 +88,27 @@ export const DriversRegistryModule: React.FC = () => {
 
               return (
                 <tr key={driver.id || i} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                  <td >
                     <div className="font-bold text-gray-800">{driver.full_name || `Chofer ${i + 1}`}</div>
                     <div className="text-xs text-gray-500">{driver.dni ? `DNI: ${driver.dni}` : ''}</div>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center">
                     <div className="font-bold">{driver.driver_license_category || 'N/A'}</div>
                     <div className={`text-xs ${isExpired ? 'text-red-500 font-bold' : isExpiringSoon ? 'text-yellow-600 font-bold' : 'text-gray-500'}`}>
                       {driver.driver_license_expiry || 'Sin fecha'}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${safetyScore >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                       {safetyScore}/100
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center font-mono text-gray-600">{efficiency} Km/L</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center font-mono text-gray-600">{efficiency} Km/L</td>
+                  <td className="text-center">
                     <div className="flex flex-col items-center gap-1">
-                      {isExpired && <span className="flex items-center gap-1 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Vencido</span>}
-                      {isExpiringSoon && <span className="flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Vence pronto</span>}
-                      {safetyScore < 80 && <span className="flex items-center gap-1 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full"><AlertTriangle size={12}/> Peligro</span>}
+                      {isExpired && <span className="badge badge-danger"><AlertTriangle size={12}/> Vencido</span>}
+                      {isExpiringSoon && <span className="badge badge-warning"><AlertTriangle size={12}/> Vence pronto</span>}
+                      {safetyScore < 80 && <span className="badge badge-danger"><AlertTriangle size={12}/> Peligro</span>}
                       {!isExpired && !isExpiringSoon && safetyScore >= 80 && <span className="text-gray-300">-</span>}
                     </div>
                   </td>
@@ -117,7 +117,7 @@ export const DriversRegistryModule: React.FC = () => {
             })}
             {drivers.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-400">No hay choferes para mostrar.</td>
+                <td colSpan={5} className="text-center text-gray-400">No hay choferes para mostrar.</td>
               </tr>
             )}
           </tbody>

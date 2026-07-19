@@ -192,7 +192,7 @@ export const BarcodeLabel: React.FC<BarcodeLabelProps> = ({ item, onClose }) => 
           </button>
           <button
             onClick={handlePrint}
-            className="flex-1 py-2.5 rounded-lg bg-ecar-blue text-white font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md flex items-center justify-center gap-2"
+            className="btn-primary 
           >
             <Printer size={16} />
             Imprimir Etiqueta

@@ -288,7 +288,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
               <div className="pt-4">
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-6 py-2 bg-yellow-100 text-yellow-700 font-bold rounded-lg hover:bg-yellow-200"
+                  className="badge badge-warning"
                 >
                   Nuevo reporte
                 </button>
@@ -310,7 +310,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
             )}
             
             {/* Vehicle Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex items-center gap-4">
+            <div className="light-card p-4">
               <div className="w-14 h-14 rounded-xl bg-ecar-blueLight flex items-center justify-center text-3xl shrink-0">
                 {VEHICLE_ICON[vehicle.vehicle_type] || '🚐'}
               </div>

@@ -20,7 +20,7 @@ import { CarpetaObraButton } from './CarpetaObraButton';
 
 const CLIMA_ICONS: Record<string, React.ElementType> = { despejado: Sun, nublado: Cloud, lluvia: CloudRain, tormenta: CloudLightning, nieve: Snowflake, ventoso: Wind };
 const CLIMA_LABELS: Record<string, string> = { despejado: 'Despejado', nublado: 'Nublado', lluvia: 'Lluvia', tormenta: 'Tormenta', nieve: 'Nieve', ventoso: 'Ventoso' };
-const ESTADO_COLORS: Record<string, string> = { borrador: 'bg-gray-100 text-gray-600', enviado: 'bg-yellow-100 text-yellow-700', aprobado: 'bg-green-100 text-green-700', rechazado: 'bg-red-100 text-red-700' };
+const ESTADO_COLORS: Record<string, string> = { borrador: 'badge-neutral', enviado: 'badge-warning', aprobado: 'badge-success', rechazado: 'badge-danger' };
 
 type DetailTab = 'actividad' | 'fotos' | 'personal' | 'materiales' | 'equipos';
 type PendingPhoto = { file: File; preview: string; tipo: 'avance' | 'entrega' | 'incidente' | 'otro' };
@@ -46,7 +46,7 @@ const EntregasProgramadas: React.FC<{ projectId: string }> = ({ projectId }) => 
               <p className="text-xs text-gray-500 line-clamp-1">{o.items?.map(i => `${i.quantity} ${i.unit} ${i.description}`).join(', ')}</p>
             </div>
             <div className="text-right shrink-0">
-              <span className="bg-ecar-blueLight text-ecar-blue px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap">
+              <span className="badge badge-info">
                 Llega: {new Date(o.delivery_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -119,12 +119,15 @@ export const FieldModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark via-ecar-blue to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-ecar-blueLight to-ecar-blueLight" />
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><ClipboardList size={24} /> Parte Diario de Obra</h3>
-          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2">
+            <ClipboardList size={24} /> Parte Diario de Obra
+          </h3>
+          <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
+            Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales
+          </p>
         </div>
       </div>
 
@@ -144,7 +147,7 @@ export const FieldModule: React.FC = () => {
       </div>
 
       {/* New Button */}
-      <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue text-white px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg hover:bg-ecar-blueDark hover:shadow-xl transition-all w-full md:w-auto justify-center">
+      <button onClick={() => setShowForm(!showForm)} className="btn-primary px-5 py-3 w-full md:w-auto flex items-center justify-center gap-2">
         {showForm ? <><X size={18} /> Cancelar</> : <><Plus size={18} /> Nuevo Parte Diario</>}
       </button>
 
@@ -263,7 +266,7 @@ export const FieldModule: React.FC = () => {
             <p className="text-xs text-ecar-blue"><strong>Tip:</strong> Al crear el parte podrás agregar <strong>personal presente</strong>, <strong>solicitar materiales</strong> del pañol y registrar <strong>equipos/maquinaria</strong> usados.</p>
           </div>
 
-          <button onClick={handleSubmit} disabled={createParte.isPending || !form.obra_id || !form.trabajo_realizado} className="w-full md:w-auto bg-ecar-blue text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all disabled:opacity-50 justify-center">
+          <button onClick={handleSubmit} disabled={createParte.isPending || !form.obra_id || !form.trabajo_realizado} className="btn-primary w-full md:w-auto px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50">
             {createParte.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Crear Parte y Continuar
           </button>
         </div>
@@ -292,7 +295,7 @@ export const FieldModule: React.FC = () => {
                   <div className="flex items-center gap-2 shrink-0">
                     {p.avance_porcentual > 0 && <span className="text-xs font-mono font-bold text-ecar-blue bg-slate-50 px-2 py-0.5 rounded-full">{p.avance_porcentual}%</span>}
                     <span className="font-mono text-xs text-gray-500">{p.horas_trabajadas}hs</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${ESTADO_COLORS[p.estado]}`}>{p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}</span>
+                    <span className={`badge ${ESTADO_COLORS[p.estado]}`}>{p.estado.charAt(0).toUpperCase() + p.estado.slice(1)}</span>
                     <ChevronDown size={16} className="text-gray-300 group-hover:text-ecar-blue transition-colors" />
                   </div>
                 </button>
@@ -345,14 +348,14 @@ const ParteDetailView: React.FC<{
           </p>
         </div>
         <div className="relative z-10 flex items-center gap-2 mt-3">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${ESTADO_COLORS[parte.estado]}`}>{parte.estado.charAt(0).toUpperCase() + parte.estado.slice(1)}</span>
+          <span className={`badge ${ESTADO_COLORS[parte.estado]}`}>{parte.estado.charAt(0).toUpperCase() + parte.estado.slice(1)}</span>
           {parte.estado === 'borrador' && (
-            <button onClick={() => onUpdate.mutate({ id: parte.id, estado: 'enviado' })} className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-yellow-600 transition-all flex items-center gap-1">
+            <button onClick={() => onUpdate.mutate({ id: parte.id, estado: 'enviado' })} className="badge badge-warning cursor-pointer hover:bg-yellow-200 gap-1">
               <Send size={12} /> Enviar para Aprobación
             </button>
           )}
           {parte.estado === 'enviado' && (
-            <button onClick={() => onUpdate.mutate({ id: parte.id, estado: 'aprobado', aprobado_en: new Date().toISOString() })} className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-green-700 transition-all flex items-center gap-1">
+            <button onClick={() => onUpdate.mutate({ id: parte.id, estado: 'aprobado', aprobado_en: new Date().toISOString() })} className="badge badge-success cursor-pointer hover:bg-green-200 gap-1">
               <Check size={12} /> Aprobar
             </button>
           )}
@@ -432,7 +435,7 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
     e.target.value = '';
   };
 
-  const TIPO_COLORS: Record<string, string> = { avance: 'bg-ecar-blueLight text-ecar-blue', entrega: 'bg-green-100 text-green-700', incidente: 'bg-red-100 text-red-700', otro: 'bg-gray-100 text-gray-600' };
+  const TIPO_COLORS: Record<string, string> = { avance: 'badge-info', entrega: 'badge-success', incidente: 'badge-danger', otro: 'badge-neutral' };
 
   return (
     <div className="space-y-4">
@@ -459,7 +462,7 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
           {fotos.map(f => (
             <div key={f.id} className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
               <img src={f.foto_url} alt={f.descripcion || 'Foto'} className="w-full h-40 object-cover" loading="lazy" />
-              <div className="absolute top-2 left-2"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${TIPO_COLORS[f.tipo]}`}>{f.tipo}</span></div>
+              <div className="absolute top-2 left-2"><span className={`badge ${TIPO_COLORS[f.tipo]}`}>{f.tipo}</span></div>
               {isBorrador && (
                 <button onClick={() => deleteFoto.mutate(f.id)} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
               )}
@@ -468,7 +471,7 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+        <div className="light-card p-8">
           <ImageIcon size={48} className="mx-auto mb-3 opacity-30" />
           <p className="font-medium">Sin fotos</p>
           <p className="text-sm">Subí fotos del avance de obra usando el botón de arriba.</p>
@@ -515,7 +518,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
             <div><label className="text-xs font-bold text-gray-500">Horas</label><input type="number" value={horas} onChange={e => setHoras(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tarea} onChange={e => setTarea(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Opcional" /></div>
           </div>
-          <button onClick={handleAdd} disabled={!selEmp || createPersonal.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={handleAdd} disabled={!selEmp || createPersonal.isPending} className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 disabled:opacity-50">
             <Plus size={16} /> Agregar
           </button>
         </div>
@@ -544,7 +547,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+        <div className="light-card p-8">
           <Users size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin personal registrado</p>
         </div>
       )}
@@ -576,8 +579,8 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
     setItemId(''); setDesc(''); setCant(''); setUnidad('unidad'); setUrgencia('normal');
   };
 
-  const URG_COLORS: Record<string, string> = { baja: 'bg-gray-100 text-gray-600', normal: 'bg-blue-100 text-blue-700', urgente: 'bg-red-100 text-red-700' };
-  const EST_COLORS: Record<string, string> = { pendiente: 'bg-yellow-100 text-yellow-700', aprobada: 'bg-green-100 text-green-700', rechazada: 'bg-red-100 text-red-700', entregada: 'bg-blue-100 text-blue-700' };
+  const URG_COLORS: Record<string, string> = { baja: 'badge-neutral', normal: 'badge-info', urgente: 'badge-danger' };
+  const EST_COLORS: Record<string, string> = { pendiente: 'badge-warning', aprobada: 'badge-success', rechazada: 'badge-danger', entregada: 'badge-info' };
 
   return (
     <div className="space-y-4">
@@ -598,7 +601,7 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
               </select>
             </div>
           </div>
-          <button onClick={handleAdd} disabled={!desc || !cant || createSol.isPending} className="w-full bg-orange-600 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={handleAdd} disabled={!desc || !cant || createSol.isPending} className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 disabled:opacity-50">
             <Plus size={16} /> Solicitar Material
           </button>
         </div>
@@ -619,12 +622,12 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
                   <p className="text-sm font-medium text-gray-800 truncate">{s.descripcion}</p>
                   <p className="text-xs text-gray-500">{s.cantidad} {s.unidad}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${URG_COLORS[s.urgencia]}`}>{s.urgencia}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${EST_COLORS[s.estado]}`}>{s.estado}</span>
+                <span className={`badge ${URG_COLORS[s.urgencia]}`}>{s.urgencia}</span>
+                <span className={`badge ${EST_COLORS[s.estado]}`}>{s.estado}</span>
                 {s.estado === 'pendiente' && !isBorrador && (
                   <div className="flex gap-1">
-                    <button onClick={() => updateSol.mutate({ id: s.id, estado: 'aprobada', aprobada_en: new Date().toISOString() })} className="p-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"><Check size={14} /></button>
-                    <button onClick={() => updateSol.mutate({ id: s.id, estado: 'rechazada' })} className="p-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"><X size={14} /></button>
+                    <button onClick={() => updateSol.mutate({ id: s.id, estado: 'aprobada', aprobada_en: new Date().toISOString() })} className="badge badge-success"><Check size={14} /></button>
+                    <button onClick={() => updateSol.mutate({ id: s.id, estado: 'rechazada' })} className="badge badge-danger"><X size={14} /></button>
                   </div>
                 )}
               </div>
@@ -632,7 +635,7 @@ const MaterialesTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ par
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+        <div className="light-card p-8">
           <Package size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin solicitudes de materiales</p>
           <p className="text-sm">Solicitá materiales directamente desde la obra.</p>
         </div>
@@ -673,7 +676,7 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
             <div><label className="text-xs font-bold text-gray-500">Horas de Uso</label><input type="number" value={horasUso} onChange={e => setHorasUso(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono" /></div>
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tareaEq} onChange={e => setTareaEq(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Qué hizo el equipo" /></div>
           </div>
-          <button onClick={handleAdd} disabled={!vehicleId || createEquipo.isPending} className="w-full bg-slate-700 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={handleAdd} disabled={!vehicleId || createEquipo.isPending} className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 disabled:opacity-50">
             <Plus size={16} /> Agregar Equipo
           </button>
         </div>
@@ -702,7 +705,7 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+        <div className="light-card p-8">
           <Truck size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin equipos registrados</p>
         </div>
       )}
@@ -714,16 +717,16 @@ const EquiposTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteI
 /*              ORDENES DE TRABAJO INTERNA (OTI)                      */
 /* ═══════════════════════════════════════════════════════════════════ */
 const PRIO_LABELS: Record<string, { label: string; color: string }> = {
-  baja: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
-  normal: { label: 'Normal', color: 'bg-blue-100 text-blue-700' },
-  alta: { label: 'Alta', color: 'bg-orange-100 text-orange-700' },
-  urgente: { label: 'Urgente', color: 'bg-red-100 text-red-700' },
+  baja: { label: 'Baja', color: 'badge-neutral' },
+  normal: { label: 'Normal', color: 'badge-info' },
+  alta: { label: 'Alta', color: 'badge-warning' },
+  urgente: { label: 'Urgente', color: 'badge-danger' },
 };
 const OTI_STATUS: Record<string, { label: string; color: string }> = {
-  pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
-  en_ejecucion: { label: 'En Ejecución', color: 'bg-blue-100 text-blue-700' },
-  completada: { label: 'Completada', color: 'bg-green-100 text-green-700' },
-  cancelada: { label: 'Cancelada', color: 'bg-red-100 text-red-700' },
+  pendiente: { label: 'Pendiente', color: 'badge-warning' },
+  en_ejecucion: { label: 'En Ejecución', color: 'badge-info' },
+  completada: { label: 'Completada', color: 'badge-success' },
+  cancelada: { label: 'Cancelada', color: 'badge-danger' },
 };
 
 const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
@@ -770,9 +773,9 @@ const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
           <p className="text-xs text-gray-500 mt-0.5">PR-GO-01 — Define qué se ejecuta, quién responde y con qué criterio</p>
         </div>
         <div className="flex items-center gap-2">
-          {pendingCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">{pendingCount} pendientes</span>}
-          {activeCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">{activeCount} en ejecución</span>}
-          <button onClick={() => setShowNew(!showNew)} className="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 shadow-sm hover:bg-amber-700 transition-all">
+          {pendingCount > 0 && <span className="badge badge-warning">{pendingCount} pendientes</span>}
+          {activeCount > 0 && <span className="badge badge-info">{activeCount} en ejecución</span>}
+          <button onClick={() => setShowNew(!showNew)} className="btn-primary px-3 py-1.5 flex items-center gap-1">
             {showNew ? <><X size={14} /> Cancelar</> : <><Plus size={14} /> Nueva OTI</>}
           </button>
         </div>
@@ -791,7 +794,7 @@ const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
             <div><label className="text-xs font-bold text-gray-500">Vencimiento</label><input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500">Descripción / Criterio de ejecución</label><textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={2} placeholder="Detallá las instrucciones técnicas, materiales a usar, condiciones de calidad y seguridad..." /></div>
-          <button type="submit" disabled={createWO.isPending || !form.title} className="bg-amber-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-amber-700 transition-all disabled:opacity-50">
+          <button type="submit" disabled={createWO.isPending || !form.title} className="btn-primary px-5 py-2 disabled:opacity-50">
             {createWO.isPending ? 'Creando...' : '📋 Crear Orden de Trabajo'}
           </button>
         </form>
@@ -823,8 +826,8 @@ const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm text-gray-800">{wo.title}</span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${stat.color}`}>{stat.label}</span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${prio.color}`}>{prio.label}</span>
+                      <span className={`badge ${stat.color}`}>{stat.label}</span>
+                      <span className={`badge ${prio.color}`}>{prio.label}</span>
                     </div>
                     {wo.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{wo.description}</p>}
                     <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-400">
@@ -835,10 +838,10 @@ const OrdenesTrabajoPanel: React.FC<{ projects: any[] }> = ({ projects }) => {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     {wo.status === 'pendiente' && (
-                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'en_ejecucion' })} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-[10px] font-bold hover:bg-blue-200">▶ Iniciar</button>
+                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'en_ejecucion' })} className="badge badge-info">▶ Iniciar</button>
                     )}
                     {wo.status === 'en_ejecucion' && (
-                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'completada', completed_at: new Date().toISOString() })} className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-[10px] font-bold hover:bg-green-200">✅ Completar</button>
+                      <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'completada', completed_at: new Date().toISOString() })} className="badge badge-success">✅ Completar</button>
                     )}
                     {['pendiente', 'en_ejecucion'].includes(wo.status) && (
                       <button onClick={() => updateWO.mutateAsync({ id: wo.id, status: 'cancelada' })} className="px-2 py-1 bg-red-50 text-red-600 rounded-md text-[10px] font-bold hover:bg-red-100">✕</button>

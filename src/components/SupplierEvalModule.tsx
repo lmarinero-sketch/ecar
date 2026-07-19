@@ -129,7 +129,7 @@ export const SupplierEvalModule: React.FC = () => {
           {supplierSummary.slice(0, 4).map(s => {
             const rec = RECOMMENDATIONS[s.lastRec];
             return (
-              <div key={s.name} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div key={s.name} className="light-card p-4">
                 <div className="font-bold text-sm text-gray-800 truncate">{s.name}</div>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex items-center gap-0.5">
@@ -154,43 +154,43 @@ export const SupplierEvalModule: React.FC = () => {
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
+          className="btn-primary">
           <Plus size={16} /> Nueva Evaluación
         </button>
       </div>
 
       {/* Table */}
       <div className="light-card overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Proveedor</th>
-              <th className="px-4 py-3">Período</th>
-              <th className="px-4 py-3 text-center">Entrega</th>
-              <th className="px-4 py-3 text-center">Calidad</th>
-              <th className="px-4 py-3 text-center">Precio</th>
-              <th className="px-4 py-3 text-center">Docs</th>
-              <th className="px-4 py-3 text-center">Respuesta</th>
-              <th className="px-4 py-3 text-center">General</th>
-              <th className="px-4 py-3 text-center">Recomendación</th>
+              <th >Proveedor</th>
+              <th >Período</th>
+              <th className="text-center">Entrega</th>
+              <th className="text-center">Calidad</th>
+              <th className="text-center">Precio</th>
+              <th className="text-center">Docs</th>
+              <th className="text-center">Respuesta</th>
+              <th className="text-center">General</th>
+              <th className="text-center">Recomendación</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {filtered.map(ev => {
               const rec = RECOMMENDATIONS[ev.recommendation];
               return (
                 <tr key={ev.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{ev.supplier_name}</td>
-                  <td className="px-4 py-3 text-gray-600 font-mono text-xs">{ev.period}</td>
+                  <td className="font-medium text-gray-800">{ev.supplier_name}</td>
+                  <td className="text-gray-600 font-mono text-xs">{ev.period}</td>
                   {(['score_delivery', 'score_quality', 'score_price', 'score_documentation', 'score_response'] as const).map(key => (
-                    <td key={key} className="px-4 py-3 text-center">
+                    <td key={key} className="text-center">
                       <div className="flex justify-center">
                         {[1, 2, 3, 4, 5].map(n => <Star key={n} size={10} className={n <= ev[key] ? 'text-amber-400' : 'text-gray-200'} fill={n <= ev[key] ? 'currentColor' : 'none'} />)}
                       </div>
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-center font-bold text-gray-800">{ev.overall_score}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center font-bold text-gray-800">{ev.overall_score}</td>
+                  <td className="text-center">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1 ${rec?.color}`}>
                       {rec?.icon} {rec?.label}
                     </span>
@@ -199,7 +199,7 @@ export const SupplierEvalModule: React.FC = () => {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={9} className="text-center py-16 text-gray-400">
+              <tr><td colSpan={9} className="text-center text-gray-400">
                 <TrendingUp size={48} className="mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No hay evaluaciones</p>
                 <p className="text-sm">Hacé clic en "Nueva Evaluación" para calificar un proveedor.</p>
@@ -292,7 +292,7 @@ export const SupplierEvalModule: React.FC = () => {
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex items-center justify-end gap-3 rounded-b-2xl">
               <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
               <button onClick={handleSubmit} disabled={!form.supplier_name || createEval.isPending}
-                className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue disabled:opacity-50 transition-all">
+                className="btn-primary">
                 <Save size={16} /> Registrar Evaluación
               </button>
             </div>

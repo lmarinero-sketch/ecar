@@ -68,7 +68,7 @@ export const LegalEntitiesPanel: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-colors flex items-center gap-2"
+          className="btn-primary"
         >
           {showAdd ? 'Cancelar' : <><Plus size={16} /> Nueva Razón Social</>}
         </button>
@@ -140,7 +140,7 @@ export const LegalEntitiesPanel: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={!form.name || !form.cuit || isUploading}
-              className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue disabled:opacity-50"
+              className="btn-primary"
             >
               {isUploading ? 'Guardando...' : 'Guardar Razón Social'}
             </button>

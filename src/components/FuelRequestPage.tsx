@@ -138,7 +138,7 @@ export const FuelRequestPage: React.FC = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up border border-gray-100">
+        <div className="light-card ">
           
           <div className="p-8 space-y-6">
             <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-2">

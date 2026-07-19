@@ -509,7 +509,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 }
                 setPasswordLoading(false);
               }}
-              className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm hover:bg-ecar-blueDark transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="btn-primary w-full py-2.5"
             >
               {passwordLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

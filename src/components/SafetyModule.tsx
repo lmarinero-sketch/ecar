@@ -331,8 +331,8 @@ const EmployeeCombobox: React.FC<{
 };
 
 const TIPO_LABELS: Record<string, string> = { accidente: 'Accidente', incidente: 'Incidente', cuasi_accidente: 'Cuasi-accidente', enfermedad_laboral: 'Enfermedad Laboral' };
-const GRAVEDAD_COLORS: Record<string, string> = { leve: 'bg-green-100 text-green-700', moderado: 'bg-yellow-100 text-yellow-700', grave: 'bg-orange-100 text-orange-700', fatal: 'bg-red-100 text-red-700' };
-const ESTADO_COLORS: Record<string, string> = { abierto: 'bg-red-100 text-red-700', en_investigacion: 'bg-yellow-100 text-yellow-700', cerrado: 'bg-green-100 text-green-700' };
+const GRAVEDAD_COLORS: Record<string, string> = { leve: 'badge badge-success', moderado: 'badge badge-warning', grave: 'badge badge-danger', fatal: 'badge badge-danger' };
+const ESTADO_COLORS: Record<string, string> = { abierto: 'badge badge-danger', en_investigacion: 'badge badge-warning', cerrado: 'badge badge-success' };
 const CATEGORIA_ICONS: Record<string, React.ElementType> = { epp: HardHat, electrico: Zap, altura: Mountain, vehicular: Car, incendio: Flame, orden_limpieza: Eye, senalizacion: AlertTriangle, excavacion: ArrowDown, otros: Activity };
 const RIESGO_COLOR = (score: number) => score >= 15 ? 'bg-red-500' : score >= 10 ? 'bg-orange-500' : score >= 5 ? 'bg-yellow-500' : 'bg-green-500';
 
@@ -380,11 +380,11 @@ export const SafetyModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="clinical-module-header">
-        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><ShieldAlert size={120} /></div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><ShieldAlert size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><ShieldAlert size={24} className="text-ecar-blue" /> Seguridad e Incidentes</h3>
-          <p className="text-gray-500 text-sm mt-1">Doc PR-GO-01 §4.6 — Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><ShieldAlert size={24} /> Seguridad e Incidentes</h3>
+          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GO-01 §4.6 — Registro de incidentes, observaciones de riesgo y acciones correctivas (Res. SRT 905/2015)</p>
         </div>
       </div>
 
@@ -486,16 +486,16 @@ export const SafetyModule: React.FC = () => {
           <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Registro de Incidentes</h3></div>
           {loadingInc ? <div className="p-8 text-center"><div className="w-6 h-6 border-2 border-gray-200 border-t-red-500 rounded-full animate-spin mx-auto" /></div> :
             incidentes.length === 0 ? <div className="text-center py-16 text-gray-400"><ShieldAlert size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Sin incidentes registrados</p><p className="text-sm">¡Mantené el registro actualizado para cumplir con la SRT!</p></div> :
-            <table className="w-full text-sm text-left"><thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase"><tr><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Obra</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Gravedad</th><th className="px-4 py-3">Afectado</th><th className="px-4 py-3">Estado</th><th className="px-4 py-3">Acción</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">{incidentes.map(i => (
-                <tr key={i.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs">{new Date(i.fecha + 'T12:00:00').toLocaleDateString('es-AR')}</td>
-                  <td className="px-4 py-3 font-medium">{(i.obra as any)?.name || '–'}</td>
-                  <td className="px-4 py-3">{TIPO_LABELS[i.tipo]}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${GRAVEDAD_COLORS[i.gravedad]}`}>{i.gravedad}</span></td>
-                  <td className="px-4 py-3">{i.persona_afectada || '–'}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${ESTADO_COLORS[i.estado]}`}>{i.estado.replace('_', ' ')}</span></td>
-                  <td className="px-4 py-3">{i.estado === 'abierto' && <button onClick={() => updateIncidente.mutate({ id: i.id, estado: 'cerrado' })} className="text-xs text-green-600 font-bold hover:underline">Cerrar</button>}</td>
+            <table className="data-table"><thead><tr><th>Fecha</th><th>Obra</th><th>Tipo</th><th>Gravedad</th><th>Afectado</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody>{incidentes.map(i => (
+                <tr key={i.id}>
+                  <td className="font-mono text-xs">{new Date(i.fecha + 'T12:00:00').toLocaleDateString('es-AR')}</td>
+                  <td className="font-medium">{(i.obra as any)?.name || '–'}</td>
+                  <td>{TIPO_LABELS[i.tipo]}</td>
+                  <td><span className={GRAVEDAD_COLORS[i.gravedad]}>{i.gravedad}</span></td>
+                  <td>{i.persona_afectada || '–'}</td>
+                  <td><span className={ESTADO_COLORS[i.estado]}>{i.estado.replace('_', ' ')}</span></td>
+                  <td>{i.estado === 'abierto' && <button onClick={() => updateIncidente.mutate({ id: i.id, estado: 'cerrado' })} className="text-xs text-green-600 font-bold hover:underline">Cerrar</button>}</td>
                 </tr>
               ))}</tbody></table>
           }
@@ -517,7 +517,7 @@ export const SafetyModule: React.FC = () => {
                     <p className="text-sm font-bold text-gray-800 flex items-center gap-2"><CatIcon size={14} /> {o.descripcion.substring(0, 80)}</p>
                     <p className="text-xs text-gray-500">{(o.obra as any)?.name} — {o.observador} — {new Date(o.fecha + 'T12:00:00').toLocaleDateString('es-AR')}</p>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${o.estado === 'resuelta' ? 'bg-green-100 text-green-700' : o.estado === 'en_correccion' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{o.estado.replace('_', ' ')}</span>
+                  <span className={`badge ${o.estado === 'resuelta' ? 'badge-success' : o.estado === 'en_correccion' ? 'badge-warning' : 'badge-danger'}`}>{o.estado.replace('_', ' ')}</span>
                 </div>
               );
             })}</div>

@@ -126,26 +126,26 @@ export const MonthlyReportModule: React.FC = () => {
           {/* Tabla de categorías */}
           <div className="light-card overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50"><h4 className="font-bold text-gray-800">Detalle por Categoría</h4></div>
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                <tr><th className="px-4 py-3">Categoría</th><th className="px-4 py-3 text-right">Monto</th><th className="px-4 py-3 text-right">%</th></tr>
+            <table className="data-table">
+              <thead>
+                <tr><th >Categoría</th><th className="text-right">Monto</th><th className="text-right">%</th></tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {breakdownEntries.map(([key, value]) => {
                   const cat = CATEGORY_LABELS[key] || { label: key, emoji: '📌', color: 'bg-gray-400' };
                   const pct = totalBreakdown > 0 ? (value / totalBreakdown) * 100 : 0;
                   return (
                     <tr key={key} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">{cat.emoji} {cat.label}</td>
-                      <td className="px-4 py-3 text-right font-mono font-bold">{fmt(value)}</td>
-                      <td className="px-4 py-3 text-right font-mono text-gray-400">{pct.toFixed(1)}%</td>
+                      <td >{cat.emoji} {cat.label}</td>
+                      <td className="text-right font-mono font-bold">{fmt(value)}</td>
+                      <td className="text-right font-mono text-gray-400">{pct.toFixed(1)}%</td>
                     </tr>
                   );
                 })}
                 <tr className="bg-gray-50 font-bold">
-                  <td className="px-4 py-3">TOTAL</td>
-                  <td className="px-4 py-3 text-right font-mono">{fmt(totalBreakdown)}</td>
-                  <td className="px-4 py-3 text-right font-mono">100%</td>
+                  <td >TOTAL</td>
+                  <td className="text-right font-mono">{fmt(totalBreakdown)}</td>
+                  <td className="text-right font-mono">100%</td>
                 </tr>
               </tbody>
             </table>
@@ -158,29 +158,29 @@ export const MonthlyReportModule: React.FC = () => {
         <h4 className="font-bold text-gray-800 mb-4">📈 Evolución Mensual</h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <thead>
               <tr>
-                <th className="px-3 py-3 text-left">Mes</th>
-                <th className="px-3 py-3 text-right">Caja Inicio</th>
-                <th className="px-3 py-3 text-right">Ingresos</th>
-                <th className="px-3 py-3 text-right">Gastos</th>
-                <th className="px-3 py-3 text-right">Proyectado</th>
-                <th className="px-3 py-3 text-right">Real</th>
-                <th className="px-3 py-3 text-right">Desvío</th>
+                <th className="text-left">Mes</th>
+                <th className="text-right">Caja Inicio</th>
+                <th className="text-right">Ingresos</th>
+                <th className="text-right">Gastos</th>
+                <th className="text-right">Proyectado</th>
+                <th className="text-right">Real</th>
+                <th className="text-right">Desvío</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {sortedSnapshots.filter(s => (s.opening_balance || 0) > 0).map(s => {
                 const d = new Date(s.month + 'T12:00:00');
                 const dev = (s.real_closing || 0) - (s.projected_closing || 0);
                 return (
                   <tr key={s.id} className={`hover:bg-gray-50 ${s.id === snap.id ? 'bg-emerald-50' : ''}`}>
-                    <td className="px-3 py-3 font-medium">{MONTHS[d.getMonth()].slice(0, 3)} {d.getFullYear()}</td>
-                    <td className="px-3 py-3 text-right font-mono text-gray-500">{fmtM(s.opening_balance)}</td>
-                    <td className="px-3 py-3 text-right font-mono text-green-600">{fmtM((s.total_income || 0) + (s.other_income || 0))}</td>
-                    <td className="px-3 py-3 text-right font-mono text-red-600">{fmtM(s.total_expenses)}</td>
-                    <td className="px-3 py-3 text-right font-mono text-gray-500">{fmtM(s.projected_closing)}</td>
-                    <td className="px-3 py-3 text-right font-mono font-bold">{fmtM(s.real_closing)}</td>
+                    <td className="font-medium">{MONTHS[d.getMonth()].slice(0, 3)} {d.getFullYear()}</td>
+                    <td className="text-right font-mono text-gray-500">{fmtM(s.opening_balance)}</td>
+                    <td className="text-right font-mono text-green-600">{fmtM((s.total_income || 0) + (s.other_income || 0))}</td>
+                    <td className="text-right font-mono text-red-600">{fmtM(s.total_expenses)}</td>
+                    <td className="text-right font-mono text-gray-500">{fmtM(s.projected_closing)}</td>
+                    <td className="text-right font-mono font-bold">{fmtM(s.real_closing)}</td>
                     <td className={`px-3 py-3 text-right font-mono font-bold ${dev >= 0 ? 'text-green-600' : 'text-red-600'}`}>{dev >= 0 ? '+' : '-'}{fmtM(Math.abs(dev))}</td>
                   </tr>
                 );

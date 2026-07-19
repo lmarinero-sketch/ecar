@@ -377,40 +377,40 @@ export const ProjectBudgetModule: React.FC = () => {
           <h3 className="font-bold text-gray-800">Presupuestos Registrados</h3>
         </div>
         {filtered.length > 0 ? (
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Presupuesto</th>
-                <th className="px-4 py-3">Proyecto</th>
-                <th className="px-3 py-3 text-center">Tipo</th>
-                <th className="px-3 py-3 text-center">Versión</th>
-                <th className="px-3 py-3 text-center">Estado</th>
-                <th className="px-3 py-3 text-right">Total Final</th>
-                <th className="px-3 py-3 text-center">Creado por</th>
-                <th className="px-3 py-3 text-center">Fecha</th>
-                <th className="px-3 py-3 text-center">Acc.</th>
+                <th>Presupuesto</th>
+                <th>Proyecto</th>
+                <th className="text-center">Tipo</th>
+                <th className="text-center">Versión</th>
+                <th className="text-center">Estado</th>
+                <th className="text-right">Total Final</th>
+                <th className="text-center">Creado por</th>
+                <th className="text-center">Fecha</th>
+                <th className="text-center">Acc.</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map(budget => {
                 const stat = STATUS_MAP[budget.status] || STATUS_MAP.draft;
                 return (
-                  <tr key={budget.id} className="hover:bg-slate-50/30 cursor-pointer transition-colors" onClick={() => openDetail(budget.id)}>
-                    <td className="px-4 py-3 font-medium text-gray-800">
+                  <tr key={budget.id} className="cursor-pointer transition-colors" onClick={() => openDetail(budget.id)}>
+                    <td className="font-medium text-gray-800">
                       <div className="flex flex-col">
                         <span className="font-semibold">{budget.name}</span>
                         {budget.description && <span className="text-xs text-gray-500 font-normal truncate max-w-[300px]">{budget.description}</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="text-gray-600">
                       {budget.project?.name ? (<span className="flex items-center gap-1.5"><FolderOpen size={14} className="text-ecar-blue" />{budget.project.name}</span>) : budget.opportunity?.client_name ? (<span className="flex items-center gap-1.5"><Layers size={14} className="text-amber-500" />{budget.opportunity.client_name} - Oportunidad</span>) : (<span className="text-gray-400 text-xs">Sin asignar</span>)}
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="text-center">
                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                         {WORK_TYPE_LABELS[(budget as any).work_type] || 'Obra Nueva'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="text-center">
                       <div className="font-mono text-xs font-bold text-gray-600">v{budget.version}</div>
                       {(() => {
                         const chain = Object.values(budgetChains).find(c => c.some((b: any) => b.id === budget.id));
@@ -419,13 +419,13 @@ export const ProjectBudgetModule: React.FC = () => {
                         ) : null;
                       })()}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${stat.bg} ${stat.color}`}>{stat.label}</span>
+                    <td className="text-center">
+                      <span className={`badge ${budget.status === 'approved' ? 'badge-success' : budget.status === 'revision' ? 'badge-warning' : budget.status === 'closed' ? 'badge-neutral' : 'badge-info'}`}>{stat.label}</span>
                     </td>
-                    <td className="px-3 py-3 text-right font-mono font-bold text-gray-800">{fmt(budget.total_final_ars)}</td>
-                    <td className="px-3 py-3 text-center text-xs text-gray-500">{budget.created_by || '—'}</td>
-                    <td className="px-3 py-3 text-center text-xs text-gray-500">{fmtDate(budget.created_at)}</td>
-                    <td className="px-3 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <td className="text-right font-mono font-bold text-gray-800">{fmt(budget.total_final_ars)}</td>
+                    <td className="text-center text-xs text-gray-500">{budget.created_by || '—'}</td>
+                    <td className="text-center text-xs text-gray-500">{fmtDate(budget.created_at)}</td>
+                    <td className="text-center" onClick={e => e.stopPropagation()}>
                       <button onClick={(e) => handleDuplicate(budget.id, e)} title="Duplicar como nueva versión"
                         className="text-gray-400 hover:text-ecar-blue transition-colors p-1 rounded-lg hover:bg-slate-50">
                         <Copy size={14} />
@@ -808,43 +808,43 @@ const BudgetDetailView: React.FC<{
     if (isEditing && editItem) {
       return (
         <tr key={item.id} className="bg-slate-50/50 border-l-2 border-ecar-blue">
-          <td className="px-4 py-2">
+          <td >
             <input value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })}
               className="w-full px-2 py-1.5 border border-ecar-blueLight rounded-lg text-sm" />
             <input value={editItem.notes} onChange={e => setEditItem({ ...editItem, notes: e.target.value })}
               placeholder="Notas..." className="w-full px-2 py-1 border border-gray-200 rounded-lg text-[10px] mt-1" />
           </td>
-          <td className="px-2 py-2">
+          <td >
             <select value={editItem.cost_type} onChange={e => setEditItem({ ...editItem, cost_type: e.target.value })}
               className="w-full px-1 py-1.5 border border-gray-200 rounded-lg text-[10px]">
               {Object.entries(COST_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </td>
-          <td className="px-2 py-2">
+          <td >
             <select value={editItem.unit} onChange={e => setEditItem({ ...editItem, unit: e.target.value })}
               className="w-full px-1 py-1.5 border border-gray-200 rounded-lg text-[10px]">
               {UNIT_OPTIONS.map(u => <option key={u.v} value={u.v}>{u.l}</option>)}
             </select>
           </td>
-          <td className="px-2 py-2">
+          <td >
             <input type="number" value={editItem.quantity} onChange={e => setEditItem({ ...editItem, quantity: e.target.value })}
               className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm font-mono text-right" style={{ width: '80px' }} />
           </td>
-          <td className="px-2 py-2">
+          <td >
             <input type="number" value={editItem.unit_price_ars} onChange={e => setEditItem({ ...editItem, unit_price_ars: e.target.value })}
               className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm font-mono text-right" style={{ width: '100px' }} />
           </td>
-          <td className="px-3 py-2 text-right font-mono font-bold text-sm text-ecar-blue">
+          <td className="text-right font-mono font-bold text-sm text-ecar-blue">
             {fmt((parseFloat(editItem.quantity) || 0) * (parseFloat(editItem.unit_price_ars) || 0))}
           </td>
-          <td className="px-2 py-2">
+          <td >
             <select value={editItem.section_id} onChange={e => setEditItem({ ...editItem, section_id: e.target.value })}
               className="w-full px-1 py-1 border border-gray-200 rounded text-[9px]">
               <option value="">Sin rubro</option>
               {sections.map((s: any) => <option key={s.id} value={s.id}>{s.ordinal} — {s.name}</option>)}
             </select>
           </td>
-          <td className="px-2 py-2 text-center">
+          <td className="text-center">
             <div className="flex gap-1 items-center justify-center">
               <button onClick={saveEditItem} className="text-green-600 hover:bg-green-50 p-1 rounded"><Save size={14} /></button>
               <button onClick={() => { setEditingItemId(null); setEditItem(null); }} className="text-gray-400 hover:bg-gray-100 p-1 rounded"><X size={14} /></button>
@@ -855,18 +855,18 @@ const BudgetDetailView: React.FC<{
     }
 
     return (
-      <tr key={item.id} className="hover:bg-gray-50/80 transition-colors group">
-        <td className="px-4 py-2.5">
+      <tr key={item.id} className="group">
+        <td>
           <span className="font-medium text-gray-800">{item.description}</span>
           {item.notes && <p className="text-[10px] text-gray-400 mt-0.5">{item.notes}</p>}
         </td>
-        <td className="px-3 py-2.5 text-center"><span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${ct.color}`}>{ct.label}</span></td>
-        <td className="px-3 py-2.5 text-center text-gray-600 text-xs">{item.unit}</td>
-        <td className="px-3 py-2.5 text-right font-mono text-sm">{item.quantity.toLocaleString('es-AR')}</td>
-        <td className="px-3 py-2.5 text-right font-mono text-sm">{fmt(item.unit_price_ars)}</td>
-        <td className="px-3 py-2.5 text-right font-mono font-bold text-sm">{fmt(item.quantity * item.unit_price_ars)}</td>
-        <td className="px-3 py-2.5"></td>
-        <td className="px-3 py-2.5 text-center">
+        <td className="text-center"><span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${ct.color}`}>{ct.label}</span></td>
+        <td className="text-center text-gray-600 text-xs">{item.unit}</td>
+        <td className="text-right font-mono text-sm">{item.quantity.toLocaleString('es-AR')}</td>
+        <td className="text-right font-mono text-sm">{fmt(item.unit_price_ars)}</td>
+        <td className="text-right font-mono font-bold text-sm">{fmt(item.quantity * item.unit_price_ars)}</td>
+        <td></td>
+        <td className="text-center">
           {!isLocked && (
             <div className="flex gap-0.5 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={() => startEditItem(item)} className="text-gray-400 hover:text-ecar-blue p-1 rounded hover:bg-slate-50"><Edit2 size={13} /></button>
@@ -1009,7 +1009,7 @@ const BudgetDetailView: React.FC<{
       {activeTab === 'entrada' && (
         <div className="space-y-4">
           {/* Handoff Checklist — Carpeta de Entrada */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="light-card ">
             <div className="bg-gray-50 border-b border-gray-200 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
@@ -1058,14 +1058,14 @@ const BudgetDetailView: React.FC<{
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+          <div className="light-card p-4">
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><AlertTriangle size={14} className="text-amber-500" /> Matriz de Riesgos Identificados</h4>
              <textarea value={budget.risks || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, risks: e.target.value })}
                 placeholder="Describir riesgos técnicos, climáticos, logísticos o financieros..."
                 className="w-full h-32 px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30" />
           </div>
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+          <div className="light-card p-4">
              <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2 mb-3"><HelpCircle size={14} className="text-ecar-blue" /> Información Faltante</h4>
              <textarea value={budget.missing_info || ''} 
                 onChange={e => updateBudget.mutate({ id: budget.id, missing_info: e.target.value })}
@@ -1136,7 +1136,7 @@ const BudgetDetailView: React.FC<{
       <div className="flex flex-wrap gap-2">
         {!isLocked && (
           <>
-            <button onClick={() => setShowNewSection(true)} className="bg-gray-100 text-gray-700 px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 hover:bg-gray-200 transition-all">
+            <button onClick={() => setShowNewSection(true)} className="badge badge-neutral">
               <Layers size={14} /> + Rubro
             </button>
             <button onClick={() => setShowNewItem(true)} className="bg-gradient-to-r from-ecar-blue to-ecar-blue text-white px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all">
@@ -1147,7 +1147,7 @@ const BudgetDetailView: React.FC<{
       </div>
 
       {/* Entregables e Interconexiones */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-4 mt-2">
+      <div className="light-card p-4">
         <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2"><Download size={14} className="text-ecar-blue" /> Generar Entregables e Interconexiones</h4>
         <div className="flex flex-wrap gap-3">
           <button onClick={() => exportToObra(budget, items, sections)} className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-xs font-bold border border-blue-200 hover:bg-blue-100 flex items-center gap-1.5 transition-all shadow-sm">
@@ -1168,7 +1168,7 @@ const BudgetDetailView: React.FC<{
           <button onClick={() => exportToLogistica(budget, items, sections)} className="bg-slate-50 text-ecar-blue px-4 py-2.5 rounded-xl text-xs font-bold border border-ecar-blueLight hover:bg-ecar-blueLight flex items-center gap-1.5 transition-all shadow-sm">
             <HardHat size={16} /> Planilla Logística (Excel)
           </button>
-          <button onClick={handleSendToLogistica} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-ecar-blue flex items-center gap-1.5 transition-all shadow-sm">
+          <button onClick={handleSendToLogistica} className="btn-primary">
             <Check size={16} /> Solicitar Equipos a Logística
           </button>
         </div>
@@ -1176,7 +1176,7 @@ const BudgetDetailView: React.FC<{
 
       {/* Handoff Checklist — Carpeta de Entrega a Obra */}
       {budget.status === 'approved' && (
-        <div className="bg-white rounded-2xl border-2 border-amber-200 shadow-sm overflow-hidden">
+        <div className="light-card ">
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -1266,7 +1266,7 @@ const BudgetDetailView: React.FC<{
               {sectionDict.map((s: any, i: number) => <option key={i} value={s.name} />)}
             </datalist>
             <div className="flex gap-2">
-              <button onClick={handleCreateSection} className="bg-ecar-blue text-white px-4 py-2 rounded-xl font-bold text-sm flex-1 hover:bg-ecar-blue transition-all"><Check size={14} /></button>
+              <button onClick={handleCreateSection} className="btn-primary"><Check size={14} /></button>
               <button onClick={() => setShowNewSection(false)} className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-sm hover:bg-gray-200"><X size={14} /></button>
             </div>
           </div>
@@ -1388,24 +1388,24 @@ const BudgetDetailView: React.FC<{
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Descripción</th>
-                  <th className="px-3 py-3 text-center">Tipo</th>
-                  <th className="px-3 py-3 text-center">Unidad</th>
-                  <th className="px-3 py-3 text-right">Cantidad</th>
-                  <th className="px-3 py-3 text-right">P.Unit</th>
-                  <th className="px-3 py-3 text-right">Subtotal</th>
-                  <th className="px-3 py-3 text-center w-16">Rubro</th>
-                  <th className="px-3 py-3 text-center w-20">Acc.</th>
+                  <th>Descripción</th>
+                  <th className="text-center">Tipo</th>
+                  <th className="text-center">Unidad</th>
+                  <th className="text-right">Cantidad</th>
+                  <th className="text-right">P.Unit</th>
+                  <th className="text-right">Subtotal</th>
+                  <th className="text-center w-16">Rubro</th>
+                  <th className="text-center w-20">Acc.</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {sections.map((sec: any) => (
                   <React.Fragment key={sec.id}>
-                    <tr className="bg-gray-50/80">
-                      <td colSpan={8} className="px-4 py-2">
+                    <tr>
+                      <td colSpan={8}>
                         {editingSectionId === sec.id ? (
                           <div className="flex items-center gap-2">
                             <input value={editSectionData.ordinal} onChange={e => setEditSectionData({ ...editSectionData, ordinal: e.target.value })}
@@ -1437,7 +1437,7 @@ const BudgetDetailView: React.FC<{
                 {(itemsBySection['_nosection'] || []).length > 0 && (
                   <>
                     <tr className="bg-gray-50/80">
-                      <td colSpan={8} className="px-4 py-2 font-bold text-gray-500 text-xs uppercase flex items-center gap-2">
+                      <td colSpan={8} className="font-bold text-gray-500 text-xs uppercase flex items-center gap-2">
                         <AlertTriangle size={12} className="text-amber-500" /> Sin rubro asignado
                       </td>
                     </tr>
@@ -1447,8 +1447,8 @@ const BudgetDetailView: React.FC<{
 
                 {/* ─── TOTALS ─── */}
                 <tr className="bg-gray-50 border-t-2 border-gray-300 font-bold">
-                  <td colSpan={5} className="px-4 py-2.5 text-right text-gray-700 uppercase text-xs">Costo Directo</td>
-                  <td className="px-3 py-2.5 text-right font-mono text-gray-800">{fmt(directTotal)}</td>
+                  <td colSpan={5} className="text-right text-gray-700 uppercase text-xs">Costo Directo</td>
+                  <td className="text-right font-mono text-gray-800">{fmt(directTotal)}</td>
                   <td colSpan={2}></td>
                 </tr>
 
@@ -1459,19 +1459,19 @@ const BudgetDetailView: React.FC<{
                       { key: 'beneficio_pct', label: 'Beneficio', val: directTotal * (parseFloat(pctForm.beneficio_pct) || 0) / 100, isGreen: true },
                     ].map(row => (
                       <tr key={row.key} className="bg-gray-50">
-                        <td colSpan={4} className="px-4 py-1.5 text-right text-gray-500 text-xs">{row.label}</td>
-                        <td className="px-3 py-1.5">
+                        <td colSpan={4} className="text-right text-gray-500 text-xs">{row.label}</td>
+                        <td>
                           <input type="number" step="0.1" value={(pctForm as any)[row.key]}
                             onChange={e => setPctForm({ ...pctForm, [row.key]: e.target.value })}
                             className="w-16 px-1 py-0.5 border rounded text-xs font-mono text-center" />%
                         </td>
-                        <td className={`px-3 py-1.5 text-right font-mono text-xs ${row.isGreen ? 'text-green-600' : 'text-gray-600'}`}>{fmt(row.val)}</td>
+                        <td className={`text-right font-mono text-xs ${row.isGreen ? 'text-green-600' : 'text-gray-600'}`}>{fmt(row.val)}</td>
                         <td colSpan={2}></td>
                       </tr>
                     ))}
                     <tr className="bg-gray-100/50 border-t border-gray-200 font-bold">
-                      <td colSpan={5} className="px-4 py-2 text-right text-gray-600 uppercase text-xs">Subtotal</td>
-                      <td className="px-3 py-2 text-right font-mono text-gray-700 text-sm">{fmt(directTotal + directTotal * (parseFloat(pctForm.gastos_generales_pct) || 0) / 100 + directTotal * (parseFloat(pctForm.beneficio_pct) || 0) / 100)}</td>
+                      <td colSpan={5} className="text-right text-gray-600 uppercase text-xs">Subtotal</td>
+                      <td className="text-right font-mono text-gray-700 text-sm">{fmt(directTotal + directTotal * (parseFloat(pctForm.gastos_generales_pct) || 0) / 100 + directTotal * (parseFloat(pctForm.beneficio_pct) || 0) / 100)}</td>
                       <td colSpan={2}></td>
                     </tr>
                     {[
@@ -1482,19 +1482,19 @@ const BudgetDetailView: React.FC<{
                       const sub = directTotal + directTotal * (parseFloat(pctForm.gastos_generales_pct) || 0) / 100 + directTotal * (parseFloat(pctForm.beneficio_pct) || 0) / 100;
                       return (
                         <tr key={row.key} className="bg-gray-50">
-                          <td colSpan={4} className="px-4 py-1.5 text-right text-gray-500 text-xs">{row.label}</td>
-                          <td className="px-3 py-1.5">
+                          <td colSpan={4} className="text-right text-gray-500 text-xs">{row.label}</td>
+                          <td>
                             <input type="number" step="0.1" value={(pctForm as any)[row.key]}
                               onChange={e => setPctForm({ ...pctForm, [row.key]: e.target.value })}
                               className="w-16 px-1 py-0.5 border rounded text-xs font-mono text-center" />%
                           </td>
-                          <td className="px-3 py-1.5 text-right font-mono text-gray-600 text-xs">{fmt(sub * (parseFloat((pctForm as any)[row.key]) || 0) / 100)}</td>
+                          <td className="text-right font-mono text-gray-600 text-xs">{fmt(sub * (parseFloat((pctForm as any)[row.key]) || 0) / 100)}</td>
                           <td colSpan={2}></td>
                         </tr>
                       );
                     })}
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-4 py-2 text-right">
+                      <td colSpan={5} className="text-right">
                         <button onClick={savePcts} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold mr-1"><Save size={11} className="inline" /> Guardar</button>
                         <button onClick={() => setEditingPcts(false)} className="bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-bold"><X size={11} className="inline" /> Cancelar</button>
                       </td>
@@ -1504,39 +1504,39 @@ const BudgetDetailView: React.FC<{
                 ) : (
                   <>
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-4 py-1.5 text-right text-gray-500 text-xs">
+                      <td colSpan={5} className="text-right text-gray-500 text-xs">
                         Gastos Generales ({fmtPct(budget.gastos_generales_pct)})
                         {!isLocked && <button onClick={startEditPcts} className="ml-2 text-ecar-blue hover:text-ecar-blue"><Edit2 size={10} className="inline" /></button>}
                       </td>
-                      <td className="px-3 py-1.5 text-right font-mono text-gray-600 text-xs">{fmt(gg)}</td>
+                      <td className="text-right font-mono text-gray-600 text-xs">{fmt(gg)}</td>
                       <td colSpan={2}></td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-4 py-1.5 text-right text-gray-500 text-xs">Beneficio ({fmtPct(budget.beneficio_pct)})</td>
-                      <td className="px-3 py-1.5 text-right font-mono text-green-600 text-xs">{fmt(beneficio)}</td>
+                      <td colSpan={5} className="text-right text-gray-500 text-xs">Beneficio ({fmtPct(budget.beneficio_pct)})</td>
+                      <td className="text-right font-mono text-green-600 text-xs">{fmt(beneficio)}</td>
                       <td colSpan={2}></td>
                     </tr>
                     <tr className="bg-gray-100/50 border-t border-gray-200 font-bold">
-                      <td colSpan={5} className="px-4 py-2 text-right text-gray-600 uppercase text-xs">Subtotal</td>
-                      <td className="px-3 py-2 text-right font-mono text-gray-700 text-sm">{fmt(subtotal)}</td>
+                      <td colSpan={5} className="text-right text-gray-600 uppercase text-xs">Subtotal</td>
+                      <td className="text-right font-mono text-gray-700 text-sm">{fmt(subtotal)}</td>
                       <td colSpan={2}></td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-4 py-1.5 text-right text-gray-500 text-xs">Financieros ({fmtPct(budget.financieros_pct)})</td>
-                      <td className="px-3 py-1.5 text-right font-mono text-gray-600 text-xs">{fmt(financiero)}</td>
+                      <td colSpan={5} className="text-right text-gray-500 text-xs">Financieros ({fmtPct(budget.financieros_pct)})</td>
+                      <td className="text-right font-mono text-gray-600 text-xs">{fmt(financiero)}</td>
                       <td colSpan={2}></td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td colSpan={5} className="px-4 py-1.5 text-right text-gray-500 text-xs">IVA ({fmtPct(budget.impuestos_pct)}) + IIBB ({fmtPct(budget.iibb_pct)})</td>
-                      <td className="px-3 py-1.5 text-right font-mono text-gray-600 text-xs">{fmt(iva + iibb)}</td>
+                      <td colSpan={5} className="text-right text-gray-500 text-xs">IVA ({fmtPct(budget.impuestos_pct)}) + IIBB ({fmtPct(budget.iibb_pct)})</td>
+                      <td className="text-right font-mono text-gray-600 text-xs">{fmt(iva + iibb)}</td>
                       <td colSpan={2}></td>
                     </tr>
                   </>
                 )}
 
                 <tr className="bg-gradient-to-r from-slate-50 to-slate-50 border-t-2 border-ecar-blueLight font-black">
-                  <td colSpan={5} className="px-4 py-3 text-right text-ecar-blue uppercase text-sm">Total Final</td>
-                  <td className="px-3 py-3 text-right font-mono text-ecar-blueDark text-lg">{fmt(totalFinal)}</td>
+                  <td colSpan={5} className="text-right text-ecar-blue uppercase text-sm">Total Final</td>
+                  <td className="text-right font-mono text-ecar-blueDark text-lg">{fmt(totalFinal)}</td>
                   <td colSpan={2}></td>
                 </tr>
               </tbody>
@@ -1587,7 +1587,7 @@ const BudgetDetailView: React.FC<{
               ) : budgetFiles.map((f: any) => (
                 <div key={f.id} className="border border-gray-200 rounded-lg p-3 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div className="flex gap-3 items-center min-w-0">
-                    <div className="bg-ecar-blueLight text-ecar-blue p-2 rounded-lg flex-shrink-0"><File size={16} /></div>
+                    <div className="badge badge-info"><File size={16} /></div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{f.file_name}</p>
                       <p className="text-[10px] text-gray-500">{f.file_type} • {(f.file_size / 1024 / 1024).toFixed(2)} MB</p>
@@ -1628,7 +1628,7 @@ const BudgetDetailView: React.FC<{
                    }))
                  } as any);
                  useModalStore.getState().showAlert('Éxito', 'Solicitud de cotización enviada a Compras correctamente.');
-             }} disabled={createPurchaseRequest.isPending} className="bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-ecar-blue transition-colors disabled:opacity-50">
+             }} disabled={createPurchaseRequest.isPending} className="btn-primary">
                 {createPurchaseRequest.isPending ? 'Enviando...' : 'Solicitar Cotización a Compras'}
              </button>
           </div>
@@ -1684,7 +1684,7 @@ const BudgetDetailView: React.FC<{
       <div className="bg-white border-t border-gray-200 p-4 rounded-b-xl flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-4">
         <div className="flex gap-2">
           {budget.status === 'draft' && (
-            <button onClick={() => handleStatusChange('revision')} className="bg-yellow-100 text-yellow-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-yellow-200 transition-all border border-yellow-200">
+            <button onClick={() => handleStatusChange('revision')} className="badge badge-warning">
               <Eye size={16} /> Enviar a Revisión
             </button>
           )}
@@ -1715,7 +1715,7 @@ const BudgetDetailView: React.FC<{
             </>
           )}
         </div>
-        <button onClick={onDuplicate} className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-50 hover:border-ecar-blue transition-all">
+        <button onClick={onDuplicate} className="light-card p-2">
           <Copy size={16} /> Crear Nueva Versión
         </button>
       </div>
@@ -1933,7 +1933,7 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <input value={newRes.notes} onChange={e => setNewRes({ ...newRes, notes: e.target.value })} placeholder="Notas..."
               className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm" />
             <button onClick={handleCreate} disabled={createResource.isPending}
-              className="bg-ecar-blue text-white px-5 py-2 rounded-xl font-bold text-sm"><Check size={14} className="inline mr-1" /> Crear</button>
+              className="btn-primary"><Check size={14} className="inline mr-1" /> Crear</button>
             <button onClick={() => setShowNew(false)} className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-sm"><X size={14} /></button>
           </div>
         </div>
@@ -1949,35 +1949,35 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div className="flex items-center justify-center py-12"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>
         ) : filtered.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 border-b text-[10px] font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Código</th>
-                  <th className="px-4 py-3">Nombre</th>
-                  <th className="px-3 py-3 text-center">Tipo</th>
-                  <th className="px-3 py-3">Categoría</th>
-                  <th className="px-3 py-3 text-center">Unidad</th>
-                  <th className="px-3 py-3 text-right">Precio</th>
-                  <th className="px-3 py-3">Proveedor</th>
-                  <th className="px-3 py-3 text-center">Últ. Act.</th>
-                  <th className="px-3 py-3 text-center">Acc.</th>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th className="text-center">Tipo</th>
+                  <th>Categoría</th>
+                  <th className="text-center">Unidad</th>
+                  <th className="text-right">Precio</th>
+                  <th>Proveedor</th>
+                  <th className="text-center">Últ. Act.</th>
+                  <th className="text-center">Acc.</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {filtered.map(r => {
                   const rt = RESOURCE_TYPE_LABELS[r.resource_type] || RESOURCE_TYPE_LABELS.material;
                   if (editingId === r.id && editData) {
                     return (
                       <tr key={r.id} className="bg-slate-50/50">
-                        <td className="px-4 py-2"><input value={editData.code} onChange={e => setEditData({ ...editData, code: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono" /></td>
-                        <td className="px-4 py-2"><input value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                        <td className="px-2 py-2"><select value={editData.resource_type} onChange={e => setEditData({ ...editData, resource_type: e.target.value })} className="w-full px-1 py-1 border rounded text-[10px]">{Object.entries(RESOURCE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
-                        <td className="px-2 py-2"><input value={editData.category} onChange={e => setEditData({ ...editData, category: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                        <td className="px-2 py-2"><select value={editData.unit} onChange={e => setEditData({ ...editData, unit: e.target.value })} className="w-full px-1 py-1 border rounded text-[10px]">{UNIT_OPTIONS.map(u => <option key={u.v} value={u.v}>{u.l}</option>)}</select></td>
-                        <td className="px-2 py-2"><input type="number" value={editData.unit_price_ars} onChange={e => setEditData({ ...editData, unit_price_ars: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono text-right" /></td>
-                        <td className="px-2 py-2"><input value={editData.supplier_ref} onChange={e => setEditData({ ...editData, supplier_ref: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
-                        <td className="px-3 py-2 text-center text-xs text-gray-400">—</td>
-                        <td className="px-2 py-2 text-center">
+                        <td ><input value={editData.code} onChange={e => setEditData({ ...editData, code: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono" /></td>
+                        <td ><input value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
+                        <td ><select value={editData.resource_type} onChange={e => setEditData({ ...editData, resource_type: e.target.value })} className="w-full px-1 py-1 border rounded text-[10px]">{Object.entries(RESOURCE_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
+                        <td ><input value={editData.category} onChange={e => setEditData({ ...editData, category: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
+                        <td ><select value={editData.unit} onChange={e => setEditData({ ...editData, unit: e.target.value })} className="w-full px-1 py-1 border rounded text-[10px]">{UNIT_OPTIONS.map(u => <option key={u.v} value={u.v}>{u.l}</option>)}</select></td>
+                        <td ><input type="number" value={editData.unit_price_ars} onChange={e => setEditData({ ...editData, unit_price_ars: e.target.value })} className="w-full px-2 py-1 border rounded text-xs font-mono text-right" /></td>
+                        <td ><input value={editData.supplier_ref} onChange={e => setEditData({ ...editData, supplier_ref: e.target.value })} className="w-full px-2 py-1 border rounded text-xs" /></td>
+                        <td className="text-center text-xs text-gray-400">—</td>
+                        <td className="text-center">
                           <button onClick={saveEdit} className="text-green-600 p-1"><Save size={13} /></button>
                           <button onClick={() => { setEditingId(null); setEditData(null); }} className="text-gray-400 p-1"><X size={13} /></button>
                         </td>
@@ -1985,19 +1985,19 @@ const ResourcesPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     );
                   }
                   return (
-                    <tr key={r.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{r.code || '—'}</td>
-                      <td className="px-4 py-2.5 font-medium text-gray-800">
+                    <tr key={r.id} className="group">
+                      <td className="font-mono text-xs text-gray-500">{r.code || '—'}</td>
+                      <td className="font-medium text-gray-800">
                         {r.name}
                         {r.notes && <p className="text-[10px] text-gray-400">{r.notes}</p>}
                       </td>
-                      <td className="px-3 py-2.5 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${rt.color}`}>{rt.label}</span></td>
-                      <td className="px-3 py-2.5 text-xs text-gray-600">{r.category || '—'}</td>
-                      <td className="px-3 py-2.5 text-center text-xs">{r.unit}</td>
-                      <td className="px-3 py-2.5 text-right font-mono font-bold">{fmt(r.unit_price_ars)}</td>
-                      <td className="px-3 py-2.5 text-xs text-gray-600">{r.supplier_ref || '—'}</td>
-                      <td className="px-3 py-2.5 text-center text-[10px] text-gray-400">{fmtDate(r.last_price_update)}</td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="text-center"><span className={`badge badge-neutral`}>{rt.label}</span></td>
+                      <td className="text-xs text-gray-600">{r.category || '—'}</td>
+                      <td className="text-center text-xs">{r.unit}</td>
+                      <td className="text-right font-mono font-bold">{fmt(r.unit_price_ars)}</td>
+                      <td className="text-xs text-gray-600">{r.supplier_ref || '—'}</td>
+                      <td className="text-center text-[10px] text-gray-400">{fmtDate(r.last_price_update)}</td>
+                      <td className="text-center">
                         <div className="flex gap-0.5 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => startEdit(r)} className="text-gray-400 hover:text-ecar-blue p-1 rounded hover:bg-slate-50"><Edit2 size={13} /></button>
                           <button onClick={() => deleteResource.mutate(r.id)} className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50"><Trash2 size={13} /></button>
@@ -2065,11 +2065,11 @@ const CierreEconomicoPanel: React.FC<{
       </div>
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+          <div className="light-card p-3">
             <p className="text-[10px] font-bold text-gray-500 uppercase">Costo Directo Presupuestado</p>
             <p className="text-lg font-black text-gray-800 font-mono">{fmt(costoDirectoPresupuestado)}</p>
           </div>
-          <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+          <div className="light-card p-3">
             <p className="text-[10px] font-bold text-gray-500 uppercase">Gasto Real (Facturas)</p>
             <p className={`text-lg font-black font-mono ${estaEnRojo ? 'text-red-600' : 'text-green-700'}`}>{fmt(gastoReal)}</p>
           </div>

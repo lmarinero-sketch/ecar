@@ -94,7 +94,7 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
             <button
               onClick={handleSubmit}
               disabled={!form.size || createDelivery.isPending}
-              className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blue disabled:opacity-50"
+              className="btn-primary"
             >
               {createDelivery.isPending ? 'Guardando...' : 'Guardar Entrega'}
             </button>
@@ -109,28 +109,28 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase border-y">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-2">Fecha</th>
-                <th className="px-4 py-2">Prenda / EPP</th>
-                <th className="px-4 py-2">Talle</th>
-                <th className="px-4 py-2">Cant.</th>
-                <th className="px-4 py-2">Notas</th>
-                <th className="px-4 py-2 text-right">Acciones</th>
+                <th >Fecha</th>
+                <th >Prenda / EPP</th>
+                <th >Talle</th>
+                <th >Cant.</th>
+                <th >Notas</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {deliveries.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-mono text-xs text-gray-500">
+                  <td className="font-mono text-xs text-gray-500">
                     <div className="flex items-center gap-1"><Calendar size={12} /> {d.delivery_date}</div>
                   </td>
-                  <td className="px-4 py-2 font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
-                  <td className="px-4 py-2 text-ecar-blue font-bold">{d.size}</td>
-                  <td className="px-4 py-2">{d.quantity}</td>
-                  <td className="px-4 py-2 text-xs text-gray-500">{d.notes || '—'}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
+                  <td className="text-ecar-blue font-bold">{d.size}</td>
+                  <td >{d.quantity}</td>
+                  <td className="text-xs text-gray-500">{d.notes || '—'}</td>
+                  <td className="text-right">
                     <button
                       onClick={() => {
                         if (confirm('¿Estás seguro de eliminar este registro?')) {

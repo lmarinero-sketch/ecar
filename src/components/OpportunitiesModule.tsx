@@ -381,7 +381,7 @@ export const OpportunitiesModule: React.FC = () => {
             {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
           <button onClick={() => { resetForm(); setSelectedOpp(null); setActiveTab('general'); setShowForm(true); }}
-            className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue hover:shadow-lg transition-all">
+            className="btn-primary">
             <Plus size={16} /> Nueva Oportunidad
           </button>
         </div>
@@ -480,41 +480,41 @@ export const OpportunitiesModule: React.FC = () => {
       ) : (
         /* List View */
         <div className="light-card overflow-hidden">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Cliente / Descripción</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3 text-center">Etapa</th>
-                <th className="px-4 py-3 text-center">Prioridad</th>
-                <th className="px-4 py-3 text-center">Riesgo</th>
-                <th className="px-4 py-3 text-right">Monto Est.</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+                <th >Cliente / Descripción</th>
+                <th >Tipo</th>
+                <th className="text-center">Etapa</th>
+                <th className="text-center">Prioridad</th>
+                <th className="text-center">Riesgo</th>
+                <th className="text-right">Monto Est.</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map(opp => {
                 const stageInfo = STAGES.find(s => s.id === opp.stage)!;
                 return (
                   <tr key={opp.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                    <td >
                       <div className="font-medium text-gray-800">{opp.client_name}</div>
                       <div className="text-xs text-gray-500 line-clamp-1">{opp.description}</div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">{WORK_TYPES[opp.work_type]}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-xs text-gray-600">{WORK_TYPES[opp.work_type]}</td>
+                    <td className="text-center">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${stageInfo.bgColor} ${stageInfo.color}`}>{stageInfo.label}</span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${PRIORITIES[opp.priority].color}`}>
                         {PRIORITIES[opp.priority].label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${RISK_COLORS[opp.risk_level]}`}>{opp.risk_level}</span>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
+                    <td className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={e => handleExportPdf(e, opp)} disabled={isExporting === opp.id} className={`text-gray-400 hover:text-ecar-blue p-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`} title="Descargar PDF">
                           {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-ecar-blue border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
@@ -527,7 +527,7 @@ export const OpportunitiesModule: React.FC = () => {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                <tr><td colSpan={7} className="text-center text-gray-400">
                   <Target size={48} className="mx-auto mb-3 opacity-30" />
                   <p className="font-medium">No hay oportunidades</p>
                   <p className="text-sm">Hacé clic en "Nueva Oportunidad" para registrar una.</p>
@@ -540,7 +540,7 @@ export const OpportunitiesModule: React.FC = () => {
 
       {/* REJECTED (collapsed) */}
       {filtered.some(o => o.stage === 'rechazada') && (
-        <details className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <details className="light-card ">
           <summary className="p-4 cursor-pointer font-bold text-sm text-gray-500 hover:text-gray-700 flex items-center gap-2">
             <ChevronRight size={16} className="details-open:rotate-90 transition-transform" />
             Rechazadas ({filtered.filter(o => o.stage === 'rechazada').length})
@@ -858,7 +858,7 @@ export const OpportunitiesModule: React.FC = () => {
                         if (fileInput) fileInput.value = '';
                       }
                     }}
-                    className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-ecar-blue disabled:opacity-50 flex items-center gap-2">
+                    className="btn-primary">
                     {uploadFile.isPending ? 'Subiendo...' : <><Upload size={16} /> Subir</>}
                   </button>
                 </div>
@@ -867,7 +867,7 @@ export const OpportunitiesModule: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {selectedOpp ? (
                   selectedOpp.files?.map(f => (
-                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-ecar-blueLight transition-colors">
+                    <div key={f.id} className="light-card p-3">
                       <div className="bg-slate-50 p-2 rounded-lg text-ecar-blue shrink-0">
                         {f.file_type?.match(/pdf/i) ? <FileText size={24} /> :
                          f.file_type?.match(/png|jpg|jpeg/i) ? <ImageIcon size={24} /> :
@@ -900,7 +900,7 @@ export const OpportunitiesModule: React.FC = () => {
                   ))
                 ) : (
                   pendingFiles.map(f => (
-                    <div key={f.id} className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-ecar-blueLight transition-colors">
+                    <div key={f.id} className="light-card p-3">
                       <div className="bg-slate-50 p-2 rounded-lg text-ecar-blue shrink-0">
                         {f.file.type.match(/pdf/i) ? <FileText size={24} /> :
                          f.file.type.match(/image/i) ? <ImageIcon size={24} /> :
@@ -953,26 +953,26 @@ export const OpportunitiesModule: React.FC = () => {
                 <div className="text-center py-6 text-gray-400">Cargando presupuestos...</div>
               ) : oppBudgets && oppBudgets.length > 0 ? (
                 <div className="light-card overflow-hidden">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+                  <table className="data-table">
+                    <thead>
                       <tr>
-                        <th className="px-4 py-3">Presupuesto</th>
-                        <th className="px-3 py-3 text-center">Versión</th>
-                        <th className="px-3 py-3 text-center">Estado</th>
-                        <th className="px-3 py-3 text-right">Total Final</th>
+                        <th >Presupuesto</th>
+                        <th className="text-center">Versión</th>
+                        <th className="text-center">Estado</th>
+                        <th className="text-right">Total Final</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody>
                       {oppBudgets.map(budget => (
                         <tr key={budget.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-800">{budget.name}</td>
-                          <td className="px-3 py-3 text-center font-mono text-xs font-bold text-gray-600">v{budget.version}</td>
-                          <td className="px-3 py-3 text-center">
+                          <td className="font-medium text-gray-800">{budget.name}</td>
+                          <td className="text-center font-mono text-xs font-bold text-gray-600">v{budget.version}</td>
+                          <td className="text-center">
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide bg-gray-100 text-gray-600">
                               {budget.status}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-right font-mono font-bold text-gray-800">
+                          <td className="text-right font-mono font-bold text-gray-800">
                             {Number(budget.total_final_ars).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
                           </td>
                         </tr>
@@ -1007,7 +1007,7 @@ export const OpportunitiesModule: React.FC = () => {
               <div className="flex items-center gap-3">
                 <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm">Cancelar</button>
                 <button onClick={handleSubmit} disabled={!form.client_name || !form.description || createOpp.isPending || updateOpp.isPending}
-                  className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue disabled:opacity-50 transition-all">
+                  className="btn-primary">
                   <Save size={16} /> {selectedOpp ? 'Guardar Cambios' : 'Crear Oportunidad'}
                 </button>
               </div>

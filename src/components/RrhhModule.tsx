@@ -110,11 +110,13 @@ export const RrhhModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="clinical-module-header">
-        <div className="absolute top-0 right-0 p-6 opacity-5 text-ecar-blue"><Users size={120} /></div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><Users size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2 text-gray-900"><Users size={24} className="text-ecar-blue" /> Gerencia de RRHH</h3>
-          <p className="text-gray-500 text-sm mt-1">
+          <h3 className="font-bold text-2xl flex items-center gap-2">
+            <Users size={24} /> Gerencia de RRHH
+          </h3>
+          <p className="text-ecar-blueLight text-sm mt-1">
             {activeEmployees.length} empleados activos · Categorías UOCRA · Parte diario de asistencia
           </p>
         </div>
@@ -160,22 +162,22 @@ export const RrhhModule: React.FC = () => {
             </div>
           ) : (
             <div className="light-card overflow-hidden">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3">Nombre</th>
-                    <th className="px-4 py-3">CUIL</th>
-                    <th className="px-4 py-3">Categoría</th>
-                    <th className="px-4 py-3">Obra</th>
-                    <th className="px-4 py-3">Antigüedad</th>
-                    <th className="px-4 py-3">Banco / Alias</th>
-                    <th className="px-4 py-3 text-center">Acciones</th>
+                    <th>Nombre</th>
+                    <th>CUIL</th>
+                    <th>Categoría</th>
+                    <th>Obra</th>
+                    <th>Antigüedad</th>
+                    <th>Banco / Alias</th>
+                    <th className="text-center">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {filtered.map(emp => (
-                    <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
+                    <tr key={emp.id}>
+                      <td>
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${emp.employment_status === 'active' ? 'bg-ecar-blueLight text-ecar-blue' : 'bg-red-100 text-red-600'}`}>
                             {emp.full_name.charAt(0)}
@@ -183,7 +185,7 @@ export const RrhhModule: React.FC = () => {
                           <div>
                             <span className="font-bold text-gray-900">{emp.full_name}</span>
                             {emp.employment_status !== 'active' && (
-                              <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-600">BAJA</span>
+                              <span className="ml-2 badge badge-danger text-[10px]">BAJA</span>
                             )}
                             <div className="text-[10px] font-medium text-gray-500 mt-0.5">
                               {emp.employer_entity || 'ECAR SAS'}
@@ -191,12 +193,12 @@ export const RrhhModule: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
-                      <td className="px-4 py-3 text-gray-700">{emp.category?.name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{emp.project?.name || '—'}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-ecar-blue">{calcAntiguedad(emp.hire_date)}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{emp.bank_alias_cbu || emp.bank_name || '—'}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
+                      <td className="text-gray-700">{emp.category?.name || '—'}</td>
+                      <td className="text-gray-500 text-xs">{emp.project?.name || '—'}</td>
+                      <td className="text-xs font-bold text-ecar-blue">{calcAntiguedad(emp.hire_date)}</td>
+                      <td className="text-xs text-gray-500">{emp.bank_alias_cbu || emp.bank_name || '—'}</td>
+                      <td className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
                           <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
@@ -682,75 +684,86 @@ export const RrhhModule: React.FC = () => {
                     <input value={editForm.driver_license_category} onChange={e => setEditForm({ ...editForm, driver_license_category: e.target.value })} placeholder="Ej: B1, C1, E1" className="w-full px-3 py-2 border rounded-xl text-sm font-bold" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 block mb-1">Vencimiento Licencia</label>
-                    <input type="date" value={editForm.driver_license_expiry} onChange={e => setEditForm({ ...editForm, driver_license_expiry: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
-                  </div>
-                </>
-              )}
-            </div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Vencimiento Licencia</label>
+                <input type="date" value={editForm.driver_license_expiry} onChange={e => setEditForm({ ...editForm, driver_license_expiry: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+            </>
+          )}
+          <button
+            onClick={async () => {
+              try {
+                await updateEmployee.mutateAsync({
+                  id: editingEmployee.id,
+                  full_name: editForm.full_name,
+                  cuil: editForm.cuil || null,
+                  dni: editForm.dni || null,
+                  birth_date: editForm.birth_date || null,
+                  address: editForm.address || null,
+                  phone: editForm.phone || null,
+                  emergency_contact: editForm.emergency_contact || null,
+                  category_id: editForm.category_id || null,
+                  current_project_id: editForm.current_project_id || null,
+                  hire_date: editForm.hire_date || null,
+                  bank_name: editForm.bank_name || null,
+                  bank_alias_cbu: editForm.bank_alias_cbu || null,
+                  trial_start_date: editForm.trial_start_date || null,
+                  obra_social: editForm.obra_social || null,
+                  art_provider: editForm.art_provider || null,
+                  modo_liquidacion: editForm.modo_liquidacion || 'mensual',
+                  retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null,
+                  employer_entity: editForm.employer_entity || 'ECAR SAS',
+                  gender: editForm.gender || null,
+                  marital_status: editForm.marital_status || null,
+                  children_info: editForm.children_info ? JSON.parse(editForm.children_info) : [],
+                  education_level: editForm.education_level || null,
+                  union_name: editForm.union_name || null,
+                  observations: editForm.observations || null,
+                  debt_to_employee: editForm.debt_to_employee ? parseFloat(editForm.debt_to_employee) : 0,
+                  debt_notes: editForm.debt_notes || null,
+                  does_overtime: editForm.does_overtime,
+                  overtime_rate: editForm.does_overtime ? editForm.overtime_rate : null,
+                  shirt_size: editForm.shirt_size || null,
+                  pants_size: editForm.pants_size || null,
+                  shoe_size: editForm.shoe_size || null,
+                  is_driver: editForm.is_driver,
+                  driver_license_category: editForm.is_driver ? (editForm.driver_license_category || null) : null,
+                  driver_license_expiry: editForm.is_driver ? (editForm.driver_license_expiry || null) : null,
+                });
+                setEditingEmployee(null);
+              } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
+            }}
+            disabled={updateEmployee.isPending || !editForm.full_name}
+            className="btn-primary w-full py-3 disabled:opacity-50"
+          >
+            {updateEmployee.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+          </button>
+        </div>
+      </div>
+    )}
 
+    {/* Delete Employee Confirmation */}
+    {deleteTarget && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+          <h3 className="font-bold text-lg text-red-600">Dar de Baja</h3>
+          <p className="text-sm text-gray-600">
+            ¿Dás de baja a <span className="font-bold">{deleteTarget.full_name}</span>? El empleado pasará a estado "Desvinculado" y no se eliminará del sistema.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
             <button
               onClick={async () => {
-                try {
-                  await updateEmployee.mutateAsync({
-                    id: editingEmployee.id, ...editForm,
-                    employer_entity: editForm.employer_entity || 'ECAR SAS',
-                    category_id: editForm.category_id || null,
-                    current_project_id: editForm.current_project_id || null,
-                    retribucion_pactada: editForm.retribucion_pactada ? parseFloat(editForm.retribucion_pactada) : null,
-                    gender: editForm.gender || null,
-                    marital_status: editForm.marital_status || null,
-                    children_info: editForm.children_info ? JSON.parse(editForm.children_info) : [],
-                    education_level: editForm.education_level || null,
-                    union_name: editForm.union_name || null,
-                    observations: editForm.observations || null,
-                    debt_to_employee: editForm.debt_to_employee ? parseFloat(editForm.debt_to_employee) : 0,
-                    debt_notes: editForm.debt_notes || null,
-                    does_overtime: editForm.does_overtime,
-                    overtime_rate: editForm.does_overtime ? editForm.overtime_rate : null,
-                    shirt_size: editForm.shirt_size || null,
-                    pants_size: editForm.pants_size || null,
-                    shoe_size: editForm.shoe_size || null,
-                    is_driver: editForm.is_driver,
-                    driver_license_category: editForm.is_driver ? (editForm.driver_license_category || null) : null,
-                    driver_license_expiry: editForm.is_driver ? (editForm.driver_license_expiry || null) : null,
-                  });
-                  useImplementationStore.getState().completeItem('e2-24');
-                  setEditingEmployee(null);
-                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
+                try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
               }}
-              disabled={updateEmployee.isPending || !editForm.full_name}
-              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
-            >
-              {updateEmployee.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
-            </button>
+              disabled={deleteEmployee.isPending}
+              className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
+            >Dar de Baja</button>
           </div>
         </div>
-      )}
-
-      {/* Delete Employee Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Dar de Baja</h3>
-            <p className="text-sm text-gray-600">
-              ¿Dás de baja a <span className="font-bold">{deleteTarget.full_name}</span>? El empleado pasará a estado "Desvinculado" y no se eliminará del sistema.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
-              <button
-                onClick={async () => {
-                  try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-                }}
-                disabled={deleteEmployee.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Dar de Baja</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 };
 
 // Sub-component: Legajo Digital
@@ -837,7 +850,7 @@ const LegajoView: React.FC<{
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {inactiveEmps.map(e => (
                 <button key={e.id} onClick={() => onSelect(e.id)} className="text-left p-3 border border-red-100 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all bg-red-50/30">
-                  <p className="font-bold text-sm text-gray-700 flex items-center gap-1">{e.full_name} <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-red-100 text-red-600">BAJA</span></p>
+                  <p className="font-bold text-sm text-gray-700 flex items-center gap-1">{e.full_name} <span className="badge badge-danger text-[10px]">BAJA</span></p>
                   <p className="text-xs text-gray-400 font-mono">{e.cuil || 'Sin CUIL'}</p>
                 </button>
               ))}
@@ -902,7 +915,7 @@ const LegajoView: React.FC<{
             </div>
             <button
               onClick={() => onEdit(employee)}
-              className="flex items-center gap-2 bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity shadow-sm"
+              className="btn-primary px-4 py-2 flex items-center gap-2"
             >
               <Pencil size={14} /> Editar Empleado
             </button>
@@ -970,7 +983,7 @@ const LegajoView: React.FC<{
           <h4 className="font-bold text-gray-900 flex items-center gap-2"><FileText size={16} /> Documentos del Legajo</h4>
           <button
             onClick={() => setShowUpload(!showUpload)}
-            className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1 hover:opacity-90 transition-opacity"
+            className="btn-primary"
           >
             {showUpload ? <><X size={14} /> Cancelar</> : <><Upload size={14} /> Subir Documento</>}
           </button>
@@ -1033,7 +1046,7 @@ const LegajoView: React.FC<{
             <button
               onClick={handleUpload}
               disabled={!selectedFile || !docTitle.trim() || uploadDoc.isPending}
-              className="bg-ecar-blue text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50 flex items-center gap-2"
+              className="btn-primary"
             >
               {uploadDoc.isPending ? (
                 <>
@@ -1125,7 +1138,7 @@ const LegajoView: React.FC<{
                         });
                       }
                     }}
-                    className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:opacity-90 transition-opacity"
+                    className="btn-primary"
                   >
                     <Printer size={12} /> Generar Carta
                   </button>

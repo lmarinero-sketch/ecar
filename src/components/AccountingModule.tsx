@@ -29,8 +29,8 @@ export const AccountingModule: React.FC = () => {
   };
 
   const statusColor: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-700', pending_cae: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700', cancelled: 'bg-gray-200 text-gray-500',
+    draft: 'badge badge-neutral', pending_cae: 'badge badge-warning',
+    approved: 'badge badge-success', rejected: 'badge badge-danger', cancelled: 'badge badge-neutral',
   };
   const statusLabel: Record<string, string> = {
     draft: 'Borrador', pending_cae: 'Pend. CAE', approved: 'Aprobada', rejected: 'Rechazada', cancelled: 'Cancelada',
@@ -63,11 +63,11 @@ export const AccountingModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-800 to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Calculator size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Calculator size={24} /> Facturación ARCA</h3>
-          <p className="text-blue-100 text-sm mt-1">Emisión de facturas electrónicas. {invoices.filter(i => i.status === 'approved').length} aprobadas.</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Emisión de facturas electrónicas. {invoices.filter(i => i.status === 'approved').length} aprobadas.</p>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export const AccountingModule: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <button onClick={() => { setErrorMsg(null); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+        <button onClick={() => { setErrorMsg(null); setShowForm(true); }} className="btn-primary">
           <Plus size={16} /> Nueva Factura
         </button>
       </div>
@@ -129,7 +129,7 @@ export const AccountingModule: React.FC = () => {
               <span className="text-sm text-gray-500">Total: </span>
               <span className="text-xl font-black font-mono">{formatARS(form.net_amount_ars + Math.round(form.net_amount_ars * 0.21))}</span>
             </div>
-            <button onClick={handleCreate} disabled={!form.receptor_name || !form.receptor_cuit || createInvoice.isPending} className="w-full bg-ecar-blue text-white py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreate} disabled={!form.receptor_name || !form.receptor_cuit || createInvoice.isPending} className="btn-primary w-full justify-center disabled:opacity-50">
               {createInvoice.isPending ? 'Guardando...' : 'Crear Factura (Borrador)'}
             </button>
           </div>
@@ -142,33 +142,33 @@ export const AccountingModule: React.FC = () => {
         {invoices.length === 0 ? (
           <div className="text-center py-12 text-gray-400"><AlertCircle size={36} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Sin facturas. Emití la primera.</p></div>
         ) : (
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Receptor</th>
-                <th className="px-4 py-3">CUIT</th>
-                <th className="px-4 py-3">Cond. IVA</th>
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3 text-right">Neto</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3 text-center">CAE</th>
-                <th className="px-4 py-3 text-center">Estado</th>
+                <th>Tipo</th>
+                <th>Receptor</th>
+                <th>CUIT</th>
+                <th>Cond. IVA</th>
+                <th>Fecha</th>
+                <th className="text-right">Neto</th>
+                <th className="text-right">Total</th>
+                <th className="text-center">CAE</th>
+                <th className="text-center">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {invoices.map(inv => (
-                <tr key={inv.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-bold">{invoiceTypeLabel[inv.invoice_type] || inv.invoice_type}</td>
-                  <td className="px-4 py-3 font-medium">{inv.receptor_name}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{inv.receptor_cuit}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{taxConditionLabel[inv.receptor_tax_condition || ''] || inv.receptor_tax_condition || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{inv.issue_date}</td>
-                  <td className="px-4 py-3 text-right font-mono">{formatARS(inv.net_amount_ars)}</td>
-                  <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(inv.total_ars)}</td>
-                  <td className="px-4 py-3 text-center font-mono text-xs text-gray-500">{inv.cae_number || '—'}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[inv.status]}`}>{statusLabel[inv.status]}</span>
+                <tr key={inv.id}>
+                  <td className="font-bold">{invoiceTypeLabel[inv.invoice_type] || inv.invoice_type}</td>
+                  <td className="font-medium">{inv.receptor_name}</td>
+                  <td className="font-mono text-xs">{inv.receptor_cuit}</td>
+                  <td className="text-xs text-gray-500">{taxConditionLabel[inv.receptor_tax_condition || ''] || inv.receptor_tax_condition || '—'}</td>
+                  <td className="text-gray-600 text-xs">{inv.issue_date}</td>
+                  <td className="text-right font-mono">{formatARS(inv.net_amount_ars)}</td>
+                  <td className="text-right font-mono font-bold">{formatARS(inv.total_ars)}</td>
+                  <td className="text-center font-mono text-xs text-gray-500">{inv.cae_number || '—'}</td>
+                  <td className="text-center">
+                    <span className={statusColor[inv.status]}>{statusLabel[inv.status]}</span>
                   </td>
                 </tr>
               ))}

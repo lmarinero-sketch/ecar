@@ -18,10 +18,10 @@ const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits
 const today = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  pendiente: { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700' },
-  en_transito: { label: 'En Tránsito', cls: 'bg-blue-100 text-blue-700' },
-  entregado: { label: 'Entregado', cls: 'bg-emerald-100 text-emerald-700' },
-  cancelado: { label: 'Cancelado', cls: 'bg-gray-100 text-gray-500' },
+  pendiente: { label: 'Pendiente', cls: 'badge-warning' },
+  en_transito: { label: 'En Tránsito', cls: 'badge-info' },
+  entregado: { label: 'Entregado', cls: 'badge-success' },
+  cancelado: { label: 'Cancelado', cls: 'badge-neutral' },
 };
 
 const MAINT_TYPE_LABEL: Record<string, string> = {
@@ -34,9 +34,9 @@ const VEHICLE_ICON: Record<string, string> = {
 };
 
 const CONDITION_CLS: Record<string, string> = {
-  operativo: 'bg-emerald-100 text-emerald-700',
-  con_observaciones: 'bg-amber-100 text-amber-700',
-  fuera_de_servicio: 'bg-red-100 text-red-700',
+  operativo: 'badge-success',
+  con_observaciones: 'badge-warning',
+  fuera_de_servicio: 'badge-danger',
 };
 
 export const LogisticsModule: React.FC = () => {
@@ -80,15 +80,13 @@ export const LogisticsModule: React.FC = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="clinical-module-header">
-        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-5 text-ecar-blue">
-          <Warehouse size={80} className="md:w-[120px] md:h-[120px]" />
-        </div>
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10"><Warehouse size={120} /></div>
         <div className="relative z-10">
-          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2 text-gray-900">
-            <Warehouse size={24} className="md:w-7 md:h-7 text-ecar-blue" /> Gerencia de Logística
+          <h3 className="font-bold text-2xl flex items-center gap-2">
+            <Warehouse size={24} /> Gerencia de Logística
           </h3>
-          <p className="text-gray-500 text-xs md:text-sm mt-1 max-w-2xl">
+          <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
             Aseguramos que cada obra cuente con los recursos físicos necesarios en tiempo y forma.
             Administramos inventarios, pañol, herramientas y la flota para evitar interrupciones operativas.
           </p>
@@ -506,32 +504,32 @@ const DeliveriesTab: React.FC<{
         <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-bold">Fecha</th>
-                <th className="px-4 py-3 font-bold">Obra / Destino</th>
-                <th className="px-4 py-3 font-bold">Vehículo</th>
-                <th className="px-4 py-3 font-bold">Chofer</th>
-                <th className="px-4 py-3 font-bold text-center">Ítems</th>
-                <th className="px-4 py-3 font-bold">Estado</th>
-                <th className="px-4 py-3 font-bold text-center">Acciones</th>
+                <th>Fecha</th>
+                <th>Obra / Destino</th>
+                <th>Vehículo</th>
+                <th>Chofer</th>
+                <th className="text-center">Ítems</th>
+                <th>Estado</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map(d => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500 text-xs">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{(d.project as any)?.name || d.destination || '-'}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{(d.vehicle as any)?.code ? `${(d.vehicle as any).code} ${(d.vehicle as any).plate ? `(${(d.vehicle as any).plate})` : ''}` : '-'}</td>
-                  <td className="px-4 py-3 text-gray-700">{d.driver_name || '-'}</td>
-                  <td className="px-4 py-3 text-center font-bold text-gray-700">{(d.items || []).length}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${STATUS_BADGE[d.status]?.cls}`}>
+                <tr key={d.id}>
+                  <td className="text-gray-500 text-xs">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
+                  <td className="font-medium text-gray-800">{(d.project as any)?.name || d.destination || '-'}</td>
+                  <td className="text-gray-600 text-xs">{(d.vehicle as any)?.code ? `${(d.vehicle as any).code} ${(d.vehicle as any).plate ? `(${(d.vehicle as any).plate})` : ''}` : '-'}</td>
+                  <td className="text-gray-700">{d.driver_name || '-'}</td>
+                  <td className="text-center font-bold text-gray-700">{(d.items || []).length}</td>
+                  <td>
+                    <span className={`badge ${STATUS_BADGE[d.status]?.cls}`}>
                       {STATUS_BADGE[d.status]?.label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       {d.status === 'pendiente' && (
                         <button onClick={() => changeStatus(d.id, 'en_transito')} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Marcar en tránsito">
@@ -628,45 +626,45 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ veh
         <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-bold">Código</th>
-                <th className="px-4 py-3 font-bold">Vehículo</th>
-                <th className="px-4 py-3 font-bold">Patente</th>
-                <th className="px-4 py-3 font-bold text-center">Km Actual</th>
-                <th className="px-4 py-3 font-bold">Próx. Mant.</th>
-                <th className="px-4 py-3 font-bold">VTV</th>
-                <th className="px-4 py-3 font-bold">Seguro</th>
-                <th className="px-4 py-3 font-bold">Condición</th>
+                <th>Código</th>
+                <th>Vehículo</th>
+                <th>Patente</th>
+                <th className="text-center">Km Actual</th>
+                <th>Próx. Mant.</th>
+                <th>VTV</th>
+                <th>Seguro</th>
+                <th>Condición</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map(v => {
                 const vtvExpired = v.vtv_expiry && v.vtv_expiry <= today();
                 const insExpired = v.insurance_expiry && v.insurance_expiry <= today();
                 const maintSoon = v.next_maintenance_date && v.next_maintenance_date <= today();
                 return (
-                  <tr key={v.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500 flex items-center gap-2">
+                  <tr key={v.id}>
+                    <td className="font-mono text-xs text-gray-500 flex items-center gap-2">
                       <span>{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span> {v.code}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-800">{v.description} {v.brand ? <span className="text-gray-400 font-normal ml-1">({v.brand})</span> : null}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.plate || '-'}</td>
-                    <td className="px-4 py-3 text-center font-bold">{v.current_km?.toLocaleString() || '-'}</td>
-                    <td className={`px-4 py-3 text-xs ${maintSoon ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                    <td className="font-medium text-gray-800">{v.description} {v.brand ? <span className="text-gray-400 font-normal ml-1">({v.brand})</span> : null}</td>
+                    <td className="text-gray-600">{v.plate || '-'}</td>
+                    <td className="text-center font-bold">{v.current_km?.toLocaleString() || '-'}</td>
+                    <td className={`text-xs ${maintSoon ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                       {v.next_maintenance_date ? new Date(v.next_maintenance_date).toLocaleDateString('es-AR') : '-'}
                     </td>
-                    <td className={`px-4 py-3 text-xs ${vtvExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                    <td className={`text-xs ${vtvExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                       {v.vtv_expiry ? new Date(v.vtv_expiry).toLocaleDateString('es-AR') : '-'}
                       {vtvExpired && <span className="ml-1">⚠️</span>}
                     </td>
-                    <td className={`px-4 py-3 text-xs ${insExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                    <td className={`text-xs ${insExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                       {v.insurance_expiry ? new Date(v.insurance_expiry).toLocaleDateString('es-AR') : '-'}
                       {insExpired && <span className="ml-1">⚠️</span>}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${CONDITION_CLS[v.vehicle_condition] || 'bg-gray-100 text-gray-500'}`}>
+                    <td>
+                      <span className={`badge ${CONDITION_CLS[v.vehicle_condition] || 'badge-neutral'}`}>
                         {v.vehicle_condition === 'operativo' ? 'Operativo' : v.vehicle_condition === 'con_observaciones' ? 'c/ Obs.' : 'F/S'}
                       </span>
                     </td>
@@ -751,32 +749,32 @@ const StockTab: React.FC<{ items: any[]; loading: boolean; toolAssignments: any[
         <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-bold">Ítem</th>
-                <th className="px-4 py-3 font-bold">Categoría</th>
-                <th className="px-4 py-3 font-bold">Ubicación</th>
-                <th className="px-4 py-3 font-bold text-center">Stock</th>
-                <th className="px-4 py-3 font-bold text-center">Mínimo</th>
-                <th className="px-4 py-3 font-bold">Estado</th>
+                <th>Ítem</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th className="text-center">Stock</th>
+                <th className="text-center">Mínimo</th>
+                <th>Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filtered.map((i: any) => {
                 const isCritical = i.current_stock <= i.min_stock;
                 return (
-                  <tr key={i.id} className={`hover:bg-gray-50 ${isCritical ? 'bg-red-50/50' : ''}`}>
-                    <td className="px-4 py-3 font-medium text-gray-800">{i.name}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs capitalize">{i.category}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{i.location || '-'}</td>
-                    <td className={`px-4 py-3 text-center font-bold ${isCritical ? 'text-red-700' : 'text-gray-700'}`}>{i.current_stock} {i.unit}</td>
-                    <td className="px-4 py-3 text-center text-gray-400">{i.min_stock} {i.unit}</td>
-                    <td className="px-4 py-3">
+                  <tr key={i.id} className={isCritical ? 'bg-red-50/50' : ''}>
+                    <td className="font-medium text-gray-800">{i.name}</td>
+                    <td className="text-gray-600 text-xs capitalize">{i.category}</td>
+                    <td className="text-gray-500 text-xs">{i.location || '-'}</td>
+                    <td className={`text-center font-bold ${isCritical ? 'text-red-700' : 'text-gray-700'}`}>{i.current_stock} {i.unit}</td>
+                    <td className="text-center text-gray-400">{i.min_stock} {i.unit}</td>
+                    <td>
                       {isCritical ? (
-                        <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-bold"><AlertTriangle size={12} /> Crítico</span>
+                        <span className="badge badge-danger gap-1"><AlertTriangle size={12} /> Crítico</span>
                       ) : (
-                        <span className="inline-flex items-center bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">OK</span>
+                        <span className="badge badge-success">OK</span>
                       )}
                     </td>
                   </tr>
@@ -850,7 +848,7 @@ const MaintenanceTab: React.FC<{
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Wrench className="text-ecar-blue" /> Mantenimiento</h3>
-        <button onClick={() => setShowForm(!showForm)} className="bg-ecar-blue hover:bg-ecar-blue text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary text-sm flex items-center gap-2 px-4 py-2">
           <Plus size={16} /> Registrar Mantenimiento
         </button>
       </div>
@@ -932,7 +930,7 @@ const MaintenanceTab: React.FC<{
             </div>
           </div>
           <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createLog.isPending} className="bg-ecar-blue hover:bg-ecar-blue text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={createLog.isPending} className="btn-primary px-6 py-2 text-sm flex items-center gap-2 disabled:opacity-50">
               <Save size={16} /> {createLog.isPending ? 'Guardando...' : 'Registrar'}
             </button>
           </div>
@@ -946,30 +944,30 @@ const MaintenanceTab: React.FC<{
           <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
         ) : logs.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 font-bold">Fecha</th>
-                  <th className="px-4 py-3 font-bold">Vehículo</th>
-                  <th className="px-4 py-3 font-bold">Tipo</th>
-                  <th className="px-4 py-3 font-bold">Descripción</th>
-                  <th className="px-4 py-3 font-bold">Proveedor</th>
-                  <th className="px-4 py-3 font-bold text-right">Costo</th>
-                  <th className="px-4 py-3 font-bold">Km/Hrs</th>
+                  <th>Fecha</th>
+                  <th>Vehículo</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Proveedor</th>
+                  <th className="text-right">Costo</th>
+                  <th>Km/Hrs</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {logs.map(l => (
-                  <tr key={l.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500 text-xs">{new Date(l.date).toLocaleDateString('es-AR')}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800">{(l.vehicle as any)?.code || '-'} {(l.vehicle as any)?.plate ? <span className="text-gray-400">({(l.vehicle as any).plate})</span> : ''}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-xs font-bold">{MAINT_TYPE_LABEL[l.type] || l.type}</span>
+                  <tr key={l.id}>
+                    <td className="text-gray-500 text-xs">{new Date(l.date).toLocaleDateString('es-AR')}</td>
+                    <td className="font-medium text-gray-800">{(l.vehicle as any)?.code || '-'} {(l.vehicle as any)?.plate ? <span className="text-gray-400">({(l.vehicle as any).plate})</span> : ''}</td>
+                    <td>
+                      <span className="badge badge-neutral">{MAINT_TYPE_LABEL[l.type] || l.type}</span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs max-w-xs truncate">{l.description || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{l.provider || '-'}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-700">{l.cost ? fmt(l.cost) : '-'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{l.km_hours?.toLocaleString() || '-'}</td>
+                    <td className="text-gray-600 text-xs max-w-xs truncate">{l.description || '-'}</td>
+                    <td className="text-gray-600 text-xs">{l.provider || '-'}</td>
+                    <td className="text-right font-bold text-gray-700">{l.cost ? fmt(l.cost) : '-'}</td>
+                    <td className="text-gray-500 text-xs">{l.km_hours?.toLocaleString() || '-'}</td>
                   </tr>
                 ))}
               </tbody>

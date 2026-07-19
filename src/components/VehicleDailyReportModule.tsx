@@ -626,7 +626,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
       <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={() => setView('form')}
-          className="bg-ecar-blue text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blueDark transition-all"
+          className="btn-primary"
         >
           <Plus size={16} /> Nuevo Parte
         </button>
@@ -695,30 +695,30 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Vehículo</th>
-                  <th className="px-4 py-3">Chofer</th>
-                  <th className="px-4 py-3">Obra</th>
-                  <th className="px-4 py-3">Km</th>
-                  <th className="px-4 py-3">Combustible</th>
-                  <th className="px-4 py-3">Checklist</th>
-                  <th className="px-4 py-3">Daño</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3"></th>
+                  <th >Fecha</th>
+                  <th >Vehículo</th>
+                  <th >Chofer</th>
+                  <th >Obra</th>
+                  <th >Km</th>
+                  <th >Combustible</th>
+                  <th >Checklist</th>
+                  <th >Daño</th>
+                  <th >Estado</th>
+                  <th ></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {filteredReports.map(r => {
                   const cond = CONDITION_BADGE[r.vehicle_condition_after] || CONDITION_BADGE.operativo;
                   const faults = (r.checklist || []).filter(c => c.estado === 'falla').length;
                   const fl = FUEL_LEVELS.find(f => f.value === r.fuel_level);
                   return (
                     <tr key={r.id} className={`hover:bg-gray-50 ${r.has_damage ? 'bg-red-50/30' : ''}`}>
-                      <td className="px-4 py-3 font-mono text-xs">{r.report_date}</td>
-                      <td className="px-4 py-3">
+                      <td className="font-mono text-xs">{r.report_date}</td>
+                      <td >
                         <div className="flex items-center gap-2">
                           <span>{VEHICLE_ICON[r.vehicle?.vehicle_type || ''] || '🚐'}</span>
                           <div>
@@ -727,26 +727,26 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs">{r.driver_name}</td>
-                      <td className="px-4 py-3 text-xs">{r.project?.name || '—'}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{r.odometer_km ? `${r.odometer_km.toLocaleString()}` : '—'}</td>
-                      <td className="px-4 py-3 text-xs">{fl?.icon} {fl?.label}</td>
-                      <td className="px-4 py-3">
+                      <td className="text-xs">{r.driver_name}</td>
+                      <td className="text-xs">{r.project?.name || '—'}</td>
+                      <td className="font-mono text-xs">{r.odometer_km ? `${r.odometer_km.toLocaleString()}` : '—'}</td>
+                      <td className="text-xs">{fl?.icon} {fl?.label}</td>
+                      <td >
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faults > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                           {faults > 0 ? `${faults} fallas` : 'OK'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td >
                         {r.has_damage ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1 w-fit"><AlertTriangle size={10} /> Sí</span>
+                          <span className="badge badge-danger"><AlertTriangle size={10} /> Sí</span>
                         ) : (
                           <span className="text-[10px] text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td >
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cond.cls}`}>{cond.icon} {cond.label}</span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td >
                         <button
                           onClick={() => { setSelectedReport(r); setView('detail'); }}
                           className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all"

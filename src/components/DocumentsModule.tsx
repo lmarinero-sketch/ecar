@@ -42,7 +42,7 @@ export const DocumentsModule: React.FC = () => {
 
       {/* Actions */}
       <div className="flex justify-end">
-        <button onClick={() => setShowForm(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+        <button onClick={() => setShowForm(true)} className="btn-primary">
           <Plus size={16} /> Nuevo Requerimiento
         </button>
       </div>
@@ -65,7 +65,7 @@ export const DocumentsModule: React.FC = () => {
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <textarea placeholder="Notas / Documentos requeridos" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" rows={3} />
-            <button onClick={handleCreate} disabled={!form.title} className="w-full bg-ecar-blue text-white py-2 rounded-lg font-bold text-sm disabled:opacity-50">Crear</button>
+            <button onClick={handleCreate} disabled={!form.title} className="btn-primary w-full>Crear</button>
           </div>
         </div>
       )}

@@ -177,7 +177,7 @@ export const AttendancePanel: React.FC = () => {
               className="text-sm font-bold text-gray-900 border-none outline-none bg-transparent"
             />
             {isToday && (
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">HOY</span>
+              <span className="badge badge-success">HOY</span>
             )}
           </div>
           <button onClick={() => changeDate(1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -288,19 +288,19 @@ export const AttendancePanel: React.FC = () => {
           /* Table wrapper */
           <div className="overflow-auto flex-1">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left">Empleado</th>
-                  <th className="px-4 py-3 text-center">Entrada</th>
-                  <th className="px-4 py-3 text-center">Salida</th>
-                  <th className="px-4 py-3 text-center">Hs. Trabajadas</th>
-                  <th className="px-4 py-3 text-center">Estado</th>
-                  <th className="px-4 py-3 text-center">Fuente</th>
-                  <th className="px-4 py-3 text-center">Dispositivo</th>
-                  <th className="px-4 py-3 text-center"></th>
+                  <th className="text-left">Empleado</th>
+                  <th className="text-center">Entrada</th>
+                  <th className="text-center">Salida</th>
+                  <th className="text-center">Hs. Trabajadas</th>
+                  <th className="text-center">Estado</th>
+                  <th className="text-center">Fuente</th>
+                  <th className="text-center">Dispositivo</th>
+                  <th className="text-center"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {attendanceRecords.map(record => {
                   const emp = record.employee;
                   const isLate = record.clock_in && formatTime(record.clock_in) > '07:30';
@@ -318,7 +318,7 @@ export const AttendancePanel: React.FC = () => {
 
                   return (
                     <tr key={record.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-4 py-3">
+                      <td >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                             {(emp as any)?.full_name?.charAt(0) || '?'}
@@ -329,7 +329,7 @@ export const AttendancePanel: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         {editingRow === record.id ? (
                           <input type="time" className="border rounded px-2 py-1 text-xs text-center w-24" value={editForm.clock_in} onChange={e => setEditForm({...editForm, clock_in: e.target.value})} />
                         ) : record.clock_in ? (
@@ -339,7 +339,7 @@ export const AttendancePanel: React.FC = () => {
                           </span>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         {editingRow === record.id ? (
                           <input type="time" className="border rounded px-2 py-1 text-xs text-center w-24" value={editForm.clock_out} onChange={e => setEditForm({...editForm, clock_out: e.target.value})} />
                         ) : record.clock_out ? (
@@ -354,30 +354,30 @@ export const AttendancePanel: React.FC = () => {
                           </span>
                         ) : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         <span className={`text-sm font-mono font-bold ${workedStr === 'En obra...' ? 'text-blue-500' : 'text-gray-700'}`}>
                           {workedStr}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${statusConfig.classes}`}>
                           {statusConfig.icon}
                           {statusConfig.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         <span className="text-xs text-gray-400 font-medium">
                           {record.source === 'mobile' ? '📱 QR' : record.source === 'biometric' ? '🔐 Bio' : '✋ Manual'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         {record.source === 'mobile' && deviceInfo ? (
                           <DeviceInfoCell deviceIn={deviceIn} deviceOut={deviceOut} />
                         ) : (
                           <span className="text-xs text-gray-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="text-center">
                         {editingRow === record.id ? (
                           <div className="flex justify-center gap-1">
                             <button onClick={async () => { await updateAttendance.mutateAsync({ id: record.id, clock_in: editForm.clock_in || null, clock_out: editForm.clock_out || null }); setEditingRow(null); }} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check size={14} /></button>

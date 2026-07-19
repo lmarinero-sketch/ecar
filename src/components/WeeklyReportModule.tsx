@@ -87,7 +87,7 @@ export const WeeklyReportModule: React.FC = () => {
         <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-600 transition-all">← Semana Anterior</button>
         <div className="text-center">
           <p className="text-lg font-black text-gray-800 flex items-center gap-2"><Calendar size={18} className="text-ecar-blue" /> Semana: {weekRange.label}</p>
-          {weekOffset === 0 && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Semana Actual</span>}
+          {weekOffset === 0 && <span className="badge badge-success">Semana Actual</span>}
         </div>
         <button onClick={() => setWeekOffset(w => Math.max(0, w - 1))} disabled={weekOffset === 0} className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-600 transition-all disabled:opacity-30">Semana Siguiente →</button>
       </div>
@@ -274,7 +274,7 @@ export const WeeklyReportModule: React.FC = () => {
 
       {/* Print Button */}
       <div className="flex justify-end">
-        <button onClick={() => window.print()} className="bg-ecar-blue text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg hover:bg-ecar-blue transition-all">
+        <button onClick={() => window.print()} className="btn-primary">
           <Printer size={16} /> Imprimir Reporte Semanal
         </button>
       </div>

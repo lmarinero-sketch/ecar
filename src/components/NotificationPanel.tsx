@@ -364,7 +364,7 @@ export const NotificationPanel: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">Se eliminará <span className="font-bold">"{deleteConfirm.title}"</span>. Esta acción no se puede deshacer.</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">Cancelar</button>
+              <button onClick={() => setDeleteConfirm(null)} className="badge badge-neutral">Cancelar</button>
               <button onClick={() => { deleteReminder.mutate(deleteConfirm.id); setDeleteConfirm(null); }} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-all shadow-md">Eliminar</button>
             </div>
           </div>
@@ -563,7 +563,7 @@ export const NotificationPanel: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={!form.title || !form.message_template || form.contact_ids.length === 0 || createReminder.isPending || updateReminder.isPending}
-                className="flex-1 py-2.5 bg-ecar-blue text-white rounded-xl font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50"
+                className="btn-primary 
               >
                 {(createReminder.isPending || updateReminder.isPending) ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Recordatorio'}
               </button>

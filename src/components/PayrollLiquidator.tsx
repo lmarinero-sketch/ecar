@@ -195,7 +195,7 @@ export const PayrollLiquidator: React.FC<{
             <button 
               onClick={fetchAttendanceAndCalculate} 
               disabled={isLoadingAtt || isLoadingEmployees}
-              className="w-full bg-ecar-blue text-white font-bold rounded-xl py-3 mt-4 disabled:opacity-50"
+              className="btn-primary w-full mt-4
             >
               {isLoadingAtt ? 'Calculando...' : 'Calcular Devengado'}
             </button>
@@ -216,7 +216,7 @@ export const PayrollLiquidator: React.FC<{
         </div>
         <div className="flex gap-3">
           <button onClick={() => setStep(1)} className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Volver a Calcular</button>
-          <button onClick={handleSave} className="bg-ecar-blue text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-ecar-blue shadow-sm">
+          <button onClick={handleSave} className="btn-primary">
             <Save size={16} /> Aprobar y Crear Pago
           </button>
           <button onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-gray-600"><X size={24} /></button>
@@ -229,22 +229,22 @@ export const PayrollLiquidator: React.FC<{
             <table className="w-full text-left min-w-[1000px] border-collapse">
               <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 z-10">
                 <tr className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <th className="px-4 py-3 min-w-[250px] bg-gray-50">Obrero / CBU</th>
-                <th className="px-4 py-3 min-w-[100px] text-center">Horas</th>
-                <th className="px-4 py-3 min-w-[120px] text-right">Valor Hora</th>
-                <th className="px-4 py-3 min-w-[120px] text-right">Premios</th>
-                <th className="px-4 py-3 min-w-[120px] text-right">Descuentos</th>
-                <th className="px-4 py-3 min-w-[140px] text-right">Total Pagar</th>
+                  <th className="min-w-[250px] bg-gray-50">Obrero / CBU</th>
+                <th className="min-w-[100px] text-center">Horas</th>
+                <th className="min-w-[120px] text-right">Valor Hora</th>
+                <th className="min-w-[120px] text-right">Premios</th>
+                <th className="min-w-[120px] text-right">Descuentos</th>
+                <th className="min-w-[140px] text-right">Total Pagar</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {obreros.map((ob, i) => (
                 <tr key={ob.employee_id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                  <td >
                     <p className="font-bold text-sm text-gray-800">{ob.name}</p>
                     <p className="text-xs text-gray-500 font-mono mt-0.5">{ob.cbu || 'Sin CBU'}</p>
                   </td>
-                  <td className="px-4 py-2 text-center">
+                  <td className="text-center">
                     <input 
                       type="number" 
                       step="0.1"
@@ -253,7 +253,7 @@ export const PayrollLiquidator: React.FC<{
                       className="w-full text-center border rounded px-2 py-1 text-sm font-mono font-bold text-ecar-blue bg-slate-50"
                     />
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="text-right">
                     <input 
                       type="number" 
                       value={ob.hourly_rate} 
@@ -261,7 +261,7 @@ export const PayrollLiquidator: React.FC<{
                       className="w-full text-right border rounded px-2 py-1 text-sm font-mono"
                     />
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="text-right">
                     <input 
                       type="number" 
                       value={ob.extra_amount} 
@@ -269,7 +269,7 @@ export const PayrollLiquidator: React.FC<{
                       className="w-full text-right border rounded px-2 py-1 text-sm font-mono text-green-700 bg-green-50"
                     />
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="text-right">
                     <input 
                       type="number" 
                       value={ob.discount_amount} 
@@ -277,14 +277,14 @@ export const PayrollLiquidator: React.FC<{
                       className="w-full text-right border rounded px-2 py-1 text-sm font-mono text-red-700 bg-red-50"
                     />
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <span className="font-bold text-base text-gray-900">{formatARS(ob.final_amount)}</span>
                   </td>
                 </tr>
               ))}
               {obreros.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-400">
+                  <td colSpan={6} className="text-center text-gray-400">
                     No se encontraron obreros activos para liquidar.
                   </td>
                 </tr>
@@ -292,8 +292,8 @@ export const PayrollLiquidator: React.FC<{
             </tbody>
             <tfoot className="bg-gray-50 font-bold border-t border-gray-200">
               <tr>
-                <td colSpan={5} className="px-4 py-3 text-right text-gray-600">TOTAL NÓMINA A PAGAR</td>
-                <td className="px-4 py-3 text-right text-lg text-ecar-blue">
+                <td colSpan={5} className="text-right text-gray-600">TOTAL NÓMINA A PAGAR</td>
+                <td className="text-right text-lg text-ecar-blue">
                   {formatARS(obreros.reduce((a,b) => a + b.final_amount, 0))}
                 </td>
               </tr>

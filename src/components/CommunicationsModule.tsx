@@ -189,7 +189,7 @@ export const CommunicationsModule: React.FC = () => {
                     <p className="text-[11px] text-gray-500 flex items-center gap-1">
                       <Clock size={10} /> Última actividad: {new Date(selectedConv.updated_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       {selectedConv.last_intent && (
-                        <span className="ml-2 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[9px] font-bold uppercase">{selectedConv.last_intent.replace(/_/g, ' ')}</span>
+                        <span className="badge badge-info">{selectedConv.last_intent.replace(/_/g, ' ')}</span>
                       )}
                     </p>
                   </div>

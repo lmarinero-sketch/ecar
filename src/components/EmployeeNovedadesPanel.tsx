@@ -70,7 +70,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
             <CalendarDays size={16} /> Ausencias y Licencias
           </h4>
-          <button onClick={() => setShowAbsForm(!showAbsForm)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+          <button onClick={() => setShowAbsForm(!showAbsForm)} className="btn-primary">
             {showAbsForm ? <><X size={14}/> Cancelar</> : <><Plus size={14}/> Registrar</>}
           </button>
         </div>
@@ -103,7 +103,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
               <label className="text-xs font-bold text-gray-500 block mb-1">Motivo</label>
               <input value={absForm.reason} onChange={e => setAbsForm({ ...absForm, reason: e.target.value })} placeholder="Detalle del motivo..." className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
-            <button onClick={handleCreateAbsence} disabled={!absForm.start_date || createAbsence.isPending} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreateAbsence} disabled={!absForm.start_date || createAbsence.isPending} className="btn-primary">
               {createAbsence.isPending ? 'Guardando...' : 'Guardar Ausencia'}
             </button>
           </div>
@@ -158,12 +158,12 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
             <Banknote size={16} /> Adelantos
             {totalAdvances > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+              <span className="badge badge-warning">
                 Pendiente: $ {totalAdvances.toLocaleString('es-AR')}
               </span>
             )}
           </h4>
-          <button onClick={() => setShowAdvForm(!showAdvForm)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+          <button onClick={() => setShowAdvForm(!showAdvForm)} className="btn-primary">
             {showAdvForm ? <><X size={14}/> Cancelar</> : <><Plus size={14}/> Nuevo Adelanto</>}
           </button>
         </div>
@@ -184,7 +184,7 @@ export const EmployeeNovedadesPanel: React.FC<Props> = ({ employeeId, employeeNa
                 <input value={advForm.reason} onChange={e => setAdvForm({ ...advForm, reason: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
             </div>
-            <button onClick={handleCreateAdvance} disabled={!advForm.amount_ars || !advForm.advance_date || createAdvance.isPending} className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+            <button onClick={handleCreateAdvance} disabled={!advForm.amount_ars || !advForm.advance_date || createAdvance.isPending} className="btn-primary">
               {createAdvance.isPending ? 'Guardando...' : 'Registrar Adelanto'}
             </button>
           </div>

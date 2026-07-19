@@ -80,18 +80,18 @@ export const TiresPanel: React.FC = () => {
         </form>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b font-bold text-gray-500 uppercase text-xs">
+      <div className="light-card ">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Medida / Marca</th>
-              <th className="px-4 py-3">Ubicación</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3 text-right">Desgaste</th>
+              <th >Código</th>
+              <th >Medida / Marca</th>
+              <th >Ubicación</th>
+              <th >Estado</th>
+              <th className="text-right">Desgaste</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {tires.map(tire => {
               const health = getHealthStatus(tire);
               const used = tire.vehicle?.current_km && tire.km_installed ? tire.vehicle.current_km - tire.km_installed : 0;
@@ -99,12 +99,12 @@ export const TiresPanel: React.FC = () => {
               
               return (
                 <tr key={tire.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono font-bold">{tire.code}</td>
-                  <td className="px-4 py-3">
+                  <td className="font-mono font-bold">{tire.code}</td>
+                  <td >
                     <p>{tire.size}</p>
                     <p className="text-xs text-gray-400">{tire.brand}</p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td >
                     {tire.vehicle ? (
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold bg-ecar-blueLight/20 text-ecar-blueDark px-2 py-1 rounded">
@@ -116,7 +116,7 @@ export const TiresPanel: React.FC = () => {
                       <span className="text-xs text-gray-400 italic">Pañol / Stock</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td >
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                       tire.status === 'en_uso' ? 'bg-green-100 text-green-700' :
                       tire.status === 'stock' ? 'bg-blue-100 text-blue-700' :
@@ -126,7 +126,7 @@ export const TiresPanel: React.FC = () => {
                       {tire.status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     {tire.status === 'en_uso' && tire.expected_lifespan_km ? (
                       <div className="flex flex-col items-end gap-1">
                         <div className="flex items-center gap-2 text-xs">

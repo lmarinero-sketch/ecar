@@ -195,13 +195,13 @@ export const LoginPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
         <Login3dBackground />
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center relative z-10 border border-gray-200">
+        <div className="light-card p-8">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <UserPlus className="text-green-600" size={28} />
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">¡Cuenta creada!</h2>
           <p className="text-gray-600 text-sm mb-6">Revisá tu email para confirmar la cuenta y luego iniciá sesión.</p>
-          <button onClick={() => { setSuccess(false); setMode('login'); }} className="bg-ecar-blue text-white px-6 py-2 rounded-lg font-bold hover:bg-ecar-blueDark transition-colors">
+          <button onClick={() => { setSuccess(false); setMode('login'); }} className="btn-primary">
             Ir a Iniciar Sesión
           </button>
         </div>
@@ -212,7 +212,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
       <Login3dBackground />
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-md w-full relative z-10 border border-gray-200">
+      <div className="light-card ">
         {/* Header */}
         <div className="bg-ecar-blueDark p-8 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-700/30 via-transparent to-transparent opacity-60 pointer-events-none" />
@@ -278,7 +278,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-ecar-blue text-white py-3 rounded-xl font-bold text-sm hover:bg-ecar-blueDark hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
+            className="btn-primary w-full mt-6
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

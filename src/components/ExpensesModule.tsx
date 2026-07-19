@@ -38,7 +38,7 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
 
   return (
     <tr className="bg-emerald-50/50 border-b border-gray-200">
-      <td colSpan={100} className="px-6 py-4">
+      <td colSpan={100} >
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Formulario de Datos */}
           <div className="flex-1 space-y-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
@@ -90,27 +90,27 @@ const ExpandedGastoDetail: React.FC<{ item: GastoItem }> = ({ item }) => {
             ) : history.length === 0 ? (
               <div className="text-center py-4 text-xs text-gray-500">Sin historial de pagos registrado.</div>
             ) : (
-              <table className="w-full text-xs">
+              <table className="data-table">
                 <thead>
-                  <tr className="text-gray-500 border-b">
-                    <th className="text-left pb-1 font-bold uppercase text-[9px]">Periodo</th>
-                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Cargado</th>
-                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Pagado</th>
-                    <th className="text-right pb-1 font-bold uppercase text-[9px]">Pendiente</th>
-                    <th className="text-center pb-1 font-bold uppercase text-[9px]">Estado</th>
+                  <tr>
+                    <th className="text-left font-bold uppercase text-[9px]">Periodo</th>
+                    <th className="text-right font-bold uppercase text-[9px]">Cargado</th>
+                    <th className="text-right font-bold uppercase text-[9px]">Pagado</th>
+                    <th className="text-right font-bold uppercase text-[9px]">Pendiente</th>
+                    <th className="text-center font-bold uppercase text-[9px]">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {history.map(h => {
                     const pendiente = Number(h.monto) - Number(h.monto_pagado || 0);
                     return (
-                      <tr key={h.id} className="hover:bg-gray-50">
-                        <td className="py-1.5 font-bold text-gray-700">{h.periodo}</td>
-                        <td className="py-1.5 text-right font-mono text-gray-600">{formatARS(Number(h.monto))}</td>
-                        <td className="py-1.5 text-right font-mono text-green-600">{formatARS(Number(h.monto_pagado || 0))}</td>
-                        <td className="py-1.5 text-right font-mono text-orange-600">{pendiente > 0 ? formatARS(pendiente) : '-'}</td>
-                        <td className="py-1.5 text-center">
-                          {h.pagado ? <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold">PAGADO</span> : <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold">PENDIENTE</span>}
+                      <tr key={h.id}>
+                        <td className="font-bold text-gray-700">{h.periodo}</td>
+                        <td className="text-right font-mono text-gray-600">{formatARS(Number(h.monto))}</td>
+                        <td className="text-right font-mono text-green-600">{formatARS(Number(h.monto_pagado || 0))}</td>
+                        <td className="text-right font-mono text-orange-600">{pendiente > 0 ? formatARS(pendiente) : '-'}</td>
+                        <td className="text-center">
+                          {h.pagado ? <span className="badge badge-success text-[9px]">PAGADO</span> : <span className="badge badge-warning text-[9px]">PENDIENTE</span>}
                         </td>
                       </tr>
                     );
@@ -295,11 +295,11 @@ export const ExpensesModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Wallet size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Wallet size={24} /> Gastos Operativos</h3>
-          <p className="text-emerald-100 text-sm mt-1">Estructura de gastos mensuales — control por categoría y período</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Estructura de gastos mensuales — control por categoría y período</p>
         </div>
       </div>
 
@@ -377,19 +377,19 @@ export const ExpensesModule: React.FC = () => {
       ) : (
         <div className="light-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="data-table">
               {/* Header row */}
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 min-w-[280px]">
+                <tr>
+                  <th className="text-left text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 min-w-[280px]">
                     Descripción
                   </th>
                   {visibleMonths.map(m => (
-                    <th key={m} className="px-3 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[140px]">
+                    <th key={m} className="text-right text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[140px]">
                       {MONTHS_LABELS[m]} {year}
                     </th>
                   ))}
-                  <th className="px-3 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100 min-w-[140px]">
+                  <th className="text-right text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[140px]">
                     Total
                   </th>
                 </tr>
@@ -406,10 +406,10 @@ export const ExpensesModule: React.FC = () => {
                     <React.Fragment key={cat}>
                       {/* Category header row */}
                       <tr
-                        className={`${cfg.bgColor} border-y border-gray-200 cursor-pointer hover:brightness-95 transition-all`}
+                        className={`${cfg.bgColor} cursor-pointer hover:brightness-95 transition-all`}
                         onClick={() => toggleCollapse(cat)}
                       >
-                        <td className={`px-4 py-2.5 font-bold ${cfg.color} flex items-center gap-2 sticky left-0 ${cfg.bgColor} z-10`}>
+                        <td className={`font-bold ${cfg.color} flex items-center gap-2 sticky left-0 ${cfg.bgColor} z-10`}>
                           {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                           <Icon size={16} />
                           <span className="text-xs uppercase tracking-wider">{cfg.label}</span>
@@ -425,12 +425,12 @@ export const ExpensesModule: React.FC = () => {
                           const p = getPeriodo(year, m);
                           const total = categoryTotal(cat, p);
                           return (
-                            <td key={m} className={`px-3 py-2.5 text-right font-mono font-black text-xs ${cfg.color}`}>
+                            <td key={m} className={`text-right font-mono font-black text-xs ${cfg.color}`}>
                               {total > 0 ? formatARS(total) : '—'}
                             </td>
                           );
                         })}
-                        <td className={`px-3 py-2.5 text-right font-mono font-black text-xs ${cfg.color} bg-gray-100/50`}>
+                        <td className={`text-right font-mono font-black text-xs ${cfg.color} bg-gray-100/50`}>
                           {formatARS(periodos.reduce((s, p) => s + categoryTotal(cat, p), 0))}
                         </td>
                       </tr>
@@ -438,8 +438,8 @@ export const ExpensesModule: React.FC = () => {
                       {/* Item rows (if not collapsed) */}
                       {!isCollapsed && catItems.map(item => (
                         <React.Fragment key={item.id}>
-                        <tr className="hover:bg-gray-50 border-b border-gray-100 group cursor-pointer" onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}>
-                          <td className="px-4 py-2 text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10">
+                        <tr className="group cursor-pointer" onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}>
+                          <td className="text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 min-w-0">
                                 <span className="truncate block">{item.descripcion}</span>
@@ -471,7 +471,7 @@ export const ExpensesModule: React.FC = () => {
                             const isEditing = editCell?.itemId === item.id && editCell?.periodo === p;
 
                             return (
-                              <td key={m} className="px-1 py-1 text-right">
+                              <td key={m} className="text-right">
                                 {isEditing ? (
                                   <div className="flex items-center gap-1 justify-end">
                                     <input
@@ -517,7 +517,7 @@ export const ExpensesModule: React.FC = () => {
                               </td>
                             );
                           })}
-                          <td className="px-3 py-2 text-right font-mono font-bold text-xs text-gray-600 bg-gray-50">
+                          <td className="text-right font-mono font-bold text-xs text-gray-600 bg-gray-50">
                             {formatARS(periodos.reduce((s, p) => s + getMonto(item.id, p), 0))}
                           </td>
                         </tr>
@@ -527,8 +527,8 @@ export const ExpensesModule: React.FC = () => {
 
                       {/* Add item inline */}
                       {showAddItem === cat && (
-                        <tr className="border-b border-gray-100 bg-emerald-50/30">
-                          <td colSpan={visibleMonths.length + 2} className="px-4 py-2">
+                        <tr className="bg-emerald-50/30">
+                          <td colSpan={visibleMonths.length + 2}>
                             <div className="flex items-center gap-2">
                               <input
                                 autoFocus
@@ -552,18 +552,18 @@ export const ExpensesModule: React.FC = () => {
 
                 {/* Grand total row */}
                 <tr className="bg-emerald-800 text-white font-bold border-t-2 border-emerald-900">
-                  <td className="px-4 py-3 text-sm uppercase tracking-wider sticky left-0 bg-emerald-800 z-10">
+                  <td className="text-sm uppercase tracking-wider sticky left-0 bg-emerald-800 z-10">
                     Total General
                   </td>
                   {visibleMonths.map(m => {
                     const p = getPeriodo(year, m);
                     return (
-                      <td key={m} className="px-3 py-3 text-right font-mono font-black text-sm">
+                      <td key={m} className="text-right font-mono font-black text-sm">
                         {formatARS(grandTotal(p))}
                       </td>
                     );
                   })}
-                  <td className="px-3 py-3 text-right font-mono font-black text-sm bg-emerald-900">
+                  <td className="text-right font-mono font-black text-sm bg-emerald-900">
                     {formatARS(totalAllMonths)}
                   </td>
                 </tr>

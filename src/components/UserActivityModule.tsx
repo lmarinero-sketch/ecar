@@ -125,32 +125,32 @@ export const UserActivityModule: React.FC = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-gray-200 text-slate-600">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-bold">Fecha / Hora</th>
-                <th className="px-4 py-3 font-bold">Usuario</th>
-                <th className="px-4 py-3 font-bold">Módulo</th>
-                <th className="px-4 py-3 font-bold">Acción</th>
-                <th className="px-4 py-3 font-bold">Detalle</th>
+                <th className="font-bold">Fecha / Hora</th>
+                <th className="font-bold">Usuario</th>
+                <th className="font-bold">Módulo</th>
+                <th className="font-bold">Acción</th>
+                <th className="font-bold">Detalle</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filteredLogs.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-10 text-gray-400">No se encontraron logs.</td></tr>
+                <tr><td colSpan={5} className="text-center text-gray-400">No se encontraron logs.</td></tr>
               ) : (
                 filteredLogs.slice(0, 50).map(log => (
                   <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-xs whitespace-nowrap text-gray-500">{new Date(log.created_at).toLocaleString('es-AR')}</td>
-                    <td className="px-4 py-3 font-medium text-gray-700">{log.user_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{log.module}</td>
-                    <td className="px-4 py-3">
+                    <td className="text-xs text-gray-500">{new Date(log.created_at).toLocaleString('es-AR')}</td>
+                    <td className="font-medium text-gray-700">{log.user_name}</td>
+                    <td className="text-gray-600">{log.module}</td>
+                    <td >
                       {log.action_type === 'time_spent' ? (
-                        <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold"><Clock size={12} /> Permanencia</span>
+                        <span className="badge badge-info"><Clock size={12} /> Permanencia</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold"><MousePointerClick size={12} /> Clic</span>
+                        <span className="badge badge-success"><MousePointerClick size={12} /> Clic</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500 max-w-xs truncate" title={JSON.stringify(log.details)}>
+                    <td className="text-xs text-gray-500 max-w-xs truncate" title={JSON.stringify(log.details)}>
                       {log.action_type === 'time_spent' ? `Duración: ${formatTime(log.duration_seconds)}` : log.details?.text || log.details?.element || '-'}
                     </td>
                   </tr>

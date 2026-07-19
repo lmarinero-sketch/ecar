@@ -451,7 +451,7 @@ export const WbsModule: React.FC = () => {
           </div>
         )}
 
-        <button onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }} className="bg-ecar-blue text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue transition-all shadow-md">
+        <button onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }} className="btn-primary">
           <Plus size={16} /> Nueva Obra
         </button>
       </div>
@@ -499,7 +499,7 @@ export const WbsModule: React.FC = () => {
       )}
 
       {!selectedProjectId && (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+        <div className="light-card p-1">
           <Target size={56} className="mx-auto mb-4 opacity-20" />
           <p className="font-medium text-lg">Seleccioná una obra para gestionar</p>
           <p className="text-sm mt-1">O creá una nueva desde el botón de arriba.</p>
@@ -519,7 +519,7 @@ export const WbsModule: React.FC = () => {
               <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm col-span-2" />
             </div>
-            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
+            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="btn-primary w-full>
               {createProject.isPending || updateProject.isPending ? 'Guardando...' : (form.id ? '✅ Guardar Cambios' : '✅ Crear Obra')}
             </button>
           </div>
@@ -529,7 +529,7 @@ export const WbsModule: React.FC = () => {
       {/* Modal Nueva/Editar Tarea */}
       {showNewTask && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center pb-6 pt-12 px-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col border border-gray-100">
+          <div className="light-card ">
             {/* Modal Header — sticky */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
               <div>
@@ -825,7 +825,7 @@ export const WbsModule: React.FC = () => {
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 shrink-0 bg-white rounded-b-2xl">
               <button 
                 onClick={() => { setShowNewTask(false); setEditTask(null); }}
-                className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-bold text-sm border hover:bg-gray-200 transition-all"
+                className="badge badge-neutral"
               >
                 Cancelar
               </button>
@@ -849,40 +849,40 @@ export const WbsModule: React.FC = () => {
 const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: () => void; onEdit: (el: WbsElement) => void; onDelete: (id: string) => void }> = ({ wbs, onNew, onEdit, onDelete }) => (
   <div className="space-y-4">
     <div className="flex justify-end">
-      <button onClick={onNew} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md"><Plus size={16} /> Nueva Tarea</button>
+      <button onClick={onNew} className="btn-primary"><Plus size={16} /> Nueva Tarea</button>
     </div>
     {wbs.length > 0 ? (
       <div className="light-card overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Tarea</th>
-              <th className="px-4 py-3">Fase</th>
-              <th className="px-4 py-3">Prioridad</th>
-              <th className="px-4 py-3">Responsable</th>
-              <th className="px-4 py-3 text-center">Avance</th>
-              <th className="px-4 py-3 text-right">Presupuesto</th>
-              <th className="px-4 py-3 text-center">Acciones</th>
+              <th >Tarea</th>
+              <th >Fase</th>
+              <th >Prioridad</th>
+              <th >Responsable</th>
+              <th className="text-center">Avance</th>
+              <th className="text-right">Presupuesto</th>
+              <th className="text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {wbs.map(el => (
               <tr key={el.id} className="hover:bg-gray-50/50">
-                <td className="px-4 py-3">
+                <td >
                   <p className="font-medium text-gray-800">{el.name}</p>
                   {el.description && <p className="text-xs text-gray-400 truncate max-w-[200px]">{el.description}</p>}
                 </td>
-                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PHASE_COLORS[el.phase]}`}>{el.phase}</span></td>
-                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLORS[el.priority]}`}>{el.priority}</span></td>
-                <td className="px-4 py-3 text-xs text-gray-600">{(el.employee as any)?.full_name || '—'}</td>
-                <td className="px-4 py-3">
+                <td ><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PHASE_COLORS[el.phase]}`}>{el.phase}</span></td>
+                <td ><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORITY_COLORS[el.priority]}`}>{el.priority}</span></td>
+                <td className="text-xs text-gray-600">{(el.employee as any)?.full_name || '—'}</td>
+                <td >
                   <div className="flex items-center gap-2 justify-center">
                     <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-ecar-blue rounded-full" style={{ width: `${el.progress_pct}%` }} /></div>
                     <span className="text-xs font-mono font-bold text-gray-500">{el.progress_pct}%</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-xs text-gray-600">{el.budget_cost_ars > 0 ? `$${el.budget_cost_ars.toLocaleString('es-AR')}` : '—'}</td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-right font-mono text-xs text-gray-600">{el.budget_cost_ars > 0 ? `$${el.budget_cost_ars.toLocaleString('es-AR')}` : '—'}</td>
+                <td className="text-center">
                   <div className="flex items-center justify-center gap-1">
                     <button onClick={() => onEdit(el)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={13} className="text-gray-500" /></button>
                     <button onClick={() => onDelete(el.id)} className="p-1.5 hover:bg-red-50 rounded-lg"><Trash2 size={13} className="text-red-400" /></button>
@@ -894,7 +894,7 @@ const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: (
         </table>
       </div>
     ) : (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+      <div className="light-card p-1">
         <FolderTree size={48} className="mx-auto mb-3 opacity-20" /><p className="font-medium">Sin tareas</p><p className="text-sm">Creá la primera tarea del proyecto.</p>
       </div>
     )}
@@ -935,7 +935,7 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any; onUpdateProgress?: (
 
   if (tasksWithDates.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+      <div className="light-card p-1">
         <Calendar size={48} className="mx-auto mb-3 opacity-20" />
         <p className="font-medium">Sin tareas programadas</p>
         <p className="text-sm">Asigná fechas de inicio y fin a las tareas en la pestaña Planificación.</p>
@@ -1128,7 +1128,7 @@ const DocumentosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             <option value="contratos">Contratos</option>
             <option value="fotos">Fotos</option>
           </select>
-          <label className="bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer transition-colors shadow-sm">
+          <label className="btn-primary">
             <Plus size={16} /> Subir
             <input type="file" onChange={handleUpload} className="hidden" disabled={isUploading} />
           </label>
@@ -1164,7 +1164,7 @@ const DocumentosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </button>
               </div>
               <div className="mt-4 flex gap-2">
-                <a href={getPublicUrl(doc.file_path)} target="_blank" rel="noopener noreferrer" className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-1.5 rounded-lg text-xs font-bold text-center transition-colors">
+                <a href={getPublicUrl(doc.file_path)} target="_blank" rel="noopener noreferrer" className="badge badge-neutral">
                   Ver/Descargar
                 </a>
               </div>
@@ -1201,7 +1201,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setShowNew(!showNew)} className="bg-ecar-blue text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-ecar-blue shadow-md">
+        <button onClick={() => setShowNew(!showNew)} className="btn-primary">
           {showNew ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> Nuevo Registro</>}
         </button>
       </div>
@@ -1227,7 +1227,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
             <div><label className="text-xs font-bold text-gray-500">Responsable</label><input value={fbForm.responsable} onChange={e => setFbForm({...fbForm, responsable: e.target.value})} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
           </div>
           <div><label className="text-xs font-bold text-gray-500">Acción Correctiva</label><textarea value={fbForm.accion_correctiva} onChange={e => setFbForm({...fbForm, accion_correctiva: e.target.value})} rows={2} className="w-full px-3 py-2.5 border rounded-xl text-sm" /></div>
-          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="w-full bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50">
+          <button onClick={handleAdd} disabled={!fbForm.descripcion || createFb.isPending} className="btn-primary w-full>
             <Check size={16} className="inline mr-1" /> Registrar
           </button>
         </div>
@@ -1250,8 +1250,8 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
                 {fb.accion_correctiva && <p className="text-xs text-gray-500"><strong>Acción:</strong> {fb.accion_correctiva}</p>}
                 {fb.estado !== 'resuelto' && (
                   <div className="flex gap-1 pt-1">
-                    {fb.estado === 'abierto' && <button onClick={() => updateFb.mutate({ id: fb.id, estado: 'en_proceso' })} className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">En Proceso</button>}
-                    <button onClick={() => updateFb.mutate({ id: fb.id, estado: 'resuelto' })} className="text-[10px] font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200">Resolver</button>
+                    {fb.estado === 'abierto' && <button onClick={() => updateFb.mutate({ id: fb.id, estado: 'en_proceso' })} className="badge badge-info">En Proceso</button>}
+                    <button onClick={() => updateFb.mutate({ id: fb.id, estado: 'resuelto' })} className="badge badge-success">Resolver</button>
                   </div>
                 )}
               </div>
@@ -1259,7 +1259,7 @@ const RetroTab: React.FC<{ projectId: string; wbs: WbsElement[] }> = ({ projectI
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+        <div className="light-card p-1">
           <RefreshCw size={48} className="mx-auto mb-3 opacity-20" /><p className="font-medium">Sin registros de retroalimentación</p>
           <p className="text-sm">Registrá desviaciones, lecciones aprendidas y mejoras del proyecto.</p>
         </div>
@@ -1369,7 +1369,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
             <Wrench size={20} className="text-ecar-blue" /> Herramientas y Equipamiento
           </h3>
-          <button onClick={() => setShowAssignModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
+          <button onClick={() => setShowAssignModal(true)} className="btn-primary">
             <Plus size={14} /> Asignar Herramienta
           </button>
         </div>
@@ -1378,33 +1378,33 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
           <div className="text-center py-6 text-gray-400 text-sm">Cargando herramientas asignadas...</div>
         ) : toolAssignments.length > 0 ? (
           <div className="light-card overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Herramienta</th>
-                  <th className="px-4 py-3">Responsable</th>
-                  <th className="px-4 py-3">Fecha Asig.</th>
-                  <th className="px-4 py-3">Devolución</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <th >Herramienta</th>
+                  <th >Responsable</th>
+                  <th >Fecha Asig.</th>
+                  <th >Devolución</th>
+                  <th >Estado</th>
+                  <th className="text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {toolAssignments.map(asg => (
                   <tr key={asg.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 font-medium text-gray-800">
+                    <td className="font-medium text-gray-800">
                       {asg.item?.name || 'Herramienta Desconocida'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="text-gray-600">
                       {asg.employee ? asg.employee.full_name : 'No asignado'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                    <td className="text-gray-500 font-mono text-xs">
                       {asg.assigned_date}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                    <td className="text-gray-500 font-mono text-xs">
                       {asg.returned_date || '-'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td >
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         asg.status === 'returned' ? 'bg-green-100 text-green-700' :
                         asg.status === 'assigned' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
@@ -1414,7 +1414,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
                          asg.status === 'lost' ? 'Perdido' : 'Dañado'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right">
                       {asg.status === 'assigned' && (
                         <button onClick={() => handleReturn(asg.id)} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold text-[10px] border transition-all">
                           Devolver
@@ -1472,7 +1472,7 @@ const RecursosTab: React.FC<RecursosTabProps> = ({ projectId }) => {
                 <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/20" placeholder="Ej: Estado al entregar, accesorios incluidos..." />
               </div>
 
-              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleAssign} disabled={!selectedItemId || !selectedEmployeeId || createToolAssignment.isPending} className="btn-primary w-full mt-2>
                 {createToolAssignment.isPending ? 'Asignando...' : 'Confirmar Asignación'}
               </button>
             </div>
@@ -1572,7 +1572,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Historial de Movimientos de Material</h3>
-            <button onClick={() => setShowMovModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
+            <button onClick={() => setShowMovModal(true)} className="btn-primary">
               <Plus size={14} /> Registrar Movimiento
             </button>
           </div>
@@ -1581,39 +1581,39 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             <div className="text-center py-6 text-gray-400 text-sm">Cargando movimientos...</div>
           ) : movements.length > 0 ? (
             <div className="light-card overflow-hidden">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3">Material</th>
-                    <th className="px-4 py-3">Tipo</th>
-                    <th className="px-4 py-3">Cantidad</th>
-                    <th className="px-4 py-3">Notas</th>
-                    <th className="px-4 py-3">Fecha</th>
+                    <th>Material</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Notas</th>
+                    <th>Fecha</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {movements.map(mov => (
-                    <tr key={mov.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-medium text-gray-800">
+                    <tr key={mov.id}>
+                      <td className="font-medium text-gray-800">
                         {mov.item?.name || 'Material Desconocido'}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          mov.movement_type === 'in' ? 'bg-green-100 text-green-700' :
-                          mov.movement_type === 'out' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                      <td>
+                        <span className={`badge ${
+                          mov.movement_type === 'in' ? 'badge-success' :
+                          mov.movement_type === 'out' ? 'badge-warning' : 'badge-info'
                         }`}>
                           {mov.movement_type === 'in' ? 'Ingreso' :
                            mov.movement_type === 'out' ? 'Consumo' :
                            mov.movement_type === 'return' ? 'Devolución' : 'Ajuste'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-700">
+                      <td className="font-mono text-gray-700">
                         {mov.quantity} {mov.item?.unit}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs truncate max-w-[200px]">
+                      <td className="text-gray-500 text-xs truncate max-w-[200px]">
                         {mov.notes || '-'}
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs font-mono">
+                      <td className="text-gray-400 text-xs font-mono">
                         {new Date(mov.created_at).toLocaleDateString('es-AR')}
                       </td>
                     </tr>
@@ -1633,7 +1633,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Planillas de Carga de Combustible</h3>
-            <button onClick={() => setShowFuelModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
+            <button onClick={() => setShowFuelModal(true)} className="btn-primary">
               <Plus size={14} /> Cargar Combustible
             </button>
           </div>
@@ -1642,40 +1642,40 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
             <div className="text-center py-6 text-gray-400 text-sm">Cargando consumos de combustible...</div>
           ) : fuelLoads.length > 0 ? (
             <div className="light-card overflow-hidden">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3">Fecha</th>
-                    <th className="px-4 py-3">Vehículo</th>
-                    <th className="px-4 py-3">Litros</th>
-                    <th className="px-4 py-3">Monto Total</th>
-                    <th className="px-4 py-3">Chofer</th>
-                    <th className="px-4 py-3">Odómetro</th>
-                    <th className="px-4 py-3">Notas</th>
+                    <th>Fecha</th>
+                    <th>Vehículo</th>
+                    <th>Litros</th>
+                    <th>Monto Total</th>
+                    <th>Chofer</th>
+                    <th>Odómetro</th>
+                    <th>Notas</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {fuelLoads.map(load => (
-                    <tr key={load.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 text-gray-600 font-mono text-xs">
+                    <tr key={load.id}>
+                      <td className="text-gray-600 font-mono text-xs">
                         {load.load_date}
                       </td>
-                      <td className="px-4 py-3 font-medium text-gray-800">
+                      <td className="font-medium text-gray-800">
                         {load.vehicle_code ? `${load.vehicle_code} (${load.plate || 'S/P'})` : 'Flota General'}
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-700">
+                      <td className="font-mono text-gray-700">
                         {load.liters ? `${load.liters.toLocaleString('es-AR')} L` : '-'}
                       </td>
-                      <td className="px-4 py-3 font-mono font-bold text-ecar-blue">
+                      <td className="font-mono font-bold text-ecar-blue">
                         {load.total_amount ? `$${load.total_amount.toLocaleString('es-AR')}` : '-'}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">
+                      <td className="text-gray-600 text-xs">
                         {load.driver_name || '-'}
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-500 text-xs">
+                      <td className="font-mono text-gray-500 text-xs">
                         {load.odometer_km ? `${load.odometer_km.toLocaleString('es-AR')} Km` : '-'}
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs truncate max-w-[150px]">
+                      <td className="text-gray-400 text-xs truncate max-w-[150px]">
                         {load.observations || '-'}
                       </td>
                     </tr>
@@ -1756,7 +1756,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={movNotes} onChange={e => setMovNotes(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Motivo o detalle del movimiento..." />
               </div>
 
-              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveMovement} disabled={!itemId || !qty || createMovement.isPending} className="btn-primary w-full mt-2>
                 {createMovement.isPending ? 'Procesando...' : 'Confirmar Movimiento'}
               </button>
             </div>
@@ -1813,7 +1813,7 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 <textarea value={obs} onChange={e => setObs(e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" placeholder="Detalles de la carga..." />
               </div>
 
-              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveFuel} disabled={!vehicleId || !liters || !totalCost || createFuelLoad.isPending} className="btn-primary w-full mt-2>
                 {createFuelLoad.isPending ? 'Guardando planilla...' : 'Guardar Planilla de Carga'}
               </button>
             </div>
@@ -1895,7 +1895,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider">Pedidos de Materiales y Suministros</h3>
-        <button onClick={() => setShowNewOrderModal(true)} className="bg-ecar-blue text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:bg-ecar-blue transition-all">
+        <button onClick={() => setShowNewOrderModal(true)} className="btn-primary">
           <Plus size={14} /> Nuevo Pedido
         </button>
       </div>
@@ -2070,7 +2070,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               </div>
             )}
 
-            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+            <button onClick={handleSubmit} disabled={items.length === 0 || createRequest.isPending} className="btn-primary w-full mt-2>
               {createRequest.isPending ? 'Enviando pedido...' : 'Registrar Pedido y Enviar'}
             </button>
           </div>
@@ -2170,44 +2170,44 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
         <div className="text-center py-6 text-gray-400 text-sm">Cargando certificados...</div>
       ) : certificates.length > 0 ? (
         <div className="light-card overflow-hidden">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Cert. N°</th>
-                <th className="px-4 py-3">Período</th>
-                <th className="px-4 py-3 text-right">Monto Bruto</th>
-                <th className="px-4 py-3 text-right">Redet.</th>
-                <th className="px-4 py-3 text-right">Retenciones</th>
-                <th className="px-4 py-3 text-right">Neto A Cobrar</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th>Cert. N°</th>
+                <th>Período</th>
+                <th className="text-right">Monto Bruto</th>
+                <th className="text-right">Redet.</th>
+                <th className="text-right">Retenciones</th>
+                <th className="text-right">Neto A Cobrar</th>
+                <th>Estado</th>
+                <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 font-mono text-xs text-gray-700">
+            <tbody className="font-mono text-xs text-gray-700">
               {certificates.map(cert => {
                 const totalRetentions = (cert.retention_iibb || 0) + (cert.retention_imp_cheque || 0) + (cert.other_retentions || 0);
 
                 return (
-                  <tr key={cert.id} className="hover:bg-gray-50/50">
-                    <td className="px-4 py-3 font-bold text-gray-800 font-sans">
+                  <tr key={cert.id}>
+                    <td className="font-bold text-gray-800 font-sans">
                       #{cert.certificate_number}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 font-sans">
+                    <td className="text-gray-600 font-sans">
                       {cert.period_description || '-'}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-800">
+                    <td className="text-right text-gray-800">
                       ${cert.gross_amount.toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-3 text-right text-green-600">
+                    <td className="text-right text-green-600">
                       +${(cert.redetermination || 0).toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-3 text-right text-red-500">
+                    <td className="text-right text-red-500">
                       -${totalRetentions.toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-ecar-blue">
+                    <td className="text-right font-bold text-ecar-blue">
                       ${cert.net_deposit.toLocaleString('es-AR')}
                     </td>
-                    <td className="px-4 py-3 font-sans">
+                    <td className="font-sans">
                       <select
                         value={cert.status}
                         onChange={(e) => {
@@ -2232,7 +2232,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                         <option value="deposited">Pagado</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-right font-sans">
+                    <td className="text-right font-sans">
                     </td>
                   </tr>
                 );
@@ -2299,7 +2299,7 @@ const CertificadosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                 </div>
               </div>
 
-              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="w-full bg-ecar-blue hover:bg-ecar-blue text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 mt-2">
+              <button onClick={handleSaveCert} disabled={!certNumber || !period || !gross || createCert.isPending} className="btn-primary w-full mt-2>
                 {createCert.isPending ? 'Guardando...' : 'Guardar y Registrar Certificado'}
               </button>
             </div>

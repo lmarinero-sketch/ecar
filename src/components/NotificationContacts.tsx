@@ -59,7 +59,7 @@ export const NotificationContacts: React.FC = () => {
                 </select>
               </div>
             </div>
-            <button onClick={handleCreate} disabled={!form.name || !form.phone || createContact.isPending} className="w-full py-2.5 bg-ecar-blue text-white rounded-xl font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+            <button onClick={handleCreate} disabled={!form.name || !form.phone || createContact.isPending} className="btn-primary w-full>
               {createContact.isPending ? 'Guardando...' : 'Guardar Contacto'}
             </button>
           </div>
@@ -85,7 +85,7 @@ export const NotificationContacts: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-900 text-sm truncate">{c.name}</p>
                 <p className="text-xs font-mono text-gray-400">{c.phone}</p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">{c.role}</span>
+                <span className="badge badge-info">{c.role}</span>
               </div>
               <button onClick={async () => { if(await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar contacto?')) deleteContact.mutate(c.id) }} className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
                 <Trash2 size={14} />

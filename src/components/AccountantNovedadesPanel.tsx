@@ -347,27 +347,27 @@ export const AccountantNovedadesPanel: React.FC = () => {
           <div className="text-center py-12 text-gray-400 text-sm">Sin empleados activos.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Empleado</th>
-                  <th className="px-4 py-3">CUIL</th>
-                  <th className="px-4 py-3">Categoría</th>
-                  <th className="px-4 py-3 text-center">Presentes</th>
-                  <th className="px-4 py-3 text-center">Tard.</th>
-                  <th className="px-4 py-3 text-center">Ausenc.</th>
-                  <th className="px-4 py-3 text-center">Vac.</th>
-                  <th className="px-4 py-3 text-center">Méd.</th>
-                  <th className="px-4 py-3 text-right">Hs Trab.</th>
-                  <th className="px-4 py-3 text-right">Hs Extra</th>
-                  <th className="px-4 py-3 text-right">Jornal</th>
-                  <th className="px-4 py-3 text-center">Estado</th>
+                  <th >Empleado</th>
+                  <th >CUIL</th>
+                  <th >Categoría</th>
+                  <th className="text-center">Presentes</th>
+                  <th className="text-center">Tard.</th>
+                  <th className="text-center">Ausenc.</th>
+                  <th className="text-center">Vac.</th>
+                  <th className="text-center">Méd.</th>
+                  <th className="text-right">Hs Trab.</th>
+                  <th className="text-right">Hs Extra</th>
+                  <th className="text-right">Jornal</th>
+                  <th className="text-center">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {employeeSummaries.map(s => (
                   <tr key={s.employee.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
+                    <td >
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs shrink-0">
                           {s.employee.full_name.charAt(0)}
@@ -375,50 +375,50 @@ export const AccountantNovedadesPanel: React.FC = () => {
                         <span className="font-bold text-gray-900">{s.employee.full_name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{s.employee.cuil || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{s.categoryName}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="font-mono text-xs text-gray-500">{s.employee.cuil || '—'}</td>
+                    <td className="text-gray-600 text-xs">{s.categoryName}</td>
+                    <td className="text-center">
                       <span className="font-mono font-bold text-green-700">{s.daysPresent}</span>
                       <span className="text-gray-400 text-xs">/{s.workingDaysInMonth}</span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {s.daysLate > 0 ? (
                         <span className="font-mono font-bold text-yellow-700">{s.daysLate}</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {s.daysAbsent > 0 ? (
                         <span className="font-mono font-bold text-red-700">{s.daysAbsent}</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {s.daysVacation > 0 ? (
                         <span className="font-mono font-bold text-blue-700">{s.daysVacation}</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {s.daysMedical > 0 ? (
                         <span className="font-mono font-bold text-ecar-blue">{s.daysMedical}</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{s.totalWorkedHours}h</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right font-mono font-bold text-gray-800">{s.totalWorkedHours}h</td>
+                    <td className="text-right">
                       {s.overtimeHours > 0 ? (
                         <span className="font-mono font-bold text-ecar-blue">{s.overtimeHours}h</span>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-600">
+                    <td className="text-right font-mono text-gray-600">
                       {s.dailyRate > 0 ? `$ ${s.dailyRate.toLocaleString('es-AR')}` : '—'}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {s.isPerfect && s.daysPresent > 0 ? (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✓ Perfecta</span>
+                        <span className="badge badge-success">✓ Perfecta</span>
                       ) : s.daysAbsent > 0 ? (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Ausencias</span>
+                        <span className="badge badge-danger">Ausencias</span>
                       ) : s.daysPresent === 0 ? (
                         <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500">Sin datos</span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Irregular</span>
+                        <span className="badge badge-warning">Irregular</span>
                       )}
                     </td>
                   </tr>

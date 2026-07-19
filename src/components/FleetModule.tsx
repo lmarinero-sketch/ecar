@@ -19,9 +19,9 @@ import { TiresPanel } from './TiresPanel';
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking' | 'drivers' | 'vehicle_kpis';
 
 const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
-  operativo: { icon: '🟢', cls: 'bg-green-100 text-green-700' },
-  con_observaciones: { icon: '🟡', cls: 'bg-yellow-100 text-yellow-700' },
-  fuera_de_servicio: { icon: '🔴', cls: 'bg-red-100 text-red-700' },
+  operativo: { icon: '🟢', cls: 'badge-success' },
+  con_observaciones: { icon: '🟡', cls: 'badge-warning' },
+  fuera_de_servicio: { icon: '🔴', cls: 'badge-danger' },
 };
 
 const VEHICLE_ICON: Record<string, string> = {
@@ -195,29 +195,29 @@ export const FleetModule: React.FC = () => {
         </button>
 
         {/* Header and Tabs */}
-        <div className="bg-gradient-to-r from-amber-700 to-amber-500 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-6 opacity-10"><Wrench size={120} /></div>
           <div className="relative z-10">
             <h3 className="font-bold text-2xl flex items-center gap-2"><Wrench size={24} /> Taller y Mantenimiento</h3>
-            <p className="text-amber-100 text-sm mt-1">Control de service, taller interno y neumáticos</p>
+            <p className="text-ecar-blueLight text-sm mt-1">Control de service, taller interno y neumáticos</p>
           </div>
           
-          <div className="flex gap-4 mt-6 border-b border-amber-400/50 relative z-10">
+          <div className="flex gap-4 mt-6 border-b border-blue-400/50 relative z-10">
             <button 
               onClick={() => setMaintenanceTab('schedule')} 
-              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'schedule' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'schedule' ? 'text-white border-b-2 border-white' : 'text-ecar-blueLight hover:text-white'}`}
             >
               Cronograma Service
             </button>
             <button 
               onClick={() => setMaintenanceTab('workshop')} 
-              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'workshop' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'workshop' ? 'text-white border-b-2 border-white' : 'text-ecar-blueLight hover:text-white'}`}
             >
               Órdenes de Taller
             </button>
             <button 
               onClick={() => setMaintenanceTab('tires')} 
-              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'tires' ? 'text-white border-b-2 border-white' : 'text-amber-200 hover:text-white'}`}
+              className={`pb-2 px-2 text-sm font-bold transition-colors ${maintenanceTab === 'tires' ? 'text-white border-b-2 border-white' : 'text-ecar-blueLight hover:text-white'}`}
             >
               Neumáticos
             </button>
@@ -273,24 +273,24 @@ export const FleetModule: React.FC = () => {
               {allMaintenance.length === 0 ? (
                 <div className="text-center py-12 text-gray-400"><Wrench size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay mantenimientos programados</p><p className="text-sm">Editá un vehículo para agendar su próximo service</p></div>
               ) : (
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-                    <tr><th className="px-4 py-3">Vehículo</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Km</th><th className="px-4 py-3">Notas</th><th className="px-4 py-3">Estado</th></tr>
+                <table className="data-table">
+                  <thead>
+                    <tr><th>Vehículo</th><th>Fecha</th><th>Km</th><th>Notas</th><th>Estado</th></tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody>
                     {allMaintenance.map(v => {
                       const overdue = isDueOrOverdue(v.next_maintenance_date);
                       const soon = isDueSoon(v.next_maintenance_date, 7);
                       return (
-                        <tr key={v.id} className={overdue ? 'bg-red-50/50' : soon ? 'bg-yellow-50/50' : 'hover:bg-gray-50'}>
-                          <td className="px-4 py-3 font-medium">{VEHICLE_ICON[v.vehicle_type] || '🚐'} {v.code} — {v.description}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_date}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{v.next_maintenance_km ? `${v.next_maintenance_km.toLocaleString()} km` : '—'}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{v.maintenance_notes || '—'}</td>
-                      <td className="px-4 py-3">
-                        {overdue ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Vencido</span>
-                          : soon ? <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Próximo</span>
-                          : <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Programado</span>}
+                        <tr key={v.id} className={overdue ? 'bg-red-50/50' : soon ? 'bg-yellow-50/50' : ''}>
+                          <td className="font-medium">{VEHICLE_ICON[v.vehicle_type] || '🚐'} {v.code} — {v.description}</td>
+                          <td className="font-mono text-xs">{v.next_maintenance_date}</td>
+                          <td className="font-mono text-xs">{v.next_maintenance_km ? `${v.next_maintenance_km.toLocaleString()} km` : '—'}</td>
+                      <td className="text-xs text-gray-500">{v.maintenance_notes || '—'}</td>
+                      <td>
+                        {overdue ? <span className="badge badge-danger">Vencido</span>
+                          : soon ? <span className="badge badge-warning">Próximo</span>
+                          : <span className="badge badge-success">Programado</span>}
                       </td>
                     </tr>
                   );
@@ -311,12 +311,11 @@ export const FleetModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Truck size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-slate-400" />
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Truck size={24} /> Flota y Maquinaria</h3>
-          <p className="text-slate-300 text-sm mt-1">Doc PR-GL-01 §4.5 — Registro de vehículos, mantenimiento preventivo y consumo de combustible</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GL-01 §4.5 — Registro de vehículos, mantenimiento preventivo y consumo de combustible</p>
         </div>
       </div>
 
@@ -403,10 +402,10 @@ export const FleetModule: React.FC = () => {
                       <span className="font-bold text-sm text-gray-800">{v.code}</span>
                       <span className="text-sm text-gray-600">{v.description}</span>
                       {v.plate && <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.plate}</span>}
-                      {overdue && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
-                      {!overdue && soon && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700">Service próximo</span>}
+                      {overdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
+                      {!overdue && soon && <span className="badge badge-warning text-[10px]">Service próximo</span>}
                       {v.vehicle_condition && CONDITION_BADGE[v.vehicle_condition] && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${CONDITION_BADGE[v.vehicle_condition].cls}`}>
+                        <span className={`badge text-[10px] ${CONDITION_BADGE[v.vehicle_condition].cls}`}>
                           {CONDITION_BADGE[v.vehicle_condition].icon} {v.vehicle_condition === 'operativo' ? '' : v.vehicle_condition === 'con_observaciones' ? 'Observado' : 'Fuera de servicio'}
                         </span>
                       )}
@@ -549,7 +548,7 @@ export const FleetModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">Área</label><input value={newForm.area} onChange={e => setNewForm({ ...newForm, area: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Obra Norte" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Chofer Habitual</label><input value={newForm.default_driver} onChange={e => setNewForm({ ...newForm, default_driver: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Juan Pérez" /></div>
               </div>
-              <button type="submit" disabled={createVehicle.isPending} className="w-full bg-slate-700 text-white py-3 rounded-lg font-bold text-sm hover:bg-slate-800 transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createVehicle.isPending} className="btn-primary w-full justify-center disabled:opacity-50">
                 {createVehicle.isPending ? 'Creando...' : '🚛 Registrar Vehículo'}
               </button>
             </form>
@@ -566,7 +565,7 @@ export const FleetModule: React.FC = () => {
               ¿Eliminás <span className="font-bold">{deleteTarget.code} — {deleteTarget.description}</span>? El vehículo se desactivará y no aparecerá más en el listado.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
+              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
               <button
                 onClick={async () => {
                   try { await deleteVehicle.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }

@@ -146,7 +146,7 @@ export const ChequeUploader: React.FC<Props> = ({ onExtracted, onCancel }) => {
             <div className="text-center py-8 space-y-4">
               <AlertCircle size={48} className="mx-auto text-red-400" />
               <p className="font-bold text-red-600">{error}</p>
-              <button onClick={() => { setStep('upload'); setError(''); }} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold">
+              <button onClick={() => { setStep('upload'); setError(''); }} className="badge badge-neutral">
                 Reintentar
               </button>
             </div>

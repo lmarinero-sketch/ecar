@@ -614,7 +614,7 @@ export const IfcViewer: React.FC<IfcViewerProps> = ({ projectId, onElementSelect
             <div className="flex justify-end border-t border-gray-100 pt-3">
               <button
                 onClick={() => setShowHelp(false)}
-                className="bg-ecar-blue text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-ecar-blueDark hover:shadow-md transition-all animate-pulse"
+                className="btn-primary"
               >
                 Entendido
               </button>

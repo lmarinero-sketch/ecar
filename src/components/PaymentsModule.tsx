@@ -236,15 +236,15 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           <Plus size={14} /> Agregar Pago
         </button>
         {pendingGastos.length > 0 && (
-          <button onClick={() => setShowImport(!showImport)} className="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-amber-200 border border-amber-200 transition-all">
+          <button onClick={() => setShowImport(!showImport)} className="badge badge-warning">
             <Building2 size={14} /> Importar de Gastos ({pendingGastos.length})
           </button>
         )}
-        <button onClick={() => setShowPayObrero(true)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-200 border border-blue-200 transition-all">
+        <button onClick={() => setShowPayObrero(true)} className="badge badge-info">
           <Users size={14} /> Pagar a Obreros
         </button>
         {/*
-        <button onClick={() => setShowPayroll(true)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-200 border border-blue-200 transition-all">
+        <button onClick={() => setShowPayroll(true)} className="badge badge-info">
           <Users size={14} /> Liquidar Obreros
         </button>
         */}
@@ -309,7 +309,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setShowAdd(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md flex items-center gap-2">
+              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="btn-primary">
                 <Save size={16} /> Guardar Pago
               </button>
             </div>
@@ -382,7 +382,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setEditId(null)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleSaveEdit} disabled={!editForm.concepto?.trim() || !editForm.monto} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md flex items-center gap-2">
+              <button onClick={handleSaveEdit} disabled={!editForm.concepto?.trim() || !editForm.monto} className="btn-primary">
                 <Save size={16} /> Guardar Cambios
               </button>
             </div>
@@ -401,17 +401,17 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-800 text-white">
-                  <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Empresa / Concepto</th>
-                  <th className="px-3 py-2.5 text-right text-[10px] uppercase tracking-wider font-bold">Monto</th>
-                  <th className="px-3 py-2.5 text-center text-[10px] uppercase tracking-wider font-bold">Alias o CBU</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Titular Cuenta</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Factura / Periodo</th>
-                  <th className="px-3 py-2.5 text-right text-[10px] uppercase tracking-wider font-bold">Resto</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Observaciones</th>
-                  <th className="px-3 py-2.5 text-center text-[10px] uppercase tracking-wider font-bold w-24">Acciones</th>
+                  <th className="text-left text-[10px] uppercase tracking-wider font-bold">Empresa / Concepto</th>
+                  <th className="text-right text-[10px] uppercase tracking-wider font-bold">Monto</th>
+                  <th className="text-center text-[10px] uppercase tracking-wider font-bold">Alias o CBU</th>
+                  <th className="text-left text-[10px] uppercase tracking-wider font-bold">Titular Cuenta</th>
+                  <th className="text-left text-[10px] uppercase tracking-wider font-bold">Factura / Periodo</th>
+                  <th className="text-right text-[10px] uppercase tracking-wider font-bold">Resto</th>
+                  <th className="text-left text-[10px] uppercase tracking-wider font-bold">Observaciones</th>
+                  <th className="text-center text-[10px] uppercase tracking-wider font-bold w-24">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {/* 
                 {isFriday && !hasPayroll && (
                   <tr 
@@ -419,7 +419,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                     onClick={() => setShowPayroll(true)}
                     title="Clic para generar sueldos"
                   >
-                    <td colSpan={8} className="px-3 py-4 text-center">
+                    <td colSpan={8} className="text-center">
                       <span className="font-bold text-blue-700 flex items-center justify-center gap-2">
                         <Users size={16} /> Sueldos de Obreros (Pendiente de Liquidar)
                       </span>
@@ -440,16 +440,16 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                         <div className="flex items-center gap-2 flex-wrap pointer-events-none">
                           {item.source_type === 'gastos_operativos' && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold">GO</span>}
                           {item.concepto}
-                          {isPartial && <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm border border-amber-200">Pago Parcial</span>}
+                          {isPartial && <span className="badge badge-warning">Pago Parcial</span>}
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 text-right font-mono font-bold text-gray-900">{formatARS(Number(item.monto))}</td>
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-xs text-gray-700">{item.alias_cbu || ''}</td>
-                      <td className="px-3 py-2.5 text-gray-600 text-xs">{item.titular_cuenta || ''}</td>
-                      <td className="px-3 py-2.5 text-gray-600 text-xs font-mono">{item.nro_factura || ''}</td>
+                      <td className="text-right font-mono font-bold text-gray-900">{formatARS(Number(item.monto))}</td>
+                      <td className="text-center font-mono font-bold text-xs text-gray-700">{item.alias_cbu || ''}</td>
+                      <td className="text-gray-600 text-xs">{item.titular_cuenta || ''}</td>
+                      <td className="text-gray-600 text-xs font-mono">{item.nro_factura || ''}</td>
                       <td className={`px-3 py-2.5 text-right font-mono text-xs font-bold ${isPartial ? 'text-amber-600' : 'text-gray-500'}`}>{Number(item.resto) > 0 ? formatARS(Number(item.resto)) : ''}</td>
-                      <td className="px-3 py-2.5 text-gray-500 text-xs">{item.observaciones || ''}</td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="text-gray-500 text-xs">{item.observaciones || ''}</td>
+                      <td className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           {item.source_type === 'sueldos_obreros' && (
                             <PayrollPDFButton paymentItemId={item.id} concepto={item.concepto} monto={Number(item.monto)} />
@@ -465,10 +465,10 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 )})}
                 {/* Total row */}
                 <tr className="bg-slate-800 text-white font-bold">
-                  <td className="px-3 py-2.5 text-sm uppercase">Total</td>
-                  <td className="px-3 py-2.5 text-right font-mono font-black text-sm">{formatARS(total)}</td>
+                  <td className="text-sm uppercase">Total</td>
+                  <td className="text-right font-mono font-black text-sm">{formatARS(total)}</td>
                   <td colSpan={3}></td>
-                  <td className="px-3 py-2.5 text-right font-mono text-sm">{totalResto > 0 ? formatARS(totalResto) : ''}</td>
+                  <td className="text-right font-mono text-sm">{totalResto > 0 ? formatARS(totalResto) : ''}</td>
                   <td className={`px-3 py-2.5 text-sm ${pagados === items.length && items.length > 0 ? 'text-green-400' : 'text-amber-400'}`}>
                     {pagados === items.length && items.length > 0 ? 'Pagado' : 'Pendiente'}
                   </td>
@@ -549,7 +549,7 @@ export const PaymentsModule: React.FC = () => {
 
       {/* Actions */}
       <div className="flex justify-end">
-        <button onClick={() => setShowNew(true)} className="bg-ecar-blue text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-md hover:bg-ecar-blue transition-all">
+        <button onClick={() => setShowNew(true)} className="btn-primary">
           <Plus size={16} /> Nueva Planilla de Pagos
         </button>
       </div>
@@ -578,7 +578,7 @@ export const PaymentsModule: React.FC = () => {
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setShowNew(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="bg-ecar-blue text-white px-5 py-2.5 rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-ecar-blue transition-colors shadow-md">
+              <button onClick={handleCreate} disabled={!newDate || !newResponsible.trim()} className="btn-primary">
                 Crear Planilla
               </button>
             </div>
@@ -590,7 +590,7 @@ export const PaymentsModule: React.FC = () => {
       {isLoading ? (
         <div className="text-center py-16"><div className="w-8 h-8 border-3 border-gray-200 border-t-ecar-blue rounded-full animate-spin mx-auto" /></div>
       ) : payments.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+        <div className="light-card p-1">
           <Banknote size={48} className="mx-auto text-gray-300 mb-3" />
           <h4 className="font-bold text-gray-500">Sin planillas de pago</h4>
           <p className="text-sm text-gray-400 mt-1">Creá tu primera planilla semanal para empezar a controlar pagos.</p>
@@ -599,7 +599,7 @@ export const PaymentsModule: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {payments.map(p => (
             <button key={p.id} onClick={() => setSelectedPayment(p)}
-              className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-ecar-blueLight transition-all text-left group">
+              className="light-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-lg bg-ecar-blueLight flex items-center justify-center">

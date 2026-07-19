@@ -93,7 +93,7 @@ export const ProposalModule: React.FC = () => {
       <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-8 md:py-12 space-y-8 md:space-y-12">
         
         {/* Cover Section */}
-        <section className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
+        <section className="light-card p-6">
            <div className="absolute top-0 right-0 p-8 md:p-12 opacity-5 pointer-events-none">
              <Handshake size={200} className="w-48 h-48 md:w-64 md:h-64" />
            </div>
@@ -130,7 +130,7 @@ export const ProposalModule: React.FC = () => {
         </section>
 
         {/* 1. Introducción */}
-        <section className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm relative">
+        <section className="light-card p-6">
            <h2 className="text-xl md:text-2xl font-bold text-ecar-blue mb-4 flex items-center gap-2"><BrainCircuit /> 1. Introducción y Visión del Proyecto</h2>
            <p className="text-sm md:text-base text-gray-600 leading-relaxed">
              La presente propuesta detalla el desarrollo de un sistema de gestión empresarial (ERP) diseñado específicamente para las necesidades operativas de la industria de la construcción, con una <strong>arquitectura escalable que permita su futura comercialización como modelo SaaS</strong>. El objetivo central de esta primera fase es digitalizar el "know-how" de la empresa para optimizar la logística, el control de stock y la toma de decisiones basada en datos.
@@ -140,7 +140,7 @@ export const ProposalModule: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
           
           {/* 2. Alcance */}
-          <section className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm flex flex-col">
+          <section className="light-card p-6">
             <h2 className="text-xl md:text-2xl font-bold text-ecar-blue mb-6 flex items-center gap-2"><Clock /> 2. Alcance (200 Horas)</h2>
             <div className="space-y-4 md:space-y-6 flex-1">
               <div className="flex gap-4">
@@ -175,7 +175,7 @@ export const ProposalModule: React.FC = () => {
           </section>
 
           {/* Gráfico de Distribución */}
-          <section className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+          <section className="light-card p-6">
              <h3 className="font-bold text-gray-900 mb-6 text-center text-sm md:text-base">Distribución de las 200 Horas Base</h3>
              <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -223,7 +223,7 @@ export const ProposalModule: React.FC = () => {
         </section>
 
         {/* Crecimiento / ROI Chart */}
-        <section className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+        <section className="light-card p-6">
            <h3 className="font-bold text-gray-900 mb-2 text-center text-lg md:text-xl flex flex-col md:flex-row justify-center items-center gap-2">
              <LineChartIcon className="text-green-500 hidden md:block"/> Proyección: Impacto de la Digitalización (6 Meses)
            </h3>
@@ -255,7 +255,7 @@ export const ProposalModule: React.FC = () => {
         </section>
 
         {/* 4. Tech Stack & Security */}
-        <section className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm relative overflow-hidden text-left">
+        <section className="light-card p-6">
            <h2 className="text-xl md:text-2xl font-bold text-ecar-blue mb-2 flex items-center gap-2"><Server /> 4. Arquitectura Tecnológica y Seguridad</h2>
            <p className="text-sm text-gray-500 mb-8 leading-relaxed max-w-4xl">
              El código madre será íntegramente documentado y comentado con estándares profesionales. Esto garantiza que cualquier programador futuro pueda leer, escalar o auditar el software sin depender tecnológicamente de nosotros de manera abusiva (Vendor Lock-in).
@@ -343,7 +343,7 @@ export const ProposalModule: React.FC = () => {
                </div>
              </div>
 
-             <div className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 text-gray-800 shadow-xl border border-gray-100 relative overflow-hidden">
+             <div className="light-card p-6">
                 <h3 className="text-lg md:text-xl font-black mb-6 flex items-center gap-2 text-ecar-blue"><ShieldCheck className="text-ecar-red"/> Garantía y Transparencia</h3>
                 <p className="text-sm md:text-base text-gray-600 mb-8 leading-relaxed">
                   El desarrollo se realizará bajo metodologías ágiles, con <strong>entregas parciales demostrables cada 15 días</strong>. Esto garantiza visibilidad total sobre el código y ajustes en tiempo real iterativos.

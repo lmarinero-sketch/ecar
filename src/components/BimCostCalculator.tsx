@@ -203,7 +203,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
 
   if (!elements.length) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+      <div className="light-card p-8">
         <Calculator size={48} className="mx-auto mb-3 opacity-20" />
         <p className="font-medium">Sin datos para calcular</p>
         <p className="text-sm">Cargá un modelo IFC para obtener el cómputo métrico automático.</p>
@@ -287,31 +287,31 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
           </div>
         </div>
 
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Rubro</th>
-              <th className="px-4 py-3 text-center">Cant.</th>
-              <th className="px-4 py-3 text-center">Cantidad</th>
-              <th className="px-4 py-3 text-center">Unidad</th>
-              <th className="px-4 py-3 text-right">Costo Unit. ({currency})</th>
-              <th className="px-4 py-3 text-right">Subtotal ({currency})</th>
-              <th className="px-4 py-3 w-8"></th>
+              <th >Rubro</th>
+              <th className="text-center">Cant.</th>
+              <th className="text-center">Cantidad</th>
+              <th className="text-center">Unidad</th>
+              <th className="text-right">Costo Unit. ({currency})</th>
+              <th className="text-right">Subtotal ({currency})</th>
+              <th className="w-8"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {categories.map(cat => (
               <React.Fragment key={cat.typeName}>
                 <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                  <td >
                     <span className="font-bold text-gray-800">{cat.typeName}</span>
                     {DEFAULT_UNIT_COSTS[cat.typeName]?.label && cat.typeName !== DEFAULT_UNIT_COSTS[cat.typeName].label && (
                       <span className="text-[10px] text-gray-400 block">{DEFAULT_UNIT_COSTS[cat.typeName].label}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center font-mono text-gray-600">{cat.count}</td>
-                  <td className="px-4 py-3 text-center font-mono font-bold text-gray-800">{getQty(cat).toFixed(2)}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="text-center font-mono text-gray-600">{cat.count}</td>
+                  <td className="text-center font-mono font-bold text-gray-800">{getQty(cat).toFixed(2)}</td>
+                  <td className="text-center">
                     <select value={cat.costUnit} onChange={e => updateUnit(cat.typeName, e.target.value as 'm2' | 'm3' | 'ml' | 'u')}
                       className="px-2 py-1 border rounded-lg text-xs font-bold text-gray-600 bg-white">
                       <option value="m2">m²</option>
@@ -320,13 +320,13 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
                       <option value="u">unidad</option>
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <input type="number" value={Math.round(getDisplayCost(cat.unitCost))}
                       onChange={e => updateCost(cat.typeName, Number(e.target.value) || 0)}
                       className="w-28 px-2 py-1 border border-gray-300 rounded-lg text-xs text-right font-mono font-bold focus:outline-none focus:ring-2 focus:ring-ecar-blueLight" />
                   </td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">{fmtUnit(cat.subtotal)}</td>
-                  <td className="px-4 py-3">
+                  <td className="text-right font-mono font-bold text-gray-800">{fmtUnit(cat.subtotal)}</td>
+                  <td >
                     <button onClick={() => setExpandedCat(expandedCat === cat.typeName ? null : cat.typeName)} className="text-gray-400 hover:text-gray-700">
                       {expandedCat === cat.typeName ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
@@ -334,7 +334,7 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
                 </tr>
                 {expandedCat === cat.typeName && (
                   <tr>
-                    <td colSpan={7} className="bg-gray-50/80 px-6 py-3">
+                    <td colSpan={7} className="bg-gray-50/80">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                         <div className="bg-white p-2.5 rounded-lg border border-gray-200">
                           <span className="text-gray-400 font-bold block text-[10px] uppercase">Superficie Total</span>
@@ -357,31 +357,31 @@ export const BimCostCalculator: React.FC<BimCostCalculatorProps> = ({ elements, 
           </tbody>
           <tfoot className="border-t-2 border-gray-300 bg-gray-50">
             <tr>
-              <td colSpan={5} className="px-4 py-2.5 text-right text-sm font-bold text-gray-600">Costo Directo</td>
-              <td className="px-4 py-2.5 text-right font-mono font-bold text-gray-800">{fmt(totalDirect)}</td>
+              <td colSpan={5} className="text-right text-sm font-bold text-gray-600">Costo Directo</td>
+              <td className="text-right font-mono font-bold text-gray-800">{fmt(totalDirect)}</td>
               <td></td>
             </tr>
             <tr>
-              <td colSpan={5} className="px-4 py-2 text-right text-sm font-bold text-gray-600">Gastos Generales ({markupPct}%)</td>
-              <td className="px-4 py-2 text-right font-mono font-bold text-gray-500">{fmt(totalMarkup)}</td>
+              <td colSpan={5} className="text-right text-sm font-bold text-gray-600">Gastos Generales ({markupPct}%)</td>
+              <td className="text-right font-mono font-bold text-gray-500">{fmt(totalMarkup)}</td>
               <td></td>
             </tr>
             <tr className="bg-slate-50 border-t border-ecar-blueLight">
-              <td colSpan={5} className="px-4 py-3 text-right text-sm font-bold text-ecar-blueDark">PRESUPUESTO TOTAL</td>
-              <td className="px-4 py-3 text-right font-mono font-black text-ecar-blue text-lg">{fmt(grandTotal)}</td>
+              <td colSpan={5} className="text-right text-sm font-bold text-ecar-blueDark">PRESUPUESTO TOTAL</td>
+              <td className="text-right font-mono font-black text-ecar-blue text-lg">{fmt(grandTotal)}</td>
               <td></td>
             </tr>
             {currency === 'USD' && (
               <tr className="bg-gray-50/50">
-                <td colSpan={5} className="px-4 py-2 text-right text-xs text-gray-400">Equivalente en ARS (@ {usdRate.toLocaleString('es-AR')})</td>
-                <td className="px-4 py-2 text-right font-mono text-xs text-gray-400">$ {(grandTotal * usdRate).toLocaleString('es-AR', { maximumFractionDigits: 0 })}</td>
+                <td colSpan={5} className="text-right text-xs text-gray-400">Equivalente en ARS (@ {usdRate.toLocaleString('es-AR')})</td>
+                <td className="text-right font-mono text-xs text-gray-400">$ {(grandTotal * usdRate).toLocaleString('es-AR', { maximumFractionDigits: 0 })}</td>
                 <td></td>
               </tr>
             )}
             {currency === 'ARS' && (
               <tr className="bg-gray-50/50">
-                <td colSpan={5} className="px-4 py-2 text-right text-xs text-gray-400">Equivalente en USD (@ {usdRate.toLocaleString('es-AR')})</td>
-                <td className="px-4 py-2 text-right font-mono text-xs text-gray-400">U$D {grandTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</td>
+                <td colSpan={5} className="text-right text-xs text-gray-400">Equivalente en USD (@ {usdRate.toLocaleString('es-AR')})</td>
+                <td className="text-right font-mono text-xs text-gray-400">U$D {grandTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</td>
                 <td></td>
               </tr>
             )}

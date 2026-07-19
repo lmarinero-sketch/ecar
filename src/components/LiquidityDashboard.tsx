@@ -346,7 +346,7 @@ export const LiquidityDashboard: React.FC = () => {
                 </select>
               </div>
 
-              <button type="submit" disabled={createMovement.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blueDark transition-all shadow-md disabled:opacity-50">
+              <button type="submit" disabled={createMovement.isPending} className="btn-primary w-full>
                 {createMovement.isPending ? 'Guardando...' : '✅ Registrar'}
               </button>
             </form>

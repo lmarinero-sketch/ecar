@@ -197,7 +197,7 @@ export const UserProfileModal: React.FC<{ onClose: () => void }> = ({ onClose })
           <button 
             onClick={handleSave} 
             disabled={updateProfile.isPending}
-            className="px-4 py-2 font-bold bg-ecar-blue hover:bg-ecar-blue text-white rounded-lg transition-colors text-sm flex items-center gap-2 shadow-sm disabled:opacity-50"
+            className="btn-primary 
           >
             <Save size={16} /> 
             {updateProfile.isPending ? 'Guardando...' : 'Guardar Perfil'}

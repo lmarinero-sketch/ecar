@@ -130,7 +130,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Descriptive Header */}
-      <div className="bg-white border-l-4 border-ecar-blue rounded-xl p-4 md:p-6 shadow-sm relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 md:p-6 opacity-5 text-ecar-blue">
           <ShoppingBag size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
@@ -173,7 +173,7 @@ export const PurchaseRequestsModule: React.FC = () => {
               <div className="flex items-center gap-2">
                 <p className="font-bold text-sm text-gray-800">WhatsApp Autorizado para Pedidos</p>
                 {phoneConfigured ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Activo</span>
+                  <span className="badge badge-success"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Activo</span>
                 ) : (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">No configurado</span>
                 )}
@@ -304,10 +304,10 @@ export const PurchaseRequestsModule: React.FC = () => {
                   </div>
                 )}
                 {req.status === 'approved' && activeTab === 'obra' && (
-                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="px-3 py-1.5 rounded-lg bg-ecar-blueLight text-ecar-blue text-xs font-bold hover:bg-ecar-blueLight transition-all">Marcar Pedido</button>
+                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="badge badge-info">Marcar Pedido</button>
                 )}
                 {req.status === 'ordered' && activeTab === 'obra' && (
-                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'received' })} className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-all">Recibido ✅</button>
+                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'received' })} className="badge badge-success">Recibido ✅</button>
                 )}
                 
                 {/* Quote Actions */}
@@ -317,7 +317,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                     items.forEach(i => { initialPrices[i.id] = i.estimated_unit_cost || 0; });
                     setQuotePrices(initialPrices);
                     setEditingQuoteId(req.id);
-                  }} className="px-4 py-2 rounded-lg bg-ecar-blueLight text-ecar-blue text-xs font-bold hover:bg-ecar-blueLight transition-all">Cotizar</button>
+                  }} className="badge badge-info">Cotizar</button>
                 )}
               </div>
               

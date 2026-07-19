@@ -60,11 +60,11 @@ export const FuelModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-sky-800 to-sky-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Fuel size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Fuel size={24} /> Control de Combustible</h3>
-          <p className="text-sky-100 text-sm mt-1">Registro de cargas, control de batán y conciliación con proveedor</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Registro de cargas, control de batán y conciliación con proveedor</p>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-gray-800">Registro de Cargas</h3>
-        <button onClick={() => setShowForm(!showForm)} className="bg-sky-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-sky-700 transition-all">
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Cancelar' : 'Nueva Carga'}
         </button>
       </div>
@@ -263,7 +263,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
           </div>
-          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters} className="bg-sky-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-sky-700 transition-all disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
         </div>
@@ -271,44 +271,44 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
       {/* Table */}
       <div className="light-card overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">ID</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Vehículo</th>
-              <th className="px-4 py-3">Patente</th><th className="px-4 py-3">Litros</th><th className="px-4 py-3">$/L</th>
-              <th className="px-4 py-3">Importe</th><th className="px-4 py-3">Vale</th><th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3 text-center">Editar</th>
+              <th>ID</th><th>Fecha</th><th>Vehículo</th>
+              <th>Patente</th><th>Litros</th><th>$/L</th>
+              <th>Importe</th><th>Vale</th><th>Estado</th>
+              <th className="text-center">Editar</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {loads.length === 0 ? (
-              <tr><td colSpan={10} className="text-center py-12 text-gray-400"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
+              <tr><td colSpan={10} className="text-center text-gray-400"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
             ) : loads.map(l => (
-              <tr key={l.id} className={`hover:bg-gray-50 ${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
-                <td className="px-4 py-3 font-mono text-xs text-gray-500">{l.load_number}</td>
-                <td className="px-4 py-3">{l.load_date}</td>
-                <td className="px-4 py-3 font-medium">{l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span></td>
-                <td className="px-4 py-3 font-mono text-xs">{l.plate}</td>
+              <tr key={l.id} className={`${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
+                <td className="font-mono text-xs text-gray-500">{l.load_number}</td>
+                <td>{l.load_date}</td>
+                <td className="font-medium">{l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span></td>
+                <td className="font-mono text-xs">{l.plate}</td>
                 {editingId === l.id ? (
                   <>
-                    <td className="px-4 py-2"><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
-                    <td className="px-4 py-2"><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
-                    <td className="px-4 py-2 font-mono font-bold text-sm">$ {fmt(editForm.total_amount)}</td>
+                    <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
+                    <td><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
+                    <td className="font-mono font-bold text-sm">$ {fmt(editForm.total_amount)}</td>
                   </>
                 ) : (
                   <>
-                    <td className="px-4 py-3 font-mono font-bold">{l.liters} L</td>
-                    <td className="px-4 py-3 font-mono text-xs">{l.price_per_liter ? `$ ${fmt(l.price_per_liter)}` : <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3 font-mono font-bold">{l.total_amount ? `$ ${fmt(l.total_amount)}` : <span className="text-gray-300">Sin precio</span>}</td>
+                    <td className="font-mono font-bold">{l.liters} L</td>
+                    <td className="font-mono text-xs">{l.price_per_liter ? `$ ${fmt(l.price_per_liter)}` : <span className="text-gray-300">—</span>}</td>
+                    <td className="font-mono font-bold">{l.total_amount ? `$ ${fmt(l.total_amount)}` : <span className="text-gray-300">Sin precio</span>}</td>
                   </>
                 )}
-                <td className="px-4 py-3 text-xs">{l.voucher_number}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${l.validation_status === 'ok' ? 'bg-green-100 text-green-700' : l.validation_status === 'observed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                <td className="text-xs">{l.voucher_number}</td>
+                <td>
+                  <span className={`badge ${l.validation_status === 'ok' ? 'badge-success' : l.validation_status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>
                     {l.validation_status === 'ok' ? 'OK' : l.validation_status === 'observed' ? 'Observado' : 'Pendiente'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-center">
                   {editingId === l.id ? (
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={saveEdit} disabled={updateLoad.isPending} className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-all" title="Guardar"><Check size={14} /></button>
@@ -331,22 +331,22 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements }) => (
   <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Control de Batán</h3></div>
-    <table className="w-full text-sm text-left">
-      <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-        <tr><th className="px-4 py-3">ID</th><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Combustible</th><th className="px-4 py-3">Litros</th><th className="px-4 py-3">Saldo</th><th className="px-4 py-3">Estado</th></tr>
+    <table className="data-table">
+      <thead>
+        <tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Combustible</th><th>Litros</th><th>Saldo</th><th>Estado</th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody>
         {movements.length === 0 ? (
-          <tr><td colSpan={7} className="text-center py-12 text-gray-400"><Droplets size={40} className="mx-auto mb-2 opacity-30" /><p>Sin movimientos</p></td></tr>
+          <tr><td colSpan={7} className="text-center text-gray-400"><Droplets size={40} className="mx-auto mb-2 opacity-30" /><p>Sin movimientos</p></td></tr>
         ) : movements.map(m => (
-          <tr key={m.id} className="hover:bg-gray-50">
-            <td className="px-4 py-3 font-mono text-xs">{m.movement_number}</td>
-            <td className="px-4 py-3">{m.movement_date}</td>
-            <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${m.movement_type === 'purchase' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{m.movement_type === 'purchase' ? 'Compra' : 'Descarga'}</span></td>
-            <td className="px-4 py-3">{m.fuel_type}</td>
-            <td className="px-4 py-3 font-mono font-bold">{m.liters_loaded || m.liters_discharged} L</td>
-            <td className="px-4 py-3 font-mono font-bold text-sky-600">{m.balance_after} L</td>
-            <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">{m.movement_status}</span></td>
+          <tr key={m.id}>
+            <td className="font-mono text-xs">{m.movement_number}</td>
+            <td>{m.movement_date}</td>
+            <td><span className={`badge ${m.movement_type === 'purchase' ? 'badge-info' : 'badge-warning'}`}>{m.movement_type === 'purchase' ? 'Compra' : 'Descarga'}</span></td>
+            <td>{m.fuel_type}</td>
+            <td className="font-mono font-bold">{m.liters_loaded || m.liters_discharged} L</td>
+            <td className="font-mono font-bold text-sky-600">{m.balance_after} L</td>
+            <td><span className="badge badge-success">{m.movement_status}</span></td>
           </tr>
         ))}
       </tbody>
@@ -358,20 +358,20 @@ const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements 
 const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
   <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Conciliación Mensual con Proveedor</h3></div>
-    <table className="w-full text-sm text-left">
-      <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-        <tr><th className="px-4 py-3">Mes</th><th className="px-4 py-3">Cargas</th><th className="px-4 py-3">Litros</th><th className="px-4 py-3">Importe Planilla</th><th className="px-4 py-3">Factura Proveedor</th><th className="px-4 py-3">Diferencia</th><th className="px-4 py-3">Estado</th></tr>
+    <table className="data-table">
+      <thead>
+        <tr><th>Mes</th><th>Cargas</th><th>Litros</th><th>Importe Planilla</th><th>Factura Proveedor</th><th>Diferencia</th><th>Estado</th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody>
         {data.map(r => (
-          <tr key={r.id} className="hover:bg-gray-50">
-            <td className="px-4 py-3 font-medium">{r.month_name} {r.year}</td>
-            <td className="px-4 py-3 font-mono">{r.total_loads}</td>
-            <td className="px-4 py-3 font-mono">{fmt(r.total_liters)} L</td>
-            <td className="px-4 py-3 font-mono">$ {fmt(r.total_amount_sheet)}</td>
-            <td className="px-4 py-3 font-mono font-bold">{r.supplier_invoice_amount ? `$ ${fmt(r.supplier_invoice_amount)}` : '—'}</td>
-            <td className="px-4 py-3 font-mono font-bold">{r.difference ? <span className={r.difference > 0 ? 'text-red-600' : 'text-green-600'}>$ {fmt(r.difference)}</span> : '—'}</td>
-            <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${r.status === 'controlled' ? 'bg-green-100 text-green-700' : r.status === 'observed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status === 'controlled' ? 'Controlado' : r.status === 'observed' ? 'Observado' : 'Pendiente'}</span></td>
+          <tr key={r.id}>
+            <td className="font-medium">{r.month_name} {r.year}</td>
+            <td className="font-mono">{r.total_loads}</td>
+            <td className="font-mono">{fmt(r.total_liters)} L</td>
+            <td className="font-mono">$ {fmt(r.total_amount_sheet)}</td>
+            <td className="font-mono font-bold">{r.supplier_invoice_amount ? `$ ${fmt(r.supplier_invoice_amount)}` : '—'}</td>
+            <td className="font-mono font-bold">{r.difference ? <span className={r.difference > 0 ? 'text-red-600' : 'text-green-600'}>$ {fmt(r.difference)}</span> : '—'}</td>
+            <td><span className={`badge ${r.status === 'controlled' ? 'badge-success' : r.status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>{r.status === 'controlled' ? 'Controlado' : r.status === 'observed' ? 'Observado' : 'Pendiente'}</span></td>
           </tr>
         ))}
       </tbody>
@@ -383,21 +383,21 @@ const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
 const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
   <div className="light-card overflow-hidden">
     <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Flota Registrada ({vehicles.length} unidades)</h3></div>
-    <table className="w-full text-sm text-left">
-      <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
-        <tr><th className="px-4 py-3">Código</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Descripción</th><th className="px-4 py-3">Patente</th><th className="px-4 py-3">Combustible</th><th className="px-4 py-3">Tanque</th><th className="px-4 py-3">Área</th><th className="px-4 py-3">Responsable</th></tr>
+    <table className="data-table">
+      <thead>
+        <tr><th>Código</th><th>Tipo</th><th>Descripción</th><th>Patente</th><th>Combustible</th><th>Tanque</th><th>Área</th><th>Responsable</th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody>
         {vehicles.map(v => (
-          <tr key={v.id} className="hover:bg-gray-50">
-            <td className="px-4 py-3 font-mono font-bold text-sky-600">{v.code}</td>
-            <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">{v.vehicle_type}</span></td>
-            <td className="px-4 py-3 font-medium">{v.description}</td>
-            <td className="px-4 py-3 font-mono text-xs">{v.plate || '—'}</td>
-            <td className="px-4 py-3 text-xs">{v.preferred_fuel}</td>
-            <td className="px-4 py-3 font-mono">{v.tank_capacity_liters ? `${v.tank_capacity_liters} L` : '—'}</td>
-            <td className="px-4 py-3 text-xs">{v.area || '—'}</td>
-            <td className="px-4 py-3 text-xs">{v.default_driver || '—'}</td>
+          <tr key={v.id}>
+            <td className="font-mono font-bold text-sky-600">{v.code}</td>
+            <td><span className="badge badge-neutral">{v.vehicle_type}</span></td>
+            <td className="font-medium">{v.description}</td>
+            <td className="font-mono text-xs">{v.plate || '—'}</td>
+            <td className="text-xs">{v.preferred_fuel}</td>
+            <td className="font-mono">{v.tank_capacity_liters ? `${v.tank_capacity_liters} L` : '—'}</td>
+            <td className="text-xs">{v.area || '—'}</td>
+            <td className="text-xs">{v.default_driver || '—'}</td>
           </tr>
         ))}
       </tbody>
@@ -733,7 +733,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       {/* ── Header ── */}
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-gray-800">Autorizaciones de Carga</h3>
-        <button onClick={() => setShowReqForm(!showReqForm)} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-md hover:bg-orange-700 transition-all">
+        <button onClick={() => setShowReqForm(!showReqForm)} className="btn-primary">
           {showReqForm ? <X size={16} /> : <Plus size={16} />} Nueva Solicitud
         </button>
       </div>
@@ -769,7 +769,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
             <label className="text-xs font-bold text-gray-500">Motivo / Notas</label>
             <input value={reqForm.observations} onChange={e => setReqForm({ ...reqForm, observations: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Ej: Viaje a obra interior..." />
           </div>
-          <button onClick={handleRequestSubmit} disabled={!reqForm.vehicle_code || !reqForm.requested_liters} className="w-full bg-orange-600 text-white py-2 rounded-lg font-bold text-sm shadow-md disabled:opacity-50">Enviar Solicitud a Gerencia</button>
+          <button onClick={handleRequestSubmit} disabled={!reqForm.vehicle_code || !reqForm.requested_liters} className="btn-primary w-full justify-center disabled:opacity-50">Enviar Solicitud a Gerencia</button>
         </div>
       )}
 
