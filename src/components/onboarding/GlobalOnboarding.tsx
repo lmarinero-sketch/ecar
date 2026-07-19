@@ -13,13 +13,19 @@ export const GlobalOnboarding: React.FC<GlobalOnboardingProps> = ({ activeModule
     completedModules,
     activeTourModule,
     markTourCompleted,
-    stopTour
+    stopTour,
+    globalDisabled
   } = useOnboardingStore();
 
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState(ONBOARDING_STEPS._fallback);
 
   useEffect(() => {
+    if (globalDisabled && activeTourModule !== activeModule) {
+      setRun(false);
+      return;
+    }
+
     const isManualStart = activeTourModule === activeModule;
     const isAutoStart = !completedModules.includes(activeModule);
 

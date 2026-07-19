@@ -8,6 +8,8 @@ interface OnboardingState {
   resetTour: (moduleId: string) => void;
   startTour: (moduleId: string) => void;
   stopTour: () => void;
+  globalDisabled: boolean;
+  disableOnboarding: () => void;
 }
 
 export const useOnboardingStore = create<OnboardingState>()(
@@ -37,6 +39,9 @@ export const useOnboardingStore = create<OnboardingState>()(
         })),
       
       stopTour: () => set({ activeTourModule: null }),
+
+      globalDisabled: false,
+      disableOnboarding: () => set({ globalDisabled: true, activeTourModule: null }),
     }),
     {
       name: 'ecar-onboarding-storage',

@@ -2,6 +2,8 @@ import React from 'react';
 import type { TooltipRenderProps } from 'react-joyride';
 import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 
+import { useOnboardingStore } from '../../store/useOnboardingStore';
+
 export const CustomTooltip: React.FC<TooltipRenderProps> = ({
   index,
   size,
@@ -12,6 +14,8 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
   tooltipProps,
   isLastStep,
 }) => {
+  const { disableOnboarding } = useOnboardingStore();
+
   return (
     <div
       {...tooltipProps}
@@ -56,13 +60,22 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
 
       {/* Footer */}
       <div className="flex items-center justify-between px-5 pb-4">
-        <button
-          type="button"
-          {...skipProps}
-          className="text-slate-400 hover:text-slate-600 text-xs font-semibold flex items-center gap-1 transition-colors"
-        >
-          <X size={12} /> Saltar tour
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            {...skipProps}
+            className="text-slate-400 hover:text-slate-600 text-xs font-semibold flex items-center gap-1 transition-colors text-left"
+          >
+            <X size={12} /> Saltar tour
+          </button>
+          <button
+            type="button"
+            onClick={disableOnboarding}
+            className="text-red-400 hover:text-red-600 text-[10px] font-semibold flex items-center gap-1 transition-colors text-left"
+          >
+            No volver a mostrar
+          </button>
+        </div>
 
         <div className="flex gap-2">
           {index > 0 && (
@@ -77,8 +90,8 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
           <button
             type="button"
             {...primaryProps}
-            className="btn-primary 
-          ">
+            className="px-4 py-1.5 rounded-lg bg-ecar-blue text-white hover:bg-blue-700 text-xs font-semibold transition-colors shadow-sm flex items-center gap-1"
+          >
             {isLastStep ? (
               <><Check size={13} /> ¡Listo!</>
             ) : (

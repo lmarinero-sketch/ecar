@@ -153,7 +153,7 @@ export const SupplierEvalModule: React.FC = () => {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar proveedor o período..."
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true); }}
+        <button data-tour="supeval-nueva" onClick={() => { resetForm(); setShowForm(true); }}
           className="btn-primary">
           <Plus size={16} /> Nueva Evaluación
         </button>
