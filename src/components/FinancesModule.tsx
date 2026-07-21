@@ -158,7 +158,12 @@ export const FinancesModule: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      const result = await createCheque.mutateAsync({ ...form, scan_url: scanUrl || undefined } as any);
+      const result = await createCheque.mutateAsync({ 
+        ...form, 
+        issue_date: form.issue_date || null,
+        due_date: form.due_date || null,
+        scan_url: scanUrl || undefined 
+      } as any);
       // Audit: created
       auditLog.mutate({
         cheque_id: (result as any)?.id || null,
@@ -213,7 +218,12 @@ export const FinancesModule: React.FC = () => {
           changes[f] = { old: oldVal, new: newVal };
         }
       }
-      await updateCheque.mutateAsync({ id: editingCheque.id, ...editForm });
+      await updateCheque.mutateAsync({ 
+        id: editingCheque.id, 
+        ...editForm,
+        issue_date: editForm.issue_date || null,
+        due_date: editForm.due_date || null
+      });
       // Audit: updated
       const statusChanged = Object.keys(changes).includes('status');
       auditLog.mutate({
