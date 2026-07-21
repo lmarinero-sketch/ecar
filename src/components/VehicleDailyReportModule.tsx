@@ -138,8 +138,10 @@ const ReportForm: React.FC<{
   }, [selectedVehicle]);
 
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
-  const kmValue = odometerKm ? parseInt(odometerKm) : null;
-  const kmInvalid = kmValue !== null && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
+  const kmValue = odometerKm ? parseFloat(odometerKm) : null;
+  const kmInvalid = kmValue !== null && selectedVehicle?.tracking_type !== 'hours' && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
+  const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && selectedVehicle?.current_hours != null && kmValue < selectedVehicle.current_hours;
+  const isInvalid = kmInvalid || hoursInvalid;
   const computedCondition: VehicleCondition = hasDamage || faultsCount >= 3
     ? 'fuera_de_servicio'
     : faultsCount > 0
@@ -156,14 +158,15 @@ const ReportForm: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicleId || !driverName.trim() || kmInvalid) return;
+    if (!vehicleId || !driverName.trim() || isInvalid) return;
 
     await createReport.mutateAsync({
       vehicle_id: vehicleId,
       report_date: today(),
       driver_name: driverName.trim(),
       project_id: projectId || null,
-      odometer_km: odometerKm ? parseInt(odometerKm) : null,
+      odometer_km: selectedVehicle?.tracking_type === 'hours' ? null : (odometerKm ? parseInt(odometerKm) : null),
+      hourmeter: selectedVehicle?.tracking_type === 'hours' ? (odometerKm ? parseFloat(odometerKm) : null) : null,
       fuel_level: fuelLevel,
       checklist,
       has_damage: hasDamage,
@@ -227,26 +230,31 @@ const ReportForm: React.FC<{
           </select>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Km Odómetro</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{selectedVehicle?.tracking_type === 'hours' ? 'Hs Horómetro' : 'Km Odómetro'}</label>
           <input
             type="number"
+            step={selectedVehicle?.tracking_type === 'hours' ? "0.1" : "1"}
             value={odometerKm}
             onChange={e => setOdometerKm(e.target.value)}
-            min={selectedVehicle?.current_km || 0}
-            placeholder={selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0'}
+            min={selectedVehicle?.tracking_type === 'hours' ? (selectedVehicle.current_hours || 0) : (selectedVehicle?.current_km || 0)}
+            placeholder={selectedVehicle?.tracking_type === 'hours'
+              ? (selectedVehicle.current_hours ? `Mínimo: ${selectedVehicle.current_hours.toLocaleString()} hs` : '0')
+              : (selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0')}
             className={`w-full px-3 py-2.5 rounded-xl text-sm font-mono focus:ring-2 border ${
-              kmInvalid
+              isInvalid
                 ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-200 focus:border-red-400'
                 : 'border-gray-300 focus:ring-ecar-blue/30 focus:border-ecar-blue'
             }`}
           />
-          {kmInvalid && (
+          {isInvalid && (
             <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1 font-medium">
-              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle!.current_km!.toLocaleString()} km (último registro)
+              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle?.tracking_type === 'hours' ? selectedVehicle.current_hours?.toLocaleString() + ' hs' : selectedVehicle?.current_km?.toLocaleString() + ' km'} (último registro)
             </p>
           )}
-          {selectedVehicle?.current_km && !kmInvalid && odometerKm && (
-            <p className="text-[10px] text-green-600 mt-1">✓ +{(parseInt(odometerKm) - selectedVehicle.current_km).toLocaleString()} km desde último registro</p>
+          {!isInvalid && odometerKm && (
+            <p className="text-[10px] text-green-600 mt-1">
+              ✓ +{(parseFloat(odometerKm) - (selectedVehicle?.tracking_type === 'hours' ? (selectedVehicle.current_hours || 0) : (selectedVehicle?.current_km || 0))).toLocaleString()} {selectedVehicle?.tracking_type === 'hours' ? 'hs' : 'km'} desde último registro
+            </p>
           )}
         </div>
         <div>
@@ -473,8 +481,10 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; onClose: () => void }
             <p className="text-sm font-medium text-gray-800">{report.project?.name || 'Sin asignar'}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-[10px] font-bold text-gray-500 uppercase">Odómetro</p>
-            <p className="text-sm font-bold font-mono text-gray-800">{report.odometer_km ? `${report.odometer_km.toLocaleString()} km` : '—'}</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Medición</p>
+            <p className="text-sm font-bold font-mono text-gray-800">
+              {report.hourmeter ? `${report.hourmeter.toLocaleString()} hs` : (report.odometer_km ? `${report.odometer_km.toLocaleString()} km` : '—')}
+            </p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-[10px] font-bold text-gray-500 uppercase">Combustible</p>
@@ -729,7 +739,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                       </td>
                       <td className="text-xs">{r.driver_name}</td>
                       <td className="text-xs">{r.project?.name || '—'}</td>
-                      <td className="font-mono text-xs">{r.odometer_km ? `${r.odometer_km.toLocaleString()}` : '—'}</td>
+                      <td className="font-mono text-xs">{r.hourmeter ? `${r.hourmeter.toLocaleString()} hs` : (r.odometer_km ? `${r.odometer_km.toLocaleString()} km` : '—')}</td>
                       <td className="text-xs">{fl?.icon} {fl?.label}</td>
                       <td >
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faults > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>

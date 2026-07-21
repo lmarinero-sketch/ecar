@@ -1404,6 +1404,7 @@ export type VehicleDailyReport = {
   driver_name: string;
   project_id: string | null;
   odometer_km: number | null;
+  hourmeter?: number | null;
   fuel_level: VehicleFuelLevel;
   checklist: VehicleChecklistItem[];
   has_damage: boolean;
@@ -1437,9 +1438,12 @@ export type FuelVehicle = {
   default_driver: string | null;
   status: 'active' | 'inactive' | 'maintenance';
   vehicle_condition: VehicleCondition;
+  tracking_type?: 'km' | 'hours';
   current_km: number | null;
+  current_hours?: number | null;
   next_maintenance_date: string | null;
   next_maintenance_km: number | null;
+  next_maintenance_hours?: number | null;
   maintenance_notes: string | null;
   last_maintenance_date: string | null;
   insurance_expiry: string | null;

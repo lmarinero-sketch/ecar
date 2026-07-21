@@ -64,7 +64,7 @@ export const FleetModule: React.FC = () => {
   const [showNew, setShowNew] = useState(false);
   const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
   const [deleteTarget, setDeleteTarget] = useState<FuelVehicle | null>(null);
-  const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
+  const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', tracking_type: 'km' as 'km'|'hours', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
 
   const maintenanceDue = useMemo(() =>
     vehicles.filter(v => isDueOrOverdue(v.next_maintenance_date)),
@@ -93,9 +93,12 @@ export const FleetModule: React.FC = () => {
       tank_capacity_liters: v.tank_capacity_liters,
       area: v.area,
       default_driver: v.default_driver,
+      tracking_type: v.tracking_type || 'km',
       current_km: v.current_km,
+      current_hours: v.current_hours,
       next_maintenance_date: v.next_maintenance_date,
       next_maintenance_km: v.next_maintenance_km,
+      next_maintenance_hours: v.next_maintenance_hours,
       maintenance_notes: v.maintenance_notes,
       insurance_expiry: v.insurance_expiry,
       vtv_expiry: v.vtv_expiry,
@@ -116,6 +119,7 @@ export const FleetModule: React.FC = () => {
       code: newForm.code,
       description: newForm.description,
       vehicle_type: newForm.vehicle_type,
+      tracking_type: newForm.tracking_type,
       brand: newForm.brand || null,
       model: newForm.model || null,
       plate: newForm.plate || null,
@@ -126,7 +130,7 @@ export const FleetModule: React.FC = () => {
       default_driver: newForm.default_driver || null,
     });
     setShowNew(false);
-    setNewForm({ code: '', description: '', vehicle_type: 'camioneta', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
+    setNewForm({ code: '', description: '', vehicle_type: 'camioneta', tracking_type: 'km', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
   };
 
   const completeMaintenance = async (v: FuelVehicle) => {
@@ -413,7 +417,12 @@ export const FleetModule: React.FC = () => {
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
                       {v.brand && <span>{v.brand} {v.model || ''}</span>}
                       {v.year && <span>Año {v.year}</span>}
-                      <span className="flex items-center gap-1"><Gauge size={10} /> {v.current_km ? `${v.current_km.toLocaleString()} km` : 'Sin km'}</span>
+                      <span className="flex items-center gap-1">
+                        <Gauge size={10} /> 
+                        {v.tracking_type === 'hours' 
+                          ? (v.current_hours ? `${v.current_hours.toLocaleString()} hs` : 'Sin hs')
+                          : (v.current_km ? `${v.current_km.toLocaleString()} km` : 'Sin km')}
+                      </span>
                       {v.next_maintenance_date && <span className="flex items-center gap-1"><Wrench size={10} /> Próx: {v.next_maintenance_date}</span>}
                       {v.insurance_expiry && <span className="flex items-center gap-1"><Shield size={10} /> Seguro: {v.insurance_expiry}</span>}
                       {v.vtv_expiry && <span className="flex items-center gap-1"><FileText size={10} /> VTV: {v.vtv_expiry}</span>}
@@ -487,16 +496,31 @@ export const FleetModule: React.FC = () => {
                       <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Mantenimiento y Documentación</p>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div>
-                          <label className="text-xs font-bold text-gray-500">Km Actuales</label>
-                          <input type="number" value={editForm.current_km ?? ''} onChange={e => setEditForm({ ...editForm, current_km: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="0" />
+                          <label className="text-xs font-bold text-gray-500">Medición</label>
+                          <select value={editForm.tracking_type || 'km'} onChange={e => setEditForm({ ...editForm, tracking_type: e.target.value as 'km'|'hours' })} className="w-full px-3 py-2 border rounded-xl text-sm">
+                            <option value="km">Kilómetros</option>
+                            <option value="hours">Horas (Maquinaria)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-gray-500">{editForm.tracking_type === 'hours' ? 'Hs Actuales' : 'Km Actuales'}</label>
+                          {editForm.tracking_type === 'hours' ? (
+                            <input type="number" step="0.1" value={editForm.current_hours ?? ''} onChange={e => setEditForm({ ...editForm, current_hours: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="0" />
+                          ) : (
+                            <input type="number" value={editForm.current_km ?? ''} onChange={e => setEditForm({ ...editForm, current_km: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="0" />
+                          )}
                         </div>
                         <div>
                           <label className="text-xs font-bold text-gray-500">Próx. Mantenimiento</label>
                           <input type="date" value={editForm.next_maintenance_date ?? ''} onChange={e => setEditForm({ ...editForm, next_maintenance_date: e.target.value || null })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-gray-500">Km Mantenimiento</label>
-                          <input type="number" value={editForm.next_maintenance_km ?? ''} onChange={e => setEditForm({ ...editForm, next_maintenance_km: parseInt(e.target.value) || null })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="50000" />
+                          <label className="text-xs font-bold text-gray-500">{editForm.tracking_type === 'hours' ? 'Hs Mantenimiento' : 'Km Mantenimiento'}</label>
+                          {editForm.tracking_type === 'hours' ? (
+                            <input type="number" step="0.1" value={editForm.next_maintenance_hours ?? ''} onChange={e => setEditForm({ ...editForm, next_maintenance_hours: parseFloat(e.target.value) || null })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="250" />
+                          ) : (
+                            <input type="number" value={editForm.next_maintenance_km ?? ''} onChange={e => setEditForm({ ...editForm, next_maintenance_km: parseInt(e.target.value) || null })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="50000" />
+                          )}
                         </div>
                         <div>
                           <label className="text-xs font-bold text-gray-500">Venc. Seguro</label>
@@ -532,6 +556,13 @@ export const FleetModule: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={newForm.code} onChange={e => setNewForm({ ...newForm, code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="C-002" required /></div>
                 <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={newForm.vehicle_type} onChange={e => setNewForm({ ...newForm, vehicle_type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="camion">Camión</option><option value="camioneta">Camioneta</option><option value="auto">Auto</option><option value="maquinaria">Maquinaria</option><option value="moto">Moto</option><option value="otro">Otro</option></select></div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Medición Uso</label>
+                  <select value={newForm.tracking_type} onChange={e => setNewForm({ ...newForm, tracking_type: e.target.value as 'km'|'hours' })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                    <option value="km">Kilómetros</option>
+                    <option value="hours">Horas (Maquinaria)</option>
+                  </select>
+                </div>
               </div>
               <div><label className="text-xs font-bold text-gray-500">Descripción *</label><input value={newForm.description} onChange={e => setNewForm({ ...newForm, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Toyota Hilux 2.4 DX" required /></div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
