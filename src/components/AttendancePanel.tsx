@@ -461,6 +461,78 @@ export const AttendancePanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal Toma Manual */}
+      {showManual && (
+        <div className="fixed inset-0 bg-black/50 z-[999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                <UserCheck size={20} className="text-ecar-blue" />
+                Toma de Asistencia Manual
+              </h3>
+              <button onClick={() => setShowManual(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Buscar Empleado</label>
+                <input 
+                  type="text" 
+                  placeholder="Buscar por nombre o apellido..." 
+                  value={empSearch}
+                  onChange={e => setEmpSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2 focus:ring-2 focus:ring-ecar-blue focus:border-transparent outline-none"
+                />
+                <select 
+                  size={5}
+                  value={manualEmpId}
+                  onChange={e => setManualEmpId(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-ecar-blue focus:border-transparent outline-none"
+                >
+                  {activeEmployees
+                    .filter(e => e.full_name?.toLowerCase().includes(empSearch.toLowerCase()))
+                    .map(e => (
+                    <option key={e.id} value={e.id} className="py-1">{e.full_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Acción</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setManualAction('clock_in')}
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm border-2 transition-all ${manualAction === 'clock_in' ? 'border-ecar-blue bg-blue-50 text-ecar-blue' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                  >
+                    Entrada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualAction('clock_out')}
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm border-2 transition-all ${manualAction === 'clock_out' ? 'border-amber-500 bg-amber-50 text-amber-600' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                  >
+                    Salida
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={!manualEmpId || manualLoading}
+                className="w-full py-3 bg-ecar-blue text-white rounded-lg font-bold shadow-md hover:bg-ecar-blueDark transition-colors disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
+              >
+                {manualLoading ? <RefreshCw className="animate-spin" size={18} /> : null}
+                {manualLoading ? 'Registrando...' : 'Registrar Asistencia'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
