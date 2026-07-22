@@ -494,4 +494,22 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
     steps: [],
     tips: []
   },
+  scope_changes: {
+    title: 'Adicionales de Obra',
+    description: 'Gestión de adicionales y cambios de alcance.',
+    steps: [],
+    tips: []
+  },
+  work_orders: {
+    title: 'Órdenes de Trabajo Internas (OTI)',
+    description: 'Control de órdenes de trabajo.',
+    steps: [],
+    tips: []
+  },
+  quality: {
+    title: 'Calidad (Checklists)',
+    description: 'Control de calidad en obra.',
+    steps: [],
+    tips: []
+  },
 };

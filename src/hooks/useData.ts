@@ -22,7 +22,7 @@ import type {
   LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog,
   EmployeePPEDelivery, LegalEntity,
   FleetMaintenanceOrder, FleetTire,
-  ProjectScopeChange, QualityChecklist
+  QualityChecklist
 } from '../lib/types';
 
 // ========== PROJECTS ==========

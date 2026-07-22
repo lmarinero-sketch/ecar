@@ -1686,3 +1686,26 @@ export type LogisticsMaintenanceLog = {
 
 // ========== SCOPE CHANGES & QUALITY ==========
 
+export type QualityChecklistItem = {
+  id: string;
+  description: string;
+  checked: boolean;
+};
+
+export type QualityChecklist = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  work_order_id: string | null;
+  title: string;
+  inspector_name: string | null;
+  items: QualityChecklistItem[];
+  score: number;
+  status: 'draft' | 'approved' | 'rejected';
+  signature_url: string | null;
+  notes: string | null;
+  created_at: string;
+  project?: { name: string };
+  work_order?: { id: string, code: string };
+};
+
