@@ -29,6 +29,46 @@ export const AttendancePanel: React.FC = () => {
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ clock_in: '', clock_out: '' });
 
+  // Manual Check-in state
+  const [showManual, setShowManual] = useState(false);
+  const [manualEmpId, setManualEmpId] = useState('');
+  const [manualAction, setManualAction] = useState<'clock_in' | 'clock_out'>('clock_in');
+  const [manualLoading, setManualLoading] = useState(false);
+  const [empSearch, setEmpSearch] = useState('');
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualEmpId) return;
+    setManualLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/attendance-checkin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: manualAction,
+          employee_id: manualEmpId,
+          metadata: { manual_by_hr: true, source: 'hr_panel' }
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al registrar');
+      }
+      useModalStore.getState().showAlert('Éxito', `Se registró la ${manualAction === 'clock_in' ? 'entrada' : 'salida'}.`);
+      setShowManual(false);
+      setManualEmpId('');
+      setEmpSearch('');
+      refetch();
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
   const handleBulkCheckout = async () => {
     try {
       const confirmed = await useModalStore.getState().showConfirm('Confirmar Acción', '¿Marcar salida para todos los presentes sin hora de salida?');
@@ -191,6 +231,13 @@ export const AttendancePanel: React.FC = () => {
         {/* QR Button */}
         {isToday && (
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowManual(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm shadow-sm hover:bg-gray-200 transition-all border border-gray-200"
+            >
+              <UserCheck size={18} />
+              Toma Manual
+            </button>
             <button
               onClick={handleBulkCheckout}
               className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg font-bold text-sm shadow-md hover:bg-amber-600 transition-all"

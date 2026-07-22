@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECAR — Ingreso</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0ed; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 32px; width: 100%; max-width: 360px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .logo { font-size: 22px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; }
+  .logo span { color: #185FA5; }
+  .sub { font-size: 13px; color: #888; margin-top: 4px; margin-bottom: 28px; }
+  label { font-size: 12px; color: #555; display: block; margin-bottom: 5px; font-weight: 500; }
+  select, input { width: 100%; padding: 9px 12px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; outline: none; transition: border-color .15s; margin-bottom: 16px; }
+  select:focus, input:focus { border-color: #185FA5; background: #fff; }
+  button { width: 100%; padding: 10px; background: #185FA5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 4px; transition: background .15s; }
+  button:hover { background: #1250880; }
+  .error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">ECAR <span>Pañol</span></div>
+  <div class="sub">Sistema de gestión de almacén</div>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="POST">
+    <label>Seleccioná tu nombre</label>
+    <select name="empleado_id" required>
+      <option value="">— elegí un empleado —</option>
+      {% for e in empleados %}
+      <option value="{{ e.id }}">{{ e.nombre }}</option>
+      {% endfor %}
+    </select>
+    <label>Contraseña</label>
+    <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+    <button type="submit">Ingresar</button>
+  </form>
+</div>
+</body>
+</html>

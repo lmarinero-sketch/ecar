@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECAR Pañol</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0ed; color: #1a1a1a; font-size: 14px; }
+
+/* TOPBAR */
+.topbar { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-size: 16px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.3px; }
+.topbar-logo span { color: #185FA5; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.user-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #e8f0fb; color: #185FA5; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.btn-logout { font-size: 12px; color: #888; text-decoration: none; padding: 4px 10px; border: 1px solid #ddd; border-radius: 6px; }
+.btn-logout:hover { background: #f5f5f5; }
+.rol-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.rol-gerencia { background: #fef3c7; color: #92400e; }
+.rol-panolero { background: #e8f0fb; color: #185FA5; }
+
+/* LAYOUT */
+.main { max-width: 820px; margin: 0 auto; padding: 20px 16px; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #e8e8e5; border-radius: 10px; padding: 3px; }
+.tab { flex: 1; padding: 7px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #666; border: none; background: none; transition: all .15s; }
+.tab.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+/* BUSCADOR */
+.search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.search-input { flex: 1; padding: 9px 12px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; outline: none; }
+.search-input:focus { border-color: #185FA5; }
+.search-select { padding: 9px 12px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; background: #fff; outline: none; color: #1a1a1a; min-width: 130px; }
+.results-count { font-size: 12px; color: #888; margin-bottom: 10px; min-height: 18px; }
+
+/* RESULT LIST */
+.result-list { display: flex; flex-direction: column; gap: 6px; }
+.result-item { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color .12s, box-shadow .12s; }
+.result-item:hover { border-color: #185FA5; box-shadow: 0 0 0 2px rgba(24,95,165,.08); }
+.ri-info { flex: 1; min-width: 0; }
+.ri-name { font-size: 14px; font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ri-meta { font-size: 11px; color: #888; margin-top: 2px; }
+.ri-stock { text-align: right; min-width: 60px; }
+.ri-num { font-size: 20px; font-weight: 600; color: #1a1a1a; line-height: 1; }
+.ri-lbl { font-size: 10px; color: #888; margin-top: 1px; }
+.ri-num.low { color: #dc2626; }
+.ri-lbl.low { color: #dc2626; }
+.ri-chevron { color: #ccc; font-size: 16px; }
+.badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; display: inline-block; margin-bottom: 3px; }
+.badge-agua { background: #dbeafe; color: #1d4ed8; }
+.badge-gas { background: #fef3c7; color: #92400e; }
+.badge-elec { background: #fce7f3; color: #9d174d; }
+.badge-default { background: #f3f4f6; color: #374151; }
+
+/* ESTADO MAQUINA */
+.estado-badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.e-disponible { background: #dcfce7; color: #166534; }
+.e-obra { background: #fef3c7; color: #92400e; }
+.e-reparacion { background: #fee2e2; color: #991b1b; }
+.e-cuarentena { background: #fde8d8; color: #9a3412; }
+.e-reemplazar { background: #ede9fe; color: #5b21b6; }
+.e-fuera { background: #f3f4f6; color: #374151; }
+
+/* DETALLE */
+.detail-panel { display: none; }
+.detail-panel.visible { display: block; }
+.back-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: #185FA5; cursor: pointer; background: none; border: none; padding: 0; margin-bottom: 14px; }
+.back-btn:hover { text-decoration: underline; }
+.detail-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 20px; }
+.detail-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; gap: 12px; }
+.detail-title { font-size: 17px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; }
+.detail-code { font-size: 11px; color: #999; font-family: monospace; }
+.stock-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.stock-card { background: #f8f8f6; border: 1px solid #ebebea; border-radius: 8px; padding: 12px; text-align: center; }
+.sc-num { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+.sc-lbl { font-size: 10px; color: #888; margin-top: 2px; }
+.sc-num.alert { color: #dc2626; }
+.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.field-row { font-size: 13px; }
+.field-lbl { color: #999; font-size: 11px; margin-bottom: 1px; }
+.field-val { font-weight: 500; color: #1a1a1a; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .12s; }
+.btn-primary { background: #185FA5; color: #fff; }
+.btn-primary:hover { background: #1250880; }
+.btn-secondary { background: #fff; color: #1a1a1a; border-color: #ddd; }
+.btn-secondary:hover { background: #f5f5f5; }
+.btn-danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-success { background: #185FA5; color: #fff; }
+.btn-warning { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+/* HISTORIAL */
+.section-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
+.mov-list { display: flex; flex-direction: column; gap: 5px; }
+.mov-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f8f8f6; border-radius: 6px; font-size: 12px; }
+.mov-tipo { font-weight: 500; }
+.mov-meta { color: #888; }
+.tipo-salida { color: #dc2626; }
+.tipo-entrada { color: #16a34a; }
+.tipo-devolucion { color: #2563eb; }
+.tipo-ajuste { color: #7c3aed; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 380px; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
+.form-field { margin-bottom: 14px; }
+.form-field label { font-size: 12px; color: #555; font-weight: 500; display: block; margin-bottom: 5px; }
+.form-field select, .form-field input, .form-field textarea { width: 100%; padding: 8px 11px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; color: #1a1a1a; outline: none; }
+.form-field select:focus, .form-field input:focus, .form-field textarea:focus { border-color: #185FA5; background: #fff; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.alert-msg { padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+.alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+.alert-success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+
+/* ALERTAS PANEL */
+.alert-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.alert-prod { font-size: 13px; font-weight: 500; }
+.alert-detail { font-size: 11px; color: #888; margin-top: 2px; }
+.alert-nums { text-align: right; font-size: 12px; }
+.alert-stock { font-size: 18px; font-weight: 600; color: #dc2626; }
+
+/* GERENCIA TABS */
+.mgmt-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.mgmt-tab { padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #666; border: 1px solid #ddd; background: #fff; }
+.mgmt-tab.active { background: #185FA5; color: #fff; border-color: #185FA5; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">ECAR <span>Pañol</span></div>
+  <div class="topbar-right">
+    <div class="user-badge">
+      <div class="avatar" id="avatarInitials"></div>
+      <span id="userNombre">{{ nombre }}</span>
+      <span class="rol-badge {% if rol == 'gerencia' %}rol-gerencia{% else %}rol-panolero{% endif %}">{{ rol }}</span>
+    </div>
+    <a href="/logout" class="btn-logout">Salir</a>
+  </div>
+</div>
+
+<div class="main">
+  <!-- TABS PRINCIPALES -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('consumibles')">Consumibles</button>
+    <button class="tab" onclick="showTab('maquinas')">Máquinas</button>
+    <button class="tab" onclick="showTab('alertas')">Alertas</button>
+    {% if rol == 'gerencia' %}
+    <button class="tab" onclick="showTab('gerencia')">Gestión</button>
+    {% endif %}
+  </div>
+
+  <!-- TAB CONSUMIBLES -->
+  <div id="tab-consumibles">
+    <div id="buscador-consumibles">
+      <div class="search-row">
+        <input class="search-input" id="searchConsumible" placeholder="Buscar por nombre o código..." oninput="buscar('consumible')">
+        <select class="search-select" id="rubroConsumible" onchange="buscar('consumible')">
+          <option value="">Todos los rubros</option>
+          {% for r in rubros %}{% if r.tipo == 'consumible' %}
+          <option value="{{ r.id }}">{{ r.nombre }}</option>
+          {% endif %}{% endfor %}
+        </select>
+      </div>
+      <div class="results-count" id="countConsumible"></div>
+      <div class="result-list" id="listConsumible"></div>
+    </div>
+    <div class="detail-panel" id="detail-consumible">
+      <button class="back-btn" onclick="backTo('consumible')">← Volver al buscador</button>
+      <div class="detail-card">
+        <div class="detail-header">
+          <div>
+            <div id="dc-badge"></div>
+            <div class="detail-title" id="dc-titulo"></div>
+            <div class="detail-code" id="dc-codigo"></div>
+          </div>
+        </div>
+        <div class="stock-grid">
+          <div class="stock-card"><div class="sc-num" id="dc-est">—</div><div class="sc-lbl">En estantería</div></div>
+          <div class="stock-card"><div class="sc-num" id="dc-res">—</div><div class="sc-lbl">En reserva</div></div>
+          <div class="stock-card"><div class="sc-num" id="dc-total">—</div><div class="sc-lbl">Total</div></div>
+        </div>
+        <div class="fields-grid">
+          <div class="field-row"><div class="field-lbl">Ubicación</div><div class="field-val" id="dc-ubic">—</div></div>
+          <div class="field-row"><div class="field-lbl">Unidad</div><div class="field-val" id="dc-unidad">—</div></div>
+          <div class="field-row"><div class="field-lbl">Stock mínimo</div><div class="field-val" id="dc-min">—</div></div>
+          <div class="field-row"><div class="field-lbl">Rubro</div><div class="field-val" id="dc-rubro">—</div></div>
+        </div>
+        <div class="actions" id="dc-actions"></div>
+        <div class="section-title">Últimos movimientos</div>
+        <div class="mov-list" id="dc-movs"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB MAQUINAS -->
+  <div id="tab-maquinas" style="display:none">
+    <div id="buscador-maquinas">
+      <div class="search-row">
+        <input class="search-input" id="searchMaquina" placeholder="Buscar por nombre, serie o marca..." oninput="buscar('maquina')">
+        <select class="search-select" id="rubroMaquina" onchange="buscar('maquina')">
+          <option value="">Todos los tipos</option>
+          {% for r in rubros %}{% if r.tipo == 'maquina' %}
+          <option value="{{ r.id }}">{{ r.nombre }}</option>
+          {% endif %}{% endfor %}
+        </select>
+      </div>
+      <div class="results-count" id="countMaquina"></div>
+      <div class="result-list" id="listMaquina"></div>
+    </div>
+    <div class="detail-panel" id="detail-maquina">
+      <button class="back-btn" onclick="backTo('maquina')">← Volver al buscador</button>
+      <div class="detail-card">
+        <div class="detail-header">
+          <div>
+            <div id="dm-badge"></div>
+            <div class="detail-title" id="dm-nombre"></div>
+            <div class="detail-code" id="dm-serie"></div>
+          </div>
+          <div id="dm-estado-badge"></div>
+        </div>
+        <div class="fields-grid">
+          <div class="field-row"><div class="field-lbl">Marca / Modelo</div><div class="field-val" id="dm-marca">—</div></div>
+          <div class="field-row"><div class="field-lbl">Rubro</div><div class="field-val" id="dm-rubro">—</div></div>
+          <div class="field-row"><div class="field-lbl">Ubicación</div><div class="field-val" id="dm-ubic">—</div></div>
+          <div class="field-row"><div class="field-lbl">En uso por</div><div class="field-val" id="dm-uso">—</div></div>
+        </div>
+        <div class="actions" id="dm-actions"></div>
+        <div class="section-title">Historial de estados</div>
+        <div class="mov-list" id="dm-historial"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB ALERTAS -->
+  <div id="tab-alertas" style="display:none">
+    <div id="alertas-content"></div>
+  </div>
+
+  <!-- TAB GERENCIA -->
+  {% if rol == 'gerencia' %}
+  <div id="tab-gerencia" style="display:none">
+    <div class="mgmt-tabs">
+      <button class="mgmt-tab active" onclick="showMgmt('nuevo-producto')">+ Producto</button>
+      <button class="mgmt-tab" onclick="showMgmt('nueva-maquina')">+ Máquina</button>
+      <button class="mgmt-tab" onclick="showMgmt('nuevo-empleado')">+ Empleado</button>
+      <button class="mgmt-tab" onclick="showMgmt('movimientos')">Movimientos</button>
+    </div>
+    <div id="mgmt-nuevo-producto">
+      <div class="detail-card">
+        <div class="detail-title" style="margin-bottom:16px">Nuevo producto</div>
+        <div class="fields-grid">
+          <div class="form-field"><label>Código (ubicación)</label><input id="np-codigo" placeholder="E2-N1-B06"></div>
+          <div class="form-field"><label>Descripción</label><input id="np-desc" placeholder="Codo 90° termofusión agua 25mm"></div>
+          <div class="form-field"><label>Rubro</label>
+            <select id="np-rubro">
+              {% for r in rubros %}{% if r.tipo == 'consumible' %}<option value="{{ r.id }}">{{ r.nombre }}</option>{% endif %}{% endfor %}
+            </select>
+          </div>
+          <div class="form-field"><label>Medida</label><input id="np-medida" placeholder="25mm"></div>
+          <div class="form-field"><label>Unidad</label>
+            <select id="np-unidad"><option>unidad</option><option>metro</option><option>kg</option><option>litro</option><option>caja</option><option>rollo</option></select>
+          </div>
+          <div class="form-field"><label>Estantería</label><input id="np-est" type="number" placeholder="2"></div>
+          <div class="form-field"><label>Nivel</label><input id="np-niv" type="number" placeholder="1"></div>
+          <div class="form-field"><label>Bin</label><input id="np-bin" type="number" placeholder="6"></div>
+          <div class="form-field"><label>Stock estantería</label><input id="np-sest" type="number" value="0"></div>
+          <div class="form-field"><label>Stock reserva</label><input id="np-sres" type="number" value="0"></div>
+          <div class="form-field"><label>Stock mínimo</label><input id="np-smin" type="number" value="0"></div>
+        </div>
+        <div id="np-msg"></div>
+        <button class="btn btn-primary" onclick="crearProducto()">Guardar producto</button>
+      </div>
+    </div>
+    <div id="mgmt-nueva-maquina" style="display:none">
+      <div class="detail-card">
+        <div class="detail-title" style="margin-bottom:16px">Nueva máquina</div>
+        <div class="fields-grid">
+          <div class="form-field"><label>Número de serie</label><input id="nm-serie" placeholder="SN-2024-AMO-001"></div>
+          <div class="form-field"><label>Nombre</label><input id="nm-nombre" placeholder="Amoladora angular 9&quot;"></div>
+          <div class="form-field"><label>Marca</label><input id="nm-marca" placeholder="Bosch"></div>
+          <div class="form-field"><label>Modelo</label><input id="nm-modelo" placeholder="GWS 22-230"></div>
+          <div class="form-field"><label>Tipo</label>
+            <select id="nm-rubro">
+              {% for r in rubros %}{% if r.tipo == 'maquina' %}<option value="{{ r.id }}">{{ r.nombre }}</option>{% endif %}{% endfor %}
+            </select>
+          </div>
+          <div class="form-field"><label>Estantería</label><input id="nm-est" type="number"></div>
+          <div class="form-field"><label>Nivel</label><input id="nm-niv" type="number"></div>
+          <div class="form-field"><label>Bin</label><input id="nm-bin" type="number"></div>
+        </div>
+        <div id="nm-msg"></div>
+        <button class="btn btn-primary" onclick="crearMaquina()">Guardar máquina</button>
+      </div>
+    </div>
+    <div id="mgmt-nuevo-empleado" style="display:none">
+      <div class="detail-card">
+        <div class="detail-title" style="margin-bottom:16px">Nuevo empleado</div>
+        <div class="form-field"><label>Nombre completo</label><input id="ne-nombre" placeholder="Juan Pérez"></div>
+        <div class="form-field"><label>Rol</label>
+          <select id="ne-rol"><option value="pañolero">Pañolero</option><option value="gerencia">Gerencia logística</option></select>
+        </div>
+        <div class="form-field"><label>Contraseña inicial</label><input id="ne-pass" type="password" placeholder="panolero123"></div>
+        <div id="ne-msg"></div>
+        <button class="btn btn-primary" onclick="crearEmpleado()">Guardar empleado</button>
+      </div>
+    </div>
+    <div id="mgmt-movimientos" style="display:none">
+      <div class="detail-card">
+        <div class="detail-title" style="margin-bottom:12px">Últimos 200 movimientos</div>
+        <div id="all-movs"></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- MODAL ENTREGAR -->
+<div class="modal-overlay" id="modal-entregar">
+  <div class="modal">
+    <div class="modal-title">Entregar material</div>
+    <div class="modal-sub" id="me-sub"></div>
+    <div id="me-msg"></div>
+    <div class="form-field"><label>Empleado que retira</label>
+      <select id="me-empleado">
+        {% for e in empleados %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-field"><label>Cantidad</label><input type="number" id="me-cantidad" min="1" value="1"></div>
+    <div class="form-field"><label>Observaciones (opcional)</label><input type="text" id="me-obs" placeholder="Ej: para obra norte"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-entregar')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarEntrega()">Confirmar entrega</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENTRADA -->
+<div class="modal-overlay" id="modal-entrada">
+  <div class="modal">
+    <div class="modal-title">Registrar entrada</div>
+    <div class="modal-sub" id="mint-sub"></div>
+    <div id="mint-msg"></div>
+    <div class="form-field"><label>Tipo</label>
+      <select id="mint-tipo"><option value="Entrada">Entrada por compra</option><option value="Devolución">Devolución desde obra</option></select>
+    </div>
+    <div class="form-field"><label>Cantidad</label><input type="number" id="mint-cantidad" min="1" value="1"></div>
+    <div class="form-field"><label>Observaciones (opcional)</label><input type="text" id="mint-obs"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-entrada')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEntrada()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRESTAR MAQUINA -->
+<div class="modal-overlay" id="modal-prestar">
+  <div class="modal">
+    <div class="modal-title">Prestar máquina</div>
+    <div class="modal-sub" id="mp-sub"></div>
+    <div id="mp-msg"></div>
+    <div class="form-field"><label>Empleado que la lleva</label>
+      <select id="mp-empleado">
+        {% for e in empleados %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-field"><label>Observaciones (opcional)</label><input type="text" id="mp-obs"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-prestar')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarPrestamo()">Confirmar préstamo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DEVOLVER MAQUINA -->
+<div class="modal-overlay" id="modal-devolver">
+  <div class="modal">
+    <div class="modal-title">Registrar devolución</div>
+    <div class="modal-sub" id="mdv-sub"></div>
+    <div id="mdv-msg"></div>
+    <div class="form-field"><label>Observaciones (estado en que vuelve)</label><input type="text" id="mdv-obs" placeholder="Ej: en buen estado"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-devolver')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarDevolucion()">Confirmar devolución</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR ESTADO -->
+<div class="modal-overlay" id="modal-estado">
+  <div class="modal">
+    <div class="modal-title">Cambiar estado</div>
+    <div class="modal-sub" id="mce-sub"></div>
+    <div id="mce-msg"></div>
+    <div class="form-field"><label>Nuevo estado</label>
+      <select id="mce-estado">
+        <option>Disponible</option>
+        <option>En obra</option>
+        <option>En reparación</option>
+        <option>En cuarentena</option>
+        <option>A reemplazar</option>
+        <option>Fuera de servicio</option>
+      </select>
+    </div>
+    <div class="form-field"><label>Motivo (requerido)</label><input type="text" id="mce-motivo" placeholder="Ej: motor quemado"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-estado')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarEstado()">Cambiar estado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROL = '{{ rol }}';
+let currentProducto = null;
+let currentMaquina = null;
+let buscarTimeout = null;
+
+// Avatar initials
+const nombre = '{{ nombre }}';
+document.getElementById('avatarInitials').textContent = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+
+function showTab(tab) {
+  ['consumibles','maquinas','alertas','gerencia'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if(el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).style.display = 'block';
+  event.target.classList.add('active');
+  if(tab === 'alertas') loadAlertas();
+  if(tab === 'gerencia') showMgmt('nuevo-producto');
+}
+
+function buscar(tipo) {
+  clearTimeout(buscarTimeout);
+  buscarTimeout = setTimeout(() => _buscar(tipo), 200);
+}
+
+async function _buscar(tipo) {
+  const q = document.getElementById('search' + (tipo==='consumible'?'Consumible':'Maquina')).value;
+  const rubro = document.getElementById('rubro' + (tipo==='consumible'?'Consumible':'Maquina')).value;
+  const res = await fetch(`/api/buscar?q=${encodeURIComponent(q)}&rubro_id=${rubro}&tipo=${tipo}`);
+  const data = await res.json();
+  const list = document.getElementById('list' + (tipo==='consumible'?'Consumible':'Maquina'));
+  const count = document.getElementById('count' + (tipo==='consumible'?'Consumible':'Maquina'));
+  count.textContent = data.length ? `${data.length} resultado${data.length>1?'s':''}` : q ? 'Sin resultados' : '';
+  if(tipo === 'consumible') {
+    list.innerHTML = data.map(p => `
+      <div class="result-item" onclick="verProducto('${p.codigo}')">
+        <div class="ri-info">
+          <div class="badge badge-default">${p.rubro_nombre||'—'}</div>
+          <div class="ri-name">${p.descripcion}</div>
+          <div class="ri-meta">${p.codigo} · ${p.unidad}</div>
+        </div>
+        <div class="ri-stock">
+          <div class="ri-num ${p.stock_estanteria <= p.stock_minimo ? 'low':''}">${fmt(p.stock_estanteria)}</div>
+          <div class="ri-lbl ${p.stock_estanteria <= p.stock_minimo ? 'low':''}">${p.stock_estanteria <= p.stock_minimo ? '⚠ stock bajo':'disponibles'}</div>
+        </div>
+        <span class="ri-chevron">›</span>
+      </div>`).join('');
+  } else {
+    list.innerHTML = data.map(m => `
+      <div class="result-item" onclick="verMaquina(${m.id})">
+        <div class="ri-info">
+          <div class="badge badge-default">${m.rubro_nombre||'—'}</div>
+          <div class="ri-name">${m.nombre}</div>
+          <div class="ri-meta">${m.numero_serie}${m.marca?' · '+m.marca:''}</div>
+        </div>
+        <div>${estadoBadge(m.estado)}</div>
+        <span class="ri-chevron">›</span>
+      </div>`).join('');
+  }
+}
+
+function fmt(n) { return n % 1 === 0 ? n : parseFloat(n).toFixed(1); }
+
+function estadoBadge(estado) {
+  const map = {'Disponible':'e-disponible','En obra':'e-obra','En reparación':'e-reparacion','En cuarentena':'e-cuarentena','A reemplazar':'e-reemplazar','Fuera de servicio':'e-fuera'};
+  return `<span class="estado-badge ${map[estado]||'e-fuera'}"><span class="dot"></span>${estado}</span>`;
+}
+
+async function verProducto(codigo) {
+  const res = await fetch(`/api/producto/${codigo}`);
+  const data = await res.json();
+  if(data.error) return;
+  const p = data.producto;
+  currentProducto = p;
+  document.getElementById('buscador-consumibles').style.display = 'none';
+  document.getElementById('detail-consumible').classList.add('visible');
+  document.getElementById('dc-badge').innerHTML = `<span class="badge badge-default">${p.rubro_nombre||'—'}</span>`;
+  document.getElementById('dc-titulo').textContent = p.descripcion;
+  document.getElementById('dc-codigo').textContent = p.codigo;
+  document.getElementById('dc-est').textContent = fmt(p.stock_estanteria);
+  document.getElementById('dc-res').textContent = fmt(p.stock_reserva);
+  document.getElementById('dc-total').textContent = fmt(p.stock_total);
+  const alert = p.stock_total <= p.stock_minimo;
+  document.getElementById('dc-total').className = 'sc-num' + (alert ? ' alert' : '');
+  const ubic = [p.estanteria?`Est.${p.estanteria}`:'', p.nivel?`Niv.${p.nivel}`:'', p.bin?`Bin ${p.bin}`:''].filter(Boolean).join(' · ');
+  document.getElementById('dc-ubic').textContent = ubic || '—';
+  document.getElementById('dc-unidad').textContent = p.unidad;
+  document.getElementById('dc-min').textContent = fmt(p.stock_minimo) + ' ' + p.unidad;
+  document.getElementById('dc-rubro').textContent = p.rubro_nombre || '—';
+  const acts = document.getElementById('dc-actions');
+  acts.innerHTML = `<button class="btn btn-success" onclick="openModal('modal-entregar')">↑ Entregar material</button>
+    <button class="btn btn-secondary" onclick="openModal('modal-entrada')">↓ Registrar entrada</button>`;
+  if(ROL === 'gerencia') acts.innerHTML += `<button class="btn btn-warning" onclick="openModalAjuste()">⚙ Ajustar stock</button>`;
+  document.getElementById('me-sub').textContent = `${p.descripcion} · ${fmt(p.stock_estanteria)} disponibles en estantería`;
+  document.getElementById('mint-sub').textContent = p.descripcion;
+  const movs = document.getElementById('dc-movs');
+  movs.innerHTML = data.movimientos.length ? data.movimientos.map(m => `
+    <div class="mov-item">
+      <div>
+        <span class="mov-tipo tipo-${m.tipo.toLowerCase()}">${m.tipo}</span>
+        <span class="mov-meta"> · ${m.empleado_nombre||'—'}</span>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:500">${m.tipo==='Salida'?'-':'+'} ${fmt(m.cantidad)} ${p.unidad}</div>
+        <div class="mov-meta">${m.fecha_hora.slice(0,16)}</div>
+      </div>
+    </div>`).join('') : '<div class="empty-state">Sin movimientos registrados</div>';
+}
+
+async function verMaquina(id) {
+  const res = await fetch(`/api/maquina/${id}`);
+  const data = await res.json();
+  const m = data.maquina;
+  currentMaquina = m;
+  currentMaquina._prestamo = data.prestamo_activo;
+  document.getElementById('buscador-maquinas').style.display = 'none';
+  document.getElementById('detail-maquina').classList.add('visible');
+  document.getElementById('dm-badge').innerHTML = `<span class="badge badge-default">${m.rubro_nombre||'—'}</span>`;
+  document.getElementById('dm-nombre').textContent = m.nombre;
+  document.getElementById('dm-serie').textContent = m.numero_serie + (m.marca?' · '+m.marca:'') + (m.modelo?' '+m.modelo:'');
+  document.getElementById('dm-estado-badge').innerHTML = estadoBadge(m.estado);
+  document.getElementById('dm-marca').textContent = [m.marca,m.modelo].filter(Boolean).join(' ') || '—';
+  document.getElementById('dm-rubro').textContent = m.rubro_nombre || '—';
+  const ubic = [m.estanteria?`Est.${m.estanteria}`:'', m.nivel?`Niv.${m.nivel}`:'', m.bin?`Bin ${m.bin}`:''].filter(Boolean).join(' · ');
+  document.getElementById('dm-ubic').textContent = ubic || '—';
+  document.getElementById('dm-uso').textContent = data.prestamo_activo ? data.prestamo_activo.empleado_nombre + ' (desde ' + data.prestamo_activo.fecha_salida.slice(0,10) + ')' : '—';
+  const acts = document.getElementById('dm-actions');
+  acts.innerHTML = '';
+  if(m.estado === 'Disponible') {
+    acts.innerHTML = `<button class="btn btn-success" onclick="openModal('modal-prestar')">↗ Prestar máquina</button>`;
+    document.getElementById('mp-sub').textContent = m.nombre + ' · ' + m.numero_serie;
+  }
+  if(m.estado === 'En obra') {
+    acts.innerHTML = `<button class="btn btn-secondary" onclick="openModal('modal-devolver')">↙ Registrar devolución</button>`;
+    document.getElementById('mdv-sub').textContent = m.nombre + ' · ' + m.numero_serie;
+  }
+  acts.innerHTML += `<button class="btn btn-danger" onclick="openModal('modal-estado')">⚠ Cambiar estado</button>`;
+  document.getElementById('mce-sub').textContent = m.nombre + ' · Estado actual: ' + m.estado;
+  const hist = document.getElementById('dm-historial');
+  hist.innerHTML = data.historial.length ? data.historial.map(h => `
+    <div class="mov-item">
+      <div><span style="font-weight:500">${h.estado_anterior} → ${h.estado_nuevo}</span><div class="mov-meta">${h.empleado_nombre||'—'} · ${h.motivo}</div></div>
+      <div class="mov-meta">${h.fecha_hora.slice(0,16)}</div>
+    </div>`).join('') : '<div class="empty-state">Sin historial</div>';
+}
+
+function backTo(tipo) {
+  if(tipo === 'consumible') {
+    document.getElementById('buscador-consumibles').style.display = 'block';
+    document.getElementById('detail-consumible').classList.remove('visible');
+  } else {
+    document.getElementById('buscador-maquinas').style.display = 'block';
+    document.getElementById('detail-maquina').classList.remove('visible');
+  }
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); document.getElementById(id.replace('modal-','')+'-msg') && (document.getElementById(id.replace('modal-','')+'-msg').innerHTML=''); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openModalAjuste() {
+  const p = currentProducto;
+  document.getElementById('mint-sub').textContent = p.descripcion + ' — Ajuste de stock';
+  document.getElementById('mint-tipo').innerHTML = '<option value="Ajuste">Ajuste de inventario</option>';
+  openModal('modal-entrada');
+}
+
+async function confirmarEntrega() {
+  const cantidad = parseFloat(document.getElementById('me-cantidad').value);
+  const empleado_id = document.getElementById('me-empleado').value;
+  const obs = document.getElementById('me-obs').value;
+  const msg = document.getElementById('me-msg');
+  if(!cantidad || cantidad <= 0) { msg.innerHTML = '<div class="alert-msg alert-error">Ingresá una cantidad válida</div>'; return; }
+  const res = await fetch('/api/movimiento', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({codigo_producto: currentProducto.codigo, tipo:'Salida', cantidad, empleado_id, observaciones: obs})});
+  const data = await res.json();
+  if(data.error) { msg.innerHTML = `<div class="alert-msg alert-error">${data.error}</div>`; return; }
+  closeModal('modal-entregar');
+  verProducto(currentProducto.codigo);
+}
+
+async function confirmarEntrada() {
+  const cantidad = parseFloat(document.getElementById('mint-cantidad').value);
+  const tipo = document.getElementById('mint-tipo').value;
+  const obs = document.getElementById('mint-obs').value;
+  const msg = document.getElementById('mint-msg');
+  if(!cantidad || cantidad <= 0) { msg.innerHTML = '<div class="alert-msg alert-error">Ingresá una cantidad válida</div>'; return; }
+  const res = await fetch('/api/movimiento', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({codigo_producto: currentProducto.codigo, tipo, cantidad, empleado_id: null, observaciones: obs})});
+  const data = await res.json();
+  if(data.error) { msg.innerHTML = `<div class="alert-msg alert-error">${data.error}</div>`; return; }
+  closeModal('modal-entrada');
+  document.getElementById('mint-tipo').innerHTML = '<option value="Entrada">Entrada por compra</option><option value="Devolución">Devolución desde obra</option>';
+  verProducto(currentProducto.codigo);
+}
+
+async function confirmarPrestamo() {
+  const empleado_id = document.getElementById('mp-empleado').value;
+  const obs = document.getElementById('mp-obs').value;
+  const res = await fetch('/api/prestar_maquina', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({maquina_id: currentMaquina.id, empleado_id, observaciones: obs})});
+  const data = await res.json();
+  if(data.error) { document.getElementById('mp-msg').innerHTML = `<div class="alert-msg alert-error">${data.error}</div>`; return; }
+  closeModal('modal-prestar');
+  verMaquina(currentMaquina.id);
+}
+
+async function confirmarDevolucion() {
+  const obs = document.getElementById('mdv-obs').value;
+  const res = await fetch('/api/devolver_maquina', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({maquina_id: currentMaquina.id, observaciones: obs})});
+  const data = await res.json();
+  if(data.error) { document.getElementById('mdv-msg').innerHTML = `<div class="alert-msg alert-error">${data.error}</div>`; return; }
+  closeModal('modal-devolver');
+  verMaquina(currentMaquina.id);
+}
+
+async function confirmarEstado() {
+  const estado = document.getElementById('mce-estado').value;
+  const motivo = document.getElementById('mce-motivo').value.trim();
+  if(!motivo) { document.getElementById('mce-msg').innerHTML = '<div class="alert-msg alert-error">El motivo es requerido</div>'; return; }
+  const res = await fetch('/api/cambiar_estado_maquina', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({maquina_id: currentMaquina.id, estado, motivo})});
+  const data = await res.json();
+  if(data.error) { document.getElementById('mce-msg').innerHTML = `<div class="alert-msg alert-error">${data.error}</div>`; return; }
+  closeModal('modal-estado');
+  verMaquina(currentMaquina.id);
+}
+
+async function loadAlertas() {
+  const res = await fetch('/api/alertas');
+  const data = await res.json();
+  const el = document.getElementById('alertas-content');
+  if(!data.length) { el.innerHTML = '<div class="empty-state" style="padding:60px 20px"><div style="font-size:32px;margin-bottom:8px">✅</div>Todo el stock está por encima del mínimo</div>'; return; }
+  el.innerHTML = `<div style="font-size:12px;color:#888;margin-bottom:12px">${data.length} producto${data.length>1?'s':''} por debajo del stock mínimo</div>` +
+    data.map(p => `<div class="alert-card">
+      <div>
+        <div class="alert-prod">${p.descripcion}</div>
+        <div class="alert-detail">${p.codigo} · ${p.rubro_nombre||'—'}</div>
+      </div>
+      <div class="alert-nums">
+        <div class="alert-stock">${fmt(p.stock_total)}</div>
+        <div style="font-size:10px;color:#888">mín: ${fmt(p.stock_minimo)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function showMgmt(section) {
+  ['nuevo-producto','nueva-maquina','nuevo-empleado','movimientos'].forEach(s => {
+    const el = document.getElementById('mgmt-'+s);
+    if(el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.mgmt-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('mgmt-'+section).style.display = 'block';
+  event.target.classList.add('active');
+  if(section === 'movimientos') loadMovimientos();
+}
+
+async function crearProducto() {
+  const body = {
+    codigo: document.getElementById('np-codigo').value.trim(),
+    descripcion: document.getElementById('np-desc').value.trim(),
+    rubro_id: document.getElementById('np-rubro').value,
+    medida: document.getElementById('np-medida').value,
+    unidad: document.getElementById('np-unidad').value,
+    estanteria: document.getElementById('np-est').value,
+    nivel: document.getElementById('np-niv').value,
+    bin: document.getElementById('np-bin').value,
+    stock_estanteria: document.getElementById('np-sest').value,
+    stock_reserva: document.getElementById('np-sres').value,
+    stock_minimo: document.getElementById('np-smin').value,
+  };
+  const res = await fetch('/api/producto', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const data = await res.json();
+  document.getElementById('np-msg').innerHTML = data.ok
+    ? '<div class="alert-msg alert-success">Producto guardado correctamente</div>'
+    : `<div class="alert-msg alert-error">${data.error}</div>`;
+}
+
+async function crearMaquina() {
+  const body = {
+    numero_serie: document.getElementById('nm-serie').value.trim(),
+    nombre: document.getElementById('nm-nombre').value.trim(),
+    marca: document.getElementById('nm-marca').value,
+    modelo: document.getElementById('nm-modelo').value,
+    rubro_id: document.getElementById('nm-rubro').value,
+    estanteria: document.getElementById('nm-est').value,
+    nivel: document.getElementById('nm-niv').value,
+    bin: document.getElementById('nm-bin').value,
+  };
+  const res = await fetch('/api/maquina', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const data = await res.json();
+  document.getElementById('nm-msg').innerHTML = data.ok
+    ? '<div class="alert-msg alert-success">Máquina guardada correctamente</div>'
+    : `<div class="alert-msg alert-error">${data.error}</div>`;
+}
+
+async function crearEmpleado() {
+  const body = {
+    nombre: document.getElementById('ne-nombre').value.trim(),
+    rol: document.getElementById('ne-rol').value,
+    password: document.getElementById('ne-pass').value || 'panolero123',
+  };
+  const res = await fetch('/api/empleado', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const data = await res.json();
+  document.getElementById('ne-msg').innerHTML = data.ok
+    ? '<div class="alert-msg alert-success">Empleado creado correctamente</div>'
+    : `<div class="alert-msg alert-error">${data.error}</div>`;
+}
+
+async function loadMovimientos() {
+  const res = await fetch('/api/movimientos');
+  const data = await res.json();
+  document.getElementById('all-movs').innerHTML = data.length ? data.map(m => `
+    <div class="mov-item" style="margin-bottom:4px">
+      <div>
+        <span class="mov-tipo tipo-${m.tipo.toLowerCase()}">${m.tipo}</span>
+        <span class="mov-meta"> · ${m.producto_nombre||m.codigo_producto}</span>
+        <div class="mov-meta">${m.empleado_nombre||'—'}${m.observaciones?' · '+m.observaciones:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:500">${fmt(m.cantidad)}</div>
+        <div class="mov-meta">${m.fecha_hora.slice(0,16)}</div>
+      </div>
+    </div>`).join('') : '<div class="empty-state">Sin movimientos</div>';
+}
+
+// Cerrar modales con click fuera
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// Carga inicial
+buscar('consumible');
+</script>
+</body>
+</html>
