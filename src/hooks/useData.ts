@@ -3441,50 +3441,14 @@ export function useUpdateFleetTire() {
   });
 }
 
-// ========== SCOPE CHANGES & QUALITY ==========
 
-export function useScopeChanges(projectId?: string) {
-  return useQuery({
-    queryKey: ['scope_changes', projectId],
-    queryFn: async () => {
-      let q = supabase.from('project_scope_changes').select('*, project:projects(name)');
-      if (projectId) q = q.eq('project_id', projectId);
-      const { data, error } = await q.order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as ProjectScopeChange[];
-    },
-  });
-}
-
-export function useCreateScopeChange() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: Partial<ProjectScopeChange>) => {
-      const { data, error } = await supabase.from('project_scope_changes').insert({ ...payload, tenant_id: ECAR_TENANT_ID }).select().single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['scope_changes'] }),
-  });
-}
-
-export function useUpdateScopeChange() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...payload }: Partial<ProjectScopeChange> & { id: string }) => {
-      const { data, error } = await supabase.from('project_scope_changes').update(payload).eq('id', id).select().single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['scope_changes'] }),
-  });
-}
+// ========== QUALITY ==========
 
 export function useQualityChecklists(projectId?: string) {
   return useQuery({
     queryKey: ['quality_checklists', projectId],
     queryFn: async () => {
-      let q = supabase.from('quality_checklists').select('*, project:projects(name), work_order:work_orders(title)');
+      let q = supabase.from('quality_checklists').select('*, project:projects(name), work_order:work_orders(id, code)');
       if (projectId) q = q.eq('project_id', projectId);
       const { data, error } = await q.order('created_at', { ascending: false });
       if (error) throw error;
@@ -3508,12 +3472,10 @@ export function useCreateQualityChecklist() {
 export function useUpdateQualityChecklist() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...payload }: Partial<QualityChecklist> & { id: string }) => {
-      const { data, error } = await supabase.from('quality_checklists').update(payload).eq('id', id).select().single();
+    mutationFn: async ({ id, ...updates }: Partial<QualityChecklist> & { id: string }) => {
+      const { error } = await supabase.from('quality_checklists').update(updates).eq('id', id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['quality_checklists'] }),
   });
 }
-
