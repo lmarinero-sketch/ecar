@@ -570,7 +570,7 @@ export const InventoryModule: React.FC = () => {
                     <p className="text-sm">Creá tu primera estantería para armar el plano del depósito.</p>
                   </div>
                 ) : (
-                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner" style={{ minHeight: 300 }}>
+                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner flex-1 w-full" style={{ minHeight: 300 }}>
                     <WebGLWarehouseGrid />
                     <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito interactivo</div>
                     <div className="relative z-10 mt-6 w-full h-[600px]">
