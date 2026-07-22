@@ -21,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />} />
         <Route path="/propuesta" element={<ProposalModule />} />
         <Route path="/fichar" element={<CheckInPage />} />
+        <Route path="/fichar-manual" element={<App />} />
         <Route path="/checkin" element={<CheckInPage />} />
         <Route path="/checkin/:vehicleId" element={<VehicleCheckInWrapper />} />
         <Route path="/presentacion-mesa-tecnica" element={<App />} />

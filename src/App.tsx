@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './components/LoginPage';
 import { CheckInPage } from './components/CheckInPage';
+import { ManualCheckInPage } from './components/ManualCheckInPage';
 import { VehicleCheckInPage } from './components/VehicleCheckInPage';
 import { VehicleTrackingPage } from './components/tracking/VehicleTrackingPage';
 import { useAppStore } from './store/useStore';
@@ -58,7 +59,7 @@ const queryClient = new QueryClient({
 });
 
 // Detect public QR routes before auth
-function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | { type: 'fuel_request' } | null {
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'manual_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | { type: 'fuel_request' } | null {
   const path = window.location.pathname;
   if (path === '/fuel-request' || path === '/fuel-request/' || path === '/solicitud-combustible' || path === '/solicitud-combustible/') {
     return { type: 'fuel_request' };
@@ -77,6 +78,9 @@ function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'checkin_veh
   // /checkin?token=... or /fichar?token=... → Attendance check-in
   if (path === '/checkin' || path === '/checkin/' || path === '/fichar' || path === '/fichar/') {
     return { type: 'checkin_attendance' };
+  }
+  if (path === '/fichar-manual' || path === '/fichar-manual/') {
+    return { type: 'manual_attendance' };
   }
   return null;
 }
@@ -102,6 +106,9 @@ function AppContent() {
     }
     if (publicRoute.type === 'checkin_vehicle') {
       return <VehicleCheckInPage vehicleId={publicRoute.vehicleId} />;
+    }
+    if (publicRoute.type === 'manual_attendance') {
+      return <ManualCheckInPage />;
     }
     return <CheckInPage />;
   }
