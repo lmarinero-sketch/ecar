@@ -1,0 +1,47 @@
+const fs = require('fs');
+
+const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .container {
+    min-width: 800px;
+    min-height: 600px;
+    background-color: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    position: relative;
+    background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px), linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+    background-size: 10% 10%;
+  }
+  .shelf {
+    position: absolute;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 2px solid;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="shelf" style="left: 10%; top: 10%; width: calc(20% - 4px); height: calc(40% - 4px); border-color: #3B82F6; background-color: rgba(59,130,246,0.2);">
+    E1
+  </div>
+  <div class="shelf" style="left: 40%; top: 10%; width: calc(20% - 4px); height: calc(40% - 4px); border-color: #3B82F6; background-color: rgba(59,130,246,0.2);">
+    E2
+  </div>
+</div>
+</body>
+</html>
+`;
+
+fs.writeFileSync('test.html', html);
+console.log('test.html written');

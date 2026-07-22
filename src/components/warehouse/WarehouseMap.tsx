@@ -57,17 +57,16 @@ export const WarehouseMap: React.FC<Props> = ({ shelves, items, onAddShelf, onEd
           >
             {/* Render Shelves */}
             {shelves.map((shelf, index) => {
-              // Fallback to a nicely arranged grid if positions are not set (e.g., from import)
-              const hasPosition = shelf.grid_width && shelf.grid_width > 0;
-              const col = hasPosition ? shelf.grid_col : (index % 4) * 2.5 + 0.25;
-              const row = hasPosition ? shelf.grid_row : Math.floor(index / 4) * 3 + 0.5;
-              const width = hasPosition ? shelf.grid_width : 2;
-              const height = hasPosition ? shelf.grid_height : 2;
+              // Bulletproof fallback logic to guarantee valid numbers
+              const safeCol = typeof shelf.grid_col === 'number' ? shelf.grid_col : ((index % 4) * 2.5 + 0.25);
+              const safeRow = typeof shelf.grid_row === 'number' ? shelf.grid_row : (Math.floor(index / 4) * 3 + 0.5);
+              const safeWidth = typeof shelf.grid_width === 'number' && shelf.grid_width > 0 ? shelf.grid_width : 2;
+              const safeHeight = typeof shelf.grid_height === 'number' && shelf.grid_height > 0 ? shelf.grid_height : 2;
 
-              const leftPercent = (col / GRID_SIZE) * 100;
-              const topPercent = (row / GRID_SIZE) * 100;
-              const widthPercent = (width / GRID_SIZE) * 100;
-              const heightPercent = (height / GRID_SIZE) * 100;
+              const leftPercent = (safeCol / GRID_SIZE) * 100;
+              const topPercent = (safeRow / GRID_SIZE) * 100;
+              const widthPercent = (safeWidth / GRID_SIZE) * 100;
+              const heightPercent = (safeHeight / GRID_SIZE) * 100;
 
               const isSelected = selectedShelf?.id === shelf.id;
 
