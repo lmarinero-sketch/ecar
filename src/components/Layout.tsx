@@ -37,6 +37,9 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   implementation: Rocket, user_management: Users, user_activity: Activity,
   communications: Mail,
   weekly_report: PieChart,
+  scope_changes: Target,
+  work_orders: FileText,
+  quality: ClipboardCheck,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -126,7 +129,10 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'wbs', requires: true },
       { id: 'field', requires: true },
+      { id: 'work_orders', requires: true },
+      { id: 'scope_changes', requires: true },
       { id: 'safety', requires: true },
+      { id: 'quality', requires: true },
       { id: 'inspections', requires: true },
       { id: 'rfi', requires: true },
       { id: 'nonconformities', requires: true },

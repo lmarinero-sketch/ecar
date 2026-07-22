@@ -48,6 +48,9 @@ import { CommunicationsModule } from './components/CommunicationsModule';
 import { WeeklyReportModule } from './components/WeeklyReportModule';
 import { ActivityTracker } from './components/ActivityTracker';
 import { useOfflineSync } from './hooks/useOfflineSync';
+import { ScopeChangesModule } from './components/ScopeChangesModule';
+import { WorkOrdersModule } from './components/WorkOrdersModule';
+import { QualityModule } from './components/QualityModule';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -163,6 +166,9 @@ function AppContent() {
       case 'user_activity': return <UserActivityModule />;
       case 'communications': return <CommunicationsModule />;
       case 'weekly_report': return <WeeklyReportModule />;
+      case 'scope_changes': return <ScopeChangesModule />;
+      case 'work_orders': return <WorkOrdersModule />;
+      case 'quality': return <QualityModule />;
       default: return <BiDashboard />;
     }
   };

@@ -1581,6 +1581,9 @@ export const ALL_MODULES = [
   'communications',
   'weekly_report',
   'payments',
+  'scope_changes',
+  'work_orders',
+  'quality',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1621,6 +1624,9 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   communications: 'Comunicaciones',
   weekly_report: 'Reporte Semanal GG',
   payments: 'Control de Pagos',
+  scope_changes: 'Adicionales y Alcance',
+  work_orders: 'Órdenes de Trabajo',
+  quality: 'Inspecciones de Calidad',
 };
 
 
@@ -1676,4 +1682,46 @@ export type LogisticsMaintenanceLog = {
   created_at: string;
   // Joined
   vehicle?: FuelVehicle | null;
+};
+
+// ========== SCOPE CHANGES & QUALITY ==========
+
+export type ProjectScopeChange = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  title: string;
+  description: string | null;
+  requested_by: string | null;
+  status: 'pending_budget' | 'pending_approval' | 'approved' | 'rejected';
+  economic_impact: number;
+  delay_days: number;
+  approved_by: string | null;
+  approved_at: string | null;
+  notes: string | null;
+  created_at: string;
+  project?: Project;
+};
+
+export type QualityChecklistItem = {
+  description: string;
+  status: 'pass' | 'fail' | 'na';
+  notes?: string;
+};
+
+export type QualityChecklist = {
+  id: string;
+  tenant_id: string;
+  project_id: string | null;
+  work_order_id: string | null;
+  title: string;
+  inspector_name: string | null;
+  items: QualityChecklistItem[];
+  score: number;
+  status: 'draft' | 'approved' | 'rejected';
+  signature_url: string | null;
+  notes: string | null;
+  created_at: string;
+  project?: Project;
+  work_order?: WorkOrder;
 };
