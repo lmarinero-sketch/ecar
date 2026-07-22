@@ -1687,9 +1687,11 @@ export type LogisticsMaintenanceLog = {
 // ========== SCOPE CHANGES & QUALITY ==========
 
 export type QualityChecklistItem = {
-  id: string;
+  id?: string;
   description: string;
-  checked: boolean;
+  status: string;
+  notes?: string;
+  checked?: boolean;
 };
 
 export type QualityChecklist = {
