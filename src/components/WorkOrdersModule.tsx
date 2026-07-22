@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   ClipboardList, Search, Plus, X, Save,
-  Clock, CheckCircle, AlertTriangle, PlayCircle
+  Clock, AlertTriangle, PlayCircle
 } from 'lucide-react';
 import { useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder, useProjects } from '../hooks/useData';
 import type { WorkOrder } from '../lib/types';

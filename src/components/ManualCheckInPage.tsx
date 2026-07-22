@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { validateQRToken } from '../lib/qrToken';
-import { CheckCircle2, XCircle, Clock, HardHat, Loader2, ShieldCheck, UserCheck, Smartphone, Search, RefreshCw, LogOut } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, HardHat, Loader2, UserCheck, Smartphone, Search } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 
-type CheckInStatus = 'loading' | 'select_employee' | 'confirming' | 'success' | 'error';
+type CheckInStatus = 'loading' | 'select_employee' | 'confirming' | 'success' | 'error' | 'already_checked';
 
 /* ─── Device info collector ─── */
 function getDeviceInfo() {

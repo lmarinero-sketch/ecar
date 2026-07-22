@@ -60,6 +60,9 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   implementation: 'Implementación', user_management: 'Usuarios', user_activity: 'Actividad',
   communications: 'Comunicaciones',
   weekly_report: 'Reporte GG',
+  scope_changes: 'Adicionales',
+  work_orders: 'OTI',
+  quality: 'Calidad',
 };
 
 /* ─── Module accent colors for active indicator ─── */

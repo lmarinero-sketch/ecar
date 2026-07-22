@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   ClipboardCheck, Search, Plus, X, Save,
-  CheckCircle, AlertTriangle, Eye, Trash2
+  AlertTriangle, Eye, Trash2
 } from 'lucide-react';
 import { useQualityChecklists, useCreateQualityChecklist, useUpdateQualityChecklist, useProjects, useWorkOrders } from '../hooks/useData';
 import type { QualityChecklist, QualityChecklistItem } from '../lib/types';
