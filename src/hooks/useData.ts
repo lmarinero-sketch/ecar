@@ -18,7 +18,7 @@ import type {
   FuelVehicle, FuelLoad, FuelBatanMovement, FuelMonthlyReconciliation,
   VehicleDailyReport,
   Opportunity, PurchaseOrder, SupplierEvaluation, NonConformity, ScopeChange,
-  WorkOrder,
+  
   LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog,
   EmployeePPEDelivery, LegalEntity,
   FleetMaintenanceOrder, FleetTire,

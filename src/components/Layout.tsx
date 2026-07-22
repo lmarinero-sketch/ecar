@@ -38,7 +38,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   communications: Mail,
   weekly_report: PieChart,
   scope_changes: Target,
-  work_orders: FileText,
+  
   quality: ClipboardCheck,
 };
 
@@ -61,7 +61,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   communications: 'Comunicaciones',
   weekly_report: 'Reporte GG',
   scope_changes: 'Adicionales',
-  work_orders: 'OTI',
+  
   quality: 'Calidad',
 };
 
@@ -132,7 +132,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'wbs', requires: true },
       { id: 'field', requires: true },
-      { id: 'work_orders', requires: true },
+      
       { id: 'scope_changes', requires: true },
       { id: 'safety', requires: true },
       { id: 'quality', requires: true },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CheckCircle2, XCircle, Clock, HardHat, Loader2, UserCheck, Smartphone, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, UserCheck, Smartphone, Search } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 
 type CheckInStatus = 'loading' | 'select_employee' | 'confirming' | 'success' | 'error' | 'already_checked';
@@ -12,7 +12,6 @@ function getDeviceInfo() {
   const screenRes = `${screen.width}x${screen.height}`;
   const online = navigator.onLine;
 
-  // Try to extract device/browser from user agent
   let browser = 'Desconocido';
   if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
   else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
@@ -149,236 +148,250 @@ export const ManualCheckInPage: React.FC = () => {
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
-      <header className="px-4 pt-6 pb-4">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/20">
-            <HardHat size={22} className="text-ecar-blueLight" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-white text-lg font-bold tracking-tight">ECAR Asistencia</h1>
-            <p className="text-ecar-blueLight/80 text-[10px] font-semibold uppercase tracking-widest">Control de fichaje digital</p>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+      {/* HEADER TIPO ECAR */}
+      <header className="bg-white border-b border-slate-200 px-4 pt-6 pb-4 shadow-sm z-10">
+        <div className="max-w-md mx-auto flex items-center justify-center gap-3">
+          <img src="/rombo.jpeg" alt="ECAR Rombo" className="w-12 h-12 object-contain rounded shadow-sm border border-slate-100" />
+          <div className="text-left">
+            <h1 className="text-ecar-blue text-xl font-bold tracking-tight leading-tight">ECAR Asistencia</h1>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Control de Fichaje Digital</p>
           </div>
         </div>
       </header>
 
-      <div className="text-center mb-4">
-        <p className="text-5xl font-black font-mono text-white tracking-wider tabular-nums">{timeStr}</p>
-        <p className="text-sm text-slate-400 mt-1 capitalize">{dateStr}</p>
+      {/* CLOCK */}
+      <div className="text-center py-6 bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
+        <p className="text-5xl font-black font-mono text-ecar-blue tracking-wider tabular-nums">{timeStr}</p>
+        <p className="text-sm font-medium text-slate-500 mt-1 capitalize">{dateStr}</p>
       </div>
 
-      <main className="flex-1 flex items-start justify-center px-4 pb-6">
-
+      <main className="flex-1 flex items-start justify-center px-4 py-8">
         {/* LOADING STATE */}
         {status === 'loading' && (
           <div className="text-center py-12 animate-in fade-in zoom-in duration-300">
             <Loader2 size={48} className="mx-auto text-ecar-blue animate-spin mb-4" />
-            <p className="font-bold text-gray-400 text-lg">Cargando...</p>
+            <p className="font-bold text-slate-500 text-lg">Cargando...</p>
           </div>
         )}
 
-        {/* Error */}
+        {/* ERROR */}
         {status === 'error' && (
-          <div className="max-w-sm w-full mt-4">
-            <div className="bg-white/5 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center space-y-4 shadow-2xl">
-              <div className="w-20 h-20 mx-auto rounded-full bg-red-500/20 flex items-center justify-center">
-                <XCircle size={40} className="text-red-400" />
+          <div className="max-w-sm w-full">
+            <div className="bg-white border border-red-200 rounded-2xl p-8 text-center space-y-4 shadow-xl">
+              <div className="w-20 h-20 mx-auto rounded-full bg-red-50 flex items-center justify-center">
+                <XCircle size={40} className="text-red-500" />
               </div>
-              <h2 className="text-xl font-bold text-white">Error</h2>
-              <p className="text-slate-300 text-sm leading-relaxed">{error}</p>
+              <h2 className="text-xl font-bold text-slate-800">Error</h2>
+              <p className="text-slate-600 text-sm leading-relaxed">{error}</p>
+              <button onClick={() => { setStatus('select_employee'); setError(''); }} className="btn-primary w-full mt-4 py-3">Reintentar</button>
             </div>
           </div>
         )}
 
-        {/* Select Employee */}
+        {/* SELECT EMPLOYEE */}
         {status === 'select_employee' && (
-          <div className="max-w-sm w-full space-y-4">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100/10 text-ecar-blue mb-4 shadow-sm">
+          <div className="max-w-md w-full space-y-6">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 text-ecar-blue mb-4 shadow-sm border border-blue-100">
                 <UserCheck size={32} />
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">TOMA MANUAL</h1>
-              <p className="text-slate-400 font-medium mt-2">Registro manual de asistencia</p>
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight">TOMA MANUAL</h1>
+              <p className="text-slate-500 font-medium mt-1">Seleccione al empleado para registrar su asistencia</p>
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="relative shadow-sm">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nombre o DNI..."
                 autoFocus
-                className="w-full bg-white/10 backdrop-blur border border-white/20 rounded-xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue/50 transition-all"
+                className="w-full bg-white border border-slate-300 rounded-xl pl-11 pr-4 py-3.5 text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all"
               />
             </div>
 
             {/* Employee List */}
-            <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin">
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin">
               {filteredEmployees.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-sm">Sin resultados</div>
+                <div className="text-center py-8 text-slate-500 text-sm font-medium">Sin resultados</div>
               ) : (
                 filteredEmployees.map(emp => (
                   <button
                     key={emp.id}
                     onClick={() => handleSelectEmployee(emp)}
-                    className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-ecar-blue/30 rounded-xl transition-all active:scale-[0.98] group"
+                    className="w-full flex items-center gap-4 p-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-ecar-blue/40 rounded-xl transition-all shadow-sm active:scale-[0.98] group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-ecar-blue/30 to-blue-500/30 flex items-center justify-center text-ecar-blueLight font-bold text-sm shrink-0 border border-ecar-blue/20">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center text-ecar-blue font-black text-lg shrink-0 border border-slate-200 group-hover:border-ecar-blue/30 shadow-sm">
                       {emp.full_name.charAt(0)}
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <p className="font-bold text-white text-sm truncate">{emp.full_name}</p>
-                      <p className="text-xs text-slate-500 font-mono truncate">
+                      <p className="font-bold text-slate-800 text-[15px] truncate group-hover:text-ecar-blue transition-colors">{emp.full_name}</p>
+                      <p className="text-xs text-slate-500 font-mono truncate mt-0.5">
                         {emp.dni ? `DNI ${emp.dni}` : emp.cuil || 'Sin identificación'}
                         {emp.category?.name ? ` · ${emp.category.name}` : ''}
                       </p>
                     </div>
-                    <UserCheck size={18} className="text-slate-600 group-hover:text-ecar-blue transition-colors shrink-0" />
+                    <UserCheck size={20} className="text-slate-300 group-hover:text-ecar-blue transition-colors shrink-0" />
                   </button>
                 ))
               )}
             </div>
 
             {/* Device info indicator */}
-            <div className="flex items-center justify-center gap-2 text-[10px] text-slate-600">
-              <Smartphone size={10} />
-              <span>Se registrará información del dispositivo al fichar</span>
+            <div className="flex items-center justify-center gap-2 text-[10px] font-medium text-slate-400">
+              <Smartphone size={12} />
+              <span>Se registrará información del dispositivo por seguridad</span>
             </div>
           </div>
         )}
 
-        {/* Confirm Check-In */}
+        {/* CONFIRM CHECK-IN */}
         {status === 'confirming' && selectedEmployee && (
-          <div className="max-w-sm w-full mt-2">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-ecar-blue/20 to-blue-500/20 flex items-center justify-center border border-ecar-blue/30">
-                <span className="text-3xl font-bold text-ecar-blueLight">{selectedEmployee.full_name.charAt(0)}</span>
+          <div className="max-w-sm w-full">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-6 shadow-xl relative overflow-hidden">
+              {/* Top Accent */}
+              <div className={`absolute top-0 left-0 w-full h-1.5 ${isClockOut ? 'bg-orange-400' : 'bg-emerald-400'}`}></div>
+
+              <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center border-4 border-white shadow-md">
+                <span className="text-4xl font-black text-ecar-blue">{selectedEmployee.full_name.charAt(0)}</span>
               </div>
 
               <div>
-                <h2 className="text-xl font-bold text-white">{selectedEmployee.full_name}</h2>
+                <h2 className="text-2xl font-bold text-slate-800 leading-tight">{selectedEmployee.full_name}</h2>
                 <p className="text-slate-500 text-sm font-mono mt-1">{selectedEmployee.cuil || selectedEmployee.dni || ''}</p>
               </div>
 
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Tipo</span>
-                  <span className={`font-bold ${isClockOut ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-500 font-medium">Tipo de Fichaje</span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${isClockOut ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
                     {isClockOut ? '🏠 Salida' : '🏗️ Entrada'}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Hora</span>
-                  <span className="font-mono font-bold text-white text-lg">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-500 font-medium">Hora actual</span>
+                  <span className="font-mono font-bold text-slate-800 text-lg">
                     {currentTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Fecha</span>
-                  <span className="text-slate-300 font-medium capitalize">
-                    {currentTime.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-500 font-medium">Fecha</span>
+                  <span className="text-slate-600 font-medium capitalize">
+                    {currentTime.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                   </span>
                 </div>
               </div>
 
               {/* Device info preview */}
-              <div className="bg-slate-800/50 rounded-lg p-3 border border-white/5">
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1">
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-left">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-1">
                   <Smartphone size={10} />
-                  <span className="font-bold uppercase tracking-wider">Dispositivo</span>
+                  <span className="font-bold uppercase tracking-wider">Dispositivo de Registro</span>
                 </div>
-                <p className="text-[10px] text-slate-600 font-mono truncate">{navigator.userAgent.slice(0, 80)}...</p>
+                <p className="text-[10px] text-slate-500 font-mono truncate">{navigator.userAgent.slice(0, 80)}...</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => { setSelectedEmployee(null); setStatus('select_employee'); }}
-                  className="flex-1 py-3 px-4 rounded-xl border border-white/20 text-slate-400 font-bold text-sm hover:bg-white/5 transition-all"
+                  className="flex-1 py-3.5 px-4 rounded-xl border-2 border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm shadow-lg active:scale-[0.97] transition-all ${
+                  className={`flex-1 py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.97] transition-all text-white ${
                     isClockOut
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
-                      : 'bg-gradient-to-r from-emerald-500 to-ecar-blue text-white hover:from-emerald-600 hover:to-ecar-blue'
+                      ? 'bg-orange-500 hover:bg-orange-600'
+                      : 'bg-emerald-500 hover:bg-emerald-600'
                   }`}
                 >
-                  {isClockOut ? 'Fichar Salida' : 'Fichar Entrada'}
+                  {isClockOut ? 'Confirmar Salida' : 'Confirmar Entrada'}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Success */}
+        {/* SUCCESS */}
         {status === 'success' && selectedEmployee && (
-          <div className="max-w-sm w-full mt-2">
-            <div className="bg-white/5 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
+          <div className="max-w-sm w-full">
+            <div className="bg-white border border-emerald-200 rounded-2xl p-8 text-center space-y-6 shadow-xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-emerald-50/50 pointer-events-none"></div>
+              
               {/* Animated check */}
-              <div className="w-24 h-24 mx-auto rounded-full bg-emerald-500/20 flex items-center justify-center border-2 border-emerald-500/40 animate-pulse">
-                <CheckCircle2 size={56} className="text-emerald-400" />
+              <div className="w-24 h-24 mx-auto rounded-full bg-emerald-100 flex items-center justify-center border-4 border-white shadow-md relative z-10">
+                <CheckCircle2 size={56} className="text-emerald-500" />
               </div>
 
-              {/* Welcome message */}
-              <div className="space-y-1">
-                <p className="text-emerald-400 text-sm font-semibold">{greeting},</p>
-                <h2 className="text-3xl font-black text-white tracking-tight">
+              <div className="space-y-1 relative z-10">
+                <p className="text-emerald-600 text-sm font-bold uppercase tracking-wide">{greeting},</p>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">
                   {selectedEmployee.full_name.split(' ')[0]}!
                 </h2>
-                <p className="text-slate-400 text-xs">{selectedEmployee.full_name}</p>
+                <p className="text-slate-500 text-sm font-medium mt-1">{selectedEmployee.full_name}</p>
               </div>
 
               {/* Large Time Display */}
-              <div className="bg-gradient-to-br from-emerald-500/10 to-ecar-blue/10 rounded-2xl p-6 border border-emerald-500/20">
-                <p className="text-[10px] uppercase tracking-widest text-emerald-400/80 font-bold mb-1">
-                  {isClockOut ? 'Salida registrada' : 'Entrada registrada'}
+              <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm relative z-10">
+                <p className="text-[10px] uppercase tracking-widest text-emerald-500 font-black mb-2">
+                  {isClockOut ? 'Salida registrada a las' : 'Entrada registrada a las'}
                 </p>
-                <p className="text-6xl font-black font-mono text-white tracking-wider tabular-nums">
+                <p className="text-6xl font-black font-mono text-slate-800 tracking-wider tabular-nums">
                   {checkInTime.slice(0, 5)}
                 </p>
-                <p className="text-xs text-slate-500 mt-2 capitalize">{dateStr}</p>
+                <p className="text-sm font-medium text-slate-500 mt-2 capitalize">{dateStr}</p>
               </div>
 
-              {/* Status badge */}
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${
+              <div className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold shadow-sm relative z-10 ${
                 isClockOut
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}>
-                {isClockOut ? '🏠 Salida fichada' : '🏗️ Jornada iniciada'}
+                {isClockOut ? '🏠 Salida fichada correctamente' : '🏗️ Jornada iniciada correctamente'}
               </div>
 
-              <p className="text-[10px] text-slate-600">Podés cerrar esta página · Registro guardado</p>
+              <p className="text-[11px] font-medium text-slate-400 relative z-10 pt-2">Podés cerrar esta página · Registro guardado</p>
+              
+              <button
+                onClick={() => { setSelectedEmployee(null); setStatus('select_employee'); }}
+                className="w-full mt-4 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all relative z-10"
+              >
+                Registrar a otra persona
+              </button>
             </div>
           </div>
         )}
 
-        {/* Already Checked */}
+        {/* ALREADY CHECKED */}
         {status === 'already_checked' && selectedEmployee && (
-          <div className="max-w-sm w-full mt-4">
-            <div className="bg-white/5 backdrop-blur-xl border border-blue-500/30 rounded-2xl p-8 text-center space-y-5 shadow-2xl">
-              <div className="w-20 h-20 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
-                <Clock size={40} className="text-blue-400" />
+          <div className="max-w-sm w-full">
+            <div className="bg-white border border-blue-200 rounded-2xl p-8 text-center space-y-6 shadow-xl">
+              <div className="w-20 h-20 mx-auto rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                <Clock size={40} className="text-blue-500" />
               </div>
-              <h2 className="text-xl font-bold text-blue-300">Ya fichaste hoy</h2>
-              <p className="text-slate-400 text-sm">{selectedEmployee.full_name}, ya registraste entrada y salida para hoy.</p>
+              <h2 className="text-2xl font-black text-slate-800">Ya fichaste hoy</h2>
+              <p className="text-slate-600 font-medium leading-relaxed">
+                <span className="font-bold">{selectedEmployee.full_name}</span>, ya registraste tu entrada y salida correspondientes a la jornada de hoy.
+              </p>
               <button
                 onClick={() => { setSelectedEmployee(null); setStatus('select_employee'); }}
-                className="w-full py-3 rounded-xl border border-white/20 text-slate-400 font-bold text-sm hover:bg-white/5 transition-all"
+                className="w-full py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
               >
-                Volver
+                Volver al buscador
               </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="text-center py-4 border-t border-white/5">
-        <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase">ECAR · Sistema creado por Grow Labs</p>
+      {/* FOOTER */}
+      <footer className="text-center py-6 border-t border-slate-200 bg-white">
+        <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+          ECAR · Sistema creado por Grow Labs
+        </p>
       </footer>
     </div>
   );

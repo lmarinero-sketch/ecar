@@ -76,8 +76,8 @@
   /* ─── Tablas ─── */
   .data-table {
     @apply w-full text-left text-sm text-slate-600;
-    display: block;
-    overflow-x: auto;
+    display: table;
+    
   }
   .data-table th {
     @apply bg-slate-50/80 px-4 py-2.5 font-semibold text-slate-500 border-b border-slate-200

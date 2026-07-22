@@ -70,7 +70,12 @@ export const CustomTooltip: React.FC<TooltipRenderProps> = ({
           </button>
           <button
             type="button"
-            onClick={disableOnboarding}
+            onClick={(e) => {
+              disableOnboarding();
+              if (skipProps && skipProps.onClick) {
+                skipProps.onClick(e as any);
+              }
+            }}
             className="text-red-400 hover:text-red-600 text-[10px] font-semibold flex items-center gap-1 transition-colors text-left"
           >
             No volver a mostrar

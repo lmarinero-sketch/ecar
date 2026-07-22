@@ -444,7 +444,7 @@ export type WbsElement = {
   start_date: string | null;
   end_date: string | null;
   duration_days: number;
-  dependency_id: string | null;
+  status?: string;
   assigned_to: string | null;
   phase: 'planificacion' | 'programacion' | 'ejecucion' | 'completado';
   actual_start_date: string | null;
@@ -762,25 +762,7 @@ export type PurchaseRequestItem = {
   created_at: string;
 };
 
-// ========== ORDENES DE TRABAJO INTERNA (OTI) ==========
 
-export type WorkOrder = {
-  id: string;
-  tenant_id: string;
-  project_id: string | null;
-  title: string;
-  description: string | null;
-  assigned_to: string | null;
-  priority: 'baja' | 'normal' | 'alta' | 'urgente';
-  status: 'pendiente' | 'en_ejecucion' | 'completada' | 'cancelada';
-  start_date: string | null;
-  due_date: string | null;
-  completed_at: string | null;
-  notes: string | null;
-  created_by: string | null;
-  created_at: string;
-  project?: Project;
-};
 
 // ========== PARTE DIARIO DE OBRA ==========
 
@@ -1582,7 +1564,7 @@ export const ALL_MODULES = [
   'weekly_report',
   'payments',
   'scope_changes',
-  'work_orders',
+  
   'quality',
 ] as const;
 
@@ -1625,7 +1607,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   weekly_report: 'Reporte Semanal GG',
   payments: 'Control de Pagos',
   scope_changes: 'Adicionales y Alcance',
-  work_orders: 'Órdenes de Trabajo',
+  
   quality: 'Inspecciones de Calidad',
 };
 
@@ -1698,7 +1680,7 @@ export type QualityChecklist = {
   id: string;
   tenant_id: string;
   project_id: string | null;
-  work_order_id: string | null;
+  wbs_element_id: string | null;
   title: string;
   inspector_name: string | null;
   items: QualityChecklistItem[];
@@ -1708,6 +1690,6 @@ export type QualityChecklist = {
   notes: string | null;
   created_at: string;
   project?: { name: string };
-  work_order?: { id: string, code: string };
+  wbs_element?: { id: string, name: string };
 };
 

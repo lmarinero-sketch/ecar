@@ -3,13 +3,13 @@ import {
   ClipboardCheck, Search, Plus, X, Save,
   Trash2
 } from 'lucide-react';
-import { useQualityChecklists, useCreateQualityChecklist, useUpdateQualityChecklist, useProjects, useWorkOrders } from '../hooks/useData';
+import { useQualityChecklists, useCreateQualityChecklist, useUpdateQualityChecklist, useProjects, useWbsElements } from '../hooks/useData';
 import type { QualityChecklist, QualityChecklistItem } from '../lib/types';
 
 export const QualityModule: React.FC = () => {
   const { data: checklists, isLoading } = useQualityChecklists();
   const { data: projects } = useProjects();
-  const { data: workOrders } = useWorkOrders();
+  const { data: wbsElements } = useWbsElements();
   const createQC = useCreateQualityChecklist();
   const updateQC = useUpdateQualityChecklist();
 
@@ -20,7 +20,7 @@ export const QualityModule: React.FC = () => {
 
   const [form, setForm] = useState({
     project_id: '',
-    work_order_id: '',
+    wbs_element_id: '',
     title: '',
     inspector_name: '',
     items: [] as QualityChecklistItem[],
@@ -59,7 +59,7 @@ export const QualityModule: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const payload = { ...form, score, work_order_id: form.work_order_id || null };
+      const payload = { ...form, score, wbs_element_id: form.wbs_element_id || null };
       if (selectedQC) {
         await updateQC.mutateAsync({ id: selectedQC.id, ...payload });
       } else {
@@ -74,14 +74,14 @@ export const QualityModule: React.FC = () => {
 
   const resetForm = () => {
     setSelectedQC(null);
-    setForm({ project_id: '', work_order_id: '', title: '', inspector_name: '', items: [], status: 'draft', notes: '' });
+    setForm({ project_id: '', wbs_element_id: '', title: '', inspector_name: '', items: [], status: 'draft', notes: '' });
   };
 
   const openEdit = (qc: QualityChecklist) => {
     setSelectedQC(qc);
     setForm({
       project_id: qc.project_id || '',
-      work_order_id: qc.work_order_id || '',
+      wbs_element_id: qc.wbs_element_id || '',
       title: qc.title,
       inspector_name: qc.inspector_name || '',
       items: qc.items || [],
@@ -168,12 +168,12 @@ export const QualityModule: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">Orden de Trabajo (Opcional)</label>
-                  <select value={form.work_order_id} onChange={e => setForm({ ...form, work_order_id: e.target.value })}
+                  <label className="block text-xs font-bold text-gray-600 mb-1">Tarea WBS (Opcional)</label>
+                  <select value={form.wbs_element_id} onChange={e => setForm({ ...form, wbs_element_id: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">Sin OT vinculada</option>
-                    {(workOrders || []).filter(w => !form.project_id || w.project_id === form.project_id).map(w => (
-                      <option key={w.id} value={w.id}>{w.title}</option>
+                    <option value="">Sin Tarea vinculada</option>
+                    {(wbsElements || []).filter(w => !form.project_id || w.project_id === form.project_id).map(w => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
                     ))}
                   </select>
                 </div>
