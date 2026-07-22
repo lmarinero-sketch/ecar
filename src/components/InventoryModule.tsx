@@ -574,12 +574,21 @@ export const InventoryModule: React.FC = () => {
                     <WebGLWarehouseGrid />
                     <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito interactivo</div>
                     <div className="relative z-10 mt-6 w-full h-[600px]">
-                      {shelfList.map(shelf => (
+                      {shelfList.map((shelf, idx) => {
+                        const width = shelf.grid_width || 200;
+                        const height = shelf.grid_height || 120;
+                        // Stagger default positions so they don't stack perfectly if uninitialized
+                        const x = shelf.grid_col ?? (50 + (idx * 30));
+                        const y = shelf.grid_row ?? (50 + (idx * 30));
+
+                        return (
                         <Rnd
                           key={shelf.id}
                           bounds="parent"
-                          position={{ x: shelf.grid_col, y: shelf.grid_row }}
-                          size={{ width: shelf.grid_width, height: shelf.grid_height }}
+                          position={{ x, y }}
+                          size={{ width, height }}
+                          minWidth={150}
+                          minHeight={100}
                           onDragStop={(_e: any, d: any) => {
                             if (d.x !== shelf.grid_col || d.y !== shelf.grid_row) {
                               updateShelf.mutate({ id: shelf.id, grid_col: d.x, grid_row: d.y });
@@ -636,7 +645,8 @@ export const InventoryModule: React.FC = () => {
                             </div>
                           </div>
                         </Rnd>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
