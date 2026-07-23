@@ -533,21 +533,10 @@ export function useCreateCheque() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (cheque: Partial<Cheque>) => {
-      // Prevent duplicate: check if same cheque_number + bank_name exists
-      if (cheque.cheque_number && cheque.bank_name) {
-        const { data: existing } = await supabase
-          .from('cheques')
-          .select('id')
-          .eq('cheque_number', cheque.cheque_number)
-          .eq('bank_name', cheque.bank_name)
-          .limit(1);
-        if (existing && existing.length > 0) {
-          throw new Error(`Ya existe un cheque Nro ${cheque.cheque_number} del banco ${cheque.bank_name}`);
-        }
-      }
       const { error } = await supabase.from('cheques').insert({ ...cheque, tenant_id: ECAR_TENANT_ID });
       if (error) throw error;
     },
+
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cheques'] }),
   });
 }

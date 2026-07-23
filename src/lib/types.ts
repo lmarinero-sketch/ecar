@@ -277,6 +277,7 @@ export type Cheque = {
   type: 'physical' | 'echeq';
   direction: 'payable' | 'receivable';
   beneficiary_or_issuer: string | null;
+  issuer_company?: string | null;
   amount_ars: number;
   issue_date: string | null;
   due_date: string | null;

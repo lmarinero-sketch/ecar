@@ -58,7 +58,7 @@ export const FinancesModule: React.FC = () => {
   const [form, setForm] = useState({
     cheque_number: '', bank_name: '', type: 'physical' as 'physical' | 'echeq',
     direction: 'receivable' as 'receivable' | 'payable', beneficiary_or_issuer: '',
-    amount_ars: 0, due_date: '', issue_date: '', scan_url: '',
+    issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '',
   });
 
   const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
@@ -148,6 +148,7 @@ export const FinancesModule: React.FC = () => {
       type: data.type === 'echeq' ? 'echeq' : 'physical',
       direction: data.direction || 'receivable',
       beneficiary_or_issuer: data.direction === 'payable' ? (data.beneficiary || data.issuer_name || '') : (data.issuer_name || ''),
+      issuer_company: 'ECAR SAS',
       amount_ars: data.amount || 0,
       due_date: data.due_date || data.issue_date || '',
       issue_date: data.issue_date || '',
@@ -158,8 +159,20 @@ export const FinancesModule: React.FC = () => {
 
   const handleCreate = async () => {
     try {
+      const isDuplicate = cheques.find(c => 
+        c.cheque_number === form.cheque_number && 
+        c.bank_name === form.bank_name && 
+        c.due_date === form.due_date
+      );
+      if (isDuplicate) {
+        if (!window.confirm(`Posible cheque duplicado detectado (Nro ${form.cheque_number}, Banco ${form.bank_name}, Vto ${form.due_date}). ¿Desea cargarlo de todas formas?`)) {
+          return;
+        }
+      }
+
       const result = await createCheque.mutateAsync({ 
         ...form, 
+        issuer_company: form.direction === 'payable' ? form.issuer_company : null,
         issue_date: form.issue_date || null,
         due_date: form.due_date || null,
         scan_url: scanUrl || undefined 
@@ -184,7 +197,7 @@ export const FinancesModule: React.FC = () => {
       setMode('idle');
       setOcrData(null);
       setScanUrl('');
-      setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+      setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message || 'Error al registrar el cheque');
     }
@@ -198,6 +211,7 @@ export const FinancesModule: React.FC = () => {
       type: ch.type,
       direction: ch.direction,
       beneficiary_or_issuer: ch.beneficiary_or_issuer || '',
+      issuer_company: ch.issuer_company || 'ECAR SAS',
       amount_ars: ch.amount_ars,
       due_date: ch.due_date || '',
       issue_date: ch.issue_date || '',
@@ -210,7 +224,7 @@ export const FinancesModule: React.FC = () => {
     try {
       // Calculate changes for audit
       const changes: Record<string, { old: unknown; new: unknown }> = {};
-      const fields = ['cheque_number','bank_name','type','direction','beneficiary_or_issuer','amount_ars','due_date','issue_date','status'] as const;
+      const fields = ['cheque_number','bank_name','type','direction','beneficiary_or_issuer','issuer_company','amount_ars','due_date','issue_date','status'] as const;
       for (const f of fields) {
         const oldVal = (editingCheque as any)[f];
         const newVal = (editForm as any)[f];
@@ -221,6 +235,7 @@ export const FinancesModule: React.FC = () => {
       await updateCheque.mutateAsync({ 
         id: editingCheque.id, 
         ...editForm,
+        issuer_company: editForm.direction === 'payable' ? editForm.issuer_company : null,
         issue_date: editForm.issue_date || null,
         due_date: editForm.due_date || null
       });
@@ -287,7 +302,7 @@ export const FinancesModule: React.FC = () => {
     setMode('idle');
     setOcrData(null);
     setScanUrl('');
-    setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+    setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
   };
 
   const statusColor: Record<string, string> = {
@@ -379,7 +394,11 @@ export const FinancesModule: React.FC = () => {
                           {isPagar ? '↑ Pagar' : '↓ Cobrar'}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold truncate">{ch.beneficiary_or_issuer || 'Sin beneficiario'}</p>
+                          <p className="text-sm font-bold truncate">
+                            {isPagar 
+                              ? (ch.issuer_company ? `${ch.beneficiary_or_issuer || 'Sin beneficiario'} (${ch.issuer_company})` : ch.beneficiary_or_issuer || 'Sin beneficiario')
+                              : ch.beneficiary_or_issuer || 'Sin beneficiario'}
+                          </p>
                           <p className="text-xs text-white/60">#{ch.cheque_number} · {ch.bank_name} · Vto: {new Date(dueDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' })}</p>
                         </div>
                       </div>
@@ -511,6 +530,15 @@ export const FinancesModule: React.FC = () => {
                     <label className="text-xs font-bold text-gray-500">Banco</label>
                     <input value={form.bank_name} onChange={e => setForm({ ...form, bank_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
                   </div>
+                  {form.direction === 'payable' && (
+                    <div className="col-span-2">
+                      <label className="text-xs font-bold text-gray-500">Razón Social Emisora</label>
+                      <select value={form.issuer_company} onChange={e => setForm({ ...form, issuer_company: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="ECAR SAS">ECAR SAS</option>
+                        <option value="CARLOS ADOLFO REGALADO">CARLOS ADOLFO REGALADO</option>
+                      </select>
+                    </div>
+                  )}
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-gray-500">
                       {form.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'} <span className="text-gray-300 font-normal">(opcional)</span>
@@ -615,7 +643,16 @@ export const FinancesModule: React.FC = () => {
                             {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{ch.beneficiary_or_issuer || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {ch.direction === 'payable' ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">{ch.beneficiary_or_issuer || '—'}</span>
+                              {ch.issuer_company && <span className="text-xs text-gray-400">Emisor: {ch.issuer_company}</span>}
+                            </div>
+                          ) : (
+                            ch.beneficiary_or_issuer || '—'
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
                         <td className="px-4 py-3 text-xs">
                           {ch.due_date ? (
@@ -936,6 +973,15 @@ export const FinancesModule: React.FC = () => {
                 <label className="text-xs font-bold text-gray-500">Banco</label>
                 <input value={editForm.bank_name} onChange={e => setEditForm({ ...editForm, bank_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
               </div>
+              {editForm.direction === 'payable' && (
+                <div className="col-span-2">
+                  <label className="text-xs font-bold text-gray-500">Razón Social Emisora</label>
+                  <select value={editForm.issuer_company} onChange={e => setEditForm({ ...editForm, issuer_company: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                    <option value="ECAR SAS">ECAR SAS</option>
+                    <option value="CARLOS ADOLFO REGALADO">CARLOS ADOLFO REGALADO</option>
+                  </select>
+                </div>
+              )}
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500">{editForm.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'} <span className="text-gray-300 font-normal">(opcional)</span></label>
                 <input value={editForm.beneficiary_or_issuer} onChange={e => setEditForm({ ...editForm, beneficiary_or_issuer: e.target.value })} placeholder="Podés dejarlo vacío" className="w-full px-3 py-2 border rounded-lg text-sm" />
