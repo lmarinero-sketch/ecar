@@ -290,6 +290,7 @@ export const PurchasesModule: React.FC = () => {
   const [periodoHasta, setPeriodoHasta] = useState(lastDay.toISOString().split('T')[0]);
   const [dateFilterMode, setDateFilterMode] = useState<'current' | 'last_month' | 'last_3_months' | 'custom'>('current');
 
+
   const applyQuickFilter = (mode: 'current' | 'last_month' | 'last_3_months' | 'custom') => {
     setDateFilterMode(mode);
     const today = new Date();
@@ -434,7 +435,27 @@ export const PurchasesModule: React.FC = () => {
 
   const filteredInvoices = invoices.filter((i: any) => {
     if (!i.issue_date) return false;
-    return i.issue_date >= periodoDesde && i.issue_date <= periodoHasta;
+    const inDateRange = i.issue_date >= periodoDesde && i.issue_date <= periodoHasta;
+    if (!inDateRange) return false;
+    
+    if (searchProvider.trim() !== '') {
+      const search = searchProvider.toLowerCase().trim();
+      const ocr = i.ocr_raw_data || {};
+      const fieldsToSearch = [
+        ocr.proveedor_cliente,
+        ocr.emisor,
+        ocr.razon_social_emisor,
+        ocr.receptor,
+        ocr.razon_social_receptor,
+        i.supplier?.business_name,
+        ocr.nombre_fantasia,
+      ].filter(Boolean).map((s: string) => s.toLowerCase());
+      
+      const matchesSearch = fieldsToSearch.some(f => f.includes(search));
+      if (!matchesSearch) return false;
+    }
+    
+    return true;
   });
 
   const compras = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'compra');
@@ -621,7 +642,17 @@ export const PurchasesModule: React.FC = () => {
             <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'custom' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500'}`}>Personalizado</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input 
+              type="text" 
+              placeholder="Buscar proveedor..." 
+              value={searchProvider} 
+              onChange={e => setSearchProvider(e.target.value)} 
+              className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-48 transition-all shadow-sm"
+            />
+          </div>
           <div className="flex items-center gap-2 text-xs">
             <label className="text-gray-500 font-medium">Desde:</label>
             <input type="date" value={periodoDesde} onChange={e => { setPeriodoDesde(e.target.value); setDateFilterMode('custom'); }} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
