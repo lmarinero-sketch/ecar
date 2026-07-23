@@ -286,6 +286,8 @@ export type Cheque = {
   linked_payment_id: string | null;
   scan_url: string | null;
   created_at: string;
+  linked_invoice_id?: string | null;
+  linked_purchase_invoice_id?: string | null;
 };
 
 // ========== RRHH EXPANSION ==========

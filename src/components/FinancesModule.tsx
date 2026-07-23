@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil, CheckCircle2 } from 'lucide-react';
-import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts } from '../hooks/useData';
+import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts, useInvoices, usePurchaseInvoices } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { InvoiceSearchSelector } from './InvoiceSearchSelector';
 import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
@@ -23,6 +24,9 @@ export const FinancesModule: React.FC = () => {
   const updateCheque = useUpdateCheque();
   const deleteCheque = useDeleteCheque();
   const auditLog = useCreateChequeAuditLog();
+
+  const { data: invoices = [] } = useInvoices();
+  const { data: purchaseInvoices = [] } = usePurchaseInvoices();
 
   // Edit/Delete state
   const [editingCheque, setEditingCheque] = useState<Cheque | null>(null);
@@ -59,6 +63,8 @@ export const FinancesModule: React.FC = () => {
     cheque_number: '', bank_name: '', type: 'physical' as 'physical' | 'echeq',
     direction: 'receivable' as 'receivable' | 'payable', beneficiary_or_issuer: '',
     issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '',
+    linked_invoice_id: null as string | null,
+    linked_purchase_invoice_id: null as string | null,
   });
 
   const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
@@ -153,6 +159,8 @@ export const FinancesModule: React.FC = () => {
       due_date: data.due_date || data.issue_date || '',
       issue_date: data.issue_date || '',
       scan_url: url,
+      linked_invoice_id: null,
+      linked_purchase_invoice_id: null,
     });
     setMode('form');
   };
@@ -175,7 +183,9 @@ export const FinancesModule: React.FC = () => {
         issuer_company: form.direction === 'payable' ? form.issuer_company : null,
         issue_date: form.issue_date || null,
         due_date: form.due_date || null,
-        scan_url: scanUrl || undefined 
+        scan_url: scanUrl || undefined,
+        linked_invoice_id: form.direction === 'receivable' ? form.linked_invoice_id : null,
+        linked_purchase_invoice_id: form.direction === 'payable' ? form.linked_purchase_invoice_id : null
       } as any);
       // Audit: created
       auditLog.mutate({
@@ -197,7 +207,7 @@ export const FinancesModule: React.FC = () => {
       setMode('idle');
       setOcrData(null);
       setScanUrl('');
-      setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+      setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '', linked_invoice_id: null, linked_purchase_invoice_id: null });
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message || 'Error al registrar el cheque');
     }
@@ -216,6 +226,8 @@ export const FinancesModule: React.FC = () => {
       due_date: ch.due_date || '',
       issue_date: ch.issue_date || '',
       status: ch.status,
+      linked_invoice_id: ch.linked_invoice_id || null,
+      linked_purchase_invoice_id: ch.linked_purchase_invoice_id || null,
     });
   };
 
@@ -224,7 +236,7 @@ export const FinancesModule: React.FC = () => {
     try {
       // Calculate changes for audit
       const changes: Record<string, { old: unknown; new: unknown }> = {};
-      const fields = ['cheque_number','bank_name','type','direction','beneficiary_or_issuer','issuer_company','amount_ars','due_date','issue_date','status'] as const;
+      const fields = ['cheque_number','bank_name','type','direction','beneficiary_or_issuer','issuer_company','amount_ars','due_date','issue_date','status','linked_invoice_id','linked_purchase_invoice_id'] as const;
       for (const f of fields) {
         const oldVal = (editingCheque as any)[f];
         const newVal = (editForm as any)[f];
@@ -237,7 +249,9 @@ export const FinancesModule: React.FC = () => {
         ...editForm,
         issuer_company: editForm.direction === 'payable' ? editForm.issuer_company : null,
         issue_date: editForm.issue_date || null,
-        due_date: editForm.due_date || null
+        due_date: editForm.due_date || null,
+        linked_invoice_id: editForm.direction === 'receivable' ? editForm.linked_invoice_id : null,
+        linked_purchase_invoice_id: editForm.direction === 'payable' ? editForm.linked_purchase_invoice_id : null
       });
       // Audit: updated
       const statusChanged = Object.keys(changes).includes('status');
@@ -302,7 +316,7 @@ export const FinancesModule: React.FC = () => {
     setMode('idle');
     setOcrData(null);
     setScanUrl('');
-    setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '' });
+    setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '', linked_invoice_id: null, linked_purchase_invoice_id: null });
   };
 
   const statusColor: Record<string, string> = {
@@ -546,6 +560,23 @@ export const FinancesModule: React.FC = () => {
                     </label>
                     <input value={form.beneficiary_or_issuer} onChange={e => setForm({ ...form, beneficiary_or_issuer: e.target.value })} placeholder="Podés dejarlo vacío" className="w-full px-3 py-2 border rounded-lg text-sm" />
                   </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-gray-500">
+                      Asociar a Factura (Opcional)
+                    </label>
+                    <InvoiceSearchSelector
+                      type={form.direction === 'payable' ? 'purchase_invoice' : 'invoice'}
+                      invoices={form.direction === 'payable' ? purchaseInvoices : invoices as any}
+                      value={form.direction === 'payable' ? form.linked_purchase_invoice_id : form.linked_invoice_id}
+                      onChange={(id) => {
+                        if (form.direction === 'payable') {
+                          setForm({ ...form, linked_purchase_invoice_id: id });
+                        } else {
+                          setForm({ ...form, linked_invoice_id: id });
+                        }
+                      }}
+                    />
+                  </div>
                   <div>
                     <label className="text-xs font-bold text-gray-500">Monto ARS</label>
                     <input type="number" value={form.amount_ars || ''} onChange={e => setForm({ ...form, amount_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono font-bold" />
@@ -649,9 +680,13 @@ export const FinancesModule: React.FC = () => {
                             <div className="flex flex-col">
                               <span className="font-medium text-gray-900">{ch.beneficiary_or_issuer || '—'}</span>
                               {ch.issuer_company && <span className="text-xs text-gray-400">Emisor: {ch.issuer_company}</span>}
+                              {ch.linked_purchase_invoice_id && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded w-max mt-1" title="Factura de Compra asociada">Factura Asoc.</span>}
                             </div>
                           ) : (
-                            ch.beneficiary_or_issuer || '—'
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">{ch.beneficiary_or_issuer || '—'}</span>
+                              {ch.linked_invoice_id && <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded w-max mt-1" title="Factura de Venta asociada">Factura Asoc.</span>}
+                            </div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
@@ -986,6 +1021,21 @@ export const FinancesModule: React.FC = () => {
               <div className="col-span-2">
                 <label className="text-xs font-bold text-gray-500">{editForm.direction === 'receivable' ? 'Emisor / Librador' : 'Beneficiario'} <span className="text-gray-300 font-normal">(opcional)</span></label>
                 <input value={editForm.beneficiary_or_issuer} onChange={e => setEditForm({ ...editForm, beneficiary_or_issuer: e.target.value })} placeholder="Podés dejarlo vacío" className="w-full px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-bold text-gray-500">Asociar a Factura (Opcional)</label>
+                <InvoiceSearchSelector
+                  type={editForm.direction === 'payable' ? 'purchase_invoice' : 'invoice'}
+                  invoices={editForm.direction === 'payable' ? purchaseInvoices : invoices as any}
+                  value={editForm.direction === 'payable' ? editForm.linked_purchase_invoice_id : editForm.linked_invoice_id}
+                  onChange={(id) => {
+                    if (editForm.direction === 'payable') {
+                      setEditForm({ ...editForm, linked_purchase_invoice_id: id });
+                    } else {
+                      setEditForm({ ...editForm, linked_invoice_id: id });
+                    }
+                  }}
+                />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500">Monto ARS</label>
