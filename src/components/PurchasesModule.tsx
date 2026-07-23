@@ -556,7 +556,7 @@ export const PurchasesModule: React.FC = () => {
             <>
               <Upload size={36} className="mx-auto mb-3 text-gray-400" />
               <p className="font-bold text-gray-700">Subir Factura</p>
-              <p className="text-xs text-gray-400 mt-1">PDF o foto (JPG, PNG). La IA detecta si es compra o venta.</p>
+              <p className="text-xs text-gray-400 mt-1">PDF o foto (JPG, PNG). Asegúrate de que la foto sea legible y todos los datos se vean de forma correcta.</p>
             </>
           )}
           <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
