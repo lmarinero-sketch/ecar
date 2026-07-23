@@ -337,7 +337,8 @@ export const FinancesModule: React.FC = () => {
           const dateStr = ch.due_date || ch.issue_date;
           if (!dateStr) return false;
           const d = new Date(dateStr + 'T12:00:00');
-          return d >= startOfWeek && d <= endOfWeek;
+          // Incluir los que vencen esta semana y los que YA vencieron (d <= endOfWeek)
+          return d <= endOfWeek;
         });
 
         const toPay = dueThisWeek.filter(c => c.direction === 'payable').reduce((s, c) => s + c.amount_ars, 0);
@@ -360,8 +361,8 @@ export const FinancesModule: React.FC = () => {
                     🔔
                   </div>
                   <div>
-                    <h4 className="font-black text-lg tracking-tight">¡{dueThisWeek.length} cheque{dueThisWeek.length > 1 ? 's' : ''} vence{dueThisWeek.length > 1 ? 'n' : ''} esta semana!</h4>
-                    <p className="text-white/80 text-xs">Semana del {startOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} al {endOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                    <h4 className="font-black text-lg tracking-tight">¡{dueThisWeek.length} cheque{dueThisWeek.length > 1 ? 's' : ''} vencido{dueThisWeek.length > 1 ? 's' : ''} o por vencer!</h4>
+                    <p className="text-white/80 text-xs">Incluye vencidos y hasta el {endOfWeek.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-4 sm:gap-6 justify-end">
