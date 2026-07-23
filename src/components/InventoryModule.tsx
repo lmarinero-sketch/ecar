@@ -335,10 +335,89 @@ export const InventoryModule: React.FC = () => {
 
       {/* Tools tab */}
       {tab === 'tools' && (
-        <div className="light-card overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2"><Wrench size={16} /> Asignaciones Activas</h3>
+        <div className="space-y-6">
+          <div className="light-card overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center gap-3">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Wrench size={16} /> Catálogo de Herramientas</h3>
+              <div className="flex-1 min-w-[200px] relative lg:ml-auto lg:max-w-xs">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar herramienta..." className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
+              </div>
+              <button onClick={() => setShowScanner(true)} className="btn-secondary">
+                <Barcode size={16} /> Escanear
+              </button>
+              <button onClick={() => { setShowNewItem(true); setNewItem({ ...newItem, category: 'herramienta' }); }} className="btn-primary">
+                <Plus size={16} /> Nueva Herramienta
+              </button>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Ítem</th>
+                  <th>Categoría</th>
+                  <th>Ubicación</th>
+                  <th className="text-center">Stock</th>
+                  <th className="text-center">Mínimo</th>
+                  <th className="text-right">Costo Unit.</th>
+                  <th className="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(item => (
+                  <tr key={item.id} className={item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}>
+                    <td className="font-medium text-gray-800">{item.name}</td>
+                    <td>
+                      <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
+                        {item.category}
+                      </span>
+                    </td>
+                    <td>
+                      {item.shelf ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
+                          <span className="text-xs font-bold text-gray-700">{(item.shelf as any)?.code}</span>
+                          {item.shelf_position && <span className="text-[10px] font-mono text-gray-400">({item.shelf_position})</span>}
+                        </div>
+                      ) : (
+                        <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
+                          <MapPin size={12} /> Asignar
+                        </button>
+                      )}
+                    </td>
+                    <td className={`text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                      {item.current_stock} {item.unit}
+                    </td>
+                    <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
+                    <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
+                        {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
+                        {item.shelf ? (
+                          <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
+                        ) : null}
+                        <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
+                        {item.current_stock <= item.min_stock && item.min_stock > 0 && (
+                          <button
+                            onClick={() => openRepoModal([{ name: item.name, quantity: item.current_stock, unit: item.unit, unit_cost: item.unit_cost, id: item.id, current_stock: item.current_stock, min_stock: item.min_stock }])}
+                            className="p-1.5 hover:bg-red-100 rounded-lg" title="Solicitar reposición a Compras"
+                          >
+                            <ShoppingBag size={14} className="text-red-600" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && <div className="text-center py-12 text-gray-400"><Wrench size={48} className="mx-auto mb-3 opacity-30" /><p>No hay herramientas registradas</p></div>}
           </div>
+
+          <div className="light-card overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={16} /> Asignaciones Activas</h3>
+            </div>
           {activeAssignments.length > 0 ? (
             <table className="data-table">
               <thead>
@@ -376,6 +455,7 @@ export const InventoryModule: React.FC = () => {
           ) : (
             <div className="text-center py-12 text-gray-400"><Wrench size={48} className="mx-auto mb-3 opacity-30" /><p>No hay herramientas asignadas</p></div>
           )}
+        </div>
         </div>
       )}
 
