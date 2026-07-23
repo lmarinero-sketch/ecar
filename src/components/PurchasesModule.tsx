@@ -449,6 +449,10 @@ export const PurchasesModule: React.FC = () => {
         ocr.razon_social_receptor,
         i.supplier?.business_name,
         ocr.nombre_fantasia,
+        i.invoice_number,
+        ocr.numero_factura,
+        `${i.point_of_sale}-${i.invoice_number}`,
+        `${ocr.punto_venta}-${ocr.numero_factura}`
       ].filter(Boolean).map((s: string) => s.toLowerCase());
       
       const matchesSearch = fieldsToSearch.some(f => f.includes(search));
@@ -557,7 +561,35 @@ export const PurchasesModule: React.FC = () => {
           )}
           <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
           </label>
-          <p className="text-xs text-gray-400 text-center">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-ecar-blue' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-gray-400">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-ecar-blue' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
+            <button 
+              onClick={() => {
+                if (!selectedLegalEntityId) {
+                  useModalStore.getState().showAlert('Atención', 'Debe seleccionar una Razón Social primero.');
+                  return;
+                }
+                setEditingInvoice({ id: 'new', status: 'validated', legal_entity_id: selectedLegalEntityId });
+                setEditForm({
+                  supplier_name: '',
+                  supplier_cuit: '',
+                  invoice_type: 'FA',
+                  point_of_sale: '0001',
+                  invoice_number: '',
+                  issue_date: new Date().toISOString().split('T')[0],
+                  net_amount_ars: 0,
+                  iva_21_ars: 0,
+                  total_ars: 0,
+                  status: 'validated',
+                  tipo_operacion: uploadTipo,
+                  related_invoice_id: ''
+                });
+              }}
+              className="text-xs font-bold text-ecar-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <Plus size={14} /> Carga Manual
+            </button>
+          </div>
         </div>
 
         <div className="light-card p-5">
@@ -647,7 +679,7 @@ export const PurchasesModule: React.FC = () => {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input 
               type="text" 
-              placeholder="Buscar proveedor..." 
+              placeholder="Buscar proveedor o n° comprobante..." 
               value={searchProvider} 
               onChange={e => setSearchProvider(e.target.value)} 
               className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-48 transition-all shadow-sm"
@@ -1222,11 +1254,30 @@ export const PurchasesModule: React.FC = () => {
                   }
 
                   const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
-                  const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
-                  if (error) throw error;
                   
-                  if (editingInvoice.supplier_id) {
-                    await supabase.from('suppliers').update({ name: editForm.supplier_name, cuit: editForm.supplier_cuit }).eq('id', editingInvoice.supplier_id);
+                  if (editingInvoice.id === 'new') {
+                    const { error } = await supabase.from('purchase_invoices').insert({
+                      tenant_id: ECAR_TENANT_ID,
+                      legal_entity_id: editingInvoice.legal_entity_id,
+                      invoice_type: editForm.invoice_type,
+                      point_of_sale: editForm.point_of_sale,
+                      invoice_number: editForm.invoice_number,
+                      issue_date: editForm.issue_date,
+                      net_amount_ars: editForm.net_amount_ars,
+                      iva_21_ars: editForm.iva_21_ars,
+                      total_ars: editForm.total_ars,
+                      status: editForm.status,
+                      ocr_raw_data: ocr,
+                      related_invoice_id: editForm.related_invoice_id || null
+                    });
+                    if (error) throw error;
+                  } else {
+                    const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
+                    if (error) throw error;
+                    
+                    if (editingInvoice.supplier_id) {
+                      await supabase.from('suppliers').update({ name: editForm.supplier_name, cuit: editForm.supplier_cuit }).eq('id', editingInvoice.supplier_id);
+                    }
                   }
                   
                   setEditingInvoice(null);
