@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil, CheckCircle2 } from 'lucide-react';
+import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil, CheckCircle2, Search } from 'lucide-react';
 import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts, useInvoices, usePurchaseInvoices } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { InvoiceSearchSelector } from './InvoiceSearchSelector';
@@ -38,6 +38,7 @@ export const FinancesModule: React.FC = () => {
   const [filterDate, setFilterDate] = useState<string>('');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
+  const [searchCheque, setSearchCheque] = useState<string>('');
   
   const { data: paymentRecords = [], isLoading: isLoadingPayments } = usePaymentRecords();
   const createPaymentRecord = useCreatePaymentRecord();
@@ -109,6 +110,20 @@ export const FinancesModule: React.FC = () => {
 
   const filteredCheques = React.useMemo(() => {
     return cheques.filter(ch => {
+      if (searchCheque.trim() !== '') {
+        const search = searchCheque.toLowerCase().trim();
+        const fieldsToSearch = [
+          ch.cheque_number,
+          ch.bank_name,
+          ch.beneficiary_or_issuer,
+          ch.issuer_company,
+          ch.amount_ars?.toString(),
+        ].filter(Boolean).map(s => String(s).toLowerCase());
+        
+        const matchesSearch = fieldsToSearch.some(f => f.includes(search));
+        if (!matchesSearch) return false;
+      }
+
       if (!filterDate) return true;
       const dateStr = ch.due_date || ch.issue_date;
       if (!dateStr) return false;
@@ -141,7 +156,7 @@ export const FinancesModule: React.FC = () => {
       }
       return true;
     });
-  }, [cheques, filterDate, customStart, customEnd]);
+  }, [cheques, filterDate, customStart, customEnd, searchCheque]);
 
   const [ocrData, setOcrData] = useState<any | null>(null);
 
@@ -610,6 +625,16 @@ export const FinancesModule: React.FC = () => {
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h3 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h3>
               <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
+                <div className="relative mr-2">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar cheque, banco o monto..." 
+                    value={searchCheque} 
+                    onChange={e => setSearchCheque(e.target.value)} 
+                    className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-48 sm:w-64 transition-all shadow-sm"
+                  />
+                </div>
                 <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm overflow-x-auto max-w-full no-scrollbar">
                   {[
                     { id: '', label: 'Todos' },
