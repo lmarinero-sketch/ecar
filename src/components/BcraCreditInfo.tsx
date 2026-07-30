@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning, BrainCircuit, Landmark, CheckCircle, FileText } from 'lucide-react';
+import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning, BrainCircuit, Landmark, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import jsPDF from 'jspdf';
