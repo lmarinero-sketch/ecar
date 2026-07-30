@@ -3,8 +3,10 @@ import {
   HardHat, Search, Download, Users, Plus,
   ChevronDown, ChevronUp, Edit2, BarChart3,
   TableProperties, TrendingUp, Crown, Banknote,
-  Check, Trash2, X, Calendar, Eye
+  Check, Trash2, X, Calendar, Eye, FileText
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   useEmployees, useUpdateEmployee, useAllWorkerPaymentItems,
   useWeeklyPayments, useCreateWeeklyPayment,
@@ -416,42 +418,140 @@ const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = (
     }
   };
 
-  // PDF export
-  const exportPDF = () => {
-    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pagos a Trabajadores</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: Arial, sans-serif; font-size: 11px; padding: 30px; }
-      h1 { text-align: center; font-size: 16px; margin-bottom: 4px; }
-      .sub { text-align: center; font-size: 11px; color: #666; margin-bottom: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-      th, td { border: 1px solid #333; padding: 5px 8px; }
-      th { background: #1a365d; color: white; text-align: center; font-size: 10px; text-transform: uppercase; }
-      td { font-size: 10px; }
-      .right { text-align: right; } .center { text-align: center; } .bold { font-weight: bold; }
-      .total-row td { background: #e2e8f0; font-weight: bold; }
-      .paid { color: #16a34a; } .pending { color: #dc2626; }
-      @media print { body { padding: 15px; } }
-    </style></head><body>
-    <h1>PAGOS A TRABAJADORES</h1>
-    <p class="sub">Detalle de pagos registrados</p>
-    <table><thead><tr>
-      <th>N°</th><th>Trabajador</th><th>Alias / CBU</th><th>Monto</th><th>Estado</th><th>Observación</th>
-    </tr></thead><tbody>`;
-    workerItems.forEach((item: any, i: number) => {
-      html += `<tr>
-        <td class="center">${i + 1}</td>
-        <td class="bold">${(item.titular_cuenta || '').toUpperCase()}</td>
-        <td class="center">${item.alias_cbu || ''}</td>
-        <td class="right bold">${formatARS(Number(item.monto || 0))}</td>
-        <td class="center ${item.pagado ? 'paid' : 'pending'}">${item.pagado ? '✓ Pagado' : 'Pendiente'}</td>
-        <td>${item.observaciones || ''}</td>
-      </tr>`;
+  // Institutional ECAR PDF export
+  const exportPDF = async () => {
+    const doc = new jsPDF('p', 'pt', 'a4');
+
+    // Logo loading
+    try {
+      const response = await fetch('/logoECAR.png');
+      if (response.ok) {
+        const blob = await response.blob();
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        doc.addImage(base64, 'PNG', 40, 30, 110, 38);
+      }
+    } catch (e) {
+      console.warn("Logo fallback", e);
+    }
+
+    // Title & Header Text
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#0B2240');
+    doc.setFontSize(14);
+    doc.text('ORDEN DE PAGO Y TRANSFERENCIAS', 220, 45);
+    doc.setFontSize(11);
+    doc.text('NÓMINA SEMANAL DE TRABAJADORES', 220, 60);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#666666');
+    doc.setFontSize(9);
+    doc.text(`Cód. Documento: ORD-PAGO-WRK-${paymentId.slice(0, 8).toUpperCase()}`, 220, 75);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-AR')}`, 220, 87);
+    doc.text(`Destinatario: Gustavo Regalado (Tesorería / Aprobación)`, 220, 99);
+
+    // Decorative Horizontal Bar (ECAR Red & Blue)
+    const barY = 112;
+    doc.setFillColor('#D22027');
+    doc.rect(40, barY, 140, 5, 'F');
+    doc.setFillColor('#0B2240');
+    doc.rect(180, barY, 375, 5, 'F');
+
+    // Resumen / Summary Box
+    doc.setFillColor('#F8FAFC');
+    doc.setDrawColor('#CBD5E1');
+    doc.roundedRect(40, 126, 515, 45, 5, 5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor('#475569');
+    doc.text('MONTO TOTAL A TRANSFERIR', 55, 142);
+    doc.text('CANTIDAD OPERARIOS', 240, 142);
+    doc.text('ESTADO NÓMINA', 410, 142);
+
+    doc.setFontSize(12);
+    doc.setTextColor('#0B2240');
+    doc.text(formatARS(total), 55, 160);
+
+    doc.setTextColor('#1E293B');
+    doc.text(`${workerItems.length} Trabajadores`, 240, 160);
+
+    const isAllPaid = pagados === workerItems.length && workerItems.length > 0;
+    doc.setTextColor(isAllPaid ? '#16A34A' : '#D97706');
+    doc.text(isAllPaid ? 'COMPLETADO' : `${pagados}/${workerItems.length} PAGADOS`, 410, 160);
+
+    // Table Data
+    const tableData = workerItems.map((item: any, idx: number) => [
+      (idx + 1).toString(),
+      (item.titular_cuenta || 'SIN NOMBRE').toUpperCase(),
+      item.alias_cbu || 'SIN ALIAS/CBU',
+      formatARS(Number(item.monto || 0)),
+      item.pagado ? 'PAGADO' : 'PENDIENTE',
+      item.observaciones || '-'
+    ]);
+
+    autoTable(doc, {
+      startY: 185,
+      head: [['N°', 'Trabajador / Operario', 'Alias / CBU Bancario', 'Monto a Transferir', 'Estado', 'Observaciones']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [11, 34, 64],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [30, 41, 59]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 25 },
+        1: { fontStyle: 'bold', cellWidth: 140 },
+        2: { cellWidth: 135 },
+        3: { halign: 'right', fontStyle: 'bold', cellWidth: 95 },
+        4: { halign: 'center', cellWidth: 60 },
+        5: { cellWidth: 60 }
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 4) {
+          if (data.cell.raw === 'PAGADO') {
+            data.cell.styles.textColor = [22, 163, 74];
+            data.cell.styles.fontStyle = 'bold';
+          } else {
+            data.cell.styles.textColor = [220, 38, 38];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
     });
-    html += `<tr class="total-row"><td colspan="3">TOTAL</td><td class="right">${formatARS(total)}</td><td class="center">${pagados}/${workerItems.length}</td><td></td></tr></tbody></table>
-    <p style="text-align:center;margin-top:30px;font-size:9px;color:#999;">ECAR Construcciones · Sistema de Gestión</p></body></html>`;
-    const printWin = window.open('', '_blank');
-    if (printWin) { printWin.document.write(html); printWin.document.close(); setTimeout(() => printWin.print(), 500); }
+
+    const finalY = (doc as any).lastAutoTable?.finalY || 350;
+
+    // Signature Area at bottom
+    const signY = Math.max(finalY + 45, 680);
+    doc.setLineWidth(0.5);
+    doc.setDrawColor('#94A3B8');
+
+    doc.line(70, signY, 220, signY);
+    doc.line(335, signY, 485, signY);
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#334155');
+    doc.text('Elaboró / Administración', 145, signY + 12, { align: 'center' });
+    doc.text('Aprobó / Gustavo Regalado', 410, signY + 12, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor('#94A3B8');
+    doc.text('ECAR ERP — Sistema de Gestión Institucional · Documento para procesamiento de pagos', 297, 810, { align: 'center' });
+
+    doc.save(`Orden_Pago_Trabajadores_${paymentId.slice(0, 8)}.pdf`);
   };
 
   return (
