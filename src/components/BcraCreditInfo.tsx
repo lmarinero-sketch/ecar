@@ -59,12 +59,16 @@ export const BcraCreditInfo: React.FC = () => {
         throw new Error(funcError.message || 'Error al comunicarse con la Edge Function');
       }
 
+      if (resultData.status === 404) {
+        throw new Error('El CUIT/Cheque ingresado no posee registros en el BCRA (Sin deudas o denuncias).');
+      }
+
       if (resultData.error) {
         throw new Error(resultData.error);
       }
       
-      if (resultData.status === 404 || resultData.status === 400) {
-        throw new Error('No se encontraron registros o los datos enviados son incorrectos.');
+      if (resultData.status === 400) {
+        throw new Error('Los datos enviados son incorrectos (verifique el formato del CUIT).');
       }
 
       setData(resultData.results);

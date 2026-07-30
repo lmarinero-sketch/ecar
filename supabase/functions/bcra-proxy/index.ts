@@ -39,8 +39,12 @@ serve(async (req) => {
     if (!bcraResponse.ok) {
       const errorText = await bcraResponse.text()
       return new Response(
-        JSON.stringify({ error: `BCRA API error: ${bcraResponse.status}`, details: errorText }),
-        { status: bcraResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          error: `BCRA API error: ${bcraResponse.status}`, 
+          details: errorText,
+          status: bcraResponse.status 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -51,9 +55,9 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error.message, status: 500 }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200,
     })
   }
 })
