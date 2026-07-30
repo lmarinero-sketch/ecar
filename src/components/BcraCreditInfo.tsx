@@ -58,13 +58,16 @@ const getSituationLabel = (sit: number) => {
 const mockAfipData = (cuit: string | number) => {
   const cuitStr = String(cuit);
   const isCompany = cuitStr.startsWith('30') || cuitStr.startsWith('33');
+  const lastDigit = parseInt(cuitStr.slice(-1)) || 0;
+  const isRI = isCompany || lastDigit > 4;
+  
   return {
     estado: 'ACTIVO',
     tipo: isCompany ? 'Persona Jurídica' : 'Persona Física',
-    regimen: isCompany ? 'Régimen General' : 'Monotributo',
-    categoria: isCompany ? 'Responsable Inscripto' : 'Categoría C',
-    actividad: isCompany ? 'Venta al por mayor de vehículos' : 'Servicios personales n.c.p.',
-    impuestos: isCompany ? ['IVA', 'Ganancias', 'Empleador'] : ['Monotributo']
+    regimen: isRI ? 'Régimen General' : 'Monotributo',
+    categoria: isCompany ? 'Empresa' : (isRI ? 'Responsable Inscripto' : 'Categoría ' + String.fromCharCode(65 + (lastDigit % 6))),
+    actividad: isCompany ? 'Venta al por mayor de vehículos' : (isRI ? 'Servicios profesionales' : 'Servicios personales n.c.p.'),
+    impuestos: isRI ? ['IVA', 'Ganancias', 'Bienes Personales'] : ['Monotributo']
   };
 };
 
@@ -323,9 +326,12 @@ export const BcraCreditInfo: React.FC = () => {
   }
 
   const chequesSorted = [...cheques].sort((a, b) => {
-    const d1 = new Date(a.fechaRechazo?.split('/').reverse().join('-') || a.fecha || 0).getTime();
-    const d2 = new Date(b.fechaRechazo?.split('/').reverse().join('-') || b.fecha || 0).getTime();
-    return d1 - d2;
+    const parseDate = (dStr: string) => {
+      if (!dStr) return 0;
+      if (dStr.includes('/')) return new Date(dStr.split('/').reverse().join('-')).getTime();
+      return new Date(dStr).getTime();
+    };
+    return parseDate(a.fechaRechazo || a.fecha) - parseDate(b.fechaRechazo || b.fecha);
   });
 
   const chequesByMonth = new Map<string, number>();
@@ -333,9 +339,15 @@ export const BcraCreditInfo: React.FC = () => {
     if (!c.fechaPago) {
       const dateStr = c.fechaRechazo || c.fecha;
       if (dateStr) {
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-          const monthYear = `${parts[2]}/${parts[1]}`;
+        let monthYear = '';
+        if (dateStr.includes('/')) {
+          const parts = dateStr.split('/');
+          if (parts.length === 3) monthYear = `${parts[2]}/${parts[1]}`;
+        } else if (dateStr.includes('-')) {
+          const parts = dateStr.split('-');
+          if (parts.length >= 2) monthYear = `${parts[0]}/${parts[1]}`;
+        }
+        if (monthYear) {
           chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (c.monto || 0));
         }
       }
@@ -385,53 +397,53 @@ export const BcraCreditInfo: React.FC = () => {
       <div className="space-y-6">
         {/* AFIP & AI INSIGHTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border-2 border-indigo-100 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-indigo-50 p-3 border-b border-indigo-100 flex items-center gap-2">
-              <Landmark size={18} className="text-indigo-600" />
-              <h4 className="font-bold text-indigo-900 text-sm uppercase tracking-wider">Padrón AFIP (Constancia)</h4>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+              <Landmark size={18} className="text-white" />
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Padrón AFIP (Constancia)</h4>
             </div>
             <div className="p-5 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Estado</p>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Estado</p>
                 <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
                   <CheckCircle size={14} className="text-green-500" />
                   {afip.estado}
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Tipo de Persona</p>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Tipo de Persona</p>
                 <p className="text-sm font-medium text-gray-900">{afip.tipo}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Régimen y Categoría</p>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Régimen y Categoría</p>
                 <div className="flex gap-2">
-                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">{afip.regimen}</span>
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-200">{afip.categoria}</span>
+                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold border border-slate-200">{afip.regimen}</span>
+                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold border border-slate-200">{afip.categoria}</span>
                 </div>
               </div>
               <div className="col-span-2">
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Actividad Principal</p>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Actividad Principal</p>
                 <p className="text-sm text-gray-700">{afip.actividad}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white border-2 border-purple-100 rounded-xl overflow-hidden shadow-sm flex flex-col">
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 flex items-center gap-2">
-              <BrainCircuit size={18} className="text-white" />
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col transition-all duration-300 hover:shadow-md">
+            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+              <BrainCircuit size={18} className="text-red-500" />
               <h4 className="font-bold text-white text-sm uppercase tracking-wider">AI Insights: Análisis de Crédito</h4>
             </div>
             <div className="p-5 flex flex-col justify-between flex-1 gap-4">
-              <p className="text-sm text-gray-700 leading-relaxed italic border-l-4 border-purple-300 pl-3">
+              <p className="text-sm text-gray-700 leading-relaxed italic border-l-4 border-red-500 pl-3">
                 "{insights.perfil}"
               </p>
-              <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
                 <div>
-                  <p className="text-xs text-gray-500 font-bold uppercase mb-1">Deuda Recomendada (Máx)</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Deuda Recomendada (Máx)</p>
                   <p className="text-lg font-black text-gray-900 font-mono">{insights.capacidadMaxima}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500 font-bold uppercase mb-1">Sugerencia</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Sugerencia</p>
                   <span className={`px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider border ${insights.color}`}>
                     {insights.veredicto}
                   </span>
@@ -441,16 +453,15 @@ export const BcraCreditInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* HEADER SUMMARY */}
-        <div className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
+          <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{nombre}</h2>
-              <p className="text-sm text-gray-600 font-mono mt-1">CUIT: {cuitIdentificacion}</p>
+              <h2 className="text-xl font-bold text-white uppercase tracking-wider">{nombre}</h2>
+              <p className="text-sm text-slate-300 font-mono mt-1 tracking-widest">CUIT: {cuitIdentificacion}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase font-semibold">Último Período (Deuda)</p>
-              <p className="font-mono font-bold text-gray-800">{lastPeriod ? formatPeriod(lastPeriod.periodo) : 'N/A'}</p>
+              <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Último Período (Deuda)</p>
+              <p className="font-mono font-bold text-white tracking-widest">{lastPeriod ? formatPeriod(lastPeriod.periodo) : 'N/A'}</p>
             </div>
           </div>
           
@@ -502,18 +513,18 @@ export const BcraCreditInfo: React.FC = () => {
         {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {historyChartData.length > 0 ? (
-            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Activity size={18} className="text-ecar-blue" />
-                Progresión de Deuda Bancaria
-              </h4>
-              <div className="h-64">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
+              <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
+                <Activity size={18} className="text-white" />
+                <h4 className="font-bold text-white text-sm uppercase tracking-wider">Progresión de Deuda Bancaria</h4>
+              </div>
+              <div className="h-64 p-5">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={historyChartData}>
                     <defs>
                       <linearGradient id="colorMontoBancaria" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#0B2240" stopOpacity={0.5}/>
+                        <stop offset="95%" stopColor="#0B2240" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -527,32 +538,32 @@ export const BcraCreditInfo: React.FC = () => {
                     <RechartsTooltip 
                       formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda Bancaria']}
                       labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Area type="monotone" dataKey="monto" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoBancaria)" />
+                    <Area type="monotone" dataKey="monto" stroke="#0B2240" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoBancaria)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex items-center justify-center text-gray-400">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex items-center justify-center text-slate-400 p-5">
               Sin historial de deuda bancaria
             </div>
           )}
 
           {chequesChartData.length > 0 ? (
-            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FileWarning size={18} className="text-orange-500" />
-                Progresión Cheques Impagos
-              </h4>
-              <div className="h-64">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
+              <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
+                <FileWarning size={18} className="text-red-500" />
+                <h4 className="font-bold text-white text-sm uppercase tracking-wider">Progresión Cheques Impagos</h4>
+              </div>
+              <div className="h-64 p-5">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chequesChartData}>
                     <defs>
                       <linearGradient id="colorMontoCheques" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#D22027" stopOpacity={0.5}/>
+                        <stop offset="95%" stopColor="#D22027" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -566,15 +577,15 @@ export const BcraCreditInfo: React.FC = () => {
                     <RechartsTooltip 
                       formatter={(value: any) => [formatARS(Number(value) || 0), 'Cheques Impagos']}
                       labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Area type="monotone" dataKey="monto" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoCheques)" />
+                    <Area type="monotone" dataKey="monto" stroke="#D22027" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoCheques)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex items-center justify-center text-gray-400 text-center flex-col gap-2">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex items-center justify-center text-slate-400 text-center flex-col gap-2 p-5 h-full">
               <ShieldCheck size={32} className="text-green-500 opacity-50" />
               <span>Sin historial de cheques impagos</span>
             </div>
@@ -583,12 +594,12 @@ export const BcraCreditInfo: React.FC = () => {
 
         {/* BANK DISTRIBUTION CHART */}
         {barChartData.length > 0 && (
-          <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Building2 size={18} className="text-ecar-blue" />
-              Distribución por Entidad Bancaria (Últ. Mes)
-            </h4>
-            <div className="h-64">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
+            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+              <Building2 size={18} className="text-white" />
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Distribución por Entidad Bancaria (Últ. Mes)</h4>
+            </div>
+            <div className="h-64 p-5">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barChartData} layout="vertical" margin={{ left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
@@ -597,8 +608,9 @@ export const BcraCreditInfo: React.FC = () => {
                   <RechartsTooltip 
                     formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda']}
                     cursor={{fill: '#f9fafb'}}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Bar dataKey="monto" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="monto" fill="#0B2240" radius={[0, 4, 4, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
