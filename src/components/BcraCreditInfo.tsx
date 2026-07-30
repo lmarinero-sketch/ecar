@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Search, AlertCircle, Building2, FileText, Activity, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, AlertCircle, Building2, FileText, Activity, AlertTriangle, ShieldCheck, Download, Clock, History } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from '../lib/supabase';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Helpers
 const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
@@ -40,6 +42,67 @@ export const BcraCreditInfo: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const fetchHistory = async () => {
+    try {
+      const { data: h } = await supabase
+        .from('bcra_queries')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (h) setHistory(h);
+    } catch (e) {
+      console.error('Error fetching BCRA history', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const downloadPDF = async () => {
+    const reportElement = document.getElementById('bcra-report-content');
+    if (!reportElement) return;
+
+    setIsGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage('/logoECAR.png', 'PNG', 10, 10, 30, 30);
+      pdf.setFontSize(18);
+      pdf.text('Informe de Verificacion BCRA', 50, 20);
+      pdf.setFontSize(12);
+      pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 50, 28);
+      pdf.text(`Identificador: ${inputValue}`, 50, 34);
+
+      pdf.addImage(imgData, 'PNG', 10, 50, pdfWidth - 20, pdfHeight - 20);
+
+      pdf.save(`Informe_BCRA_${inputValue}.pdf`);
+    } catch (err) {
+      console.error('Error generando PDF', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const loadFromHistory = (h: any) => {
+    setApiType(h.query_type);
+    setInputValue(h.cuit);
+    setData(h.data);
+    setError(null);
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +135,14 @@ export const BcraCreditInfo: React.FC = () => {
       }
 
       setData(resultData.results);
+      
+      // Guardar en historial
+      supabase.from('bcra_queries').insert({
+        cuit: inputValue,
+        query_type: apiType,
+        data: resultData.results
+      }).then(() => fetchHistory());
+
     } catch (err: any) {
       setError(err.message || 'Error al consultar la API del BCRA.');
     } finally {
@@ -323,16 +394,70 @@ export const BcraCreditInfo: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-50/30 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* Search Header */}
-      <div className="p-6 border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Building2 className="text-ecar-blue" size={24} />
-          <h3 className="font-bold text-xl text-gray-900">Informe Integral de Verificación BCRA</h3>
+    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+      {/* Sidebar Historial */}
+      <div className="w-full lg:w-1/4">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-6">
+          <div className="bg-slate-700 p-4 flex items-center gap-2">
+            <History className="text-white" size={18} />
+            <h3 className="font-bold text-white uppercase text-sm tracking-wider">Últimas Consultas</h3>
+          </div>
+          <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+            {history.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">No hay consultas previas</div>
+            ) : (
+              history.map((h, i) => (
+                <div 
+                  key={i} 
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => loadFromHistory(h)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-gray-800 font-mono text-sm">{h.cuit}</span>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 border px-1.5 rounded bg-white">
+                      {h.query_type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock size={12} />
+                    <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-        <p className="text-sm text-gray-500 mb-6">Consulta los registros públicos del Banco Central de la República Argentina mediante conexión segura directa.</p>
+      </div>
 
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+      {/* Main Content */}
+      <div className="w-full lg:w-3/4 bg-gray-50/30 rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        {/* Search Header */}
+        <div className="p-6 border-b border-gray-100 bg-white flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Building2 className="text-ecar-blue" size={24} />
+              <h3 className="font-bold text-xl text-gray-900">Informe Integral de Verificación BCRA</h3>
+            </div>
+            <p className="text-sm text-gray-500">Consulta los registros públicos del Banco Central de la República Argentina mediante conexión segura directa.</p>
+          </div>
+          {data && !loading && !error && (
+            <button
+              onClick={downloadPDF}
+              disabled={isGeneratingPdf}
+              className="flex items-center justify-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors disabled:opacity-50 shrink-0"
+            >
+              {isGeneratingPdf ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              {isGeneratingPdf ? 'Generando...' : 'Descargar PDF'}
+            </button>
+          )}
+        </div>
+
+        <div className="p-6 bg-white border-b border-gray-100">
+          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
           <div className="flex-1">
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
               Módulo a Consultar
@@ -383,7 +508,7 @@ export const BcraCreditInfo: React.FC = () => {
             </div>
           </div>
         </form>
-      </div>
+        </div>
 
       <div className="p-6 min-h-[400px]">
         {error && (
@@ -412,10 +537,11 @@ export const BcraCreditInfo: React.FC = () => {
         )}
 
         {data && !loading && (
-          <div>
+          <div id="bcra-report-content" className="w-full bg-white p-4">
             {apiType === 'deudores' ? renderDeudoresDashboard() : renderChequesDenunciados()}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
