@@ -12,6 +12,19 @@ const formatPeriod = (p: string) => {
   return p;
 };
 
+const getDiasAtrasoText = (situacion: number, diasAtraso: number | undefined) => {
+  if (diasAtraso !== undefined && diasAtraso > 0) return diasAtraso.toString();
+  switch (situacion) {
+    case 1: return 'N/A';
+    case 2: return '31 a 90';
+    case 3: return '91 a 180';
+    case 4: return '181 a 360';
+    case 5: return '+360';
+    case 6: return '+360';
+    default: return 'N/A';
+  }
+};
+
 const getSituationColor = (sit: number) => {
   switch (sit) {
     case 1: return 'bg-green-100 text-green-700 border-green-200';
@@ -150,7 +163,6 @@ export const BcraCreditInfo: React.FC = () => {
     }
   };
 
-  // Parsing Central de Deudores Data
   const renderDeudoresDashboard = () => {
     if (!data || !data.periodos || data.periodos.length === 0) {
       return (
@@ -160,19 +172,16 @@ export const BcraCreditInfo: React.FC = () => {
       );
     }
 
-    // 1. Process History
-    // Sort periods oldest to newest
     const sortedPeriods = [...data.periodos].sort((a, b) => a.periodo.localeCompare(b.periodo));
     
     const historyChartData = sortedPeriods.map(p => {
-      const totalMonto = p.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0); // BCRA devuelve montos en miles
+      const totalMonto = p.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
       return {
         periodo: formatPeriod(p.periodo),
         monto: totalMonto,
       };
     });
 
-    // 2. Most recent period info
     const lastPeriod = sortedPeriods[sortedPeriods.length - 1];
     const lastPeriodEntities = lastPeriod.entidades;
     const worstSituation = Math.max(...lastPeriodEntities.map((e: any) => e.situacion));
@@ -185,8 +194,7 @@ export const BcraCreditInfo: React.FC = () => {
     }));
 
     return (
-      <div className="space-y-6 animate-fade-in">
-        {/* HEADER SUMMARY */}
+      <div className="space-y-6">
         <div className="bg-white border-2 border-red-100 rounded-xl overflow-hidden shadow-sm">
           <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
             <div>
@@ -233,7 +241,6 @@ export const BcraCreditInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
             <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -290,7 +297,6 @@ export const BcraCreditInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* RECENT PERIOD TABLE */}
         <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
           <div className="bg-slate-700 p-3">
             <h4 className="font-bold text-white text-sm uppercase tracking-wider">Exposición Financiera Institucional Activa</h4>
@@ -317,8 +323,8 @@ export const BcraCreditInfo: React.FC = () => {
                     <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
                       {formatARS(e.monto * 1000)}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500">
-                      {e.diasAtraso || 0}
+                    <td className="px-4 py-3 text-right text-gray-500 font-medium">
+                      {getDiasAtrasoText(e.situacion, e.diasAtrasoPago)}
                     </td>
                   </tr>
                 ))}
@@ -355,7 +361,7 @@ export const BcraCreditInfo: React.FC = () => {
     }
 
     return (
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden animate-fade-in">
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
         <div className="bg-slate-700 p-3">
           <h4 className="font-bold text-white text-sm uppercase tracking-wider">Registro de Cheques Denunciados / Rechazados</h4>
         </div>
@@ -412,13 +418,18 @@ export const BcraCreditInfo: React.FC = () => {
                   className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => loadFromHistory(h)}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-gray-800 font-mono text-sm">{h.cuit}</span>
-                    <span className="text-[10px] uppercase font-bold text-gray-400 border px-1.5 rounded bg-white">
-                      {h.query_type}
-                    </span>
+                  <div className="flex flex-col mb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-gray-800 text-sm truncate" title={h.data?.denominacion || 'Desconocido'}>
+                        {h.data?.denominacion || 'Sin Denominación'}
+                      </span>
+                      <span className="text-[10px] uppercase font-bold text-gray-400 border px-1.5 rounded bg-white shrink-0">
+                        {h.query_type}
+                      </span>
+                    </div>
+                    <span className="text-gray-500 font-mono text-xs mt-0.5">CUIT: {h.cuit}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
                     <Clock size={12} />
                     <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
