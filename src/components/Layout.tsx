@@ -55,7 +55,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
   opportunities: 'Pipeline', fuel: 'Combustible', budget_landing: 'Introducción GPP',
   payments: 'Pagos',
-  worker_payments: 'Pago Obreros',
+  worker_payments: 'Trabajadores',
   nonconformities: 'No Conf.',
   supplier_eval: 'Eval. Prov.',
   guide: 'Guía', manual: 'Manual ISO',

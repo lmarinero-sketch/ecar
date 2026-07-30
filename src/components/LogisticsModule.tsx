@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 
-type Tab = 'dashboard' | 'deliveries' | 'fleet' | 'stock' | 'maintenance';
+type Tab = 'dashboard' | 'deliveries' | 'fleet' | 'maintenance';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -73,7 +73,6 @@ export const LogisticsModule: React.FC = () => {
     { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
     { id: 'deliveries', icon: Repeat, label: 'Acopios & Entregas' },
     { id: 'fleet', icon: Truck, label: 'Flota & Máquinas' },
-    { id: 'stock', icon: Package, label: 'Pañol & Stock' },
     { id: 'maintenance', icon: Wrench, label: 'Mantenimiento' },
   ];
 
@@ -167,9 +166,6 @@ export const LogisticsModule: React.FC = () => {
         )}
         {activeTab === 'fleet' && (
           <FleetTab vehicles={allVehicles} loading={loadingVehicles} />
-        )}
-        {activeTab === 'stock' && (
-          <StockTab items={inventoryItems} loading={loadingInventory} toolAssignments={toolAssignments} />
         )}
         {activeTab === 'maintenance' && (
           <MaintenanceTab logs={maintenanceLogs} loading={loadingMaintenance} allVehicles={allVehicles} />

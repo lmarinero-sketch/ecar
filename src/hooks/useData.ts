@@ -3059,7 +3059,27 @@ export function useDeleteWeeklyPaymentItem() {
   });
 }
 
-// â”€â”€â”€ Weekly Payroll Details â”€â”€â”€
+// ─── All Worker Payment Items (for metrics) ───
+export function useAllWorkerPaymentItems() {
+  return useQuery({
+    queryKey: ['worker_payment_items_all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_payment_items')
+        .select('*, payment:weekly_payments(payment_date)')
+        .eq('source_type', 'sueldos_obreros')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Array<{
+        id: string; concepto: string; monto: number; alias_cbu: string;
+        titular_cuenta: string; observaciones: string; pagado: boolean;
+        created_at: string; payment: { payment_date: string } | null;
+      }>;
+    },
+  });
+}
+
+// ─── Weekly Payroll Details ───
 export function useWeeklyPayrollDetails(weeklyPaymentItemId: string | null) {
   return useQuery({
     queryKey: ['weekly_payroll_details', weeklyPaymentItemId],

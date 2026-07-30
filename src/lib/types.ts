@@ -1610,7 +1610,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   communications: 'Comunicaciones',
   weekly_report: 'Reporte Semanal GG',
   payments: 'Control de Pagos',
-  worker_payments: 'Pagos a Obreros',
+  worker_payments: 'Pagos a Trabajadores',
   scope_changes: 'Adicionales y Alcance',
   
   quality: 'Inspecciones de Calidad',
