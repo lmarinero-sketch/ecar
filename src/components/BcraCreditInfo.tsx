@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, AlertCircle, Building2, FileText, Activity, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { supabase } from '../lib/supabase';
 
 // Helpers
@@ -183,7 +183,7 @@ export const BcraCreditInfo: React.FC = () => {
                     tickLine={false} 
                   />
                   <RechartsTooltip 
-                    formatter={(value: number) => [formatARS(value), 'Deuda']}
+                    formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda']}
                     labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
@@ -205,7 +205,7 @@ export const BcraCreditInfo: React.FC = () => {
                   <XAxis type="number" tickFormatter={(val) => `$${(val/1000000).toFixed(1)}M`} tick={{fontSize: 12}} hide />
                   <YAxis dataKey="entidad" type="category" tick={{fontSize: 11, fill: '#6b7280'}} width={120} axisLine={false} tickLine={false} />
                   <RechartsTooltip 
-                    formatter={(value: number) => [formatARS(value), 'Deuda']}
+                    formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda']}
                     cursor={{fill: '#f9fafb'}}
                   />
                   <Bar dataKey="monto" fill="#3b82f6" radius={[0, 4, 4, 0]} />
