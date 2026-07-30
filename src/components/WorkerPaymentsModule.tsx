@@ -13,6 +13,8 @@ import {
   useWeeklyPaymentItems, useCreateWeeklyPaymentItem,
   useUpdateWeeklyPaymentItem, useDeleteWeeklyPaymentItem
 } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
+import { useModalStore } from '../store/useModalStore';
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -398,6 +400,7 @@ const PaymentWeekCard: React.FC<{ payment: any; onClick: () => void }> = ({ paym
 
 // ─── Payment Detail View ───
 const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = ({ paymentId, onBack }) => {
+  const { profile } = useAuth();
   const { data: items = [], isLoading } = useWeeklyPaymentItems(paymentId);
   const updateItem = useUpdateWeeklyPaymentItem();
   const deleteItem = useDeleteWeeklyPaymentItem();
@@ -412,8 +415,8 @@ const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = (
     updateItem.mutate({ id: item.id, payment_id: paymentId, pagado: !item.pagado });
   };
 
-  const handleDelete = (item: any) => {
-    if (confirm(`¿Eliminar pago de ${item.titular_cuenta}?`)) {
+  const handleDelete = async (item: any) => {
+    if (await useModalStore.getState().showConfirm('Eliminar pago', `¿Eliminar pago de ${item.titular_cuenta}?`)) {
       deleteItem.mutate({ id: item.id, payment_id: paymentId });
     }
   };
@@ -543,7 +546,8 @@ const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = (
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#334155');
-    doc.text('Elaboró / Administración', 145, signY + 12, { align: 'center' });
+    const elaboradorText = profile?.full_name ? `Elaboró / ${profile.full_name}` : 'Elaboró / Administración';
+    doc.text(elaboradorText, 145, signY + 12, { align: 'center' });
     doc.text('Aprobó / Gustavo Regalado', 410, signY + 12, { align: 'center' });
 
     doc.setFont('helvetica', 'normal');
