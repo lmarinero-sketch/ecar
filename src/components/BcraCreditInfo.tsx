@@ -260,13 +260,25 @@ export const BcraCreditInfo: React.FC = () => {
   };
 
   const renderChequesDenunciados = () => {
-    // Si la API devuelve un arreglo directamente o si está dentro de results
-    const cheques = Array.isArray(data) ? data : (data.cheques || [data]);
-    if (!cheques || cheques.length === 0) {
+    let cheques: any[] = [];
+    if (data && data.causales) {
+      data.causales.forEach((causalObj: any) => {
+        causalObj.entidades?.forEach((entidadObj: any) => {
+          entidadObj.detalle?.forEach((cheque: any) => {
+            cheques.push({
+              ...cheque,
+              causal: causalObj.causal
+            });
+          });
+        });
+      });
+    }
+
+    if (cheques.length === 0) {
       return (
         <div className="text-center py-12 text-gray-400 flex flex-col items-center">
           <ShieldCheck size={48} className="mb-4 text-green-500 opacity-50" />
-          <p>No se encontraron denuncias para este número de cheque.</p>
+          <p>No se encontraron denuncias de cheques para este CUIT/CUIL.</p>
         </div>
       );
     }
@@ -290,15 +302,15 @@ export const BcraCreditInfo: React.FC = () => {
             <tbody className="divide-y divide-gray-100">
               {cheques.map((c: any, i: number) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900 font-medium">{c.numeroCheque || c.numero || inputValue}</td>
+                  <td className="px-4 py-3 text-gray-900 font-medium">{c.nroCheque || c.numeroCheque || '-'}</td>
                   <td className="px-4 py-3 text-gray-600">{c.fechaRechazo || c.fecha || 'N/A'}</td>
                   <td className="px-4 py-3 font-bold text-red-600 uppercase text-xs">{c.causal || 'SIN FONDOS'}</td>
                   <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
                     {c.monto ? formatARS(c.monto) : '-'}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="px-2.5 py-1 rounded bg-red-800 text-white border-red-900 text-xs font-bold">
-                      Incumplimiento
+                    <span className={`px-2.5 py-1 rounded text-xs font-bold border ${c.fechaPago ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-800 text-white border-red-900'}`}>
+                      {c.fechaPago ? 'Pagado' : 'Incumplimiento'}
                     </span>
                   </td>
                 </tr>
@@ -342,7 +354,7 @@ export const BcraCreditInfo: React.FC = () => {
 
           <div className="flex-[2]">
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-              {apiType === 'deudores' ? 'Identificador (CUIT/CUIL/CDI sin guiones)' : 'Número de Cheque'}
+              Identificador (CUIT/CUIL/CDI sin guiones)
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -351,7 +363,7 @@ export const BcraCreditInfo: React.FC = () => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={apiType === 'deudores' ? 'Ej: 20111111112' : 'Ej: 12345678'}
+                  placeholder="Ej: 20111111112"
                   className="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue shadow-sm"
                   pattern="[0-9]*"
                   required

@@ -17,9 +17,9 @@ serve(async (req) => {
     // Construct BCRA URL based on type
     let url = ''
     if (type === 'deudores') {
-      url = `https://api.bcra.gob.ar/centraldedeudores/v1/cuit/${id}`
+      url = `https://api.bcra.gob.ar/centraldedeudores/v1.0/Deudas/Historicas/${id}`
     } else if (type === 'cheques') {
-      url = `https://api.bcra.gob.ar/chequesdenunciados/v1/numero/${id}`
+      url = `https://api.bcra.gob.ar/centraldedeudores/v1.0/Deudas/ChequesRechazados/${id}`
     } else if (endpoint) {
        // Fallback for direct endpoints
        url = endpoint
