@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import {
-  HardHat, Search, Download, Users, UserCheck, UserX,
-  ChevronDown, ChevronUp, Edit2, Save, X, BarChart3,
+  HardHat, Search, Download, Users,
+  ChevronDown, ChevronUp, Edit2, BarChart3,
   TableProperties, TrendingUp, Crown
 } from 'lucide-react';
 import { useEmployees, useUpdateEmployee, useAllWorkerPaymentItems } from '../hooks/useData';
-import type { Employee } from '../lib/types';
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

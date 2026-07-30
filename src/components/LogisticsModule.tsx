@@ -45,7 +45,7 @@ export const LogisticsModule: React.FC = () => {
 
   // Data from existing tables
   const { data: allVehicles = [], isLoading: loadingVehicles } = useAllFuelVehicles();
-  const { data: inventoryItems = [], isLoading: loadingInventory } = useInventoryItems();
+  const { data: inventoryItems = [] } = useInventoryItems();
   const { data: toolAssignments = [] } = useToolAssignments();
   const { data: projects = [] } = useProjects();
 
@@ -680,114 +680,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ veh
   );
 };
 
-/* ═══════════════════════ STOCK TAB ═══════════════════════ */
 
-const StockTab: React.FC<{ items: any[]; loading: boolean; toolAssignments: any[] }> = ({ items, loading, toolAssignments }) => {
-  const [search, setSearch] = useState('');
-  const [filterCat, setFilterCat] = useState<string>('all');
-  const [showOnlyCritical, setShowOnlyCritical] = useState(false);
-
-  const filtered = useMemo(() => {
-    let list = items || [];
-    if (filterCat !== 'all') list = list.filter(i => i.category === filterCat);
-    if (showOnlyCritical) list = list.filter(i => i.current_stock <= i.min_stock);
-    if (search) {
-      const s = search.toLowerCase();
-      list = list.filter(i => i.name.toLowerCase().includes(s) || (i.location || '').toLowerCase().includes(s));
-    }
-    return list;
-  }, [items, filterCat, showOnlyCritical, search]);
-
-  const overdueTools = (toolAssignments || []).filter((t: any) => t.status === 'assigned' && !t.returned_date);
-
-  return (
-    <div className="p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Package className="text-ecar-blue" /> Pañol & Stock</h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="pl-8 pr-3 py-2 border rounded-lg text-sm w-40" />
-          </div>
-          <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="border rounded-lg text-sm px-3 py-2">
-            <option value="all">Todas las categorías</option>
-            <option value="material">Material</option>
-            <option value="herramienta">Herramienta</option>
-            <option value="consumible">Consumible</option>
-          </select>
-          <label className="flex items-center gap-2 text-xs font-bold text-gray-600 cursor-pointer">
-            <input type="checkbox" checked={showOnlyCritical} onChange={e => setShowOnlyCritical(e.target.checked)} className="rounded" />
-            Solo críticos
-          </label>
-        </div>
-      </div>
-
-      {/* Overdue tools alert */}
-      {overdueTools.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <h4 className="font-bold text-amber-800 text-sm flex items-center gap-2 mb-2"><Clock size={16} /> {overdueTools.length} Herramienta{overdueTools.length > 1 ? 's' : ''} sin devolver</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {overdueTools.slice(0, 6).map((t: any) => (
-              <div key={t.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{t.item?.name || 'Herramienta'}</p>
-                  <p className="text-xs text-gray-500">{t.employee?.full_name || '-'} · {t.project?.name || '-'}</p>
-                </div>
-                <p className="text-xs text-amber-600 font-bold">{new Date(t.assigned_date).toLocaleDateString('es-AR')}</p>
-              </div>
-            ))}
-          </div>
-          {overdueTools.length > 6 && <p className="text-xs text-amber-600 mt-2">...y {overdueTools.length - 6} más</p>}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
-      ) : filtered.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Ítem</th>
-                <th>Categoría</th>
-                <th>Ubicación</th>
-                <th className="text-center">Stock</th>
-                <th className="text-center">Mínimo</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((i: any) => {
-                const isCritical = i.current_stock <= i.min_stock;
-                return (
-                  <tr key={i.id} className={isCritical ? 'bg-red-50/50' : ''}>
-                    <td className="font-medium text-gray-800">{i.name}</td>
-                    <td className="text-gray-600 text-xs capitalize">{i.category}</td>
-                    <td className="text-gray-500 text-xs">{i.location || '-'}</td>
-                    <td className={`text-center font-bold ${isCritical ? 'text-red-700' : 'text-gray-700'}`}>{i.current_stock} {i.unit}</td>
-                    <td className="text-center text-gray-400">{i.min_stock} {i.unit}</td>
-                    <td>
-                      {isCritical ? (
-                        <span className="badge badge-danger gap-1"><AlertTriangle size={12} /> Crítico</span>
-                      ) : (
-                        <span className="badge badge-success">OK</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <Package size={48} className="mx-auto mb-3 opacity-20" />
-          <p>No hay ítems de inventario{showOnlyCritical ? ' en estado crítico' : ''}.</p>
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* ═══════════════════════ MAINTENANCE TAB ═══════════════════════ */
 
