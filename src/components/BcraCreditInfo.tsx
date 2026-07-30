@@ -55,8 +55,9 @@ const getSituationLabel = (sit: number) => {
   }
 };
 
-const mockAfipData = (cuit: string) => {
-  const isCompany = cuit.startsWith('30') || cuit.startsWith('33');
+const mockAfipData = (cuit: string | number) => {
+  const cuitStr = String(cuit);
+  const isCompany = cuitStr.startsWith('30') || cuitStr.startsWith('33');
   return {
     estado: 'ACTIVO',
     tipo: isCompany ? 'Persona Jurídica' : 'Persona Física',
