@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { InvoiceSearchSelector } from './InvoiceSearchSelector';
 import { ChequeUploader } from './ChequeUploader';
 import { ImageViewer } from './ImageViewer';
+import { BcraCreditInfo } from './BcraCreditInfo';
 import { supabase } from '../lib/supabase';
 import { useModalStore } from '../store/useModalStore';
 import type { Cheque } from '../lib/types';
@@ -44,7 +45,7 @@ export const FinancesModule: React.FC = () => {
   const createPaymentRecord = useCreatePaymentRecord();
   const { data: bankAccounts = [] } = useBankAccounts();
 
-  const [activeTab, setActiveTab] = useState<'cheques' | 'receipts'>('cheques');
+  const [activeTab, setActiveTab] = useState<'cheques' | 'receipts' | 'bcra'>('cheques');
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptForm, setReceiptForm] = useState({
     payment_date: new Date().toISOString().split('T')[0],
@@ -498,6 +499,16 @@ export const FinancesModule: React.FC = () => {
         >
           Comprobantes de Pago
         </button>
+        <button
+          onClick={() => setActiveTab('bcra')}
+          className={`py-2.5 px-6 font-bold text-sm border-b-2 transition-all ${
+            activeTab === 'bcra'
+              ? 'border-ecar-blue text-ecar-blue'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          Información Crediticia
+        </button>
       </div>
 
       {activeTab === 'cheques' && (
@@ -832,6 +843,10 @@ export const FinancesModule: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {activeTab === 'bcra' && (
+        <BcraCreditInfo />
       )}
 
       {/* Upload Receipt Modal */}
