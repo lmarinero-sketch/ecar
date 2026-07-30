@@ -413,6 +413,16 @@ export const NotificationPanel: React.FC = () => {
               )}
 
               <div>
+                <label className="text-xs font-bold text-gray-500">Horario de envío (GMT-3 Buenos Aires)</label>
+                <input
+                  type="time"
+                  value={form.schedule_time || ''}
+                  onChange={e => setForm({...form, schedule_time: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
+                />
+              </div>
+
+              <div>
                 <label className="text-xs font-bold text-gray-500">Recurrencia</label>
                 <select value={form.recurrence} onChange={e => setForm({...form, recurrence: e.target.value as NotificationReminder['recurrence'], schedule_days: e.target.value === 'once' ? [] : form.schedule_days})} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm">
                   <option value="once">Una vez</option>
@@ -486,16 +496,7 @@ export const NotificationPanel: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Time */}
-                  <div>
-                    <label className="text-xs font-bold text-gray-500">Hora de envío</label>
-                    <input
-                      type="time"
-                      value={form.schedule_time}
-                      onChange={e => setForm({...form, schedule_time: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
-                    />
-                  </div>
+
 
                   {/* Date range */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
