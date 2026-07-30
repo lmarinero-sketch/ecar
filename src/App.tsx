@@ -33,6 +33,7 @@ import { InspectionsModule } from './components/InspectionsModule';
 import { RFIModule } from './components/RFIModule';
 import { ExpensesModule } from './components/ExpensesModule';
 import { PaymentsModule } from './components/PaymentsModule';
+import { WorkerPaymentsModule } from './components/WorkerPaymentsModule';
 import { ProjectBudgetModule } from './components/ProjectBudgetModule';
 import { BudgetLandingModule } from './components/BudgetLandingModule';
 import { OpportunitiesModule } from './components/OpportunitiesModule';
@@ -151,6 +152,7 @@ function AppContent() {
       case 'rfi': return <RFIModule />;
       case 'expenses': return <ExpensesModule />;
       case 'payments': return <PaymentsModule />;
+      case 'worker_payments': return <WorkerPaymentsModule />;
       case 'project_budget': return <ProjectBudgetModule />;
       case 'opportunities': return <OpportunitiesModule />;
       case 'budget_landing': return <BudgetLandingModule />;

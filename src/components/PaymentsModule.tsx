@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { PayrollLiquidator } from './PayrollLiquidator';
 import { PayrollPDFButton } from './PayrollPDFButton';
 import { PayrollViewerModal } from './PayrollViewerModal';
-import { PayObreroModal } from './PayObreroModal';
+
 
 function formatARS(v: number) {
   return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -32,7 +32,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   
   // Payroll / Obreros Modals
   const [showPayroll, setShowPayroll] = useState(false); // Hiding old button logic but keeping state
-  const [showPayObrero, setShowPayObrero] = useState(false);
+
   const [viewPayrollItem, setViewPayrollItem] = useState<{id: string, concepto: string} | null>(null);
 
   // Import from gastos operativos
@@ -240,9 +240,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             <Building2 size={14} /> Importar de Gastos ({pendingGastos.length})
           </button>
         )}
-        <button onClick={() => setShowPayObrero(true)} className="badge badge-info">
-          <Users size={14} /> Pagar a Obreros
-        </button>
+
         {/*
         <button onClick={() => setShowPayroll(true)} className="badge badge-info">
           <Users size={14} /> Liquidar Obreros
@@ -497,14 +495,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
         />
       )}
 
-      {showPayObrero && (
-        <PayObreroModal 
-          paymentId={payment.id}
-          currentItemsCount={items.length}
-          onClose={() => setShowPayObrero(false)}
-          onSuccess={() => setShowPayObrero(false)}
-        />
-      )}
+
     </div>
   );
 };
