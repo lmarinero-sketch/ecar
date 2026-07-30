@@ -3,7 +3,7 @@ import {
   HardHat, Search, Download, Users, Plus,
   ChevronDown, ChevronUp, Edit2, BarChart3,
   TableProperties, TrendingUp, Crown, Banknote,
-  Check, Trash2, X, Calendar, Eye, FileText
+  Check, Trash2, X, Calendar, Eye
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
