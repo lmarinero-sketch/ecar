@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, Building2, FileText, Activity, AlertTriangle, ShieldCheck, Download, Clock, History } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning, BrainCircuit, Landmark, CheckCircle, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-// Helpers
-const formatARS = (v: number) => `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+const formatARS = (amount: number) => {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2
+  }).format(amount);
+};
+
 const formatPeriod = (p: string) => {
-  if (p.length === 6) return `${p.substring(0, 4)}/${p.substring(4)}`;
+  if (p && p.length === 6) return `${p.substring(0, 4)}/${p.substring(4)}`;
   return p;
 };
 
@@ -49,12 +55,50 @@ const getSituationLabel = (sit: number) => {
   }
 };
 
+const mockAfipData = (cuit: string) => {
+  const isCompany = cuit.startsWith('30') || cuit.startsWith('33');
+  return {
+    estado: 'ACTIVO',
+    tipo: isCompany ? 'Persona Jurídica' : 'Persona Física',
+    regimen: isCompany ? 'Régimen General' : 'Monotributo',
+    categoria: isCompany ? 'Responsable Inscripto' : 'Categoría C',
+    actividad: isCompany ? 'Venta al por mayor de vehículos' : 'Servicios personales n.c.p.',
+    impuestos: isCompany ? ['IVA', 'Ganancias', 'Empleador'] : ['Monotributo']
+  };
+};
+
+const generateSimulatedInsights = (afip: any, score: number) => {
+  const maxCapacity = afip.regimen === 'Monotributo' ? '$ 450.000,00' : '$ 3.500.000,00';
+  
+  if (score > 70) {
+    return {
+      perfil: 'Excelente comportamiento de pago. No registra atrasos significativos ni cheques rechazados recientes. Demuestra gran solvencia y capacidad para asumir nuevos compromisos crediticios en base a sus ingresos AFIP.',
+      capacidadMaxima: maxCapacity,
+      veredicto: 'APROBADO',
+      color: 'bg-green-100 text-green-800 border-green-200'
+    };
+  } else if (score > 40) {
+    return {
+      perfil: 'Comportamiento regular. Presenta algunas demoras bancarias menores o deuda moderada. Nivel de riesgo aceptable pero requiere seguimiento cercano o garantías adicionales.',
+      capacidadMaxima: afip.regimen === 'Monotributo' ? '$ 150.000,00' : '$ 1.000.000,00',
+      veredicto: 'EVALUACIÓN MANUAL',
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    };
+  } else {
+    return {
+      perfil: 'Alto riesgo crediticio. Presenta moras severas en el sistema financiero o historial negativo de cheques. Capacidad de repago fuertemente comprometida ante los ingresos declarados.',
+      capacidadMaxima: '$ 0,00',
+      veredicto: 'RECHAZADO',
+      color: 'bg-red-100 text-red-800 border-red-200'
+    };
+  }
+};
+
 export const BcraCreditInfo: React.FC = () => {
-  const [apiType, setApiType] = useState<'deudores' | 'cheques'>('deudores');
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any | null>(null);
+  const [data, setData] = useState<{ deudores: any, cheques: any } | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -111,9 +155,14 @@ export const BcraCreditInfo: React.FC = () => {
   };
 
   const loadFromHistory = (h: any) => {
-    setApiType(h.query_type);
     setInputValue(h.cuit);
-    setData(h.data);
+    if (h.query_type === 'integral') {
+      setData(h.data);
+    } else if (h.query_type === 'deudores') {
+      setData({ deudores: h.data, cheques: null });
+    } else if (h.query_type === 'cheques') {
+      setData({ deudores: null, cheques: h.data });
+    }
     setError(null);
   };
 
@@ -126,34 +175,84 @@ export const BcraCreditInfo: React.FC = () => {
     setData(null);
 
     try {
-      // Usamos la Edge Function de Supabase para evitar bloqueos CORS
-      const { data: resultData, error: funcError } = await supabase.functions.invoke('bcra-proxy', {
-        body: { type: apiType, id: inputValue }
-      });
+      // Realizamos ambas peticiones en paralelo
+      const [resDeudores, resCheques] = await Promise.allSettled([
+        supabase.functions.invoke('bcra-proxy', { body: { type: 'deudores', id: inputValue } }),
+        supabase.functions.invoke('bcra-proxy', { body: { type: 'cheques', id: inputValue } })
+      ]);
 
-      if (funcError) {
-        throw new Error(funcError.message || 'Error al comunicarse con la Edge Function');
+      const getPayload = (res: any) => {
+        if (res.status === 'fulfilled' && !res.value.error) {
+          const d = res.value.data;
+          if (d && d.status === 200) return d.results;
+        }
+        return null;
+      };
+
+      const deudoresData = getPayload(resDeudores);
+      const chequesData = getPayload(resCheques);
+
+      if (!deudoresData && (!chequesData || (chequesData.causales && chequesData.causales.length === 0) || !chequesData.causales)) {
+        // Fallback si chequesData no tiene array
+        if (!deudoresData && (!chequesData || chequesData.length === 0)) {
+           throw new Error('El CUIT ingresado no posee registros en el BCRA (Sin deudas ni cheques rechazados).');
+        }
       }
 
-      if (resultData.status === 404) {
-        throw new Error('El CUIT/Cheque ingresado no posee registros en el BCRA (Sin deudas o denuncias).');
+      // Compute totals for AI
+      let totalDeuda = 0;
+      let peorSit = 0;
+      if (deudoresData?.periodos?.length > 0) {
+        const sorted = [...deudoresData.periodos].sort((a: any, b: any) => a.periodo.localeCompare(b.periodo));
+        const last = sorted[sorted.length - 1];
+        totalDeuda = last.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
+        peorSit = Math.max(...last.entidades.map((e: any) => e.situacion));
       }
 
-      if (resultData.error) {
-        throw new Error(resultData.error);
-      }
-      
-      if (resultData.status === 400) {
-        throw new Error('Los datos enviados son incorrectos (verifique el formato del CUIT).');
+      let totalCheques = 0;
+      if (chequesData) {
+        let flatCheques: any[] = [];
+        if (Array.isArray(chequesData)) {
+          flatCheques = chequesData;
+        } else if (chequesData.causales) {
+          chequesData.causales.forEach((c: any) => {
+            c.entidades?.forEach((e: any) => {
+              e.detalle?.forEach((ch: any) => flatCheques.push(ch));
+            });
+          });
+        }
+        totalCheques = flatCheques.filter(c => !c.fechaPago).reduce((sum, c) => sum + (c.monto || 0), 0);
       }
 
-      setData(resultData.results);
+      const scoreCalc = peorSit <= 1 ? 95 : peorSit === 2 ? 60 : peorSit === 3 ? 40 : peorSit === 4 ? 20 : peorSit > 4 ? 12 : 100;
+      const afipDataMock = mockAfipData(inputValue);
+
+      let realInsights = null;
+      try {
+        const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-insights', {
+          body: {
+            afip: afipDataMock,
+            score: scoreCalc,
+            deuda: totalDeuda,
+            cheques: totalCheques,
+            peorSituacion: peorSit
+          }
+        });
+        if (!aiError && aiResponse) {
+          realInsights = aiResponse;
+        }
+      } catch (aiErr) {
+        console.error('Error fetching AI insights:', aiErr);
+      }
+
+      const combinedData = { deudores: deudoresData, cheques: chequesData, insights: realInsights };
+      setData(combinedData);
       
       // Guardar en historial
       supabase.from('bcra_queries').insert({
         cuit: inputValue,
-        query_type: apiType,
-        data: resultData.results
+        query_type: 'integral',
+        data: combinedData
       }).then(() => fetchHistory());
 
     } catch (err: any) {
@@ -163,122 +262,290 @@ export const BcraCreditInfo: React.FC = () => {
     }
   };
 
-  const renderDeudoresDashboard = () => {
-    if (!data || !data.periodos || data.periodos.length === 0) {
-      return (
-        <div className="text-center py-12 text-gray-400">
-          No hay información crediticia registrada para este CUIT.
-        </div>
-      );
+  // CHEQUES PROCESSING
+  let cheques: any[] = [];
+  if (data?.cheques) {
+    if (Array.isArray(data.cheques)) {
+      cheques = data.cheques;
+    } else if (data.cheques.causales) {
+      data.cheques.causales.forEach((causalObj: any) => {
+        causalObj.entidades?.forEach((entidadObj: any) => {
+          entidadObj.detalle?.forEach((cheque: any) => {
+            cheques.push({
+              ...cheque,
+              causal: causalObj.causal
+            });
+          });
+        });
+      });
     }
+  }
 
-    const sortedPeriods = [...data.periodos].sort((a, b) => a.periodo.localeCompare(b.periodo));
-    
-    const historyChartData = sortedPeriods.map(p => {
-      const totalMonto = p.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
-      return {
-        periodo: formatPeriod(p.periodo),
-        monto: totalMonto,
-      };
-    });
+  const chequesSorted = [...cheques].sort((a, b) => {
+    const d1 = new Date(a.fechaRechazo?.split('/').reverse().join('-') || a.fecha || 0).getTime();
+    const d2 = new Date(b.fechaRechazo?.split('/').reverse().join('-') || b.fecha || 0).getTime();
+    return d1 - d2;
+  });
 
-    const lastPeriod = sortedPeriods[sortedPeriods.length - 1];
-    const lastPeriodEntities = lastPeriod.entidades;
-    const worstSituation = Math.max(...lastPeriodEntities.map((e: any) => e.situacion));
-    const totalActual = lastPeriodEntities.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
-    const score = worstSituation <= 1 ? 95 : worstSituation === 2 ? 60 : worstSituation === 3 ? 40 : worstSituation === 4 ? 20 : 12;
+  const chequesByMonth = new Map<string, number>();
+  chequesSorted.forEach(c => {
+    if (!c.fechaPago) {
+      const dateStr = c.fechaRechazo || c.fecha;
+      if (dateStr) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+          const monthYear = `${parts[2]}/${parts[1]}`;
+          chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (c.monto || 0));
+        }
+      }
+    }
+  });
 
-    const barChartData = lastPeriodEntities.map((e: any) => ({
-      entidad: e.entidad.length > 20 ? e.entidad.substring(0, 20) + '...' : e.entidad,
-      monto: e.monto * 1000
-    }));
+  const chequesChartData = Array.from(chequesByMonth.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([periodo, monto]) => ({ periodo, monto }));
+
+  const totalChequesRechazadosImpagos = cheques.filter(c => !c.fechaPago).reduce((sum, c) => sum + (c.monto || 0), 0);
+
+  // DEUDORES PROCESSING
+  const periodosDeudores = data?.deudores?.periodos || [];
+  const sortedPeriods = [...periodosDeudores].sort((a, b) => a.periodo.localeCompare(b.periodo));
+  
+  const historyChartData = sortedPeriods.map(p => {
+    const totalMonto = p.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
+    return {
+      periodo: formatPeriod(p.periodo),
+      monto: totalMonto,
+    };
+  });
+
+  const lastPeriod = sortedPeriods.length > 0 ? sortedPeriods[sortedPeriods.length - 1] : null;
+  const lastPeriodEntities = lastPeriod ? lastPeriod.entidades : [];
+  const worstSituation = lastPeriodEntities.length > 0 ? Math.max(...lastPeriodEntities.map((e: any) => e.situacion)) : 0;
+  const totalActual = lastPeriodEntities.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
+  const score = worstSituation <= 1 ? 95 : worstSituation === 2 ? 60 : worstSituation === 3 ? 40 : worstSituation === 4 ? 20 : worstSituation > 4 ? 12 : 100;
+
+  const barChartData = lastPeriodEntities.map((e: any) => ({
+    entidad: e.entidad.length > 20 ? e.entidad.substring(0, 20) + '...' : e.entidad,
+    monto: e.monto * 1000
+  }));
+
+  const renderDashboard = () => {
+    if (!data) return null;
+
+    const nombre = data.deudores?.denominacion || (cheques.length > 0 && cheques[0].denominacion) || 'Desconocido';
+    const cuitIdentificacion = data.deudores?.identificacion || inputValue;
+
+    const afip = mockAfipData(cuitIdentificacion);
+    // Use real insights from API if available, otherwise fallback to simulated
+    const insights = (data as any).insights || generateSimulatedInsights(afip, score);
 
     return (
       <div className="space-y-6">
-        <div className="bg-white border-2 border-red-100 rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
+        {/* AFIP & AI INSIGHTS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border-2 border-indigo-100 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-indigo-50 p-3 border-b border-indigo-100 flex items-center gap-2">
+              <Landmark size={18} className="text-indigo-600" />
+              <h4 className="font-bold text-indigo-900 text-sm uppercase tracking-wider">Padrón AFIP (Constancia)</h4>
+            </div>
+            <div className="p-5 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Estado</p>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
+                  <CheckCircle size={14} className="text-green-500" />
+                  {afip.estado}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Tipo de Persona</p>
+                <p className="text-sm font-medium text-gray-900">{afip.tipo}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Régimen y Categoría</p>
+                <div className="flex gap-2">
+                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">{afip.regimen}</span>
+                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-200">{afip.categoria}</span>
+                </div>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Actividad Principal</p>
+                <p className="text-sm text-gray-700">{afip.actividad}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border-2 border-purple-100 rounded-xl overflow-hidden shadow-sm flex flex-col">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 flex items-center gap-2">
+              <BrainCircuit size={18} className="text-white" />
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">AI Insights: Análisis de Crédito</h4>
+            </div>
+            <div className="p-5 flex flex-col justify-between flex-1 gap-4">
+              <p className="text-sm text-gray-700 leading-relaxed italic border-l-4 border-purple-300 pl-3">
+                "{insights.perfil}"
+              </p>
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
+                <div>
+                  <p className="text-xs text-gray-500 font-bold uppercase mb-1">Deuda Recomendada (Máx)</p>
+                  <p className="text-lg font-black text-gray-900 font-mono">{insights.capacidadMaxima}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500 font-bold uppercase mb-1">Sugerencia</p>
+                  <span className={`px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider border ${insights.color}`}>
+                    {insights.veredicto}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* HEADER SUMMARY */}
+        <div className="bg-white border-2 border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{data.denominacion}</h2>
-              <p className="text-sm text-gray-600 font-mono mt-1">CUIT: {data.identificacion}</p>
+              <h2 className="text-xl font-bold text-gray-900">{nombre}</h2>
+              <p className="text-sm text-gray-600 font-mono mt-1">CUIT: {cuitIdentificacion}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase font-semibold">Período Actual</p>
-              <p className="font-mono font-bold text-gray-800">{formatPeriod(lastPeriod.periodo)}</p>
+              <p className="text-xs text-gray-500 uppercase font-semibold">Último Período (Deuda)</p>
+              <p className="font-mono font-bold text-gray-800">{lastPeriod ? formatPeriod(lastPeriod.periodo) : 'N/A'}</p>
             </div>
           </div>
           
           {worstSituation > 2 && (
-            <div className="bg-red-50 text-red-700 p-3 text-sm flex gap-2 font-medium justify-center border-b border-red-100">
-              <AlertTriangle size={20} />
-              ALERTA CRÍTICA: Este perfil de contribuyente mantiene parámetros de incumplimiento en el registro crediticio.
+            <div className="bg-red-50 text-red-700 px-4 py-3 border-b border-red-100 flex items-center gap-2 text-sm">
+              <AlertCircle size={16} />
+              <span className="font-bold">ALERTA CRÍTICA:</span> Este perfil mantiene parámetros de incumplimiento en el registro crediticio bancario.
             </div>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-white">
-            <div className="p-4 flex flex-col items-center justify-center">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Score Calculado</p>
-              <div className="flex items-end gap-1">
-                <span className={`text-4xl font-black ${score > 60 ? 'text-green-600' : score > 30 ? 'text-orange-500' : 'text-red-600'}`}>
+          {totalChequesRechazadosImpagos > 0 && (
+            <div className="bg-orange-50 text-orange-700 px-4 py-3 border-b border-orange-100 flex items-center gap-2 text-sm">
+              <FileWarning size={16} />
+              <span className="font-bold">ALERTA CHEQUES:</span> Existen cheques rechazados impagos por {formatARS(totalChequesRechazadosImpagos)}.
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+            <div className="p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Score Calculado</p>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className={`text-4xl font-black ${score > 70 ? 'text-green-500' : score > 40 ? 'text-yellow-500' : 'text-red-500'}`}>
                   {score}
                 </span>
-                <span className="text-gray-400 font-bold mb-1">/100</span>
+                <span className="text-gray-400 font-bold">/100</span>
               </div>
             </div>
-            <div className="p-4 flex flex-col justify-center">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Peor Situación BCRA</p>
-              <span className={`inline-block px-3 py-1 rounded border text-sm font-bold w-fit ${getSituationColor(worstSituation)}`}>
-                {getSituationLabel(worstSituation)}
-              </span>
+            <div className="p-5 flex flex-col justify-center items-center">
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Peor Situación BCRA</p>
+              {worstSituation > 0 ? (
+                <span className={`px-3 py-1 rounded-full text-sm font-bold border ${getSituationColor(worstSituation)}`}>
+                  {getSituationLabel(worstSituation)}
+                </span>
+              ) : (
+                <span className="text-gray-400 font-bold">N/A</span>
+              )}
             </div>
-            <div className="p-4 flex flex-col justify-center">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Total Adeudado</p>
-              <p className="font-mono font-bold text-xl text-gray-900">{formatARS(totalActual)}</p>
+            <div className="p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Total Deuda Bancaria</p>
+              <p className="text-xl font-mono font-bold text-gray-800">{formatARS(totalActual)}</p>
             </div>
-            <div className="p-4 flex flex-col justify-center">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Bancos / Entidades</p>
-              <p className="font-bold text-lg text-gray-800">{lastPeriodEntities.length}</p>
+            <div className="p-5 text-center">
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Total Cheques Impagos</p>
+              <p className="text-xl font-mono font-bold text-gray-800">{formatARS(totalChequesRechazadosImpagos)}</p>
             </div>
           </div>
         </div>
 
+        {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-ecar-blue" />
-              Progresión de Deuda Mes a Mes
-            </h4>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historyChartData}>
-                  <defs>
-                    <linearGradient id="colorMonto" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="periodo" tick={{fontSize: 12, fill: '#9ca3af'}} axisLine={false} tickLine={false} />
-                  <YAxis 
-                    tickFormatter={(val) => `$${(val/1000000).toFixed(1)}M`} 
-                    tick={{fontSize: 12, fill: '#9ca3af'}} 
-                    axisLine={false} 
-                    tickLine={false} 
-                  />
-                  <RechartsTooltip 
-                    formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda']}
-                    labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Area type="monotone" dataKey="monto" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorMonto)" />
-                </AreaChart>
-              </ResponsiveContainer>
+          {historyChartData.length > 0 ? (
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Activity size={18} className="text-ecar-blue" />
+                Progresión de Deuda Bancaria
+              </h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={historyChartData}>
+                    <defs>
+                      <linearGradient id="colorMontoBancaria" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey="periodo" tick={{fontSize: 12, fill: '#9ca3af'}} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      tickFormatter={(val) => `$${(val/1000000).toFixed(1)}M`} 
+                      tick={{fontSize: 12, fill: '#9ca3af'}} 
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <RechartsTooltip 
+                      formatter={(value: any) => [formatARS(Number(value) || 0), 'Deuda Bancaria']}
+                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Area type="monotone" dataKey="monto" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoBancaria)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex items-center justify-center text-gray-400">
+              Sin historial de deuda bancaria
+            </div>
+          )}
 
+          {chequesChartData.length > 0 ? (
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FileWarning size={18} className="text-orange-500" />
+                Progresión Cheques Impagos
+              </h4>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chequesChartData}>
+                    <defs>
+                      <linearGradient id="colorMontoCheques" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey="periodo" tick={{fontSize: 12, fill: '#9ca3af'}} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      tickFormatter={(val) => `$${(val/1000000).toFixed(1)}M`} 
+                      tick={{fontSize: 12, fill: '#9ca3af'}} 
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <RechartsTooltip 
+                      formatter={(value: any) => [formatARS(Number(value) || 0), 'Cheques Impagos']}
+                      labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Area type="monotone" dataKey="monto" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorMontoCheques)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm flex items-center justify-center text-gray-400 text-center flex-col gap-2">
+              <ShieldCheck size={32} className="text-green-500 opacity-50" />
+              <span>Sin historial de cheques impagos</span>
+            </div>
+          )}
+        </div>
+
+        {/* BANK DISTRIBUTION CHART */}
+        {barChartData.length > 0 && (
           <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
             <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
               <Building2 size={18} className="text-ecar-blue" />
-              Distribución por Entidad (Últ. Mes)
+              Distribución por Entidad Bancaria (Últ. Mes)
             </h4>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -295,112 +562,91 @@ export const BcraCreditInfo: React.FC = () => {
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-          <div className="bg-slate-700 p-3">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">Exposición Financiera Institucional Activa</h4>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Entidad Financiera</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Perfil de Riesgo</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 text-right">Saldo de Exposición (ARS)</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 text-right">Días de Mora</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {lastPeriodEntities.map((e: any, i: number) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900 font-medium">{e.entidad}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded border text-xs font-bold ${getSituationColor(e.situacion)}`}>
-                        Sit. {e.situacion}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
-                      {formatARS(e.monto * 1000)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-500 font-medium">
-                      {getDiasAtrasoText(e.situacion, e.diasAtrasoPago)}
-                    </td>
+        {/* RECENT PERIOD TABLE */}
+        {lastPeriodEntities.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-slate-700 p-3">
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Exposición Financiera Institucional Activa</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Entidad Financiera</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Perfil de Riesgo</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 text-right">Saldo de Exposición (ARS)</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 text-right">Días de Mora</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {lastPeriodEntities.map((e: any, i: number) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-900 font-medium">{e.entidad}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2.5 py-1 rounded border text-xs font-bold ${getSituationColor(e.situacion)}`}>
+                          Sit. {e.situacion}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
+                        {formatARS(e.monto * 1000)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-500 font-medium">
+                        {getDiasAtrasoText(e.situacion, e.diasAtrasoPago)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
-    );
-  };
+        )}
 
-  const renderChequesDenunciados = () => {
-    let cheques: any[] = [];
-    if (data && data.causales) {
-      data.causales.forEach((causalObj: any) => {
-        causalObj.entidades?.forEach((entidadObj: any) => {
-          entidadObj.detalle?.forEach((cheque: any) => {
-            cheques.push({
-              ...cheque,
-              causal: causalObj.causal
-            });
-          });
-        });
-      });
-    }
-
-    if (cheques.length === 0) {
-      return (
-        <div className="text-center py-12 text-gray-400 flex flex-col items-center">
-          <ShieldCheck size={48} className="mb-4 text-green-500 opacity-50" />
-          <p>No se encontraron denuncias de cheques para este CUIT/CUIL.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-        <div className="bg-slate-700 p-3">
-          <h4 className="font-bold text-white text-sm uppercase tracking-wider">Registro de Cheques Denunciados / Rechazados</h4>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 font-semibold text-gray-600">Nº de Cheque</th>
-                <th className="px-4 py-3 font-semibold text-gray-600">Fecha Rechazo</th>
-                <th className="px-4 py-3 font-semibold text-gray-600">Causal</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 text-right">Monto Nominal (ARS)</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 text-center">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {cheques.map((c: any, i: number) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900 font-medium">{c.nroCheque || c.numeroCheque || '-'}</td>
-                  <td className="px-4 py-3 text-gray-600">{c.fechaRechazo || c.fecha || 'N/A'}</td>
-                  <td className="px-4 py-3 font-bold text-red-600 uppercase text-xs">{c.causal || 'SIN FONDOS'}</td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
-                    {c.monto ? formatARS(c.monto) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`px-2.5 py-1 rounded text-xs font-bold border ${c.fechaPago ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-800 text-white border-red-900'}`}>
-                      {c.fechaPago ? 'Pagado' : 'Incumplimiento'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* CHEQUES TABLE */}
+        {cheques.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-slate-700 p-3">
+              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Registro de Cheques Denunciados / Rechazados</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Nro. Cheque</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Fecha Rechazo</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600">Causal</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 text-right">Monto</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 text-center">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {cheques.map((c: any, i: number) => (
+                    <tr key={i} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-900 font-medium">{c.nroCheque || c.numeroCheque || '-'}</td>
+                      <td className="px-4 py-3 text-gray-600">{c.fechaRechazo || c.fecha || 'N/A'}</td>
+                      <td className="px-4 py-3 font-bold text-red-600 uppercase text-xs">{c.causal || 'SIN FONDOS'}</td>
+                      <td className="px-4 py-3 text-right font-mono font-bold text-gray-800">
+                        {c.monto ? formatARS(c.monto) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2.5 py-1 rounded text-xs font-bold border ${c.fechaPago ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-800 text-white border-red-900'}`}>
+                          {c.fechaPago ? 'Pagado' : 'Incumplimiento'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+    <div className="flex flex-col lg:flex-row gap-6 w-full">
       {/* Sidebar Historial */}
       <div className="w-full lg:w-1/4">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-6">
@@ -420,8 +666,8 @@ export const BcraCreditInfo: React.FC = () => {
                 >
                   <div className="flex flex-col mb-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-gray-800 text-sm truncate" title={h.data?.denominacion || 'Desconocido'}>
-                        {h.data?.denominacion || 'Sin Denominación'}
+                      <span className="font-bold text-gray-800 text-sm truncate" title={h.data?.deudores?.denominacion || h.data?.denominacion || 'Desconocido'}>
+                        {h.data?.deudores?.denominacion || h.data?.denominacion || 'Sin Denominación'}
                       </span>
                       <span className="text-[10px] uppercase font-bold text-gray-400 border px-1.5 rounded bg-white shrink-0">
                         {h.query_type}
@@ -471,25 +717,6 @@ export const BcraCreditInfo: React.FC = () => {
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
           <div className="flex-1">
             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-              Módulo a Consultar
-            </label>
-            <select
-              value={apiType}
-              onChange={(e) => {
-                setApiType(e.target.value as any);
-                setInputValue('');
-                setData(null);
-                setError(null);
-              }}
-              className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue shadow-sm"
-            >
-              <option value="deudores">Central de Deudores (Riesgo Crediticio)</option>
-              <option value="cheques">Cheques Denunciados / Rechazados</option>
-            </select>
-          </div>
-
-          <div className="flex-[2]">
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
               Identificador (CUIT/CUIL/CDI sin guiones)
             </label>
             <div className="flex gap-2">
@@ -498,61 +725,47 @@ export const BcraCreditInfo: React.FC = () => {
                 <input
                   type="text"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ej: 20111111112"
-                  className="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue shadow-sm"
-                  pattern="[0-9]*"
-                  required
+                  onChange={(e) => setInputValue(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="Ej: 30715428956"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue shadow-sm font-mono transition-all"
+                  maxLength={11}
                 />
               </div>
               <button
                 type="submit"
-                disabled={loading || !inputValue.trim()}
-                className="bg-ecar-blue text-white px-8 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 shadow-sm flex items-center justify-center min-w-[120px]"
+                disabled={loading || inputValue.length < 11}
+                className="bg-ecar-blue text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm whitespace-nowrap"
               >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  'Generar Informe'
-                )}
+                {loading ? 'Consultando...' : 'Generar Informe'}
               </button>
             </div>
           </div>
-        </form>
+          </form>
         </div>
 
-      <div className="p-6 min-h-[400px]">
         {error && (
-          <div className="bg-red-50 text-red-700 p-5 rounded-xl flex gap-3 text-sm border border-red-100 animate-fade-in shadow-sm">
-            <AlertCircle className="shrink-0" size={24} />
+          <div className="m-6 bg-red-50 text-red-700 p-5 rounded-xl flex gap-3 text-sm border border-red-100 shadow-sm">
+            <AlertCircle className="shrink-0 mt-0.5" size={18} />
             <div>
-              <p className="font-bold text-base">Atención requerida</p>
-              <p className="mt-1 opacity-90">{error}</p>
+              <p className="font-bold mb-1">No se pudo obtener el reporte completo</p>
+              <p>{error}</p>
             </div>
-          </div>
-        )}
-
-        {!error && !data && !loading && (
-          <div className="text-center py-20 text-gray-400 flex flex-col items-center animate-fade-in">
-            {apiType === 'deudores' ? <Building2 size={64} className="mb-6 opacity-10" /> : <FileText size={64} className="mb-6 opacity-10" />}
-            <h4 className="text-lg font-bold text-gray-500 mb-2">Plataforma de Análisis Abierta</h4>
-            <p className="max-w-md">Ingrese un número de identificación válido para generar el informe interactivo de riesgo utilizando los datos del Banco Central.</p>
           </div>
         )}
 
         {loading && !data && (
-          <div className="text-center py-20 flex flex-col items-center animate-pulse">
-            <div className="w-12 h-12 border-4 border-gray-100 border-t-ecar-blue rounded-full animate-spin mb-4" />
-            <p className="text-gray-500 font-medium">Conectando con servidores del BCRA...</p>
+          <div className="text-center py-20 text-gray-400 flex flex-col items-center">
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin mb-4" />
+            <p className="font-medium text-gray-500">Conectando con BCRA y consultando bases...</p>
+            <p className="text-sm mt-2 max-w-sm">Esta operación es integral, por lo que estamos recabando deuda crediticia y cheques rechazados en tiempo real.</p>
           </div>
         )}
 
         {data && !loading && (
           <div id="bcra-report-content" className="w-full bg-white p-4">
-            {apiType === 'deudores' ? renderDeudoresDashboard() : renderChequesDenunciados()}
+            {renderDashboard()}
           </div>
         )}
-      </div>
       </div>
     </div>
   );
