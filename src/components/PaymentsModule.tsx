@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Banknote, Plus, X, Save, Trash2, Check, Download, Calendar,
-  Edit2, ChevronRight, ArrowLeft, Building2, Users
+  Edit2, ChevronRight, ArrowLeft, Building2
 } from 'lucide-react';
 import {
   useWeeklyPayments, useCreateWeeklyPayment,

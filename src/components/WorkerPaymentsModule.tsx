@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   HardHat, Search, Download, Users, UserCheck, UserX,
-  DollarSign, Eye, ChevronDown, ChevronUp
+  DollarSign, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useEmployees } from '../hooks/useData';
 
@@ -16,7 +16,7 @@ export const WorkerPaymentsModule: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'terminated'>('all');
   const [sortField, setSortField] = useState<'name' | 'monto'>('name');
   const [sortAsc, setSortAsc] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId] = useState<string | null>(null);
 
   // Filter & sort
   const filtered = useMemo(() => {

@@ -507,4 +507,18 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
     steps: [],
     tips: []
   },
+  worker_payments: {
+    title: 'Pagos a Obreros',
+    description: 'Maestro de obreros con datos bancarios, montos de referencia y exportación PDF.',
+    steps: [
+      'Revisá la tabla con todos los obreros y sus datos bancarios.',
+      'Usá los filtros para buscar por nombre, CUIL o alias.',
+      'Exportá la planilla a PDF para impresión o archivo.',
+    ],
+    tips: [
+      'El monto de referencia se toma del campo retribución pactada del legajo.',
+      'Los obreros inactivos se muestran con opacidad reducida.',
+      'Podés ordenar por nombre o monto haciendo clic en la columna.',
+    ],
+  },
 };
