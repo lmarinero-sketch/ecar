@@ -58,8 +58,9 @@ const getSituationLabel = (sit: number) => {
 const mockAfipData = (cuit: string | number) => {
   const cuitStr = String(cuit);
   const isCompany = cuitStr.startsWith('30') || cuitStr.startsWith('33');
+  const isUser = cuitStr === '27434893483';
   const lastDigit = parseInt(cuitStr.slice(-1)) || 0;
-  const isRI = isCompany || lastDigit > 4;
+  const isRI = isCompany || isUser || lastDigit > 4;
   
   return {
     estado: 'ACTIVO',
@@ -395,10 +396,32 @@ export const BcraCreditInfo: React.FC = () => {
 
     return (
       <div className="space-y-6">
+        {/* PREMIUM HEADER BANNER */}
+        <div className="bg-gradient-to-r from-[#0B2240] to-slate-800 rounded-2xl overflow-hidden shadow-xl p-6 relative flex flex-col md:flex-row items-start md:items-center justify-between text-white border border-slate-700/50">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <Building2 size={120} />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-1">{nombre}</h2>
+            <div className="flex items-center gap-3 text-slate-300 font-mono tracking-widest text-sm">
+              <span>CUIT: {cuitIdentificacion}</span>
+              <span className="w-1 h-1 rounded-full bg-slate-500"></span>
+              <span>Ref. BCRA</span>
+            </div>
+          </div>
+          <div className="relative z-10 mt-4 md:mt-0 text-left md:text-right bg-black/20 p-3 rounded-xl border border-white/10 backdrop-blur-md">
+            <p className="text-xs text-slate-300 uppercase font-semibold tracking-wider mb-1">Información actualizada al</p>
+            <div className="flex items-center gap-2 justify-start md:justify-end">
+              <Clock size={16} className="text-red-400" />
+              <p className="font-mono font-bold text-white tracking-widest text-lg">{lastPeriod ? formatPeriod(lastPeriod.periodo) : 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
         {/* AFIP & AI INSIGHTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
-            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
               <Landmark size={18} className="text-white" />
               <h4 className="font-bold text-white text-sm uppercase tracking-wider">Padrón AFIP (Constancia)</h4>
             </div>
@@ -428,8 +451,8 @@ export const BcraCreditInfo: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col transition-all duration-300 hover:shadow-md">
-            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col transition-all duration-300 hover:shadow-lg">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
               <BrainCircuit size={18} className="text-red-500" />
               <h4 className="font-bold text-white text-sm uppercase tracking-wider">AI Insights: Análisis de Crédito</h4>
             </div>
@@ -453,18 +476,7 @@ export const BcraCreditInfo: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white uppercase tracking-wider">{nombre}</h2>
-              <p className="text-sm text-slate-300 font-mono mt-1 tracking-widest">CUIT: {cuitIdentificacion}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Último Período (Deuda)</p>
-              <p className="font-mono font-bold text-white tracking-widest">{lastPeriod ? formatPeriod(lastPeriod.periodo) : 'N/A'}</p>
-            </div>
-          </div>
-          
+        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg">
           {worstSituation > 2 && (
             <div className="bg-red-50 text-red-700 px-4 py-3 border-b border-red-100 flex items-center gap-2 text-sm">
               <AlertCircle size={16} />
@@ -513,8 +525,8 @@ export const BcraCreditInfo: React.FC = () => {
         {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {historyChartData.length > 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
-              <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
+            <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg flex flex-col">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
                 <Activity size={18} className="text-white" />
                 <h4 className="font-bold text-white text-sm uppercase tracking-wider">Progresión de Deuda Bancaria</h4>
               </div>
@@ -552,8 +564,8 @@ export const BcraCreditInfo: React.FC = () => {
           )}
 
           {chequesChartData.length > 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
-              <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
+            <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg flex flex-col">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2">
                 <FileWarning size={18} className="text-red-500" />
                 <h4 className="font-bold text-white text-sm uppercase tracking-wider">Progresión Cheques Impagos</h4>
               </div>
@@ -594,8 +606,8 @@ export const BcraCreditInfo: React.FC = () => {
 
         {/* BANK DISTRIBUTION CHART */}
         {barChartData.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md flex flex-col">
-            <div className="bg-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
+          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg flex flex-col">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
               <Building2 size={18} className="text-white" />
               <h4 className="font-bold text-white text-sm uppercase tracking-wider">Distribución por Entidad Bancaria (Últ. Mes)</h4>
             </div>
