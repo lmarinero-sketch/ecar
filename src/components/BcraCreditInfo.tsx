@@ -126,28 +126,68 @@ export const BcraCreditInfo: React.FC = () => {
 
     setIsGeneratingPdf(true);
     try {
+      const originalWidth = reportElement.style.width;
+      const originalMaxW = reportElement.style.maxWidth;
+      reportElement.style.width = '1000px';
+      reportElement.style.maxWidth = '1000px';
+
       const canvas = await html2canvas(reportElement, {
         scale: 2,
         useCORS: true,
         logging: false
       });
       
+      reportElement.style.width = originalWidth;
+      reportElement.style.maxWidth = originalMaxW;
+
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const doc = new jsPDF('p', 'pt', 'a4');
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const COLOR_BLUE = '#0B2240'; 
+      const COLOR_RED = '#D22027'; 
+      const FONT_TITLE = 'helvetica';
+
+      try {
+        const response = await fetch('/logoECAR.png');
+        if (response.ok) {
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          doc.addImage(base64, 'PNG', 40, 40, 100, 35);
+        }
+      } catch (e) {
+        console.warn('No se pudo cargar el logo', e);
+      }
       
-      pdf.addImage('/logoECAR.png', 'PNG', 10, 10, 30, 30);
-      pdf.setFontSize(18);
-      pdf.text('Informe de Verificacion BCRA', 50, 20);
-      pdf.setFontSize(12);
-      pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 50, 28);
-      pdf.text(`Identificador: ${inputValue}`, 50, 34);
+      doc.setFont(FONT_TITLE, 'bold');
+      doc.setTextColor(COLOR_BLUE);
+      doc.setFontSize(16);
+      doc.text('INFORME DE VERIFICACIÓN', 250, 55);
+      doc.text('BCRA & AFIP', 250, 75);
 
-      pdf.addImage(imgData, 'PNG', 10, 50, pdfWidth - 20, pdfHeight - 20);
+      doc.setFont(FONT_TITLE, 'normal');
+      doc.setTextColor('#666666');
+      doc.setFontSize(10);
+      doc.text(`Identificador: ${inputValue}`, 250, 100);
+      doc.text(`Generado: ${new Date().toLocaleDateString('es-AR')} ${new Date().toLocaleTimeString('es-AR', {hour: '2-digit', minute:'2-digit'})}`, 250, 115);
 
-      pdf.save(`Informe_BCRA_${inputValue}.pdf`);
+      const barY = 140;
+      const barHeight = 12;
+      doc.setFillColor(COLOR_RED);
+      doc.rect(40, barY, 150, barHeight, 'F');
+      doc.setFillColor(COLOR_BLUE);
+      doc.rect(190, barY, 365, barHeight, 'F');
+
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const imgWidth = pdfWidth - 80;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      doc.addImage(imgData, 'PNG', 40, 170, imgWidth, imgHeight);
+
+      doc.save(`Informe_BCRA_${inputValue}.pdf`);
     } catch (err) {
       console.error('Error generando PDF', err);
     } finally {
