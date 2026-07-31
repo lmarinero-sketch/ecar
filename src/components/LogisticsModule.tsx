@@ -665,7 +665,7 @@ const DeliveriesTab: React.FC<{
                           <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Autorizar Entrega">
                             <CheckCircle2 size={16} />
                           </button>
-                          <button onClick={() => setRejectingDelivery(d)} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
+                          <button onClick={() => { if(confirm('¿Seguro que deseas rechazar esta entrega?')) changeStatus(d.id, 'rechazado') }} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
                             <X size={16} />
                           </button>
                         </>
