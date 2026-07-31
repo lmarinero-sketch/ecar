@@ -741,7 +741,7 @@ export type PurchaseRequest = {
   tenant_id: string;
   project_id: string | null;
   budget_id: string | null;
-  request_type: 'purchase' | 'quote';
+  request_type: 'purchase' | 'quote' | 'logistics';
   requested_by: string | null;
   urgency: 'low' | 'normal' | 'urgent';
   urgency_reason?: string | null;

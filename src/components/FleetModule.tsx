@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users, QrCode, Printer
 } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
@@ -64,6 +64,7 @@ export const FleetModule: React.FC = () => {
   const [showNew, setShowNew] = useState(false);
   const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
   const [deleteTarget, setDeleteTarget] = useState<FuelVehicle | null>(null);
+  const [qrVehicle, setQrVehicle] = useState<FuelVehicle | null>(null);
   const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', tracking_type: 'km' as 'km'|'hours', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
 
   const maintenanceDue = useMemo(() =>
@@ -432,6 +433,9 @@ export const FleetModule: React.FC = () => {
                     <button onClick={() => isEditing ? setEditId(null) : startEdit(v)} className={`p-2 rounded-lg transition-all ${isEditing ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}>
                       {isEditing ? <X size={16} /> : <Edit2 size={16} />}
                     </button>
+                    <button onClick={() => setQrVehicle(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-500 transition-all" title="Imprimir QR para Parte Diario">
+                      <QrCode size={16} />
+                    </button>
                     <button onClick={() => setDeleteTarget(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all" title="Eliminar vehículo">
                       <Trash2 size={16} />
                     </button>
@@ -604,6 +608,26 @@ export const FleetModule: React.FC = () => {
                 disabled={deleteVehicle.isPending}
                 className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
               >Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {qrVehicle && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden text-center p-6">
+            <h3 className="font-bold text-xl text-gray-800 mb-1">{qrVehicle.code}</h3>
+            <p className="text-sm text-gray-500 mb-6">Escaneá este código para iniciar el Parte Diario.</p>
+            <div className="bg-white p-4 inline-block border-4 border-ecar-blue rounded-xl mb-4" id="qr-print-area">
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/checkin/' + qrVehicle.id)}`} alt="QR Code" className="w-48 h-48 mx-auto" />
+            </div>
+            <p className="text-xs text-blue-600 break-all bg-blue-50 p-2 rounded mb-6 font-mono border border-blue-100">
+              {window.location.origin + '/checkin/' + qrVehicle.id}
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setQrVehicle(null)} className="btn-secondary flex-1">Cerrar</button>
+              <button onClick={() => window.open(window.location.origin + '/checkin/' + qrVehicle.id, '_blank')} className="btn-primary flex-1">Ver Link</button>
             </div>
           </div>
         </div>

@@ -140,7 +140,10 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   };
 
   const handleSubmit = async () => {
-    if (!form.load_date || !form.vehicle_code || !form.liters) return;
+    if (!form.load_date || !form.vehicle_code || !form.liters || (!form.total_amount && !form.price_per_liter)) {
+      alert("Por favor, ingrese el Importe Total o el Precio por Litro facturado.");
+      return;
+    }
     const nextNum = loads.length + 1;
     await createLoad.mutateAsync({ ...form, load_number: `CARGA-${String(nextNum).padStart(4, '0')}`, validation_status: 'pending', load_source: 'station', created_by: 'web' });
     setForm({});
@@ -263,7 +266,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
           </div>
-          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters} className="btn-primary disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (!form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
         </div>

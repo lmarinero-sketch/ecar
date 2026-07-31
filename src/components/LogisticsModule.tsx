@@ -2,28 +2,31 @@ import React, { useState, useMemo } from 'react';
 import {
   Warehouse, Truck, Repeat, Wrench, Plus, ChevronDown, ChevronUp, Package, Clock,
   ShieldAlert, AlertTriangle, ArrowRight, X, Save, Calendar, MapPin,
-  CheckCircle2, PackageCheck, FileText, TrendingUp, Search
+  CheckCircle2, PackageCheck, FileText, TrendingUp, Search, ShoppingCart
 } from 'lucide-react';
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
   useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog,
-  useUpdateInventoryItem, useCreateInventoryMovement
+  useUpdateInventoryItem, useCreateInventoryMovement,
+  usePurchaseRequests, useUpdatePurchaseRequest
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 
-type Tab = 'dashboard' | 'deliveries' | 'fleet' | 'maintenance';
+type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'fleet' | 'maintenance';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   pendiente: { label: 'Pendiente', cls: 'badge-warning' },
+  pendiente_autorizacion: { label: 'Pendiente Aut.', cls: 'bg-orange-100 text-orange-800' },
   aprobado: { label: 'Aprobado', cls: 'bg-purple-100 text-purple-800' },
   en_transito: { label: 'En Tránsito', cls: 'badge-info' },
   entregado: { label: 'Entregado', cls: 'badge-success' },
   cancelado: { label: 'Cancelado', cls: 'badge-neutral' },
+  rechazado: { label: 'Rechazado', cls: 'bg-red-100 text-red-800' },
 };
 
 const MAINT_TYPE_LABEL: Record<string, string> = {
@@ -54,6 +57,11 @@ export const LogisticsModule: React.FC = () => {
   // Logistics-own tables
   const { data: deliveries = [], isLoading: loadingDeliveries } = useLogisticsDeliveries();
   const { data: maintenanceLogs = [], isLoading: loadingMaintenance } = useLogisticsMaintenanceLog();
+  const { data: purchaseRequests = [] } = usePurchaseRequests();
+  const updatePurchaseRequest = useUpdatePurchaseRequest();
+
+  // Filtrar pedidos que vengan a logística
+  const obraRequests = useMemo(() => purchaseRequests.filter(r => r.request_type === 'logistics'), [purchaseRequests]);
 
   // KPIs computed from real data
   const kpis = useMemo(() => {
@@ -73,7 +81,8 @@ export const LogisticsModule: React.FC = () => {
 
   const tabs: { id: Tab; icon: React.ElementType; label: string }[] = [
     { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
-    { id: 'deliveries', icon: Repeat, label: 'Entregas a Obra' },
+    { id: 'obra_requests', icon: Package, label: 'Pedidos de Obra' },
+    { id: 'deliveries', icon: Repeat, label: 'Logística y Entregas' },
     { id: 'fleet', icon: Truck, label: 'Flota & Máquinas' },
     { id: 'maintenance', icon: Wrench, label: 'Mantenimiento' },
   ];
@@ -163,6 +172,9 @@ export const LogisticsModule: React.FC = () => {
         {activeTab === 'dashboard' && (
           <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
+        {activeTab === 'obra_requests' && (
+          <ObraRequestsTab requests={obraRequests} updateRequest={updatePurchaseRequest} />
+        )}
         {activeTab === 'deliveries' && (
           <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
@@ -173,6 +185,85 @@ export const LogisticsModule: React.FC = () => {
           <MaintenanceTab logs={maintenanceLogs} loading={loadingMaintenance} allVehicles={allVehicles} />
         )}
       </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════ OBRA REQUESTS TAB ═══════════════════════ */
+
+const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ requests, updateRequest }) => {
+  const pending = requests.filter(r => r.status === 'pending');
+  const processed = requests.filter(r => r.status !== 'pending');
+
+  const handleDeriveToPurchases = async (reqId: string) => {
+    if (confirm('¿Derivar este pedido a Compras de forma definitiva?')) {
+      await updateRequest.mutateAsync({ id: reqId, request_type: 'purchase', status: 'pending' });
+    }
+  };
+
+  const handleMarkAsResolved = async (reqId: string) => {
+    if (confirm('¿Marcar como resuelto? (Ej: Ya despachaste el material del pañol)')) {
+      await updateRequest.mutateAsync({ id: reqId, status: 'approved' });
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <h3 className="font-bold text-gray-800 flex items-center gap-2"><Package size={20} className="text-ecar-blue" /> Pedidos Recibidos desde Obra</h3>
+      <p className="text-sm text-gray-500">Logística evalúa los pedidos de Obra. Si hay stock, lo resuelve enviándolo. Si no, lo deriva a Compras.</p>
+
+      {pending.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <PackageCheck size={48} className="mx-auto mb-3 text-emerald-400 opacity-50" />
+          <p className="font-bold text-gray-700">No hay pedidos pendientes</p>
+          <p className="text-sm text-gray-500">Todo el material solicitado ha sido procesado.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {pending.map(r => (
+            <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start">
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  Obra: <span className="text-ecar-blue">{r.project?.name || 'S/D'}</span>
+                </p>
+                <div className="space-y-2 mt-3">
+                  {r.items?.map((it: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2 text-sm font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-ecar-blue block" />
+                      {it.quantity} {it.unit} - {it.description}
+                    </div>
+                  ))}
+                </div>
+                {r.notes && <p className="text-xs text-gray-500 mt-3 italic text-orange-600 bg-orange-50 p-2 rounded">Nota: {r.notes}</p>}
+                {r.urgency === 'urgent' && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold mt-2"><AlertTriangle size={12} /> Urgente</span>}
+              </div>
+              <div className="flex flex-col gap-2 min-w-[200px] w-full md:w-auto">
+                <button onClick={() => handleMarkAsResolved(r.id)} className="btn-primary flex items-center justify-center gap-2 w-full">
+                  <CheckCircle2 size={16} /> Resolver con Stock (Pañol)
+                </button>
+                <button onClick={() => handleDeriveToPurchases(r.id)} className="bg-white border-2 border-ecar-blue text-ecar-blue hover:bg-ecar-blue hover:text-white px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full">
+                  <ShoppingCart size={16} /> Derivar a Compras
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {processed.length > 0 && (
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h4 className="font-bold text-gray-700 text-sm mb-4">Pedidos Procesados Recientemente</h4>
+          <div className="space-y-3">
+            {processed.slice(0, 10).map(r => (
+              <div key={r.id} className="text-xs bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between opacity-70">
+                <span className="font-bold">{r.project?.name}</span>
+                <span className="truncate flex-1 px-4">{r.items?.map((i:any) => i.description).join(', ')}</span>
+                <span className="font-mono text-gray-400">{r.created_at.split('T')[0]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -320,6 +411,8 @@ const DeliveriesTab: React.FC<{
   const createDelivery = useCreateLogisticsDelivery();
   const updateDelivery = useUpdateLogisticsDelivery();
   const { profile } = useAuth();
+  const [rejectingDelivery, setRejectingDelivery] = useState<any>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const [form, setForm] = useState({
     project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '',
@@ -354,6 +447,7 @@ const DeliveriesTab: React.FC<{
       destination: form.destination || null,
       notes: form.notes || null,
       created_by: profile?.full_name || null,
+      status: 'pendiente_autorizacion',
       items: form.items.filter(i => i.description.trim()).map(i => ({
         description: i.description,
         quantity: i.quantity,
@@ -364,8 +458,8 @@ const DeliveriesTab: React.FC<{
     setShowForm(false);
   };
 
-  const changeStatus = async (id: string, status: string) => {
-    await updateDelivery.mutateAsync({ id, status } as any);
+  const changeStatus = async (id: string, status: string, reason?: string) => {
+    await updateDelivery.mutateAsync({ id, status, rejection_reason: reason || null } as any);
   };
 
   const handleReceiveDelivery = async () => {
@@ -373,7 +467,7 @@ const DeliveriesTab: React.FC<{
     
     // Descontar inventario para cada ítem de la entrega
     for (const dItem of receivingDelivery.items || []) {
-      if (dItem.item_id) {
+      if (dItem.item_id && checklistValues[dItem.id]) {
         const inv = inventoryItems.find(i => i.id === dItem.item_id);
         if (inv) {
           const newStock = Math.max(0, inv.current_stock - Number(dItem.quantity));
@@ -393,7 +487,9 @@ const DeliveriesTab: React.FC<{
       }
     }
     
-    await updateDelivery.mutateAsync({ id: receivingDelivery.id, status: 'entregado' } as any);
+    const allChecked = (receivingDelivery.items || []).every((it: any) => checklistValues[it.id]);
+    const notes = !allChecked ? 'Recepción parcial (faltaron ítems).' : '';
+    await updateDelivery.mutateAsync({ id: receivingDelivery.id, status: 'entregado', notes: receivingDelivery.notes ? receivingDelivery.notes + '. ' + notes : notes } as any);
     setReceivingDelivery(null);
     setChecklistValues({});
   };
@@ -401,7 +497,7 @@ const DeliveriesTab: React.FC<{
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Entregas a Obra</h3>
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Logística y Entregas</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -414,10 +510,12 @@ const DeliveriesTab: React.FC<{
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded-lg text-sm px-3 py-2">
             <option value="all">Todos</option>
-            <option value="pendiente">Pendientes</option>
+            <option value="pendiente">Pendientes Grales</option>
+            <option value="pendiente_autorizacion">Pendientes Aut.</option>
             <option value="aprobado">Aprobados</option>
             <option value="en_transito">En Tránsito</option>
             <option value="entregado">Entregados</option>
+            <option value="rechazado">Rechazados</option>
             <option value="cancelado">Cancelados</option>
           </select>
           <button onClick={() => setShowForm(!showForm)} className="btn-primary">
@@ -564,10 +662,15 @@ const DeliveriesTab: React.FC<{
                   </td>
                   <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      {d.status === 'pendiente' && (
-                        <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Aprobar Entrega">
-                          <CheckCircle2 size={16} />
-                        </button>
+                      {(d.status === 'pendiente' || d.status === 'pendiente_autorizacion') && (
+                        <>
+                          <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Autorizar Entrega">
+                            <CheckCircle2 size={16} />
+                          </button>
+                          <button onClick={() => setRejectingDelivery(d)} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
+                            <X size={16} />
+                          </button>
+                        </>
                       )}
                       {d.status === 'aprobado' && (
                         <button onClick={() => changeStatus(d.id, 'en_transito')} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Despachar a obra">
@@ -575,12 +678,21 @@ const DeliveriesTab: React.FC<{
                         </button>
                       )}
                       {d.status === 'en_transito' && (
-                        <button onClick={() => setReceivingDelivery(d)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
-                          <PackageCheck size={16} />
-                        </button>
+                        <>
+                          <button onClick={() => {
+                            // En un entorno real se usaría window.location o un store setter para cambiar el módulo.
+                            // Por ahora simulamos un link global a "tracking" si existe.
+                            window.location.hash = '#tracking';
+                          }} className="text-blue-400 hover:bg-blue-50 p-1 rounded" title="Ver Mapa en Vivo">
+                            <MapPin size={16} />
+                          </button>
+                          <button onClick={() => setReceivingDelivery(d)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
+                            <PackageCheck size={16} />
+                          </button>
+                        </>
                       )}
-                      {(d.status === 'pendiente' || d.status === 'aprobado' || d.status === 'en_transito') && (
-                        <button onClick={() => changeStatus(d.id, 'cancelado')} className="text-red-400 hover:bg-red-50 p-1 rounded" title="Cancelar">
+                      {(d.status === 'pendiente' || d.status === 'pendiente_autorizacion' || d.status === 'aprobado' || d.status === 'en_transito' || d.status === 'rechazado') && (
+                        <button onClick={() => changeStatus(d.id, 'cancelado')} className="text-gray-400 hover:bg-gray-50 p-1 rounded" title="Cancelar definitivamente">
                           <X size={16} />
                         </button>
                       )}

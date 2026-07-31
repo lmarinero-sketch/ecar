@@ -428,7 +428,7 @@ export const WbsModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-ecar-blue to-ecar-blue" />
         <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gestión de Proyectos</h3>
+          <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gerencia de Obras</h3>
           <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GPP-01 — Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
         </div>
       </div>
@@ -619,17 +619,6 @@ export const WbsModule: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
                       />
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Presupuesto Asignado ($)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-400 font-mono text-sm font-bold">$</span>
-                        <input 
-                          type="number" 
-                          value={taskForm.budget_cost_ars} 
-                          onChange={e => setTaskForm({...taskForm, budget_cost_ars: e.target.value})} 
-                          className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -663,10 +652,10 @@ export const WbsModule: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-0.5 bg-gray-100 rounded-xl p-1">
                       {(['planificacion', 'programacion', 'ejecucion', 'completado'] as const).map(f => {
                         const isSelected = taskForm.phase === f;
-                        const labels: Record<string, string> = { planificacion: 'Planif.', programacion: 'Program.', ejecucion: 'Ejecuc.', completado: 'Complet.' };
+                        const labels: Record<string, string> = { planificacion: 'Planificación (Objetivo Macro)', programacion: 'Programación', ejecucion: 'En Ejecución', completado: 'Completado' };
                         return (
                           <button key={f} type="button" onClick={() => setTaskForm({ ...taskForm, phase: f })}
-                            className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-white text-[#115C9C] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800'}`}
+                            className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-white text-[#115C9C] shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-800'}`}
                           >
                             {labels[f]}
                           </button>
@@ -1880,6 +1869,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     if (items.length === 0) return;
     await createRequest.mutateAsync({
       project_id: projectId,
+      request_type: 'logistics',
       urgency,
       status: 'pending',
       notes: notes || null,

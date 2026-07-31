@@ -10,6 +10,7 @@ import {
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
   Activity, BookOpen, FileText, PieChart, Mail
 } from 'lucide-react';
+import { usePurchaseRequests } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 import { TutorialPanel } from './TutorialPanel';
@@ -195,6 +196,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
 
   const { startTour } = useOnboardingStore();
+  const { data: purchaseRequests = [] } = usePurchaseRequests();
+
+  const pendingLogistics = purchaseRequests.filter(r => r.request_type === 'logistics' && r.status === 'pending').length;
+  const pendingPurchases = purchaseRequests.filter(r => (r.request_type === 'purchase' || !r.request_type) && r.status === 'pending').length;
 
   // Trigger content animation on module change
   useEffect(() => {
@@ -315,6 +320,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         expanded={expanded}
                         onSelect={handleSelect}
                         delay={idx * 20}
+                        badgeCount={item.id === 'logistics' ? pendingLogistics : item.id === 'purchases' ? pendingPurchases : 0}
                       />
                     ))}
                   </div>
@@ -564,7 +570,8 @@ const SidebarItem: React.FC<{
   expanded: boolean;
   onSelect: (id: ModuleId) => void;
   delay?: number;
-}> = ({ id, icon: Icon, active, expanded, onSelect, delay: _delay = 0 }) => {
+  badgeCount?: number;
+}> = ({ id, icon: Icon, active, expanded, onSelect, delay: _delay = 0, badgeCount = 0 }) => {
   const isActive = active === id;
   const accent = MODULE_ACCENT[id] || 'bg-ecar-blue';
 
@@ -616,6 +623,13 @@ const SidebarItem: React.FC<{
             {SHORT_LABELS[id]}
           </span>
         </>
+      )}
+
+      {/* Badge Notification */}
+      {badgeCount > 0 && (
+        <span className={`absolute ${expanded ? 'right-2' : 'top-1 right-1'} bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[18px] h-[18px]`}>
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
       )}
     </button>
   );
