@@ -142,9 +142,9 @@ const ReportForm: React.FC<{
   const kmInvalid = kmValue !== null && selectedVehicle?.tracking_type !== 'hours' && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
   const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && selectedVehicle?.current_hours != null && kmValue < selectedVehicle.current_hours;
   const isInvalid = kmInvalid || hoursInvalid;
-  const computedCondition: VehicleCondition = hasDamage || faultsCount >= 3
+  const computedCondition: VehicleCondition = faultsCount >= 3
     ? 'fuera_de_servicio'
-    : faultsCount > 0
+    : (hasDamage || faultsCount > 0)
       ? 'con_observaciones'
       : 'operativo';
 

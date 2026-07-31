@@ -7,7 +7,8 @@ import {
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
-  useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog
+  useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog,
+  useUpdateInventoryItem, useCreateInventoryMovement
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
@@ -19,6 +20,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   pendiente: { label: 'Pendiente', cls: 'badge-warning' },
+  aprobado: { label: 'Aprobado', cls: 'bg-purple-100 text-purple-800' },
   en_transito: { label: 'En Tránsito', cls: 'badge-info' },
   entregado: { label: 'Entregado', cls: 'badge-success' },
   cancelado: { label: 'Cancelado', cls: 'badge-neutral' },
@@ -71,7 +73,7 @@ export const LogisticsModule: React.FC = () => {
 
   const tabs: { id: Tab; icon: React.ElementType; label: string }[] = [
     { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
-    { id: 'deliveries', icon: Repeat, label: 'Acopios & Entregas' },
+    { id: 'deliveries', icon: Repeat, label: 'Entregas a Obra' },
     { id: 'fleet', icon: Truck, label: 'Flota & Máquinas' },
     { id: 'maintenance', icon: Wrench, label: 'Mantenimiento' },
   ];
@@ -323,6 +325,10 @@ const DeliveriesTab: React.FC<{
     project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '',
     items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] as { item_id: string; description: string; quantity: number; unit: string }[],
   });
+  const [receivingDelivery, setReceivingDelivery] = useState<any>(null);
+  const [checklistValues, setChecklistValues] = useState<Record<string, boolean>>({});
+  const updateItem = useUpdateInventoryItem();
+  const createMovement = useCreateInventoryMovement();
 
   const filtered = useMemo(() => {
     let list = deliveries;
@@ -362,10 +368,40 @@ const DeliveriesTab: React.FC<{
     await updateDelivery.mutateAsync({ id, status } as any);
   };
 
+  const handleReceiveDelivery = async () => {
+    if (!receivingDelivery) return;
+    
+    // Descontar inventario para cada ítem de la entrega
+    for (const dItem of receivingDelivery.items || []) {
+      if (dItem.item_id) {
+        const inv = inventoryItems.find(i => i.id === dItem.item_id);
+        if (inv) {
+          const newStock = Math.max(0, inv.current_stock - Number(dItem.quantity));
+          await updateItem.mutateAsync({ id: inv.id, current_stock: newStock } as any);
+          await createMovement.mutateAsync({
+            tenant_id: inv.tenant_id,
+            item_id: inv.id,
+            movement_type: 'salida',
+            quantity: Number(dItem.quantity),
+            reference_type: 'entrega',
+            reference_id: receivingDelivery.id,
+            notes: `Entrega a ${(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}`,
+            created_by: profile?.full_name || 'Sistema',
+            date: new Date().toISOString()
+          } as any);
+        }
+      }
+    }
+    
+    await updateDelivery.mutateAsync({ id: receivingDelivery.id, status: 'entregado' } as any);
+    setReceivingDelivery(null);
+    setChecklistValues({});
+  };
+
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Acopios & Entregas a Obra</h3>
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Entregas a Obra</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -379,6 +415,7 @@ const DeliveriesTab: React.FC<{
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded-lg text-sm px-3 py-2">
             <option value="all">Todos</option>
             <option value="pendiente">Pendientes</option>
+            <option value="aprobado">Aprobados</option>
             <option value="en_transito">En Tránsito</option>
             <option value="entregado">Entregados</option>
             <option value="cancelado">Cancelados</option>
@@ -528,16 +565,21 @@ const DeliveriesTab: React.FC<{
                   <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       {d.status === 'pendiente' && (
-                        <button onClick={() => changeStatus(d.id, 'en_transito')} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Marcar en tránsito">
+                        <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Aprobar Entrega">
+                          <CheckCircle2 size={16} />
+                        </button>
+                      )}
+                      {d.status === 'aprobado' && (
+                        <button onClick={() => changeStatus(d.id, 'en_transito')} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Despachar a obra">
                           <ArrowRight size={16} />
                         </button>
                       )}
                       {d.status === 'en_transito' && (
-                        <button onClick={() => changeStatus(d.id, 'entregado')} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Marcar entregado">
-                          <CheckCircle2 size={16} />
+                        <button onClick={() => setReceivingDelivery(d)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
+                          <PackageCheck size={16} />
                         </button>
                       )}
-                      {(d.status === 'pendiente' || d.status === 'en_transito') && (
+                      {(d.status === 'pendiente' || d.status === 'aprobado' || d.status === 'en_transito') && (
                         <button onClick={() => changeStatus(d.id, 'cancelado')} className="text-red-400 hover:bg-red-50 p-1 rounded" title="Cancelar">
                           <X size={16} />
                         </button>
@@ -554,6 +596,52 @@ const DeliveriesTab: React.FC<{
           <Repeat size={48} className="mx-auto mb-3 opacity-20" />
           <p>No hay entregas registradas.</p>
           <p className="text-xs mt-1">Programá una nueva entrega a obra usando el botón superior.</p>
+        </div>
+      )}
+
+      {/* Modal de Checklist de Recepción */}
+      {receivingDelivery && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex justify-between items-center">
+              <h2 className="font-bold text-lg flex items-center gap-2"><PackageCheck size={20} /> Checklist de Recepción en Obra</h2>
+              <button onClick={() => setReceivingDelivery(null)} className="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+            </div>
+            
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="bg-emerald-50 text-emerald-800 p-3 rounded-lg text-sm mb-4">
+                Por favor, confirmá la recepción de los siguientes materiales/herramientas en <strong>{(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}</strong>. Al confirmar, se descontarán del stock.
+              </div>
+              
+              <div className="space-y-2">
+                {(receivingDelivery.items || []).map((it: any) => (
+                  <label key={it.id} className="flex items-start gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="mt-1 w-4 h-4 text-emerald-600 rounded"
+                      checked={checklistValues[it.id] || false}
+                      onChange={(e) => setChecklistValues({...checklistValues, [it.id]: e.target.checked})}
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-800">{it.description}</div>
+                      <div className="text-sm text-gray-500">Cantidad: {it.quantity} {it.unit}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button onClick={() => setReceivingDelivery(null)} className="btn-secondary px-5 py-2">Cancelar</button>
+              <button 
+                onClick={handleReceiveDelivery} 
+                disabled={updateDelivery.isPending || (receivingDelivery.items || []).some((it: any) => !checklistValues[it.id])} 
+                className="btn-primary bg-emerald-600 hover:bg-emerald-700 border-none px-5 py-2 flex items-center gap-2 disabled:opacity-50"
+              >
+                <CheckCircle2 size={18} /> Confirmar Recepción Completa
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -124,9 +124,9 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const kmInvalid = kmValue !== null && vehicle?.tracking_type !== 'hours' && vehicle?.current_km != null && kmValue < vehicle.current_km;
   const hoursInvalid = kmValue !== null && vehicle?.tracking_type === 'hours' && vehicle?.current_hours != null && kmValue < vehicle.current_hours;
   const isInvalid = kmInvalid || hoursInvalid;
-  const computedCondition: VehicleCondition = hasDamage || faultsCount >= 3
+  const computedCondition: VehicleCondition = faultsCount >= 3
     ? 'fuera_de_servicio'
-    : faultsCount > 0
+    : (hasDamage || faultsCount > 0)
       ? 'con_observaciones'
       : 'operativo';
 

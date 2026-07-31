@@ -249,22 +249,20 @@ export const BcraCreditInfo: React.FC = () => {
 
   const chequesByMonth = new Map<string, number>();
   chequesSorted.forEach(c => {
-    if (!c.fechaPago && !c.fecha_pago) {
-      const dateStr = c.fechaRechazo || c.fecha_rechazo || c.fecha || '';
-      if (dateStr) {
-        let monthYear = '';
-        if (dateStr.includes('/')) {
-          const parts = dateStr.split('/');
-          if (parts.length === 3) monthYear = `${parts[2]}/${parts[1]}`;
-        } else if (dateStr.includes('-')) {
-          const parts = dateStr.split('-');
-          if (parts.length >= 2) monthYear = `${parts[0]}/${parts[1]}`;
-        } else if (dateStr.length >= 6) {
-           monthYear = `${dateStr.substring(0, 4)}/${dateStr.substring(4, 6)}`;
-        }
-        if (monthYear) {
-          chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (Number(c.monto) || 0));
-        }
+    const dateStr = c.fechaRechazo || c.fecha_rechazo || c.fecha || '';
+    if (dateStr) {
+      let monthYear = '';
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) monthYear = `${parts[2]}/${parts[1]}`;
+      } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 2) monthYear = `${parts[0]}/${parts[1]}`;
+      } else if (dateStr.length >= 6) {
+         monthYear = `${dateStr.substring(0, 4)}/${dateStr.substring(4, 6)}`;
+      }
+      if (monthYear) {
+        chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (Number(c.monto) || 0));
       }
     }
   });

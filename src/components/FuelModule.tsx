@@ -248,7 +248,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Importe Total</label>
-              <input readOnly value={form.total_amount ? `$ ${fmt(form.total_amount)}` : ''} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 font-mono font-bold" />
+              <input type="number" step="0.01" value={form.total_amount || ''} onChange={e => { const t = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">N° Vale</label>
@@ -293,7 +293,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                   <>
                     <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
                     <td><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
-                    <td className="font-mono font-bold text-sm">$ {fmt(editForm.total_amount)}</td>
+                    <td><input type="number" step="0.01" value={editForm.total_amount} onChange={e => { const t = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-24 px-2 py-1 border rounded text-sm font-mono font-bold" /></td>
                   </>
                 ) : (
                   <>

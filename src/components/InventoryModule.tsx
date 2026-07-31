@@ -11,6 +11,7 @@ import {
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest
 } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
 import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
@@ -36,6 +37,7 @@ const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: s
 const SHELF_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
 
 export const InventoryModule: React.FC = () => {
+  const { isAdmin } = useAuth();
   const { data: items, isLoading } = useInventoryItems();
   const { data: movements } = useInventoryMovements();
   const { data: assignments } = useToolAssignments();
@@ -538,7 +540,7 @@ export const InventoryModule: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
                 <div><label className="text-xs font-bold text-gray-500">Estantería</label><select value={newItem.shelf_id} onChange={e => setNewItem({ ...newItem, shelf_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Sin asignar</option>{(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}</select></div>
-                <div><label className="text-xs font-bold text-gray-500">Unidad</label><input value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="unidad, kg, m3" /></div>
+                <div><label className="text-xs font-bold text-gray-500">Unidad</label><select value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="unidad">Unidad (un)</option><option value="kg">Kilogramos (kg)</option><option value="tn">Toneladas (tn)</option><option value="l">Litros (l)</option><option value="m">Metros (m)</option><option value="m2">Metros Cuadrados (m2)</option><option value="m3">Metros Cúbicos (m3)</option><option value="bl">Bolsa (bl)</option><option value="cj">Caja (cj)</option><option value="hs">Horas (hs)</option><option value="gl">Global (gl)</option><option value="juego">Juego</option><option value="par">Par</option></select></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Stock Actual</label><input type="number" value={newItem.current_stock} onChange={e => setNewItem({ ...newItem, current_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
@@ -703,7 +705,7 @@ export const InventoryModule: React.FC = () => {
                           >
                             <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
                               <button onClick={(e) => { e.stopPropagation(); setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '', rotation: String(shelf.rotation || 0) }); setShowNewShelf(true); }} className="p-1 bg-blue-100 rounded-lg hover:bg-blue-200"><Edit3 size={12} className="text-blue-600" /></button>
-                              <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>
+                              {isAdmin && <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>}
                             </div>
                             <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
                               <div>
@@ -783,7 +785,7 @@ export const InventoryModule: React.FC = () => {
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver estantería"><Search size={14} className="text-gray-600" /></button>
                             <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
-                            <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>
+                            {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>}
                           </div>
                         </td>
                       </tr>

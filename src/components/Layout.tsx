@@ -49,7 +49,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   wbs: 'Planificación', invoicing: 'ARCA', purchases: 'Compras',
   purchase_requests: 'Pedidos', purchase_orders: 'OC / OT',
   finances: 'Finanzas', obligations: 'Alertas',
-  rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Acopios',
+  rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Entregas',
   fleet: 'Flota', certifications: 'Certificaciones', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',

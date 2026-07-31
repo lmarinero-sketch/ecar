@@ -1587,7 +1587,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   obligations: 'Alertas & Obligaciones',
   rrhh: 'Gerencia de RRHH',
   inventory: 'Inventario & Pañol',
-  logistics: 'Acopios & Entregas',
+  logistics: 'Entregas',
   fleet: 'Flota y Maquinaria',
   certifications: 'Certificaciones',
   field: 'Parte Diario de Obra',
@@ -1626,7 +1626,7 @@ export type LogisticsDelivery = {
   tenant_id: string;
   project_id: string | null;
   delivery_date: string;
-  status: 'pendiente' | 'en_transito' | 'entregado' | 'cancelado';
+  status: 'pendiente' | 'aprobado' | 'en_transito' | 'entregado' | 'cancelado';
   vehicle_id: string | null;
   driver_name: string | null;
   destination: string | null;
