@@ -5,10 +5,15 @@ import {
   Package, Briefcase, AlertTriangle,
 } from 'lucide-react';
 import {
+  LayoutDashboard, TrendingUp, Users, Truck, DollarSign, BarChart3,
+  Target, FileSignature, ShieldAlert,
+  Package, Briefcase, AlertTriangle, CalendarClock, MapPin, Clock, ArrowRight, CheckCircle2, ShoppingCart
+} from 'lucide-react';
+import {
   useProjects, useEmployees, useCheques, useInvoices,
   useOpportunities, usePurchaseOrders, useNonConformities,
   useScopeChanges, useSupplierEvaluations, useInventoryItems,
-  useFuelVehicles,
+  useFuelVehicles, usePurchaseRequests, useLogisticsDeliveries
 } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -32,8 +37,22 @@ export const BiDashboard: React.FC = () => {
   const { data: supplierEvals = [] } = useSupplierEvaluations();
   const { data: inventoryItems = [] } = useInventoryItems();
   const { data: vehicles = [] } = useFuelVehicles();
+  const { data: purchaseRequests = [] } = usePurchaseRequests();
+  const { data: deliveries = [] } = useLogisticsDeliveries();
 
   useEffect(() => { useImplementationStore.getState().completeItem('c2-25'); }, []);
+
+  // === OPERATIVA DEL DÍA (HOY) ===
+  const today = new Date().toISOString().split('T')[0];
+  
+  const chequesHoy = cheques.filter(c => c.due_date === today && c.status === 'pending');
+  const chequesPagarHoy = chequesHoy.filter(c => c.direction === 'payable').reduce((sum, c) => sum + c.amount_ars, 0);
+  const chequesCobrarHoy = chequesHoy.filter(c => c.direction === 'receivable').reduce((sum, c) => sum + c.amount_ars, 0);
+
+  const entregasEnTransito = deliveries.filter(d => d.status === 'en_transito');
+  
+  const pedidosHoy = purchaseRequests.filter(r => r.created_at.startsWith(today));
+  const pedidosUrgentesHoy = pedidosHoy.filter(r => r.urgency === 'urgent').length;
 
   // === KPIs Gerencia de Proyectos ===
   const activeProjects = projects.filter(p => p.status === 'active').length;
@@ -77,6 +96,85 @@ export const BiDashboard: React.FC = () => {
               <p className="text-blue-100 text-sm mt-1">Vista consolidada por gerencia · Actualización en tiempo real</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Operativa del Día (HOY) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Cheques Hoy */}
+        <div className={`light-card p-5 border-l-4 ${chequesHoy.length > 0 ? 'border-amber-500 bg-amber-50/20' : 'border-gray-200'} flex flex-col justify-between`}>
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2"><CalendarClock size={16} className={chequesHoy.length > 0 ? 'text-amber-500' : 'text-gray-400'} /> Vencimientos Hoy</h4>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${chequesHoy.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+              {chequesHoy.length} cheques
+            </span>
+          </div>
+          {chequesHoy.length > 0 ? (
+            <div className="space-y-3 mt-3">
+              {chequesPagarHoy > 0 && (
+                <div className="flex justify-between items-center text-sm border-b border-amber-100 pb-2">
+                  <span className="text-gray-600 font-medium">A Pagar</span>
+                  <span className="font-bold font-mono text-red-600">{formatARS(chequesPagarHoy)}</span>
+                </div>
+              )}
+              {chequesCobrarHoy > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600 font-medium">A Cobrar</span>
+                  <span className="font-bold font-mono text-emerald-600">{formatARS(chequesCobrarHoy)}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 mt-2">No hay cheques pendientes para la fecha actual.</p>
+          )}
+        </div>
+
+        {/* Camionetas en tránsito */}
+        <div className={`light-card p-5 border-l-4 ${entregasEnTransito.length > 0 ? 'border-blue-500 bg-blue-50/20' : 'border-gray-200'} flex flex-col justify-between`}>
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2"><MapPin size={16} className={entregasEnTransito.length > 0 ? 'text-blue-500' : 'text-gray-400'} /> Flota en Tránsito</h4>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${entregasEnTransito.length > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+              {entregasEnTransito.length} vehículos
+            </span>
+          </div>
+          {entregasEnTransito.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {entregasEnTransito.slice(0, 3).map(e => (
+                <div key={e.id} className="text-xs flex items-center justify-between border-b border-blue-50 pb-1 last:border-0">
+                  <span className="font-bold text-gray-700 truncate">{e.vehicle?.code || 'Vehículo'}</span>
+                  <span className="text-gray-500 truncate max-w-[120px]"><ArrowRight size={10} className="inline mr-1 text-blue-400" />{e.project?.name || e.destination}</span>
+                </div>
+              ))}
+              {entregasEnTransito.length > 3 && <p className="text-[10px] text-gray-400 text-center pt-1">+ {entregasEnTransito.length - 3} más</p>}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 mt-2">No hay camionetas realizando entregas en este momento.</p>
+          )}
+        </div>
+
+        {/* Pedidos del día */}
+        <div className={`light-card p-5 border-l-4 ${pedidosUrgentesHoy > 0 ? 'border-red-500 bg-red-50/20' : pedidosHoy.length > 0 ? 'border-ecar-blue bg-blue-50/10' : 'border-gray-200'} flex flex-col justify-between`}>
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2"><ShoppingCart size={16} className={pedidosUrgentesHoy > 0 ? 'text-red-500' : pedidosHoy.length > 0 ? 'text-ecar-blue' : 'text-gray-400'} /> Ingresos del Día</h4>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${pedidosUrgentesHoy > 0 ? 'bg-red-100 text-red-700' : pedidosHoy.length > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+              {pedidosHoy.length} pedidos
+            </span>
+          </div>
+          {pedidosHoy.length > 0 ? (
+            <div className="mt-3">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Total Solicitudes:</span>
+                <span className="font-bold text-gray-800">{pedidosHoy.length}</span>
+              </div>
+              {pedidosUrgentesHoy > 0 && (
+                <div className="mt-2 bg-red-100 border border-red-200 text-red-700 text-xs px-2 py-1.5 rounded flex items-center gap-1.5 font-bold">
+                  <AlertTriangle size={14} /> ¡{pedidosUrgentesHoy} marcados como urgentes!
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 mt-2">Aún no se han generado pedidos de obra ni de almacén hoy.</p>
+          )}
         </div>
       </div>
 
