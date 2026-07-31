@@ -83,8 +83,6 @@ export const LogisticsModule: React.FC = () => {
     { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
     { id: 'obra_requests', icon: Package, label: 'Pedidos de Obra' },
     { id: 'deliveries', icon: Repeat, label: 'Logística y Entregas' },
-    { id: 'fleet', icon: Truck, label: 'Flota & Máquinas' },
-    { id: 'maintenance', icon: Wrench, label: 'Mantenimiento' },
   ];
 
   return (
@@ -177,12 +175,6 @@ export const LogisticsModule: React.FC = () => {
         )}
         {activeTab === 'deliveries' && (
           <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} />
-        )}
-        {activeTab === 'fleet' && (
-          <FleetTab vehicles={allVehicles} loading={loadingVehicles} />
-        )}
-        {activeTab === 'maintenance' && (
-          <MaintenanceTab logs={maintenanceLogs} loading={loadingMaintenance} allVehicles={allVehicles} />
         )}
       </div>
     </div>
