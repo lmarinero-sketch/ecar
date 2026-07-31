@@ -2,11 +2,6 @@ import React, { useEffect } from 'react';
 import {
   LayoutDashboard, TrendingUp, Users, Truck, DollarSign, BarChart3,
   Target, FileSignature, ShieldAlert,
-  Package, Briefcase, AlertTriangle,
-} from 'lucide-react';
-import {
-  LayoutDashboard, TrendingUp, Users, Truck, DollarSign, BarChart3,
-  Target, FileSignature, ShieldAlert,
   Package, Briefcase, AlertTriangle, CalendarClock, MapPin, Clock, ArrowRight, CheckCircle2, ShoppingCart
 } from 'lucide-react';
 import {
