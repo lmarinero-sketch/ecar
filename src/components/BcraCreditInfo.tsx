@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning, BrainCircuit, Landmark, CheckCircle } from 'lucide-react';
+import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import jsPDF from 'jspdf';
@@ -55,49 +55,7 @@ const getSituationLabel = (sit: number) => {
   }
 };
 
-const mockAfipData = (cuit: string | number) => {
-  const cuitStr = String(cuit);
-  const isCompany = cuitStr.startsWith('30') || cuitStr.startsWith('33');
-  const isUser = cuitStr === '27434893483';
-  const lastDigit = parseInt(cuitStr.slice(-1)) || 0;
-  const isRI = isCompany || isUser || lastDigit > 4;
-  
-  return {
-    estado: 'ACTIVO',
-    tipo: isCompany ? 'Persona Jurídica' : 'Persona Física',
-    regimen: isRI ? 'Régimen General' : 'Monotributo',
-    categoria: isCompany ? 'Empresa' : (isRI ? 'Responsable Inscripto' : 'Categoría ' + String.fromCharCode(65 + (lastDigit % 6))),
-    actividad: isCompany ? 'Venta al por mayor de vehículos' : (isRI ? 'Servicios profesionales' : 'Servicios personales n.c.p.'),
-    impuestos: isRI ? ['IVA', 'Ganancias', 'Bienes Personales'] : ['Monotributo']
-  };
-};
 
-const generateSimulatedInsights = (afip: any, score: number) => {
-  const maxCapacity = afip.regimen === 'Monotributo' ? '$ 450.000,00' : '$ 3.500.000,00';
-  
-  if (score > 70) {
-    return {
-      perfil: 'Excelente comportamiento de pago. No registra atrasos significativos ni cheques rechazados recientes. Demuestra gran solvencia y capacidad para asumir nuevos compromisos crediticios en base a sus ingresos AFIP.',
-      capacidadMaxima: maxCapacity,
-      veredicto: 'APROBADO',
-      color: 'bg-green-100 text-green-800 border-green-200'
-    };
-  } else if (score > 40) {
-    return {
-      perfil: 'Comportamiento regular. Presenta algunas demoras bancarias menores o deuda moderada. Nivel de riesgo aceptable pero requiere seguimiento cercano o garantías adicionales.',
-      capacidadMaxima: afip.regimen === 'Monotributo' ? '$ 150.000,00' : '$ 1.000.000,00',
-      veredicto: 'EVALUACIÓN MANUAL',
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    };
-  } else {
-    return {
-      perfil: 'Alto riesgo crediticio. Presenta moras severas en el sistema financiero o historial negativo de cheques. Capacidad de repago fuertemente comprometida ante los ingresos declarados.',
-      capacidadMaxima: '$ 0,00',
-      veredicto: 'RECHAZADO',
-      color: 'bg-red-100 text-red-800 border-red-200'
-    };
-  }
-};
 
 export const BcraCreditInfo: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
@@ -244,53 +202,7 @@ export const BcraCreditInfo: React.FC = () => {
         }
       }
 
-      // Compute totals for AI
-      let totalDeuda = 0;
-      let peorSit = 0;
-      if (deudoresData?.periodos?.length > 0) {
-        const sorted = [...deudoresData.periodos].sort((a: any, b: any) => a.periodo.localeCompare(b.periodo));
-        const last = sorted[sorted.length - 1];
-        totalDeuda = last.entidades.reduce((sum: number, ent: any) => sum + (ent.monto * 1000), 0);
-        peorSit = Math.max(...last.entidades.map((e: any) => e.situacion));
-      }
-
-      let totalCheques = 0;
-      if (chequesData) {
-        let flatCheques: any[] = [];
-        if (Array.isArray(chequesData)) {
-          flatCheques = chequesData;
-        } else if (chequesData.causales) {
-          chequesData.causales.forEach((c: any) => {
-            c.entidades?.forEach((e: any) => {
-              e.detalle?.forEach((ch: any) => flatCheques.push(ch));
-            });
-          });
-        }
-        totalCheques = flatCheques.filter(c => !c.fechaPago).reduce((sum, c) => sum + (c.monto || 0), 0);
-      }
-
-      const scoreCalc = peorSit <= 1 ? 95 : peorSit === 2 ? 60 : peorSit === 3 ? 40 : peorSit === 4 ? 20 : peorSit > 4 ? 12 : 100;
-      const afipDataMock = mockAfipData(inputValue);
-
-      let realInsights = null;
-      try {
-        const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-insights', {
-          body: {
-            afip: afipDataMock,
-            score: scoreCalc,
-            deuda: totalDeuda,
-            cheques: totalCheques,
-            peorSituacion: peorSit
-          }
-        });
-        if (!aiError && aiResponse) {
-          realInsights = aiResponse;
-        }
-      } catch (aiErr) {
-        console.error('Error fetching AI insights:', aiErr);
-      }
-
-      const combinedData = { deudores: deudoresData, cheques: chequesData, insights: realInsights };
+      const combinedData = { deudores: deudoresData, cheques: chequesData };
       setData(combinedData);
       
       // Guardar en historial
@@ -332,13 +244,13 @@ export const BcraCreditInfo: React.FC = () => {
       if (dStr.includes('/')) return new Date(dStr.split('/').reverse().join('-')).getTime();
       return new Date(dStr).getTime();
     };
-    return parseDate(a.fechaRechazo || a.fecha) - parseDate(b.fechaRechazo || b.fecha);
+    return parseDate(a.fechaRechazo || a.fecha_rechazo || a.fecha) - parseDate(b.fechaRechazo || b.fecha_rechazo || b.fecha);
   });
 
   const chequesByMonth = new Map<string, number>();
   chequesSorted.forEach(c => {
-    if (!c.fechaPago) {
-      const dateStr = c.fechaRechazo || c.fecha;
+    if (!c.fechaPago && !c.fecha_pago) {
+      const dateStr = c.fechaRechazo || c.fecha_rechazo || c.fecha || '';
       if (dateStr) {
         let monthYear = '';
         if (dateStr.includes('/')) {
@@ -347,9 +259,11 @@ export const BcraCreditInfo: React.FC = () => {
         } else if (dateStr.includes('-')) {
           const parts = dateStr.split('-');
           if (parts.length >= 2) monthYear = `${parts[0]}/${parts[1]}`;
+        } else if (dateStr.length >= 6) {
+           monthYear = `${dateStr.substring(0, 4)}/${dateStr.substring(4, 6)}`;
         }
         if (monthYear) {
-          chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (c.monto || 0));
+          chequesByMonth.set(monthYear, (chequesByMonth.get(monthYear) || 0) + (Number(c.monto) || 0));
         }
       }
     }
@@ -359,7 +273,7 @@ export const BcraCreditInfo: React.FC = () => {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([periodo, monto]) => ({ periodo, monto }));
 
-  const totalChequesRechazadosImpagos = cheques.filter(c => !c.fechaPago).reduce((sum, c) => sum + (c.monto || 0), 0);
+  const totalChequesRechazadosImpagos = cheques.filter(c => !c.fechaPago && !c.fecha_pago).reduce((sum, c) => sum + (Number(c.monto) || 0), 0);
 
   // DEUDORES PROCESSING
   const periodosDeudores = data?.deudores?.periodos || [];
@@ -390,10 +304,6 @@ export const BcraCreditInfo: React.FC = () => {
     const nombre = data.deudores?.denominacion || (cheques.length > 0 && cheques[0].denominacion) || 'Desconocido';
     const cuitIdentificacion = data.deudores?.identificacion || inputValue;
 
-    const afip = mockAfipData(cuitIdentificacion);
-    // Use real insights from API if available, otherwise fallback to simulated
-    const insights = (data as any).insights || generateSimulatedInsights(afip, score);
-
     return (
       <div className="space-y-6">
         {/* PREMIUM HEADER BANNER */}
@@ -418,63 +328,7 @@ export const BcraCreditInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* AFIP & AI INSIGHTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg">
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
-              <Landmark size={18} className="text-white" />
-              <h4 className="font-bold text-white text-sm uppercase tracking-wider">Padrón AFIP (Constancia)</h4>
-            </div>
-            <div className="p-5 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Estado</p>
-                <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
-                  <CheckCircle size={14} className="text-green-500" />
-                  {afip.estado}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Tipo de Persona</p>
-                <p className="text-sm font-medium text-gray-900">{afip.tipo}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Régimen y Categoría</p>
-                <div className="flex gap-2">
-                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold border border-slate-200">{afip.regimen}</span>
-                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-bold border border-slate-200">{afip.categoria}</span>
-                </div>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Actividad Principal</p>
-                <p className="text-sm text-gray-700">{afip.actividad}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col transition-all duration-300 hover:shadow-lg">
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 border-b border-slate-700 flex items-center gap-2 text-white">
-              <BrainCircuit size={18} className="text-red-500" />
-              <h4 className="font-bold text-white text-sm uppercase tracking-wider">AI Insights: Análisis de Crédito</h4>
-            </div>
-            <div className="p-5 flex flex-col justify-between flex-1 gap-4">
-              <p className="text-sm text-gray-700 leading-relaxed italic border-l-4 border-red-500 pl-3">
-                "{insights.perfil}"
-              </p>
-              <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
-                <div>
-                  <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Deuda Recomendada (Máx)</p>
-                  <p className="text-lg font-black text-gray-900 font-mono">{insights.capacidadMaxima}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">Sugerencia</p>
-                  <span className={`px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider border ${insights.color}`}>
-                    {insights.veredicto}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:shadow-lg">
           {worstSituation > 2 && (
