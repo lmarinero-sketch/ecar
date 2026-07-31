@@ -45,7 +45,7 @@ export const RrhhModule: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [showInactive, setShowInactive] = useState(false);
   const [form, setForm] = useState({
-    full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
+    legajo: '', full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', hire_date: '',
     bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '',
     modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS',
@@ -99,7 +99,7 @@ export const RrhhModule: React.FC = () => {
       driver_license_expiry: form.is_driver ? (form.driver_license_expiry || null) : null,
     });
     useImplementationStore.getState().completeItem('e2-21');
-    setForm({ full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50', shirt_size: '', pants_size: '', shoe_size: '', is_driver: false, driver_license_category: '', driver_license_expiry: '' });
+    setForm({ legajo: '', full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '', emergency_contact: '', category_id: '', current_project_id: '', hire_date: '', bank_name: '', bank_alias_cbu: '', trial_start_date: '', obra_social: '', art_provider: '', modo_liquidacion: 'mensual', retribucion_pactada: '', employer_entity: 'ECAR SAS', gender: '', marital_status: '', children_info: '[]', education_level: '', union_name: 'UOCRA', observations: '', debt_to_employee: '', debt_notes: '', does_overtime: false, overtime_rate: '50', shirt_size: '', pants_size: '', shoe_size: '', is_driver: false, driver_license_category: '', driver_license_expiry: '' });
     setTab('roster');
   };
 
@@ -164,6 +164,7 @@ export const RrhhModule: React.FC = () => {
                 <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
                   <tr>
                     <th className="px-4 py-3">Nombre</th>
+                    <th className="px-4 py-3">Legajo</th>
                     <th className="px-4 py-3">CUIL</th>
                     <th className="px-4 py-3">Categoría</th>
                     <th className="px-4 py-3">Obra</th>
@@ -191,6 +192,7 @@ export const RrhhModule: React.FC = () => {
                           </div>
                         </div>
                       </td>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-gray-700">{emp.legajo || '—'}</td>
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{emp.cuil || '—'}</td>
                       <td className="px-4 py-3 text-gray-700">{emp.category?.name || '—'}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{emp.project?.name || '—'}</td>
@@ -199,7 +201,7 @@ export const RrhhModule: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
-                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => { setEditingEmployee(emp); setEditForm({ legajo: emp.legajo || '', full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
                           <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
                         </div>
                       </td>
@@ -223,6 +225,10 @@ export const RrhhModule: React.FC = () => {
             <div className="md:col-span-3">
               <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
               <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Nro. Legajo</label>
+              <input value={form.legajo} onChange={e => setForm({ ...form, legajo: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">CUIL</label>
@@ -446,7 +452,7 @@ export const RrhhModule: React.FC = () => {
           templates={templates}
           onSelect={setSelectedId}
           onBack={() => setTab('roster')}
-          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '', is_driver: emp.is_driver || false, driver_license_category: emp.driver_license_category || '', driver_license_expiry: emp.driver_license_expiry || '' }); }}
+          onEdit={(emp: any) => { setEditingEmployee(emp); setEditForm({ legajo: emp.legajo || '', full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '', is_driver: emp.is_driver || false, driver_license_category: emp.driver_license_category || '', driver_license_expiry: emp.driver_license_expiry || '' }); }}
           calcAntiguedad={calcAntiguedad}
         />
       )}
@@ -486,6 +492,10 @@ export const RrhhModule: React.FC = () => {
               <div className="md:col-span-3">
                 <label className="text-xs font-bold text-gray-500 block mb-1">Nombre Completo *</label>
                 <input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Nro. Legajo</label>
+                <input value={editForm.legajo} onChange={e => setEditForm({ ...editForm, legajo: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 block mb-1">CUIL</label>

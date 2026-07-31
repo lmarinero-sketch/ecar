@@ -49,6 +49,7 @@ export type Project = {
 export type Employee = {
   id: string;
   tenant_id: string;
+  legajo?: string | null;
   full_name: string;
   cuil: string | null;
   dni: string | null;
