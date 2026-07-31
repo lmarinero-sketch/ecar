@@ -619,7 +619,6 @@ export const WbsModule: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#115C9C]/30 focus:border-[#115C9C] bg-white transition-all" 
                       />
                     </div>
-                    </div>
                   </div>
                 </div>
                 {/* Prioridad + Fase en una fila */}
