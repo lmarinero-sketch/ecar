@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, Building2, Download, ShieldCheck, History, Clock, Activity, FileWarning } from 'lucide-react';
+import { Search, AlertCircle, Building2, Download, ShieldCheck, Clock, Activity, FileWarning } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import jsPDF from 'jspdf';
@@ -62,25 +62,7 @@ export const BcraCreditInfo: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ deudores: any, cheques: any } | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
-  const fetchHistory = async () => {
-    try {
-      const { data: h } = await supabase
-        .from('bcra_queries')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (h) setHistory(h);
-    } catch (e) {
-      console.error('Error fetching BCRA history', e);
-    }
-  };
-
-  useEffect(() => {
-    fetchHistory();
-  }, []);
 
   const downloadPDF = async () => {
     const reportElement = document.getElementById('bcra-report-content');
@@ -157,17 +139,7 @@ export const BcraCreditInfo: React.FC = () => {
     }
   };
 
-  const loadFromHistory = (h: any) => {
-    setInputValue(h.cuit);
-    if (h.query_type === 'integral') {
-      setData(h.data);
-    } else if (h.query_type === 'deudores') {
-      setData({ deudores: h.data, cheques: null });
-    } else if (h.query_type === 'cheques') {
-      setData({ deudores: null, cheques: h.data });
-    }
-    setError(null);
-  };
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,12 +177,7 @@ export const BcraCreditInfo: React.FC = () => {
       const combinedData = { deudores: deudoresData, cheques: chequesData };
       setData(combinedData);
       
-      // Guardar en historial
-      supabase.from('bcra_queries').insert({
-        cuit: inputValue,
-        query_type: 'integral',
-        data: combinedData
-      }).then(() => fetchHistory());
+
 
     } catch (err: any) {
       setError(err.message || 'Error al consultar la API del BCRA.');
@@ -563,48 +530,9 @@ export const BcraCreditInfo: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full">
-      {/* Sidebar Historial */}
-      <div className="w-full lg:w-1/4">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden sticky top-6">
-          <div className="bg-slate-700 p-4 flex items-center gap-2">
-            <History className="text-white" size={18} />
-            <h3 className="font-bold text-white uppercase text-sm tracking-wider">Últimas Consultas</h3>
-          </div>
-          <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
-            {history.length === 0 ? (
-              <div className="p-4 text-center text-sm text-gray-500">No hay consultas previas</div>
-            ) : (
-              history.map((h, i) => (
-                <div 
-                  key={i} 
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => loadFromHistory(h)}
-                >
-                  <div className="flex flex-col mb-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-gray-800 text-sm truncate" title={h.data?.deudores?.denominacion || h.data?.denominacion || 'Desconocido'}>
-                        {h.data?.deudores?.denominacion || h.data?.denominacion || 'Sin Denominación'}
-                      </span>
-                      <span className="text-[10px] uppercase font-bold text-gray-400 border px-1.5 rounded bg-white shrink-0">
-                        {h.query_type}
-                      </span>
-                    </div>
-                    <span className="text-gray-500 font-mono text-xs mt-0.5">CUIT: {h.cuit}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-[11px] text-gray-400 font-medium">
-                    <Clock size={12} />
-                    <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full">
       {/* Main Content */}
-      <div className="w-full lg:w-3/4 bg-gray-50/30 rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+      <div className="w-full bg-gray-50/30 rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         {/* Search Header */}
         <div className="p-6 border-b border-gray-100 bg-white flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
