@@ -411,8 +411,6 @@ const DeliveriesTab: React.FC<{
   const createDelivery = useCreateLogisticsDelivery();
   const updateDelivery = useUpdateLogisticsDelivery();
   const { profile } = useAuth();
-  const [rejectingDelivery, setRejectingDelivery] = useState<any>(null);
-  const [rejectionReason, setRejectionReason] = useState('');
 
   const [form, setForm] = useState({
     project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '',

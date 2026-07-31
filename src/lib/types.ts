@@ -1627,7 +1627,7 @@ export type LogisticsDelivery = {
   tenant_id: string;
   project_id: string | null;
   delivery_date: string;
-  status: 'pendiente' | 'aprobado' | 'en_transito' | 'entregado' | 'cancelado';
+  status: 'pendiente' | 'pendiente_autorizacion' | 'aprobado' | 'rechazado' | 'en_transito' | 'entregado' | 'cancelado';
   vehicle_id: string | null;
   driver_name: string | null;
   destination: string | null;

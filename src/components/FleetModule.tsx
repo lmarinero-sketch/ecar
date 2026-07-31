@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users, QrCode, Printer
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users, QrCode
 } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
