@@ -49,7 +49,6 @@ const GERENCIA_DATA: Record<GerenciaKey, GerenciaConfig> = {
     ],
     tools: [
       { id: 'purchases', title: 'Compras & Registro de Facturas', desc: 'Carga de comprobantes, Libro IVA compras y vinculación con remitos.', icon: ShoppingCart, gradient: 'from-ecar-blue to-ecar-blue' },
-      { id: 'purchase_requests', title: 'Solicitudes de Pedido', desc: 'Gestión y seguimiento de requerimientos emitidos por los frentes de obra.', icon: Package, gradient: 'from-blue-600 to-indigo-600' },
       { id: 'purchase_orders', title: 'Órdenes de Compra (OC / OT)', desc: 'Emisión formal, firmas de aprobación por montos y trazabilidad de ítems.', icon: FileSignature, gradient: 'from-indigo-600 to-purple-600' },
       { id: 'supplier_eval', title: 'Evaluación de Proveedores', desc: 'Ranking de proveedores, incidencias, tiempos de entrega y nómina autorizada.', icon: ClipboardCheck, gradient: 'from-emerald-600 to-teal-600' },
     ],
@@ -84,6 +83,7 @@ const GERENCIA_DATA: Record<GerenciaKey, GerenciaConfig> = {
       { step: '5', title: 'Parte Diario & Mantenimiento', desc: 'Escaneo de QR de vehículo, carga de Km, combustible y tickets de service.', role: 'Chofer / Taller', icon: Wrench, color: 'bg-purple-100 text-purple-700' },
     ],
     tools: [
+      { id: 'purchase_requests', title: 'Pedidos de Obra & Requerimientos', desc: 'Gestión y seguimiento de solicitudes de materiales emitidas por los frentes de obra.', icon: Package, gradient: 'from-amber-600 to-orange-600' },
       { id: 'logistics', title: 'Logística de Envíos & Entregas', desc: 'Creación de remitos, asignación de chofer, estado en tránsito y recepción.', icon: Warehouse, gradient: 'from-sky-600 to-blue-600' },
       { id: 'fleet', title: 'Flota y Maquinaria', desc: 'Registro de vehículos, partes diarios por QR, consumo de fuel y mapa GPS.', icon: Truck, gradient: 'from-blue-600 to-indigo-600' },
       { id: 'inventory', title: 'Inventario & Pañol', desc: 'Stock físico, alertas de reposición, ubicación en estantería y herramientas.', icon: Package, gradient: 'from-slate-700 to-slate-900' },

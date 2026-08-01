@@ -3,7 +3,8 @@ import {
   Target, Plus, X, FolderTree, Calendar, BarChart3, RefreshCw,
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
   MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
-  ShoppingCart, FileCheck, DollarSign, Truck, Sparkles, Info, Mic, MicOff
+  ShoppingCart, FileCheck, DollarSign, Truck, Sparkles, Info, Mic, MicOff,
+  Building2, MapPin, Search, ArrowRight, Briefcase, ArrowLeft
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Wbs3dView } from './Wbs3dView';
@@ -51,7 +52,21 @@ export const WbsModule: React.FC = () => {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectSearch, setProjectSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'suspended'>('all');
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter(p => {
+      const q = projectSearch.toLowerCase().trim();
+      const matchesSearch = !q || p.name.toLowerCase().includes(q) ||
+        (p.client_name && p.client_name.toLowerCase().includes(q)) ||
+        (p.location && p.location.toLowerCase().includes(q));
+      const pStatus = p.status || 'active';
+      const matchesStatus = statusFilter === 'all' || pStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [projects, projectSearch, statusFilter]);
   const { data: wbs = [] } = useWbsElements(selectedProjectId || undefined);
   const { data: employees = [] } = useEmployees();
   const [tab, setTab] = useState<MainTab>('planificacion');
@@ -422,69 +437,308 @@ export const WbsModule: React.FC = () => {
   if (isLoading) return <div className="text-center py-12 text-gray-400">Cargando planificación...</div>;
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark via-ecar-blue to-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-ecar-blue to-ecar-blue" />
-        <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2"><Target size={24} /> Gerencia de Obras</h3>
-          <p className="text-ecar-blueLight text-sm mt-1">Doc PR-GPP-01 — Planificación · Recursos · Movimientos · Pedidos · Certificados · Retroalimentación</p>
-        </div>
-      </div>
+    <div className="space-y-6 pb-12">
+      {/* ─── CASE A: NO OBRA SELECTED (PORTFOLIO HUB) ─── */}
+      {!selectedProjectId ? (
+        <div className="space-y-6">
+          {/* Portfolio Hero Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-ecar-blueDark rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden space-y-4">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Building2 size={180} />
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/10 backdrop-blur-md border border-white/20 text-amber-300">
+                  <span>🏗️</span> Portafolio de Obras & Ejecución
+                </div>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                  Catálogo General de Obras
+                </h2>
+                <p className="text-sm text-gray-300 leading-relaxed font-normal">
+                  Seleccioná un frente de trabajo para gestionar la planificación WBS, asignación de recursos, cronograma Gantt, pedidos y certificados.
+                </p>
+              </div>
 
-      {/* Project Selector + Actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        <select value={selectedProjectId || ''} onChange={e => setSelectedProjectId(e.target.value || null)} className="flex-1 min-w-[200px] px-4 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-ecar-blue/30">
-          <option value="">Seleccioná una obra</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name} — {p.client_name || 'Sin cliente'}</option>)}
-        </select>
-        
-        {selectedProjectId && (
-          <div className="flex items-center gap-2 mr-2">
-            <button onClick={handleEditProject} className="p-2 text-gray-500 hover:text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100" title="Editar Obra">
-              <Pencil size={18} />
-            </button>
-            <button onClick={handleDeleteProject} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Eliminar Obra">
-              <Trash2 size={18} />
+              {/* Quick Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md shrink-0">
+                <div className="text-center p-2">
+                  <span className="text-[11px] text-gray-300 block font-bold uppercase tracking-wider">Obras Totales</span>
+                  <span className="text-xl font-black font-mono text-white">{projects.length}</span>
+                </div>
+                <div className="text-center p-2 border-l border-white/10">
+                  <span className="text-[11px] text-gray-300 block font-bold uppercase tracking-wider">En Ejecución</span>
+                  <span className="text-xl font-black font-mono text-emerald-400">{projects.filter(p => p.status === 'active' || !p.status).length}</span>
+                </div>
+                <div className="text-center p-2 border-l border-white/10 col-span-2 md:col-span-1">
+                  <span className="text-[11px] text-gray-300 block font-bold uppercase tracking-wider">Presupuesto</span>
+                  <span className="text-xl font-black font-mono text-amber-300">{formatARS(projects.reduce((acc, p) => acc + (p.budget_ars || 0), 0))}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search Bar & Filters */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="relative flex-1">
+              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar obra por nombre, cliente o ubicación..."
+                value={projectSearch}
+                onChange={e => setProjectSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 transition-all font-medium"
+              />
+            </div>
+
+            {/* Status Filter Pills */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl overflow-x-auto shrink-0">
+              {[
+                { id: 'all', label: 'Todas', count: projects.length },
+                { id: 'active', label: 'En Ejecución', count: projects.filter(p => p.status === 'active' || !p.status).length },
+                { id: 'completed', label: 'Completadas', count: projects.filter(p => p.status === 'completed').length },
+                { id: 'suspended', label: 'Suspendidas', count: projects.filter(p => p.status === 'suspended').length },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    statusFilter === f.id
+                      ? 'bg-white text-ecar-blue shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {f.label} ({f.count})
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }}
+              className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg transition-all shrink-0"
+            >
+              <Plus size={18} /> Nueva Obra
             </button>
           </div>
-        )}
 
-        <button onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }} className="btn-primary">
-          <Plus size={16} /> Nueva Obra
-        </button>
-      </div>
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map((p) => {
+              const isCompleted = p.status === 'completed';
+              const isSuspended = p.status === 'suspended';
+              const statusLabel = isCompleted ? 'Completada' : isSuspended ? 'Suspendida' : 'En Ejecución';
+              const statusBg = isCompleted ? 'bg-blue-50 text-blue-700 border-blue-200' : isSuspended ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+              const dotBg = isCompleted ? 'bg-blue-500' : isSuspended ? 'bg-amber-500' : 'bg-emerald-500';
 
-      {selectedProjectId && (
-        <>
-          {/* KPIs */}
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-xl hover:border-ecar-blue/40 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden"
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${isCompleted ? 'bg-blue-500' : isSuspended ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+
+                  <div className="space-y-4">
+                    {/* Header: Status + Quick Actions */}
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${statusBg}`}>
+                        <span className={`w-2 h-2 rounded-full ${dotBg}`} />
+                        {statusLabel}
+                      </span>
+                      
+                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSelectedProjectId(p.id); handleEditProject(); }}
+                          className="p-1.5 text-gray-400 hover:text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar Obra"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSelectedProjectId(p.id); handleDeleteProject(); }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar Obra"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Title & Client */}
+                    <div onClick={() => setSelectedProjectId(p.id)} className="cursor-pointer space-y-1">
+                      <h3 className="font-extrabold text-gray-900 text-lg group-hover:text-ecar-blue transition-colors line-clamp-2 leading-snug">
+                        {p.name}
+                      </h3>
+                      <p className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                        <Briefcase size={13} className="text-gray-400 shrink-0" />
+                        <span className="truncate">{p.client_name ? `${p.client_name} ${p.client_cuit ? `(${p.client_cuit})` : ''}` : 'Sin cliente asignado'}</span>
+                      </p>
+                    </div>
+
+                    {/* Location & Details */}
+                    <div className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-100 text-xs">
+                      <div className="flex items-center justify-between text-gray-600">
+                        <span className="flex items-center gap-1 text-gray-500 font-medium">
+                          <MapPin size={14} className="text-ecar-blue shrink-0" /> Ubicación:
+                        </span>
+                        <span className="font-semibold text-gray-800 truncate max-w-[160px]" title={p.location || ''}>
+                          {p.location || 'No especificada'}
+                        </span>
+                      </div>
+                      {p.start_date && (
+                        <div className="flex items-center justify-between text-gray-600">
+                          <span className="flex items-center gap-1 text-gray-500 font-medium">
+                            <Calendar size={14} className="text-indigo-500 shrink-0" /> Fecha Inicio:
+                          </span>
+                          <span className="font-mono font-medium text-gray-700">
+                            {new Date(p.start_date).toLocaleDateString('es-AR')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Presupuesto */}
+                    <div className="pt-1 flex items-center justify-between border-t border-gray-100">
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Presupuesto</span>
+                      <span className="font-mono font-extrabold text-base text-gray-900">
+                        {formatARS(p.budget_ars || 0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Footer */}
+                  <div className="mt-5 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => setSelectedProjectId(p.id)}
+                      className="w-full py-2.5 px-4 bg-slate-900 hover:bg-ecar-blue text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all duration-200 group/btn"
+                    >
+                      <span>Gestionar Obra & Planificación</span>
+                      <ArrowRight size={15} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Empty Search Result State */}
+          {filteredProjects.length === 0 && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center space-y-4 shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <Building2 size={32} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-gray-800 text-base">No se encontraron obras</h3>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  No se registran obras que coincidan con la búsqueda o filtro seleccionado.
+                </p>
+              </div>
+              <button
+                onClick={() => { setProjectSearch(''); setStatusFilter('all'); }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors"
+              >
+                Limpiar Filtros
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ─── CASE B: SPECIFIC OBRA SELECTED (FULL WBS VIEW) ─── */
+        <div className="space-y-5">
+          {/* Active Obra Header & Navigation Bar */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-ecar-blueDark rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none"><Target size={140} /></div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => setSelectedProjectId(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft size={14} /> Volver a Obras
+                  </button>
+
+                  <div className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl px-3 py-1 text-xs">
+                    <span className="text-gray-400 font-medium">Cambiar Obra:</span>
+                    <select
+                      value={selectedProjectId || ''}
+                      onChange={e => setSelectedProjectId(e.target.value || null)}
+                      className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+                    >
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id} className="text-gray-900">{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                    {selectedProject?.name}
+                    <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                      Obra Activa
+                    </span>
+                  </h2>
+                  <p className="text-xs md:text-sm text-gray-300 mt-1 flex flex-wrap items-center gap-4">
+                    <span>🏢 Cliente: <strong className="text-white">{selectedProject?.client_name || 'Sin cliente'}</strong></span>
+                    {selectedProject?.location && <span>📍 Ubicación: <strong className="text-white">{selectedProject.location}</strong></span>}
+                    {selectedProject?.budget_ars ? <span>💰 Presupuesto: <strong className="text-amber-300 font-mono">{formatARS(selectedProject.budget_ars)}</strong></span> : null}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start md:self-auto">
+                <button onClick={handleEditProject} className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/10" title="Editar Obra">
+                  <Pencil size={18} />
+                </button>
+                <button onClick={handleDeleteProject} className="p-2.5 bg-white/10 hover:bg-red-500/30 text-white hover:text-red-200 rounded-xl transition-all border border-white/10" title="Eliminar Obra">
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }}
+                  className="btn-primary text-xs font-bold py-2.5 px-4 shadow-md"
+                >
+                  <Plus size={16} /> Nueva Obra
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* KPIs Bar */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
-              { label: 'Tareas', value: kpis.total, icon: FolderTree, color: 'text-ecar-blue' },
+              { label: 'Tareas WBS', value: kpis.total, icon: FolderTree, color: 'text-ecar-blue' },
               { label: 'En Ejecución', value: kpis.enEjecucion, icon: Clock, color: 'text-green-600' },
               { label: 'Completadas', value: kpis.completadas, icon: CheckCircle2, color: 'text-emerald-600' },
               { label: 'Avance Global', value: `${kpis.avgProgress}%`, icon: TrendingUp, color: 'text-ecar-blue' },
-              { label: 'Presupuesto', value: formatARS(kpis.totalBudget), icon: BarChart3, color: 'text-ecar-blue' },
+              { label: 'Presupuesto WBS', value: formatARS(kpis.totalBudget), icon: BarChart3, color: 'text-ecar-blue' },
             ].map(k => (
-              <div key={k.label} className="light-card p-3.5 shadow-sm">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1"><k.icon size={14} className={k.color} /> {k.label}</div>
+              <div key={k.label} className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-1">
+                  <k.icon size={15} className={k.color} /> {k.label}
+                </div>
                 <p className={`text-xl font-black font-mono ${k.color}`}>{k.value}</p>
               </div>
             ))}
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
+          {/* Submodule Tabs */}
+          <div className="flex gap-1.5 bg-slate-200/80 rounded-2xl p-1.5 overflow-x-auto shadow-inner">
             {tabs.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 min-w-[90px] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${tab === t.id ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                <span className="md:hidden text-base">{t.emoji}</span>
-                <span className="hidden md:inline">{t.emoji} {t.label}</span>
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex-1 min-w-[100px] py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${
+                  tab === t.id
+                    ? 'bg-white text-ecar-blue shadow-md scale-[1.02]'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                }`}
+              >
+                <span className="text-sm">{t.emoji}</span>
+                <span>{t.label}</span>
               </button>
             ))}
           </div>
 
-          {/* Tab Content */}
+          {/* Submodule Tab Content */}
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
@@ -495,14 +749,6 @@ export const WbsModule: React.FC = () => {
           {tab === 'certificados' && <CertificadosTab projectId={selectedProjectId} />}
           {tab === 'documentos' && <DocumentosTab projectId={selectedProjectId} />}
           {tab === 'retroalimentacion' && <RetroTab projectId={selectedProjectId} wbs={wbs} />}
-        </>
-      )}
-
-      {!selectedProjectId && (
-        <div className="light-card p-1">
-          <Target size={56} className="mx-auto mb-4 opacity-20" />
-          <p className="font-medium text-lg">Seleccioná una obra para gestionar</p>
-          <p className="text-sm mt-1">O creá una nueva desde el botón de arriba.</p>
         </div>
       )}
 

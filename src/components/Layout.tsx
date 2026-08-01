@@ -125,7 +125,6 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     items: [
       { id: 'compras_intro', requires: true },
       { id: 'purchases', requires: true },
-      { id: 'purchase_requests' },
       { id: 'purchase_orders', requires: true },
       { id: 'supplier_eval', requires: true },
     ],
@@ -134,6 +133,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Ger. Logística', emoji: '📦',
     items: [
       { id: 'logistics_intro', requires: true },
+      { id: 'purchase_requests' },
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
       { id: 'inventory', requires: true },
@@ -208,9 +208,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const { startTour } = useOnboardingStore();
   const { data: purchaseRequests = [] } = usePurchaseRequests();
-
-  const pendingLogistics = purchaseRequests.filter(r => r.request_type === 'logistics' && r.status === 'pending').length;
-  const pendingPurchases = purchaseRequests.filter(r => (r.request_type === 'purchase' || !r.request_type) && r.status === 'pending').length;
+  const pendingRequests = purchaseRequests.filter(r => r.status === 'pending').length;
 
   // Trigger content animation on module change
   useEffect(() => {
@@ -331,7 +329,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         expanded={expanded}
                         onSelect={handleSelect}
                         delay={idx * 20}
-                        badgeCount={item.id === 'logistics' ? pendingLogistics : item.id === 'purchases' ? pendingPurchases : 0}
+                        badgeCount={item.id === 'purchase_requests' ? pendingRequests : 0}
                       />
                     ))}
                   </div>
@@ -638,7 +636,10 @@ const SidebarItem: React.FC<{
 
       {/* Badge Notification */}
       {badgeCount > 0 && (
-        <span className={`absolute ${expanded ? 'right-2' : 'top-1 right-1'} bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[18px] h-[18px]`}>
+        <span
+          title={`${badgeCount} pedido(s) pendiente(s) de revisión`}
+          className={`absolute ${expanded ? 'right-2' : 'top-1 right-1'} bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[18px] h-[18px] shadow-sm`}
+        >
           {badgeCount > 99 ? '99+' : badgeCount}
         </span>
       )}

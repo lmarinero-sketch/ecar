@@ -130,18 +130,19 @@ export const PurchaseRequestsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Descriptive Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-5 text-ecar-blue">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-ecar-blueDark rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 md:p-6 opacity-10 text-white">
           <ShoppingBag size={80} className="md:w-[120px] md:h-[120px]" />
         </div>
-        <div className="relative z-10">
-          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2 text-gray-900">
-            <ShoppingBag size={24} className="md:w-7 md:h-7 text-ecar-blue" /> Gerencia de Compras
+        <div className="relative z-10 space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-sky-300 border border-white/20">
+            <span>📦</span> Gerencia de Logística & Pañol
+          </div>
+          <h3 className="font-bold text-xl md:text-2xl flex items-center gap-2 text-white pt-1">
+            <ShoppingBag size={24} className="md:w-7 md:h-7 text-sky-400" /> Pedidos de Obra y Requerimientos
           </h3>
-          <p className="text-gray-500 text-xs md:text-sm mt-1 max-w-2xl">
-            Unificamos y profesionalizamos el proceso de adquisición. 
-            Transformamos los pedidos urgentes y desordenados en compras planificadas, 
-            garantizando calidad, mejor precio y trazabilidad.
+          <p className="text-gray-300 text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
+            Recepción centralizada de requerimientos de materiales enviados por las obras. Verificación de stock disponible en pañol central, despacho a frentes de trabajo o derivación a compras por insumos faltantes.
           </p>
         </div>
       </div>
