@@ -748,6 +748,10 @@ export type PurchaseRequest = {
   notes: string | null;
   approved_by: string | null;
   approved_at: string | null;
+  dispatched_at?: string | null;
+  received_at?: string | null;
+  dispatched_by?: string | null;
+  received_by?: string | null;
   created_at: string;
   project?: Project;
   items?: PurchaseRequestItem[];
@@ -758,6 +762,10 @@ export type PurchaseRequestItem = {
   request_id: string;
   description: string;
   quantity: number;
+  quantity_sent?: number | null;
+  quantity_received?: number | null;
+  dispatch_notes?: string | null;
+  reception_notes?: string | null;
   unit: string;
   estimated_unit_cost: number;
   inventory_item_id: string | null;

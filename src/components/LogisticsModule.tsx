@@ -12,6 +12,7 @@ import {
   usePurchaseRequests, useUpdatePurchaseRequest, useEmployees
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppStore } from '../store/useStore';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 
 type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
@@ -60,8 +61,8 @@ export const LogisticsModule: React.FC = () => {
   const { data: purchaseRequests = [] } = usePurchaseRequests();
   const updatePurchaseRequest = useUpdatePurchaseRequest();
 
-  // Filtrar pedidos que vengan a logística
-  const obraRequests = useMemo(() => purchaseRequests.filter(r => r.request_type === 'logistics'), [purchaseRequests]);
+  // Todos los pedidos que vienen desde las obras
+  const obraRequests = purchaseRequests;
 
   // KPIs computed from real data
   const kpis = useMemo(() => {
@@ -199,6 +200,7 @@ export const LogisticsModule: React.FC = () => {
 /* ═══════════════════════ OBRA REQUESTS TAB ═══════════════════════ */
 
 const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ requests, updateRequest }) => {
+  const { setActiveModule } = useAppStore();
   const pending = requests.filter(r => r.status === 'pending');
   const processed = requests.filter(r => r.status !== 'pending');
 
@@ -216,8 +218,22 @@ const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ re
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <h3 className="font-bold text-gray-800 flex items-center gap-2"><Package size={20} className="text-ecar-blue" /> Pedidos Recibidos desde Obra</h3>
-      <p className="text-sm text-gray-500">Logística evalúa los pedidos de Obra. Si hay stock, lo resuelve enviándolo. Si no, lo deriva a Compras.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bold text-gray-800 flex items-center gap-2 text-base md:text-lg">
+            <Package size={20} className="text-ecar-blue" /> Pedidos Recibidos desde Obra
+          </h3>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
+            Logística evalúa los pedidos de Obra. Si hay stock en Pañol, lo resuelve enviándolo. Si no hay stock, lo deriva a Compras.
+          </p>
+        </div>
+        <button
+          onClick={() => setActiveModule('purchase_requests')}
+          className="px-4 py-2 bg-slate-900 hover:bg-ecar-blue text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-colors shrink-0 shadow-sm"
+        >
+          <span>Abrir Gestor Completo de Pedidos →</span>
+        </button>
+      </div>
 
       {pending.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">

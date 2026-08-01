@@ -1403,11 +1403,19 @@ export function useUpdatePurchaseRequest() {
 export function useUpdatePurchaseRequestItems() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (items: { id: string; estimated_unit_cost: number; budget_item_id?: string | null }[]) => {
+    mutationFn: async (items: { id: string; estimated_unit_cost?: number; quantity_sent?: number | null; quantity_received?: number | null; dispatch_notes?: string | null; reception_notes?: string | null; budget_item_id?: string | null }[]) => {
       for (const item of items) {
-        const { error } = await supabase.from('purchase_request_items').update({ estimated_unit_cost: item.estimated_unit_cost }).eq('id', item.id);
+        const updates: any = {};
+        if (item.estimated_unit_cost !== undefined) updates.estimated_unit_cost = item.estimated_unit_cost;
+        if (item.quantity_sent !== undefined) updates.quantity_sent = item.quantity_sent;
+        if (item.quantity_received !== undefined) updates.quantity_received = item.quantity_received;
+        if (item.dispatch_notes !== undefined) updates.dispatch_notes = item.dispatch_notes;
+        if (item.reception_notes !== undefined) updates.reception_notes = item.reception_notes;
+
+        const { error } = await supabase.from('purchase_request_items').update(updates).eq('id', item.id);
         if (error) throw error;
-        if (item.budget_item_id) {
+
+        if (item.budget_item_id && item.estimated_unit_cost !== undefined) {
           const { error: budgetError } = await supabase.from('budget_items').update({ unit_price_ars: item.estimated_unit_cost, quote_status: 'received' }).eq('id', item.budget_item_id);
           if (budgetError) throw budgetError;
         }
@@ -1418,6 +1426,94 @@ export function useUpdatePurchaseRequestItems() {
       qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
       qc.invalidateQueries({ queryKey: ['budgets'] });
       qc.invalidateQueries({ queryKey: ['budget_items'] });
+    },
+  });
+}
+
+export function useDispatchPurchaseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      dispatchedBy,
+      items
+    }: {
+      requestId: string;
+      dispatchedBy: string;
+      items: { id: string; quantity_sent: number; dispatch_notes?: string }[];
+    }) => {
+      // 1. Update purchase_requests status to 'ordered' and set dispatch info
+      const { error: reqErr } = await supabase
+        .from('purchase_requests')
+        .update({
+          status: 'ordered',
+          dispatched_at: new Date().toISOString(),
+          dispatched_by: dispatchedBy
+        })
+        .eq('id', requestId);
+
+      if (reqErr) throw reqErr;
+
+      // 2. Update item quantities sent
+      for (const item of items) {
+        const { error: itemErr } = await supabase
+          .from('purchase_request_items')
+          .update({
+            quantity_sent: item.quantity_sent,
+            dispatch_notes: item.dispatch_notes || null
+          })
+          .eq('id', item.id);
+
+        if (itemErr) throw itemErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
+    },
+  });
+}
+
+export function useReceivePurchaseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      receivedBy,
+      items
+    }: {
+      requestId: string;
+      receivedBy: string;
+      items: { id: string; quantity_received: number; reception_notes?: string }[];
+    }) => {
+      // 1. Update purchase_requests status to 'received' and set reception info
+      const { error: reqErr } = await supabase
+        .from('purchase_requests')
+        .update({
+          status: 'received',
+          received_at: new Date().toISOString(),
+          received_by: receivedBy
+        })
+        .eq('id', requestId);
+
+      if (reqErr) throw reqErr;
+
+      // 2. Update item quantities received
+      for (const item of items) {
+        const { error: itemErr } = await supabase
+          .from('purchase_request_items')
+          .update({
+            quantity_received: item.quantity_received,
+            reception_notes: item.reception_notes || null
+          })
+          .eq('id', item.id);
+
+        if (itemErr) throw itemErr;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
     },
   });
 }

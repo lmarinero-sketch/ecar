@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  ShoppingBag, Plus, X, Check, XCircle, Clock, AlertTriangle,
-  Building2, Package, Smartphone, Shield, Save, CheckCircle2
+  ShoppingBag, Plus, X, AlertTriangle, Clock,
+  Building2, Package, Smartphone, Shield, Save, CheckCircle2,
+  Truck, FileText, Download
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
-  useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems
+  useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems,
+  useDispatchPurchaseRequest, useReceivePurchaseRequest
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import type { PurchaseRequestItem } from '../lib/types';
+import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
+import { exportRequestPdf, exportDispatchPdf, exportThreeWayComparisonPdf } from '../lib/orderPdfExport';
 
 const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
   low: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
@@ -62,6 +65,104 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [quotePrices, setQuotePrices] = useState<Record<string, number>>({});
 
   const updateQuoteItems = useUpdatePurchaseRequestItems();
+  const dispatchMutation = useDispatchPurchaseRequest();
+  const receiveMutation = useReceivePurchaseRequest();
+
+  // Modals for 3-way tracking
+  const [dispatchModalReq, setDispatchModalReq] = useState<PurchaseRequest | null>(null);
+  const [dispatchItemsState, setDispatchItemsState] = useState<Record<string, { quantity_sent: number; notes: string }>>({});
+  const [dispatchedBy, setDispatchedBy] = useState('');
+
+  const [receptionModalReq, setReceptionModalReq] = useState<PurchaseRequest | null>(null);
+  const [receptionItemsState, setReceptionItemsState] = useState<Record<string, { quantity_received: number; notes: string }>>({});
+  const [receivedBy, setReceivedBy] = useState('');
+
+  const openDispatchModal = (req: PurchaseRequest) => {
+    const initial: Record<string, { quantity_sent: number; notes: string }> = {};
+    (req.items || []).forEach((it: any) => {
+      initial[it.id] = {
+        quantity_sent: it.quantity_sent !== undefined && it.quantity_sent !== null ? it.quantity_sent : it.quantity,
+        notes: it.dispatch_notes || ''
+      };
+    });
+    setDispatchItemsState(initial);
+    setDispatchedBy(userName || 'Pañol Central');
+    setDispatchModalReq(req);
+  };
+
+  const handleConfirmDispatch = async () => {
+    if (!dispatchModalReq) return;
+    const items = Object.entries(dispatchItemsState).map(([id, val]: [string, any]) => ({
+      id,
+      quantity_sent: Number(val.quantity_sent) || 0,
+      dispatch_notes: val.notes
+    }));
+
+    await dispatchMutation.mutateAsync({
+      requestId: dispatchModalReq.id,
+      dispatchedBy,
+      items
+    });
+
+    const updatedReq: PurchaseRequest = {
+      ...dispatchModalReq,
+      dispatched_by: dispatchedBy,
+      dispatched_at: new Date().toISOString(),
+      status: 'ordered',
+      items: (dispatchModalReq.items || []).map((it: any) => ({
+        ...it,
+        quantity_sent: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
+        dispatch_notes: dispatchItemsState[it.id]?.notes
+      }))
+    };
+
+    await exportDispatchPdf(updatedReq);
+    setDispatchModalReq(null);
+  };
+
+  const openReceptionModal = (req: PurchaseRequest) => {
+    const initial: Record<string, { quantity_received: number; notes: string }> = {};
+    (req.items || []).forEach((it: any) => {
+      const sent = it.quantity_sent !== undefined && it.quantity_sent !== null ? it.quantity_sent : it.quantity;
+      initial[it.id] = {
+        quantity_received: it.quantity_received !== undefined && it.quantity_received !== null ? it.quantity_received : sent,
+        notes: it.reception_notes || ''
+      };
+    });
+    setReceptionItemsState(initial);
+    setReceivedBy(userName || 'Receptor Obra');
+    setReceptionModalReq(req);
+  };
+
+  const handleConfirmReception = async () => {
+    if (!receptionModalReq) return;
+    const items = Object.entries(receptionItemsState).map(([id, val]: [string, any]) => ({
+      id,
+      quantity_received: Number(val.quantity_received) || 0,
+      reception_notes: val.notes
+    }));
+
+    await receiveMutation.mutateAsync({
+      requestId: receptionModalReq.id,
+      receivedBy,
+      items
+    });
+
+    const updatedReq: PurchaseRequest = {
+      ...receptionModalReq,
+      received_by: receivedBy,
+      received_at: new Date().toISOString(),
+      status: 'received',
+      items: (receptionModalReq.items || []).map((it: any) => ({
+        ...it,
+        quantity_received: receptionItemsState[it.id]?.quantity_received ?? (it.quantity_sent ?? it.quantity),
+        reception_notes: receptionItemsState[it.id]?.notes
+      }))
+    };
+
+    await exportThreeWayComparisonPdf(updatedReq);
+    setReceptionModalReq(null);
+  };
 
   useEffect(() => {
     if (whatsappSetting?.value !== undefined) {
@@ -270,57 +371,179 @@ export const PurchaseRequestsModule: React.FC = () => {
           const stat = STATUS_LABEL[req.status] || STATUS_LABEL.pending;
           return (
             <div key={req.id} className="light-card overflow-hidden">
-              <div className="p-4 flex items-start gap-4">
-                <div className="flex-1">
+              <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
+                <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${stat.color}`}>{stat.label}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${urg.color}`}>{urg.label}</span>
-                    {req.project && <span className="text-xs text-gray-500 flex items-center gap-1"><Building2 size={12} /> {(req.project as any)?.name}</span>}
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${stat.color}`}>{stat.label}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${urg.color}`}>{urg.label}</span>
+                    {req.project && (
+                      <span className="text-xs text-gray-700 font-bold flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md">
+                        <Building2 size={12} className="text-ecar-blue" /> {(req.project as any)?.name}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">Por: {req.requested_by || '—'} · {new Date(req.created_at).toLocaleDateString('es-AR')}</p>
-                  {req.urgency === 'urgent' && req.urgency_reason && <p className="text-sm text-red-600 font-medium mt-1 bg-red-50 p-2 rounded-md border border-red-100">Motivo de urgencia: {req.urgency_reason}</p>}
-                  {req.notes && <p className="text-sm text-gray-500 mt-1">{req.notes}</p>}
-                  {items.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {items.map((item, i) => (
-                        <div key={i} className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs border border-gray-200 shadow-sm">
-                          <Package size={12} className="text-gray-400" />
-                          <span className="font-medium text-gray-700">{item.quantity} {item.unit} — {item.description}</span>
-                          {item.estimated_unit_cost > 0 && (
-                            <span className="ml-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold font-mono" title="Costo estimado por Presupuestos">
-                              Est: ${(item.estimated_unit_cost * item.quantity).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
-                            </span>
-                          )}
-                          {item.budget_item_id && <span className="ml-0.5 text-blue-500" title="Vinculado al Presupuesto Oficial">🔗</span>}
-                        </div>
-                      ))}
-                    </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solicitado por: <span className="font-bold text-gray-700">{req.requested_by || 'Jefe de Obra'}</span> · {new Date(req.created_at).toLocaleDateString('es-AR')}
+                    {req.dispatched_by && <span> · Despachado por: <span className="font-bold text-sky-700">{req.dispatched_by}</span> ({req.dispatched_at ? new Date(req.dispatched_at).toLocaleDateString('es-AR') : ''})</span>}
+                    {req.received_by && <span> · Recepcionado por: <span className="font-bold text-emerald-700">{req.received_by}</span> ({req.received_at ? new Date(req.received_at).toLocaleDateString('es-AR') : ''})</span>}
+                  </p>
+                  {req.urgency === 'urgent' && req.urgency_reason && (
+                    <p className="text-xs text-red-600 font-medium mt-1 bg-red-50 p-2 rounded-md border border-red-100">
+                      Motivo de urgencia: {req.urgency_reason}
+                    </p>
+                  )}
+                  {req.notes && <p className="text-xs text-gray-600 mt-1 italic">"{req.notes}"</p>}
+                </div>
+
+                {/* Main Workflow Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {activeTab === 'obra' && (
+                    <>
+                      {(req.status === 'pending' || req.status === 'approved') && (
+                        <button
+                          onClick={() => openDispatchModal(req)}
+                          className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                          title="Ingresar las cantidades despachadas por Pañol Central"
+                        >
+                          <Truck size={15} /> Declarar Despacho / Pañol
+                        </button>
+                      )}
+
+                      {req.status === 'ordered' && (
+                        <button
+                          onClick={() => openReceptionModal(req)}
+                          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                          title="Confirmar la recepción efectiva de los materiales en el frente de obra"
+                        >
+                          <CheckCircle2 size={15} /> Recepcionar en Obra
+                        </button>
+                      )}
+
+                      {req.status === 'received' && (
+                        <button
+                          onClick={() => exportThreeWayComparisonPdf(req)}
+                          className="px-3.5 py-2 bg-slate-900 hover:bg-ecar-blue text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Download size={15} /> Descargar Acta Final PDF
+                        </button>
+                      )}
+
+                      {/* PDF Direct Actions */}
+                      <button
+                        onClick={() => exportRequestPdf(req)}
+                        className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                        title="Descargar Solicitud de Pedido de Obra PDF"
+                      >
+                        <FileText size={14} className="text-ecar-blue" /> PDF Solicitud
+                      </button>
+                      {req.dispatched_at && (
+                        <button
+                          onClick={() => exportDispatchPdf(req)}
+                          className="px-2.5 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                          title="Descargar Remito de Pañol PDF"
+                        >
+                          <Truck size={14} /> PDF Remito
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Quote Tab Actions */}
+                  {activeTab === 'quote' && req.status === 'pending' && editingQuoteId !== req.id && (
+                    <button
+                      onClick={() => {
+                        const initialPrices: Record<string, number> = {};
+                        items.forEach(i => { initialPrices[i.id] = i.estimated_unit_cost || 0; });
+                        setQuotePrices(initialPrices);
+                        setEditingQuoteId(req.id);
+                      }}
+                      className="badge badge-info"
+                    >
+                      Cotizar
+                    </button>
                   )}
                 </div>
-                {req.status === 'pending' && activeTab === 'obra' && (
-                  <div className="flex gap-1 shrink-0">
-                    <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'approved', approved_at: new Date().toISOString() })} className="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-all" title="Aprobar"><Check size={16} className="text-green-700" /></button>
-                    <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'returned' })} className="p-2 rounded-lg bg-orange-100 hover:bg-orange-200 transition-all" title="Devolver (Faltan Datos)"><AlertTriangle size={16} className="text-orange-700" /></button>
-                    <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'rejected' })} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-all" title="Rechazar"><XCircle size={16} className="text-red-700" /></button>
-                  </div>
-                )}
-                {req.status === 'approved' && activeTab === 'obra' && (
-                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'ordered' })} className="badge badge-info">Marcar Pedido</button>
-                )}
-                {req.status === 'ordered' && activeTab === 'obra' && (
-                  <button onClick={() => updateRequest.mutateAsync({ id: req.id, status: 'received' })} className="badge badge-success">Recibido ✅</button>
-                )}
-                
-                {/* Quote Actions */}
-                {activeTab === 'quote' && req.status === 'pending' && editingQuoteId !== req.id && (
-                  <button onClick={() => {
-                    const initialPrices: Record<string, number> = {};
-                    items.forEach(i => { initialPrices[i.id] = i.estimated_unit_cost || 0; });
-                    setQuotePrices(initialPrices);
-                    setEditingQuoteId(req.id);
-                  }} className="badge badge-info">Cotizar</button>
-                )}
               </div>
+
+              {/* ─── 3-WAY COMPARISON & TRACEABILITY TABLE ─── */}
+              {items.length > 0 && (
+                <div className="p-4 bg-slate-50/50">
+                  <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
+                    <div className="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+                      <div className="flex items-center gap-2">
+                        <Package size={15} className="text-sky-400" />
+                        <span>Tabla de Trazabilidad Tripartita (Obra ➔ Pañol ➔ Recepción)</span>
+                      </div>
+                      <span className="text-[11px] font-normal text-slate-300">
+                        {items.length} ítem(s) registrados
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                      {items.map((it) => {
+                        const requested = it.quantity || 0;
+                        const sent = it.quantity_sent;
+                        const received = it.quantity_received;
+
+                        let statusText = '⏳ Pendiente Despacho Pañol';
+                        let statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+
+                        if (sent !== undefined && sent !== null) {
+                          if (sent < requested) {
+                            statusText = `⚠️ Despacho Parcial (${requested - sent} faltantes)`;
+                            statusBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                          } else if (received !== undefined && received !== null) {
+                            if (received === requested) {
+                              statusText = '✅ Recibido 100% Conforme';
+                              statusBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                            } else {
+                              statusText = `⚠️ Diferencia en Obra (${sent - received} dif.)`;
+                              statusBadgeClass = 'bg-red-50 text-red-700 border-red-200';
+                            }
+                          } else {
+                            statusText = '🚚 En Tránsito a Obra';
+                            statusBadgeClass = 'bg-sky-50 text-sky-700 border-sky-200';
+                          }
+                        }
+
+                        return (
+                          <div key={it.id} className="p-3 text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-gray-800 text-sm">{it.description}</span>
+                                {it.budget_item_id && <span className="text-blue-500 text-xs" title="Vinculado al Presupuesto Oficial">🔗 Presupuestado</span>}
+                              </div>
+                              {it.dispatch_notes && <p className="text-[11px] text-sky-600 italic mt-0.5">Nota Pañol: {it.dispatch_notes}</p>}
+                              {it.reception_notes && <p className="text-[11px] text-emerald-600 italic mt-0.5">Nota Recepción: {it.reception_notes}</p>}
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 text-center min-w-[310px]">
+                              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                <span className="text-[9px] font-bold text-gray-400 block tracking-wider uppercase">1. SOLICITADO</span>
+                                <span className="font-mono font-bold text-gray-800 text-xs">{requested} {it.unit}</span>
+                              </div>
+                              <div className="bg-sky-50/70 p-2 rounded-lg border border-sky-100">
+                                <span className="text-[9px] font-bold text-sky-600 block tracking-wider uppercase">2. ENVIADO PAÑOL</span>
+                                <span className="font-mono font-bold text-sky-800 text-xs">{sent !== null && sent !== undefined ? `${sent} ${it.unit}` : '—'}</span>
+                              </div>
+                              <div className="bg-emerald-50/70 p-2 rounded-lg border border-emerald-100">
+                                <span className="text-[9px] font-bold text-emerald-600 block tracking-wider uppercase">3. RECIBIDO OBRA</span>
+                                <span className="font-mono font-bold text-emerald-800 text-xs">{received !== null && received !== undefined ? `${received} ${it.unit}` : '—'}</span>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 text-right">
+                              <span className={`inline-block px-3 py-1 rounded-full font-bold border text-[11px] ${statusBadgeClass}`}>
+                                {statusText}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Quote Editing UI */}
               {editingQuoteId === req.id && (
@@ -478,6 +701,203 @@ export const PurchaseRequestsModule: React.FC = () => {
                 {createRequest.isPending ? 'Creando...' : '🛒 Crear Pedido de Compra'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal Declarar Despacho / Pañol */}
+      {dispatchModalReq && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div>
+                <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Declaración de Despacho desde Pañol</span>
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mt-0.5">
+                  <Truck size={20} className="text-sky-600" /> Pedido PED-{dispatchModalReq.id.slice(0, 8).toUpperCase()}
+                </h3>
+              </div>
+              <button onClick={() => setDispatchModalReq(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Responsable Despachante (Pañol Central)</label>
+                <input
+                  type="text"
+                  value={dispatchedBy}
+                  onChange={e => setDispatchedBy(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                  placeholder="Nombre de pañolero"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-2">Conformación de Materiales Despachados</label>
+                <div className="space-y-3">
+                  {(dispatchModalReq.items || []).map((it) => {
+                    const current = dispatchItemsState[it.id] || { quantity_sent: it.quantity, notes: '' };
+                    const isPartial = current.quantity_sent < it.quantity;
+
+                    return (
+                      <div key={it.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-bold text-gray-800 text-sm">{it.description}</span>
+                          <span className="text-xs text-gray-500">Solicitado: <strong className="text-gray-800">{it.quantity} {it.unit}</strong></span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="text-[11px] font-bold text-sky-700 block mb-1">Cantidad a Enviar ({it.unit})</label>
+                            <input
+                              type="number"
+                              step="any"
+                              value={current.quantity_sent}
+                              onChange={e => setDispatchItemsState({
+                                ...dispatchItemsState,
+                                [it.id]: { ...current, quantity_sent: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full px-3 py-1.5 border border-sky-300 rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-sky-500/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 block mb-1">Observación de Despacho (Opcional)</label>
+                            <input
+                              type="text"
+                              value={current.notes}
+                              onChange={e => setDispatchItemsState({
+                                ...dispatchItemsState,
+                                [it.id]: { ...current, notes: e.target.value }
+                              })}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
+                              placeholder="Ej: Stock parcial en pañol..."
+                            />
+                          </div>
+                        </div>
+
+                        {isPartial && (
+                          <p className="text-[11px] text-amber-700 font-bold bg-amber-50 p-2 rounded-lg border border-amber-200 flex items-center gap-1.5">
+                            <AlertTriangle size={13} /> Faltan {it.quantity - current.quantity_sent} {it.unit} por cubrir. El saldo faltante quedará registrado para compras.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setDispatchModalReq(null)}
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDispatch}
+                  disabled={dispatchMutation.isPending}
+                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+                >
+                  {dispatchMutation.isPending ? 'Confirmando...' : '📄 Confirmar Despacho & Generar Remito PDF'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Declarar Recepción en Obra */}
+      {receptionModalReq && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div>
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Constancia de Recepción en Obra</span>
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mt-0.5">
+                  <CheckCircle2 size={20} className="text-emerald-600" /> Pedido PED-{receptionModalReq.id.slice(0, 8).toUpperCase()}
+                </h3>
+              </div>
+              <button onClick={() => setReceptionModalReq(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Receptor de Campo / Obra</label>
+                <input
+                  type="text"
+                  value={receivedBy}
+                  onChange={e => setReceivedBy(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none"
+                  placeholder="Nombre de receptor"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-2">Conformidad de Recepción de Materiales</label>
+                <div className="space-y-3">
+                  {(receptionModalReq.items || []).map((it) => {
+                    const current = receptionItemsState[it.id] || { quantity_received: it.quantity_sent ?? it.quantity, notes: '' };
+                    const sentQty = it.quantity_sent ?? it.quantity;
+
+                    return (
+                      <div key={it.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-bold text-gray-800 text-sm">{it.description}</span>
+                          <span className="text-xs text-sky-700 font-bold">Enviado por Pañol: {sentQty} {it.unit}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="text-[11px] font-bold text-emerald-700 block mb-1">Cantidad Recibida Real ({it.unit})</label>
+                            <input
+                              type="number"
+                              step="any"
+                              value={current.quantity_received}
+                              onChange={e => setReceptionItemsState({
+                                ...receptionItemsState,
+                                [it.id]: { ...current, quantity_received: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full px-3 py-1.5 border border-emerald-300 rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-emerald-500/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 block mb-1">Observaciones / Conformidad</label>
+                            <input
+                              type="text"
+                              value={current.notes}
+                              onChange={e => setReceptionItemsState({
+                                ...receptionItemsState,
+                                [it.id]: { ...current, notes: e.target.value }
+                              })}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
+                              placeholder="Ej: Conforme 100%, empaque impecable"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setReceptionModalReq(null)}
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmReception}
+                  disabled={receiveMutation.isPending}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+                >
+                  {receiveMutation.isPending ? 'Confirmando...' : '📋 Confirmar Recepción & Generar Acta PDF'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
