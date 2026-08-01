@@ -500,38 +500,56 @@ export const InventoryModule: React.FC = () => {
       {/* Movements tab */}
       {tab === 'movements' && (
         <div className="light-card overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-bold text-gray-800">Historial de Movimientos</h3>
+          <div className="p-4 border-b border-gray-100 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span>📦</span> Kardex General de Movimientos y Registro de Pañol
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Auditoría completa de entradas, salidas por despacho a obras y ajustes de stock con fecha, hora y responsable.
+              </p>
+            </div>
+            <span className="text-xs font-mono font-bold bg-white/10 px-3 py-1 rounded-lg text-sky-300">
+              {(movements || []).length} registros
+            </span>
           </div>
           {(movements || []).length > 0 ? (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Ítem</th>
-                  <th>Tipo</th>
-                  <th className="text-center">Cantidad</th>
-                  <th>Obra</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(movements || []).map(m => (
-                  <tr key={m.id}>
-                    <td className="font-mono text-xs text-gray-500">{new Date(m.created_at).toLocaleDateString('es-AR')}</td>
-                    <td className="font-medium">{(m.item as any)?.name || '—'}</td>
-                    <td>
-                      <span className={`badge ${m.movement_type === 'in' ? 'badge-success' : m.movement_type === 'out' ? 'badge-danger' : m.movement_type === 'return' ? 'badge-info' : 'badge-neutral'}`}>
-                        {m.movement_type === 'in' ? 'Ingreso' : m.movement_type === 'out' ? 'Egreso' : m.movement_type === 'return' ? 'Devolución' : 'Ajuste'}
-                      </span>
-                    </td>
-                    <td className="text-center font-mono font-bold">{m.quantity}</td>
-                    <td className="text-gray-500">{(m.project as any)?.name || '—'}</td>
-                    <td className="text-gray-400 text-xs">{m.notes || '—'}</td>
+            <div className="overflow-x-auto">
+              <table className="data-table w-full">
+                <thead>
+                  <tr>
+                    <th>Fecha / Hora</th>
+                    <th>Ítem / Material</th>
+                    <th>Tipo Operación</th>
+                    <th className="text-center">Cantidad</th>
+                    <th>Obra Destino</th>
+                    <th>Responsable Pañol</th>
+                    <th>Detalle / Referencia Pedido</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(movements || []).map(m => (
+                    <tr key={m.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="font-mono text-xs text-gray-500 whitespace-nowrap">
+                        {new Date(m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="font-bold text-gray-800">{(m.item as any)?.name || '—'}</td>
+                      <td>
+                        <span className={`badge ${m.movement_type === 'in' ? 'badge-success' : m.movement_type === 'out' ? 'badge-danger' : m.movement_type === 'return' ? 'badge-info' : 'badge-neutral'}`}>
+                          {m.movement_type === 'in' ? '🟢 Ingreso Stock' : m.movement_type === 'out' ? '🔴 Egreso / Despacho' : m.movement_type === 'return' ? '🔵 Devolución' : '⚙️ Ajuste'}
+                        </span>
+                      </td>
+                      <td className="text-center font-mono font-bold text-sm text-gray-900">{m.quantity}</td>
+                      <td className="text-gray-700 font-medium">{(m.project as any)?.name || '—'}</td>
+                      <td className="text-gray-800 font-bold text-xs bg-slate-100 px-2 py-1 rounded-md inline-block my-1">
+                        👤 {m.created_by || 'Pañol Central'}
+                      </td>
+                      <td className="text-gray-600 text-xs italic">{m.notes || 'Sin observaciones'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="text-center py-12 text-gray-400"><ArrowDownToLine size={48} className="mx-auto mb-3 opacity-30" /><p>Sin movimientos aún</p></div>
           )}

@@ -1442,7 +1442,22 @@ export function useDispatchPurchaseRequest() {
       dispatchedBy: string;
       items: { id: string; quantity_sent: number; dispatch_notes?: string }[];
     }) => {
-      // 1. Update purchase_requests status to 'ordered' and set dispatch info
+      // 1. Fetch purchase_requests to get project_id
+      const { data: reqData } = await supabase
+        .from('purchase_requests')
+        .select('project_id, project:projects(name)')
+        .eq('id', requestId)
+        .maybeSingle();
+
+      // 2. Fetch purchase_request_items to inspect inventory_item_id
+      const { data: reqItems } = await supabase
+        .from('purchase_request_items')
+        .select('id, inventory_item_id, description, quantity')
+        .eq('request_id', requestId);
+
+      const itemsMap = new Map((reqItems || []).map(i => [i.id, i]));
+
+      // 3. Update purchase_requests status to 'ordered' and set dispatch info
       const { error: reqErr } = await supabase
         .from('purchase_requests')
         .update({
@@ -1454,8 +1469,10 @@ export function useDispatchPurchaseRequest() {
 
       if (reqErr) throw reqErr;
 
-      // 2. Update item quantities sent
+      // 4. Update item quantities sent + Deduct inventory stock & record kardex movement
       for (const item of items) {
+        const originalItem = itemsMap.get(item.id);
+
         const { error: itemErr } = await supabase
           .from('purchase_request_items')
           .update({
@@ -1465,11 +1482,50 @@ export function useDispatchPurchaseRequest() {
           .eq('id', item.id);
 
         if (itemErr) throw itemErr;
+
+        // AUTOMATIC STOCK DEDUCTION & KARDEX MOVEMENT LOGGING
+        if (item.quantity_sent > 0 && originalItem?.inventory_item_id) {
+          const invId = originalItem.inventory_item_id;
+
+          // a. Get current stock
+          const { data: inv } = await supabase
+            .from('inventory_items')
+            .select('current_stock, name')
+            .eq('id', invId)
+            .maybeSingle();
+
+          if (inv) {
+            const currentStock = Number(inv.current_stock) || 0;
+            const newStock = Math.max(0, currentStock - item.quantity_sent);
+
+            // b. Update stock in inventory
+            await supabase
+              .from('inventory_items')
+              .update({ current_stock: newStock })
+              .eq('id', invId);
+
+            // c. Log Kardex movement
+            const projectName = (reqData as any)?.project?.name || 'Obra';
+            const noteText = `Egreso por Despacho a ${projectName} (Pedido PED-${requestId.slice(0, 8).toUpperCase()}). ${item.dispatch_notes || ''}`.trim();
+
+            await supabase.from('inventory_movements').insert({
+              tenant_id: ECAR_TENANT_ID,
+              item_id: invId,
+              movement_type: 'out',
+              quantity: item.quantity_sent,
+              project_id: reqData?.project_id || null,
+              notes: noteText,
+              created_by: dispatchedBy
+            });
+          }
+        }
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['purchase_requests'] });
       qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
     },
   });
 }
