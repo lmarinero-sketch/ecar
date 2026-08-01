@@ -3172,49 +3172,6 @@ export function useDeleteWeeklyPayrollDetail() {
 }
 
 // ========== LOGISTICS MODULE ==========
-export function useLogisticsInventory() {
-  return useQuery({
-    queryKey: ['logistics_inventory'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('logistics_inventory').select('*').order('name');
-      if (error) throw error;
-      return data;
-    }
-  });
-}
-
-export function useLogisticsAssets() {
-  return useQuery({
-    queryKey: ['logistics_assets'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('logistics_assets').select('*').order('name');
-      if (error) throw error;
-      return data;
-    }
-  });
-}
-
-export function useLogisticsMovements() {
-  return useQuery({
-    queryKey: ['logistics_movements'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('logistics_movements').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
-    }
-  });
-}
-
-export function useLogisticsMaintenance() {
-  return useQuery({
-    queryKey: ['logistics_maintenance'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('logistics_maintenance').select('*').order('date', { ascending: false });
-      if (error) throw error;
-      return data;
-    }
-  });
-}
 
 // ========== AUDIT LOGS ==========
 export function useAuditLogs() {
