@@ -272,11 +272,12 @@ export const RomboChat: React.FC = () => {
     inventory: {
       where: 'Pañol & Inventario',
       capabilities: [
-        'Ver materiales con **stock bajo mínimo**',
+        'Ver el **Kardex Auditoría de Movimientos** (con fecha, hora y responsable)',
+        'Consultar **descuentos automáticos de stock** realizados por despacho de pedidos',
+        'Ver materiales con **stock bajo mínimo** y sugerir reposiciones',
         'Consultar **herramientas asignadas** a empleados',
-        'Revisar los **últimos movimientos** (entradas, salidas, devoluciones)',
-        'Obtener un **resumen general** del estado del pañol',
       ],
+      proTip: 'Cada despacho a obra descuenta stock en tiempo real y registra quién y cuándo lo hizo.',
     },
     liquidity: {
       where: 'Tablero de Liquidez',
@@ -315,12 +316,14 @@ export const RomboChat: React.FC = () => {
       ],
     },
     purchase_requests: {
-      where: 'Pedidos de Compra',
+      where: 'Pedidos de Obra y Requerimientos (Logística)',
       capabilities: [
-        'Ver **pedidos pendientes** de aprobación',
-        'Consultar montos de **pedidos consolidados**',
-        'Revisar el **detalle** de cada solicitud (items, cantidades, costos)',
+        'Gestionar el **circuito tripartito** (Solicitado ➔ Enviado Pañol ➔ Recibido Obra)',
+        'Descargar **PDFs oficiales ECAR** (Solicitud, Remito Pañol y Acta Recepción)',
+        'Declarar **despachos con descuento automático de stock**',
+        'Consultar la **tabla comparativa de saldos** e ítems faltantes',
       ],
+      proTip: 'Los pedidos despachados descuentan stock del Pañol y quedan auditados en el Kardex.',
     },
     logistics: {
       where: 'Gerencia de Logística (PR-GL-01)',

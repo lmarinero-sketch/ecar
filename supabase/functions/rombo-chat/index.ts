@@ -74,10 +74,11 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Sugerí: "¿Querés que revise quién faltó hoy?" o "Puedo mostrar los datos de alta de un empleado" o "¿Querés ver los adelantos pendientes de descuento?".`,
   
   inventory: `## CONTEXTO ACTUAL: El usuario está en Pañol & Inventario
-- Gestiona materiales, herramientas y consumibles. Control de stock con mínimos.
-- Movimientos: entrada, salida, devolución, ajuste. Asignación de herramientas a empleados.
-- Ayudalo a: revisar stock bajo mínimo, ver herramientas asignadas, consultar movimientos recientes.
-- Sugerí: "¿Querés que revise qué materiales están por debajo del stock mínimo?"`,
+- Gestiona materiales, herramientas y consumibles. Control de stock con mínimos y ubicación física.
+- Descuento Automático de Stock: Al despachar un pedido desde Logística, se descuenta en tiempo real el stock del pañol.
+- Kardex Completo de Movimientos (Auditoría): Registra entradas, salidas por despacho, devoluciones y ajustes con fecha, hora exacta, responsable pañolero (quién actualizó), obra y notas con referencia al Pedido (PED-XXXX).
+- Ayudalo a: revisar stock bajo mínimo, consultar el kardex de movimientos con responsables y fecha/hora, ver herramientas asignadas.
+- Sugerí: "¿Querés que revise qué materiales tienen stock crítico?" o "Puedo mostrarte el kardex de movimientos recientes con responsables".`,
   
   liquidity: `## CONTEXTO ACTUAL: El usuario está en el Tablero de Liquidez
 - Muestra la posición de caja, saldos bancarios y proyecciones de flujo.
@@ -100,10 +101,12 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Muestra: presupuesto, costo comprometido, devengado, avance %, hitos.
 - Ayudalo a: consultar avance de obra, comparar presupuesto vs real, identificar desvíos.`,
   
-  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Pedidos de Compra
-- Solicitudes internas de compra de materiales. Estados: pendiente, aprobado, consolidado, recibido.
-- Cada pedido tiene items con descripción, cantidad, unidad y costo estimado.
-- Ayudalo a: ver pedidos pendientes, aprobar solicitudes, consultar montos consolidados.`,
+  purchase_requests: `## CONTEXTO ACTUAL: El usuario está en Pedidos de Obra y Requerimientos (Gerencia de Logística)
+- Circuito Tripartito de Trazabilidad: 1. Solicitado (Obra) ➔ 2. Enviado (Pañol Central) ➔ 3. Recibido (Obra).
+- Descuento Automático e Integración con Pañol: Al declarar el despacho, se descuenta el stock en tiempo real y se genera el movimiento en el Kardex.
+- Documentos PDF Oficiales ECAR: Solicitud de Pedido de Obra, Remito de Despacho Pañol y Acta de Recepción y Conformidad Tripartita.
+- Tabla Comparativa de Saldos: Muestra en cada pedido lo solicitado vs enviado vs recibido, con saldos faltantes derivados a Compras.
+- Ayudalo a: gestionar la trazabilidad de pedidos, guiar la declaración de despacho con descuento de stock, descargar PDFs oficiales ECAR y analizar faltantes.`,
   
   field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario de Obra
 - Registro diario de actividades en obra: tareas realizadas, personal, clima (con ícono), temperatura, hs trabajadas, entregas, incidentes.
