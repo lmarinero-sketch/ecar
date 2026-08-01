@@ -336,17 +336,17 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
   },
   logistics: {
     title: 'Gerencia de Logística',
-    description: 'Hub centralizado de logística (Doc PR-GL-01). Control de acopios, transporte, inventario, flota y abastecimiento con KPIs consolidados y alertas de stock.',
+    description: 'Hub centralizado de logística (Doc PR-GL-01). Control de pañol, transporte, inventario, flota y abastecimiento con KPIs consolidados y alertas de stock.',
     steps: [
       'Revisá los KPIs consolidados: ítems en stock, stock bajo, valor inventario, OC pendientes, flota operativa.',
-      'Hacé clic en las tarjetas de Depósito, Flota, OC o Pedidos para acceder al sub-módulo.',
+      'Hacé clic en las tarjetas de Pañol, Flota, OC o Pedidos para acceder al sub-módulo.',
       'Revisá las alertas de stock bajo para identificar materiales que necesitan reposición urgente.',
       'Consultá los últimos movimientos de inventario en la tabla inferior.',
     ],
     tips: [
+      'El rol "Pañolero" solo puede ver y gestionar las secciones de Pañol y Flota, sin acceso a información contable.',
       'Las alertas rojas indican ítems por debajo del stock mínimo configurado.',
       'Desde este hub podés navegar a todos los sub-módulos de logística.',
-      'Los KPIs se actualizan en tiempo real con datos de Inventario, Flota y Compras.',
     ],
   },
   user_management: {

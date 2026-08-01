@@ -1,9 +1,44 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Truck, DollarSign, Activity, Wrench, AlertCircle } from 'lucide-react';
-import { useFuelVehicles } from '../hooks/useData';
+import { useFuelVehicles, useFuelLoads, useLogisticsMaintenanceLog } from '../hooks/useData';
 
 export const VehiclesRegistryModule: React.FC = () => {
-  const { data: vehicles = [], isLoading } = useFuelVehicles();
+  const { data: vehicles = [], isLoading: isLoadingV } = useFuelVehicles();
+  const { data: fuelLoads = [], isLoading: isLoadingF } = useFuelLoads();
+  const { data: maintenanceLogs = [], isLoading: isLoadingM } = useLogisticsMaintenanceLog();
+
+  const isLoading = isLoadingV || isLoadingF || isLoadingM;
+
+  // Calculate Global KPIs based on real data
+  const { avgCostPerKm, avgAvailability, ratioMaintStr } = useMemo(() => {
+    if (vehicles.length === 0) return { avgCostPerKm: 0, avgAvailability: 100, ratioMaintStr: '0% Prev / 0% Corr' };
+    
+    let totalFuelCost = 0;
+    fuelLoads.forEach(fl => totalFuelCost += (fl.total_amount || 0));
+    let totalMaintCost = 0;
+    let countPrev = 0;
+    let countCorr = 0;
+    
+    maintenanceLogs.forEach(ml => {
+      totalMaintCost += (ml.cost || 0);
+      if (ml.type === 'service' || ml.type === 'vtv' || ml.type === 'seguro') countPrev++;
+      else countCorr++;
+    });
+
+    // Approximate total KM (sum of current_km of active vehicles)
+    let totalKm = vehicles.reduce((sum, v) => sum + (v.current_km || 0), 1);
+    if (totalKm === 0) totalKm = 1; // Prevent division by zero
+
+    const avgCostPerKm = (totalFuelCost + totalMaintCost) / totalKm;
+    const totalMaintCount = countPrev + countCorr || 1;
+    const ratioMaintStr = `${Math.round((countPrev/totalMaintCount)*100)}% Prev / ${Math.round((countCorr/totalMaintCount)*100)}% Corr`;
+    
+    // Availability based on maintenance status
+    const vehiclesInMaintenance = vehicles.filter(v => v.status === 'maintenance').length;
+    const avgAvailability = ((vehicles.length - vehiclesInMaintenance) / vehicles.length) * 100;
+
+    return { avgCostPerKm, avgAvailability, ratioMaintStr };
+  }, [vehicles, fuelLoads, maintenanceLogs]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-amber-500 rounded-full animate-spin" /></div>;
@@ -16,7 +51,7 @@ export const VehiclesRegistryModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Activity size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Activity size={24} /> Desempeño de Vehículos (KPIs)</h3>
-          <p className="text-amber-100 text-sm mt-1">Análisis de costos, disponibilidad y eficiencia de la flota.</p>
+          <p className="text-amber-100 text-sm mt-1">Análisis de costos, disponibilidad y eficiencia de la flota basado en consumos reales.</p>
         </div>
       </div>
 
@@ -24,15 +59,15 @@ export const VehiclesRegistryModule: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><DollarSign size={16} className="text-red-500" /> Costo Operativo Prom.</div>
-          <p className="text-2xl font-black text-red-600 font-mono relative z-10">$ 2,450 / Km</p>
+          <p className="text-2xl font-black text-red-600 font-mono relative z-10">$ {avgCostPerKm.toLocaleString(undefined, { maximumFractionDigits: 2 })} / Km</p>
         </div>
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-emerald-500" /> Tasa de Disponibilidad</div>
-          <p className="text-2xl font-black text-emerald-600 font-mono relative z-10">94.5 %</p>
+          <p className="text-2xl font-black text-emerald-600 font-mono relative z-10">{avgAvailability.toFixed(1)} %</p>
         </div>
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Wrench size={16} className="text-blue-500" /> Ratio Mantenimiento</div>
-          <p className="text-2xl font-black text-blue-600 font-mono relative z-10">80% Prev / 20% Corr</p>
+          <p className="text-2xl font-black text-blue-600 font-mono relative z-10">{ratioMaintStr}</p>
         </div>
       </div>
 
@@ -53,12 +88,21 @@ export const VehiclesRegistryModule: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {vehicles.map((v, i) => {
-                // Valores mockeados basados en el índice temporalmente
-                const costoKm = 2000 + (i * 150);
-                const eficiencia = (10 - (i * 0.5)).toFixed(1);
-                const disponibilidad = 100 - (i * 2);
-                const isWarning = disponibilidad < 90 || costoKm > 3000;
+              {vehicles.map((v) => {
+                // Cálculos reales
+                const vFuelLoads = fuelLoads.filter(fl => fl.vehicle_id === v.id);
+                const vMaintLogs = maintenanceLogs.filter(ml => ml.vehicle_id === v.id);
+                
+                const vFuelCost = vFuelLoads.reduce((sum, fl) => sum + (fl.total_amount || 0), 0);
+                const vFuelLiters = vFuelLoads.reduce((sum, fl) => sum + (fl.liters || 0), 0);
+                const vMaintCost = vMaintLogs.reduce((sum, ml) => sum + (ml.cost || 0), 0);
+                const currentKm = v.current_km || 1;
+                
+                const costoKm = (vFuelCost + vMaintCost) / currentKm;
+                const eficiencia = vFuelLiters > 0 ? (currentKm / vFuelLiters).toFixed(1) : 'N/A';
+                const disponibilidad = v.status === 'maintenance' ? 0 : 100;
+                
+                const isWarning = (v.status === 'maintenance') || (disponibilidad < 90) || (costoKm > 3000);
 
                 return (
                   <tr key={v.id} className="hover:bg-gray-50 transition-colors">

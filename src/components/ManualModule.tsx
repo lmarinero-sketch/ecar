@@ -683,7 +683,7 @@ const MODULES_DATA: ModuleDoc[] = [
   {
     id: 'logistics',
     code: 'MOD-05A',
-    name: 'Logística y Acopios',
+    name: 'Logística y Pañol',
     section: 'Gerencia Logística',
     icon: Warehouse,
     color: 'text-slate-600',
@@ -691,7 +691,7 @@ const MODULES_DATA: ModuleDoc[] = [
     borderColor: 'border-slate-400',
     purpose: 'Gestión centralizada de depósitos, recepción de mercadería y transferencias a obras, asegurando trazabilidad física del inventario.',
     scope: 'Gerencia de Logística y Encargados de Pañol.',
-    responsible: 'Gerencia de Logística',
+    responsible: 'Gerencia de Logística / Pañolero',
     process: [
       'Se configuran los depósitos centrales y pañoles de obra.',
       'Se reciben los remitos físicos y se ingresan al sistema, actualizando el stock.',
