@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 
-type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'fleet' | 'maintenance';
+type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -83,6 +83,7 @@ export const LogisticsModule: React.FC = () => {
     { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
     { id: 'obra_requests', icon: Package, label: 'Pedidos de Obra' },
     { id: 'deliveries', icon: Repeat, label: 'Logística y Entregas' },
+    { id: 'diagrams', icon: FileText, label: 'Procesos y Diagramas' },
   ];
 
   return (
@@ -121,32 +122,43 @@ export const LogisticsModule: React.FC = () => {
           </div>
         </button>
         {showIntro && (
-          <div className="p-4 md:p-6 border-t border-gray-100 bg-white grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito & Stock</h5>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Logística debe conocer exactamente qué tenemos, dónde está y su estado.
-                Definimos <span className="font-semibold text-gray-800">Alertas de Reposición</span> antes de que el material se agote.
-              </p>
+          <div className="p-4 md:p-6 border-t border-gray-100 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito & Stock</h5>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Logística debe conocer exactamente qué tenemos, dónde está y su estado.
+                  Definimos <span className="font-semibold text-gray-800">Alertas de Reposición</span> antes de que el material se agote.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos</h5>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Cada salida tiene un responsable y una fecha de devolución.
+                  La trazabilidad previene pérdidas económicas.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota</h5>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Control de horas y km nos permite anticipar mantenimientos preventivos, services y VTV.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><MapPin size={16} /> 4. Entregas a Obra</h5>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Programamos qué materiales y herramientas van a cada obra, con qué vehículo y quién es el responsable.
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos</h5>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Cada salida tiene un responsable y una fecha de devolución.
-                La trazabilidad previene pérdidas económicas.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota</h5>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Control de horas y km nos permite anticipar mantenimientos preventivos, services y VTV.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><MapPin size={16} /> 4. Entregas a Obra</h5>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Programamos qué materiales y herramientas van a cada obra, con qué vehículo y quién es el responsable.
-              </p>
+            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs text-gray-500">¿Querés ver el flujo paso a paso con los diagramas interactivos de Pedidos, Compras y Flota?</span>
+              <button
+                onClick={() => setActiveTab('diagrams')}
+                className="px-4 py-2 bg-ecar-blue text-white text-xs font-bold rounded-lg hover:bg-ecar-blueDark transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <FileText size={14} /> Abrir Diagramas de Procesos completos
+              </button>
             </div>
           </div>
         )}
@@ -175,6 +187,9 @@ export const LogisticsModule: React.FC = () => {
         )}
         {activeTab === 'deliveries' && (
           <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} employees={employees} />
+        )}
+        {activeTab === 'diagrams' && (
+          <ProcessDiagramsTab />
         )}
       </div>
     </div>
@@ -1107,3 +1122,313 @@ export const MaintenanceTab: React.FC<{
     </div>
   );
 };
+
+/* ═══════════════════════ PROCESS DIAGRAMS TAB ═══════════════════════ */
+
+const ProcessDiagramsTab: React.FC = () => {
+  const [activeDiagram, setActiveDiagram] = useState<'pedidos' | 'flota' | 'panol'>('pedidos');
+
+  return (
+    <div className="space-y-6">
+      {/* Header and Subtabs */}
+      <div className="bg-slate-900 text-white rounded-xl p-6 shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-ecar-blue/30 text-ecar-blueLight rounded-full text-xs font-semibold mb-2">
+              <PackageCheck size={14} /> Guía Visual de Procesos
+            </div>
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              Diagramas de Trabajo: Logística, Flota y Compras
+            </h3>
+            <p className="text-xs text-gray-300 mt-1 max-w-2xl">
+              Visualizá el recorrido extremo a extremo de los insumos, la maquinaria, las órdenes de compra y las entregas a obra.
+            </p>
+          </div>
+
+          {/* Subtab Selector */}
+          <div className="flex bg-slate-800 p-1.5 rounded-xl gap-1 border border-slate-700">
+            <button
+              onClick={() => setActiveDiagram('pedidos')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDiagram === 'pedidos' ? 'bg-ecar-blue text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Package size={14} /> 1. Obra ➔ Pañol ➔ Compras
+            </button>
+            <button
+              onClick={() => setActiveDiagram('flota')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDiagram === 'flota' ? 'bg-ecar-blue text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Truck size={14} /> 2. Flota & Parte Diario
+            </button>
+            <button
+              onClick={() => setActiveDiagram('panol')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDiagram === 'panol' ? 'bg-ecar-blue text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Wrench size={14} /> 3. Pañol & Herramientas
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* DIAGRAM 1: PEDIDOS OBRA -> LOGISTICA -> COMPRAS */}
+      {activeDiagram === 'pedidos' && (
+        <div className="space-y-6">
+          <div className="border border-blue-100 bg-blue-50/50 rounded-xl p-4 flex items-center gap-3 text-xs text-blue-900">
+            <ShieldAlert size={20} className="text-ecar-blue shrink-0" />
+            <div>
+              <span className="font-bold">Regla de Negocio Core:</span> Todo pedido originado en Obra ingresa primero a Logística para ser cubierto con stock existente en Pañol. Solamente si el stock es insuficiente o es un ítem especial, se deriva automáticamente a Compras.
+            </div>
+          </div>
+
+          {/* Process Flow Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
+            {/* Step 1 */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-ecar-blue font-bold flex items-center justify-center text-xs mb-3">
+                  1
+                </div>
+                <h5 className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                  <Package size={16} className="text-ecar-blue" /> Solicitud en Obra
+                </h5>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  El Capataz o Jefe de Obra carga la lista de insumos indicando la obra, fecha límite y nivel de urgencia.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] font-semibold text-gray-400">
+                Rol: Responsable de Obra
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs mb-3">
+                  2
+                </div>
+                <h5 className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                  <Warehouse size={16} className="text-indigo-600" /> Control en Pañol
+                </h5>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Logística evalúa existencias en inventario y reserva los materiales físicamente disponibles.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] font-semibold text-gray-400">
+                Rol: Pañolero / Logística
+              </div>
+            </div>
+
+            {/* Step 3 (Decision) */}
+            <div className="bg-gradient-to-b from-slate-50 to-slate-100 rounded-xl border-2 border-dashed border-gray-300 p-4 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <div className="w-8 h-8 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-xs mb-3">
+                  3
+                </div>
+                <h5 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                  <TrendingUp size={16} className="text-slate-700" /> Evaluación de Stock
+                </h5>
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-medium">
+                    🟢 <strong>Hay Stock:</strong> Pasa a Despacho Directo.
+                  </div>
+                  <div className="p-2 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-800 font-medium">
+                    🔴 <strong>Sin Stock:</strong> Deriva a Compras.
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-200 text-[11px] font-semibold text-gray-500">
+                Filtro Automático / Manual
+              </div>
+            </div>
+
+            {/* Step 4A (If Stock) */}
+            <div className="bg-emerald-50/50 rounded-xl border border-emerald-200 p-4 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs mb-3">
+                  4A
+                </div>
+                <h5 className="font-bold text-emerald-900 text-sm flex items-center gap-1.5">
+                  <Truck size={16} className="text-emerald-600" /> Despacho a Obra
+                </h5>
+                <p className="text-xs text-emerald-800/80 mt-1 leading-relaxed">
+                  Se genera la Hoja de Ruta, se asigna transporte y chofer. Al llegar a obra se firma la recepción y se descuenta stock.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-emerald-200/60 text-[11px] font-bold text-emerald-700">
+                Camino Verde: Pañol
+              </div>
+            </div>
+
+            {/* Step 4B (If No Stock) */}
+            <div className="bg-amber-50/50 rounded-xl border border-amber-200 p-4 shadow-sm relative flex flex-col justify-between">
+              <div>
+                <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-xs mb-3">
+                  4B
+                </div>
+                <h5 className="font-bold text-amber-900 text-sm flex items-center gap-1.5">
+                  <ShoppingCart size={16} className="text-amber-600" /> Circuito Compras
+                </h5>
+                <p className="text-xs text-amber-800/80 mt-1 leading-relaxed">
+                  Compras solicita cotizaciones a proveedores, aprueba la OC y coordina entrega directa o ingreso a pañol.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-amber-200/60 text-[11px] font-bold text-amber-700">
+                Camino Naranja: Compras
+              </div>
+            </div>
+          </div>
+
+          {/* Extended Flowchart Summary */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+              <FileText size={16} className="text-ecar-blue" /> Detalle Informativo de los Estados del Pedido
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1">
+                <span className="font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[10px]">PENDIENTE</span>
+                <p className="text-gray-600 mt-1">El pedido fue creado desde la obra y está a la espera de ser revisado por el equipo logístico.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1">
+                <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px]">EN TRÁNSITO</span>
+                <p className="text-gray-600 mt-1">El pedido fue preparado en pañol y se encuentra viajando hacia la obra con chofer asignado.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-1">
+                <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">ENTREGADO</span>
+                <p className="text-gray-600 mt-1">El receptor en obra confirmó la llegada física con checklist y firma. Se actualizó el stock real.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIAGRAM 2: CICLO DE FLOTA Y PARTE DIARIO */}
+      {activeDiagram === 'flota' && (
+        <div className="space-y-6">
+          <div className="border border-purple-100 bg-purple-50/50 rounded-xl p-4 flex items-center gap-3 text-xs text-purple-900">
+            <Truck size={20} className="text-purple-600 shrink-0" />
+            <div>
+              <span className="font-bold">Circuito Integral de Flotas & Maquinaria:</span> Desde el escaneo del código QR en la cabina del vehículo hasta la actualización del Odómetro/Horómetro, alertas preventivas de Service/VTV y seguimiento por GPS.
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Step 1: QR & Parte Diario */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+              <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
+                1
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">📱 Escaneo QR & Parte Diario</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                El chofer u operador escanea el código QR adherido al vehículo desde su teléfono móvil al iniciar o finalizar la jornada.
+              </p>
+              <ul className="text-[11px] text-gray-500 space-y-1 list-disc pl-4">
+                <td>Ingreso de Km o Horas de uso.</td>
+                <td>Litros y monto de combustible cargado.</td>
+                <td>Adjunto de comprobantes / fotos de estado.</td>
+              </ul>
+            </div>
+
+            {/* Step 2: Impacto Automático */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                2
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">⚡ Actualización de Perfil</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                El kilometraje cargado impacta de inmediato en la ficha técnica unificada del vehículo, recalculando los remanentes para el próximo mantenimiento.
+              </p>
+              <ul className="text-[11px] text-gray-500 space-y-1 list-disc pl-4">
+                <td>Actualización de odómetro real.</td>
+                <td>Cálculo de costo/km de combustible.</td>
+              </ul>
+            </div>
+
+            {/* Step 3: Evaluación de Estado */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                3
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">🛠️ Mantenimiento & Tickets</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Si el reporte indica una falla o faltan menos de 15 días para el service/VTV:
+              </p>
+              <div className="space-y-1.5 text-[11px]">
+                <div className="p-1.5 bg-yellow-50 text-yellow-800 rounded font-medium border border-yellow-200">
+                  🟡 <strong>Daño Leve:</strong> Crea Ticket "Con Observaciones" (sigue operativo).
+                </div>
+                <div className="p-1.5 bg-red-50 text-red-800 rounded font-medium border border-red-200">
+                  🔴 <strong>Falla Crítica:</strong> Pasa a "Fuera de Servicio".
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4: Tracking & Salida Taller */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                4
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">📡 Tracking GPS & Alta</h5>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Logística visualiza en el Mapa en Vivo las unidades activas y coordinan el turno en taller. Tras el service, el vehículo retorna a estado Operativo.
+              </p>
+              <ul className="text-[11px] text-gray-500 space-y-1 list-disc pl-4">
+                <td>Verificación en mapa GPS en vivo.</td>
+                <td>Cierre del ticket de taller con costo real.</td>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIAGRAM 3: GESTION DE PAÑOL Y HERRAMIENTAS */}
+      {activeDiagram === 'panol' && (
+        <div className="space-y-6">
+          <div className="border border-emerald-100 bg-emerald-50/50 rounded-xl p-4 flex items-center gap-3 text-xs text-emerald-900">
+            <Wrench size={20} className="text-emerald-600 shrink-0" />
+            <div>
+              <span className="font-bold">Control Físico del Pañol:</span> Evitamos extravíos de herramientas de alto valor mediante firmas de asignación a operarios y control por posiciones de estantería.
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center text-xs">
+                PASO 1
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">🏷️ Registro y Ubicación Física</h5>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Cada herramienta (amoladora, rotomartillo, nivel) o material posee una ubicación codificada en estantería (ej: <code>E1-N3-C2</code>) y unidad de medida estandarizada.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center text-xs">
+                PASO 2
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">✍️ Asignación a Operario (Checkout)</h5>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Al retirar una herramienta, el pañolero genera la asignación a nombre del trabajador indicando la fecha estimada de devolución y la obra asociada.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center text-xs">
+                PASO 3
+              </div>
+              <h5 className="font-bold text-gray-800 text-sm">🔄 Retorno & Control de Estado (Checkin)</h5>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Al devolver el equipo, se revisa la condición funcional. Si está en óptimas condiciones, reingresa al pañol; si presenta roturas, se envía a reparación.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
