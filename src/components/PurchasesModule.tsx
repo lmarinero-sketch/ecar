@@ -1182,13 +1182,16 @@ export const PurchasesModule: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      <input type="text" placeholder="🔍 Escribí para buscar por proveedor..." value={searchProvider} onChange={e => setSearchProvider(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
+                      <input type="text" placeholder="🔍 Escribí para buscar por proveedor o n° comprobante..." value={searchProvider} onChange={e => setSearchProvider(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
                       <div className="max-h-32 overflow-y-auto border rounded-lg bg-gray-50 divide-y shadow-inner">
                         {invoices
                           .filter((inv: any) => !isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura))
                           .filter((inv: any) => {
                              const prov = (inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '').toLowerCase();
-                             return searchProvider === '' || prov.includes(searchProvider.toLowerCase());
+                             const invNum = String(inv.invoice_number || '').toLowerCase();
+                             const pointSale = String(inv.point_of_sale || '').toLowerCase();
+                             const q = searchProvider.toLowerCase();
+                             return q === '' || prov.includes(q) || invNum.includes(q) || `${pointSale}-${invNum}`.includes(q);
                           })
                           .map((inv: any) => (
                           <div key={inv.id} onClick={() => setEditForm({...editForm, related_invoice_id: inv.id})} className="p-2 hover:bg-blue-100 cursor-pointer text-sm flex flex-col md:flex-row md:justify-between transition-colors">

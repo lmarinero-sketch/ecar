@@ -1,44 +1,52 @@
-# Minutas de Reunión y Requerimientos del Sistema (ECAR)
+# Minutas de Reunión y Plan de Acción - Sistema ECAR
 
-## 1. Resumen de la Reunión
-En la reunión se revisaron varios módulos operativos del sistema (Logística, Flota, Compras, Inventario y Obras) desde el punto de vista del usuario final (operarios, choferes y gerencia). El objetivo principal es mejorar la experiencia de usuario (UX), agilizar el uso en campo (vía celular) y asegurar que existan los controles, trazabilidad y autorizaciones correspondientes para evitar pérdidas o errores.
+## 1. Resumen Ejecutivo
+Se revisaron los módulos operativos del sistema (Logística, Flota, Compras, Inventario y Obras) enfocándose en la experiencia de usuario (UX) para los operarios y la gerencia. El objetivo primordial es que los **módulos core (Logística, Entregas y Pedidos)** funcionen al 100% de manera fluida y controlada antes de dispersar el desarrollo hacia funcionalidades accesorias.
 
-Se destacó que el desarrollo debe centrarse en los "Módulos Core" de uso diario (Logística, Entregas y Pedidos de Obra) para estabilizarlos antes de avanzar con otros módulos accesorios.
+Se detectaron varias oportunidades de mejora en la captura de datos (dropdowns en vez de texto libre), flujos de autorización (doble chequeo, justificación de rechazos) y auditoría (trazabilidad y manejo de roles).
 
 ---
 
-## 2. Lógicas Faltantes y Tareas de Desarrollo
+## 2. Requerimientos de Lógica y Tareas Faltantes
 
-### A. Módulo de Logística y Entregas (Acopios)
-* **Revisión de Nomenclatura:** Cambiar el término "Acopio" por "Logística", "Inicio" o "Entregas", ya que el término actual es confuso.
-* **Flujo de Autorizaciones en Pedidos:**
-  1. La obra solicita materiales.
-  2. Logística arma el pedido.
-  3. Un responsable (ej. Ezequiel) debe autorizar el envío.
-  4. **Control de montos:** Si el valor del envío supera un límite (ej. $300.000), requerir una segunda validación del Gerente General (vía alerta/notificación).
-  5. **Rechazos:** Si un pedido se rechaza, no debe borrarse. Debe quedar en estado de "Revisión" con una *observación obligatoria* de por qué se rechazó (ej. "No envíes la amoladora"), permitiendo su edición para re-envío.
-* **Trazabilidad en Tránsito:** 
-  * Al marcar un envío como "En Tránsito", el sistema debe habilitar un botón/acceso directo que lleve al mapa en vivo (Tracking) para ver la ubicación real de la camioneta que lleva el pedido.
-  * El receptor en la obra debe recibir un enlace (o notificación) avisando que su pedido está en camino.
-* **Recepción en Obra (Checklist y Devoluciones):** 
-  * El encargado de recibir en obra debe tener un *Checklist* en el celular para tildar ítem por ítem lo que llega.
-  * Debe poder firmar digitalmente la recepción.
-  * Permitir **entregas parciales y devoluciones** en el momento (si algo llega roto o falta).
-* **Descuento Automático de Stock e Historial:** Al confirmarse la salida/entrega, el material debe descontarse automáticamente del stock del pañol y dejar un registro en el "Historial de Entradas y Salidas".
+### A. Módulo Logística, Pedidos y Entregas (ex "Acopios")
+*   **Cambio de Nomenclatura:** Reevaluar el nombre de "Acopios" por algo más representativo como "Logística de Envíos" o "Entregas", ya que abarca el movimiento general.
+*   **Flujo de Aprobación de Envíos (Doble Control):**
+    1.  La obra solicita el material o se arma el envío.
+    2.  Un responsable autoriza la preparación (ej. Ezequiel).
+    3.  **Control de Montos:** Implementar una regla de negocio donde, si el valor total de la mercadería enviada supera cierto umbral (ej. $300.000), se dispare una notificación/alerta para una segunda autorización de Gerencia.
+*   **Edición sobre Rechazos:** Si un gerente u otro responsable rechaza el envío de un material (ej. porque no hace falta enviarlo), **no se debe eliminar** el pedido entero. Se debe mantener un registro (historial) añadiendo una *observación obligatoria* del rechazo, permitiendo editar el envío para que siga su curso sin el ítem cuestionado.
+*   **Listas Desplegables (Dropdowns):** Evitar inputs de texto libre para datos estandarizados. Por ejemplo, al elegir el "Chofer responsable", debe ser una lista desplegable.
+*   **Trazabilidad en Tránsito (Mapa en Vivo):** Al marcar un pedido como "En tránsito", habilitar una funcionalidad para ir directamente al **mapa en vivo** y visualizar la ubicación del chofer/flota que realiza la entrega, informando también a la persona en obra.
+*   **Recepción en Obra:**
+    *   El receptor debe contar con un **Checklist** en el celular para validar ítem por ítem lo que llega.
+    *   El sistema debe soportar **entregas parciales** y registrar devoluciones inmediatas si un ítem falta o llega dañado, acompañado de una firma digital.
+    *   Confirmar que al marcar como "entregado", los ítems se descuenten automáticamente del stock real.
 
-### B. Módulo de Inventario y Pañol
-* **Gestión de Permisos (Eliminación):** Quitar el permiso de eliminar movimientos/materiales a los usuarios normales. Solo un Administrador/Gerente debe poder borrar. Los errores deben ser corregidos mediante edición o notas de compensación (auditoría).
-* **Campos Estandarizados:** En la creación de nuevos ítems, los campos como "Unidad de Medida" y "Ubicación/Estantería" deben ser listas desplegables (Dropdowns) y no campos de texto libre.
-* **Importación y Exportación masiva:** Implementar funcionalidad para importar y exportar stock, materiales y precios mediante archivos Excel.
-* **Control de Costos de Salida (Valorización):** Desarrollar lógica para saber a qué costo histórico se está entregando un material (para previsiones de reposición).
-* **Ubicaciones Visuales (Plano/Fotos):** Añadir la capacidad de subir fotos reales o un plano interactivo del pañol (Estanterías A, B, C...) con puntos interactivos. Al hacer clic en un material, el sistema debe mostrar visualmente dónde está guardado.
+### B. Módulo Inventario y Stock (Pañol)
+*   **Estandarización de Nuevos Ítems:** Al crear un material, el campo "Unidad" y la "Ubicación" (estantería) deben ser menús desplegables, no texto libre.
+*   **Importación / Exportación masiva:** Es urgente agregar un submódulo para **Importar** (precios, materiales, stock inicial) y **Exportar** datos hacia/desde Excel.
+*   **Valorización e Histórico de Costos:** Resolver la lógica contable para materiales acopiados a largo plazo. El sistema debe poder informar a qué costo real o histórico se está dando salida a un material, para tener un cálculo certero de reposición.
+*   **Auditoría y Permisos (No Eliminar):** Los usuarios regulares no deben poder eliminar registros ni ítems. Solo el Administrador general puede hacerlo, y para los demás, se debe recurrir a ediciones o ajustes de stock que dejen huella en el sistema (trazabilidad).
+*   **Ubicación Visual en Pañol (UX):** Excelente iniciativa a desarrollar: permitir subir un plano del pañol o fotos reales de las estanterías (e incluso imágenes de los productos) y poder interactuar con pines en la imagen para saber exactamente dónde buscar un repuesto/material.
 
-### C. Módulo de Flota y Maquinaria
-* **Separación Visual (Dashboards):** Separar los reportes en tableros específicos ("Dashboard de Flota", "Dashboard de Logística") para no mezclar la información en pantallas gigantes.
-* **Parte Diario (QR):** 
-  * Imprimir Códigos QR para cada vehículo. Al escanear, el operario debe poder llenar su parte diario: nivel de combustible, kilometraje y reporte de daños.
-  * El kilometraje ingresado en el Parte Diario y en las Cargas de Combustible debe alimentar y actualizar automáticamente los "Kilómetros Actuales" del vehículo en el maestro de la Flota.
-* **Estados del Vehículo:** 
-  * Si en el Parte Diario se reporta un daño (ej. luz rota), el vehículo no debería pasar automáticamente a un "Fuera de Servicio" total (que indica que no puede usarse). Debería generar un "Ticket de Mantenimiento" y mantener un estado como "Con Observaciones", reservando el "Fuera de Servicio" para daños graves.
-* **Cargas de Combustible:**
-  * En la carga de combustible (que ya tiene autorización y vale digital), se debe exigir el ingreso del **monto total o valor por litro** facturado, para tener el gasto monetario real, no solo los litros.
+### C. Módulo Flota y Maquinaria
+*   **Dashboards Dedicados:** Separar indicadores en "Dashboards" específicos para que en una pantalla general no se mezcle, por ejemplo, información de flota con inventario (quitar stock pañol de la vista de flota).
+*   **Parte Diario con QR:**
+    *   Ya funciona escanear un QR con el celular para reportar.
+    *   **Lógica de Kilometraje:** El kilometraje cargado desde el Parte Diario (y también desde las cargas de combustible) debe impactar y actualizar el kilometraje actual en el perfil principal del vehículo.
+*   **Estados de Servicio (Tickets de Mantenimiento):** Si se reporta un daño leve (ej. óptica rota), el vehículo **no** debe pasar automáticamente al estado rojo "Fuera de Servicio". Debe crearse un **Ticket de mantenimiento** y el vehículo debe quedar "Con Observaciones". Reservar "Fuera de Servicio" solo para paralizaciones totales.
+*   **Control Económico de Combustible:** En la autorización o carga del comprobante de combustible, obligar a ingresar no solo los litros, sino el **monto total o el valor por litro** para control financiero, no solo logístico.
+
+### D. Mejoras Transversales y Administrativas
+*   **Buscador en Compras/Facturas:** Asegurarse de que las facturas no solo se busquen por el nombre del proveedor, sino también **por número de factura**, adaptándose a cómo trabajan los perfiles contables.
+*   **Control de Accesos (Roles):** Refinar los permisos. Un perfil como el de armador de pedidos o coordinador logístico, por defecto no debe ver información financiera, costos o indicadores generales si no le corresponde. Lo mismo para el borrado de datos.
+*   **Métricas de Uso (Permanencia):** Mantener y valorar la métrica de tiempo de actividad y registro de lo que hace el usuario (permanencia en módulos) para comprobar fehacientemente si el sistema está siendo usado por el equipo.
+
+---
+
+**Siguientes Pasos (Prioridad Alta):**
+1. Perfeccionar toda la experiencia de "Entregas a Obra" (Checklist, Estados y Firmas).
+2. Perfeccionar "Parte Diario" (Kilómetros unificados, Estados de Flota sin falsos bloqueos).
+3. Asegurar los inputs (convertir texto libre a Dropdowns).
+4. Implementar Importar/Exportar en Inventario.

@@ -9,7 +9,7 @@ import {
   useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
-  useCreatePurchaseRequest
+  useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
@@ -37,7 +37,8 @@ const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: s
 const SHELF_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
 
 export const InventoryModule: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
+  const isPanolero = profile?.role === 'panolero';
   const { data: items, isLoading } = useInventoryItems();
   const { data: movements } = useInventoryMovements();
   const { data: assignments } = useToolAssignments();
@@ -52,7 +53,10 @@ export const InventoryModule: React.FC = () => {
   const createShelf = useCreateWarehouseShelf();
   const updateShelf = useUpdateWarehouseShelf();
   const deleteShelf = useDeleteWarehouseShelf();
-  const createPurchaseRequest = useCreatePurchaseRequest();
+  const createPurchaseReq = useCreatePurchaseRequest();
+  const deleteItem = useDeleteInventoryItem();
+  const deleteAllInventory = useDeleteAllInventory();
+  const createProject = useCreateProject();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -62,7 +66,8 @@ export const InventoryModule: React.FC = () => {
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '', measure: '' });
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
   const [showNewShelf, setShowNewShelf] = useState(false);
@@ -85,7 +90,7 @@ export const InventoryModule: React.FC = () => {
 
   const handleRepoSubmit = async () => {
     try {
-      await createPurchaseRequest.mutateAsync({
+      await createPurchaseReq.mutateAsync({
         project_id: repoProjectId || null,
         urgency: repoItems.some(i => i.current_stock === 0) ? 'urgent' as const : 'normal' as const,
         urgency_reason: repoItems.some(i => i.current_stock === 0) ? `Stock agotado de ${repoItems.filter(i => i.current_stock === 0).map(i => i.name).join(', ')}` : undefined,
@@ -156,8 +161,11 @@ export const InventoryModule: React.FC = () => {
 
   const handleNewItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createItem.mutateAsync({
-      name: newItem.name, category: newItem.category, unit: newItem.unit,
+    const payload: any = {
+      name: newItem.name,
+      category: newItem.category,
+      unit: newItem.unit,
+      measure: newItem.measure || null,
       current_stock: parseFloat(newItem.current_stock) || 0,
       min_stock: parseFloat(newItem.min_stock) || 0,
       unit_cost: parseFloat(newItem.unit_cost) || 0,
@@ -165,9 +173,15 @@ export const InventoryModule: React.FC = () => {
       barcode: newItem.barcode || null,
       location: newItem.location || 'Depósito',
       shelf_id: newItem.shelf_id || null,
-    });
+    };
+    if (editingItem) {
+      await updateItem.mutateAsync({ id: editingItem.id, ...payload });
+    } else {
+      await createItem.mutateAsync(payload);
+    }
     setShowNewItem(false);
-    setNewItem({ name: '', category: 'material', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
+    setEditingItem(null);
+    setNewItem({ name: '', category: 'material', unit: 'unidad', measure: '', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
   };
 
   const handleMovement = async (e: React.FormEvent) => {
@@ -236,10 +250,12 @@ export const InventoryModule: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Depósito</div>
-          <p className="text-2xl font-black text-emerald-600 font-mono">{fmt(totalValue)}</p>
-        </div>
+        {!isPanolero && (
+          <div className="light-card p-5">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Package size={16} className="text-emerald-500" /> Valor Total Depósito</div>
+            <p className="text-2xl font-black text-emerald-600 font-mono">{fmt(totalValue)}</p>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -263,12 +279,24 @@ export const InventoryModule: React.FC = () => {
               <option value="herramienta">🔧 Herramientas</option>
               <option value="consumible">🔩 Consumibles</option>
             </select>
+            <button onClick={() => setShowImporter(true)} className="btn-secondary">
+              <ArrowDownToLine size={16} /> Importar Excel
+            </button>
             <button onClick={() => setShowScanner(true)} className="btn-secondary">
               <Barcode size={16} /> Escanear Código
             </button>
-            <button onClick={() => setShowNewItem(true)} className="btn-primary">
+            <button onClick={() => { setShowNewItem(true); setEditingItem(null); setNewItem({ name: '', category: 'material', unit: 'unidad', measure: '', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' }); }} className="btn-primary">
               <Plus size={16} /> Nuevo Ítem
             </button>
+            {isAdmin && (
+              <button onClick={async () => {
+                if (await useModalStore.getState().showConfirm('Confirmar Purga', '⚠️ ¿Estás seguro que deseas eliminar TODO el inventario? Esta acción no se puede deshacer.')) {
+                  deleteAllInventory.mutate();
+                }
+              }} className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100 flex items-center gap-2">
+                <Trash2 size={16} /> Vaciar Inventario
+              </button>
+            )}
           </div>
           <table className="data-table">
             <thead>
@@ -276,9 +304,11 @@ export const InventoryModule: React.FC = () => {
                 <th>Ítem</th>
                 <th>Categoría</th>
                 <th>Ubicación</th>
+                <th>Medida</th>
+                <th>Unidad</th>
                 <th className="text-center">Stock</th>
                 <th className="text-center">Mínimo</th>
-                <th className="text-right">Costo Unit.</th>
+                {!isPanolero && <th className="text-right">Costo Unit.</th>}
                 <th className="text-center">Acciones</th>
               </tr>
             </thead>
@@ -304,13 +334,15 @@ export const InventoryModule: React.FC = () => {
                       </button>
                     )}
                   </td>
-                  <td className={`text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
-                    {item.current_stock} {item.unit}
-                  </td>
+                  <td className="text-gray-600 font-medium">{item.measure || '-'}</td>
+                  <td className="text-gray-500 text-xs uppercase">{item.unit || 'un'}</td>
+                  <td className="text-center font-mono font-bold text-gray-800">{item.current_stock}</td>
                   <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
-                  <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>
+                  {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
                   <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
+                      <button onClick={() => { setEditingItem(item); setNewItem({ name: item.name, category: item.category as any, unit: item.unit, measure: item.measure || '', current_stock: String(item.current_stock), min_stock: String(item.min_stock), unit_cost: String(item.unit_cost), is_tool: item.is_tool, barcode: item.barcode || '', location: item.location, shelf_id: item.shelf_id || '' }); setShowNewItem(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Editar"><Edit3 size={14} className="text-gray-600" /></button>
+                      {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Eliminar"><Trash2 size={14} className="text-red-500" /></button>}
                       <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
                       {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
                       {item.shelf ? (
@@ -358,9 +390,11 @@ export const InventoryModule: React.FC = () => {
                   <th>Ítem</th>
                   <th>Categoría</th>
                   <th>Ubicación</th>
+                  <th>Medida</th>
+                  <th>Unidad</th>
                   <th className="text-center">Stock</th>
                   <th className="text-center">Mínimo</th>
-                  <th className="text-right">Costo Unit.</th>
+                  {!isPanolero && <th className="text-right">Costo Unit.</th>}
                   <th className="text-center">Acciones</th>
                 </tr>
               </thead>
@@ -386,13 +420,15 @@ export const InventoryModule: React.FC = () => {
                         </button>
                       )}
                     </td>
-                    <td className={`text-center font-mono font-bold ${item.current_stock <= item.min_stock && item.min_stock > 0 ? 'text-red-600' : 'text-gray-800'}`}>
-                      {item.current_stock} {item.unit}
-                    </td>
+                    <td className="text-gray-600 font-medium">{item.measure || '-'}</td>
+                    <td className="text-gray-500 text-xs uppercase">{item.unit || 'un'}</td>
+                    <td className="text-center font-mono font-bold text-gray-800">{item.current_stock}</td>
                     <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
-                    <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>
+                    {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
                     <td className="text-center">
                       <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => { setEditingItem(item); setNewItem({ name: item.name, category: item.category as any, unit: item.unit, measure: item.measure || '', current_stock: String(item.current_stock), min_stock: String(item.min_stock), unit_cost: String(item.unit_cost), is_tool: item.is_tool, barcode: item.barcode || '', location: item.location, shelf_id: item.shelf_id || '' }); setShowNewItem(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Editar"><Edit3 size={14} className="text-gray-600" /></button>
+                        {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Eliminar"><Trash2 size={14} className="text-red-500" /></button>}
                         <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
                         {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
                         {item.shelf ? (
@@ -506,9 +542,12 @@ export const InventoryModule: React.FC = () => {
       {showNewItem && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Ítem</h3><button onClick={() => setShowNewItem(false)}><X size={20} className="text-gray-400" /></button></div>
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingItem ? 'Editar Ítem' : 'Nuevo Ítem'}</h3><button onClick={() => setShowNewItem(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleNewItem} className="space-y-3">
-              <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: Amoladora Bosch 7&quot;" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: Amoladora Bosch 7&quot;" /></div>
+                <div><label className="text-xs font-bold text-gray-500">Medida / Dimensión</label><input value={newItem.measure} onChange={e => setNewItem({ ...newItem, measure: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: 125x63, 7 1/4" /></div>
+              </div>
               <div>
                 <label className="text-xs font-bold text-gray-500">Código de Barras / QR (Opcional)</label>
                 <div className="flex gap-2 items-center mt-1">
@@ -547,8 +586,8 @@ export const InventoryModule: React.FC = () => {
                 <div><label className="text-xs font-bold text-gray-500">Stock Mínimo</label><input type="number" value={newItem.min_stock} onChange={e => setNewItem({ ...newItem, min_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
                 <div><label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label><input type="number" value={newItem.unit_cost} onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
               </div>
-              <button type="submit" disabled={createItem.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
-                {createItem.isPending ? 'Guardando...' : '✅ Crear Ítem'}
+              <button type="submit" disabled={createItem.isPending || updateItem.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
+                {(createItem.isPending || updateItem.isPending) ? 'Guardando...' : editingItem ? '✅ Guardar Cambios' : '✅ Crear Ítem'}
               </button>
             </form>
           </div>
@@ -571,7 +610,20 @@ export const InventoryModule: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Cantidad *</label><input type="number" value={movForm.quantity} onChange={e => setMovForm({ ...movForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
-                <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={movForm.project_id} onChange={e => setMovForm({ ...movForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={movForm.project_id} onChange={e => {
+                  if (e.target.value === 'NEW_PROJECT') {
+                    const name = prompt('Ingrese el nombre de la nueva obra/proyecto:');
+                    if (name && name.trim()) {
+                      createProject.mutate({ name: name.trim(), status: 'active', budget_ars: 0, client_name: '', client_cuit: '', location: '', start_date: new Date().toISOString().split('T')[0], end_date: null }, {
+                        onSuccess: (newProject) => {
+                          setMovForm(prev => ({ ...prev, project_id: newProject.id }));
+                        }
+                      });
+                    }
+                  } else {
+                    setMovForm({ ...movForm, project_id: e.target.value });
+                  }
+                }} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}<option value="NEW_PROJECT" className="font-bold text-ecar-blue">+ Agregar nueva obra...</option></select></div>
               </div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={movForm.notes} onChange={e => setMovForm({ ...movForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Detalle del movimiento" /></div>
               <button type="submit" disabled={createMovement.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
@@ -654,7 +706,10 @@ export const InventoryModule: React.FC = () => {
                 ) : (
                   <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner flex-1 w-full" style={{ minHeight: 300 }}>
                     <WebGLWarehouseGrid />
-                    <div className="absolute top-2 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider z-10 drop-shadow-sm bg-white/70 px-2 py-0.5 rounded-full">Plano depósito interactivo</div>
+                    <div className="absolute top-2 left-3 z-10 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Plano 2D Interactivo</span>
+                      <span className="text-[10px] text-gray-500 border-l border-gray-300 pl-2">Arrastre las estanterías para organizar. Fondo 3D decorativo.</span>
+                    </div>
                     <div className="relative z-10 mt-6 w-full h-[600px]">
                       {shelfList.map((shelf, idx) => {
                         const width = shelf.grid_width || 200;
@@ -709,11 +764,11 @@ export const InventoryModule: React.FC = () => {
                             </div>
                             <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
                               <div>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="text-lg">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
-                                  <span className="font-bold text-sm" style={{ color: shelf.color }}>{shelf.code}</span>
+                                <div className="flex items-center gap-1.5 mb-1 overflow-hidden">
+                                  <span className="text-lg shrink-0">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
+                                  <span className="font-bold text-sm truncate" style={{ color: shelf.color }} title={shelf.code}>{shelf.code}</span>
                                 </div>
-                                <p className="text-xs text-gray-600 font-medium truncate">{shelf.name}</p>
+                                <p className="text-[11px] text-gray-600 font-medium truncate leading-tight" title={shelf.name}>{shelf.name}</p>
                               </div>
                               <div className="flex items-center justify-between mt-2">
                                 <span className="text-[10px] text-gray-500 font-medium">{shelf.rows_count}×{shelf.columns_count} pos</span>
@@ -903,13 +958,27 @@ export const InventoryModule: React.FC = () => {
                 </label>
                 <select
                   value={repoProjectId}
-                  onChange={e => setRepoProjectId(e.target.value)}
+                  onChange={e => {
+                    if (e.target.value === 'NEW_PROJECT') {
+                      const name = prompt('Ingrese el nombre de la nueva obra/proyecto:');
+                      if (name && name.trim()) {
+                        createProject.mutate({ name: name.trim(), status: 'active', budget_ars: 0, client_name: '', client_cuit: '', location: '', start_date: new Date().toISOString().split('T')[0], end_date: null }, {
+                          onSuccess: (newProject) => {
+                            setRepoProjectId(newProject.id);
+                          }
+                        });
+                      }
+                    } else {
+                      setRepoProjectId(e.target.value);
+                    }
+                  }}
                   className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
                 >
                   <option value="">— Sin asignar (stock general) —</option>
                   {(projects || []).map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
+                  <option value="NEW_PROJECT" className="font-bold text-blue-600">+ Agregar nueva obra...</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">Seleccioná el proyecto u obra al que se imputan estos materiales.</p>
               </div>
@@ -949,10 +1018,10 @@ export const InventoryModule: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRepoSubmit}
-                  disabled={createPurchaseRequest.isPending}
+                  disabled={createPurchaseReq.isPending}
                   className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 rounded-xl font-bold text-sm hover:from-red-700 hover:to-orange-700 transition-all shadow-md disabled:opacity-50"
                 >
-                  {createPurchaseRequest.isPending ? 'Enviando...' : '📤 Enviar a Compras'}
+                  {createPurchaseReq.isPending ? 'Enviando...' : '📤 Enviar a Compras'}
                 </button>
               </div>
             </div>

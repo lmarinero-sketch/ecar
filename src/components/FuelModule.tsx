@@ -576,7 +576,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const [completeForm, setCompleteForm] = useState({ liters: '', price_per_liter: '', total_amount: '' });
 
   const handleComplete = async () => {
-    if (!completingId || !completeForm.liters) return;
+    if (!completingId || !completeForm.liters || (!completeForm.price_per_liter && !completeForm.total_amount)) {
+      alert("Por favor, ingrese los litros y el importe total o precio por litro.");
+      return;
+    }
     await updateLoad.mutateAsync({
       id: completingId,
       liters: parseFloat(completeForm.liters) || 0,
@@ -622,7 +625,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         </div>
 
         {/* Signature Registration Card */}
-        {isAdmin && (
+        {(isAdmin || profile?.role === 'colaborador') && (
           <div className={`rounded-xl p-4 shadow-sm border ${hasSignature ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : 'bg-gradient-to-br from-amber-50 to-orange-50 border-orange-200'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -787,7 +790,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                 <div className="text-sm">Solicita: <span className="font-bold">{r.requested_by}</span></div>
                 <div className="text-sm">Litros: <span className="font-mono font-bold text-lg">{r.requested_liters} L</span></div>
                 <div className="text-xs text-gray-500 mt-1 line-clamp-1">{r.observations || 'Sin notas'}</div>
-                {isAdmin ? (
+                {(isAdmin || r.requested_by === user?.email) ? (
                   <button onClick={() => handleAuthorize(r.id)} className="mt-3 w-full bg-orange-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-orange-700">
                     <Check size={14} /> Autorizar con Firma
                   </button>

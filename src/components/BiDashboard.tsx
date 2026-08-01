@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import {
   LayoutDashboard, TrendingUp, Users, Truck, DollarSign, BarChart3,
   Target, FileSignature, ShieldAlert,
-  Package, Briefcase, AlertTriangle, CalendarClock, MapPin, Clock, ArrowRight, CheckCircle2, ShoppingCart
+  Package, Briefcase, AlertTriangle, CalendarClock, MapPin, ArrowRight, ShoppingCart
 } from 'lucide-react';
 import {
   useProjects, useEmployees, useCheques, useInvoices,

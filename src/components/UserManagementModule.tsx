@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, UserPlus, Shield, Edit, Trash2, X, Save, Search,
   CheckCircle2, AlertCircle, Mail, KeyRound, ChevronDown, ChevronUp,
-  Eye, Pencil, Trash, Check, BookOpen,
+  Eye, Pencil, Trash, Check, BookOpen, Package
 } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +16,7 @@ type UserProfile = {
   auth_user_id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'colaborador';
+  role: 'admin' | 'colaborador' | 'panolero';
   allowed_modules: string[];
   created_at: string;
 };
@@ -53,14 +53,14 @@ export const UserManagementModule: React.FC = () => {
   const [formName, setFormName] = useState('');
   const [formUsername, setFormUsername] = useState('');
   const [formPassword, setFormPassword] = useState('');
-  const [formRole, setFormRole] = useState<'admin' | 'colaborador'>('colaborador');
+  const [formRole, setFormRole] = useState<'admin' | 'colaborador' | 'panolero'>('colaborador');
   const [formPerms, setFormPerms] = useState<ModulePerms>({});
   const [formLoading, setFormLoading] = useState(false);
   const [formMsg, setFormMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Edit state
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editRole, setEditRole] = useState<'admin' | 'colaborador'>('colaborador');
+  const [editRole, setEditRole] = useState<'admin' | 'colaborador' | 'panolero'>('colaborador');
   const [editPerms, setEditPerms] = useState<ModulePerms>({});
   const [editName, setEditName] = useState('');
   const [editLoading, setEditLoading] = useState(false);
@@ -128,9 +128,19 @@ export const UserManagementModule: React.FC = () => {
 
     const activeModules = formRole === 'admin'
       ? ALL_MODULES as unknown as string[]
-      : Object.entries(formPerms).filter(([, p]) => p.read || p.write || p.delete).map(([m]) => m);
+      : formRole === 'panolero'
+        ? ['inventory', 'logistics', 'fleet']
+        : Object.entries(formPerms).filter(([, p]) => p.read || p.write || p.delete).map(([m]) => m);
 
-    const permissions = formRole === 'admin' ? undefined : formPerms;
+    const permissions = formRole === 'admin' 
+      ? undefined 
+      : formRole === 'panolero'
+        ? {
+            inventory: { read: true, write: true, delete: false },
+            logistics: { read: true, write: true, delete: false },
+            fleet: { read: true, write: true, delete: false },
+          }
+        : formPerms;
 
     const result = await callManageUsers({
       action: 'create',
@@ -157,9 +167,19 @@ export const UserManagementModule: React.FC = () => {
     setEditLoading(true);
     const activeModules = editRole === 'admin'
       ? ALL_MODULES as unknown as string[]
-      : Object.entries(editPerms).filter(([, p]) => p.read || p.write || p.delete).map(([m]) => m);
+      : editRole === 'panolero'
+        ? ['inventory', 'logistics', 'fleet']
+        : Object.entries(editPerms).filter(([, p]) => p.read || p.write || p.delete).map(([m]) => m);
 
-    const permissions = editRole === 'admin' ? undefined : editPerms;
+    const permissions = editRole === 'admin' 
+      ? undefined 
+      : editRole === 'panolero'
+        ? {
+            inventory: { read: true, write: true, delete: false },
+            logistics: { read: true, write: true, delete: false },
+            fleet: { read: true, write: true, delete: false },
+          }
+        : editPerms;
 
     const result = await callManageUsers({
       action: 'update',
@@ -536,11 +556,15 @@ export const UserManagementModule: React.FC = () => {
               <div className="flex gap-3">
                 <button type="button" onClick={() => setFormRole('admin')}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${formRole === 'admin' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}>
-                  <Shield size={14} /> Admin (acceso total)
+                  <Shield size={14} /> Admin
+                </button>
+                <button type="button" onClick={() => setFormRole('panolero')}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${formRole === 'panolero' ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}>
+                  <Package size={14} /> Pañolero
                 </button>
                 <button type="button" onClick={() => setFormRole('colaborador')}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all flex items-center justify-center gap-2 ${formRole === 'colaborador' ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}>
-                  <Users size={14} /> Colaborador (permisos específicos)
+                  <Users size={14} /> Colaborador
                 </button>
               </div>
             </div>
@@ -589,15 +613,15 @@ export const UserManagementModule: React.FC = () => {
               <div key={profile.id} className={`light-card overflow-hidden transition-all ${isEditing ? 'border-ecar-blue ring-2 ring-ecar-blue/10' : 'border-gray-200 hover:border-gray-300'}`}>
                 <div className="p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${profile.role === 'admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : 'bg-gradient-to-br from-ecar-blue to-blue-600'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${profile.role === 'admin' ? 'bg-gradient-to-br from-amber-500 to-amber-600' : profile.role === 'panolero' ? 'bg-gradient-to-br from-purple-500 to-purple-600' : 'bg-gradient-to-br from-ecar-blue to-blue-600'}`}>
                       {profile.full_name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h5 className="font-bold text-gray-800 text-sm">{profile.full_name}</h5>
                         {isSelf && <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">TÚ</span>}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${profile.role === 'admin' ? 'text-amber-700 bg-amber-100' : 'text-blue-700 bg-blue-100'}`}>
-                          {profile.role === 'admin' ? '🛡️ Admin' : '👤 Colaborador'}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${profile.role === 'admin' ? 'text-amber-700 bg-amber-100' : profile.role === 'panolero' ? 'text-purple-700 bg-purple-100' : 'text-blue-700 bg-blue-100'}`}>
+                          {profile.role === 'admin' ? '👑 Admin' : profile.role === 'panolero' ? '📦 Pañolero' : '👤 Colaborador'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 truncate">{profile.email}</p>
@@ -653,9 +677,10 @@ export const UserManagementModule: React.FC = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-600">Rol</label>
-                        <select value={editRole} onChange={e => setEditRole(e.target.value as 'admin' | 'colaborador')}
+                        <select value={editRole} onChange={e => setEditRole(e.target.value as 'admin' | 'colaborador' | 'panolero' | 'panolero')}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue transition-all">
-                          <option value="admin">🛡️ Admin (acceso total)</option>
+                          <option value="admin">👑 Admin (acceso total)</option>
+                          <option value="panolero">📦 Pañolero (depósito y flota)</option>
                           <option value="colaborador">👤 Colaborador (permisos específicos)</option>
                         </select>
                       </div>

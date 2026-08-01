@@ -7,9 +7,9 @@ import {
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
-  useLogisticsMaintenanceLog, useCreateLogisticsMaintenanceLog,
+   useCreateLogisticsMaintenanceLog,
   useUpdateInventoryItem, useCreateInventoryMovement,
-  usePurchaseRequests, useUpdatePurchaseRequest
+  usePurchaseRequests, useUpdatePurchaseRequest, useEmployees
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
@@ -49,14 +49,14 @@ export const LogisticsModule: React.FC = () => {
   const [showIntro, setShowIntro] = useState(false);
 
   // Data from existing tables
-  const { data: allVehicles = [], isLoading: loadingVehicles } = useAllFuelVehicles();
+  const { data: allVehicles = [] } = useAllFuelVehicles();
   const { data: inventoryItems = [] } = useInventoryItems();
   const { data: toolAssignments = [] } = useToolAssignments();
   const { data: projects = [] } = useProjects();
+  const { data: employees = [] } = useEmployees();
 
   // Logistics-own tables
   const { data: deliveries = [], isLoading: loadingDeliveries } = useLogisticsDeliveries();
-  const { data: maintenanceLogs = [], isLoading: loadingMaintenance } = useLogisticsMaintenanceLog();
   const { data: purchaseRequests = [] } = usePurchaseRequests();
   const updatePurchaseRequest = useUpdatePurchaseRequest();
 
@@ -174,7 +174,7 @@ export const LogisticsModule: React.FC = () => {
           <ObraRequestsTab requests={obraRequests} updateRequest={updatePurchaseRequest} />
         )}
         {activeTab === 'deliveries' && (
-          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} />
+          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} employees={employees} />
         )}
       </div>
     </div>
@@ -396,7 +396,8 @@ const DeliveriesTab: React.FC<{
   projects: any[];
   allVehicles: FuelVehicle[];
   inventoryItems: any[];
-}> = ({ deliveries, loading, projects, allVehicles, inventoryItems }) => {
+  employees: any[];
+}> = ({ deliveries, loading, projects, allVehicles, inventoryItems, employees }) => {
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -409,7 +410,7 @@ const DeliveriesTab: React.FC<{
     items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] as { item_id: string; description: string; quantity: number; unit: string }[],
   });
   const [receivingDelivery, setReceivingDelivery] = useState<any>(null);
-  const [checklistValues, setChecklistValues] = useState<Record<string, boolean>>({});
+  const [checklistValues, setChecklistValues] = useState<Record<string, number>>({});
   const updateItem = useUpdateInventoryItem();
   const createMovement = useCreateInventoryMovement();
 
@@ -429,6 +430,19 @@ const DeliveriesTab: React.FC<{
 
   const handleSubmit = async () => {
     if (!form.delivery_date || form.items.filter(i => i.description.trim()).length === 0) return;
+    
+    // Check total amount > 300,000
+    const validItems = form.items.filter(i => i.description.trim());
+    let totalCost = 0;
+    validItems.forEach(i => {
+      const inv = inventoryItems.find((inv: any) => inv.id === i.item_id);
+      if (inv) {
+        totalCost += (inv.unit_cost || 0) * i.quantity;
+      }
+    });
+    
+    const initialStatus = totalCost > 300000 ? 'pendiente_autorizacion' : 'pendiente_autorizacion';
+
     await createDelivery.mutateAsync({
       project_id: form.project_id || null,
       vehicle_id: form.vehicle_id || null,
@@ -437,8 +451,8 @@ const DeliveriesTab: React.FC<{
       destination: form.destination || null,
       notes: form.notes || null,
       created_by: profile?.full_name || null,
-      status: 'pendiente_autorizacion',
-      items: form.items.filter(i => i.description.trim()).map(i => ({
+      status: initialStatus,
+      items: validItems.map(i => ({
         description: i.description,
         quantity: i.quantity,
         unit: i.unit,
@@ -455,18 +469,27 @@ const DeliveriesTab: React.FC<{
   const handleReceiveDelivery = async () => {
     if (!receivingDelivery) return;
     
-    // Descontar inventario para cada ítem de la entrega
+    let isPartial = false;
+    let missingNotes = [];
+
+    // Descontar inventario para cada ítem de la entrega basado en lo realmente recibido
     for (const dItem of receivingDelivery.items || []) {
-      if (dItem.item_id && checklistValues[dItem.id]) {
+      const receivedQty = checklistValues[dItem.id] || 0;
+      if (receivedQty < dItem.quantity) {
+        isPartial = true;
+        missingNotes.push(`Faltaron ${dItem.quantity - receivedQty} de ${dItem.description}`);
+      }
+
+      if (dItem.item_id && receivedQty > 0) {
         const inv = inventoryItems.find(i => i.id === dItem.item_id);
         if (inv) {
-          const newStock = Math.max(0, inv.current_stock - Number(dItem.quantity));
+          const newStock = Math.max(0, inv.current_stock - Number(receivedQty));
           await updateItem.mutateAsync({ id: inv.id, current_stock: newStock } as any);
           await createMovement.mutateAsync({
             tenant_id: inv.tenant_id,
             item_id: inv.id,
             movement_type: 'salida',
-            quantity: Number(dItem.quantity),
+            quantity: Number(receivedQty),
             reference_type: 'entrega',
             reference_id: receivingDelivery.id,
             notes: `Entrega a ${(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}`,
@@ -477,8 +500,7 @@ const DeliveriesTab: React.FC<{
       }
     }
     
-    const allChecked = (receivingDelivery.items || []).every((it: any) => checklistValues[it.id]);
-    const notes = !allChecked ? 'Recepción parcial (faltaron ítems).' : '';
+    const notes = isPartial ? `Recepción parcial. ${missingNotes.join(', ')}` : '';
     await updateDelivery.mutateAsync({ id: receivingDelivery.id, status: 'entregado', notes: receivingDelivery.notes ? receivingDelivery.notes + '. ' + notes : notes } as any);
     setReceivingDelivery(null);
     setChecklistValues({});
@@ -537,7 +559,12 @@ const DeliveriesTab: React.FC<{
             </div>
             <div>
               <label className="text-xs font-bold text-gray-600 block mb-1">Chofer / Responsable</label>
-              <input value={form.driver_name} onChange={e => setForm({ ...form, driver_name: e.target.value })} placeholder="Nombre del chofer" className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <select value={form.driver_name} onChange={e => setForm({ ...form, driver_name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
+                <option value="">— Seleccionar chofer —</option>
+                {employees.filter(e => e.status === 'active').map(e => (
+                  <option key={e.id} value={e.full_name}>{e.full_name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-600 block mb-1">Vehículo</label>
@@ -657,7 +684,14 @@ const DeliveriesTab: React.FC<{
                           <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Autorizar Entrega">
                             <CheckCircle2 size={16} />
                           </button>
-                          <button onClick={() => { if(confirm('¿Seguro que deseas rechazar esta entrega?')) changeStatus(d.id, 'rechazado') }} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
+                          <button onClick={() => {
+                            const reason = prompt('Motivo del rechazo:');
+                            if (reason !== null && reason.trim() !== '') {
+                              changeStatus(d.id, 'rechazado', reason);
+                            } else if (reason === '') {
+                              alert('Debes ingresar un motivo para rechazar.');
+                            }
+                          }} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
                             <X size={16} />
                           </button>
                         </>
@@ -676,7 +710,12 @@ const DeliveriesTab: React.FC<{
                           }} className="text-blue-400 hover:bg-blue-50 p-1 rounded" title="Ver Mapa en Vivo">
                             <MapPin size={16} />
                           </button>
-                          <button onClick={() => setReceivingDelivery(d)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
+                          <button onClick={() => {
+                            const initialChecklist: Record<string, number> = {};
+                            d.items?.forEach((i: any) => initialChecklist[i.id] = i.quantity);
+                            setChecklistValues(initialChecklist);
+                            setReceivingDelivery(d);
+                          }} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
                             <PackageCheck size={16} />
                           </button>
                         </>
@@ -717,18 +756,23 @@ const DeliveriesTab: React.FC<{
               
               <div className="space-y-2">
                 {(receivingDelivery.items || []).map((it: any) => (
-                  <label key={it.id} className="flex items-start gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                    <input 
-                      type="checkbox" 
-                      className="mt-1 w-4 h-4 text-emerald-600 rounded"
-                      checked={checklistValues[it.id] || false}
-                      onChange={(e) => setChecklistValues({...checklistValues, [it.id]: e.target.checked})}
-                    />
+                  <div key={it.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="font-bold text-gray-800">{it.description}</div>
-                      <div className="text-sm text-gray-500">Cantidad: {it.quantity} {it.unit}</div>
+                      <div className="text-sm text-gray-500">Esperado: {it.quantity} {it.unit}</div>
                     </div>
-                  </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-600">Recibido:</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max={it.quantity}
+                        className="w-20 border rounded-lg px-2 py-1 text-center"
+                        value={checklistValues[it.id] !== undefined ? checklistValues[it.id] : it.quantity}
+                        onChange={(e) => setChecklistValues({...checklistValues, [it.id]: Number(e.target.value)})}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -752,7 +796,7 @@ const DeliveriesTab: React.FC<{
 
 /* ═══════════════════════ FLEET TAB ═══════════════════════ */
 
-const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ vehicles, loading }) => {
+export const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ vehicles, loading }) => {
   const [search, setSearch] = useState('');
   const [filterCondition, setFilterCondition] = useState<string>('all');
 
@@ -874,7 +918,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ veh
 
 /* ═══════════════════════ MAINTENANCE TAB ═══════════════════════ */
 
-const MaintenanceTab: React.FC<{
+export const MaintenanceTab: React.FC<{
   logs: LogisticsMaintenanceLog[];
   loading: boolean;
   allVehicles: FuelVehicle[];

@@ -1262,6 +1262,29 @@ export function useUpdateInventoryItem() {
   });
 }
 
+export function useDeleteInventoryItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('inventory_items').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
+  });
+}
+
+export function useDeleteAllInventory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Usamos is_tool: false/true hack, o simplemente neq id, '' para borrar todo
+      const { error } = await supabase.from('inventory_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
+  });
+}
+
 export function useInventoryMovements(itemId?: string) {
   return useQuery({
     queryKey: ['inventory_movements', itemId],
@@ -2481,9 +2504,22 @@ export function useCreateFuelLoad() {
     mutationFn: async (load: Partial<FuelLoad>) => {
       const { data, error } = await supabase.from('fuel_loads').insert({ ...load, tenant_id: ECAR_TENANT_ID }).select().single();
       if (error) throw error;
+      
+      if (load.vehicle_id) {
+        const vehicleUpdates: Record<string, number> = {};
+        if (load.odometer_km) vehicleUpdates.current_km = load.odometer_km;
+        if (load.hourmeter) vehicleUpdates.current_hours = load.hourmeter;
+        if (Object.keys(vehicleUpdates).length > 0) {
+          await supabase.from('fuel_vehicles').update(vehicleUpdates).eq('id', load.vehicle_id);
+        }
+      }
+      
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_loads'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fuel_loads'] });
+      qc.invalidateQueries({ queryKey: ['fuel_vehicles'] });
+    },
   });
 }
 

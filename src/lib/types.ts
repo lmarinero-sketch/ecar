@@ -1,11 +1,10 @@
-// Database types matching Supabase schema
 export type Profile = {
   id: string;
   auth_user_id: string;
   tenant_id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'colaborador';
+  role: 'admin' | 'colaborador' | 'panolero';
   allowed_modules: string[];
   avatar_url: string | null;
   dni?: string | null;
