@@ -1568,8 +1568,13 @@ export const ALL_MODULES = [
   'payments',
   'worker_payments',
   'scope_changes',
-  
   'quality',
+
+  'compras_intro',
+  'logistics_intro',
+  'obra_intro',
+  'finanzas_intro',
+  'rrhh_intro',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1598,7 +1603,12 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   documents: 'Documentos & Correo',
   project_budget: 'Presupuestos de Obra',
   opportunities: 'Pipeline Oportunidades',
-  budget_landing: 'Ger. Proyectos y Presupuestos',
+  budget_landing: 'Introducción GPP',
+  compras_intro: 'Introducción Compras',
+  logistics_intro: 'Introducción Logística',
+  obra_intro: 'Introducción Ger. Obra',
+  finanzas_intro: 'Introducción Finanzas',
+  rrhh_intro: 'Introducción RRHH',
   fuel: 'Combustible',
   nonconformities: 'No Conformidades',
   supplier_eval: 'Evaluación de Proveedores',

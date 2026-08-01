@@ -8,7 +8,7 @@ import {
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
-  Activity, BookOpen, FileText, PieChart, Mail
+  Activity, BookOpen, FileText, PieChart, Mail, Building2
 } from 'lucide-react';
 import { usePurchaseRequests } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -31,6 +31,8 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   safety: ShieldAlert, inspections: ClipboardCheck, rfi: MessageSquareText,
   expenses: Wallet, documents: FolderOpen, project_budget: HardHat,
   opportunities: Target, fuel: Fuel, budget_landing: HardHat,
+  compras_intro: ShoppingCart, logistics_intro: Warehouse, obra_intro: Building2,
+  finanzas_intro: Landmark, rrhh_intro: Users,
   payments: Banknote,
   worker_payments: HardHat,
   nonconformities: ShieldAlert,
@@ -55,6 +57,8 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
   opportunities: 'Pipeline', fuel: 'Combustible', budget_landing: 'Introducción GPP',
+  compras_intro: 'Introducción Compras', logistics_intro: 'Introducción Logística',
+  obra_intro: 'Introducción Obra', finanzas_intro: 'Introducción Finanzas', rrhh_intro: 'Introducción RRHH',
   payments: 'Pagos',
   worker_payments: 'Pagos Trabajadores',
   nonconformities: 'No Conf.',
@@ -81,6 +85,8 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   field: 'bg-yellow-500', safety: 'bg-red-500', inspections: 'bg-pink-500',
   rfi: 'bg-rose-500', documents: 'bg-slate-400', project_budget: 'bg-ecar-blue',
   opportunities: 'bg-blue-600', fuel: 'bg-sky-600', budget_landing: 'bg-slate-700',
+  compras_intro: 'bg-ecar-blue', logistics_intro: 'bg-slate-600', obra_intro: 'bg-amber-600',
+  finanzas_intro: 'bg-emerald-600', rrhh_intro: 'bg-indigo-600',
   payments: 'text-emerald-500 bg-emerald-50',
   worker_payments: 'text-amber-600 bg-amber-50',
   nonconformities: 'bg-red-600',
@@ -117,6 +123,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Compras', emoji: '🛒',
     items: [
+      { id: 'compras_intro', requires: true },
       { id: 'purchases', requires: true },
       { id: 'purchase_requests' },
       { id: 'purchase_orders', requires: true },
@@ -126,6 +133,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Logística', emoji: '📦',
     items: [
+      { id: 'logistics_intro', requires: true },
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
       { id: 'inventory', requires: true },
@@ -134,6 +142,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Obra', emoji: '🏗️',
     items: [
+      { id: 'obra_intro', requires: true },
       { id: 'wbs', requires: true },
       { id: 'field', requires: true },
       
@@ -149,6 +158,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Adm. y Finanzas', emoji: '💼',
     items: [
+      { id: 'finanzas_intro', requires: true },
       { id: 'finances', requires: true },
       { id: 'obligations', requires: true },
       { id: 'certifications', requires: true },
@@ -160,6 +170,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. RRHH', emoji: '👥',
     items: [
+      { id: 'rrhh_intro', requires: true },
       { id: 'rrhh', requires: true },
     ],
   },

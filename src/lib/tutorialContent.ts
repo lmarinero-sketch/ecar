@@ -522,4 +522,66 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Podés ordenar por nombre o monto haciendo clic en la columna.',
     ],
   },
+  compras_intro: {
+    title: 'Introducción Gerencia de Compras',
+    description: 'Punto de partida del área de abastecimiento: pedidos, cotizaciones, órdenes de compra y evaluación de proveedores.',
+    steps: [
+      'Revisá el circuito de trabajo en 5 pasos desde el pedido de obra hasta la evaluación.',
+      'Navegá a los submódulos activos: Registro de Compras, Pedidos, Órdenes de Compra y Evaluación de Proveedores.',
+      'Consultá los entregables e interacción con Obras, Logística y Finanzas.',
+      'Revisá las preguntas frecuentes para resolver dudas operativas.',
+    ],
+    tips: [
+      'Todo pedido sin stock en pañol se deriva automáticamente a este sector.',
+    ],
+  },
+  logistics_intro: {
+    title: 'Introducción Gerencia de Logística',
+    description: 'Punto de partida del área de logística: inventario, pañol, entregas a obra, flota vehicular y mantenimiento.',
+    steps: [
+      'Revisá el circuito en 5 pasos de gestión de stock, entregas y partes diarios de flota.',
+      'Accedé a los módulos de Entregas, Flota y Maquinaria, e Inventario.',
+      'Consultá la sección de Diagramas de Procesos completos.',
+    ],
+    tips: [
+      'El uso del código QR por parte de choferes automatiza el odómetro de cada unidad.',
+    ],
+  },
+  obra_intro: {
+    title: 'Introducción Gerencia de Obra',
+    description: 'Punto de partida del frente de producción: planificación WBS, parte diario de campo, adicionales, calidad y seguridad.',
+    steps: [
+      'Revisá el circuito operativo desde la estructura WBS hasta el cierre de protocolos e incidentes.',
+      'Ingresá a WBS, Parte Diario, Adicionales, Seguridad, Calidad, RFI y No Conformidades.',
+      'Consultá la documentación a entregar a Finanzas para la certificación comitente.',
+    ],
+    tips: [
+      'El Parte Diario cargado por el Capataz alimenta la asistencia de RRHH y el uso de maquinaria de Logística.',
+    ],
+  },
+  finanzas_intro: {
+    title: 'Introducción Gerencia de Adm. y Finanzas',
+    description: 'Punto de partida del área financiera: tesorería, cashflow, ARCA, certificaciones, quincenas y pagos.',
+    steps: [
+      'Revisá el flujo de certificación comitente, comprobantes, obligaciones y pagos.',
+      'Accedé a Finanzas, Alertas & Obligaciones, Certificaciones, Gastos, Pagos y Pagos a Trabajadores.',
+      'Consultá las FAQs sobre vencimientos, eCheqs y retenciones impositivas.',
+    ],
+    tips: [
+      'El módulo Alertas & Obligaciones notifica vencimientos fiscales y bancarios 15 días antes.',
+    ],
+  },
+  rrhh_intro: {
+    title: 'Introducción Gerencia de RRHH',
+    description: 'Punto de partida de la gestión de talento: legajos, EPP, asistencia, licencias y sueldos UOCRA.',
+    steps: [
+      'Revisá el ciclo de vida del colaborador desde el alta hasta la liquidación final.',
+      'Ingresá a Legajos & Personal, Parte Diario de Presentismo y Liquidación de Sueldos.',
+      'Revisá la guía de entrega de EPP e indumentaria de trabajo.',
+    ],
+    tips: [
+      'La firma digital de entrega de EPP cumple con los requerimientos de auditoría de ART.',
+    ],
+  },
 };
+
