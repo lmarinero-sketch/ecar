@@ -81,6 +81,9 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [receptionItemsState, setReceptionItemsState] = useState<Record<string, { quantity_received: number; notes: string }>>({});
   const [receivedBy, setReceivedBy] = useState('');
 
+  const [deriveModalReq, setDeriveModalReq] = useState<PurchaseRequest | null>(null);
+  const [deriveItems, setDeriveItems] = useState<{ description: string; quantity: number; unit: string; subtotal: number; unit_price: number }[]>([]);
+
   const openDispatchModal = (req: PurchaseRequest) => {
     const initial: Record<string, { quantity_sent: number; notes: string }> = {};
     (req.items || []).forEach((it: any) => {
@@ -168,42 +171,49 @@ export const PurchaseRequestsModule: React.FC = () => {
     setReceptionModalReq(null);
   };
 
-  const handleDeriveToPurchases = async (req: PurchaseRequest) => {
-    if (!confirm('¿Estás seguro que deseas derivar este pedido a Compras? Se creará un borrador de Orden de Compra con los ítems faltantes.')) return;
+  const openDeriveModal = (req: PurchaseRequest) => {
+    setDeriveModalReq(req);
+    const missingItems = (req.items || []).map(it => {
+      const sent = it.quantity_sent || 0;
+      const missing = Math.max(0, it.quantity - sent);
+      return {
+        description: it.description,
+        quantity: missing > 0 ? missing : it.quantity,
+        unit: it.unit || 'un',
+        unit_price: 0,
+        subtotal: 0
+      };
+    }).filter(it => it.quantity > 0);
+    setDeriveItems(missingItems.length ? missingItems : [{ description: '', quantity: 1, unit: 'un', unit_price: 0, subtotal: 0 }]);
+  };
+
+  const submitDeriveToPurchases = async () => {
+    if (!deriveModalReq) return;
 
     try {
       // 1. Create Draft PO
       await createPO.mutateAsync({
-        request_id: req.id,
-        project_id: req.project_id,
+        request_id: deriveModalReq.id,
+        project_id: deriveModalReq.project_id,
         supplier_name: 'A Definir',
-        po_number: `PO-${req.id.slice(0, 5).toUpperCase()}`,
+        po_number: `PO-${deriveModalReq.id.slice(0, 5).toUpperCase()}`,
         order_type: 'compra',
         status: 'borrador',
         approval_status: 'no_requerida',
         total_amount: 0,
-        urgency: req.urgency === 'urgent',
-        urgency_reason: req.urgency_reason || null,
-        items: (req.items || []).map(it => {
-          const sent = it.quantity_sent || 0;
-          const missing = Math.max(0, it.quantity - sent);
-          return {
-            description: it.description,
-            quantity: missing > 0 ? missing : it.quantity,
-            unit: it.unit || 'un',
-            unit_price: 0,
-            subtotal: 0
-          };
-        }).filter(it => it.quantity > 0)
+        urgency: deriveModalReq.urgency === 'urgent',
+        urgency_reason: deriveModalReq.urgency_reason || null,
+        items: deriveItems.filter(it => it.description.trim() !== '')
       } as any);
 
-      // 2. Update Request Status (mark as sent to purchases / consolidated)
+      // 2. Update Request Status
       await updateRequest.mutateAsync({
-        id: req.id,
+        id: deriveModalReq.id,
         status: 'consolidated'
       } as any);
 
       alert('Pedido derivado a Compras exitosamente. Podrán verlo en el módulo de Órdenes de Compra.');
+      setDeriveModalReq(null);
     } catch (e: any) {
       alert(`Error al derivar: ${e.message}`);
     }
@@ -456,9 +466,9 @@ export const PurchaseRequestsModule: React.FC = () => {
 
                       {(req.status === 'pending' || req.status === 'approved' || req.status === 'ordered') && (
                         <button
-                          onClick={() => handleDeriveToPurchases(req)}
+                          onClick={() => openDeriveModal(req)}
                           className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                          title="Enviar faltantes a Compras como Orden de Compra"
+                          title="Enviar a Compras indicando los productos y unidades necesarios"
                         >
                           <Package size={15} /> Derivar a Compras
                         </button>
@@ -996,6 +1006,113 @@ export const PurchaseRequestsModule: React.FC = () => {
               }
               hasDerivation={viewFlowReq.status === 'consolidated' || viewFlowReq.status === 'quoted'}
             />
+          </div>
+        </div>
+      , document.body)}
+
+      {/* DERIVE TO PURCHASES MODAL */}
+      {deriveModalReq && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Package className="text-amber-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">Derivar a Compras</h3>
+                  <p className="text-sm text-gray-500">Indicá los productos y unidades que vas a necesitar pedir.</p>
+                </div>
+              </div>
+              <button onClick={() => setDeriveModalReq(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 mb-6 flex items-start gap-3">
+                <AlertTriangle className="flex-shrink-0 mt-0.5" size={18} />
+                <div className="text-sm">
+                  <strong>Aviso Importante:</strong> Los ítems listados abajo se enviarán al módulo de Compras para formar una nueva Orden de Compra. Podés ajustar las cantidades, agregar nuevos o borrar los que no necesites.
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-[1fr_120px_120px_40px] gap-4 font-bold text-sm text-gray-600 px-2">
+                  <div>Descripción del Ítem</div>
+                  <div>Cantidad</div>
+                  <div>Unidad</div>
+                  <div></div>
+                </div>
+
+                {deriveItems.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-[1fr_120px_120px_40px] gap-4 items-center">
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-colors"
+                      placeholder="Ej: Cemento Loma Negra"
+                      value={item.description}
+                      onChange={(e) => {
+                        const newItems = [...deriveItems];
+                        newItems[idx].description = e.target.value;
+                        setDeriveItems(newItems);
+                      }}
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-colors"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const newItems = [...deriveItems];
+                        newItems[idx].quantity = Number(e.target.value);
+                        setDeriveItems(newItems);
+                      }}
+                    />
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-colors"
+                      placeholder="Ej: un, kg, lt"
+                      value={item.unit}
+                      onChange={(e) => {
+                        const newItems = [...deriveItems];
+                        newItems[idx].unit = e.target.value;
+                        setDeriveItems(newItems);
+                      }}
+                    />
+                    <button
+                      onClick={() => setDeriveItems(deriveItems.filter((_, i) => i !== idx))}
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors flex justify-center"
+                      title="Eliminar ítem"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() => setDeriveItems([...deriveItems, { description: '', quantity: 1, unit: 'un', unit_price: 0, subtotal: 0 }])}
+                  className="w-full py-3 border-2 border-dashed border-gray-200 hover:border-amber-400 text-gray-500 hover:text-amber-600 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors"
+                >
+                  <Plus size={18} /> Agregar Ítem
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+              <button
+                onClick={() => setDeriveModalReq(null)}
+                className="px-6 py-2.5 font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitDeriveToPurchases}
+                className="px-6 py-2.5 font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-md hover:shadow-lg rounded-xl transition-all"
+              >
+                Confirmar Derivación
+              </button>
+            </div>
           </div>
         </div>
       , document.body)}
