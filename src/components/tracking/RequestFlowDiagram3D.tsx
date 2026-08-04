@@ -11,6 +11,7 @@ interface FlowNode {
   position: [number, number, number];
   status: 'completed' | 'active' | 'future';
   color: string;
+  type: 'box' | 'warehouse' | 'truck' | 'construction';
 }
 
 interface RequestFlowDiagram3DProps {
@@ -18,26 +19,117 @@ interface RequestFlowDiagram3DProps {
   hasDerivation: boolean;
 }
 
+// --- 3D Models built with primitives ---
+
+const TruckModel = ({ color, emissive }: any) => (
+  <group scale={0.5} position={[0, 0.2, 0]}>
+    {/* Cabin */}
+    <mesh position={[0.6, 0.4, 0]}>
+      <boxGeometry args={[0.6, 0.8, 0.8]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    {/* Body */}
+    <mesh position={[-0.4, 0.4, 0]}>
+      <boxGeometry args={[1.4, 0.8, 0.9]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    {/* Wheels */}
+    <mesh position={[0.6, 0, 0.45]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
+      <meshStandardMaterial color="#1f2937" />
+    </mesh>
+    <mesh position={[0.6, 0, -0.45]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
+      <meshStandardMaterial color="#1f2937" />
+    </mesh>
+    <mesh position={[-0.6, 0, 0.45]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
+      <meshStandardMaterial color="#1f2937" />
+    </mesh>
+    <mesh position={[-0.6, 0, -0.45]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.2, 0.2, 0.1, 16]} />
+      <meshStandardMaterial color="#1f2937" />
+    </mesh>
+  </group>
+);
+
+const WarehouseModel = ({ color, emissive }: any) => (
+  <group scale={0.5} position={[0, 0.25, 0]}>
+    {/* Main Building */}
+    <mesh position={[0, 0.4, 0]}>
+      <boxGeometry args={[1.6, 0.8, 1.2]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    {/* Roof */}
+    <mesh position={[0, 1.05, 0]} rotation={[0, Math.PI/4, 0]}>
+      <cylinderGeometry args={[0, 1.2, 0.5, 4]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+  </group>
+);
+
+const BoxModel = ({ color, emissive }: any) => (
+  <group scale={0.5} position={[0, 0.3, 0]}>
+    <mesh position={[0, 0, 0]}>
+      <boxGeometry args={[0.8, 0.6, 0.8]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    {/* Tape */}
+    <mesh position={[0, 0.31, 0]}>
+      <boxGeometry args={[0.9, 0.02, 0.2]} />
+      <meshStandardMaterial color="#fcd34d" />
+    </mesh>
+  </group>
+);
+
+const ConstructionModel = ({ color, emissive }: any) => (
+  <group scale={0.5} position={[0, 0.3, 0]}>
+    <mesh position={[0, 0, 0]}>
+      <boxGeometry args={[1.2, 0.6, 1.2]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    <mesh position={[-0.4, 0.6, -0.4]}>
+      <cylinderGeometry args={[0.1, 0.1, 0.6]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+    <mesh position={[0.4, 0.6, 0.4]}>
+      <cylinderGeometry args={[0.1, 0.1, 0.6]} />
+      <meshStandardMaterial color={color} emissive={emissive} />
+    </mesh>
+  </group>
+);
+
+const getModelForType = (type: string, color: string, emissive: string) => {
+  switch (type) {
+    case 'truck': return <TruckModel color={color} emissive={emissive} />;
+    case 'warehouse': return <WarehouseModel color={color} emissive={emissive} />;
+    case 'construction': return <ConstructionModel color={color} emissive={emissive} />;
+    case 'box':
+    default: return <BoxModel color={color} emissive={emissive} />;
+  }
+};
+
 const Node = ({ node }: { node: FlowNode }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (node.status === 'active' && meshRef.current) {
-      // Pulse animation for active node
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.1;
-      meshRef.current.scale.set(scale, scale, scale);
+    if (node.status === 'active' && groupRef.current) {
+      // Bobbing animation for active node
+      const y = Math.sin(state.clock.elapsedTime * 3) * 0.1;
+      groupRef.current.position.y = node.position[1] + y;
+      groupRef.current.rotation.y += 0.01;
     }
   });
 
   const materialColor = node.status === 'completed' ? '#10b981' : node.status === 'active' ? '#3b82f6' : '#9ca3af';
-  const emissiveColor = node.status === 'active' ? '#3b82f6' : '#000000';
+  const emissiveColor = node.status === 'active' ? '#1d4ed8' : '#000000';
 
   return (
     <group position={node.position}>
-      <Sphere ref={meshRef} args={[0.4, 32, 32]}>
-        <meshStandardMaterial color={materialColor} emissive={emissiveColor} emissiveIntensity={node.status === 'active' ? 0.5 : 0} />
-      </Sphere>
-      <Html position={[0, -0.7, 0]} center zIndexRange={[100, 0]}>
+      <group ref={groupRef}>
+        {getModelForType(node.type, materialColor, emissiveColor)}
+      </group>
+      <Html position={[0, -0.8, 0]} center zIndexRange={[100, 0]}>
         <div className={`px-2 py-1 rounded-md text-[10px] font-bold whitespace-nowrap shadow-sm border ${
           node.status === 'completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
           node.status === 'active' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -67,21 +159,21 @@ const ConnectionLine = ({ start, end, active }: { start: [number, number, number
 export const RequestFlowDiagram3D: React.FC<RequestFlowDiagram3DProps> = ({ currentStatus, hasDerivation }) => {
   const nodes = useMemo<FlowNode[]>(() => {
     const baseNodes: FlowNode[] = [
-      { id: '1', label: '1. Pedido Obra', position: [-4, 0, 0], status: 'completed', color: '#10b981' },
-      { id: '2', label: '2. Pañol Central', position: [-1.5, 0, 0], status: 'active', color: '#3b82f6' },
+      { id: '1', label: '1. Pedido Obra', position: [-4, 0, 0], status: 'completed', color: '#10b981', type: 'box' },
+      { id: '2', label: '2. Pañol Central', position: [-1.5, 0, 0], status: 'active', color: '#3b82f6', type: 'warehouse' },
     ];
 
     if (hasDerivation) {
       baseNodes.push(
-        { id: '3', label: '3. Derivado a Compras', position: [0.5, 2, -1], status: 'future', color: '#9ca3af' },
-        { id: '4', label: '4. Logística (Recepción)', position: [2.5, 2, -1], status: 'future', color: '#9ca3af' },
-        { id: '5', label: '5. Despacho a Obra', position: [2.5, 0, 0], status: 'future', color: '#9ca3af' },
-        { id: '6', label: '6. Recepción en Obra', position: [5, 0, 0], status: 'future', color: '#9ca3af' }
+        { id: '3', label: '3. Derivado a Compras', position: [0.5, 2, -1], status: 'future', color: '#9ca3af', type: 'warehouse' },
+        { id: '4', label: '4. Logística (Recepción)', position: [2.5, 2, -1], status: 'future', color: '#9ca3af', type: 'warehouse' },
+        { id: '5', label: '5. Despacho a Obra', position: [2.5, 0, 0], status: 'future', color: '#9ca3af', type: 'truck' },
+        { id: '6', label: '6. Recepción en Obra', position: [5, 0, 0], status: 'future', color: '#9ca3af', type: 'construction' }
       );
     } else {
       baseNodes.push(
-        { id: '3', label: '3. Despacho a Obra', position: [1.5, 0, 0], status: 'future', color: '#9ca3af' },
-        { id: '4', label: '4. Recepción en Obra', position: [4, 0, 0], status: 'future', color: '#9ca3af' }
+        { id: '3', label: '3. Despacho a Obra', position: [1.5, 0, 0], status: 'future', color: '#9ca3af', type: 'truck' },
+        { id: '4', label: '4. Recepción en Obra', position: [4, 0, 0], status: 'future', color: '#9ca3af', type: 'construction' }
       );
     }
 
