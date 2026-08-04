@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ShoppingBag, Plus, X, AlertTriangle, Clock,
   Building2, Package, Smartphone, Shield, Save, CheckCircle2,
-  Truck, FileText, Download
+  Truck, FileText, Download, Trash2
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
