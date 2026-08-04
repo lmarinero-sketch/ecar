@@ -144,11 +144,11 @@ export const InventoryModule: React.FC = () => {
 
   const seedDefaultShelves = async () => {
     const defaultShelves = [
-      { code: 'A', name: 'Herramientas eléctricas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#3B82F6', grid_row: 30, grid_col: 40, grid_width: 220, grid_height: 120, notes: 'Taladros, amoladoras, sierras, cargadores y accesorios eléctricos.' },
-      { code: 'B', name: 'Electricidad', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#8B5CF6', grid_row: 30, grid_col: 300, grid_width: 220, grid_height: 120, notes: 'Cables, llaves térmicas, tomas, cajas, materiales de instalación eléctrica.' },
-      { code: 'C', name: 'Gas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#F59E0B', grid_row: 30, grid_col: 560, grid_width: 220, grid_height: 120, notes: 'Cañerías, llaves de paso, accesorios y materiales para instalaciones de gas.' },
-      { code: 'D', name: 'Agua y Cloaca', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#10B981', grid_row: 260, grid_col: 100, grid_width: 260, grid_height: 130, notes: 'Caños, accesorios sanitarios, materiales de agua y desagüe cloacal en conjunto.' },
-      { code: 'E', name: 'EPP / Ferretería', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#EF4444', grid_row: 260, grid_col: 460, grid_width: 260, grid_height: 130, notes: 'Elementos de protección personal (cascos, guantes, arneses) junto con ferretería general (tornillos, bulones, varios).' }
+      { code: 'A', name: 'Herramientas eléctricas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#115C9C', grid_row: 30, grid_col: 40, grid_width: 220, grid_height: 120, notes: 'Taladros, amoladoras, sierras, cargadores y accesorios eléctricos.' },
+      { code: 'B', name: 'Electricidad', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#0A3B66', grid_row: 30, grid_col: 300, grid_width: 220, grid_height: 120, notes: 'Cables, llaves térmicas, tomas, cajas, materiales de instalación eléctrica.' },
+      { code: 'C', name: 'Gas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#1E40AF', grid_row: 30, grid_col: 560, grid_width: 220, grid_height: 120, notes: 'Cañerías, llaves de paso, accesorios y materiales para instalaciones de gas.' },
+      { code: 'D', name: 'Agua y Cloaca', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#0369A1', grid_row: 260, grid_col: 100, grid_width: 260, grid_height: 130, notes: 'Caños, accesorios sanitarios, materiales de agua y desagüe cloacal en conjunto.' },
+      { code: 'E', name: 'EPP / Ferretería', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#0F766E', grid_row: 260, grid_col: 460, grid_width: 260, grid_height: 130, notes: 'Elementos de protección personal (cascos, guantes, arneses) junto con ferretería general (tornillos, bulones, varios).' }
     ];
 
     try {
@@ -808,15 +808,15 @@ export const InventoryModule: React.FC = () => {
 
               {/* Warehouse Layout Map 10m x 5m */}
               <div className="p-6 bg-slate-50">
-                <div className="relative border-4 border-slate-700 rounded-2xl p-6 bg-white shadow-xl max-w-5xl mx-auto overflow-hidden">
+                <div className="relative border-2 border-slate-300 rounded-2xl p-6 bg-white shadow-xl max-w-5xl mx-auto overflow-hidden">
                   
                   {/* Top Header Label */}
-                  <div className="text-center font-black text-sm tracking-wider uppercase bg-slate-800 text-white py-1.5 rounded-lg mb-6 shadow-sm">
+                  <div className="text-center font-black text-sm tracking-wider uppercase bg-gradient-to-r from-ecar-blueDark to-ecar-blue text-white py-2.5 rounded-xl mb-6 shadow-md border border-white/20">
                     ALMACÉN PEQUEÑO — 50 m² (10 m x 5 m)
                   </div>
 
                   {/* 3D Moving Mesh decorative background */}
-                  <div className="absolute inset-0 opacity-20 pointer-events-none">
+                  <div className="absolute inset-0 opacity-15 pointer-events-none">
                     <WebGLWarehouseGrid />
                   </div>
 
@@ -826,31 +826,30 @@ export const InventoryModule: React.FC = () => {
                     {/* Top Row: A, B, C */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {[
-                        { letter: 'A', name: 'Herramientas eléctricas', desc: 'Taladros, amoladoras, sierras, cargadores', color: '#3B82F6' },
-                        { letter: 'B', name: 'Electricidad', desc: 'Cables, llaves térmicas, tomas, cajas', color: '#8B5CF6' },
-                        { letter: 'C', name: 'Gas', desc: 'Cañerías, llaves de paso, accesorios', color: '#F59E0B' }
+                        { letter: 'A', name: 'Herramientas eléctricas', desc: 'Taladros, amoladoras, sierras, cargadores', color: '#115C9C' },
+                        { letter: 'B', name: 'Electricidad', desc: 'Cables, llaves térmicas, tomas, cajas', color: '#0A3B66' },
+                        { letter: 'C', name: 'Gas', desc: 'Cañerías, llaves de paso, accesorios', color: '#1E40AF' }
                       ].map(cfg => {
                         const sh = shelfList.find(s => s.code === cfg.letter);
                         return (
                           <div
                             key={cfg.letter}
                             onClick={() => sh && setViewingShelf(sh)}
-                            className="bg-white border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
-                            style={{ borderColor: cfg.color }}
+                            className="bg-white border-2 border-slate-200 hover:border-ecar-blue rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="w-8 h-8 rounded-lg font-black text-white flex items-center justify-center text-base shadow" style={{ backgroundColor: cfg.color }}>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="w-9 h-9 rounded-xl font-black text-white flex items-center justify-center text-base shadow bg-ecar-blue">
                                 {cfg.letter}
                               </span>
-                              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
+                              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ecar-blueLight text-ecar-blue border border-ecar-blue/20">
                                 {itemsByShelf[sh?.id || ''] || 0} ítems
                               </span>
                             </div>
-                            <h4 className="font-bold text-gray-900 text-sm">{cfg.name}</h4>
-                            <p className="text-[11px] text-gray-500 mt-1">{cfg.desc}</p>
-                            <div className="mt-3 text-[10px] font-mono text-gray-400 flex justify-between border-t pt-2">
+                            <h4 className="font-bold text-slate-900 text-sm">{cfg.name}</h4>
+                            <p className="text-[11px] text-slate-500 mt-1">{cfg.desc}</p>
+                            <div className="mt-4 text-[10px] font-mono text-slate-400 flex justify-between border-t border-slate-100 pt-2.5">
                               <span>Formato Bin: {cfg.letter}-[Nº]-[Bin]</span>
-                              <span className="text-orange-600 font-bold group-hover:underline">Ver Niveles →</span>
+                              <span className="text-ecar-blue font-bold group-hover:underline">Ver Niveles →</span>
                             </div>
                           </div>
                         );
@@ -858,39 +857,38 @@ export const InventoryModule: React.FC = () => {
                     </div>
 
                     {/* Pasillo Central */}
-                    <div className="bg-orange-50 border-2 border-dashed border-orange-300 rounded-xl py-3 text-center flex items-center justify-center gap-3">
-                      <span className="text-orange-500 font-bold">⬆️</span>
-                      <span className="text-xs font-bold uppercase tracking-widest text-orange-800">Pasillo Central de Circulación</span>
-                      <span className="text-orange-500 font-bold">⬇️</span>
+                    <div className="bg-slate-100/90 border-2 border-dashed border-slate-300 rounded-xl py-3.5 text-center flex items-center justify-center gap-3 shadow-inner">
+                      <span className="text-ecar-blue font-bold">⬆️</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-700">Pasillo Central de Circulación</span>
+                      <span className="text-ecar-blue font-bold">⬇️</span>
                     </div>
 
                     {/* Bottom Row: D, E */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                       {[
-                        { letter: 'D', name: 'Agua y Cloaca', desc: 'Caños, accesorios sanitarios, agua y desagüe', color: '#10B981' },
-                        { letter: 'E', name: 'EPP / Ferretería', desc: 'Protección personal, tornillos, bulones', color: '#EF4444' }
+                        { letter: 'D', name: 'Agua y Cloaca', desc: 'Caños, accesorios sanitarios, agua y desagüe', color: '#0369A1' },
+                        { letter: 'E', name: 'EPP / Ferretería', desc: 'Protección personal, tornillos, bulones', color: '#0F766E' }
                       ].map(cfg => {
                         const sh = shelfList.find(s => s.code === cfg.letter);
                         return (
                           <div
                             key={cfg.letter}
                             onClick={() => sh && setViewingShelf(sh)}
-                            className="bg-white border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
-                            style={{ borderColor: cfg.color }}
+                            className="bg-white border-2 border-slate-200 hover:border-ecar-blue rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="w-8 h-8 rounded-lg font-black text-white flex items-center justify-center text-base shadow" style={{ backgroundColor: cfg.color }}>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="w-9 h-9 rounded-xl font-black text-white flex items-center justify-center text-base shadow bg-ecar-blue">
                                 {cfg.letter}
                               </span>
-                              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
+                              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ecar-blueLight text-ecar-blue border border-ecar-blue/20">
                                 {itemsByShelf[sh?.id || ''] || 0} ítems
                               </span>
                             </div>
-                            <h4 className="font-bold text-gray-900 text-sm">{cfg.name}</h4>
-                            <p className="text-[11px] text-gray-500 mt-1">{cfg.desc}</p>
-                            <div className="mt-3 text-[10px] font-mono text-gray-400 flex justify-between border-t pt-2">
+                            <h4 className="font-bold text-slate-900 text-sm">{cfg.name}</h4>
+                            <p className="text-[11px] text-slate-500 mt-1">{cfg.desc}</p>
+                            <div className="mt-4 text-[10px] font-mono text-slate-400 flex justify-between border-t border-slate-100 pt-2.5">
                               <span>Formato Bin: {cfg.letter}-[Nº]-[Bin]</span>
-                              <span className="text-orange-600 font-bold group-hover:underline">Ver Niveles →</span>
+                              <span className="text-ecar-blue font-bold group-hover:underline">Ver Niveles →</span>
                             </div>
                           </div>
                         );
@@ -899,7 +897,7 @@ export const InventoryModule: React.FC = () => {
 
                     {/* ENTRADA Door Indicator at Bottom */}
                     <div className="flex justify-center pt-2">
-                      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white font-black text-xs px-8 py-2 rounded-xl shadow-md border-2 border-white flex items-center gap-2">
+                      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue text-white font-black text-xs px-8 py-2.5 rounded-xl shadow-md border-2 border-white flex items-center gap-2">
                         <span>🚪</span> ENTRADA ALMACÉN (10 m)
                       </div>
                     </div>
