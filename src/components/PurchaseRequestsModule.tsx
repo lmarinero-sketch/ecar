@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ShoppingBag, Plus, X, AlertTriangle, Clock,
   Building2, Package, Smartphone, Shield, Save, CheckCircle2,
@@ -7,11 +8,12 @@ import {
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
   useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems,
-  useDispatchPurchaseRequest, useReceivePurchaseRequest
+  useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
 import { exportRequestPdf, exportDispatchPdf, exportThreeWayComparisonPdf } from '../lib/orderPdfExport';
+import { RequestFlowDiagram3D } from './tracking/RequestFlowDiagram3D';
 
 const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
   low: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
@@ -49,6 +51,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   const { data: whatsappSetting } = useSystemSetting('whatsapp_purchase_phone');
   const createRequest = useCreatePurchaseRequest();
   const updateRequest = useUpdatePurchaseRequest();
+  const createPO = useCreatePurchaseOrder();
   const upsertSetting = useUpsertSystemSetting();
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
@@ -74,6 +77,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   const [dispatchedBy, setDispatchedBy] = useState('');
 
   const [receptionModalReq, setReceptionModalReq] = useState<PurchaseRequest | null>(null);
+  const [viewFlowReq, setViewFlowReq] = useState<PurchaseRequest | null>(null);
   const [receptionItemsState, setReceptionItemsState] = useState<Record<string, { quantity_received: number; notes: string }>>({});
   const [receivedBy, setReceivedBy] = useState('');
 
@@ -162,6 +166,47 @@ export const PurchaseRequestsModule: React.FC = () => {
 
     await exportThreeWayComparisonPdf(updatedReq);
     setReceptionModalReq(null);
+  };
+
+  const handleDeriveToPurchases = async (req: PurchaseRequest) => {
+    if (!confirm('¿Estás seguro que deseas derivar este pedido a Compras? Se creará un borrador de Orden de Compra con los ítems faltantes.')) return;
+
+    try {
+      // 1. Create Draft PO
+      await createPO.mutateAsync({
+        request_id: req.id,
+        project_id: req.project_id,
+        supplier_name: 'A Definir',
+        po_number: `PO-${req.id.slice(0, 5).toUpperCase()}`,
+        order_type: 'compra',
+        status: 'borrador',
+        approval_status: 'no_requerida',
+        total_amount: 0,
+        urgency: req.urgency === 'urgent',
+        urgency_reason: req.urgency_reason || null,
+        items: (req.items || []).map(it => {
+          const sent = it.quantity_sent || 0;
+          const missing = Math.max(0, it.quantity - sent);
+          return {
+            description: it.description,
+            quantity: missing > 0 ? missing : it.quantity,
+            unit: it.unit || 'un',
+            unit_price: 0,
+            subtotal: 0
+          };
+        }).filter(it => it.quantity > 0)
+      } as any);
+
+      // 2. Update Request Status (mark as sent to purchases / consolidated)
+      await updateRequest.mutateAsync({
+        id: req.id,
+        status: 'consolidated'
+      } as any);
+
+      alert('Pedido derivado a Compras exitosamente. Podrán verlo en el módulo de Órdenes de Compra.');
+    } catch (e: any) {
+      alert(`Error al derivar: ${e.message}`);
+    }
   };
 
   useEffect(() => {
@@ -409,6 +454,16 @@ export const PurchaseRequestsModule: React.FC = () => {
                         </button>
                       )}
 
+                      {(req.status === 'pending' || req.status === 'approved' || req.status === 'ordered') && (
+                        <button
+                          onClick={() => handleDeriveToPurchases(req)}
+                          className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                          title="Enviar faltantes a Compras como Orden de Compra"
+                        >
+                          <Package size={15} /> Derivar a Compras
+                        </button>
+                      )}
+
                       {req.status === 'ordered' && (
                         <button
                           onClick={() => openReceptionModal(req)}
@@ -445,6 +500,14 @@ export const PurchaseRequestsModule: React.FC = () => {
                           <Truck size={14} /> PDF Remito
                         </button>
                       )}
+
+                      <button
+                        onClick={() => setViewFlowReq(req)}
+                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ml-auto"
+                        title="Ver Diagrama de Flujo 3D"
+                      >
+                        Visualizar Flujo 3D
+                      </button>
                     </>
                   )}
 
@@ -705,9 +768,9 @@ export const PurchaseRequestsModule: React.FC = () => {
         </div>
       )}
       {/* Modal Declarar Despacho / Pañol */}
-      {dispatchModalReq && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100">
+      {dispatchModalReq && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100 relative">
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
               <div>
                 <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Declaración de Despacho desde Pañol</span>
@@ -803,13 +866,14 @@ export const PurchaseRequestsModule: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Declarar Recepción en Obra */}
-      {receptionModalReq && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100">
+      {receptionModalReq && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100 relative">
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
               <div>
                 <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Constancia de Recepción en Obra</span>
@@ -850,7 +914,7 @@ export const PurchaseRequestsModule: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                           <div>
-                            <label className="text-[11px] font-bold text-emerald-700 block mb-1">Cantidad Recibida Real ({it.unit})</label>
+                            <label className={`text-[11px] font-bold block mb-1 ${current.quantity_received < sentQty ? 'text-red-600' : 'text-emerald-700'}`}>Cantidad Recibida Real ({it.unit})</label>
                             <input
                               type="number"
                               step="any"
@@ -859,7 +923,7 @@ export const PurchaseRequestsModule: React.FC = () => {
                                 ...receptionItemsState,
                                 [it.id]: { ...current, quantity_received: parseFloat(e.target.value) || 0 }
                               })}
-                              className="w-full px-3 py-1.5 border border-emerald-300 rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-emerald-500/30"
+                              className={`w-full px-3 py-1.5 border rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 ${current.quantity_received < sentQty ? 'border-red-400 focus:ring-red-500/30 text-red-700' : 'border-emerald-300 focus:ring-emerald-500/30'}`}
                             />
                           </div>
                           <div>
@@ -876,6 +940,12 @@ export const PurchaseRequestsModule: React.FC = () => {
                             />
                           </div>
                         </div>
+
+                        {current.quantity_received < sentQty && (
+                          <p className="text-[11px] text-red-700 font-bold bg-red-50 p-2 rounded-lg border border-red-200 flex items-center gap-1.5 mt-2">
+                            <AlertTriangle size={13} /> ¡Atención! Se recibieron {sentQty - current.quantity_received} {it.unit} menos de los enviados. Quedará registrado en el acta.
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -899,8 +969,36 @@ export const PurchaseRequestsModule: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* FLOW 3D MODAL */}
+      {viewFlowReq && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 overflow-hidden">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">Trazabilidad 3D</h3>
+                <p className="text-sm text-gray-500">Visualizando estado del pedido</p>
+              </div>
+              <button onClick={() => setViewFlowReq(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <RequestFlowDiagram3D 
+              currentStatus={
+                viewFlowReq.status === 'received' ? 'recepcion' :
+                viewFlowReq.status === 'ordered' ? 'despacho' :
+                viewFlowReq.status === 'consolidated' || viewFlowReq.status === 'quoted' ? 'compras' :
+                'pañol'
+              }
+              hasDerivation={viewFlowReq.status === 'consolidated' || viewFlowReq.status === 'quoted'}
+            />
+          </div>
+        </div>
+      , document.body)}
     </div>
   );
 };

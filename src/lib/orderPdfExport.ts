@@ -269,12 +269,26 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
   y += 85;
 
   // 3-Way Comparison Table
+  let hasInconsistencies = false;
+
   const tableData = (req.items || []).map((it, idx) => {
     const requested = it.quantity || 0;
     const sent = it.quantity_sent !== undefined && it.quantity_sent !== null ? it.quantity_sent : requested;
     const received = it.quantity_received !== undefined && it.quantity_received !== null ? it.quantity_received : sent;
+    const missingReception = sent - received;
     const diff = requested - received;
-    const status = diff === 0 ? 'OK Completo' : diff > 0 ? `Pendiente ${diff} ${it.unit}` : 'Excedente';
+    
+    let status = '';
+    if (missingReception > 0) {
+      status = `⚠️ Inconsistencia: Faltaron ${missingReception} ${it.unit}`;
+      hasInconsistencies = true;
+    } else if (diff === 0) {
+      status = 'OK Completo';
+    } else if (diff > 0) {
+      status = `Pendiente ${diff} ${it.unit}`;
+    } else {
+      status = 'Excedente';
+    }
 
     return [
       String(idx + 1),
@@ -285,6 +299,8 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
       status
     ];
   });
+
+  doc.text(`Conformidad: ${hasInconsistencies ? 'CON INCONSISTENCIAS GRAVES' : 'COMPLETA / CONFORME'}`, 320, y - 35);
 
   autoTable(doc, {
     startY: y,
@@ -300,6 +316,12 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
       3: { cellWidth: 75, halign: 'center' },
       4: { cellWidth: 75, halign: 'center' },
       5: { cellWidth: 95, halign: 'center' }
+    },
+    didParseCell: (data: any) => {
+      if (data.section === 'body' && data.row.raw[5].includes('Inconsistencia')) {
+        data.cell.styles.textColor = '#DC2626'; // red-600
+        data.cell.styles.fontStyle = 'bold';
+      }
     },
     margin: { left: 40, right: 40 }
   });
