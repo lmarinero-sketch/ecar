@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
@@ -168,11 +168,16 @@ export const InventoryModule: React.FC = () => {
           await updateShelf.mutateAsync({ id: exists.id, ...s });
         }
       }
-      useModalStore.getState().showAlert('Éxito', 'Estanterías A, B, C, D, E cargadas/actualizadas según plano de distribución.');
     } catch (err: any) {
-      useModalStore.getState().showAlert('Error', 'No se pudieron cargar las estanterías: ' + err.message);
+      console.warn('Auto-seed warning:', err);
     }
   };
+
+  useEffect(() => {
+    if (shelves && shelves.length === 0) {
+      seedDefaultShelves();
+    }
+  }, [shelves]);
 
   const generateRandomBarcode = () => {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
