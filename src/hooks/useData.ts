@@ -1277,11 +1277,19 @@ export function useDeleteAllInventory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      // Usamos is_tool: false/true hack, o simplemente neq id, '' para borrar todo
-      const { error } = await supabase.from('inventory_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (error) throw error;
+      await supabase.from('inventory_movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('tool_assignments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error: itemsErr } = await supabase.from('inventory_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (itemsErr) throw itemsErr;
+      const { error: shelvesErr } = await supabase.from('warehouse_shelves').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (shelvesErr) throw shelvesErr;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['warehouse_shelves'] });
+      qc.invalidateQueries({ queryKey: ['tool_assignments'] });
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
+    },
   });
 }
 
