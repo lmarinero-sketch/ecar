@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
-  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3, ShoppingBag,
-  ShieldCheck, CheckCircle2, AlertCircle, Clock
+  LayoutGrid, MapPin, Trash2, Edit3, ShoppingBag,
+  ShieldCheck, CheckCircle2
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -19,7 +19,6 @@ import type { InventoryItem, WarehouseShelf } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
-import { Rnd } from 'react-rnd';
 import { WarehouseExcelImporter } from './warehouse/WarehouseExcelImporter';
 import { ShelfFrontView } from './warehouse/ShelfFrontView';
 
@@ -1457,7 +1456,7 @@ export const InventoryModule: React.FC = () => {
               <h4 className="font-bold text-gray-900">Etiqueta de Código de Barras</h4>
               <button onClick={() => setShowBarcode(null)}><X size={20} className="text-gray-400" /></button>
             </div>
-            <BarcodeLabel item={showBarcode} />
+            <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
           </div>
         </div>
       )}
