@@ -1243,9 +1243,9 @@ export function useCreateInventoryItem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (item: Partial<InventoryItem>) => {
-      const { data, error } = await supabase.from('inventory_items').insert({ ...item, tenant_id: ECAR_TENANT_ID }).select().single();
+      const { data, error } = await supabase.from('inventory_items').insert({ ...item, tenant_id: ECAR_TENANT_ID }).select();
       if (error) throw error;
-      return data;
+      return data?.[0] || data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_items'] }),
   });

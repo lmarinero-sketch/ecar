@@ -2,14 +2,16 @@ import React, { useState, useMemo } from 'react';
 import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
-  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3, ShoppingBag
+  LayoutGrid, MapPin, Trash2, Edit3, Grid3X3, ShoppingBag,
+  ShieldCheck, CheckCircle2, AlertCircle, Clock
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
   useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
-  useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject
+  useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject,
+  useEmployeePPE, useCreateEmployeePPE
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
@@ -23,7 +25,7 @@ import { ShelfFrontView } from './warehouse/ShelfFrontView';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
-type Tab = 'stock' | 'tools' | 'movements' | 'shelves';
+type Tab = 'stock' | 'tools' | 'movements' | 'shelves' | 'epp';
 type RepoItem = { name: string; quantity: number; unit: string; unit_cost: number; id: string; current_stock: number; min_stock: number };
 
 const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: string }> = {
@@ -57,6 +59,7 @@ export const InventoryModule: React.FC = () => {
   const deleteItem = useDeleteInventoryItem();
   const deleteAllInventory = useDeleteAllInventory();
   const createProject = useCreateProject();
+  const createEmployeePPE = useCreateEmployeePPE();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -67,7 +70,27 @@ export const InventoryModule: React.FC = () => {
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', category: 'material' as 'material' | 'herramienta' | 'consumible', unit: 'unidad', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '', measure: '' });
+  
+  // Item Form state with Location/Bin coding [Letra]-[Estante]-[Bin]
+  const [newItem, setNewItem] = useState({
+    name: '',
+    category: 'material' as 'material' | 'herramienta' | 'consumible',
+    unit: 'unidad',
+    current_stock: '',
+    min_stock: '',
+    unit_cost: '',
+    is_tool: false,
+    barcode: '',
+    location: '',
+    shelf_id: '',
+    shelf_position: '',
+    measure: '',
+    tool_status: 'operativa' as 'operativa' | 'mantenimiento' | 'no_funciona'
+  });
+  
+  const [shelfLevel, setShelfLevel] = useState('1');
+  const [shelfBin, setShelfBin] = useState('1');
+
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
   const [showNewShelf, setShowNewShelf] = useState(false);
@@ -75,12 +98,28 @@ export const InventoryModule: React.FC = () => {
   const [shelfForm, setShelfForm] = useState({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' });
   const [assignShelfItem, setAssignShelfItem] = useState<InventoryItem | null>(null);
   const [shelfAssignForm, setShelfAssignForm] = useState({ shelf_id: '', shelf_position: '' });
+  
   // Reposición modal state
   const [showRepoModal, setShowRepoModal] = useState(false);
   const [repoProjectId, setRepoProjectId] = useState<string>('');
   const [repoItems, setRepoItems] = useState<RepoItem[]>([]);
   const [showImporter, setShowImporter] = useState(false);
   const [viewingShelf, setViewingShelf] = useState<WarehouseShelf | null>(null);
+
+  // EPP Form State
+  const [selectedEppEmployeeId, setSelectedEppEmployeeId] = useState<string>('');
+  const [eppForm, setEppForm] = useState({
+    item_type: 'pantalon',
+    size: 'M',
+    quantity: 1,
+    delivery_date: new Date().toISOString().split('T')[0],
+    notes: ''
+  });
+
+  const selectedShelfCode = useMemo(() => {
+    const s = (shelves || []).find(x => x.id === newItem.shelf_id);
+    return s ? s.code : '';
+  }, [shelves, newItem.shelf_id]);
 
   const openRepoModal = (items: RepoItem[]) => {
     setRepoItems(items);
@@ -109,6 +148,30 @@ export const InventoryModule: React.FC = () => {
       setShowRepoModal(false);
     } catch {
       useModalStore.getState().showAlert('Error', 'No se pudo enviar la solicitud.');
+    }
+  };
+
+  const seedDefaultShelves = async () => {
+    const defaultShelves = [
+      { code: 'A', name: 'Herramientas eléctricas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#3B82F6', grid_row: 30, grid_col: 40, grid_width: 220, grid_height: 120, notes: 'Taladros, amoladoras, sierras, cargadores y accesorios eléctricos.' },
+      { code: 'B', name: 'Electricidad', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#8B5CF6', grid_row: 30, grid_col: 300, grid_width: 220, grid_height: 120, notes: 'Cables, llaves térmicas, tomas, cajas, materiales de instalación eléctrica.' },
+      { code: 'C', name: 'Gas', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#F59E0B', grid_row: 30, grid_col: 560, grid_width: 220, grid_height: 120, notes: 'Cañerías, llaves de paso, accesorios y materiales para instalaciones de gas.' },
+      { code: 'D', name: 'Agua y Cloaca', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#10B981', grid_row: 260, grid_col: 100, grid_width: 260, grid_height: 130, notes: 'Caños, accesorios sanitarios, materiales de agua y desagüe cloacal en conjunto.' },
+      { code: 'E', name: 'EPP / Ferretería', shelf_type: 'rack' as const, rows_count: 4, columns_count: 3, color: '#EF4444', grid_row: 260, grid_col: 460, grid_width: 260, grid_height: 130, notes: 'Elementos de protección personal (cascos, guantes, arneses) junto con ferretería general (tornillos, bulones, varios).' }
+    ];
+
+    try {
+      for (const s of defaultShelves) {
+        const exists = (shelves || []).find(ex => ex.code === s.code);
+        if (!exists) {
+          await createShelf.mutateAsync(s);
+        } else {
+          await updateShelf.mutateAsync({ id: exists.id, ...s });
+        }
+      }
+      useModalStore.getState().showAlert('Éxito', 'Estanterías A, B, C, D, E cargadas/actualizadas según plano de distribución.');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', 'No se pudieron cargar las estanterías: ' + err.message);
     }
   };
 
@@ -148,7 +211,15 @@ export const InventoryModule: React.FC = () => {
   const filtered = useMemo(() => {
     if (!items) return [];
     return items.filter(i => {
-      if (search && !i.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const matchesName = i.name.toLowerCase().includes(q);
+        const matchesBarcode = i.barcode?.toLowerCase().includes(q);
+        const matchesPosition = i.shelf_position?.toLowerCase().includes(q);
+        const matchesLocation = i.location?.toLowerCase().includes(q);
+        const matchesMeasure = i.measure?.toLowerCase().includes(q);
+        if (!matchesName && !matchesBarcode && !matchesPosition && !matchesLocation && !matchesMeasure) return false;
+      }
       if (filterCat && i.category !== filterCat) return false;
       if (tab === 'tools' && !i.is_tool) return false;
       return true;
@@ -161,54 +232,173 @@ export const InventoryModule: React.FC = () => {
 
   const handleNewItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: any = {
-      name: newItem.name,
-      category: newItem.category,
-      unit: newItem.unit,
-      measure: newItem.measure || null,
-      current_stock: parseFloat(newItem.current_stock) || 0,
-      min_stock: parseFloat(newItem.min_stock) || 0,
-      unit_cost: parseFloat(newItem.unit_cost) || 0,
-      is_tool: newItem.is_tool || newItem.category === 'herramienta',
-      barcode: newItem.barcode || null,
-      location: newItem.location || 'Depósito',
-      shelf_id: newItem.shelf_id || null,
-    };
-    if (editingItem) {
-      await updateItem.mutateAsync({ id: editingItem.id, ...payload });
-    } else {
-      await createItem.mutateAsync(payload);
+    try {
+      if (!newItem.name.trim()) {
+        useModalStore.getState().showAlert('Atención', 'Por favor ingrese el nombre del ítem.');
+        return;
+      }
+
+      // Format location code [Letra]-[Estante]-[Bin] (e.g. C-3-2)
+      const computedPos = selectedShelfCode ? `${selectedShelfCode}-${shelfLevel}-${shelfBin}` : (newItem.shelf_position || null);
+
+      const payload: any = {
+        name: newItem.name.trim(),
+        category: newItem.category,
+        unit: newItem.unit,
+        measure: newItem.measure ? newItem.measure.trim() : null,
+        current_stock: newItem.current_stock !== '' ? parseFloat(newItem.current_stock) || 0 : 0,
+        min_stock: newItem.min_stock !== '' ? parseFloat(newItem.min_stock) || 0 : 0,
+        unit_cost: newItem.unit_cost !== '' ? parseFloat(newItem.unit_cost) || 0 : 0,
+        is_tool: newItem.is_tool || newItem.category === 'herramienta',
+        barcode: newItem.barcode ? newItem.barcode.trim() : null,
+        location: computedPos ? `Ubicación ${computedPos}` : (newItem.location || 'Depósito'),
+        shelf_id: newItem.shelf_id || null,
+        shelf_position: computedPos || null,
+      };
+
+      if (editingItem) {
+        await updateItem.mutateAsync({ id: editingItem.id, ...payload });
+        useModalStore.getState().showAlert('Éxito', 'Ítem actualizado correctamente.');
+      } else {
+        const created: any = await createItem.mutateAsync(payload);
+        // Create initial stock movement if stock > 0
+        if (payload.current_stock > 0 && (created?.id || (Array.isArray(created) && created[0]?.id))) {
+          const itemId = created?.id || created[0]?.id;
+          try {
+            await createMovement.mutateAsync({
+              item_id: itemId,
+              movement_type: 'in',
+              quantity: payload.current_stock,
+              notes: 'Ingreso Inicial de Stock',
+              project_id: null
+            });
+          } catch (mErr) {
+            console.warn('No se pudo registrar el movimiento inicial de stock:', mErr);
+          }
+        }
+        useModalStore.getState().showAlert('Éxito', 'Ítem creado correctamente.');
+      }
+
+      setShowNewItem(false);
+      setEditingItem(null);
+      setNewItem({
+        name: '',
+        category: 'material',
+        unit: 'unidad',
+        measure: '',
+        current_stock: '',
+        min_stock: '',
+        unit_cost: '',
+        is_tool: false,
+        barcode: '',
+        location: '',
+        shelf_id: '',
+        shelf_position: '',
+        tool_status: 'operativa'
+      });
+    } catch (err: any) {
+      console.error('Error al guardar ítem:', err);
+      useModalStore.getState().showAlert('Error al Guardar', err?.message || 'No se pudo guardar el ítem.');
     }
-    setShowNewItem(false);
-    setEditingItem(null);
-    setNewItem({ name: '', category: 'material', unit: 'unidad', measure: '', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' });
   };
 
   const handleMovement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showMovement) return;
-    await createMovement.mutateAsync({
-      item_id: showMovement.id,
-      movement_type: movForm.movement_type,
-      quantity: parseFloat(movForm.quantity),
-      project_id: movForm.project_id || null,
-      notes: movForm.notes || null,
-    });
-    setShowMovement(null);
-    setMovForm({ movement_type: 'out', quantity: '', notes: '', project_id: '' });
+    try {
+      await createMovement.mutateAsync({
+        item_id: showMovement.id,
+        movement_type: movForm.movement_type,
+        quantity: parseFloat(movForm.quantity),
+        project_id: movForm.project_id || null,
+        notes: movForm.notes || null,
+      });
+      useModalStore.getState().showAlert('Éxito', 'Movimiento registrado en Kardex.');
+      setShowMovement(null);
+      setMovForm({ movement_type: 'out', quantity: '', notes: '', project_id: '' });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
+    }
   };
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showAssign) return;
-    await createAssignment.mutateAsync({
-      item_id: showAssign.id,
-      employee_id: assignForm.employee_id,
-      project_id: assignForm.project_id || null,
-      notes: assignForm.notes || null,
-    });
-    setShowAssign(null);
-    setAssignForm({ employee_id: '', project_id: '', notes: '' });
+    try {
+      await createAssignment.mutateAsync({
+        item_id: showAssign.id,
+        employee_id: assignForm.employee_id,
+        project_id: assignForm.project_id || null,
+        notes: assignForm.notes || null,
+      });
+      useModalStore.getState().showAlert('Éxito', 'Herramienta asignada al colaborador.');
+      setShowAssign(null);
+      setAssignForm({ employee_id: '', project_id: '', notes: '' });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo asignar la herramienta.');
+    }
+  };
+
+  const handleSaveShelf = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        code: shelfForm.code.trim(),
+        name: shelfForm.name.trim(),
+        shelf_type: shelfForm.shelf_type as any,
+        rows_count: parseInt(shelfForm.rows_count) || 4,
+        columns_count: parseInt(shelfForm.columns_count) || 3,
+        color: shelfForm.color,
+        notes: shelfForm.notes || null,
+        rotation: parseInt(shelfForm.rotation) || 0,
+      };
+
+      if (editingShelf) {
+        await updateShelf.mutateAsync({ id: editingShelf.id, ...payload });
+        useModalStore.getState().showAlert('Éxito', 'Estantería actualizada.');
+      } else {
+        await createShelf.mutateAsync({
+          ...payload,
+          grid_row: 50,
+          grid_col: 50,
+          grid_width: 220,
+          grid_height: 120
+        });
+        useModalStore.getState().showAlert('Éxito', 'Nueva estantería creada.');
+      }
+      setShowNewShelf(false);
+      setEditingShelf(null);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar la estantería.');
+    }
+  };
+
+  const handleCreateEppDelivery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEppEmployeeId) {
+      useModalStore.getState().showAlert('Atención', 'Seleccioná un empleado para la entrega.');
+      return;
+    }
+    try {
+      await createEmployeePPE.mutateAsync({
+        employee_id: selectedEppEmployeeId,
+        item_type: eppForm.item_type as any,
+        size: eppForm.size,
+        quantity: eppForm.quantity,
+        delivery_date: eppForm.delivery_date,
+        notes: eppForm.notes || null,
+      });
+      useModalStore.getState().showAlert('Éxito', 'Entrega de EPP registrada.');
+      setEppForm({
+        item_type: 'pantalon',
+        size: 'M',
+        quantity: 1,
+        delivery_date: new Date().toISOString().split('T')[0],
+        notes: ''
+      });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar la entrega.');
+    }
   };
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" /></div>;
@@ -220,10 +410,10 @@ export const InventoryModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Boxes size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2">
-            <Package size={24} /> Depósito & Inventario
+            <Package size={24} /> Depósito & Inventario Pañol ECAR
           </h3>
           <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
-            Doc PR-GL-01 §4.3 — Control de materiales, herramientas y pañol con trazabilidad
+            Doc PR-GL-01 §4.3 — Control de materiales, herramientas eléctricas, estanterías A-E y entregas de EPP
           </p>
         </div>
       </div>
@@ -258,10 +448,22 @@ export const InventoryModule: React.FC = () => {
         )}
       </div>
 
-      {/* Tabs */}
+      {/* Tabs Navigation */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {([['stock', '📦 Stock', null], ['tools', '🔧 Herramientas', null], ['movements', '📋 Historial Entradas/Salidas', null], ['shelves', '🗄️ Estanterías', null]] as [Tab, string, null][]).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === id ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{label}</button>
+        {([
+          ['stock', '📦 Stock General', null],
+          ['tools', '🔧 Herramientas Eléctricas', null],
+          ['movements', '📋 Kardex Entradas/Salidas', null],
+          ['shelves', '🗄️ Estanterías Almacén (A-E)', null],
+          ['epp', '🦺 Entrega de EPP', null]
+        ] as [Tab, string, null][]).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex-1 py-2.5 rounded-md text-xs md:text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === id ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
@@ -271,9 +473,14 @@ export const InventoryModule: React.FC = () => {
           <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-[200px] relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar material o herramienta..." className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por nombre, código de barras o ubicación (ej: C-3-2)..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30"
+              />
             </div>
-            <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="px-3 py-2 border rounded-lg text-sm">
+            <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-white">
               <option value="">Todas las categorías</option>
               <option value="material">📦 Materiales</option>
               <option value="herramienta">🔧 Herramientas</option>
@@ -285,15 +492,41 @@ export const InventoryModule: React.FC = () => {
             <button onClick={() => setShowScanner(true)} className="btn-secondary">
               <Barcode size={16} /> Escanear Código
             </button>
-            <button onClick={() => { setShowNewItem(true); setEditingItem(null); setNewItem({ name: '', category: 'material', unit: 'unidad', measure: '', current_stock: '', min_stock: '', unit_cost: '', is_tool: false, barcode: '', location: '', shelf_id: '' }); }} className="btn-primary">
+            <button
+              onClick={() => {
+                setShowNewItem(true);
+                setEditingItem(null);
+                setNewItem({
+                  name: '',
+                  category: 'material',
+                  unit: 'unidad',
+                  measure: '',
+                  current_stock: '',
+                  min_stock: '',
+                  unit_cost: '',
+                  is_tool: false,
+                  barcode: '',
+                  location: '',
+                  shelf_id: '',
+                  shelf_position: '',
+                  tool_status: 'operativa'
+                });
+                setShelfLevel('1');
+                setShelfBin('1');
+              }}
+              className="btn-primary"
+            >
               <Plus size={16} /> Nuevo Ítem
             </button>
             {isAdmin && (
-              <button onClick={async () => {
-                if (await useModalStore.getState().showConfirm('Confirmar Purga', '⚠️ ¿Estás seguro que deseas eliminar TODO el inventario? Esta acción no se puede deshacer.')) {
-                  deleteAllInventory.mutate();
-                }
-              }} className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100 flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  if (await useModalStore.getState().showConfirm('Confirmar Purga', '⚠️ ¿Estás seguro que deseas eliminar TODO el inventario? Esta acción no se puede deshacer.')) {
+                    deleteAllInventory.mutate();
+                  }
+                }}
+                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold border border-red-200 hover:bg-red-100 flex items-center gap-2"
+              >
                 <Trash2 size={16} /> Vaciar Inventario
               </button>
             )}
@@ -301,9 +534,9 @@ export const InventoryModule: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Ítem</th>
+                <th>Ítem / Descripción</th>
                 <th>Categoría</th>
-                <th>Ubicación</th>
+                <th>Ubicación Bin (Est-Estante-Bin)</th>
                 <th>Medida</th>
                 <th>Unidad</th>
                 <th className="text-center">Stock</th>
@@ -315,7 +548,10 @@ export const InventoryModule: React.FC = () => {
             <tbody>
               {filtered.map(item => (
                 <tr key={item.id} className={item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}>
-                  <td className="font-medium text-gray-800">{item.name}</td>
+                  <td className="font-medium text-gray-800">
+                    <div>{item.name}</div>
+                    {item.barcode && <span className="font-mono text-[10px] text-gray-400">🏷️ {item.barcode}</span>}
+                  </td>
                   <td>
                     <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
                       {item.category}
@@ -325,9 +561,15 @@ export const InventoryModule: React.FC = () => {
                     {item.shelf ? (
                       <div className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
-                        <span className="text-xs font-bold text-gray-700">{(item.shelf as any)?.code}</span>
-                        {item.shelf_position && <span className="text-[10px] font-mono text-gray-400">({item.shelf_position})</span>}
+                        <span className="text-xs font-bold text-gray-800 font-mono">
+                          {(item.shelf as any)?.code}
+                          {item.shelf_position ? `-${item.shelf_position.replace(/^N(\d+)-C(\d+)$/, '$1-$2')}` : ''}
+                        </span>
                       </div>
+                    ) : item.shelf_position ? (
+                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                        📍 {item.shelf_position}
+                      </span>
                     ) : (
                       <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
                         <MapPin size={12} /> Asignar
@@ -341,159 +583,165 @@ export const InventoryModule: React.FC = () => {
                   {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
                   <td className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => { setEditingItem(item); setNewItem({ name: item.name, category: item.category as any, unit: item.unit, measure: item.measure || '', current_stock: String(item.current_stock), min_stock: String(item.min_stock), unit_cost: String(item.unit_cost), is_tool: item.is_tool, barcode: item.barcode || '', location: item.location, shelf_id: item.shelf_id || '' }); setShowNewItem(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Editar"><Edit3 size={14} className="text-gray-600" /></button>
-                      {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Eliminar"><Trash2 size={14} className="text-red-500" /></button>}
-                      <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
-                      {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
-                      {item.shelf ? (
-                        <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
-                      ) : null}
-                      <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
-                      {item.current_stock <= item.min_stock && item.min_stock > 0 && (
+                      <button
+                        onClick={() => {
+                          setEditingItem(item);
+                          setNewItem({
+                            name: item.name,
+                            category: item.category as any,
+                            unit: item.unit,
+                            measure: item.measure || '',
+                            current_stock: String(item.current_stock),
+                            min_stock: String(item.min_stock),
+                            unit_cost: String(item.unit_cost),
+                            is_tool: item.is_tool,
+                            barcode: item.barcode || '',
+                            location: item.location || '',
+                            shelf_id: item.shelf_id || '',
+                            shelf_position: item.shelf_position || '',
+                            tool_status: 'operativa'
+                          });
+                          setShowNewItem(true);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg"
+                        title="Editar"
+                      >
+                        <Edit3 size={14} className="text-gray-600" />
+                      </button>
+                      {isAdmin && (
                         <button
-                          onClick={() => openRepoModal([{ name: item.name, quantity: item.current_stock, unit: item.unit, unit_cost: item.unit_cost, id: item.id, current_stock: item.current_stock, min_stock: item.min_stock }])}
-                          className="p-1.5 hover:bg-red-100 rounded-lg" title="Solicitar reposición a Compras"
+                          onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg"
+                          title="Eliminar"
                         >
-                          <ShoppingBag size={14} className="text-red-600" />
+                          <Trash2 size={14} className="text-red-500" />
                         </button>
                       )}
+                      <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
+                      {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
+                      <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación bin"><MapPin size={14} className="text-orange-500" /></button>
+                      <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && <div className="text-center py-12 text-gray-400"><Package size={48} className="mx-auto mb-3 opacity-30" /><p>No hay ítems</p></div>}
+          {filtered.length === 0 && <div className="text-center py-12 text-gray-400"><Package size={48} className="mx-auto mb-3 opacity-30" /><p>No hay ítems registrados</p></div>}
         </div>
       )}
 
-      {/* Tools tab */}
+      {/* Tools tab (Herramientas Eléctricas & Prestamos) */}
       {tab === 'tools' && (
         <div className="space-y-6">
-          <div className="light-card overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center gap-3">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Wrench size={16} /> Catálogo de Herramientas</h3>
-              <div className="flex-1 min-w-[200px] relative lg:ml-auto lg:max-w-xs">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar herramienta..." className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" />
-              </div>
-              <button onClick={() => setShowScanner(true)} className="btn-secondary">
-                <Barcode size={16} /> Escanear
-              </button>
-              <button onClick={() => { setShowNewItem(true); setNewItem({ ...newItem, category: 'herramienta' }); }} className="btn-primary">
-                <Plus size={16} /> Nueva Herramienta
-              </button>
+          <div className="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">⚡ Gestión de Herramientas Eléctricas (Estantería A)</h3>
+              <p className="text-xs text-slate-300">Control individual con código único, estado físico (Operativa / Mantenimiento / No Funciona) y trazabilidad de préstamos.</p>
             </div>
+            <button
+              onClick={() => {
+                setShowNewItem(true);
+                setEditingItem(null);
+                setNewItem({
+                  name: '',
+                  category: 'herramienta',
+                  unit: 'unidad',
+                  measure: '',
+                  current_stock: '1',
+                  min_stock: '1',
+                  unit_cost: '',
+                  is_tool: true,
+                  barcode: '',
+                  location: 'Estantería A - Herramientas Eléctricas',
+                  shelf_id: (shelves || []).find(s => s.code === 'A')?.id || '',
+                  shelf_position: 'A-1-1',
+                  tool_status: 'operativa'
+                });
+              }}
+              className="btn-primary"
+            >
+              <Plus size={16} /> Registrar Herramienta
+            </button>
+          </div>
+
+          <div className="light-card overflow-hidden">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Ítem</th>
-                  <th>Categoría</th>
-                  <th>Ubicación</th>
-                  <th>Medida</th>
-                  <th>Unidad</th>
+                  <th>Código Único / Serie</th>
+                  <th>Herramienta</th>
+                  <th>Ubicación Estantería A</th>
+                  <th className="text-center">Estado Físico</th>
                   <th className="text-center">Stock</th>
-                  <th className="text-center">Mínimo</th>
-                  {!isPanolero && <th className="text-right">Costo Unit.</th>}
                   <th className="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(item => (
-                  <tr key={item.id} className={item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}>
+                  <tr key={item.id}>
+                    <td className="font-mono text-xs font-bold text-ecar-blue">{item.barcode || 'SIN-CÓDIGO'}</td>
                     <td className="font-medium text-gray-800">{item.name}</td>
-                    <td>
-                      <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
-                        {item.category}
+                    <td className="font-mono text-xs text-gray-600">
+                      📍 {item.shelf_position || 'Estantería A'}
+                    </td>
+                    <td className="text-center">
+                      <span className="badge badge-success flex items-center gap-1 justify-center mx-auto">
+                        <CheckCircle2 size={12} /> Operativa
                       </span>
                     </td>
-                    <td>
-                      {item.shelf ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
-                          <span className="text-xs font-bold text-gray-700">{(item.shelf as any)?.code}</span>
-                          {item.shelf_position && <span className="text-[10px] font-mono text-gray-400">({item.shelf_position})</span>}
-                        </div>
-                      ) : (
-                        <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
-                          <MapPin size={12} /> Asignar
-                        </button>
-                      )}
-                    </td>
-                    <td className="text-gray-600 font-medium">{item.measure || '-'}</td>
-                    <td className="text-gray-500 text-xs uppercase">{item.unit || 'un'}</td>
-                    <td className="text-center font-mono font-bold text-gray-800">{item.current_stock}</td>
-                    <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
-                    {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
+                    <td className="text-center font-mono font-bold">{item.current_stock} {item.unit}</td>
                     <td className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => { setEditingItem(item); setNewItem({ name: item.name, category: item.category as any, unit: item.unit, measure: item.measure || '', current_stock: String(item.current_stock), min_stock: String(item.min_stock), unit_cost: String(item.unit_cost), is_tool: item.is_tool, barcode: item.barcode || '', location: item.location, shelf_id: item.shelf_id || '' }); setShowNewItem(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Editar"><Edit3 size={14} className="text-gray-600" /></button>
-                        {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Eliminar"><Trash2 size={14} className="text-red-500" /></button>}
-                        <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
-                        {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
-                        {item.shelf ? (
-                          <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación"><MapPin size={14} className="text-orange-500" /></button>
-                        ) : null}
-                        <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
-                        {item.current_stock <= item.min_stock && item.min_stock > 0 && (
-                          <button
-                            onClick={() => openRepoModal([{ name: item.name, quantity: item.current_stock, unit: item.unit, unit_cost: item.unit_cost, id: item.id, current_stock: item.current_stock, min_stock: item.min_stock }])}
-                            className="p-1.5 hover:bg-red-100 rounded-lg" title="Solicitar reposición a Compras"
-                          >
-                            <ShoppingBag size={14} className="text-red-600" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && <div className="text-center py-12 text-gray-400"><Wrench size={48} className="mx-auto mb-3 opacity-30" /><p>No hay herramientas registradas</p></div>}
-          </div>
-
-          <div className="light-card overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={16} /> Asignaciones Activas</h3>
-            </div>
-          {activeAssignments.length > 0 ? (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Herramienta</th>
-                  <th>Empleado</th>
-                  <th>Obra</th>
-                  <th>Fecha Asignación</th>
-                  <th className="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeAssignments.map(a => (
-                  <tr key={a.id}>
-                    <td className="font-medium">{(a.item as any)?.name || '—'}</td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-ecar-blueLight flex items-center justify-center text-ecar-blue font-bold text-xs uppercase">
-                          {((a.employee as any)?.full_name || '?')[0]}
-                        </div>
-                        {(a.employee as any)?.full_name}
-                      </div>
-                    </td>
-                    <td className="text-gray-500">{(a.project as any)?.name || '—'}</td>
-                    <td className="font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
-                    <td className="text-center">
-                      <button onClick={() => updateAssignment.mutateAsync({ id: a.id, status: 'returned', returned_date: new Date().toISOString().split('T')[0] })} className="badge badge-success">
-                        <RotateCcw size={12} /> Devolver
+                      <button onClick={() => setShowAssign(item)} className="btn-secondary text-xs px-2.5 py-1 py-0.5">
+                        <User size={12} /> Asignar / Préstamo
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : (
-            <div className="text-center py-12 text-gray-400"><Wrench size={48} className="mx-auto mb-3 opacity-30" /><p>No hay herramientas asignadas</p></div>
-          )}
-        </div>
+          </div>
+
+          {/* Active Tool Assignments */}
+          <div className="light-card overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={16} /> Préstamos Diarios Activos</h3>
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">{activeAssignments.length} prestadas</span>
+            </div>
+            {activeAssignments.length > 0 ? (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Herramienta</th>
+                    <th>Empleado (Retiró)</th>
+                    <th>Obra / Destino</th>
+                    <th>Fecha Retiro</th>
+                    <th className="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeAssignments.map(a => (
+                    <tr key={a.id}>
+                      <td className="font-medium text-gray-900">{(a.item as any)?.name || '—'}</td>
+                      <td>{(a.employee as any)?.full_name || 'Sin asignar'}</td>
+                      <td>{(a.project as any)?.name || 'Sin obra'}</td>
+                      <td className="font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
+                      <td className="text-center">
+                        <button
+                          onClick={() => updateAssignment.mutateAsync({ id: a.id, status: 'returned', returned_date: new Date().toISOString().split('T')[0] })}
+                          className="badge badge-success hover:bg-emerald-600 cursor-pointer"
+                        >
+                          <RotateCcw size={12} /> Registrar Devolución
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-center py-8 text-gray-400"><Wrench size={32} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Todas las herramientas están guardadas en pañol</p></div>
+            )}
+          </div>
         </div>
       )}
 
@@ -506,7 +754,7 @@ export const InventoryModule: React.FC = () => {
                 <span>📦</span> Kardex General de Movimientos y Registro de Pañol
               </h3>
               <p className="text-xs text-slate-300 mt-0.5">
-                Auditoría completa de entradas, salidas por despacho a obras y ajustes de stock con fecha, hora y responsable.
+                Auditoría completa de entradas, salidas por despacho a obras y ajustes de stock.
               </p>
             </div>
             <span className="text-xs font-mono font-bold bg-white/10 px-3 py-1 rounded-lg text-sky-300">
@@ -524,7 +772,7 @@ export const InventoryModule: React.FC = () => {
                     <th className="text-center">Cantidad</th>
                     <th>Obra Destino</th>
                     <th>Responsable Pañol</th>
-                    <th>Detalle / Referencia Pedido</th>
+                    <th>Detalle / Referencia</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -556,18 +804,353 @@ export const InventoryModule: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Nuevo Ítem */}
+      {/* Shelves tab (Plano de distribución A-E) */}
+      {tab === 'shelves' && (() => {
+        const shelfList = shelves || [];
+        const itemsByShelf = (items || []).reduce((acc, item) => {
+          if (item.shelf_id) acc[item.shelf_id] = (acc[item.shelf_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        return (
+          <div className="space-y-6">
+            {/* Diagrama Visual del Depósito */}
+            <div className="light-card overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <LayoutGrid size={18} /> Plano Orientativo Almacén Pequeño — 50 m² (10 m x 5 m)
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    Ubicación estandarizada de las 5 estanterías (A-E) con pasillo central de circulación y entrada.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={seedDefaultShelves} className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5">
+                    🗺️ Cargar Distribución A-E (50m²)
+                  </button>
+                  <button onClick={() => setShowImporter(true)} className="btn-secondary text-xs">
+                    <ArrowDownToLine size={14} /> Importar Excel
+                  </button>
+                  <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="btn-primary text-xs">
+                    <Plus size={14} /> Nueva Estantería
+                  </button>
+                </div>
+              </div>
+
+              {/* Warehouse Layout Map 10m x 5m */}
+              <div className="p-6 bg-slate-50">
+                <div className="relative border-4 border-slate-700 rounded-2xl p-6 bg-white shadow-xl max-w-5xl mx-auto overflow-hidden">
+                  
+                  {/* Top Header Label */}
+                  <div className="text-center font-black text-sm tracking-wider uppercase bg-slate-800 text-white py-1.5 rounded-lg mb-6 shadow-sm">
+                    ALMACÉN PEQUEÑO — 50 m² (10 m x 5 m)
+                  </div>
+
+                  {/* 3D Moving Mesh decorative background */}
+                  <div className="absolute inset-0 opacity-20 pointer-events-none">
+                    <WebGLWarehouseGrid />
+                  </div>
+
+                  {/* Shelves Layout Canvas */}
+                  <div className="relative z-10 space-y-8 py-4">
+                    
+                    {/* Top Row: A, B, C */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {[
+                        { letter: 'A', name: 'Herramientas eléctricas', desc: 'Taladros, amoladoras, sierras, cargadores', color: '#3B82F6' },
+                        { letter: 'B', name: 'Electricidad', desc: 'Cables, llaves térmicas, tomas, cajas', color: '#8B5CF6' },
+                        { letter: 'C', name: 'Gas', desc: 'Cañerías, llaves de paso, accesorios', color: '#F59E0B' }
+                      ].map(cfg => {
+                        const sh = shelfList.find(s => s.code === cfg.letter);
+                        return (
+                          <div
+                            key={cfg.letter}
+                            onClick={() => sh && setViewingShelf(sh)}
+                            className="bg-white border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
+                            style={{ borderColor: cfg.color }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-8 h-8 rounded-lg font-black text-white flex items-center justify-center text-base shadow" style={{ backgroundColor: cfg.color }}>
+                                {cfg.letter}
+                              </span>
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
+                                {itemsByShelf[sh?.id || ''] || 0} ítems
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-gray-900 text-sm">{cfg.name}</h4>
+                            <p className="text-[11px] text-gray-500 mt-1">{cfg.desc}</p>
+                            <div className="mt-3 text-[10px] font-mono text-gray-400 flex justify-between border-t pt-2">
+                              <span>Formato Bin: {cfg.letter}-[Nº]-[Bin]</span>
+                              <span className="text-orange-600 font-bold group-hover:underline">Ver Niveles →</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pasillo Central */}
+                    <div className="bg-orange-50 border-2 border-dashed border-orange-300 rounded-xl py-3 text-center flex items-center justify-center gap-3">
+                      <span className="text-orange-500 font-bold">⬆️</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-orange-800">Pasillo Central de Circulación</span>
+                      <span className="text-orange-500 font-bold">⬇️</span>
+                    </div>
+
+                    {/* Bottom Row: D, E */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                      {[
+                        { letter: 'D', name: 'Agua y Cloaca', desc: 'Caños, accesorios sanitarios, agua y desagüe', color: '#10B981' },
+                        { letter: 'E', name: 'EPP / Ferretería', desc: 'Protección personal, tornillos, bulones', color: '#EF4444' }
+                      ].map(cfg => {
+                        const sh = shelfList.find(s => s.code === cfg.letter);
+                        return (
+                          <div
+                            key={cfg.letter}
+                            onClick={() => sh && setViewingShelf(sh)}
+                            className="bg-white border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group"
+                            style={{ borderColor: cfg.color }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="w-8 h-8 rounded-lg font-black text-white flex items-center justify-center text-base shadow" style={{ backgroundColor: cfg.color }}>
+                                {cfg.letter}
+                              </span>
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
+                                {itemsByShelf[sh?.id || ''] || 0} ítems
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-gray-900 text-sm">{cfg.name}</h4>
+                            <p className="text-[11px] text-gray-500 mt-1">{cfg.desc}</p>
+                            <div className="mt-3 text-[10px] font-mono text-gray-400 flex justify-between border-t pt-2">
+                              <span>Formato Bin: {cfg.letter}-[Nº]-[Bin]</span>
+                              <span className="text-orange-600 font-bold group-hover:underline">Ver Niveles →</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* ENTRADA Door Indicator at Bottom */}
+                    <div className="flex justify-center pt-2">
+                      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white font-black text-xs px-8 py-2 rounded-xl shadow-md border-2 border-white flex items-center gap-2">
+                        <span>🚪</span> ENTRADA ALMACÉN (10 m)
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Inspector Front View */}
+              {viewingShelf && (
+                <div className="p-6 border-t bg-gray-50">
+                  <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: viewingShelf.color }} />
+                        <div>
+                          <h3 className="font-bold text-gray-800 text-base">{viewingShelf.name} (Estantería {viewingShelf.code})</h3>
+                          <p className="text-xs text-gray-500 font-mono">Formato de ubicación bin: {viewingShelf.code}-[Nº Estante]-[Nº Bin]</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setViewingShelf(null)} className="btn-secondary text-xs"><X size={14} /> Cerrar Vista</button>
+                    </div>
+                    <ShelfFrontView shelf={viewingShelf} items={(items || []).filter(i => i.shelf_id === viewingShelf.id)} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Lista de estanterías */}
+            <div className="light-card overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 className="font-bold text-gray-800">Detalle de Estanterías A-E</h3>
+              </div>
+              {shelfList.length > 0 && (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Nombre Estantería</th>
+                      <th>Tipo</th>
+                      <th className="text-center">Niveles / Bins</th>
+                      <th className="text-center">Ítems Asignados</th>
+                      <th>Descripción / Contenido</th>
+                      <th className="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shelfList.map(s => (
+                      <tr key={s.id}>
+                        <td><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="font-bold font-mono text-sm">{s.code}</span></div></td>
+                        <td className="font-medium text-gray-900">{s.name}</td>
+                        <td><span className="badge badge-neutral">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
+                        <td className="text-center font-mono">{s.rows_count} Niveles × {s.columns_count} Bins</td>
+                        <td className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
+                        <td className="text-gray-500 text-xs">{s.notes || '—'}</td>
+                        <td className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver niveles y bins"><Search size={14} className="text-gray-600" /></button>
+                            <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
+                            {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar estantería?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* EPP Tab */}
+      {tab === 'epp' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-6 rounded-xl shadow-lg">
+            <h3 className="font-bold text-xl flex items-center gap-2"><ShieldCheck size={24} /> Registro de Entrega de EPP (Elementos de Protección Personal)</h3>
+            <p className="text-emerald-100 text-xs mt-1">Control por empleado de cascos, guantes, anteojos de seguridad, arneses, calzado y ropa de trabajo (Estantería E).</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Delivery Form */}
+            <div className="light-card p-5 space-y-4">
+              <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Plus size={16} className="text-emerald-600" /> Registrar Entrega de EPP</h4>
+              <form onSubmit={handleCreateEppDelivery} className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Empleado *</label>
+                  <select
+                    value={selectedEppEmployeeId}
+                    onChange={e => setSelectedEppEmployeeId(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white font-medium"
+                  >
+                    <option value="">Seleccionar empleado...</option>
+                    {(employees || []).map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.legajo || 'Sin legajo'})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Elemento Entregado *</label>
+                  <select
+                    value={eppForm.item_type}
+                    onChange={e => setEppForm({ ...eppForm, item_type: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
+                  >
+                    <option value="pantalon">👖 Pantalón de Trabajo</option>
+                    <option value="zapatos">🥾 Zapatos / Calzado de Seguridad</option>
+                    <option value="campera">🧥 Campera de Abrigo / Ignífuga</option>
+                    <option value="camisa">👔 Camisa de Trabajo</option>
+                    <option value="remera">👕 Remera</option>
+                    <option value="casco">🪖 Casco de Seguridad (EPP)</option>
+                    <option value="guantes">🧤 Guantes de Protección (EPP)</option>
+                    <option value="anteojos">🥽 Anteojos de Seguridad (EPP)</option>
+                    <option value="arnes">🦺 Arnés de Seguridad (EPP)</option>
+                    <option value="otro">📦 Otro Elemento de Protección</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 block mb-1">Talle / Dimensión</label>
+                    <input
+                      value={eppForm.size}
+                      onChange={e => setEppForm({ ...eppForm, size: e.target.value })}
+                      placeholder="Ej: 42, L, XL"
+                      className="w-full px-3 py-2 border rounded-xl text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={eppForm.quantity}
+                      onChange={e => setEppForm({ ...eppForm, quantity: parseInt(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Fecha de Entrega</label>
+                  <input
+                    type="date"
+                    value={eppForm.delivery_date}
+                    onChange={e => setEppForm({ ...eppForm, delivery_date: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones</label>
+                  <input
+                    value={eppForm.notes}
+                    onChange={e => setEppForm({ ...eppForm, notes: e.target.value })}
+                    placeholder="Ej: Firma en planilla N° 12..."
+                    className="w-full px-3 py-2 border rounded-xl text-sm"
+                  />
+                </div>
+                <button type="submit" disabled={createEmployeePPE.isPending} className="btn-primary w-full py-2.5 text-sm">
+                  {createEmployeePPE.isPending ? 'Guardando...' : '✅ Registrar Entrega'}
+                </button>
+              </form>
+            </div>
+
+            {/* Employee Audit View */}
+            <div className="md:col-span-2 light-card p-5">
+              <h4 className="font-bold text-gray-900 text-sm mb-4 flex items-center justify-between">
+                <span>Historial de Entregas por Empleado</span>
+                {selectedEppEmployeeId && (
+                  <span className="text-xs font-normal text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    Filtrando por: {(employees || []).find(e => e.id === selectedEppEmployeeId)?.full_name}
+                  </span>
+                )}
+              </h4>
+              {selectedEppEmployeeId ? (
+                <EppAuditList employeeId={selectedEppEmployeeId} />
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <ShieldCheck size={48} className="mx-auto mb-2 opacity-30 text-emerald-600" />
+                  <p className="text-sm font-medium">Seleccioná un empleado para ver su historial de entregas de EPP</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nuevo / Editar Ítem */}
       {showNewItem && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingItem ? 'Editar Ítem' : 'Nuevo Ítem'}</h3><button onClick={() => setShowNewItem(false)}><X size={20} className="text-gray-400" /></button></div>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-lg">{editingItem ? 'Editar Ítem' : 'Nuevo Ítem de Inventario'}</h3>
+              <button onClick={() => setShowNewItem(false)}><X size={20} className="text-gray-400" /></button>
+            </div>
             <form onSubmit={handleNewItem} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: Amoladora Bosch 7&quot;" /></div>
-                <div><label className="text-xs font-bold text-gray-500">Medida / Dimensión</label><input value={newItem.measure} onChange={e => setNewItem({ ...newItem, measure: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="Ej: 125x63, 7 1/4" /></div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Nombre del Ítem *</label>
+                  <input
+                    value={newItem.name}
+                    onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30"
+                    placeholder="Ej: Codo termofusion 20"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Medida / Dimensión</label>
+                  <input
+                    value={newItem.measure}
+                    onChange={e => setNewItem({ ...newItem, measure: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30"
+                    placeholder="Ej: 20, 1/2&quot;, 110mm"
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="text-xs font-bold text-gray-500">Código de Barras / QR (Opcional)</label>
+                <label className="text-xs font-bold text-gray-500">Código Único / Barras / QR (Opcional)</label>
                 <div className="flex gap-2 items-center mt-1">
                   <input
                     value={newItem.barcode}
@@ -579,7 +1162,7 @@ export const InventoryModule: React.FC = () => {
                     type="button"
                     onClick={generateRandomBarcode}
                     className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 shrink-0"
-                    title="Generar código de barras aleatorio"
+                    title="Generar código aleatorio"
                   >
                     ⚡ Generar
                   </button>
@@ -587,24 +1170,140 @@ export const InventoryModule: React.FC = () => {
                     type="button"
                     disabled={!newItem.barcode}
                     onClick={printTempBarcode}
-                    className="btn-primary"
-                    title="Imprimir código de barras"
+                    className="btn-primary shrink-0"
+                    title="Imprimir"
                   >
                     🖨️ Imprimir
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><label className="text-xs font-bold text-gray-500">Categoría</label><select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="material">Material</option><option value="herramienta">Herramienta</option><option value="consumible">Consumible</option></select></div>
-                <div><label className="text-xs font-bold text-gray-500">Estantería</label><select value={newItem.shelf_id} onChange={e => setNewItem({ ...newItem, shelf_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="">Sin asignar</option>{(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}</select></div>
-                <div><label className="text-xs font-bold text-gray-500">Unidad</label><select value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"><option value="unidad">Unidad (un)</option><option value="kg">Kilogramos (kg)</option><option value="tn">Toneladas (tn)</option><option value="l">Litros (l)</option><option value="m">Metros (m)</option><option value="m2">Metros Cuadrados (m2)</option><option value="m3">Metros Cúbicos (m3)</option><option value="bl">Bolsa (bl)</option><option value="cj">Caja (cj)</option><option value="hs">Horas (hs)</option><option value="gl">Global (gl)</option><option value="juego">Juego</option><option value="par">Par</option></select></div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Categoría</label>
+                  <select
+                    value={newItem.category}
+                    onChange={e => setNewItem({ ...newItem, category: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white"
+                  >
+                    <option value="material">📦 Material</option>
+                    <option value="herramienta">🔧 Herramienta</option>
+                    <option value="consumible">🔩 Consumible</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Unidad de Medida</label>
+                  <select
+                    value={newItem.unit}
+                    onChange={e => setNewItem({ ...newItem, unit: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white"
+                  >
+                    <option value="unidad">Unidad (un)</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="tn">Toneladas (tn)</option>
+                    <option value="l">Litros (l)</option>
+                    <option value="m">Metros (m)</option>
+                    <option value="m2">Metros Cuadrados (m2)</option>
+                    <option value="m3">Metros Cúbicos (m3)</option>
+                    <option value="bl">Bolsa (bl)</option>
+                    <option value="cj">Caja (cj)</option>
+                    <option value="par">Par</option>
+                    <option value="juego">Juego</option>
+                  </select>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><label className="text-xs font-bold text-gray-500">Stock Actual</label><input type="number" value={newItem.current_stock} onChange={e => setNewItem({ ...newItem, current_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
-                <div><label className="text-xs font-bold text-gray-500">Stock Mínimo</label><input type="number" value={newItem.min_stock} onChange={e => setNewItem({ ...newItem, min_stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
-                <div><label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label><input type="number" value={newItem.unit_cost} onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+
+              {/* Codificación interna: estantería A-E, estante (nivel) y bin (cajón) */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">📍 Ubicación en Almacén: Estantería, Estante (Nivel) y Bin (Cajón)</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400">Estantería A-E</label>
+                    <select
+                      value={newItem.shelf_id}
+                      onChange={e => setNewItem({ ...newItem, shelf_id: e.target.value })}
+                      className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs bg-white font-medium"
+                    >
+                      <option value="">Sin asignar</option>
+                      {(shelves || []).map(s => (
+                        <option key={s.id} value={s.id}>{s.code} — {s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400">Estante / Nivel</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={shelfLevel}
+                      onChange={e => setShelfLevel(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs font-mono bg-white"
+                      placeholder="Ej: 3"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400">Bin / Cajón</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={shelfBin}
+                      onChange={e => setShelfBin(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs font-mono bg-white"
+                      placeholder="Ej: 2"
+                    />
+                  </div>
+                </div>
+                {selectedShelfCode && (
+                  <div className="text-xs font-mono font-bold text-ecar-blue flex items-center gap-1.5 pt-1">
+                    <span>Código Ubicación:</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200">
+                      {selectedShelfCode}-{shelfLevel}-{shelfBin}
+                    </span>
+                    <span className="text-gray-400 font-normal text-[10px]">(Estantería {selectedShelfCode}, Estante {shelfLevel}, Bin {shelfBin})</span>
+                  </div>
+                )}
               </div>
-              <button type="submit" disabled={createItem.isPending || updateItem.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Stock Actual</label>
+                  <input
+                    type="number"
+                    value={newItem.current_stock}
+                    onChange={e => setNewItem({ ...newItem, current_stock: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Stock Mínimo</label>
+                  <input
+                    type="number"
+                    value={newItem.min_stock}
+                    onChange={e => setNewItem({ ...newItem, min_stock: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label>
+                  <input
+                    type="number"
+                    value={newItem.unit_cost}
+                    onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={createItem.isPending || updateItem.isPending}
+                className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50"
+              >
                 {(createItem.isPending || updateItem.isPending) ? 'Guardando...' : editingItem ? '✅ Guardar Cambios' : '✅ Crear Ítem'}
               </button>
             </form>
@@ -641,7 +1340,7 @@ export const InventoryModule: React.FC = () => {
                   } else {
                     setMovForm({ ...movForm, project_id: e.target.value });
                   }
-                }} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}<option value="NEW_PROJECT" className="font-bold text-ecar-blue">+ Agregar nueva obra...</option></select></div>
+                }} className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}<option value="NEW_PROJECT" className="font-bold text-ecar-blue">+ Agregar nueva obra...</option></select></div>
               </div>
               <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={movForm.notes} onChange={e => setMovForm({ ...movForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Detalle del movimiento" /></div>
               <button type="submit" disabled={createMovement.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
@@ -656,291 +1355,82 @@ export const InventoryModule: React.FC = () => {
       {showAssign && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Asignar: {showAssign.name}</h3><button onClick={() => setShowAssign(null)}><X size={20} className="text-gray-400" /></button></div>
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Asignar / Préstamo: {showAssign.name}</h3><button onClick={() => setShowAssign(null)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleAssign} className="space-y-3">
-              <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}</select></div>
-              <div><label className="text-xs font-bold text-gray-500">Obra</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-              <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" /></div>
+              <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Seleccioná empleado...</option>{(employees || []).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}</select></div>
+              <div><label className="text-xs font-bold text-gray-500">Obra / Destino</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+              <div><label className="text-xs font-bold text-gray-500">Observaciones</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Opcional..." /></div>
               <button type="submit" disabled={createAssignment.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
-                {createAssignment.isPending ? 'Asignando...' : '🔧 Asignar Herramienta'}
+                {createAssignment.isPending ? 'Asignando...' : '👤 Confirmar Préstamo'}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Código de Barras */}
-      {showBarcode && (
-        <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
+      {/* Modal Nueva/Editar Estantería */}
+      {showNewShelf && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingShelf ? 'Editar' : 'Nueva'} Estantería</h3><button onClick={() => { setShowNewShelf(false); setEditingShelf(null); }}><X size={20} className="text-gray-400" /></button></div>
+            <form onSubmit={handleSaveShelf} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><label className="text-xs font-bold text-gray-500">Código (Letra A-E) *</label><input value={shelfForm.code} onChange={e => setShelfForm({ ...shelfForm, code: e.target.value.toUpperCase() })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="A, B, C, D o E" /></div>
+                <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={shelfForm.name} onChange={e => setShelfForm({ ...shelfForm, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Herramientas eléctricas" /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={shelfForm.shelf_type} onChange={e => setShelfForm({ ...shelfForm, shelf_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm bg-white">{Object.entries(SHELF_TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}</select></div>
+                <div><label className="text-xs font-bold text-gray-500">Niveles</label><input type="number" min="1" max="10" value={shelfForm.rows_count} onChange={e => setShelfForm({ ...shelfForm, rows_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+                <div><label className="text-xs font-bold text-gray-500">Bins / Cajones</label><input type="number" min="1" max="10" value={shelfForm.columns_count} onChange={e => setShelfForm({ ...shelfForm, columns_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Rotación</label>
+                  <div className="flex items-center gap-2">
+                      <input type="range" min="0" max="360" value={shelfForm.rotation} onChange={e => setShelfForm({ ...shelfForm, rotation: e.target.value })} className="w-full" />
+                      <span className="text-xs font-mono w-8">{shelfForm.rotation}º</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500">Color Identificador</label>
+                <div className="flex gap-2 mt-1">{SHELF_COLORS.map(c => <button key={c} type="button" onClick={() => setShelfForm({ ...shelfForm, color: c })} className={`w-7 h-7 rounded-full border-2 transition-all ${shelfForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />)}</div>
+              </div>
+              <div><label className="text-xs font-bold text-gray-500">Notas / Categorías asignadas</label><input value={shelfForm.notes} onChange={e => setShelfForm({ ...shelfForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción del contenido..." /></div>
+              <button type="submit" disabled={createShelf.isPending || updateShelf.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
+                {(createShelf.isPending || updateShelf.isPending) ? 'Guardando...' : editingShelf ? '💾 Guardar Cambios' : '✅ Crear Estantería'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
-      {/* Shelves Tab */}
-      {tab === 'shelves' && (() => {
-        const shelfList = shelves || [];
-
-        const itemsByShelf = (items || []).reduce((acc, it) => {
-          if (it.shelf_id) { acc[it.shelf_id] = (acc[it.shelf_id] || 0) + 1; }
-          return acc;
-        }, {} as Record<string, number>);
-
-        const handleSaveShelf = async (e: React.FormEvent) => {
-          e.preventDefault();
-          const payload = {
-            code: shelfForm.code, name: shelfForm.name, shelf_type: shelfForm.shelf_type as WarehouseShelf['shelf_type'],
-            rows_count: parseInt(shelfForm.rows_count) || 4, columns_count: parseInt(shelfForm.columns_count) || 3,
-            color: shelfForm.color, notes: shelfForm.notes || null, rotation: parseInt(shelfForm.rotation) || 0
-          };
-          if (editingShelf) {
-            await updateShelf.mutateAsync({ id: editingShelf.id, ...payload });
-          } else {
-            await createShelf.mutateAsync({ ...payload, grid_row: 50, grid_col: 50, grid_width: 200, grid_height: 120 });
-          }
-          setShowNewShelf(false); setEditingShelf(null);
-          setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' });
-        };
-
-        return (
-          <div className="space-y-6">
-            {/* Diagrama Visual del Depósito */}
-            <div className="light-card overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2"><LayoutGrid size={16} /> Plano del Depósito</h3>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowImporter(true)} className="btn-secondary">
-                    <ArrowDownToLine size={16} /> Importar Excel
-                  </button>
-                  <button onClick={() => { setShowNewShelf(true); setEditingShelf(null); setShelfForm({ code: '', name: '', shelf_type: 'rack', rows_count: '4', columns_count: '3', color: '#3B82F6', notes: '', rotation: '0' }); }} className="btn-primary">
-                    <Plus size={16} /> Nueva Estantería
-                  </button>
-                </div>
-              </div>
-              <div className="p-6 flex gap-6">
-                {shelfList.length === 0 ? (
-                  <div className="text-center py-16 text-gray-400">
-                    <Grid3X3 size={48} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No hay estanterías configuradas</p>
-                    <p className="text-sm">Creá tu primera estantería para armar el plano del depósito.</p>
-                  </div>
-                ) : (
-                  <div className="relative border-2 border-dashed border-gray-200 rounded-xl p-4 bg-white overflow-hidden shadow-inner flex-1 w-full" style={{ minHeight: 300 }}>
-                    <WebGLWarehouseGrid />
-                    <div className="absolute top-2 left-3 z-10 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Plano 2D Interactivo</span>
-                      <span className="text-[10px] text-gray-500 border-l border-gray-300 pl-2">Arrastre las estanterías para organizar. Fondo 3D decorativo.</span>
-                    </div>
-                    <div className="relative z-10 mt-6 w-full h-[600px]">
-                      {shelfList.map((shelf, idx) => {
-                        const width = shelf.grid_width || 200;
-                        const height = shelf.grid_height || 120;
-                        // Stagger default positions so they don't stack perfectly if uninitialized
-                        const x = shelf.grid_col ?? (50 + (idx * 30));
-                        const y = shelf.grid_row ?? (50 + (idx * 30));
-
-                        return (
-                        <Rnd
-                          key={shelf.id}
-                          bounds="parent"
-                          position={{ x, y }}
-                          size={{ width, height }}
-                          minWidth={150}
-                          minHeight={100}
-                          onDragStop={(_e: any, d: any) => {
-                            if (d.x !== shelf.grid_col || d.y !== shelf.grid_row) {
-                              updateShelf.mutate({ id: shelf.id, grid_col: d.x, grid_row: d.y });
-                            }
-                          }}
-                          onResizeStop={(_e: any, _direction: any, ref: any, _delta: any, position: any) => {
-                            const newWidth = parseInt(ref.style.width, 10);
-                            const newHeight = parseInt(ref.style.height, 10);
-                            updateShelf.mutate({
-                              id: shelf.id,
-                              grid_width: newWidth,
-                              grid_height: newHeight,
-                              grid_col: position.x,
-                              grid_row: position.y
-                            });
-                          }}
-                          className="group"
-                          style={{ zIndex: 10 }}
-                        >
-                          <div 
-                            className={`rounded-xl border-2 p-3 flex flex-col justify-between cursor-move hover:shadow-lg transition-shadow w-full h-full relative overflow-hidden ${viewingShelf?.id === shelf.id ? 'ring-4 ring-ecar-blue/30' : ''}`}
-                            style={{ 
-                              borderColor: shelf.color, 
-                              background: `${shelf.color}08`,
-                              transform: `rotate(${shelf.rotation || 0}deg)`,
-                              transformOrigin: 'center center'
-                            }}
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              setViewingShelf(shelf);
-                            }}
-                          >
-                            <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
-                              <button onClick={(e) => { e.stopPropagation(); setEditingShelf(shelf); setShelfForm({ code: shelf.code, name: shelf.name, shelf_type: shelf.shelf_type, rows_count: String(shelf.rows_count), columns_count: String(shelf.columns_count), color: shelf.color, notes: shelf.notes || '', rotation: String(shelf.rotation || 0) }); setShowNewShelf(true); }} className="p-1 bg-blue-100 rounded-lg hover:bg-blue-200"><Edit3 size={12} className="text-blue-600" /></button>
-                              {isAdmin && <button onClick={async (e) => { e.stopPropagation(); if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar esta estantería?')) deleteShelf.mutateAsync(shelf.id); }} className="p-1 bg-red-100 rounded-lg hover:bg-red-200"><Trash2 size={12} className="text-red-600" /></button>}
-                            </div>
-                            <div className="relative z-10 bg-white/90 backdrop-blur-[2px] p-2 rounded-lg h-full flex flex-col justify-between shadow-sm border border-white/50">
-                              <div>
-                                <div className="flex items-center gap-1.5 mb-1 overflow-hidden">
-                                  <span className="text-lg shrink-0">{SHELF_TYPES[shelf.shelf_type]?.icon || '📦'}</span>
-                                  <span className="font-bold text-sm truncate" style={{ color: shelf.color }} title={shelf.code}>{shelf.code}</span>
-                                </div>
-                                <p className="text-[11px] text-gray-600 font-medium truncate leading-tight" title={shelf.name}>{shelf.name}</p>
-                              </div>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-[10px] text-gray-500 font-medium">{shelf.rows_count}×{shelf.columns_count} pos</span>
-                                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: `${shelf.color}15`, color: shelf.color }}>{itemsByShelf[shelf.id] || 0} ítems</span>
-                              </div>
-                              <div className="grid gap-0.5 mt-2" style={{ gridTemplateColumns: `repeat(${shelf.columns_count}, 1fr)` }}>
-                                {Array.from({ length: Math.min(shelf.rows_count * shelf.columns_count, 12) }).map((_, i) => (
-                                  <div key={i} className="h-1.5 rounded-full" style={{ backgroundColor: `${shelf.color}${i < (itemsByShelf[shelf.id] || 0) ? '60' : '20'}` }} />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </Rnd>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Inspector Front View */}
-                {viewingShelf && (
-                  <div className="w-[450px] shrink-0 bg-white border border-gray-200 rounded-xl shadow-lg flex flex-col animate-in slide-in-from-right-8 h-[600px]">
-                    <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: viewingShelf.color }} />
-                        <div>
-                          <h3 className="font-bold text-gray-800 text-sm leading-tight">{viewingShelf.name}</h3>
-                          <p className="text-xs text-gray-500 font-mono mt-0.5">{viewingShelf.code} • {SHELF_TYPES[viewingShelf.shelf_type]?.label}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => setViewingShelf(null)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"><X size={16} /></button>
-                    </div>
-                    <div className="flex-1 overflow-auto bg-gray-50/50 p-4">
-                      <ShelfFrontView shelf={viewingShelf} items={(items || []).filter(i => i.shelf_id === viewingShelf.id)} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Lista de estanterías */}
-            <div className="light-card overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50">
-                <h3 className="font-bold text-gray-800">Detalle de Estanterías</h3>
-              </div>
-              {shelfList.length > 0 ? (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Código</th>
-                      <th>Nombre</th>
-                      <th>Tipo</th>
-                      <th className="text-center">Posiciones</th>
-                      <th className="text-center">Ítems</th>
-                      <th>Notas</th>
-                      <th className="text-center">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shelfList.map(s => (
-                      <tr key={s.id}>
-                        <td><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} /><span className="font-bold font-mono">{s.code}</span></div></td>
-                        <td className="font-medium">{s.name}</td>
-                        <td><span className="badge badge-neutral">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
-                        <td className="text-center font-mono">{s.rows_count} × {s.columns_count}</td>
-                        <td className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
-                        <td className="text-gray-400 text-xs">{s.notes || '—'}</td>
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver estantería"><Search size={14} className="text-gray-600" /></button>
-                            <button onClick={() => { setEditingShelf(s); setShelfForm({ code: s.code, name: s.name, shelf_type: s.shelf_type, rows_count: String(s.rows_count), columns_count: String(s.columns_count), color: s.color, notes: s.notes || '', rotation: String(s.rotation || 0) }); setShowNewShelf(true); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Edit3 size={14} className="text-blue-600" /></button>
-                            {isAdmin && <button onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar?')) deleteShelf.mutateAsync(s.id); }} className="p-1.5 hover:bg-gray-100 rounded-lg"><Trash2 size={14} className="text-red-500" /></button>}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-            </div>
-
-            {/* Modal Nueva/Editar Estantería */}
-            {showNewShelf && (
-              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
-                  <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingShelf ? 'Editar' : 'Nueva'} Estantería</h3><button onClick={() => { setShowNewShelf(false); setEditingShelf(null); }}><X size={20} className="text-gray-400" /></button></div>
-                  <form onSubmit={handleSaveShelf} className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={shelfForm.code} onChange={e => setShelfForm({ ...shelfForm, code: e.target.value.toUpperCase() })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="EST-01" /></div>
-                      <div><label className="text-xs font-bold text-gray-500">Nombre *</label><input value={shelfForm.name} onChange={e => setShelfForm({ ...shelfForm, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Estantería Principal" /></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={shelfForm.shelf_type} onChange={e => setShelfForm({ ...shelfForm, shelf_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">{Object.entries(SHELF_TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}</select></div>
-                      <div><label className="text-xs font-bold text-gray-500">Niveles</label><input type="number" min="1" max="10" value={shelfForm.rows_count} onChange={e => setShelfForm({ ...shelfForm, rows_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
-                      <div><label className="text-xs font-bold text-gray-500">Divisiones</label><input type="number" min="1" max="10" value={shelfForm.columns_count} onChange={e => setShelfForm({ ...shelfForm, columns_count: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" /></div>
-                      <div>
-                        <label className="text-xs font-bold text-gray-500">Rotación</label>
-                        <div className="flex items-center gap-2">
-                           <input type="range" min="0" max="360" value={shelfForm.rotation} onChange={e => setShelfForm({ ...shelfForm, rotation: e.target.value })} className="w-full" />
-                           <span className="text-xs font-mono w-8">{shelfForm.rotation}º</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-500">Color</label>
-                      <div className="flex gap-2 mt-1">{SHELF_COLORS.map(c => <button key={c} type="button" onClick={() => setShelfForm({ ...shelfForm, color: c })} className={`w-7 h-7 rounded-full border-2 transition-all ${shelfForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />)}</div>
-                    </div>
-                    <div><label className="text-xs font-bold text-gray-500">Notas</label><input value={shelfForm.notes} onChange={e => setShelfForm({ ...shelfForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Descripción del contenido..." /></div>
-                    <button type="submit" disabled={createShelf.isPending || updateShelf.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
-                      {(createShelf.isPending || updateShelf.isPending) ? 'Guardando...' : editingShelf ? '💾 Guardar Cambios' : '✅ Crear Estantería'}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* Modal Asignar Ubicación */}
+      {/* Modal Asignar Ubicación Bin */}
       {assignShelfItem && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">📍 Ubicación: {assignShelfItem.name}</h3><button onClick={() => setAssignShelfItem(null)}><X size={20} className="text-gray-400" /></button></div>
-            <form onSubmit={async (e) => { e.preventDefault(); await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: shelfAssignForm.shelf_id || null, shelf_position: shelfAssignForm.shelf_position || null } as any); setAssignShelfItem(null); }} className="space-y-3">
-              <div><label className="text-xs font-bold text-gray-500">Estantería *</label>
-                <select value={shelfAssignForm.shelf_id} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_id: e.target.value })} required className="w-full px-3 py-2 border rounded-xl text-sm">
-                  <option value="">Seleccioná...</option>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const sel = (shelves || []).find(s => s.id === shelfAssignForm.shelf_id);
+              const pos = shelfAssignForm.shelf_position ? shelfAssignForm.shelf_position.toUpperCase() : null;
+              const locationStr = sel ? `Ubicación ${sel.code}${pos ? `-${pos}` : ''}` : null;
+              await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: shelfAssignForm.shelf_id || null, shelf_position: pos, location: locationStr } as any);
+              useModalStore.getState().showAlert('Éxito', 'Ubicación asignada correctamente.');
+              setAssignShelfItem(null);
+            }} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Estantería *</label>
+                <select value={shelfAssignForm.shelf_id} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_id: e.target.value })} required className="w-full px-3 py-2 border rounded-xl text-sm bg-white font-medium">
+                  <option value="">Seleccioná estantería...</option>
                   {(shelves || []).map(s => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}
                 </select>
               </div>
-              <div><label className="text-xs font-bold text-gray-500">Posición (Nivel-Columna)</label><input value={shelfAssignForm.shelf_position} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_position: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="Ej: N2-C1 (Nivel 2, Columna 1)" /></div>
-              {shelfAssignForm.shelf_id && (() => {
-                const sel = (shelves || []).find(s => s.id === shelfAssignForm.shelf_id);
-                if (!sel) return null;
-                return (
-                  <div className="bg-gray-50 rounded-xl p-3 border">
-                    <p className="text-xs font-bold text-gray-500 mb-2">Posiciones disponibles ({sel.rows_count} × {sel.columns_count})</p>
-                    <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${sel.columns_count}, 1fr)` }}>
-                      {Array.from({ length: sel.rows_count }).map((_, r) =>
-                        Array.from({ length: sel.columns_count }).map((_, c) => {
-                          const pos = `N${r + 1}-C${c + 1}`;
-                          const occupied = (items || []).some(it => it.shelf_id === sel.id && it.shelf_position === pos && it.id !== assignShelfItem.id);
-                          const isSelected = shelfAssignForm.shelf_position === pos;
-                          return <button key={pos} type="button" disabled={occupied} onClick={() => setShelfAssignForm({ ...shelfAssignForm, shelf_position: pos })} className={`py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all ${isSelected ? 'text-white shadow-sm' : occupied ? 'bg-red-100 text-red-400 cursor-not-allowed' : 'bg-white border border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600'}`} style={isSelected ? { backgroundColor: sel.color } : undefined}>{pos}</button>;
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="flex gap-2">
+              <div>
+                <label className="text-xs font-bold text-gray-500">Código de Ubicación [Estantería]-[Estante]-[Bin]</label>
+                <input value={shelfAssignForm.shelf_position} onChange={e => setShelfAssignForm({ ...shelfAssignForm, shelf_position: e.target.value.toUpperCase() })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="Ej: C-3-2 (Estantería C, Estante 3, Bin 2)" />
+              </div>
+              <div className="flex gap-2 pt-2">
                 {assignShelfItem.shelf_id && <button type="button" onClick={async () => { await updateItem.mutateAsync({ id: assignShelfItem.id, shelf_id: null, shelf_position: null } as any); setAssignShelfItem(null); }} className="badge badge-danger">Quitar ubicación</button>}
-                <button type="submit" disabled={updateItem.isPending} className="btn-primary ">
+                <button type="submit" disabled={updateItem.isPending} className="btn-primary flex-1 py-2.5 text-xs">
                   {updateItem.isPending ? 'Guardando...' : '📍 Asignar Ubicación'}
                 </button>
               </div>
@@ -960,6 +1450,18 @@ export const InventoryModule: React.FC = () => {
         />
       )}
 
+      {showBarcode && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h4 className="font-bold text-gray-900">Etiqueta de Código de Barras</h4>
+              <button onClick={() => setShowBarcode(null)}><X size={20} className="text-gray-400" /></button>
+            </div>
+            <BarcodeLabel item={showBarcode} />
+          </div>
+        </div>
+      )}
+
       {/* Modal Solicitar Reposición a Compras */}
       {showRepoModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -969,10 +1471,9 @@ export const InventoryModule: React.FC = () => {
               <button onClick={() => setShowRepoModal(false)} className="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
             </div>
             <div className="p-5 space-y-4">
-              {/* Proyecto / Centro de Costo */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                  🏗️ Centro de Costo (Proyecto / Obra) *
+                  🏗️ Centro de Costo (Proyecto / Obra)
                 </label>
                 <select
                   value={repoProjectId}
@@ -990,7 +1491,7 @@ export const InventoryModule: React.FC = () => {
                       setRepoProjectId(e.target.value);
                     }
                   }}
-                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all bg-white"
                 >
                   <option value="">— Sin asignar (stock general) —</option>
                   {(projects || []).map(p => (
@@ -998,10 +1499,8 @@ export const InventoryModule: React.FC = () => {
                   ))}
                   <option value="NEW_PROJECT" className="font-bold text-blue-600">+ Agregar nueva obra...</option>
                 </select>
-                <p className="text-[10px] text-gray-400 mt-1">Seleccioná el proyecto u obra al que se imputan estos materiales.</p>
               </div>
 
-              {/* Items to request */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ítems a reponer ({repoItems.length})</label>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-100 rounded-xl p-2">
@@ -1023,11 +1522,9 @@ export const InventoryModule: React.FC = () => {
                 </div>
               </div>
 
-              {/* Summary */}
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-800">
                 <strong>Resumen:</strong> Se enviará un pedido de compra con {repoItems.length} ítem{repoItems.length > 1 ? 's' : ''} 
                 {repoProjectId ? ` imputado al proyecto "${(projects || []).find(p => p.id === repoProjectId)?.name}"` : ' sin centro de costo asignado'}.
-                {repoItems.some(i => i.current_stock === 0) && ' ⚡ Se marcará como URGENTE por ítems con stock agotado.'}
               </div>
 
               <div className="flex gap-2">
@@ -1056,6 +1553,52 @@ export const InventoryModule: React.FC = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const EppAuditList: React.FC<{ employeeId: string }> = ({ employeeId }) => {
+  const { data: deliveries = [], isLoading } = useEmployeePPE(employeeId);
+  const itemLabels: Record<string, string> = {
+    pantalon: '👖 Pantalón',
+    zapatos: '🥾 Zapatos de Seguridad',
+    campera: '🧥 Campera',
+    camisa: '👔 Camisa',
+    remera: '👕 Remera',
+    casco: '🪖 Casco (EPP)',
+    guantes: '🧤 Guantes (EPP)',
+    anteojos: '🥽 Anteojos (EPP)',
+    arnes: '🦺 Arnés (EPP)',
+    otro: '📦 Otro'
+  };
+
+  if (isLoading) return <div className="text-center py-6 text-xs text-gray-400">Cargando entregas...</div>;
+  if (deliveries.length === 0) return <div className="text-center py-6 text-xs text-gray-400 font-medium">Sin entregas registradas aún para este empleado</div>;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="data-table w-full text-xs">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Elemento EPP</th>
+            <th>Talle</th>
+            <th className="text-center">Cantidad</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {deliveries.map(d => (
+            <tr key={d.id}>
+              <td className="font-mono text-gray-500">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
+              <td className="font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
+              <td className="font-mono">{d.size || '—'}</td>
+              <td className="text-center font-bold font-mono">{d.quantity}</td>
+              <td className="text-gray-500 italic">{d.notes || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
