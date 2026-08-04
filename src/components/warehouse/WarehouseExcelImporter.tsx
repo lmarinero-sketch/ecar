@@ -3,28 +3,67 @@ import * as XLSX from 'xlsx';
 import { UploadCloud, CheckCircle2, AlertCircle, Play } from 'lucide-react';
 import { useModalStore } from '../../store/useModalStore';
 import type { WarehouseShelf } from '../../lib/types';
-import { useCreateWarehouseShelf, useCreateInventoryItem } from '../../hooks/useData';
+import { supabase, ECAR_TENANT_ID } from '../../lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Props {
   existingShelves: WarehouseShelf[];
   onComplete: () => void;
 }
 
+// Helper to extract values from row independent of column header variations (accents, spaces, casing)
+const getRowValue = (row: Record<string, any>, possibleKeys: string[]): any => {
+  if (!row) return undefined;
+  
+  // 1. Direct key match
+  for (const k of possibleKeys) {
+    if (row[k] !== undefined && row[k] !== null) return row[k];
+  }
+
+  // 2. Normalized key match (strip accents, lowercase, strip whitespace & non-alphanumeric)
+  const normKeys = Object.keys(row);
+  const normPossible = possibleKeys.map(k => 
+    k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")
+  );
+
+  for (const rKey of normKeys) {
+    const normRKey = rKey.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    if (normPossible.includes(normRKey)) {
+      if (row[rKey] !== undefined && row[rKey] !== null) return row[rKey];
+    }
+  }
+
+  return undefined;
+};
+
+// Normalize shelf codes to EST-XX
+const normalizeShelfCode = (raw: any): string => {
+  if (raw === undefined || raw === null || String(raw).trim() === '') return '';
+  const str = String(raw).trim();
+  const numStr = str.replace(/^(EST-|E-|E|Estanter[ií]a\s*)/i, '').trim();
+  const num = parseInt(numStr, 10);
+  if (!isNaN(num)) {
+    return `EST-${String(num).padStart(2, '0')}`;
+  }
+  return `EST-${numStr.toUpperCase()}`;
+};
+
 // Parse fractions like "1/4" to 0.25, and split numeric from units like "15m" to 15, "m"
-const parseStockAndUnit = (rawStock: string | number | undefined): { qty: number, unit: string } => {
+const parseStockAndUnit = (rawStock: any, defaultUnit?: any): { qty: number, unit: string } => {
+  const fallbackUnit = defaultUnit ? String(defaultUnit).trim() : 'unidad';
   if (rawStock === undefined || rawStock === null || rawStock === '') {
-    return { qty: 0, unit: 'unidad' };
+    return { qty: 0, unit: fallbackUnit };
   }
   
   const stockStr = String(rawStock).trim().toLowerCase();
   
-  // Fraction check
+  // Fraction check (e.g. "1/2", "1/4")
   if (stockStr.includes('/')) {
     const [num, den] = stockStr.split('/');
     const n = parseFloat(num);
     const d = parseFloat(den);
     if (!isNaN(n) && !isNaN(d) && d !== 0) {
-      return { qty: n / d, unit: 'unidad' }; // The unit might need manual fixing later, but fraction is parsed
+      return { qty: n / d, unit: fallbackUnit };
     }
   }
 
@@ -32,16 +71,16 @@ const parseStockAndUnit = (rawStock: string | number | undefined): { qty: number
   const match = stockStr.match(/^([\d.,]+)\s*([a-zA-Z]*)$/);
   if (match) {
     const qty = parseFloat(match[1].replace(',', '.'));
-    const unit = match[2] || 'unidad';
+    const unit = match[2] || fallbackUnit;
     return { qty: isNaN(qty) ? 0 : qty, unit };
   }
 
   const numVal = parseFloat(stockStr.replace(',', '.'));
   if (!isNaN(numVal)) {
-    return { qty: numVal, unit: 'unidad' };
+    return { qty: numVal, unit: fallbackUnit };
   }
 
-  return { qty: 0, unit: 'unidad' };
+  return { qty: 0, unit: fallbackUnit };
 };
 
 export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onComplete }) => {
@@ -50,8 +89,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   
-  const createShelf = useCreateWarehouseShelf();
-  const createItem = useCreateInventoryItem();
+  const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +103,6 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
       const wb = XLSX.read(bstr, { type: 'binary' });
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
-      // Expecting headers: Descripción, Rubro, medida, Stock, Estanteria, nivel, bin, observaciones
       const data = XLSX.utils.sheet_to_json(ws);
       setParsedData(data);
     };
@@ -79,75 +116,155 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
 
     try {
       const localShelves = [...existingShelves];
-      
+
       // 1. Identify missing shelves and create them
-      const uniqueShelfIds = new Set(parsedData.map(r => String(r.Estanteria || '').trim()).filter(Boolean));
+      const rawShelfList = parsedData
+        .map(r => getRowValue(r, ['Estanteria', 'Estantería', 'Shelf', 'Estante', 'Ubicacion', 'Ubicación']))
+        .filter(Boolean);
+
+      const uniqueShelfCodes = Array.from(new Set(rawShelfList.map(s => normalizeShelfCode(s)))).filter(Boolean);
       
-      for (const shelfCode of Array.from(uniqueShelfIds)) {
-        const fullCode = `EST-${shelfCode.padStart(2, '0')}`;
-        if (!localShelves.find(s => s.code === fullCode)) {
-          // Create shelf
-          const newShelf = await createShelf.mutateAsync({
-            code: fullCode,
-            name: `Estantería ${shelfCode}`,
-            shelf_type: 'rack',
-            rows_count: 5,
-            columns_count: 3,
-            color: '#3B82F6',
-            grid_row: 0,
-            grid_col: localShelves.length, // Put them in a line for now
-            grid_width: 1,
-            grid_height: 1,
-            is_active: true
-          });
-          localShelves.push(newShelf as any);
+      let createdShelvesCount = 0;
+
+      for (const fullCode of uniqueShelfCodes) {
+        let existing = localShelves.find(s => s.code === fullCode);
+        if (!existing) {
+          // Check database to see if it exists already in Supabase
+          const { data: dbShelf } = await supabase
+            .from('warehouse_shelves')
+            .select('*')
+            .eq('code', fullCode)
+            .maybeSingle();
+
+          if (dbShelf) {
+            existing = dbShelf as WarehouseShelf;
+            localShelves.push(existing);
+          } else {
+            // Create shelf in DB
+            const codeNum = fullCode.replace('EST-', '');
+            const { data: newShelf, error: shelfErr } = await supabase
+              .from('warehouse_shelves')
+              .insert({
+                tenant_id: ECAR_TENANT_ID,
+                code: fullCode,
+                name: `Estantería ${codeNum}`,
+                shelf_type: 'rack',
+                rows_count: 5,
+                columns_count: 3,
+                color: '#3B82F6',
+                grid_row: 0,
+                grid_col: localShelves.length,
+                grid_width: 1,
+                grid_height: 1,
+                is_active: true
+              })
+              .select()
+              .single();
+
+            if (shelfErr) console.error("Error creating shelf:", shelfErr);
+            if (newShelf) {
+              existing = newShelf as WarehouseShelf;
+              localShelves.push(existing);
+              createdShelvesCount++;
+            }
+          }
         }
       }
 
-      // 2. Import items
+      // 2. Prepare items for bulk insertion
+      const itemsToInsert: any[] = [];
+
       for (let i = 0; i < parsedData.length; i++) {
         const row = parsedData[i];
-        if (!row['Descripción']?.trim()) continue;
-
-        const { qty, unit } = parseStockAndUnit(row.Stock);
         
-        let shelfId = null;
-        let shelfPos = null;
+        const description = getRowValue(row, [
+          'Descripción', 'Descripcion', 'DESCRIPCION', 'Nombre', 'Material', 'Item', 'Ítem', 'Producto', 'Description'
+        ]);
+        
+        if (!description || !String(description).trim()) continue;
 
-        if (row.Estanteria) {
-          const shelfCode = `EST-${String(row.Estanteria).trim().padStart(2, '0')}`;
-          const shelf = localShelves.find(s => s.code === shelfCode);
+        const rawRubro = getRowValue(row, ['Rubro', 'Rubros', 'Categoría', 'Categoria', 'Category', 'RUBRO']);
+        const rawMeasure = getRowValue(row, ['medida', 'Medida', 'Medidas', 'Unidad de Medida']);
+        const rawStock = getRowValue(row, ['Stock ', 'Stock', 'stock', 'Stock_Actual', 'Cantidad', 'CANTIDAD', 'Qty']);
+        const rawShelf = getRowValue(row, ['Estanteria', 'Estantería', 'Shelf', 'Estante', 'Ubicacion', 'Ubicación']);
+        const rawNivel = getRowValue(row, ['nivel', 'Nivel', 'NIVEL', 'Fila', 'Row']);
+        const rawBin = getRowValue(row, ['bin', 'Bin', 'BIN', 'Casillero', 'Columna', 'Column']);
+        const rawObs = getRowValue(row, ['observaciones', 'Observaciones', 'Notas', 'Notes', 'Comentarios', 'OBS']);
+
+        const { qty, unit } = parseStockAndUnit(rawStock, rawMeasure);
+        
+        let shelfId: string | null = null;
+        let shelfPos: string | null = null;
+
+        if (rawShelf) {
+          const code = normalizeShelfCode(rawShelf);
+          const shelf = localShelves.find(s => s.code === code);
           if (shelf) {
             shelfId = shelf.id;
-            // Build position string, e.g., N2-B46
-            const n = row.nivel ? `N${row.nivel}` : 'N1';
-            const b = row.bin ? `-B${row.bin}` : '';
+            const n = rawNivel ? `N${rawNivel}` : 'N1';
+            const b = rawBin ? `-B${rawBin}` : '';
             shelfPos = `${n}${b}`;
           }
         }
 
-        await createItem.mutateAsync({
-          name: String(row['Descripción']).trim(),
-          rubro: row.Rubro ? String(row.Rubro).trim() : null,
-          measure: row.medida ? String(row.medida).trim() : null,
-          category: 'material', // default
+        const rubroStr = rawRubro ? String(rawRubro).trim() : null;
+        let category: 'material' | 'herramienta' | 'consumible' = 'material';
+        if (rubroStr) {
+          const lower = rubroStr.toLowerCase();
+          if (lower.includes('herramienta')) category = 'herramienta';
+          else if (lower.includes('consumible')) category = 'consumible';
+        }
+
+        let fullName = String(description).trim();
+        if (rawMeasure && String(rawMeasure).trim() !== '-' && String(rawMeasure).trim().toLowerCase() !== 'unidad') {
+          fullName += ` (${String(rawMeasure).trim()})`;
+        }
+        if (rawObs && String(rawObs).trim()) {
+          fullName += ` - ${String(rawObs).trim()}`;
+        }
+
+        itemsToInsert.push({
+          tenant_id: ECAR_TENANT_ID,
+          name: fullName,
+          category,
           current_stock: qty,
           min_stock: 0,
           unit: unit,
+          location: 'panol',
           shelf_id: shelfId,
-          shelf_position: shelfPos,
-          notes: row.observaciones ? String(row.observaciones).trim() : null,
-          location: 'panol'
+          shelf_position: shelfPos
         });
-
-        setProgress(Math.round(((i + 1) / parsedData.length) * 100));
       }
 
-      useModalStore.getState().showAlert('Éxito', `Se importaron ${parsedData.length} ítems correctamente.`);
+      // Insert items in batches of 100
+      const BATCH_SIZE = 100;
+      let insertedCount = 0;
+
+      for (let b = 0; b < itemsToInsert.length; b += BATCH_SIZE) {
+        const batch = itemsToInsert.slice(b, b + BATCH_SIZE);
+        const { error: batchErr } = await supabase.from('inventory_items').insert(batch);
+        
+        if (batchErr) {
+          console.error("Error inserting batch:", batchErr);
+          throw batchErr;
+        }
+
+        insertedCount += batch.length;
+        setProgress(Math.round((insertedCount / itemsToInsert.length) * 100));
+      }
+
+      // Invalidate query caches so UI updates immediately
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['warehouse_shelves'] });
+
+      useModalStore.getState().showAlert(
+        'Importación Exitosa', 
+        `Se importaron ${insertedCount} ítems y se crearon ${createdShelvesCount} estanterías nuevas en la base de datos.`
+      );
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      useModalStore.getState().showAlert('Error', 'Hubo un error al procesar la importación. Revisa la consola para más detalles.');
+      useModalStore.getState().showAlert('Error de Importación', `Hubo un error al guardar los datos en la base de datos: ${error.message || error}`);
     } finally {
       setIsProcessing(false);
     }
@@ -211,7 +328,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
           {isProcessing ? (
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-medium text-slate-700">
-                <span>Procesando...</span>
+                <span>Procesando e insertando en la Base de Datos...</span>
                 <span>{progress}%</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2.5">
