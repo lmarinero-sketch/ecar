@@ -10,8 +10,7 @@ import {
   useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
-  useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject,
-  useEmployeePPE, useCreateEmployeePPE
+  useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
@@ -21,6 +20,7 @@ import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
 import { WarehouseExcelImporter } from './warehouse/WarehouseExcelImporter';
 import { ShelfFrontView } from './warehouse/ShelfFrontView';
+import { PPEDeliveriesPanel } from './PPEDeliveriesPanel';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
@@ -58,7 +58,6 @@ export const InventoryModule: React.FC = () => {
   const deleteItem = useDeleteInventoryItem();
   const deleteAllInventory = useDeleteAllInventory();
   const createProject = useCreateProject();
-  const createEmployeePPE = useCreateEmployeePPE();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -107,13 +106,6 @@ export const InventoryModule: React.FC = () => {
 
   // EPP Form State
   const [selectedEppEmployeeId, setSelectedEppEmployeeId] = useState<string>('');
-  const [eppForm, setEppForm] = useState({
-    item_type: 'pantalon',
-    size: 'M',
-    quantity: 1,
-    delivery_date: new Date().toISOString().split('T')[0],
-    notes: ''
-  });
 
   const selectedShelfCode = useMemo(() => {
     const s = (shelves || []).find(x => x.id === newItem.shelf_id);
@@ -374,34 +366,6 @@ export const InventoryModule: React.FC = () => {
       setEditingShelf(null);
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar la estantería.');
-    }
-  };
-
-  const handleCreateEppDelivery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedEppEmployeeId) {
-      useModalStore.getState().showAlert('Atención', 'Seleccioná un empleado para la entrega.');
-      return;
-    }
-    try {
-      await createEmployeePPE.mutateAsync({
-        employee_id: selectedEppEmployeeId,
-        item_type: eppForm.item_type as any,
-        size: eppForm.size,
-        quantity: eppForm.quantity,
-        delivery_date: eppForm.delivery_date,
-        notes: eppForm.notes || null,
-      });
-      useModalStore.getState().showAlert('Éxito', 'Entrega de EPP registrada.');
-      setEppForm({
-        item_type: 'pantalon',
-        size: 'M',
-        quantity: 1,
-        delivery_date: new Date().toISOString().split('T')[0],
-        notes: ''
-      });
-    } catch (err: any) {
-      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar la entrega.');
     }
   };
 
@@ -1013,111 +977,31 @@ export const InventoryModule: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-6 rounded-xl shadow-lg">
             <h3 className="font-bold text-xl flex items-center gap-2"><ShieldCheck size={24} /> Registro de Entrega de EPP (Elementos de Protección Personal)</h3>
-            <p className="text-emerald-100 text-xs mt-1">Control por empleado de cascos, guantes, anteojos de seguridad, arneses, calzado y ropa de trabajo (Estantería E).</p>
+            <p className="text-emerald-100 text-xs mt-1">Integración unificada Pañol & Recursos Humanos para control por colaborador (Estantería E).</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Delivery Form */}
-            <div className="light-card p-5 space-y-4">
-              <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Plus size={16} className="text-emerald-600" /> Registrar Entrega de EPP</h4>
-              <form onSubmit={handleCreateEppDelivery} className="space-y-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Empleado *</label>
-                  <select
-                    value={selectedEppEmployeeId}
-                    onChange={e => setSelectedEppEmployeeId(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white font-medium"
-                  >
-                    <option value="">Seleccionar empleado...</option>
-                    {(employees || []).map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.legajo || 'Sin legajo'})</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Elemento Entregado *</label>
-                  <select
-                    value={eppForm.item_type}
-                    onChange={e => setEppForm({ ...eppForm, item_type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
-                  >
-                    <option value="pantalon">👖 Pantalón de Trabajo</option>
-                    <option value="zapatos">🥾 Zapatos / Calzado de Seguridad</option>
-                    <option value="campera">🧥 Campera de Abrigo / Ignífuga</option>
-                    <option value="camisa">👔 Camisa de Trabajo</option>
-                    <option value="remera">👕 Remera</option>
-                    <option value="casco">🪖 Casco de Seguridad (EPP)</option>
-                    <option value="guantes">🧤 Guantes de Protección (EPP)</option>
-                    <option value="anteojos">🥽 Anteojos de Seguridad (EPP)</option>
-                    <option value="arnes">🦺 Arnés de Seguridad (EPP)</option>
-                    <option value="otro">📦 Otro Elemento de Protección</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 block mb-1">Talle / Dimensión</label>
-                    <input
-                      value={eppForm.size}
-                      onChange={e => setEppForm({ ...eppForm, size: e.target.value })}
-                      placeholder="Ej: 42, L, XL"
-                      className="w-full px-3 py-2 border rounded-xl text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={eppForm.quantity}
-                      onChange={e => setEppForm({ ...eppForm, quantity: parseInt(e.target.value) || 1 })}
-                      className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Fecha de Entrega</label>
-                  <input
-                    type="date"
-                    value={eppForm.delivery_date}
-                    onChange={e => setEppForm({ ...eppForm, delivery_date: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones</label>
-                  <input
-                    value={eppForm.notes}
-                    onChange={e => setEppForm({ ...eppForm, notes: e.target.value })}
-                    placeholder="Ej: Firma en planilla N° 12..."
-                    className="w-full px-3 py-2 border rounded-xl text-sm"
-                  />
-                </div>
-                <button type="submit" disabled={createEmployeePPE.isPending} className="btn-primary w-full py-2.5 text-sm">
-                  {createEmployeePPE.isPending ? 'Guardando...' : '✅ Registrar Entrega'}
-                </button>
-              </form>
-            </div>
+          <div className="light-card p-5">
+            <label className="text-xs font-bold text-gray-700 block mb-2">👤 Seleccionar Colaborador / Empleado para ver o registrar Entregas de Ropa y EPP</label>
+            <select
+              value={selectedEppEmployeeId}
+              onChange={e => setSelectedEppEmployeeId(e.target.value)}
+              className="w-full max-w-md px-3.5 py-2.5 border-2 border-emerald-200 rounded-xl text-sm font-bold text-gray-800 bg-white shadow-sm focus:border-emerald-500 focus:outline-none mb-4"
+            >
+              <option value="">-- Seleccionar empleado de la lista... --</option>
+              {(employees || []).map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.legajo || 'Sin legajo'})</option>
+              ))}
+            </select>
 
-            {/* Employee Audit View */}
-            <div className="md:col-span-2 light-card p-5">
-              <h4 className="font-bold text-gray-900 text-sm mb-4 flex items-center justify-between">
-                <span>Historial de Entregas por Empleado</span>
-                {selectedEppEmployeeId && (
-                  <span className="text-xs font-normal text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                    Filtrando por: {(employees || []).find(e => e.id === selectedEppEmployeeId)?.full_name}
-                  </span>
-                )}
-              </h4>
-              {selectedEppEmployeeId ? (
-                <EppAuditList employeeId={selectedEppEmployeeId} />
-              ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <ShieldCheck size={48} className="mx-auto mb-2 opacity-30 text-emerald-600" />
-                  <p className="text-sm font-medium">Seleccioná un empleado para ver su historial de entregas de EPP</p>
-                </div>
-              )}
-            </div>
+            {selectedEppEmployeeId ? (
+              <PPEDeliveriesPanel employeeId={selectedEppEmployeeId} />
+            ) : (
+              <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                <ShieldCheck size={48} className="mx-auto mb-2 opacity-30 text-emerald-600" />
+                <p className="text-sm font-bold text-gray-700">Seleccioná un empleado del desplegable superior</p>
+                <p className="text-xs text-gray-400 mt-1">Podrás cargar entregas de casco, ropa, calzado, arnés o guantes y auditar su historial completo.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1557,52 +1441,6 @@ export const InventoryModule: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-const EppAuditList: React.FC<{ employeeId: string }> = ({ employeeId }) => {
-  const { data: deliveries = [], isLoading } = useEmployeePPE(employeeId);
-  const itemLabels: Record<string, string> = {
-    pantalon: '👖 Pantalón',
-    zapatos: '🥾 Zapatos de Seguridad',
-    campera: '🧥 Campera',
-    camisa: '👔 Camisa',
-    remera: '👕 Remera',
-    casco: '🪖 Casco (EPP)',
-    guantes: '🧤 Guantes (EPP)',
-    anteojos: '🥽 Anteojos (EPP)',
-    arnes: '🦺 Arnés (EPP)',
-    otro: '📦 Otro'
-  };
-
-  if (isLoading) return <div className="text-center py-6 text-xs text-gray-400">Cargando entregas...</div>;
-  if (deliveries.length === 0) return <div className="text-center py-6 text-xs text-gray-400 font-medium">Sin entregas registradas aún para este empleado</div>;
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="data-table w-full text-xs">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Elemento EPP</th>
-            <th>Talle</th>
-            <th className="text-center">Cantidad</th>
-            <th>Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deliveries.map(d => (
-            <tr key={d.id}>
-              <td className="font-mono text-gray-500">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
-              <td className="font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
-              <td className="font-mono">{d.size || '—'}</td>
-              <td className="text-center font-bold font-mono">{d.quantity}</td>
-              <td className="text-gray-500 italic">{d.notes || '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 };
