@@ -124,11 +124,9 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const kmInvalid = kmValue !== null && vehicle?.tracking_type !== 'hours' && vehicle?.current_km != null && kmValue < vehicle.current_km;
   const hoursInvalid = kmValue !== null && vehicle?.tracking_type === 'hours' && vehicle?.current_hours != null && kmValue < vehicle.current_hours;
   const isInvalid = kmInvalid || hoursInvalid;
-  const computedCondition: VehicleCondition = faultsCount >= 3
-    ? 'fuera_de_servicio'
-    : (hasDamage || faultsCount > 0)
-      ? 'con_observaciones'
-      : 'operativo';
+  const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0)
+    ? 'con_observaciones'
+    : 'operativo';
 
   const toggleCheckItem = (idx: number) => {
     setChecklist(prev => prev.map((c, i) => i === idx ? { ...c, estado: c.estado === 'ok' ? 'falla' : 'ok' } : c));
