@@ -37,6 +37,17 @@ const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: s
 
 const SHELF_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
 
+const formatShelfPosition = (shelfCode?: string, position?: string | null) => {
+  if (!position) return shelfCode || '—';
+  const pos = position.replace(/^N(\d+)-C(\d+)$/, '$1-$2');
+  if (shelfCode) {
+    if (pos.startsWith(`${shelfCode}-`)) return pos;
+    if (pos.startsWith(shelfCode)) return pos;
+    return `${shelfCode}-${pos}`;
+  }
+  return pos;
+};
+
 export const InventoryModule: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const isPanolero = profile?.role === 'panolero';
@@ -530,13 +541,12 @@ export const InventoryModule: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
                         <span className="text-xs font-bold text-gray-800 font-mono">
-                          {(item.shelf as any)?.code}
-                          {item.shelf_position ? `-${item.shelf_position.replace(/^N(\d+)-C(\d+)$/, '$1-$2')}` : ''}
+                          {formatShelfPosition((item.shelf as any)?.code, item.shelf_position)}
                         </span>
                       </div>
                     ) : item.shelf_position ? (
                       <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                        📍 {item.shelf_position}
+                        📍 {formatShelfPosition(undefined, item.shelf_position)}
                       </span>
                     ) : (
                       <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">

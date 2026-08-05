@@ -1310,7 +1310,43 @@ export function useCreateInventoryMovement() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (mov: Partial<InventoryMovement>) => {
-      const { data, error } = await supabase.from('inventory_movements').insert({ ...mov, tenant_id: ECAR_TENANT_ID }).select().single();
+      // 1. Automatic stock calculation and update in inventory_items
+      if (mov.item_id && mov.quantity !== undefined && mov.quantity !== null) {
+        const { data: inv } = await supabase
+          .from('inventory_items')
+          .select('current_stock')
+          .eq('id', mov.item_id)
+          .maybeSingle();
+
+        if (inv) {
+          const current = Number(inv.current_stock) || 0;
+          const qty = Math.abs(Number(mov.quantity) || 0);
+          let newStock = current;
+
+          const type = (mov.movement_type || '').toLowerCase();
+          if (type === 'out' || type === 'salida' || type === 'discharge') {
+            newStock = Math.max(0, current - qty);
+          } else if (type === 'in' || type === 'ingreso' || type === 'purchase') {
+            newStock = current + qty;
+          } else if (type === 'return' || type === 'devolucion') {
+            newStock = current + qty;
+          } else if (type === 'adjustment' || type === 'ajuste') {
+            newStock = qty;
+          }
+
+          await supabase
+            .from('inventory_items')
+            .update({ current_stock: newStock })
+            .eq('id', mov.item_id);
+        }
+      }
+
+      // 2. Insert movement record into Kardex
+      const { data, error } = await supabase
+        .from('inventory_movements')
+        .insert({ ...mov, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },
@@ -1506,8 +1542,18 @@ export function useDispatchPurchaseRequest() {
         if (itemErr) throw itemErr;
 
         // AUTOMATIC STOCK DEDUCTION & KARDEX MOVEMENT LOGGING
-        if (item.quantity_sent > 0 && originalItem?.inventory_item_id) {
-          const invId = originalItem.inventory_item_id;
+        let invId = originalItem?.inventory_item_id;
+        if (!invId && originalItem?.description) {
+          const { data: matched } = await supabase
+            .from('inventory_items')
+            .select('id')
+            .ilike('name', originalItem.description.trim())
+            .limit(1)
+            .maybeSingle();
+          if (matched) invId = matched.id;
+        }
+
+        if (item.quantity_sent > 0 && invId) {
 
           // a. Get current stock
           const { data: inv } = await supabase
