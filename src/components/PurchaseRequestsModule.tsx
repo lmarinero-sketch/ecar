@@ -8,7 +8,7 @@ import {
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
   useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems,
-  useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder
+  useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder, useDeletePurchaseRequest
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
@@ -51,6 +51,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   const { data: whatsappSetting } = useSystemSetting('whatsapp_purchase_phone');
   const createRequest = useCreatePurchaseRequest();
   const updateRequest = useUpdatePurchaseRequest();
+  const deleteRequest = useDeletePurchaseRequest();
   const createPO = useCreatePurchaseOrder();
   const upsertSetting = useUpsertSystemSetting();
 
@@ -517,6 +518,18 @@ export const PurchaseRequestsModule: React.FC = () => {
                         title="Ver Diagrama de Flujo 3D"
                       >
                         Visualizar Flujo 3D
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (confirm('¿Está seguro de que desea eliminar este pedido de obra? Esta acción no se puede deshacer.')) {
+                            deleteRequest.mutate(req.id);
+                          }
+                        }}
+                        className="px-2.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ml-2"
+                        title="Eliminar Pedido"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </>
                   )}

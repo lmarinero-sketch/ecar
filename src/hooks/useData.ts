@@ -1408,6 +1408,20 @@ export function useUpdatePurchaseRequest() {
   });
 }
 
+export function useDeletePurchaseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('purchase_requests').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['purchase_requests'] });
+      qc.invalidateQueries({ queryKey: ['project_purchase_requests'] });
+    },
+  });
+}
+
 export function useUpdatePurchaseRequestItems() {
   const qc = useQueryClient();
   return useMutation({
