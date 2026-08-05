@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS legal_entities (
 
 ALTER TABLE legal_entities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "legal_entities_all" ON legal_entities;
 CREATE POLICY "legal_entities_all" ON legal_entities
     FOR ALL
     USING (true)

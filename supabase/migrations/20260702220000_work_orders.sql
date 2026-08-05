@@ -20,4 +20,5 @@ CREATE TABLE IF NOT EXISTS work_orders (
 
 ALTER TABLE work_orders ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "work_orders_all" ON work_orders;
 CREATE POLICY "work_orders_all" ON work_orders FOR ALL USING (true) WITH CHECK (true);

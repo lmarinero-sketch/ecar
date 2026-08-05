@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
 );
 
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for system_settings" ON system_settings;
 CREATE POLICY "Allow all for system_settings" ON system_settings FOR ALL USING (true) WITH CHECK (true);
 
 -- Seed: número autorizado de WhatsApp para pedidos (vacío = deshabilitado)

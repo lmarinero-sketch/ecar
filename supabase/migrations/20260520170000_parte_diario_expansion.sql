@@ -25,7 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_parte_fotos_parte ON parte_diario_fotos(parte_id)
 ALTER TABLE parte_diario_fotos ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'parte_diario_fotos' AND policyname = 'parte_fotos_all') THEN
-    CREATE POLICY "parte_fotos_all" ON parte_diario_fotos FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "parte_fotos_all" ON parte_diario_fotos;
+CREATE POLICY "parte_fotos_all" ON parte_diario_fotos FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -53,7 +54,8 @@ CREATE INDEX IF NOT EXISTS idx_parte_sol_item ON parte_diario_solicitudes(item_i
 ALTER TABLE parte_diario_solicitudes ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'parte_diario_solicitudes' AND policyname = 'parte_solicitudes_all') THEN
-    CREATE POLICY "parte_solicitudes_all" ON parte_diario_solicitudes FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "parte_solicitudes_all" ON parte_diario_solicitudes;
+CREATE POLICY "parte_solicitudes_all" ON parte_diario_solicitudes FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -73,7 +75,8 @@ CREATE INDEX IF NOT EXISTS idx_parte_personal_employee ON parte_diario_personal(
 ALTER TABLE parte_diario_personal ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'parte_diario_personal' AND policyname = 'parte_personal_all') THEN
-    CREATE POLICY "parte_personal_all" ON parte_diario_personal FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "parte_personal_all" ON parte_diario_personal;
+CREATE POLICY "parte_personal_all" ON parte_diario_personal FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -93,7 +96,8 @@ CREATE INDEX IF NOT EXISTS idx_parte_equipos_vehicle ON parte_diario_equipos(veh
 ALTER TABLE parte_diario_equipos ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'parte_diario_equipos' AND policyname = 'parte_equipos_all') THEN
-    CREATE POLICY "parte_equipos_all" ON parte_diario_equipos FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "parte_equipos_all" ON parte_diario_equipos;
+CREATE POLICY "parte_equipos_all" ON parte_diario_equipos FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -104,12 +108,15 @@ ON CONFLICT (id) DO NOTHING;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'parte_fotos_upload') THEN
-    CREATE POLICY "parte_fotos_upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'parte-diario-fotos');
+    DROP POLICY IF EXISTS "parte_fotos_upload" ON storage.objects;
+CREATE POLICY "parte_fotos_upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'parte-diario-fotos');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'parte_fotos_read') THEN
-    CREATE POLICY "parte_fotos_read" ON storage.objects FOR SELECT USING (bucket_id = 'parte-diario-fotos');
+    DROP POLICY IF EXISTS "parte_fotos_read" ON storage.objects;
+CREATE POLICY "parte_fotos_read" ON storage.objects FOR SELECT USING (bucket_id = 'parte-diario-fotos');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'parte_fotos_delete') THEN
-    CREATE POLICY "parte_fotos_delete" ON storage.objects FOR DELETE USING (bucket_id = 'parte-diario-fotos');
+    DROP POLICY IF EXISTS "parte_fotos_delete" ON storage.objects;
+CREATE POLICY "parte_fotos_delete" ON storage.objects FOR DELETE USING (bucket_id = 'parte-diario-fotos');
   END IF;
 END $$;

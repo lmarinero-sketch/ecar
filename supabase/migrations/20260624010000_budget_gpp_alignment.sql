@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS budget_files (
 CREATE INDEX IF NOT EXISTS idx_budget_files_budget ON budget_files(budget_id);
 
 ALTER TABLE budget_files ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "budget_files_all" ON budget_files;
 CREATE POLICY "budget_files_all" ON budget_files FOR ALL USING (true) WITH CHECK (true);
 
 -- Ensure a bucket exists for project-files
@@ -45,7 +46,11 @@ VALUES ('project-files', 'project-files', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS para storage
+DROP POLICY IF EXISTS "budget_files_select" ON storage.objects;
 CREATE POLICY "budget_files_select" ON storage.objects FOR SELECT USING (bucket_id = 'project-files');
+DROP POLICY IF EXISTS "budget_files_insert" ON storage.objects;
 CREATE POLICY "budget_files_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'project-files');
+DROP POLICY IF EXISTS "budget_files_update" ON storage.objects;
 CREATE POLICY "budget_files_update" ON storage.objects FOR UPDATE USING (bucket_id = 'project-files');
+DROP POLICY IF EXISTS "budget_files_delete" ON storage.objects;
 CREATE POLICY "budget_files_delete" ON storage.objects FOR DELETE USING (bucket_id = 'project-files');

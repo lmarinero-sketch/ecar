@@ -14,7 +14,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'purchase_invoices'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON purchase_invoices
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON purchase_invoices;
+CREATE POLICY "allow_authenticated_read" ON purchase_invoices
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -28,7 +29,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'suppliers'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON suppliers
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON suppliers;
+CREATE POLICY "allow_authenticated_read" ON suppliers
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -42,7 +44,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'gastos_items'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON gastos_items
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON gastos_items;
+CREATE POLICY "allow_authenticated_read" ON gastos_items
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -56,7 +59,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'projects'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON projects
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON projects;
+CREATE POLICY "allow_authenticated_read" ON projects
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -70,7 +74,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'employees'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON employees
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON employees;
+CREATE POLICY "allow_authenticated_read" ON employees
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -84,7 +89,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'profiles'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON profiles
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON profiles;
+CREATE POLICY "allow_authenticated_read" ON profiles
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -98,7 +104,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'cheques'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON cheques
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON cheques;
+CREATE POLICY "allow_authenticated_read" ON cheques
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -112,7 +119,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'obligations'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON obligations
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON obligations;
+CREATE POLICY "allow_authenticated_read" ON obligations
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -126,7 +134,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'invoices'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON invoices
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON invoices;
+CREATE POLICY "allow_authenticated_read" ON invoices
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -140,7 +149,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'union_categories'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON union_categories
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON union_categories;
+CREATE POLICY "allow_authenticated_read" ON union_categories
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -154,7 +164,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'attendance_records'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON attendance_records
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON attendance_records;
+CREATE POLICY "allow_authenticated_read" ON attendance_records
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -168,7 +179,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'cash_movements'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON cash_movements
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON cash_movements;
+CREATE POLICY "allow_authenticated_read" ON cash_movements
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -182,7 +194,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'bank_accounts'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON bank_accounts
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON bank_accounts;
+CREATE POLICY "allow_authenticated_read" ON bank_accounts
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -196,7 +209,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'payment_records'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON payment_records
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON payment_records;
+CREATE POLICY "allow_authenticated_read" ON payment_records
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -210,7 +224,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'fixed_expenses'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON fixed_expenses
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON fixed_expenses;
+CREATE POLICY "allow_authenticated_read" ON fixed_expenses
       FOR SELECT TO authenticated
       USING (true);
   END IF;

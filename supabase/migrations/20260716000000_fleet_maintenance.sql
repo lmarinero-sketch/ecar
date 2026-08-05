@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS fleet_maintenance_orders (
 );
 
 ALTER TABLE fleet_maintenance_orders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "fleet_maintenance_all" ON fleet_maintenance_orders;
 CREATE POLICY "fleet_maintenance_all" ON fleet_maintenance_orders FOR ALL USING (true) WITH CHECK (true);
 
 -- Fleet Tires
@@ -39,4 +40,5 @@ CREATE TABLE IF NOT EXISTS fleet_tires (
 );
 
 ALTER TABLE fleet_tires ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "fleet_tires_all" ON fleet_tires;
 CREATE POLICY "fleet_tires_all" ON fleet_tires FOR ALL USING (true) WITH CHECK (true);

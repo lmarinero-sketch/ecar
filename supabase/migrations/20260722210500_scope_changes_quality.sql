@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS project_scope_changes (
 );
 
 ALTER TABLE project_scope_changes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "project_scope_changes_all" ON project_scope_changes;
 CREATE POLICY "project_scope_changes_all" ON project_scope_changes FOR ALL USING (true) WITH CHECK (true);
 
 -- Migración para Checklist de Calidad (PR-GO-01)
@@ -35,4 +36,5 @@ CREATE TABLE IF NOT EXISTS quality_checklists (
 );
 
 ALTER TABLE quality_checklists ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "quality_checklists_all" ON quality_checklists;
 CREATE POLICY "quality_checklists_all" ON quality_checklists FOR ALL USING (true) WITH CHECK (true);

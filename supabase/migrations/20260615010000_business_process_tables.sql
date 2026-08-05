@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
 );
 
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "opportunities_tenant_all" ON opportunities;
 CREATE POLICY "opportunities_tenant_all" ON opportunities FOR ALL USING (true);
 
 -- ========== VERSIONES DE PRESUPUESTO ==========
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS budget_versions (
 );
 
 ALTER TABLE budget_versions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "budget_versions_tenant_all" ON budget_versions;
 CREATE POLICY "budget_versions_tenant_all" ON budget_versions FOR ALL USING (true);
 
 -- ========== ÓRDENES DE COMPRA / TRABAJO ==========
@@ -73,6 +75,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
 );
 
 ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "purchase_orders_tenant_all" ON purchase_orders;
 CREATE POLICY "purchase_orders_tenant_all" ON purchase_orders FOR ALL USING (true);
 
 -- ========== COMPARATIVAS DE COTIZACIÓN ==========
@@ -91,6 +94,7 @@ CREATE TABLE IF NOT EXISTS quotation_comparisons (
 );
 
 ALTER TABLE quotation_comparisons ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "quotation_comparisons_tenant_all" ON quotation_comparisons;
 CREATE POLICY "quotation_comparisons_tenant_all" ON quotation_comparisons FOR ALL USING (true);
 
 -- ========== EVALUACIÓN DE PROVEEDORES ==========
@@ -114,6 +118,7 @@ CREATE TABLE IF NOT EXISTS supplier_evaluations (
 );
 
 ALTER TABLE supplier_evaluations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "supplier_evaluations_tenant_all" ON supplier_evaluations;
 CREATE POLICY "supplier_evaluations_tenant_all" ON supplier_evaluations FOR ALL USING (true);
 
 -- ========== NO CONFORMIDADES ==========
@@ -140,6 +145,7 @@ CREATE TABLE IF NOT EXISTS nonconformities (
 );
 
 ALTER TABLE nonconformities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "nonconformities_tenant_all" ON nonconformities;
 CREATE POLICY "nonconformities_tenant_all" ON nonconformities FOR ALL USING (true);
 
 -- ========== CAMBIOS DE ALCANCE Y ADICIONALES ==========
@@ -164,6 +170,7 @@ CREATE TABLE IF NOT EXISTS scope_changes (
 );
 
 ALTER TABLE scope_changes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "scope_changes_tenant_all" ON scope_changes;
 CREATE POLICY "scope_changes_tenant_all" ON scope_changes FOR ALL USING (true);
 
 -- ========== INDEXES ==========

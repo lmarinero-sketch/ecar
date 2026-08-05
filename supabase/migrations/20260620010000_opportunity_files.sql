@@ -3,7 +3,7 @@
 -- Fecha: 2026-06-20
 -- ═══════════════════════════════════════════════════════════════════════
 
--- 1. Create table opportunity_files
+-- 1. CREATE TABLE IF NOT EXISTS opportunity_files
 CREATE TABLE IF NOT EXISTS opportunity_files (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id TEXT NOT NULL DEFAULT 'a0000000-0000-0000-0000-000000000001',
@@ -24,7 +24,8 @@ ALTER TABLE opportunity_files ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for opportunity_files' AND tablename = 'opportunity_files') THEN
-    CREATE POLICY "Allow all for opportunity_files" ON opportunity_files FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "Allow all for opportunity_files" ON opportunity_files;
+CREATE POLICY "Allow all for opportunity_files" ON opportunity_files FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -60,19 +61,23 @@ VALUES (
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_upload_opportunity_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_upload_opportunity_files" ON storage.objects FOR INSERT TO authenticated
+    DROP POLICY IF EXISTS "auth_upload_opportunity_files" ON storage.objects;
+CREATE POLICY "auth_upload_opportunity_files" ON storage.objects FOR INSERT TO authenticated
       WITH CHECK (bucket_id = 'opportunity-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_read_opportunity_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_read_opportunity_files" ON storage.objects FOR SELECT TO authenticated
+    DROP POLICY IF EXISTS "auth_read_opportunity_files" ON storage.objects;
+CREATE POLICY "auth_read_opportunity_files" ON storage.objects FOR SELECT TO authenticated
       USING (bucket_id = 'opportunity-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_delete_opportunity_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_delete_opportunity_files" ON storage.objects FOR DELETE TO authenticated
+    DROP POLICY IF EXISTS "auth_delete_opportunity_files" ON storage.objects;
+CREATE POLICY "auth_delete_opportunity_files" ON storage.objects FOR DELETE TO authenticated
       USING (bucket_id = 'opportunity-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_read_opportunity_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "public_read_opportunity_files" ON storage.objects FOR SELECT TO anon
+    DROP POLICY IF EXISTS "public_read_opportunity_files" ON storage.objects;
+CREATE POLICY "public_read_opportunity_files" ON storage.objects FOR SELECT TO anon
       USING (bucket_id = 'opportunity-files');
   END IF;
 END $$;

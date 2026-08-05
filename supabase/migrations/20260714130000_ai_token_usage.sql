@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS ai_token_usage (
 
 ALTER TABLE ai_token_usage ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "ai_token_usage_all" ON ai_token_usage;
 CREATE POLICY "ai_token_usage_all" ON ai_token_usage
     FOR ALL
     USING (true)

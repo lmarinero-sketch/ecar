@@ -78,10 +78,15 @@ ALTER TABLE tool_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_request_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all for inventory_items" ON inventory_items;
 CREATE POLICY "Allow all for inventory_items" ON inventory_items FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for inventory_movements" ON inventory_movements;
 CREATE POLICY "Allow all for inventory_movements" ON inventory_movements FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for tool_assignments" ON tool_assignments;
 CREATE POLICY "Allow all for tool_assignments" ON tool_assignments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for purchase_requests" ON purchase_requests;
 CREATE POLICY "Allow all for purchase_requests" ON purchase_requests FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for purchase_request_items" ON purchase_request_items;
 CREATE POLICY "Allow all for purchase_request_items" ON purchase_request_items FOR ALL USING (true) WITH CHECK (true);
 
 -- Add 'inventory' and 'purchase_requests' modules to admin profiles

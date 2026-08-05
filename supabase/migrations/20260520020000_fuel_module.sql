@@ -116,16 +116,20 @@ ALTER TABLE fuel_loads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fuel_batan_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fuel_monthly_reconciliation ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "fuel_vehicles_all" ON fuel_vehicles;
 CREATE POLICY "fuel_vehicles_all" ON fuel_vehicles FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "fuel_loads_all" ON fuel_loads;
 CREATE POLICY "fuel_loads_all" ON fuel_loads FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "fuel_batan_all" ON fuel_batan_movements;
 CREATE POLICY "fuel_batan_all" ON fuel_batan_movements FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "fuel_reconciliation_all" ON fuel_monthly_reconciliation;
 CREATE POLICY "fuel_reconciliation_all" ON fuel_monthly_reconciliation FOR ALL USING (true) WITH CHECK (true);
 
 -- ═══════════════ INDICES ═══════════════
-CREATE INDEX idx_fuel_loads_date ON fuel_loads(load_date);
-CREATE INDEX idx_fuel_loads_vehicle ON fuel_loads(vehicle_code);
-CREATE INDEX idx_fuel_loads_month ON fuel_loads(year, month);
-CREATE INDEX idx_fuel_batan_date ON fuel_batan_movements(movement_date);
+CREATE INDEX IF NOT EXISTS idx_fuel_loads_date ON fuel_loads(load_date);
+CREATE INDEX IF NOT EXISTS idx_fuel_loads_vehicle ON fuel_loads(vehicle_code);
+CREATE INDEX IF NOT EXISTS idx_fuel_loads_month ON fuel_loads(year, month);
+CREATE INDEX IF NOT EXISTS idx_fuel_batan_date ON fuel_batan_movements(movement_date);
 
 -- ═══════════════ SEED DATA — FLOTA ═══════════════
 -- Datos reales del Excel "combustible_batan - mayo 2026"

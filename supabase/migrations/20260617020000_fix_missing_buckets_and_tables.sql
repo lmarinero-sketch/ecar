@@ -26,15 +26,18 @@ VALUES (
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_upload_receipts' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_upload_receipts" ON storage.objects FOR INSERT TO authenticated
+    DROP POLICY IF EXISTS "auth_upload_receipts" ON storage.objects;
+CREATE POLICY "auth_upload_receipts" ON storage.objects FOR INSERT TO authenticated
       WITH CHECK (bucket_id = 'payment-receipts');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_read_receipts' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_read_receipts" ON storage.objects FOR SELECT TO authenticated
+    DROP POLICY IF EXISTS "auth_read_receipts" ON storage.objects;
+CREATE POLICY "auth_read_receipts" ON storage.objects FOR SELECT TO authenticated
       USING (bucket_id = 'payment-receipts');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_delete_receipts' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_delete_receipts" ON storage.objects FOR DELETE TO authenticated
+    DROP POLICY IF EXISTS "auth_delete_receipts" ON storage.objects;
+CREATE POLICY "auth_delete_receipts" ON storage.objects FOR DELETE TO authenticated
       USING (bucket_id = 'payment-receipts');
   END IF;
 END $$;
@@ -54,15 +57,18 @@ VALUES (
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_upload_obligation_docs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_upload_obligation_docs" ON storage.objects FOR INSERT TO authenticated
+    DROP POLICY IF EXISTS "auth_upload_obligation_docs" ON storage.objects;
+CREATE POLICY "auth_upload_obligation_docs" ON storage.objects FOR INSERT TO authenticated
       WITH CHECK (bucket_id = 'obligation-docs');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_read_obligation_docs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_read_obligation_docs" ON storage.objects FOR SELECT TO authenticated
+    DROP POLICY IF EXISTS "auth_read_obligation_docs" ON storage.objects;
+CREATE POLICY "auth_read_obligation_docs" ON storage.objects FOR SELECT TO authenticated
       USING (bucket_id = 'obligation-docs');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_delete_obligation_docs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_delete_obligation_docs" ON storage.objects FOR DELETE TO authenticated
+    DROP POLICY IF EXISTS "auth_delete_obligation_docs" ON storage.objects;
+CREATE POLICY "auth_delete_obligation_docs" ON storage.objects FOR DELETE TO authenticated
       USING (bucket_id = 'obligation-docs');
   END IF;
 END $$;
@@ -96,15 +102,18 @@ VALUES (
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_upload_meeting_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_upload_meeting_files" ON storage.objects FOR INSERT TO authenticated
+    DROP POLICY IF EXISTS "auth_upload_meeting_files" ON storage.objects;
+CREATE POLICY "auth_upload_meeting_files" ON storage.objects FOR INSERT TO authenticated
       WITH CHECK (bucket_id = 'meeting-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_read_meeting_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_read_meeting_files" ON storage.objects FOR SELECT TO authenticated
+    DROP POLICY IF EXISTS "auth_read_meeting_files" ON storage.objects;
+CREATE POLICY "auth_read_meeting_files" ON storage.objects FOR SELECT TO authenticated
       USING (bucket_id = 'meeting-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_delete_meeting_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_delete_meeting_files" ON storage.objects FOR DELETE TO authenticated
+    DROP POLICY IF EXISTS "auth_delete_meeting_files" ON storage.objects;
+CREATE POLICY "auth_delete_meeting_files" ON storage.objects FOR DELETE TO authenticated
       USING (bucket_id = 'meeting-files');
   END IF;
 END $$;
@@ -124,15 +133,18 @@ VALUES (
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_upload_certs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_upload_certs" ON storage.objects FOR INSERT TO authenticated
+    DROP POLICY IF EXISTS "auth_upload_certs" ON storage.objects;
+CREATE POLICY "auth_upload_certs" ON storage.objects FOR INSERT TO authenticated
       WITH CHECK (bucket_id = 'project-certificates');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_read_certs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_read_certs" ON storage.objects FOR SELECT TO authenticated
+    DROP POLICY IF EXISTS "auth_read_certs" ON storage.objects;
+CREATE POLICY "auth_read_certs" ON storage.objects FOR SELECT TO authenticated
       USING (bucket_id = 'project-certificates');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'auth_delete_certs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "auth_delete_certs" ON storage.objects FOR DELETE TO authenticated
+    DROP POLICY IF EXISTS "auth_delete_certs" ON storage.objects;
+CREATE POLICY "auth_delete_certs" ON storage.objects FOR DELETE TO authenticated
       USING (bucket_id = 'project-certificates');
   END IF;
 END $$;
@@ -172,7 +184,8 @@ ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for system_settings' AND tablename = 'system_settings') THEN
-    CREATE POLICY "Allow all for system_settings" ON system_settings FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "Allow all for system_settings" ON system_settings;
+CREATE POLICY "Allow all for system_settings" ON system_settings FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
@@ -183,19 +196,23 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_read_payment_receipts' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "public_read_payment_receipts" ON storage.objects FOR SELECT TO anon
+    DROP POLICY IF EXISTS "public_read_payment_receipts" ON storage.objects;
+CREATE POLICY "public_read_payment_receipts" ON storage.objects FOR SELECT TO anon
       USING (bucket_id = 'payment-receipts');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_read_obligation_docs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "public_read_obligation_docs" ON storage.objects FOR SELECT TO anon
+    DROP POLICY IF EXISTS "public_read_obligation_docs" ON storage.objects;
+CREATE POLICY "public_read_obligation_docs" ON storage.objects FOR SELECT TO anon
       USING (bucket_id = 'obligation-docs');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_read_meeting_files' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "public_read_meeting_files" ON storage.objects FOR SELECT TO anon
+    DROP POLICY IF EXISTS "public_read_meeting_files" ON storage.objects;
+CREATE POLICY "public_read_meeting_files" ON storage.objects FOR SELECT TO anon
       USING (bucket_id = 'meeting-files');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_read_project_certs' AND tablename = 'objects' AND schemaname = 'storage') THEN
-    CREATE POLICY "public_read_project_certs" ON storage.objects FOR SELECT TO anon
+    DROP POLICY IF EXISTS "public_read_project_certs" ON storage.objects;
+CREATE POLICY "public_read_project_certs" ON storage.objects FOR SELECT TO anon
       USING (bucket_id = 'project-certificates');
   END IF;
 END $$;

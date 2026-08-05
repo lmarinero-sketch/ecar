@@ -4,18 +4,18 @@ values ('whatsapp_media', 'whatsapp_media', true, 10485760, null)
 on conflict (id) do nothing;
 
 -- RLS Policies
-create policy "WhatsApp Media public access"
-  on storage.objects for select
+DROP POLICY IF EXISTS "WhatsApp Media public access" ON storage.objects;
+CREATE POLICY "WhatsApp Media public access" ON storage.objects for select
   using ( bucket_id = 'whatsapp_media' );
 
-create policy "WhatsApp Media insert access"
-  on storage.objects for insert
+DROP POLICY IF EXISTS "WhatsApp Media insert access" ON storage.objects;
+CREATE POLICY "WhatsApp Media insert access" ON storage.objects for insert
   with check ( bucket_id = 'whatsapp_media' );
 
-create policy "WhatsApp Media update access"
-  on storage.objects for update
+DROP POLICY IF EXISTS "WhatsApp Media update access" ON storage.objects;
+CREATE POLICY "WhatsApp Media update access" ON storage.objects for update
   using ( bucket_id = 'whatsapp_media' );
 
-create policy "WhatsApp Media delete access"
-  on storage.objects for delete
+DROP POLICY IF EXISTS "WhatsApp Media delete access" ON storage.objects;
+CREATE POLICY "WhatsApp Media delete access" ON storage.objects for delete
   using ( bucket_id = 'whatsapp_media' );

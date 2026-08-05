@@ -38,7 +38,8 @@ create index if not exists idx_parte_diario_fecha on parte_diario(fecha desc);
 create unique index if not exists idx_parte_diario_unique on parte_diario(obra_id, fecha);
 
 alter table parte_diario enable row level security;
-create policy "parte_diario_all" on parte_diario for all using (true) with check (true);
+DROP POLICY IF EXISTS "parte_diario_all" ON parte_diario;
+CREATE POLICY "parte_diario_all" ON parte_diario for all using (true) with check (true);
 
 -- ─── 2. SEGURIDAD E INCIDENTES ────────────────────────────────────────────
 
@@ -72,7 +73,8 @@ create index if not exists idx_seg_incidentes_obra on seguridad_incidentes(obra_
 create index if not exists idx_seg_incidentes_fecha on seguridad_incidentes(fecha desc);
 
 alter table seguridad_incidentes enable row level security;
-create policy "seg_incidentes_all" on seguridad_incidentes for all using (true) with check (true);
+DROP POLICY IF EXISTS "seg_incidentes_all" ON seguridad_incidentes;
+CREATE POLICY "seg_incidentes_all" ON seguridad_incidentes for all using (true) with check (true);
 
 create table if not exists seguridad_observaciones (
   id uuid primary key default gen_random_uuid(),
@@ -94,7 +96,8 @@ create table if not exists seguridad_observaciones (
 create index if not exists idx_seg_obs_obra on seguridad_observaciones(obra_id);
 
 alter table seguridad_observaciones enable row level security;
-create policy "seg_obs_all" on seguridad_observaciones for all using (true) with check (true);
+DROP POLICY IF EXISTS "seg_obs_all" ON seguridad_observaciones;
+CREATE POLICY "seg_obs_all" ON seguridad_observaciones for all using (true) with check (true);
 
 -- ─── 3. INSPECCIONES + PUNCH LIST ─────────────────────────────────────────
 
@@ -117,7 +120,8 @@ create table if not exists inspecciones (
 create index if not exists idx_inspecciones_obra on inspecciones(obra_id);
 
 alter table inspecciones enable row level security;
-create policy "inspecciones_all" on inspecciones for all using (true) with check (true);
+DROP POLICY IF EXISTS "inspecciones_all" ON inspecciones;
+CREATE POLICY "inspecciones_all" ON inspecciones for all using (true) with check (true);
 
 create table if not exists punch_list (
   id uuid primary key default gen_random_uuid(),
@@ -144,7 +148,8 @@ create index if not exists idx_punch_obra on punch_list(obra_id);
 create index if not exists idx_punch_estado on punch_list(estado);
 
 alter table punch_list enable row level security;
-create policy "punch_list_all" on punch_list for all using (true) with check (true);
+DROP POLICY IF EXISTS "punch_list_all" ON punch_list;
+CREATE POLICY "punch_list_all" ON punch_list for all using (true) with check (true);
 
 -- ─── 4. CONSULTAS DE OBRA (RFI) ──────────────────────────────────────────
 
@@ -176,4 +181,5 @@ create index if not exists idx_consultas_obra on consultas_obra(obra_id);
 create index if not exists idx_consultas_estado on consultas_obra(estado);
 
 alter table consultas_obra enable row level security;
-create policy "consultas_obra_all" on consultas_obra for all using (true) with check (true);
+DROP POLICY IF EXISTS "consultas_obra_all" ON consultas_obra;
+CREATE POLICY "consultas_obra_all" ON consultas_obra for all using (true) with check (true);

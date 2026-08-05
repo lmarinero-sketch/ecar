@@ -15,20 +15,20 @@ CREATE TABLE IF NOT EXISTS public.purchase_invoice_allocations (
 -- RLS
 ALTER TABLE public.purchase_invoice_allocations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view allocations for their tenant"
-    ON public.purchase_invoice_allocations FOR SELECT
+DROP POLICY IF EXISTS "Users can view allocations for their tenant" ON public.purchase_invoice_allocations;
+CREATE POLICY "Users can view allocations for their tenant" ON public.purchase_invoice_allocations FOR SELECT
     USING (tenant_id = (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
-CREATE POLICY "Users can insert allocations for their tenant"
-    ON public.purchase_invoice_allocations FOR INSERT
+DROP POLICY IF EXISTS "Users can insert allocations for their tenant" ON public.purchase_invoice_allocations;
+CREATE POLICY "Users can insert allocations for their tenant" ON public.purchase_invoice_allocations FOR INSERT
     WITH CHECK (tenant_id = (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
-CREATE POLICY "Users can update allocations for their tenant"
-    ON public.purchase_invoice_allocations FOR UPDATE
+DROP POLICY IF EXISTS "Users can update allocations for their tenant" ON public.purchase_invoice_allocations;
+CREATE POLICY "Users can update allocations for their tenant" ON public.purchase_invoice_allocations FOR UPDATE
     USING (tenant_id = (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
-CREATE POLICY "Users can delete allocations for their tenant"
-    ON public.purchase_invoice_allocations FOR DELETE
+DROP POLICY IF EXISTS "Users can delete allocations for their tenant" ON public.purchase_invoice_allocations;
+CREATE POLICY "Users can delete allocations for their tenant" ON public.purchase_invoice_allocations FOR DELETE
     USING (tenant_id = (SELECT tenant_id FROM profiles WHERE id = auth.uid()));
 
 -- Data Migration

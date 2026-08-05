@@ -21,9 +21,11 @@ CREATE INDEX IF NOT EXISTS ai_token_usage_tenant_idx ON public.ai_token_usage (t
 -- RLS: solo el tenant puede ver sus propios datos
 ALTER TABLE public.ai_token_usage ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "ai_token_usage_select" ON public.ai_token_usage;
 CREATE POLICY "ai_token_usage_select" ON public.ai_token_usage
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "ai_token_usage_insert" ON public.ai_token_usage;
 CREATE POLICY "ai_token_usage_insert" ON public.ai_token_usage
   FOR INSERT WITH CHECK (true);
 

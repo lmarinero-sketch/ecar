@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ========== CORE ==========
 
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   cuit TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE tenants (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
@@ -28,7 +28,7 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE projects (
 
 -- ========== MOD 1: OBLIGACIONES ==========
 
-CREATE TABLE obligations (
+CREATE TABLE IF NOT EXISTS obligations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE obligations (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE obligation_payments (
+CREATE TABLE IF NOT EXISTS obligation_payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   obligation_id UUID REFERENCES obligations(id) ON DELETE CASCADE,
   payment_date DATE NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE obligation_payments (
 
 -- ========== MOD 2: FACTURACIÓN ==========
 
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   project_id UUID REFERENCES projects(id),
@@ -96,7 +96,7 @@ CREATE TABLE invoices (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE invoice_items (
+CREATE TABLE IF NOT EXISTS invoice_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE,
   description TEXT NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE invoice_items (
 
 -- ========== MOD 3: GESTIÓN DOCUMENTAL ==========
 
-CREATE TABLE document_requests (
+CREATE TABLE IF NOT EXISTS document_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   project_id UUID REFERENCES projects(id),
@@ -122,7 +122,7 @@ CREATE TABLE document_requests (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   entity_type TEXT NOT NULL,
@@ -136,7 +136,7 @@ CREATE TABLE documents (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE emails (
+CREATE TABLE IF NOT EXISTS emails (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   document_request_id UUID REFERENCES document_requests(id),
@@ -154,7 +154,7 @@ CREATE TABLE emails (
 
 -- ========== MOD 4: ASISTENCIA ==========
 
-CREATE TABLE shifts (
+CREATE TABLE IF NOT EXISTS shifts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -165,7 +165,7 @@ CREATE TABLE shifts (
 
 -- ========== MOD 5: LIQUIDACIÓN ==========
 
-CREATE TABLE union_categories (
+CREATE TABLE IF NOT EXISTS union_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -179,7 +179,7 @@ CREATE TABLE union_categories (
 
 -- ========== MOD 6: EMPLEADOS ==========
 
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
@@ -201,7 +201,7 @@ CREATE TABLE employees (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE attendance_records (
+CREATE TABLE IF NOT EXISTS attendance_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
   project_id UUID REFERENCES projects(id),
@@ -220,7 +220,7 @@ CREATE TABLE attendance_records (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE payroll_periods (
+CREATE TABLE IF NOT EXISTS payroll_periods (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   period_type TEXT DEFAULT 'biweekly' CHECK (period_type IN ('weekly','biweekly','monthly')),
@@ -230,7 +230,7 @@ CREATE TABLE payroll_periods (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE payroll_lines (
+CREATE TABLE IF NOT EXISTS payroll_lines (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   payroll_period_id UUID REFERENCES payroll_periods(id) ON DELETE CASCADE,
   employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
@@ -244,7 +244,7 @@ CREATE TABLE payroll_lines (
   status TEXT DEFAULT 'calculated' CHECK (status IN ('calculated','adjusted','approved'))
 );
 
-CREATE TABLE employee_documents (
+CREATE TABLE IF NOT EXISTS employee_documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
   doc_type TEXT NOT NULL,
@@ -257,7 +257,7 @@ CREATE TABLE employee_documents (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE letter_templates (
+CREATE TABLE IF NOT EXISTS letter_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -266,7 +266,7 @@ CREATE TABLE letter_templates (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE accountant_access_tokens (
+CREATE TABLE IF NOT EXISTS accountant_access_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   token_hash TEXT NOT NULL,
@@ -280,7 +280,7 @@ CREATE TABLE accountant_access_tokens (
 
 -- ========== MOD 7: COMPRAS ==========
 
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -294,7 +294,7 @@ CREATE TABLE suppliers (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE purchase_invoices (
+CREATE TABLE IF NOT EXISTS purchase_invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   supplier_id UUID REFERENCES suppliers(id),
@@ -321,7 +321,7 @@ CREATE TABLE purchase_invoices (
 
 -- ========== MOD 8: GASTOS Y CHEQUES ==========
 
-CREATE TABLE fixed_expenses (
+CREATE TABLE IF NOT EXISTS fixed_expenses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   supplier_id UUID REFERENCES suppliers(id),
@@ -333,7 +333,7 @@ CREATE TABLE fixed_expenses (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE payment_records (
+CREATE TABLE IF NOT EXISTS payment_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   entity_type TEXT NOT NULL,
@@ -349,7 +349,7 @@ CREATE TABLE payment_records (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE cheques (
+CREATE TABLE IF NOT EXISTS cheques (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   cheque_number TEXT NOT NULL,
@@ -369,7 +369,7 @@ CREATE TABLE cheques (
 
 -- ========== WBS (existing concept) ==========
 
-CREATE TABLE wbs_elements (
+CREATE TABLE IF NOT EXISTS wbs_elements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES wbs_elements(id),
@@ -385,21 +385,21 @@ CREATE TABLE wbs_elements (
 
 -- ========== INDEXES ==========
 
-CREATE INDEX idx_profiles_tenant ON profiles(tenant_id);
-CREATE INDEX idx_profiles_auth ON profiles(auth_user_id);
-CREATE INDEX idx_projects_tenant ON projects(tenant_id);
-CREATE INDEX idx_employees_tenant ON employees(tenant_id, employment_status);
-CREATE INDEX idx_employees_project ON employees(current_project_id);
-CREATE INDEX idx_attendance_employee_date ON attendance_records(employee_id, record_date);
-CREATE INDEX idx_attendance_project_date ON attendance_records(project_id, record_date);
-CREATE INDEX idx_invoices_tenant_date ON invoices(tenant_id, issue_date DESC);
-CREATE INDEX idx_purchase_invoices_status ON purchase_invoices(tenant_id, status);
-CREATE INDEX idx_cheques_tenant_due ON cheques(tenant_id, due_date, status);
-CREATE INDEX idx_payroll_lines_period ON payroll_lines(payroll_period_id, employee_id);
-CREATE INDEX idx_obligations_tenant ON obligations(tenant_id, due_day_of_month);
-CREATE INDEX idx_documents_entity ON documents(entity_type, entity_id);
-CREATE INDEX idx_wbs_project ON wbs_elements(project_id);
-CREATE INDEX idx_employee_docs ON employee_documents(employee_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_tenant ON profiles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_auth ON profiles(auth_user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_tenant ON projects(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_employees_tenant ON employees(tenant_id, employment_status);
+CREATE INDEX IF NOT EXISTS idx_employees_project ON employees(current_project_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_employee_date ON attendance_records(employee_id, record_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_project_date ON attendance_records(project_id, record_date);
+CREATE INDEX IF NOT EXISTS idx_invoices_tenant_date ON invoices(tenant_id, issue_date DESC);
+CREATE INDEX IF NOT EXISTS idx_purchase_invoices_status ON purchase_invoices(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_cheques_tenant_due ON cheques(tenant_id, due_date, status);
+CREATE INDEX IF NOT EXISTS idx_payroll_lines_period ON payroll_lines(payroll_period_id, employee_id);
+CREATE INDEX IF NOT EXISTS idx_obligations_tenant ON obligations(tenant_id, due_day_of_month);
+CREATE INDEX IF NOT EXISTS idx_documents_entity ON documents(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_wbs_project ON wbs_elements(project_id);
+CREATE INDEX IF NOT EXISTS idx_employee_docs ON employee_documents(employee_id);
 
 -- ========== RLS POLICIES ==========
 
@@ -436,30 +436,55 @@ RETURNS UUID AS $$
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Tenant isolation policies (applied to all tenant-scoped tables)
+DROP POLICY IF EXISTS "tenant_isolation" ON profiles;
 CREATE POLICY "tenant_isolation" ON profiles FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON projects;
 CREATE POLICY "tenant_isolation" ON projects FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON employees;
 CREATE POLICY "tenant_isolation" ON employees FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON obligations;
 CREATE POLICY "tenant_isolation" ON obligations FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON obligation_payments;
 CREATE POLICY "tenant_isolation" ON obligation_payments FOR ALL USING (obligation_id IN (SELECT id FROM obligations WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_isolation" ON invoices;
 CREATE POLICY "tenant_isolation" ON invoices FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON invoice_items;
 CREATE POLICY "tenant_isolation" ON invoice_items FOR ALL USING (invoice_id IN (SELECT id FROM invoices WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_isolation" ON document_requests;
 CREATE POLICY "tenant_isolation" ON document_requests FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON documents;
 CREATE POLICY "tenant_isolation" ON documents FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON emails;
 CREATE POLICY "tenant_isolation" ON emails FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON shifts;
 CREATE POLICY "tenant_isolation" ON shifts FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON union_categories;
 CREATE POLICY "tenant_isolation" ON union_categories FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON attendance_records;
 CREATE POLICY "tenant_isolation" ON attendance_records FOR ALL USING (employee_id IN (SELECT id FROM employees WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_isolation" ON payroll_periods;
 CREATE POLICY "tenant_isolation" ON payroll_periods FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON payroll_lines;
 CREATE POLICY "tenant_isolation" ON payroll_lines FOR ALL USING (payroll_period_id IN (SELECT id FROM payroll_periods WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_isolation" ON employee_documents;
 CREATE POLICY "tenant_isolation" ON employee_documents FOR ALL USING (employee_id IN (SELECT id FROM employees WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_isolation" ON letter_templates;
 CREATE POLICY "tenant_isolation" ON letter_templates FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON accountant_access_tokens;
 CREATE POLICY "tenant_isolation" ON accountant_access_tokens FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON suppliers;
 CREATE POLICY "tenant_isolation" ON suppliers FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON purchase_invoices;
 CREATE POLICY "tenant_isolation" ON purchase_invoices FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON fixed_expenses;
 CREATE POLICY "tenant_isolation" ON fixed_expenses FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON payment_records;
 CREATE POLICY "tenant_isolation" ON payment_records FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON cheques;
 CREATE POLICY "tenant_isolation" ON cheques FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation" ON wbs_elements;
 CREATE POLICY "tenant_isolation" ON wbs_elements FOR ALL USING (project_id IN (SELECT id FROM projects WHERE tenant_id = get_my_tenant_id()));
+DROP POLICY IF EXISTS "tenant_read" ON tenants;
 CREATE POLICY "tenant_read" ON tenants FOR SELECT USING (id = get_my_tenant_id());
 
 -- ========== SEED: Default Tenant ==========

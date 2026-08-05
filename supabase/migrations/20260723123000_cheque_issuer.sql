@@ -1,1 +1,1 @@
-ALTER TABLE cheques ADD COLUMN issuer_company TEXT;
+ALTER TABLE cheques ADD COLUMN IF NOT EXISTS issuer_company TEXT;

@@ -4,7 +4,7 @@
 -- =============================================
 
 -- Tabla maestra de items de gasto (la "plantilla")
-CREATE TABLE gastos_items (
+CREATE TABLE IF NOT EXISTS gastos_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id uuid REFERENCES tenants(id),
   categoria text NOT NULL, -- personal, seguros, servicios, impuestos, gremios, combustibles, terceros, servicios_contratados, viandas, varios
@@ -15,7 +15,7 @@ CREATE TABLE gastos_items (
 );
 
 -- Registros mensuales de gasto (cada fila = 1 item + 1 mes)
-CREATE TABLE gastos_registros (
+CREATE TABLE IF NOT EXISTS gastos_registros (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id uuid REFERENCES tenants(id),
   item_id uuid REFERENCES gastos_items(id) ON DELETE CASCADE,
@@ -34,13 +34,15 @@ CREATE TABLE gastos_registros (
 ALTER TABLE gastos_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gastos_registros ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "gastos_items_all" ON gastos_items;
 CREATE POLICY "gastos_items_all" ON gastos_items FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "gastos_registros_all" ON gastos_registros;
 CREATE POLICY "gastos_registros_all" ON gastos_registros FOR ALL USING (true) WITH CHECK (true);
 
 -- Indices
-CREATE INDEX idx_gastos_items_cat ON gastos_items(categoria);
-CREATE INDEX idx_gastos_registros_periodo ON gastos_registros(periodo);
-CREATE INDEX idx_gastos_registros_item ON gastos_registros(item_id);
+CREATE INDEX IF NOT EXISTS idx_gastos_items_cat ON gastos_items(categoria);
+CREATE INDEX IF NOT EXISTS idx_gastos_registros_periodo ON gastos_registros(periodo);
+CREATE INDEX IF NOT EXISTS idx_gastos_registros_item ON gastos_registros(item_id);
 
 -- =============================================
 -- SEED: Categorías e items de la planilla ECAR

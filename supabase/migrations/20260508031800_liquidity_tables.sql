@@ -89,9 +89,13 @@ ALTER TABLE cash_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monthly_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_certificates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all for bank_accounts" ON bank_accounts;
 CREATE POLICY "Allow all for bank_accounts" ON bank_accounts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for cash_movements" ON cash_movements;
 CREATE POLICY "Allow all for cash_movements" ON cash_movements FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for monthly_snapshots" ON monthly_snapshots;
 CREATE POLICY "Allow all for monthly_snapshots" ON monthly_snapshots FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for project_certificates" ON project_certificates;
 CREATE POLICY "Allow all for project_certificates" ON project_certificates FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================

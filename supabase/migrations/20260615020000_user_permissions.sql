@@ -28,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_user_module_permissions_profile
 -- 5) RLS
 ALTER TABLE user_module_permissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tenant_isolation" ON user_module_permissions;
 CREATE POLICY "tenant_isolation" ON user_module_permissions
   FOR ALL USING (
     profile_id IN (

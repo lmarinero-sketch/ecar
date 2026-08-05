@@ -7,7 +7,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_read' 
     AND tablename = 'audit_logs'
   ) THEN
-    CREATE POLICY "allow_authenticated_read" ON audit_logs
+    DROP POLICY IF EXISTS "allow_authenticated_read" ON audit_logs;
+CREATE POLICY "allow_authenticated_read" ON audit_logs
       FOR SELECT TO authenticated
       USING (true);
   END IF;
@@ -20,7 +21,8 @@ BEGIN
     WHERE policyname = 'allow_authenticated_insert' 
     AND tablename = 'audit_logs'
   ) THEN
-    CREATE POLICY "allow_authenticated_insert" ON audit_logs
+    DROP POLICY IF EXISTS "allow_authenticated_insert" ON audit_logs;
+CREATE POLICY "allow_authenticated_insert" ON audit_logs
       FOR INSERT TO authenticated
       WITH CHECK (true);
   END IF;

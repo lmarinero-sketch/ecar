@@ -25,7 +25,7 @@ VALUES (
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Carlos"}',
   '', '', ''
-);
+) ON CONFLICT DO NOTHING;
 
 -- 2) Enrico
 INSERT INTO auth.users (
@@ -47,7 +47,7 @@ VALUES (
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Enrico"}',
   '', '', ''
-);
+) ON CONFLICT DO NOTHING;
 
 -- 3) Gustavo
 INSERT INTO auth.users (
@@ -69,7 +69,7 @@ VALUES (
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Gustavo"}',
   '', '', ''
-);
+) ON CONFLICT DO NOTHING;
 
 -- Crear perfil vinculado al tenant ECAR para cada usuario (growlabs.lat)
 INSERT INTO public.profiles (auth_user_id, tenant_id, full_name, email, role, allowed_modules)
@@ -82,7 +82,7 @@ SELECT
   '["bi","liquidity","monthly_report","wbs","invoicing","purchases","purchase_requests","finances","obligations","rrhh","inventory","logistics","fleet","certifications","field","safety","inspections","rfi","expenses","documents","project_budget","fuel","guide","manual","implementation","user_management"]'::jsonb
 FROM auth.users
 WHERE email IN ('carlos@growlabs.lat', 'enrico@growlabs.lat', 'gustavo@growlabs.lat')
-  AND id NOT IN (SELECT auth_user_id FROM public.profiles WHERE auth_user_id IS NOT NULL);
+  AND id NOT IN (SELECT auth_user_id FROM public.profiles WHERE auth_user_id IS NOT NULL) ON CONFLICT DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════
 -- Crear usuarios administradores adicionales (Grow Labs)
@@ -109,7 +109,7 @@ VALUES (
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Carlos (Grow Labs)"}',
   '', '', ''
-);
+) ON CONFLICT DO NOTHING;
 
 -- 5) Lucas Marinero
 INSERT INTO auth.users (
@@ -131,7 +131,7 @@ VALUES (
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Lucas Marinero"}',
   '', '', ''
-);
+) ON CONFLICT DO NOTHING;
 
 -- Crear perfil admin para carlos@growlabs.com y lucasmmarinero@gmail.com
 INSERT INTO public.profiles (auth_user_id, tenant_id, full_name, email, role, allowed_modules)

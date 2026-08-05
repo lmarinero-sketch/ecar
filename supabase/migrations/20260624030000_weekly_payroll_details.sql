@@ -20,5 +20,5 @@ CREATE TABLE IF NOT EXISTS public.weekly_payroll_details (
 ALTER TABLE public.weekly_payroll_details ENABLE ROW LEVEL SECURITY;
 
 -- Policy
-CREATE POLICY "Enable ALL for authenticated users on weekly_payroll_details" 
-ON public.weekly_payroll_details FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable ALL for authenticated users on weekly_payroll_details" ON public.weekly_payroll_details;
+CREATE POLICY "Enable ALL for authenticated users on weekly_payroll_details" ON public.weekly_payroll_details FOR ALL TO authenticated USING (true) WITH CHECK (true);

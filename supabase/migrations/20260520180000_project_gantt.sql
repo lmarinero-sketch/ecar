@@ -46,6 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_estado ON project_feedback(estado);
 ALTER TABLE project_feedback ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'project_feedback' AND policyname = 'project_feedback_all') THEN
-    CREATE POLICY "project_feedback_all" ON project_feedback FOR ALL USING (true) WITH CHECK (true);
+    DROP POLICY IF EXISTS "project_feedback_all" ON project_feedback;
+CREATE POLICY "project_feedback_all" ON project_feedback FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;

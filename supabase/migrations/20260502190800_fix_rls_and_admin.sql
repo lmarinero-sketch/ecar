@@ -1,9 +1,11 @@
 -- Fix: Allow authenticated users to INSERT their own profile (bootstrapping)
+DROP POLICY IF EXISTS "allow_profile_insert" ON profiles;
 CREATE POLICY "allow_profile_insert" ON profiles
   FOR INSERT
   WITH CHECK (auth_user_id = auth.uid());
 
 -- Fix: Allow users to SELECT their own profile even before tenant resolution
+DROP POLICY IF EXISTS "allow_own_profile_select" ON profiles;
 CREATE POLICY "allow_own_profile_select" ON profiles
   FOR SELECT
   USING (auth_user_id = auth.uid());

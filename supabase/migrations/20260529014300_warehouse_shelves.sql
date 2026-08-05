@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS warehouse_shelves (
 );
 
 ALTER TABLE warehouse_shelves ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for warehouse_shelves" ON warehouse_shelves;
 CREATE POLICY "Allow all for warehouse_shelves" ON warehouse_shelves FOR ALL USING (true) WITH CHECK (true);
 
 -- Agregar campo shelf_id a inventory_items para link directo

@@ -25,7 +25,9 @@ DROP POLICY IF EXISTS "auth_upload_receipts" ON storage.objects;
 DROP POLICY IF EXISTS "auth_read_receipts" ON storage.objects;
 DROP POLICY IF EXISTS "auth_delete_receipts" ON storage.objects;
 CREATE POLICY "auth_upload_receipts" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'payment-receipts');
+DROP POLICY IF EXISTS "auth_read_receipts" ON storage.objects;
 CREATE POLICY "auth_read_receipts" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'payment-receipts');
+DROP POLICY IF EXISTS "auth_delete_receipts" ON storage.objects;
 CREATE POLICY "auth_delete_receipts" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'payment-receipts');
 
 -- 4. Crear el bucket para certificaciones de obra
@@ -43,7 +45,9 @@ DROP POLICY IF EXISTS "auth_upload_certs" ON storage.objects;
 DROP POLICY IF EXISTS "auth_read_certs" ON storage.objects;
 DROP POLICY IF EXISTS "auth_delete_certs" ON storage.objects;
 CREATE POLICY "auth_upload_certs" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'project-certificates');
+DROP POLICY IF EXISTS "auth_read_certs" ON storage.objects;
 CREATE POLICY "auth_read_certs" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'project-certificates');
+DROP POLICY IF EXISTS "auth_delete_certs" ON storage.objects;
 CREATE POLICY "auth_delete_certs" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'project-certificates');
 
 -- 5. Asegurar la integridad de perfiles huérfanos o con tenant_id nulo

@@ -1,4 +1,4 @@
-create table public.bcra_queries (
+CREATE TABLE IF NOT EXISTS public.bcra_queries (
     id uuid default gen_random_uuid() primary key,
     cuit varchar(20) not null,
     query_type varchar(20) not null,
@@ -11,13 +11,13 @@ create table public.bcra_queries (
 alter table public.bcra_queries enable row level security;
 
 -- Políticas
-create policy "Los usuarios autenticados pueden ver todas las consultas"
-on public.bcra_queries for select
+DROP POLICY IF EXISTS "Los usuarios autenticados pueden ver todas las consultas" ON public.bcra_queries;
+CREATE POLICY "Los usuarios autenticados pueden ver todas las consultas" ON public.bcra_queries for select
 to authenticated
 using (true);
 
-create policy "Los usuarios autenticados pueden insertar consultas"
-on public.bcra_queries for insert
+DROP POLICY IF EXISTS "Los usuarios autenticados pueden insertar consultas" ON public.bcra_queries;
+CREATE POLICY "Los usuarios autenticados pueden insertar consultas" ON public.bcra_queries for insert
 to authenticated
 with check (true);
 

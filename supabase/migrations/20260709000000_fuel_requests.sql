@@ -20,16 +20,20 @@ ON CONFLICT (id) DO NOTHING;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public Access fuel_tickets') THEN
-    CREATE POLICY "Public Access fuel_tickets" ON storage.objects FOR SELECT USING (bucket_id = 'fuel_tickets');
+    DROP POLICY IF EXISTS "Public Access fuel_tickets" ON storage.objects;
+CREATE POLICY "Public Access fuel_tickets" ON storage.objects FOR SELECT USING (bucket_id = 'fuel_tickets');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Auth Insert fuel_tickets') THEN
-    CREATE POLICY "Auth Insert fuel_tickets" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
+    DROP POLICY IF EXISTS "Auth Insert fuel_tickets" ON storage.objects;
+CREATE POLICY "Auth Insert fuel_tickets" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Auth Update fuel_tickets') THEN
-    CREATE POLICY "Auth Update fuel_tickets" ON storage.objects FOR UPDATE WITH CHECK (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
+    DROP POLICY IF EXISTS "Auth Update fuel_tickets" ON storage.objects;
+CREATE POLICY "Auth Update fuel_tickets" ON storage.objects FOR UPDATE WITH CHECK (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Auth Delete fuel_tickets') THEN
-    CREATE POLICY "Auth Delete fuel_tickets" ON storage.objects FOR DELETE USING (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
+    DROP POLICY IF EXISTS "Auth Delete fuel_tickets" ON storage.objects;
+CREATE POLICY "Auth Delete fuel_tickets" ON storage.objects FOR DELETE USING (bucket_id = 'fuel_tickets' AND auth.role() = 'authenticated');
   END IF;
 END
 $$;

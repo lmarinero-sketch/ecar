@@ -75,9 +75,13 @@ ALTER TABLE employee_advances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salary_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_tasks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all for authenticated" ON employee_absences;
 CREATE POLICY "Allow all for authenticated" ON employee_absences FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for authenticated" ON employee_advances;
 CREATE POLICY "Allow all for authenticated" ON employee_advances FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for authenticated" ON salary_history;
 CREATE POLICY "Allow all for authenticated" ON salary_history FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for authenticated" ON daily_tasks;
 CREATE POLICY "Allow all for authenticated" ON daily_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- 7. Indexes

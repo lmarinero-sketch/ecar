@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS public.weekly_payments (
 
 ALTER TABLE public.weekly_payments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable ALL for authenticated users on weekly_payments" 
-ON public.weekly_payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable ALL for authenticated users on weekly_payments" ON public.weekly_payments;
+CREATE POLICY "Enable ALL for authenticated users on weekly_payments" ON public.weekly_payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 CREATE TABLE IF NOT EXISTS public.weekly_payment_items (
   id uuid primary key default uuid_generate_v4(),
@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS public.weekly_payment_items (
 
 ALTER TABLE public.weekly_payment_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable ALL for authenticated users on weekly_payment_items" 
-ON public.weekly_payment_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Enable ALL for authenticated users on weekly_payment_items" ON public.weekly_payment_items;
+CREATE POLICY "Enable ALL for authenticated users on weekly_payment_items" ON public.weekly_payment_items FOR ALL TO authenticated USING (true) WITH CHECK (true);

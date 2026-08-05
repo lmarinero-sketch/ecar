@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS vehicle_tracking_sessions (
 );
 
 -- Solo puede haber una sesión activa por vehículo a la vez
-CREATE UNIQUE INDEX idx_unique_active_session ON vehicle_tracking_sessions(vehicle_id) WHERE is_active = true;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_session ON vehicle_tracking_sessions(vehicle_id) WHERE is_active = true;
 
 -- ═══════════════ 2. PUNTOS HISTÓRICOS ═══════════════
 CREATE TABLE IF NOT EXISTS vehicle_tracking_points (
@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS vehicle_tracking_points (
 );
 
 -- Índices para optimizar consultas de históricos
-CREATE INDEX idx_tracking_points_session ON vehicle_tracking_points(session_id, recorded_at DESC);
-CREATE INDEX idx_tracking_points_vehicle ON vehicle_tracking_points(vehicle_id, recorded_at DESC);
-CREATE INDEX idx_tracking_sessions_active ON vehicle_tracking_sessions(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_tracking_points_session ON vehicle_tracking_points(session_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tracking_points_vehicle ON vehicle_tracking_points(vehicle_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tracking_sessions_active ON vehicle_tracking_sessions(is_active) WHERE is_active = true;
 
 -- ═══════════════ 3. RLS POLICIES ═══════════════
 
@@ -49,18 +49,27 @@ ALTER TABLE vehicle_tracking_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicle_tracking_points ENABLE ROW LEVEL SECURITY;
 
 -- Permitir lectura general y anónima
+DROP POLICY IF EXISTS "allow_authenticated_read" ON vehicle_tracking_sessions;
 CREATE POLICY "allow_authenticated_read" ON vehicle_tracking_sessions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "allow_anon_read" ON vehicle_tracking_sessions;
 CREATE POLICY "allow_anon_read" ON vehicle_tracking_sessions FOR SELECT TO anon USING (true);
+DROP POLICY IF EXISTS "allow_authenticated_read" ON vehicle_tracking_points;
 CREATE POLICY "allow_authenticated_read" ON vehicle_tracking_points FOR SELECT USING (true);
+DROP POLICY IF EXISTS "allow_anon_read" ON vehicle_tracking_points;
 CREATE POLICY "allow_anon_read" ON vehicle_tracking_points FOR SELECT TO anon USING (true);
 
 -- Permitir inserts y updates al rol anónimo (usado por el PWA sin login)
+DROP POLICY IF EXISTS "allow_anon_insert" ON vehicle_tracking_sessions;
 CREATE POLICY "allow_anon_insert" ON vehicle_tracking_sessions FOR INSERT TO anon WITH CHECK (true);
+DROP POLICY IF EXISTS "allow_anon_update" ON vehicle_tracking_sessions;
 CREATE POLICY "allow_anon_update" ON vehicle_tracking_sessions FOR UPDATE TO anon USING (true);
+DROP POLICY IF EXISTS "allow_anon_insert" ON vehicle_tracking_points;
 CREATE POLICY "allow_anon_insert" ON vehicle_tracking_points FOR INSERT TO anon WITH CHECK (true);
 
 -- Políticas RLS tradicionales con tenant isolation
+DROP POLICY IF EXISTS "tenant_isolation_all" ON vehicle_tracking_sessions;
 CREATE POLICY "tenant_isolation_all" ON vehicle_tracking_sessions FOR ALL USING (tenant_id = get_my_tenant_id());
+DROP POLICY IF EXISTS "tenant_isolation_all_pts" ON vehicle_tracking_points;
 CREATE POLICY "tenant_isolation_all_pts" ON vehicle_tracking_points FOR ALL USING (
   session_id IN (SELECT id FROM vehicle_tracking_sessions WHERE tenant_id = get_my_tenant_id())
 );

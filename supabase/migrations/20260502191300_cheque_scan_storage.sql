@@ -13,14 +13,14 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies: authenticated users can upload and read their own files
-CREATE POLICY "tenant_upload_cheque_scans"
-  ON storage.objects FOR INSERT
+DROP POLICY IF EXISTS "tenant_upload_cheque_scans" ON storage.objects;
+CREATE POLICY "tenant_upload_cheque_scans" ON storage.objects FOR INSERT
   WITH CHECK (bucket_id = 'cheque-scans' AND auth.role() = 'authenticated');
 
-CREATE POLICY "tenant_read_cheque_scans"
-  ON storage.objects FOR SELECT
+DROP POLICY IF EXISTS "tenant_read_cheque_scans" ON storage.objects;
+CREATE POLICY "tenant_read_cheque_scans" ON storage.objects FOR SELECT
   USING (bucket_id = 'cheque-scans' AND auth.role() = 'authenticated');
 
-CREATE POLICY "tenant_delete_cheque_scans"
-  ON storage.objects FOR DELETE
+DROP POLICY IF EXISTS "tenant_delete_cheque_scans" ON storage.objects;
+CREATE POLICY "tenant_delete_cheque_scans" ON storage.objects FOR DELETE
   USING (bucket_id = 'cheque-scans' AND auth.role() = 'authenticated');

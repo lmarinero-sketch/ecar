@@ -13,14 +13,14 @@ create table if not exists public.audit_logs (
 -- RLS
 alter table public.audit_logs enable row level security;
 
-create policy "Users can view audit logs for their tenant"
-    on public.audit_logs for select
+DROP POLICY IF EXISTS "Users can view audit logs for their tenant" ON public.audit_logs;
+CREATE POLICY "Users can view audit logs for their tenant" ON public.audit_logs for select
     using (tenant_id = (select auth.jwt() ->> 'tenant_id')::uuid or tenant_id = '48408cf5-c1fa-40c2-9e9f-7bc6198fbc18');
 
-create policy "Users can insert audit logs for their tenant"
-    on public.audit_logs for insert
+DROP POLICY IF EXISTS "Users can insert audit logs for their tenant" ON public.audit_logs;
+CREATE POLICY "Users can insert audit logs for their tenant" ON public.audit_logs for insert
     with check (tenant_id = (select auth.jwt() ->> 'tenant_id')::uuid or tenant_id = '48408cf5-c1fa-40c2-9e9f-7bc6198fbc18');
 
 -- Index for querying
-create index idx_audit_logs_tenant on public.audit_logs(tenant_id);
-create index idx_audit_logs_created_at on public.audit_logs(created_at desc);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON public.audit_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at desc);

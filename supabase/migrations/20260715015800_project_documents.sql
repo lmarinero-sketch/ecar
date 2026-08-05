@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS project_documents (
 CREATE INDEX IF NOT EXISTS idx_project_documents_project ON project_documents(project_id);
 
 ALTER TABLE project_documents ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "project_documents_all" ON project_documents;
 CREATE POLICY "project_documents_all" ON project_documents FOR ALL USING (true) WITH CHECK (true);
 
 -- Ensure a bucket exists for project-documents
@@ -21,7 +22,11 @@ VALUES ('project-documents', 'project-documents', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS para storage
+DROP POLICY IF EXISTS "project_documents_select" ON storage.objects;
 CREATE POLICY "project_documents_select" ON storage.objects FOR SELECT USING (bucket_id = 'project-documents');
+DROP POLICY IF EXISTS "project_documents_insert" ON storage.objects;
 CREATE POLICY "project_documents_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'project-documents');
+DROP POLICY IF EXISTS "project_documents_update" ON storage.objects;
 CREATE POLICY "project_documents_update" ON storage.objects FOR UPDATE USING (bucket_id = 'project-documents');
+DROP POLICY IF EXISTS "project_documents_delete" ON storage.objects;
 CREATE POLICY "project_documents_delete" ON storage.objects FOR DELETE USING (bucket_id = 'project-documents');

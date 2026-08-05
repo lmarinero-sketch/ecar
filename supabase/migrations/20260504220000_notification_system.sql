@@ -46,8 +46,11 @@ ALTER TABLE notification_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all for authenticated" ON notification_contacts;
 CREATE POLICY "Allow all for authenticated" ON notification_contacts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for authenticated" ON notification_reminders;
 CREATE POLICY "Allow all for authenticated" ON notification_reminders FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all for authenticated" ON notification_log;
 CREATE POLICY "Allow all for authenticated" ON notification_log FOR ALL USING (true) WITH CHECK (true);
 
 -- Indexes

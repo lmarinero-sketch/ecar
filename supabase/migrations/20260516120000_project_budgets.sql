@@ -113,9 +113,15 @@ ALTER TABLE budget_apu ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_apu_components ENABLE ROW LEVEL SECURITY;
 
 -- Policies (full access for authenticated users within their tenant)
+DROP POLICY IF EXISTS "budget_resources_all" ON budget_resources;
 CREATE POLICY "budget_resources_all" ON budget_resources FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "budgets_all" ON budgets;
 CREATE POLICY "budgets_all" ON budgets FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "budget_sections_all" ON budget_sections;
 CREATE POLICY "budget_sections_all" ON budget_sections FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "budget_items_all" ON budget_items;
 CREATE POLICY "budget_items_all" ON budget_items FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "budget_apu_all" ON budget_apu;
 CREATE POLICY "budget_apu_all" ON budget_apu FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "budget_apu_components_all" ON budget_apu_components;
 CREATE POLICY "budget_apu_components_all" ON budget_apu_components FOR ALL USING (true) WITH CHECK (true);

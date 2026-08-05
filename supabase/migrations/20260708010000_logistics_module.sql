@@ -58,31 +58,43 @@ ALTER TABLE logistics_delivery_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE logistics_maintenance_log ENABLE ROW LEVEL SECURITY;
 
 -- logistics_deliveries
+DROP POLICY IF EXISTS "logistics_deliveries_select" ON logistics_deliveries;
 CREATE POLICY "logistics_deliveries_select" ON logistics_deliveries
   FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "logistics_deliveries_insert" ON logistics_deliveries;
 CREATE POLICY "logistics_deliveries_insert" ON logistics_deliveries
   FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_deliveries_update" ON logistics_deliveries;
 CREATE POLICY "logistics_deliveries_update" ON logistics_deliveries
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_deliveries_delete" ON logistics_deliveries;
 CREATE POLICY "logistics_deliveries_delete" ON logistics_deliveries
   FOR DELETE TO authenticated USING (true);
 
 -- logistics_delivery_items
+DROP POLICY IF EXISTS "logistics_delivery_items_select" ON logistics_delivery_items;
 CREATE POLICY "logistics_delivery_items_select" ON logistics_delivery_items
   FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "logistics_delivery_items_insert" ON logistics_delivery_items;
 CREATE POLICY "logistics_delivery_items_insert" ON logistics_delivery_items
   FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_delivery_items_update" ON logistics_delivery_items;
 CREATE POLICY "logistics_delivery_items_update" ON logistics_delivery_items
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_delivery_items_delete" ON logistics_delivery_items;
 CREATE POLICY "logistics_delivery_items_delete" ON logistics_delivery_items
   FOR DELETE TO authenticated USING (true);
 
 -- logistics_maintenance_log
+DROP POLICY IF EXISTS "logistics_maintenance_log_select" ON logistics_maintenance_log;
 CREATE POLICY "logistics_maintenance_log_select" ON logistics_maintenance_log
   FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "logistics_maintenance_log_insert" ON logistics_maintenance_log;
 CREATE POLICY "logistics_maintenance_log_insert" ON logistics_maintenance_log
   FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_maintenance_log_update" ON logistics_maintenance_log;
 CREATE POLICY "logistics_maintenance_log_update" ON logistics_maintenance_log
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "logistics_maintenance_log_delete" ON logistics_maintenance_log;
 CREATE POLICY "logistics_maintenance_log_delete" ON logistics_maintenance_log
   FOR DELETE TO authenticated USING (true);
