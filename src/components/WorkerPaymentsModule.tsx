@@ -17,7 +17,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
 
 function formatARS(v: number) {
-  return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (v === undefined || v === null || isNaN(v)) return '$ 0';
+  return `$ ${v.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function formatCurrency(v: number | string | null | undefined): string {
+  if (v === null || v === undefined || v === '') return '';
+  const num = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^\d.,-]/g, '').replace(',', '.'));
+  if (isNaN(num)) return String(v);
+  return `$ ${num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -680,8 +688,8 @@ const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = (
 // INLINE EDITABLE CELL
 // ═══════════════════════════════════════════════════════════════════
 const EditableCell: React.FC<{
-  value: string; field: string; employeeId: string; updateEmployee: any; className?: string; isMono?: boolean;
-}> = ({ value, field, employeeId, updateEmployee, className = '', isMono = false }) => {
+  value: string; field: string; employeeId: string; updateEmployee: any; className?: string; isMono?: boolean; displayValue?: string;
+}> = ({ value, field, employeeId, updateEmployee, className = '', isMono = false, displayValue }) => {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(value || '');
 
@@ -704,10 +712,12 @@ const EditableCell: React.FC<{
     );
   }
 
+  const textToDisplay = displayValue !== undefined ? displayValue : (value || '');
+
   return (
     <div className={`group/cell cursor-pointer hover:bg-amber-50 rounded px-1 py-0.5 transition-colors flex items-center gap-1 ${className}`}
       onClick={() => { setEditValue(value || ''); setEditing(true); }} title="Clic para editar">
-      <span className={`${isMono ? 'font-mono' : ''} ${!value ? 'text-gray-300 italic' : ''}`}>{value || 'Sin dato'}</span>
+      <span className={`${isMono ? 'font-mono' : ''} ${!textToDisplay ? 'text-gray-300 italic' : ''}`}>{textToDisplay || 'Sin dato'}</span>
       <Edit2 size={10} className="text-gray-300 opacity-0 group-hover/cell:opacity-100 transition-opacity shrink-0" />
     </div>
   );
@@ -898,7 +908,15 @@ export const WorkerPaymentsModule: React.FC = () => {
                           </td>
                           <td className="px-3 py-2.5 text-center text-xs text-gray-600 uppercase">{emp.full_name}</td>
                           <td className="px-3 py-2.5 text-right text-gray-900">
-                            <EditableCell value={emp.retribucion_pactada ? String(emp.retribucion_pactada) : ''} field="retribucion_pactada" employeeId={emp.id} updateEmployee={updateEmployee} isMono className="justify-end font-bold" />
+                            <EditableCell
+                              value={emp.retribucion_pactada ? String(emp.retribucion_pactada) : ''}
+                              displayValue={emp.retribucion_pactada ? formatCurrency(emp.retribucion_pactada) : ''}
+                              field="retribucion_pactada"
+                              employeeId={emp.id}
+                              updateEmployee={updateEmployee}
+                              isMono
+                              className="justify-end font-bold text-gray-900"
+                            />
                           </td>
                           <td className="px-3 py-2.5 text-center">
                             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${st.cls}`}>{st.text}</span>

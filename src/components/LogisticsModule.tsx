@@ -13,6 +13,8 @@ import {
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
+import { createPortal } from 'react-dom';
+import { exportDispatchPdf } from '../lib/orderPdfExport';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 
 type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
@@ -184,7 +186,13 @@ export const LogisticsModule: React.FC = () => {
           <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
         )}
         {activeTab === 'obra_requests' && (
-          <ObraRequestsTab requests={obraRequests} updateRequest={updatePurchaseRequest} />
+          <ObraRequestsTab
+            requests={obraRequests}
+            updateRequest={updatePurchaseRequest}
+            employees={employees}
+            allVehicles={allVehicles}
+            onGoToDeliveries={() => setActiveTab('deliveries')}
+          />
         )}
         {activeTab === 'deliveries' && (
           <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} employees={employees} />
@@ -199,10 +207,26 @@ export const LogisticsModule: React.FC = () => {
 
 /* ═══════════════════════ OBRA REQUESTS TAB ═══════════════════════ */
 
-const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ requests, updateRequest }) => {
+const ObraRequestsTab: React.FC<{
+  requests: any[];
+  updateRequest: any;
+  employees: any[];
+  allVehicles: any[];
+  onGoToDeliveries: () => void;
+}> = ({ requests, updateRequest, employees, allVehicles, onGoToDeliveries }) => {
   const { setActiveModule } = useAppStore();
+  const { profile } = useAuth();
+  const createDelivery = useCreateLogisticsDelivery();
   const pending = requests.filter(r => r.status === 'pending');
   const processed = requests.filter(r => r.status !== 'pending');
+
+  const [dispatchModalReq, setDispatchModalReq] = useState<any | null>(null);
+  const [dispatchItemsState, setDispatchItemsState] = useState<Record<string, { quantity_sent: number; notes: string }>>({});
+  const [dispatchedBy, setDispatchedBy] = useState('');
+  const [dispatchDriverName, setDispatchDriverName] = useState('');
+  const [dispatchVehicleId, setDispatchVehicleId] = useState('');
+  const [dispatchDate, setDispatchDate] = useState(today());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleDeriveToPurchases = async (reqId: string) => {
     if (confirm('¿Derivar este pedido a Compras de forma definitiva?')) {
@@ -210,9 +234,71 @@ const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ re
     }
   };
 
-  const handleMarkAsResolved = async (reqId: string) => {
-    if (confirm('¿Marcar como resuelto? (Ej: Ya despachaste el material del pañol)')) {
-      await updateRequest.mutateAsync({ id: reqId, status: 'approved' });
+  const openDispatchModal = (req: any) => {
+    const initial: Record<string, { quantity_sent: number; notes: string }> = {};
+    (req.items || []).forEach((it: any) => {
+      initial[it.id] = {
+        quantity_sent: it.quantity_sent !== undefined && it.quantity_sent !== null ? it.quantity_sent : it.quantity,
+        notes: it.dispatch_notes || ''
+      };
+    });
+    setDispatchItemsState(initial);
+    setDispatchedBy(profile?.full_name || 'Pañol Central');
+    setDispatchDriverName('');
+    setDispatchVehicleId('');
+    setDispatchDate(today());
+    setDispatchModalReq(req);
+  };
+
+  const handleConfirmDispatch = async () => {
+    if (!dispatchModalReq) return;
+    setIsSubmitting(true);
+    try {
+      // 1. Update purchase request status to 'ordered'
+      await updateRequest.mutateAsync({
+        id: dispatchModalReq.id,
+        status: 'ordered',
+        dispatched_by: dispatchedBy,
+        dispatched_at: new Date().toISOString()
+      });
+
+      // 2. Auto-create logistics delivery
+      const itemsSent = (dispatchModalReq.items || []).map((it: any) => ({
+        description: it.description,
+        quantity: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
+        unit: it.unit || 'un'
+      })).filter((i: any) => i.quantity > 0);
+
+      await createDelivery.mutateAsync({
+        project_id: dispatchModalReq.project_id || null,
+        vehicle_id: dispatchVehicleId || null,
+        driver_name: dispatchDriverName || null,
+        delivery_date: dispatchDate || today(),
+        status: 'en_transito',
+        notes: `Despacho de Pedido PED-${dispatchModalReq.id.slice(0, 8).toUpperCase()}`,
+        items: itemsSent
+      } as any);
+
+      // 3. Export PDF
+      const updatedReq = {
+        ...dispatchModalReq,
+        dispatched_by: dispatchedBy,
+        dispatched_at: new Date().toISOString(),
+        status: 'ordered',
+        items: (dispatchModalReq.items || []).map((it: any) => ({
+          ...it,
+          quantity_sent: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
+          dispatch_notes: dispatchItemsState[it.id]?.notes
+        }))
+      };
+      await exportDispatchPdf(updatedReq as any);
+
+      setDispatchModalReq(null);
+      onGoToDeliveries();
+    } catch (err: any) {
+      alert(`Error al declarar despacho: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -247,7 +333,7 @@ const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ re
             <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start">
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                  Obra: <span className="text-ecar-blue">{r.project?.name || 'S/D'}</span>
+                  Obra: <span className="text-ecar-blue font-semibold">{r.project?.name || 'S/D'}</span>
                 </p>
                 <div className="space-y-2 mt-3">
                   {r.items?.map((it: any, i: number) => (
@@ -260,11 +346,11 @@ const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ re
                 {r.notes && <p className="text-xs text-gray-500 mt-3 italic text-orange-600 bg-orange-50 p-2 rounded">Nota: {r.notes}</p>}
                 {r.urgency === 'urgent' && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold mt-2"><AlertTriangle size={12} /> Urgente</span>}
               </div>
-              <div className="flex flex-col gap-2 min-w-[200px] w-full md:w-auto">
-                <button onClick={() => handleMarkAsResolved(r.id)} className="btn-primary flex items-center justify-center gap-2 w-full">
-                  <CheckCircle2 size={16} /> Resolver con Stock (Pañol)
+              <div className="flex flex-col gap-2 min-w-[220px] w-full md:w-auto">
+                <button onClick={() => openDispatchModal(r)} className="px-3.5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+                  <Truck size={16} /> Declarar Despacho / Pañol
                 </button>
-                <button onClick={() => handleDeriveToPurchases(r.id)} className="bg-white border-2 border-ecar-blue text-ecar-blue hover:bg-ecar-blue hover:text-white px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full">
+                <button onClick={() => handleDeriveToPurchases(r.id)} className="bg-white border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
                   <ShoppingCart size={16} /> Derivar a Compras
                 </button>
               </div>
@@ -286,6 +372,137 @@ const ObraRequestsTab: React.FC<{ requests: any[]; updateRequest: any }> = ({ re
             ))}
           </div>
         </div>
+      )}
+
+      {/* Dispatch Modal inside Logistics */}
+      {dispatchModalReq && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100 relative">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div>
+                <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Declaración de Despacho desde Pañol</span>
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mt-0.5">
+                  <Truck size={20} className="text-sky-600" /> Pedido PED-{dispatchModalReq.id.slice(0, 8).toUpperCase()}
+                </h3>
+              </div>
+              <button onClick={() => setDispatchModalReq(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Pañolero Despachante</label>
+                  <input
+                    type="text"
+                    value={dispatchedBy}
+                    onChange={e => setDispatchedBy(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                    placeholder="Nombre de pañolero"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Chofer / Responsable</label>
+                  <select
+                    value={dispatchDriverName}
+                    onChange={e => setDispatchDriverName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                  >
+                    <option value="">— Seleccionar chofer —</option>
+                    {employees.filter(e => e.status === 'active').map(e => (
+                      <option key={e.id} value={e.full_name}>{e.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Vehículo Asignado</label>
+                  <select
+                    value={dispatchVehicleId}
+                    onChange={e => setDispatchVehicleId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                  >
+                    <option value="">— Seleccionar vehículo —</option>
+                    {allVehicles.filter(v => v.status === 'active').map(v => (
+                      <option key={v.id} value={v.id}>{v.code} - {v.description} {v.plate ? `(${v.plate})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-2">Conformación de Materiales Despachados</label>
+                <div className="space-y-3">
+                  {(dispatchModalReq.items || []).map((it: any) => {
+                    const current = dispatchItemsState[it.id] || { quantity_sent: it.quantity, notes: '' };
+                    const isPartial = current.quantity_sent < it.quantity;
+
+                    return (
+                      <div key={it.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-bold text-gray-800 text-sm">{it.description}</span>
+                          <span className="text-xs text-gray-500">Solicitado: <strong className="text-gray-800">{it.quantity} {it.unit}</strong></span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="text-[11px] font-bold text-sky-700 block mb-1">Cantidad a Enviar ({it.unit})</label>
+                            <input
+                              type="number"
+                              step="any"
+                              value={current.quantity_sent}
+                              onChange={e => setDispatchItemsState({
+                                ...dispatchItemsState,
+                                [it.id]: { ...current, quantity_sent: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full px-3 py-1.5 border border-sky-300 rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-sky-500/30"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-500 block mb-1">Observación de Despacho (Opcional)</label>
+                            <input
+                              type="text"
+                              value={current.notes}
+                              onChange={e => setDispatchItemsState({
+                                ...dispatchItemsState,
+                                [it.id]: { ...current, notes: e.target.value }
+                              })}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
+                              placeholder="Ej: Stock parcial en pañol..."
+                            />
+                          </div>
+                        </div>
+
+                        {isPartial && (
+                          <p className="text-[11px] text-amber-700 font-bold bg-amber-50 p-2 rounded-lg border border-amber-200 flex items-center gap-1.5">
+                            <AlertTriangle size={13} /> Faltan {it.quantity - current.quantity_sent} {it.unit} por cubrir. El saldo faltante quedará registrado.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setDispatchModalReq(null)}
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDispatch}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Confirmando...' : '📄 Confirmar Despacho & Generar Remito PDF'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -428,18 +645,12 @@ const DeliveriesTab: React.FC<{
   allVehicles: FuelVehicle[];
   inventoryItems: any[];
   employees: any[];
-}> = ({ deliveries, loading, projects, allVehicles, inventoryItems, employees }) => {
-  const [showForm, setShowForm] = useState(false);
+}> = ({ deliveries, loading, inventoryItems }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
-  const createDelivery = useCreateLogisticsDelivery();
   const updateDelivery = useUpdateLogisticsDelivery();
   const { profile } = useAuth();
 
-  const [form, setForm] = useState({
-    project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '',
-    items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] as { item_id: string; description: string; quantity: number; unit: string }[],
-  });
   const [receivingDelivery, setReceivingDelivery] = useState<any>(null);
   const [checklistValues, setChecklistValues] = useState<Record<string, number>>({});
   const updateItem = useUpdateInventoryItem();
@@ -459,40 +670,6 @@ const DeliveriesTab: React.FC<{
     return list;
   }, [deliveries, filterStatus, search]);
 
-  const handleSubmit = async () => {
-    if (!form.delivery_date || form.items.filter(i => i.description.trim()).length === 0) return;
-    
-    // Check total amount > 300,000
-    const validItems = form.items.filter(i => i.description.trim());
-    let totalCost = 0;
-    validItems.forEach(i => {
-      const inv = inventoryItems.find((inv: any) => inv.id === i.item_id);
-      if (inv) {
-        totalCost += (inv.unit_cost || 0) * i.quantity;
-      }
-    });
-    
-    const initialStatus = totalCost > 300000 ? 'pendiente_autorizacion' : 'pendiente_autorizacion';
-
-    await createDelivery.mutateAsync({
-      project_id: form.project_id || null,
-      vehicle_id: form.vehicle_id || null,
-      delivery_date: form.delivery_date,
-      driver_name: form.driver_name || null,
-      destination: form.destination || null,
-      notes: form.notes || null,
-      created_by: profile?.full_name || null,
-      status: initialStatus,
-      items: validItems.map(i => ({
-        description: i.description,
-        quantity: i.quantity,
-        unit: i.unit,
-      })),
-    } as any);
-    setForm({ project_id: '', vehicle_id: '', delivery_date: today(), driver_name: '', destination: '', notes: '', items: [{ item_id: '', description: '', quantity: 1, unit: 'u' }] });
-    setShowForm(false);
-  };
-
   const changeStatus = async (id: string, status: string, reason?: string) => {
     await updateDelivery.mutateAsync({ id, status, rejection_reason: reason || null } as any);
   };
@@ -503,7 +680,6 @@ const DeliveriesTab: React.FC<{
     let isPartial = false;
     let missingNotes = [];
 
-    // Descontar inventario para cada ítem de la entrega basado en lo realmente recibido
     for (const dItem of receivingDelivery.items || []) {
       const receivedQty = checklistValues[dItem.id] || 0;
       if (receivedQty < dItem.quantity) {
@@ -540,143 +716,29 @@ const DeliveriesTab: React.FC<{
   return (
     <div className="p-4 md:p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Logística y Entregas</h3>
+        <div>
+          <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Trazabilidad de Entregas y Envíos</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Control de despachos en camino, choferes asignados y entregas confirmadas en obra.</p>
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="pl-8 pr-3 py-2 border rounded-lg text-sm w-40"
+              placeholder="Buscar obra, chofer..."
+              className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm w-48 outline-none focus:ring-2 focus:ring-ecar-blue/20"
             />
           </div>
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded-lg text-sm px-3 py-2">
-            <option value="all">Todos</option>
-            <option value="pendiente">Pendientes Grales</option>
-            <option value="pendiente_autorizacion">Pendientes Aut.</option>
-            <option value="aprobado">Aprobados</option>
-            <option value="en_transito">En Tránsito</option>
-            <option value="entregado">Entregados</option>
-            <option value="rechazado">Rechazados</option>
-            <option value="cancelado">Cancelados</option>
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 rounded-xl text-sm px-3 py-2 outline-none font-medium">
+            <option value="all">Todos los estados</option>
+            <option value="en_transito">🚚 En Tránsito / En Camino</option>
+            <option value="pendiente">🔵 Pendientes</option>
+            <option value="entregado">✅ Entregados en Obra</option>
+            <option value="cancelado">❌ Cancelados</option>
           </select>
-          <button onClick={() => setShowForm(!showForm)} className="btn-primary">
-            <Plus size={16} /> Nueva Entrega
-          </button>
         </div>
       </div>
-
-      {/* New Delivery Form */}
-      {showForm && (
-        <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 md:p-6 mb-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h4 className="font-bold text-ecar-blueDark text-sm">Programar Entrega a Obra</h4>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Obra destino</label>
-              <select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="">— Seleccionar obra —</option>
-                {projects.filter((p: any) => p.status === 'active').map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Fecha de entrega</label>
-              <input type="date" value={form.delivery_date} onChange={e => setForm({ ...form, delivery_date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Chofer / Responsable</label>
-              <select value={form.driver_name} onChange={e => setForm({ ...form, driver_name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="">— Seleccionar chofer —</option>
-                {employees.filter(e => e.status === 'active').map(e => (
-                  <option key={e.id} value={e.full_name}>{e.full_name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Vehículo</label>
-              <select value={form.vehicle_id} onChange={e => setForm({ ...form, vehicle_id: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="">— Seleccionar vehículo —</option>
-                {allVehicles.filter(v => v.status === 'active').map(v => (
-                  <option key={v.id} value={v.id}>{v.code} - {v.description} {v.plate ? `(${v.plate})` : ''}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Destino (si no es obra)</label>
-              <input value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} placeholder="Ej: Depósito zona norte" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Notas</label>
-              <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Observaciones" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
-
-          {/* Items */}
-          <div>
-            <label className="text-xs font-bold text-gray-600 block mb-2">Materiales / Herramientas a enviar</label>
-            {form.items.map((item, idx) => (
-              <div key={idx} className="flex gap-2 mb-2 items-center">
-                <select
-                  value={item.item_id}
-                  onChange={e => {
-                    const items = [...form.items];
-                    const selectedId = e.target.value;
-                    if (selectedId === '__manual__') {
-                      items[idx] = { ...items[idx], item_id: '__manual__', description: '', unit: 'u' };
-                    } else if (selectedId) {
-                      const inv = inventoryItems.find((i: any) => i.id === selectedId);
-                      items[idx] = { ...items[idx], item_id: selectedId, description: inv?.name || '', unit: inv?.unit || 'u' };
-                    } else {
-                      items[idx] = { ...items[idx], item_id: '', description: '', unit: 'u' };
-                    }
-                    setForm({ ...form, items });
-                  }}
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="">— Seleccionar material —</option>
-                  {inventoryItems.map((inv: any) => (
-                    <option key={inv.id} value={inv.id}>{inv.name} ({inv.unit}) — Stock: {inv.current_stock}</option>
-                  ))}
-                  <option value="__manual__">✏️ Otro (ingreso manual)</option>
-                </select>
-                {item.item_id === '__manual__' && (
-                  <input
-                    value={item.description}
-                    onChange={e => { const items = [...form.items]; items[idx].description = e.target.value; setForm({ ...form, items }); }}
-                    placeholder="Descripción manual"
-                    className="flex-1 border rounded-lg px-3 py-2 text-sm"
-                  />
-                )}
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={e => { const items = [...form.items]; items[idx].quantity = Number(e.target.value); setForm({ ...form, items }); }}
-                  className="w-20 border rounded-lg px-3 py-2 text-sm text-center"
-                  min={1}
-                />
-                <span className="text-xs text-gray-500 w-10 text-center font-bold">{item.unit}</span>
-                {form.items.length > 1 && (
-                  <button onClick={() => { const items = form.items.filter((_, i) => i !== idx); setForm({ ...form, items }); }} className="text-red-400 hover:text-red-600"><X size={16} /></button>
-                )}
-              </div>
-            ))}
-            <button onClick={() => setForm({ ...form, items: [...form.items, { item_id: '', description: '', quantity: 1, unit: 'u' }] })} className="text-ecar-blue text-xs font-bold hover:underline flex items-center gap-1 mt-1">
-              <Plus size={14} /> Agregar ítem
-            </button>
-          </div>
-
-          <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createDelivery.isPending} className="btn-primary px-6 disabled:opacity-50">
-              <Save size={16} /> {createDelivery.isPending ? 'Guardando...' : 'Programar Entrega'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Table */}
       {loading ? (

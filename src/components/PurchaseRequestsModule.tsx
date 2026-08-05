@@ -8,7 +8,8 @@ import {
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
   useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems,
-  useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder, useDeletePurchaseRequest
+  useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder, useDeletePurchaseRequest,
+  useEmployees, useAllFuelVehicles, useCreateLogisticsDelivery
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
@@ -71,11 +72,17 @@ export const PurchaseRequestsModule: React.FC = () => {
   const updateQuoteItems = useUpdatePurchaseRequestItems();
   const dispatchMutation = useDispatchPurchaseRequest();
   const receiveMutation = useReceivePurchaseRequest();
+  const createLogisticsDelivery = useCreateLogisticsDelivery();
+  const { data: employees = [] } = useEmployees();
+  const { data: allVehicles = [] } = useAllFuelVehicles();
 
   // Modals for 3-way tracking
   const [dispatchModalReq, setDispatchModalReq] = useState<PurchaseRequest | null>(null);
   const [dispatchItemsState, setDispatchItemsState] = useState<Record<string, { quantity_sent: number; notes: string }>>({});
   const [dispatchedBy, setDispatchedBy] = useState('');
+  const [dispatchDriverName, setDispatchDriverName] = useState('');
+  const [dispatchVehicleId, setDispatchVehicleId] = useState('');
+  const [dispatchDate, setDispatchDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [receptionModalReq, setReceptionModalReq] = useState<PurchaseRequest | null>(null);
   const [viewFlowReq, setViewFlowReq] = useState<PurchaseRequest | null>(null);
@@ -95,6 +102,9 @@ export const PurchaseRequestsModule: React.FC = () => {
     });
     setDispatchItemsState(initial);
     setDispatchedBy(userName || 'Pañol Central');
+    setDispatchDriverName('');
+    setDispatchVehicleId('');
+    setDispatchDate(new Date().toISOString().split('T')[0]);
     setDispatchModalReq(req);
   };
 
@@ -111,6 +121,27 @@ export const PurchaseRequestsModule: React.FC = () => {
       dispatchedBy,
       items
     });
+
+    // Auto-create logistics delivery for tracking
+    try {
+      const itemsSent = (dispatchModalReq.items || []).map((it: any) => ({
+        description: it.description,
+        quantity: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
+        unit: it.unit || 'un'
+      })).filter(i => i.quantity > 0);
+
+      await createLogisticsDelivery.mutateAsync({
+        project_id: dispatchModalReq.project_id || null,
+        vehicle_id: dispatchVehicleId || null,
+        driver_name: dispatchDriverName || null,
+        delivery_date: dispatchDate || new Date().toISOString().split('T')[0],
+        status: 'en_transito',
+        notes: `Despacho de Pedido PED-${dispatchModalReq.id.slice(0, 8).toUpperCase()}`,
+        items: itemsSent
+      } as any);
+    } catch (e) {
+      console.error('Error auto-creating delivery:', e);
+    }
 
     const updatedReq: PurchaseRequest = {
       ...dispatchModalReq,
@@ -807,15 +838,43 @@ export const PurchaseRequestsModule: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Responsable Despachante (Pañol Central)</label>
-                <input
-                  type="text"
-                  value={dispatchedBy}
-                  onChange={e => setDispatchedBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
-                  placeholder="Nombre de pañolero"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Pañolero Despachante</label>
+                  <input
+                    type="text"
+                    value={dispatchedBy}
+                    onChange={e => setDispatchedBy(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                    placeholder="Nombre de pañolero"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Chofer / Responsable</label>
+                  <select
+                    value={dispatchDriverName}
+                    onChange={e => setDispatchDriverName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                  >
+                    <option value="">— Seleccionar chofer —</option>
+                    {employees.map((e: any) => (
+                      <option key={e.id} value={e.full_name}>{e.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Vehículo Asignado</label>
+                  <select
+                    value={dispatchVehicleId}
+                    onChange={e => setDispatchVehicleId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
+                  >
+                    <option value="">— Seleccionar vehículo —</option>
+                    {allVehicles.filter(v => v.status === 'active').map(v => (
+                      <option key={v.id} value={v.id}>{v.code} - {v.description} {v.plate ? `(${v.plate})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
