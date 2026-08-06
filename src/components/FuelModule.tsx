@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import jsPDF from 'jspdf';
-import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
+import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
@@ -110,7 +110,7 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [form, setForm] = useState<Partial<FuelLoad>>(() => {
     const d = new Date();
     return {
@@ -124,6 +124,9 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ liters: number; price_per_liter: number; total_amount: number }>({ liters: 0, price_per_liter: 0, total_amount: 0 });
   const updateLoad = useUpdateFuelLoad();
+  const deleteLoad = useDeleteFuelLoad();
+  const userEmail = user?.email?.toLowerCase() || '';
+  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
 
   const handleVehicleCode = (code: string) => {
     const v = vehicles.find(x => x.code === code);
@@ -280,7 +283,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <th>ID</th><th>Fecha</th><th>Vehículo</th>
               <th>Patente</th><th>Litros</th><th>$/L</th>
               <th>Importe</th><th>Vale</th><th>Estado</th>
-              <th className="text-center">Editar</th>
+              <th className="text-center">Editar / Borrar</th>
             </tr>
           </thead>
           <tbody>
@@ -318,7 +321,19 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                       <button onClick={() => setEditingId(null)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all" title="Cancelar"><X size={14} /></button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar precio retroactivo"><Pencil size={14} /></button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar precio retroactivo"><Pencil size={14} /></button>
+                      {canDelete && (
+                        <button 
+                          onClick={() => { if (window.confirm('¿Seguro que deseás borrar esta carga?')) deleteLoad.mutateAsync(l.id); }} 
+                          disabled={deleteLoad.isPending}
+                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all" 
+                          title="Borrar carga"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </td>
               </tr>

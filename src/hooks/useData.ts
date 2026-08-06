@@ -2754,6 +2754,17 @@ export function useUpdateFuelLoad() {
   });
 }
 
+export function useDeleteFuelLoad() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('fuel_loads').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_loads'] }),
+  });
+}
+
 export function useFuelBatanMovements() {
   return useQuery({
     queryKey: ['fuel_batan_movements'],

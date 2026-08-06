@@ -168,6 +168,69 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Ofrecé explicar al usuario cómo usar cualquiera de las herramientas o módulos.
 - Explicá que la IA puede interpretar texto natural en español argentino.
 - Sugerí: "Puedo darte ejemplos de mensajes que le podés mandar al bot de WhatsApp" o "Preguntame sobre qué podés hacer en cualquiera de los módulos de ECAR" o "Probá activar el Modo Tutorial desde el header para obtener ayuda paso a paso".`,
+  
+  user_activity: `## CONTEXTO ACTUAL: El usuario está en Actividad de Usuarios
+- Este módulo permite auditar quién se conectó, qué páginas visitó y qué acciones realizó.
+- Solo es visible para administradores.
+- Sugerí: "¿Querés saber cuáles son los módulos más usados?" o "Puedo ayudarte a revisar la actividad de un usuario en particular."`,
+
+  scope_changes: `## CONTEXTO ACTUAL: El usuario está en Adicionales de Obra
+- Gestión de cambios de alcance que impactan el presupuesto o el cronograma.
+- Cada adicional tiene justificación, monto, días extra y estado de aprobación.
+- Ayudalo a entender el impacto de los adicionales abiertos.
+- Sugerí: "¿Querés que veamos los adicionales pendientes de aprobación?"`,
+
+  quality: `## CONTEXTO ACTUAL: El usuario está en Calidad (Checklists)
+- Se manejan los protocolos y checklists de calidad (hormigonado, zanjas, etc.).
+- Permite verificar el estándar constructivo y reportar desvíos a través de NCs o punch lists.
+- Sugerí: "¿Querés revisar los protocolos de calidad que tienen desvíos reportados?"`,
+
+  worker_payments: `## CONTEXTO ACTUAL: El usuario está en Pagos a Trabajadores
+- Centraliza los datos bancarios y montos de referencia para pago de quincenas al personal de obra.
+- Sugerí: "¿Querés ver las métricas de gasto mensual en pagos a trabajadores?"`,
+
+  payments: `## CONTEXTO ACTUAL: El usuario está en Control de Pagos Semanales
+- Planilla para organizar los egresos por transferencias de la semana.
+- Permite exportar a PDF e importar gastos operativos pendientes.
+- Sugerí: "¿Querés que revise qué pagos quedan pendientes esta semana?"`,
+
+  communications: `## CONTEXTO ACTUAL: El usuario está en Comunicaciones WhatsApp
+- Historial de todas las conversaciones de Rombo (vos) con los usuarios por WhatsApp.
+- El usuario solo puede leer, no puede responder desde acá.
+- Sugerí: "¿Querés revisar si hubo consultas no resueltas hoy?"`,
+
+  weekly_report: `## CONTEXTO ACTUAL: El usuario está en Reporte Semanal a GG
+- Un reporte consolidado para Gerencia General con KPIs de toda la empresa.
+- Destaca decisiones requeridas, avance de obras y alertas críticas.
+- Sugerí: "¿Querés que te resuma las decisiones urgentes para Gerencia?"`,
+
+  user_management: `## CONTEXTO ACTUAL: El usuario está en Gestión de Usuarios
+- Administración de perfiles, roles y accesos al sistema.
+- Sugerí: "¿Necesitás ayuda asignando permisos a un nuevo colaborador?"`,
+
+  compras_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Compras
+- Pantalla informativa sobre el circuito de abastecimiento.
+- Sugerí: "Si querés operar, podés ir al submódulo de Órdenes de Compra o Pedidos."`,
+
+  logistics_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Logística
+- Pantalla informativa sobre la gestión de stock y flota.
+- Sugerí: "Puedo ayudarte revisando el stock actual o el estado de la flota."`,
+
+  obra_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Obra
+- Pantalla informativa sobre el frente de producción.
+- Sugerí: "Podés navegar a WBS o Partes Diarios para cargar el avance."`,
+
+  finanzas_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Finanzas
+- Pantalla informativa sobre tesorería, pagos y certificaciones.
+- Sugerí: "Puedo calcularte el cashflow a 30 días si querés."`,
+
+  rrhh_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a RRHH
+- Pantalla informativa sobre gestión de legajos y EPP.
+- Sugerí: "¿Querés consultar la asistencia de hoy?"`,
+
+  budget_landing: `## CONTEXTO ACTUAL: El usuario está en Gerencia de Presupuestos
+- Muestra el flujo de presupuestación y matriz RACI.
+- Sugerí: "Podés revisar el pipeline de oportunidades desde acá."`,
 }
 
 function buildSystemPrompt(activeModule?: string): string {

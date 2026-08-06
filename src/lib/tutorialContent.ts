@@ -490,22 +490,45 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
   },
   user_activity: {
     title: 'Actividad de Usuarios',
-    description: 'Auditoría de navegación y clicks.',
-    steps: [],
-    tips: []
+    description: 'Auditoría de navegación y acciones de los usuarios en el sistema.',
+    steps: [
+      'Revisá la tabla de registro de actividad para ver qué usuarios se conectaron recientemente.',
+      'Analizá los módulos más visitados por cada usuario.',
+      'Consultá las acciones específicas realizadas (clicks, ingresos a módulos) para propósitos de auditoría.'
+    ],
+    tips: [
+      'Los registros de actividad se almacenan de forma automática cada vez que un usuario interactúa con el sistema.',
+      'Solo los usuarios con rol de Administrador pueden ver este módulo.'
+    ]
   },
   scope_changes: {
     title: 'Adicionales de Obra',
-    description: 'Gestión de adicionales y cambios de alcance.',
-    steps: [],
-    tips: []
+    description: 'Gestión de adicionales y cambios de alcance que impactan en el presupuesto y cronograma.',
+    steps: [
+      'Registrá un nuevo Adicional de Obra o Cambio de Alcance indicando el motivo y la obra afectada.',
+      'Detallá el impacto económico (costo) y el impacto en plazo (días de extensión) del cambio.',
+      'Cargá la documentación respaldatoria que justifique el adicional.',
+      'Hacé el seguimiento de su estado de aprobación (borrador, enviado, aprobado, rechazado).'
+    ],
+    tips: [
+      'Todo adicional aprobado debe vincularse luego al Presupuesto y al WBS de la obra.',
+      'Llevá un control estricto de los adicionales para evitar desvíos imprevistos al final del proyecto.'
+    ]
   },
   
   quality: {
     title: 'Calidad (Checklists)',
-    description: 'Control de calidad en obra.',
-    steps: [],
-    tips: []
+    description: 'Control de calidad en obra y seguimiento de protocolos (hormigonado, excavación, etc.).',
+    steps: [
+      'Seleccioná el protocolo o checklist de calidad correspondiente a la tarea a evaluar.',
+      'Completá los ítems de verificación indicando si cumplen o no con los estándares.',
+      'Adjuntá fotos de evidencia de los trabajos realizados.',
+      'En caso de desvíos, generá automáticamente una No Conformidad o un ítem de Punch List.'
+    ],
+    tips: [
+      'Completar los checklists en tiempo real asegura la trazabilidad y evita retrabajos.',
+      'La firma digital avala que el proceso se realizó bajo la norma vigente.'
+    ]
   },
   worker_payments: {
     title: 'Pagos a Trabajadores',

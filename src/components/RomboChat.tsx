@@ -461,6 +461,112 @@ export const RomboChat: React.FC = () => {
       ],
       proTip: 'Los proveedores bloqueados no aparecen como opción en nuevas OC.',
     },
+    user_activity: {
+      where: 'Actividad de Usuarios',
+      capabilities: [
+        'Consultar **quién se conectó** recientemente',
+        'Ver los **módulos más visitados**',
+        'Auditar **acciones específicas** en el sistema',
+      ],
+      proTip: 'Ideal para revisar la adopción del sistema por parte del equipo.',
+    },
+    scope_changes: {
+      where: 'Adicionales de Obra',
+      capabilities: [
+        'Registrar un nuevo **adicional o cambio de alcance**',
+        'Ver el **impacto en costos y plazo**',
+        'Hacer seguimiento de la **aprobación** de adicionales',
+      ],
+    },
+    quality: {
+      where: 'Calidad (Checklists)',
+      capabilities: [
+        'Completar **protocolos de calidad**',
+        'Verificar el cumplimiento de **estándares**',
+        'Generar **No Conformidades** a partir de desvíos',
+      ],
+    },
+    worker_payments: {
+      where: 'Pagos a Trabajadores',
+      capabilities: [
+        'Consultar **datos bancarios** del personal',
+        'Revisar **montos de referencia** pactados',
+        'Ver **métricas de gasto mensual** en quincenas',
+      ],
+    },
+    payments: {
+      where: 'Control de Pagos Semanales',
+      capabilities: [
+        'Consultar la **planilla de pagos** de la semana',
+        'Ver el estado de **transferencias**',
+        'Exportar listados a **PDF**',
+      ],
+    },
+    communications: {
+      where: 'Comunicaciones WhatsApp',
+      capabilities: [
+        'Revisar el **historial de mensajes** con Rombo',
+        'Ver la **intención detectada** en cada charla',
+      ],
+      proTip: 'Este módulo es de solo lectura, los mensajes se responden automáticamente.',
+    },
+    weekly_report: {
+      where: 'Reporte Semanal a GG',
+      capabilities: [
+        'Revisar **KPIs consolidados** de la semana',
+        'Ver las **decisiones requeridas** por GG',
+        'Analizar el **avance de obras** general',
+      ],
+    },
+    user_management: {
+      where: 'Gestión de Usuarios',
+      capabilities: [
+        'Ver los **usuarios activos** en el sistema',
+        'Revisar **roles y permisos** asignados',
+      ],
+    },
+    compras_intro: {
+      where: 'Introducción a Compras',
+      capabilities: [
+        'Conocer el **circuito de abastecimiento**',
+        'Entender cómo interactuar con **Logística y Obras**',
+      ],
+    },
+    logistics_intro: {
+      where: 'Introducción a Logística',
+      capabilities: [
+        'Ver el circuito de **gestión de stock y entregas**',
+        'Conocer cómo usar los **códigos QR de flota**',
+      ],
+    },
+    obra_intro: {
+      where: 'Introducción a Obra',
+      capabilities: [
+        'Entender el flujo desde el **WBS hasta los cierres**',
+        'Ver qué entregar a **Finanzas para certificar**',
+      ],
+    },
+    finanzas_intro: {
+      where: 'Introducción a Finanzas',
+      capabilities: [
+        'Conocer el circuito de **pagos y certificaciones**',
+        'Revisar las FAQs de **eCheqs y retenciones**',
+      ],
+    },
+    rrhh_intro: {
+      where: 'Introducción a RRHH',
+      capabilities: [
+        'Ver el ciclo del colaborador: **alta a liquidación**',
+        'Conocer los requisitos de **EPP y auditoría ART**',
+      ],
+    },
+    budget_landing: {
+      where: 'Gerencia de Presupuestos',
+      capabilities: [
+        'Revisar el **flujo del proceso de presupuestación**',
+        'Entender la **matriz RACI** y entregables',
+      ],
+    },
   }), []);
 
   const contextualGreeting = useMemo(() => {
