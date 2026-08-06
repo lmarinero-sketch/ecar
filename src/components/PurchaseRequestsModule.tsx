@@ -109,7 +109,7 @@ export const PurchaseRequestsModule: React.FC = () => {
   };
 
   const handleConfirmDispatch = async () => {
-    if (!dispatchModalReq) return;
+    if (!dispatchModalReq || dispatchMutation.isPending) return;
     const items = Object.entries(dispatchItemsState).map(([id, val]: [string, any]) => ({
       id,
       quantity_sent: Number(val.quantity_sent) || 0,

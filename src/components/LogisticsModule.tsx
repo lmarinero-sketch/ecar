@@ -675,7 +675,7 @@ const DeliveriesTab: React.FC<{
   };
 
   const handleReceiveDelivery = async () => {
-    if (!receivingDelivery) return;
+    if (!receivingDelivery || updateDelivery.isPending) return;
     
     let isPartial = false;
     let missingNotes = [];
@@ -688,22 +688,9 @@ const DeliveriesTab: React.FC<{
       }
 
       if (dItem.item_id && receivedQty > 0) {
-        const inv = inventoryItems.find(i => i.id === dItem.item_id);
-        if (inv) {
-          const newStock = Math.max(0, inv.current_stock - Number(receivedQty));
-          await updateItem.mutateAsync({ id: inv.id, current_stock: newStock } as any);
-          await createMovement.mutateAsync({
-            tenant_id: inv.tenant_id,
-            item_id: inv.id,
-            movement_type: 'salida',
-            quantity: Number(receivedQty),
-            reference_type: 'entrega',
-            reference_id: receivingDelivery.id,
-            notes: `Entrega a ${(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}`,
-            created_by: profile?.full_name || 'Sistema',
-            date: new Date().toISOString()
-          } as any);
-        }
+        // NOTE: We do NOT deduct stock here. 
+        // Stock is already deducted centrally when the Pañolero dispatches the request (useDispatchPurchaseRequest).
+        // Deducting stock again here causes duplicate stock deductions.
       }
     }
     

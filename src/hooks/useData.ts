@@ -1515,6 +1515,12 @@ export function useDispatchPurchaseRequest() {
 
       const itemsMap = new Map((reqItems || []).map(i => [i.id, i]));
 
+      // PREVENT RACE CONDITION: Check if already ordered
+      const { data: currentReq } = await supabase.from('purchase_requests').select('status').eq('id', requestId).single();
+      if (currentReq?.status === 'ordered' || currentReq?.status === 'received') {
+        throw new Error('Esta solicitud ya ha sido despachada. Evitando duplicidad de stock.');
+      }
+
       // 3. Update purchase_requests status to 'ordered' and set dispatch info
       const { error: reqErr } = await supabase
         .from('purchase_requests')

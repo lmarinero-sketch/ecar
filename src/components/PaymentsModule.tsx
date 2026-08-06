@@ -20,7 +20,15 @@ function formatARS(v: number) {
 
 // ─── Payment Detail View ───
 const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment, onBack }) => {
-  const { data: items = [], isLoading } = useWeeklyPaymentItems(payment.id);
+  const { data: rawItems = [], isLoading } = useWeeklyPaymentItems(payment.id);
+  
+  const items = useMemo(() => {
+    return rawItems.filter(item => 
+      item.source_type !== 'sueldos_obreros' &&
+      !item.concepto.toUpperCase().includes('SUELDO TRABAJADORES') &&
+      !item.concepto.toUpperCase().includes('SUELDO OBREROS')
+    );
+  }, [rawItems]);
   const createItem = useCreateWeeklyPaymentItem();
   const updateItem = useUpdateWeeklyPaymentItem();
   const deleteItem = useDeleteWeeklyPaymentItem();
