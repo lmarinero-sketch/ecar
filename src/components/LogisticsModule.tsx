@@ -8,7 +8,6 @@ import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
    useCreateLogisticsMaintenanceLog,
-  useUpdateInventoryItem, useCreateInventoryMovement,
   usePurchaseRequests, useUpdatePurchaseRequest, useEmployees
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -645,16 +644,13 @@ const DeliveriesTab: React.FC<{
   allVehicles: FuelVehicle[];
   inventoryItems: any[];
   employees: any[];
-}> = ({ deliveries, loading, inventoryItems }) => {
+}> = ({ deliveries, loading }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const updateDelivery = useUpdateLogisticsDelivery();
-  const { profile } = useAuth();
 
   const [receivingDelivery, setReceivingDelivery] = useState<any>(null);
   const [checklistValues, setChecklistValues] = useState<Record<string, number>>({});
-  const updateItem = useUpdateInventoryItem();
-  const createMovement = useCreateInventoryMovement();
 
   const filtered = useMemo(() => {
     let list = deliveries;

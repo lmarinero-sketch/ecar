@@ -9,9 +9,6 @@ import {
   useGastosItems, useGastosRegistrosByRange,
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import { PayrollLiquidator } from './PayrollLiquidator';
-import { PayrollPDFButton } from './PayrollPDFButton';
-import { PayrollViewerModal } from './PayrollViewerModal';
 
 
 function formatARS(v: number) {
@@ -38,11 +35,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   
-  // Payroll / Obreros Modals
-  const [showPayroll, setShowPayroll] = useState(false); // Hiding old button logic but keeping state
-
-  const [viewPayrollItem, setViewPayrollItem] = useState<{id: string, concepto: string} | null>(null);
-
   // Import from gastos operativos
   const periodo = payment.payment_date?.slice(0, 7); // YYYY-MM
   const { data: gastosItems = [] } = useGastosItems();
@@ -69,9 +61,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const totalResto = items.reduce((s, i) => s + Number(i.resto || 0), 0);
   const pagados = items.filter(i => i.pagado).length;
   
-  // const isFriday = new Date(payment.payment_date + 'T12:00:00').getDay() === 5;
-  // const hasPayroll = items.some(i => i.source_type === 'sueldos_obreros');
-
   const handleAdd = async () => {
     const monto = parseFloat(form.monto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     if (!form.concepto.trim() || monto <= 0) return;
@@ -248,12 +237,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             <Building2 size={14} /> Importar de Gastos ({pendingGastos.length})
           </button>
         )}
-
-        {/*
-        <button onClick={() => setShowPayroll(true)} className="badge badge-info">
-          <Users size={14} /> Liquidar Obreros
-        </button>
-        */}
       </div>
 
       {/* Import from gastos */}
@@ -418,31 +401,11 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                 </tr>
               </thead>
               <tbody>
-                {/* 
-                {isFriday && !hasPayroll && (
-                  <tr 
-                    className="hover:bg-blue-50/50 bg-blue-50/30 border-l-4 border-blue-500 cursor-pointer transition-colors"
-                    onClick={() => setShowPayroll(true)}
-                    title="Clic para generar sueldos"
-                  >
-                    <td colSpan={8} className="text-center">
-                      <span className="font-bold text-blue-700 flex items-center justify-center gap-2">
-                        <Users size={16} /> Sueldos de Obreros (Pendiente de Liquidar)
-                      </span>
-                    </td>
-                  </tr>
-                )}
-                */}
                 {items.map(item => {
                   const isPartial = item.pagado && Number(item.resto) > 0;
-                  const isPayroll = item.source_type === 'sueldos_obreros';
                   return (
                     <tr key={item.id} className={`hover:bg-gray-50 ${isPartial ? 'bg-amber-50/50' : item.pagado ? 'bg-green-50/30' : ''}`}>
-                      <td 
-                        className={`px-3 py-2.5 font-bold text-xs ${isPayroll ? 'cursor-pointer text-ecar-blue hover:text-ecar-blueDark underline decoration-ecar-blueLight underline-offset-2' : 'text-gray-800'}`}
-                        onClick={() => isPayroll && setViewPayrollItem({id: item.id, concepto: item.concepto})}
-                        title={isPayroll ? "Ver detalle de alias" : ""}
-                      >
+                      <td className="px-3 py-2.5 font-bold text-xs text-gray-800">
                         <div className="flex items-center gap-2 flex-wrap pointer-events-none">
                           {item.source_type === 'gastos_operativos' && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold">GO</span>}
                           {item.concepto}
@@ -457,9 +420,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                       <td className="text-gray-500 text-xs">{item.observaciones || ''}</td>
                       <td className="text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {item.source_type === 'sueldos_obreros' && (
-                            <PayrollPDFButton paymentItemId={item.id} concepto={item.concepto} monto={Number(item.monto)} />
-                          )}
                           <button onClick={() => handleTogglePagado(item)} className={`p-1 rounded transition-colors ${isPartial ? 'bg-amber-100 text-amber-600' : item.pagado ? 'bg-green-100 text-green-600' : 'text-gray-300 hover:text-green-500 hover:bg-green-50'}`} title={isPartial ? 'Pago Parcial ✓' : item.pagado ? 'Pagado ✓' : 'Marcar como pagado'}>
                             <Check size={13} />
                           </button>
@@ -485,24 +445,6 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           </div>
         )}
       </div>
-
-      {showPayroll && (
-        <PayrollLiquidator 
-          paymentId={payment.id} 
-          paymentDate={payment.payment_date} 
-          onClose={() => setShowPayroll(false)} 
-          onSuccess={() => setShowPayroll(false)} 
-        />
-      )}
-
-      {viewPayrollItem && (
-        <PayrollViewerModal
-          paymentItemId={viewPayrollItem.id}
-          concepto={viewPayrollItem.concepto}
-          onClose={() => setViewPayrollItem(null)}
-        />
-      )}
-
 
     </div>
   );
