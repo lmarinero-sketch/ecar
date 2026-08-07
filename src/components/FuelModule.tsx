@@ -88,8 +88,8 @@ export const FuelModule: React.FC = () => {
           </div>
 
           {/* Content */}
-          {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} />}
-          {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} />}
+          {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} createBatan={createBatan} />}
+          {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} />}
           {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} />}
           {tab === 'batan' && <BatanTab movements={batanMovements} createBatan={createBatan} />}
           {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
@@ -109,9 +109,9 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 );
 
 /* ── Loads Tab ── */
-const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad }) => {
+const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
   const { user, isAdmin } = useAuth();
-  const [form, setForm] = useState<Partial<FuelLoad>>(() => {
+  const [form, setForm] = useState<Partial<FuelLoad> & { fuel_source?: 'station' | 'batan' }>(() => {
     const d = new Date();
     return {
       load_date: d.toISOString().split('T')[0],
@@ -119,6 +119,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       year: d.getFullYear(),
       day_of_week: DAYS_ES[d.getDay()],
       driver_name: user?.email || '',
+      fuel_source: 'station'
     };
   });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -143,13 +144,33 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   };
 
   const handleSubmit = async () => {
-    if (!form.load_date || !form.vehicle_code || !form.liters || (!form.total_amount && !form.price_per_liter)) {
+    const isBatan = form.fuel_source === 'batan';
+    if (!form.load_date || !form.vehicle_code || !form.liters) {
+      alert("Por favor, complete los datos básicos.");
+      return;
+    }
+    if (!isBatan && (!form.total_amount && !form.price_per_liter)) {
       alert("Por favor, ingrese el Importe Total o el Precio por Litro facturado.");
       return;
     }
     const nextNum = loads.length + 1;
-    await createLoad.mutateAsync({ ...form, load_number: `CARGA-${String(nextNum).padStart(4, '0')}`, validation_status: 'pending', load_source: 'station', created_by: 'web' });
-    setForm({});
+    const finalAmount = isBatan ? 0 : form.total_amount;
+    const finalPrice = isBatan ? 0 : form.price_per_liter;
+
+    await createLoad.mutateAsync({ ...form, load_number: `CARGA-${String(nextNum).padStart(4, '0')}`, validation_status: 'pending', load_source: form.fuel_source || 'station', created_by: 'web', supplier: isBatan ? 'Uso Interno' : form.supplier, total_amount: finalAmount, price_per_liter: finalPrice });
+
+    if (isBatan) {
+      await createBatan.mutateAsync({
+        movement_date: form.load_date,
+        movement_type: 'discharge',
+        fuel_type: form.fuel_type || 'Diesel V-Power',
+        liters_discharged: form.liters,
+        movement_status: 'completed',
+        reference_load: `CARGA-${String(nextNum).padStart(4, '0')}`
+      });
+    }
+
+    setForm({ fuel_source: 'station' });
     setShowForm(false);
   };
 
@@ -194,7 +215,18 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <input readOnly value={form.year || ''} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50" />
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-500">Origen de Carga</label>
+              <select value={form.fuel_source || 'station'} onChange={e => {
+                const s = e.target.value as 'station' | 'batan';
+                if (s === 'batan') setForm(f => ({ ...f, fuel_source: s, price_per_liter: 0, total_amount: 0, supplier: 'Uso Interno' }));
+                else setForm(f => ({ ...f, fuel_source: s }));
+              }} className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 font-bold text-blue-700">
+                <option value="station">Estación / Prov.</option>
+                <option value="batan">Batán Interno</option>
+              </select>
+            </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Código Interno</label>
               <select value={form.vehicle_code || ''} onChange={e => handleVehicleCode(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
@@ -250,11 +282,11 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">$/Litro</label>
-              <input type="number" step="0.01" value={form.price_per_liter || ''} onChange={e => { const p = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
+              <input type="number" step="0.01" value={form.price_per_liter || ''} disabled={form.fuel_source === 'batan'} onChange={e => { const p = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono disabled:opacity-50" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Importe Total</label>
-              <input type="number" step="0.01" value={form.total_amount || ''} onChange={e => { const t = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold" />
+              <input type="number" step="0.01" value={form.total_amount || ''} disabled={form.fuel_source === 'batan'} onChange={e => { const t = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold disabled:opacity-50" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">N° Vale</label>
@@ -269,7 +301,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
           </div>
-          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (!form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (form.fuel_source !== 'batan' && !form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
         </div>
@@ -424,10 +456,10 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
 );
 
 /* ── Requests Tab ── */
-const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; updateLoad: any; createLoad: any; projects: any[] }> = ({ loads, vehicles, updateLoad, createLoad, projects }) => {
+const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; updateLoad: any; createLoad: any; projects: any[]; createBatan: any }> = ({ loads, vehicles, updateLoad, createLoad, projects, createBatan }) => {
   const { user, isAdmin, profile } = useAuth();
   const [showReqForm, setShowReqForm] = useState(false);
-  const [reqForm, setReqForm] = useState({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '' });
+  const [reqForm, setReqForm] = useState<{ vehicle_code: string; requested_liters: string; odometer_km: string; project_name: string; observations: string; fuel_source: 'station' | 'batan' }>({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station' });
   
   // Signature registration
   const [showSignaturePanel, setShowSignaturePanel] = useState(false);
@@ -566,9 +598,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       observations: reqForm.observations,
       requested_by: user?.email || 'Operario',
       workflow_status: 'requested',
-      created_by: 'web'
+      created_by: 'web',
+      load_source: reqForm.fuel_source
     });
-    setReqForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '' });
+    setReqForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station' });
     setShowReqForm(false);
   };
 
@@ -588,20 +621,42 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   };
 
   const [completingId, setCompletingId] = useState<string | null>(null);
-  const [completeForm, setCompleteForm] = useState({ liters: '', price_per_liter: '', total_amount: '' });
+  const [completeForm, setCompleteForm] = useState({ liters: '', price_per_liter: '', total_amount: '', fuel_source: 'station' as 'station' | 'batan' });
 
   const handleComplete = async () => {
-    if (!completingId || !completeForm.liters || (!completeForm.price_per_liter && !completeForm.total_amount)) {
-      alert("Por favor, ingrese los litros y el importe total o precio por litro.");
+    const isBatan = completeForm.fuel_source === 'batan';
+    if (!completingId || !completeForm.liters) return;
+    if (!isBatan && !completeForm.total_amount && !completeForm.price_per_liter) {
+      alert("Por favor, ingrese el Importe Total.");
       return;
     }
+    
+    const finalLiters = parseFloat(completeForm.liters) || 0;
+    const finalAmount = isBatan ? 0 : parseFloat(completeForm.total_amount) || 0;
+    const finalPrice = isBatan ? 0 : (finalAmount / finalLiters) || 0;
+
     await updateLoad.mutateAsync({
       id: completingId,
-      liters: parseFloat(completeForm.liters) || 0,
-      price_per_liter: parseFloat(completeForm.price_per_liter) || 0,
-      total_amount: parseFloat(completeForm.total_amount) || 0,
-      workflow_status: 'completed'
+      liters: finalLiters,
+      price_per_liter: finalPrice,
+      total_amount: finalAmount,
+      workflow_status: 'completed',
+      load_source: completeForm.fuel_source,
+      supplier: isBatan ? 'Uso Interno' : undefined
     });
+
+    if (isBatan) {
+      const loadObj = loads.find(x => x.id === completingId);
+      await createBatan.mutateAsync({
+        movement_date: new Date().toISOString().split('T')[0],
+        movement_type: 'discharge',
+        fuel_type: loadObj?.fuel_type || 'Diesel V-Power',
+        liters_discharged: finalLiters,
+        movement_status: 'completed',
+        reference_load: loadObj?.load_number
+      });
+    }
+
     setCompletingId(null);
   };
 
@@ -762,7 +817,14 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       {showReqForm && (
         <div className="bg-white border-2 border-orange-200 rounded-xl p-5 shadow-lg space-y-4">
           <h4 className="font-bold text-gray-700 text-sm">📝 Solicitud de Carga (Operario)</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-500">Origen</label>
+              <select value={reqForm.fuel_source} onChange={e => setReqForm({ ...reqForm, fuel_source: e.target.value as any })} className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 font-bold text-blue-700">
+                <option value="station">Estación</option>
+                <option value="batan">Batán Interno</option>
+              </select>
+            </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Vehículo</label>
               <select value={reqForm.vehicle_code} onChange={e => setReqForm({ ...reqForm, vehicle_code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
@@ -968,27 +1030,40 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                 </button>
                 {completingId === r.id ? (
                   <div className="mt-3 bg-white p-2 rounded-lg border border-green-200 space-y-2">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-500">Origen</label>
+                        <select value={completeForm.fuel_source} onChange={e => {
+                          const s = e.target.value as 'station' | 'batan';
+                          setCompleteForm(prev => ({ ...prev, fuel_source: s, total_amount: s === 'batan' ? '0' : prev.total_amount }));
+                        }} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-bold text-sky-700">
+                          <option value="station">Estación</option>
+                          <option value="batan">Batán</option>
+                        </select>
+                      </div>
+                      <div>
                         <label className="text-[10px] font-bold text-gray-500">Lts Reales</label>
-                        <input type="number" step="0.1" value={completeForm.liters} onChange={e => { const l = parseFloat(e.target.value) || 0; setCompleteForm({ ...completeForm, liters: e.target.value, total_amount: String(l * (parseFloat(completeForm.price_per_liter) || 0)) }); }} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
+                        <input type="number" step="0.1" value={completeForm.liters} onChange={e => setCompleteForm({ ...completeForm, liters: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
                       </div>
-                      <div className="flex-1">
+                      <div>
                         <label className="text-[10px] font-bold text-gray-500">Monto Final</label>
-                        <input type="number" step="0.1" value={completeForm.total_amount} onChange={e => setCompleteForm({ ...completeForm, total_amount: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
+                        <input type="number" step="0.1" disabled={completeForm.fuel_source === 'batan'} value={completeForm.total_amount} onChange={e => setCompleteForm({ ...completeForm, total_amount: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono disabled:opacity-50" />
                       </div>
+                    </div>
+                    <div className="text-right text-[10px] font-bold text-gray-400">
+                       Precio Calculado: <span className="text-gray-600">${completeForm.fuel_source === 'batan' ? '0.00' : (parseFloat(completeForm.total_amount) / parseFloat(completeForm.liters) || 0).toFixed(2)}/L</span>
                     </div>
                     <label className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors border border-gray-300">
                       <Camera size={14} /> Foto del Ticket
                       <input type="file" accept="image/*" capture="environment" className="hidden" />
                     </label>
                     <div className="flex gap-1">
-                      <button onClick={handleComplete} className="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold">Cargar</button>
+                      <button onClick={handleComplete} disabled={updateLoad.isPending || createBatan.isPending} className="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold disabled:opacity-50">Cargar</button>
                       <button onClick={() => setCompletingId(null)} className="flex-1 bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold">Cancelar</button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => { setCompletingId(r.id); setCompleteForm({ liters: String(r.requested_liters || 0), price_per_liter: '', total_amount: '' }); }} className="mt-3 w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-green-700 shadow-sm">
+                  <button onClick={() => { setCompletingId(r.id); setCompleteForm({ liters: String(r.requested_liters || 0), price_per_liter: '', total_amount: '', fuel_source: r.load_source === 'batan' ? 'batan' : 'station' }); }} className="mt-3 w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-green-700 shadow-sm">
                     <Fuel size={14} /> Completar Carga Real
                   </button>
                 )}
