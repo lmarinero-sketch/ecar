@@ -397,7 +397,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                   <th className="text-left text-[10px] uppercase tracking-wider font-bold">Factura / Periodo</th>
                   <th className="text-right text-[10px] uppercase tracking-wider font-bold">Resto</th>
                   <th className="text-left text-[10px] uppercase tracking-wider font-bold">Observaciones</th>
-                  <th className="text-center text-[10px] uppercase tracking-wider font-bold w-24">Acciones</th>
+                  <th className="text-center text-[10px] uppercase tracking-wider font-bold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -418,13 +418,24 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                       <td className="text-gray-600 text-xs font-mono">{item.nro_factura || ''}</td>
                       <td className={`px-3 py-2.5 text-right font-mono text-xs font-bold ${isPartial ? 'text-amber-600' : 'text-gray-500'}`}>{Number(item.resto) > 0 ? formatARS(Number(item.resto)) : ''}</td>
                       <td className="text-gray-500 text-xs">{item.observaciones || ''}</td>
-                      <td className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleTogglePagado(item)} className={`p-1 rounded transition-colors ${isPartial ? 'bg-amber-100 text-amber-600' : item.pagado ? 'bg-green-100 text-green-600' : 'text-gray-300 hover:text-green-500 hover:bg-green-50'}`} title={isPartial ? 'Pago Parcial ✓' : item.pagado ? 'Pagado ✓' : 'Marcar como pagado'}>
-                            <Check size={13} />
+                      <td className="text-center px-2">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => handleTogglePagado(item)} 
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm border ${
+                              isPartial 
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' 
+                                : item.pagado 
+                                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' 
+                                  : 'bg-white text-gray-600 border-gray-300 hover:border-green-500 hover:text-green-600 hover:bg-green-50'
+                            }`}
+                            title={isPartial ? 'Pago Parcial' : item.pagado ? 'Pagado' : 'Marcar como pagado'}
+                          >
+                            <Check size={14} />
+                            {isPartial ? 'Parcial' : item.pagado ? 'Pagado' : 'Confirmar'}
                           </button>
-                          <button onClick={() => startEdit(item)} className="p-1 rounded text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"><Edit2 size={13} /></button>
-                          <button onClick={() => deleteItem.mutate({ id: item.id, payment_id: payment.id })} className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"><Trash2 size={13} /></button>
+                          <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-100" title="Editar"><Edit2 size={14} /></button>
+                          <button onClick={() => deleteItem.mutate({ id: item.id, payment_id: payment.id })} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100" title="Eliminar"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
