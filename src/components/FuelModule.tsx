@@ -41,6 +41,7 @@ export const FuelModule: React.FC = () => {
   }, [tab]);
 
   const [showForm, setShowForm] = useState(false);
+  const [viewingTicket, setViewingTicket] = useState<string | null>(null);
   const { data: vehicles = [] } = useFuelVehicles();
   const { data: loads = [] } = useFuelLoads();
   const { data: batanMovements = [] } = useFuelBatanMovements();
@@ -478,9 +479,9 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                   </span>
                   {l.unauthorized_load && <span className="block mt-1 badge bg-amber-100 text-amber-800 text-[9px] border-amber-200">Sin Autorizar</span>}
                   {l.ticket_photo_url && (
-                    <a href={l.ticket_photo_url} target="_blank" rel="noreferrer" className="mt-1 flex items-center justify-center gap-1 text-[10px] font-bold text-ecar-blue hover:bg-blue-100 bg-blue-50 border border-blue-100 px-1 py-0.5 rounded transition-colors">
+                    <button onClick={() => setViewingTicket(l.ticket_photo_url!)} className="mt-1 flex w-full items-center justify-center gap-1 text-[10px] font-bold text-ecar-blue hover:bg-blue-100 bg-blue-50 border border-blue-100 px-1 py-0.5 rounded transition-colors">
                       <ImageIcon size={10} /> Ver Ticket
-                    </a>
+                    </button>
                   )}
                 </td>
                 <td className="text-center">
@@ -1555,6 +1556,30 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
           </div>
         </div>
       </div>
+
+      {/* Ticket Viewer Modal */}
+      {viewingTicket && (
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewingTicket(null)}>
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col bg-white rounded-xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-gray-100">
+              <h3 className="font-bold text-ecar-blue flex items-center gap-2">
+                <ImageIcon size={18} /> Ticket de Carga
+              </h3>
+              <button onClick={() => setViewingTicket(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-gray-50 p-4 flex items-center justify-center min-h-[400px]">
+              <img src={viewingTicket} alt="Ticket de Carga" className="max-w-full max-h-full object-contain rounded shadow-sm" />
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-white flex justify-end">
+              <a href={viewingTicket} target="_blank" rel="noreferrer" className="px-4 py-2 bg-ecar-blue text-white rounded-lg text-sm font-bold hover:bg-ecar-blueDark transition-colors flex items-center gap-2">
+                <Download size={16} /> Descargar Original
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

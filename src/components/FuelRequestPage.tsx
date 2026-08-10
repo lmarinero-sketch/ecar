@@ -13,6 +13,7 @@ export const FuelRequestPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   
   const [activeRequest, setActiveRequest] = useState<FuelLoad | null>(null);
 
@@ -152,7 +153,7 @@ export const FuelRequestPage: React.FC = () => {
       });
       setCompleteForm({ station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power', liters: '', price_per_liter: '', total_amount: '' });
       setTicketFile(null);
-      alert('Carga completada exitosamente.');
+      setShowSuccess(true);
       
     } catch (e: any) {
       setError(e.message || 'Error al completar la carga');
@@ -167,6 +168,32 @@ export const FuelRequestPage: React.FC = () => {
       setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-4 relative overflow-hidden">
+        {/* ECAR Corporate Background */}
+        <div className="absolute top-0 left-0 right-0 h-[35vh] bg-ecar-blue transform origin-top-left -skew-y-6 z-0 shadow-lg"></div>
+        <div className="absolute top-[35vh] left-0 right-0 h-4 bg-ecar-red transform origin-top-left -skew-y-6 z-0 translate-y-[-100%] shadow-md"></div>
+        
+        <div className="relative z-10 bg-white rounded-2xl p-10 text-center max-w-md w-full border border-gray-100 shadow-2xl animate-fade-in-up">
+          <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-green-100 shadow-inner">
+            <Check size={48} className="text-green-500" />
+          </div>
+          <h2 className="text-3xl font-black text-ecar-blue mb-3">¡Carga Registrada!</h2>
+          <p className="text-gray-600 mb-2">
+            La carga de combustible se ha completado exitosamente y ya está registrada en el sistema.
+          </p>
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="mt-8 bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl w-full"
+          >
+            Nueva Carga
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
