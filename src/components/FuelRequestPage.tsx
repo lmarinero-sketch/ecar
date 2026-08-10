@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Send, FileText, AlertCircle, Camera, Upload, X } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
+import { useModalStore } from '../store/useModalStore';
 import type { FuelLoad } from '../lib/types';
 
 type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string; preferred_fuel?: string };
@@ -298,12 +299,33 @@ export const FuelRequestPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Litros Solicitados <span className="text-ecar-red">*</span></label>
-                  <input type="number" step="0.1" value={form.requested_liters} onChange={e => setForm({ ...form, requested_liters: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-lg font-bold font-mono" />
+                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Estación <span className="text-ecar-red">*</span></label>
+                  <select value={form.station_name} onChange={e => setForm({ ...form, station_name: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800">
+                    <option value="YPF">YPF</option>
+                    <option value="Shell">Shell</option>
+                    <option value="Axion">Axion</option>
+                    <option value="Puma">Puma</option>
+                    <option value="Refinor">Refinor</option>
+                    <option value="Surtidor Propio / Batán">Surtidor Propio / Batán</option>
+                    <option value="Otro">Otro</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Km / Hs Actual</label>
-                  <input type="number" value={form.odometer_km} onChange={e => setForm({ ...form, odometer_km: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-lg font-bold font-mono" />
+                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Tipo de Comb. <span className="text-ecar-red">*</span></label>
+                  <select value={form.fuel_type} onChange={e => setForm({ ...form, fuel_type: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800">
+                    <option value="Diesel Premium / V-Power">Diesel Premium</option>
+                    <option value="Diesel Comun / X-10">Diesel Común</option>
+                    <option value="Nafta Premium / V-Power">Nafta Premium</option>
+                    <option value="Nafta Super">Nafta Súper</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Litros Solic. <span className="text-ecar-red">*</span></label>
+                  <input type="number" step="0.1" value={form.requested_liters} onChange={e => setForm({ ...form, requested_liters: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-lg font-bold font-mono" placeholder="0.0" />
+                </div>
+                <div>
+                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Km/Hs Actual <span className="text-ecar-red">*</span></label>
+                  <input type="number" value={form.odometer_km} onChange={e => setForm({ ...form, odometer_km: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-lg font-bold font-mono" placeholder="Ej: 12500" />
                 </div>
               </div>
 
@@ -325,8 +347,8 @@ export const FuelRequestPage: React.FC = () => {
           </div>
           
           {/* SEARCH COMPONENT (Only shown in Step 1) */}
-          <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-center animate-fade-in">
-            <p className="text-white text-sm font-bold mb-3 shadow-black drop-shadow">¿Ya tenés una solicitud autorizada?</p>
+          <div className="mt-6 bg-gray-800/90 backdrop-blur-md rounded-xl p-4 border border-gray-700 text-center animate-fade-in shadow-xl">
+            <p className="text-gray-300 text-sm font-bold mb-3">¿Ya tenés una solicitud autorizada?</p>
             {error && <div className="mb-3 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold shadow-sm">{error}</div>}
             <div className="flex gap-2 max-w-sm mx-auto">
               <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-2 rounded-lg border-0 shadow-inner font-mono text-center uppercase" />
