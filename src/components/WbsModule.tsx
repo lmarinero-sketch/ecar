@@ -25,6 +25,7 @@ import {
 import type {
   WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
 } from '../lib/types';
+import { useModalStore } from '../store/useModalStore';
 
 type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d' | 'documentos';
 
@@ -366,7 +367,7 @@ export const WbsModule: React.FC = () => {
 
   const handleDeleteProject = async () => {
     if (!selectedProjectId) return;
-    if (confirm('¿Estás seguro de que deseas eliminar esta obra y TODO su contenido? Esta acción es irreversible.')) {
+    if (await useModalStore.getState().showConfirm('Eliminar Obra', '¿Estás seguro de que deseas eliminar esta obra y TODO su contenido? Esta acción es irreversible.')) {
       await deleteProject.mutateAsync(selectedProjectId);
       setSelectedProjectId(null);
     }
@@ -1393,7 +1394,7 @@ const DocumentosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
                     <p className="text-xs text-gray-400 capitalize">{doc.category} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 </div>
-                <button onClick={() => { if (confirm('¿Eliminar documento?')) deleteDoc.mutate({ id: doc.id, filePath: doc.file_path }); }} className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors shrink-0">
+                <button onClick={async () => { if (await useModalStore.getState().showConfirm('Eliminar Documento', '¿Estás seguro de eliminar este documento?')) deleteDoc.mutate({ id: doc.id, filePath: doc.file_path }); }} className="text-gray-400 hover:text-red-500 p-1 rounded transition-colors shrink-0">
                   <Trash2 size={14} />
                 </button>
               </div>

@@ -15,6 +15,7 @@ import { useAppStore } from '../store/useStore';
 import { createPortal } from 'react-dom';
 import { exportDispatchPdf } from '../lib/orderPdfExport';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
+import { useModalStore } from '../store/useModalStore';
 
 type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
 
@@ -228,7 +229,7 @@ const ObraRequestsTab: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleDeriveToPurchases = async (reqId: string) => {
-    if (confirm('¿Derivar este pedido a Compras de forma definitiva?')) {
+    if (await useModalStore.getState().showConfirm('Derivar a Compras', '¿Derivar este pedido a Compras de forma definitiva?')) {
       await updateRequest.mutateAsync({ id: reqId, request_type: 'purchase', status: 'pending' });
     }
   };

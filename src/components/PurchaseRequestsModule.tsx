@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ShoppingBag, Plus, X, AlertTriangle, Clock,
-  Building2, Package, Smartphone, Shield, Save, CheckCircle2,
+  Building2, Package, CheckCircle2,
   Truck, FileText, Download, Trash2
 } from 'lucide-react';
 import {
   usePurchaseRequests, useCreatePurchaseRequest, useUpdatePurchaseRequest, useProjects,
-  useSystemSetting, useUpsertSystemSetting, useInventoryItems, useUpdatePurchaseRequestItems,
+  useInventoryItems, useUpdatePurchaseRequestItems,
   useDispatchPurchaseRequest, useReceivePurchaseRequest, useCreatePurchaseOrder, useDeletePurchaseRequest,
   useEmployees, useAllFuelVehicles, useCreateLogisticsDelivery
 } from '../hooks/useData';
@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { PurchaseRequest, PurchaseRequestItem } from '../lib/types';
 import { exportRequestPdf, exportDispatchPdf, exportThreeWayComparisonPdf } from '../lib/orderPdfExport';
 import { RequestFlowDiagram3D } from './tracking/RequestFlowDiagram3D';
+import { useModalStore } from '../store/useModalStore';
 
 const URGENCY_LABEL: Record<string, { label: string; color: string }> = {
   low: { label: 'Baja', color: 'bg-gray-100 text-gray-600' },
@@ -33,39 +34,23 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   returned: { label: 'Devuelto', color: 'bg-orange-100 text-orange-700' },
 };
 
-const formatPhone = (phone: string) => {
-  const clean = phone.replace(/\D/g, '');
-  if (clean.length >= 10) {
-    const cc = clean.slice(0, clean.length - 10);
-    const area = clean.slice(-10, -7);
-    const rest = clean.slice(-7, -4) + '-' + clean.slice(-4);
-    return `+${cc} ${area} ${rest}`;
-  }
-  return phone;
-};
-
 export const PurchaseRequestsModule: React.FC = () => {
   const { user } = useAuth();
   const { data: requests, isLoading } = usePurchaseRequests();
   const { data: projects } = useProjects();
   const { data: inventoryItems = [] } = useInventoryItems();
-  const { data: whatsappSetting } = useSystemSetting('whatsapp_purchase_phone');
   const createRequest = useCreatePurchaseRequest();
   const updateRequest = useUpdatePurchaseRequest();
   const deleteRequest = useDeletePurchaseRequest();
   const createPO = useCreatePurchaseOrder();
-  const upsertSetting = useUpsertSystemSetting();
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
 
   const [showNew, setShowNew] = useState(false);
-  const [showWhatsappConfig, setShowWhatsappConfig] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [activeTab, setActiveTab] = useState<'obra' | 'quote'>('obra');
   const [form, setForm] = useState({ project_id: '', urgency: 'normal', urgency_reason: '', requested_by: '', notes: '' });
   const [formItems, setFormItems] = useState<{ description: string; quantity: string; unit: string; inventoryItemId: string; searchText: string; showDropdown: boolean }[]>([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
-  const [whatsappPhone, setWhatsappPhone] = useState('');
-  const [phoneSaved, setPhoneSaved] = useState(false);
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [quotePrices, setQuotePrices] = useState<Record<string, number>>({});
 
@@ -251,12 +236,6 @@ export const PurchaseRequestsModule: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (whatsappSetting?.value !== undefined) {
-      setWhatsappPhone(whatsappSetting.value);
-    }
-  }, [whatsappSetting]);
-
   const filtered = useMemo(() => {
     if (!requests) return [];
     return requests.filter(r => {
@@ -300,20 +279,7 @@ export const PurchaseRequestsModule: React.FC = () => {
     setFormItems([{ description: '', quantity: '1', unit: 'unidad', inventoryItemId: '', searchText: '', showDropdown: false }]);
   };
 
-  const handleSavePhone = async () => {
-    const clean = whatsappPhone.replace(/\D/g, '');
-    await upsertSetting.mutateAsync({
-      key: 'whatsapp_purchase_phone',
-      value: clean,
-      description: 'Número de WhatsApp autorizado para pedidos de insumos',
-    });
-    setPhoneSaved(true);
-    setTimeout(() => setPhoneSaved(false), 3000);
-  };
-
   if (isLoading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-gray-200 border-t-ecar-blue rounded-full animate-spin" /></div>;
-
-  const phoneConfigured = !!(whatsappSetting?.value);
 
   return (
     <div className="space-y-6">
@@ -349,82 +315,6 @@ export const PurchaseRequestsModule: React.FC = () => {
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ShoppingBag size={16} className="text-ecar-blue" /> Total Pedidos</div>
           <p className="text-2xl font-black text-ecar-blue font-mono">{(requests || []).length}</p>
         </div>
-      </div>
-
-      {/* WhatsApp Authorization Card */}
-      <div className={`light-card overflow-hidden transition-all ${phoneConfigured ? 'border-green-200' : 'border-orange-200'}`}>
-        <div className="p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${phoneConfigured ? 'bg-green-100' : 'bg-orange-100'}`}>
-              <Smartphone size={20} className={phoneConfigured ? 'text-green-600' : 'text-orange-600'} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="font-bold text-sm text-gray-800">WhatsApp Autorizado para Pedidos</p>
-                {phoneConfigured ? (
-                  <span className="badge badge-success"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Activo</span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">No configurado</span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {phoneConfigured
-                  ? <>Solo el número <span className="font-mono font-bold text-gray-600">{formatPhone(whatsappSetting!.value)}</span> puede hacer pedidos por WhatsApp</>
-                  : 'Configurá un número para que el encargado de obra pueda pedir insumos desde WhatsApp'}
-              </p>
-            </div>
-          </div>
-          <button onClick={() => setShowWhatsappConfig(!showWhatsappConfig)} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${showWhatsappConfig ? 'bg-gray-100 text-gray-600' : 'bg-ecar-blueLight text-ecar-blue hover:bg-ecar-blueLight'}`}>
-            {showWhatsappConfig ? <><X size={14} /> Cerrar</> : <><Shield size={14} /> Configurar</>}
-          </button>
-        </div>
-
-        {/* Expanded config */}
-        {showWhatsappConfig && (
-          <div className="px-4 pb-4 pt-0 border-t border-gray-100">
-            <div className="bg-gray-50 rounded-xl p-4 mt-3 space-y-3">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Número de WhatsApp Autorizado</label>
-                <div className="flex gap-2 mt-1">
-                  <div className="relative flex-1">
-                    <Smartphone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      value={whatsappPhone}
-                      onChange={e => { setWhatsappPhone(e.target.value); setPhoneSaved(false); }}
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all"
-                      placeholder="Ej: 5492641234567"
-                    />
-                  </div>
-                  <button
-                    onClick={handleSavePhone}
-                    disabled={upsertSetting.isPending}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm ${phoneSaved ? 'bg-green-500 text-white' : 'bg-ecar-blue text-white hover:bg-ecar-blue'} disabled:opacity-50`}
-                  >
-                    {upsertSetting.isPending ? (
-                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando...</>
-                    ) : phoneSaved ? (
-                      <><CheckCircle2 size={16} /> ¡Guardado!</>
-                    ) : (
-                      <><Save size={16} /> Guardar</>
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-3 border border-ecar-blueLight">
-                <p className="text-xs text-ecar-blue font-medium flex items-center gap-1.5">
-                  <Shield size={14} /> <span className="font-bold">¿Cómo funciona?</span>
-                </p>
-                <ul className="text-xs text-ecar-blue mt-1.5 space-y-1 ml-5">
-                  <li>• Solo este número podrá crear pedidos de compra vía WhatsApp con Rombo</li>
-                  <li>• El encargado manda un mensaje como <span className="font-mono bg-ecar-blueLight px-1 rounded">"necesito 50 bolsas de cemento urgente"</span></li>
-                  <li>• Rombo crea automáticamente el pedido en el sistema</li>
-                  <li>• Si otro número intenta hacer un pedido, será rechazado</li>
-                  <li>• Dejá el campo vacío para deshabilitar pedidos por WhatsApp</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* TABS */}
@@ -552,8 +442,8 @@ export const PurchaseRequestsModule: React.FC = () => {
                       </button>
 
                       <button
-                        onClick={() => {
-                          if (confirm('¿Está seguro de que desea eliminar este pedido de obra? Esta acción no se puede deshacer.')) {
+                        onClick={async () => {
+                          if (await useModalStore.getState().showConfirm('Eliminar Pedido', '¿Está seguro de que desea eliminar este pedido de obra? Esta acción no se puede deshacer.')) {
                             deleteRequest.mutate(req.id);
                           }
                         }}
