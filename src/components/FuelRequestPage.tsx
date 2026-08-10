@@ -13,6 +13,9 @@ export const FuelRequestPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
+  const STATIONS = ['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'];
+  const FUEL_TYPES = ['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Diesel EVOLUX', 'Nafta Súper', 'Nafta Premium', 'Aceite / Lubricante', 'Otro'];
+
   const [form, setForm] = useState({
     vehicle_code: '',
     requested_liters: '',
@@ -20,6 +23,8 @@ export const FuelRequestPage: React.FC = () => {
     project_name: '',
     requested_by: '',
     observations: '',
+    station_name: 'YPF',
+    fuel_type: 'Diesel Premium / V-Power',
   });
 
   // Load data
@@ -27,7 +32,7 @@ export const FuelRequestPage: React.FC = () => {
     (async () => {
       try {
         const [vRes, pRes] = await Promise.all([
-          supabase.from('fuel_vehicles').select('id, code, description, vehicle_type, plate').eq('status', 'active').order('code'),
+          supabase.from('fuel_vehicles').select('id, code, description, vehicle_type, plate, preferred_fuel').eq('status', 'active').order('code'),
           supabase.from('projects').select('id, name').eq('status', 'active').order('name'),
         ]);
         setVehicles(vRes.data || []);
@@ -63,10 +68,13 @@ export const FuelRequestPage: React.FC = () => {
         project_name: form.project_name || null,
         requested_by: form.requested_by,
         observations: form.observations || null,
+        supplier: form.station_name,
+        station_name: form.station_name,
+        fuel_type: form.fuel_type || vehicle?.preferred_fuel || 'Diesel Premium / V-Power',
         workflow_status: 'requested',
         driver_name: form.requested_by,
         liters: 0,
-        load_source: 'station',
+        load_source: form.station_name === 'Batán Interno' ? 'batan' : 'station',
         validation_status: 'pending',
       });
 
@@ -182,6 +190,38 @@ export const FuelRequestPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Row: Estación + Tipo de Combustible */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  Estación de Servicio Preferida
+                </label>
+                <select
+                  value={form.station_name}
+                  onChange={e => setForm({ ...form, station_name: e.target.value })}
+                  className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3.5 text-gray-800 focus:outline-none focus:border-ecar-blue focus:ring-2 focus:ring-ecar-blueLight transition-all font-medium appearance-none"
+                >
+                  {STATIONS.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  Tipo de Combustible
+                </label>
+                <select
+                  value={form.fuel_type}
+                  onChange={e => setForm({ ...form, fuel_type: e.target.value })}
+                  className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3.5 text-gray-800 focus:outline-none focus:border-ecar-blue focus:ring-2 focus:ring-ecar-blueLight transition-all font-medium appearance-none"
+                >
+                  {FUEL_TYPES.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Row: Litros + Odómetro */}

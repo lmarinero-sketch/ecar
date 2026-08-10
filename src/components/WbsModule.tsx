@@ -1742,6 +1742,9 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
   const [vehicleId, setVehicleId] = useState('');
   const [liters, setLiters] = useState('');
   const [totalCost, setTotalCost] = useState('');
+  const [unitPrice, setUnitPrice] = useState('');
+  const [stationName, setStationName] = useState('YPF');
+  const [fuelType, setFuelType] = useState('Diesel Premium / V-Power');
   const [odometer, setOdometer] = useState('');
   const [driver, setDriver] = useState('');
   const [obs, setObs] = useState('');
@@ -1762,8 +1765,12 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
   };
 
   const handleSaveFuel = async () => {
-    if (!vehicleId || !liters || !totalCost) return;
+    if (!vehicleId || !liters || (!totalCost && !unitPrice)) return;
     const v = vehicles.find(x => x.id === vehicleId);
+    const l = parseFloat(liters) || 0;
+    const total = parseFloat(totalCost) || (l * (parseFloat(unitPrice) || 0));
+    const priceL = parseFloat(unitPrice) || (l ? total / l : 0);
+
     await createFuelLoad.mutateAsync({
       project_id: projectId,
       vehicle_id: vehicleId,
@@ -1772,19 +1779,25 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
       plate: v?.plate || null,
       vehicle_type: v?.vehicle_type || null,
       load_date: new Date().toISOString().split('T')[0],
-      liters: parseFloat(liters),
-      total_amount: parseFloat(totalCost),
-      price_per_liter: parseFloat(totalCost) / parseFloat(liters),
+      liters: l,
+      total_amount: total,
+      price_per_liter: priceL,
+      supplier: stationName,
+      station_name: stationName,
+      fuel_type: fuelType || v?.preferred_fuel || 'Diesel Premium / V-Power',
       odometer_km: odometer ? parseFloat(odometer) : null,
       driver_name: driver || null,
       observations: obs || null,
-      load_source: 'station',
+      load_source: stationName === 'Batán Interno' ? 'batan' : 'station',
       validation_status: 'pending',
     });
     setShowFuelModal(false);
     setVehicleId('');
     setLiters('');
     setTotalCost('');
+    setUnitPrice('');
+    setStationName('YPF');
+    setFuelType('Diesel Premium / V-Power');
     setOdometer('');
     setDriver('');
     setObs('');
@@ -2022,12 +2035,72 @@ const MovimientosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Estación de Servicio *</label>
+                  <select value={stationName} onChange={e => setStationName(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none font-medium">
+                    {['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Tipo de Combustible *</label>
+                  <select value={fuelType} onChange={e => setFuelType(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none font-medium">
+                    {['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Diesel EVOLUX', 'Nafta Súper', 'Nafta Premium', 'Aceite / Lubricante', 'Otro'].map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Litros cargados *</label>
-                  <input type="number" min="0.1" step="any" value={liters} onChange={e => setLiters(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                  <input 
+                    type="number" 
+                    min="0.1" 
+                    step="any" 
+                    value={liters} 
+                    onChange={e => {
+                      const l = parseFloat(e.target.value) || 0;
+                      const u = parseFloat(unitPrice) || 0;
+                      setLiters(e.target.value);
+                      if (u > 0) setTotalCost(String(l * u));
+                    }} 
+                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none font-mono font-bold text-sky-700" 
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">$/Litro (Precio Unitario)</label>
+                  <input 
+                    type="number" 
+                    step="any" 
+                    disabled={stationName === 'Batán Interno'}
+                    value={unitPrice} 
+                    onChange={e => {
+                      const u = parseFloat(e.target.value) || 0;
+                      const l = parseFloat(liters) || 0;
+                      setUnitPrice(e.target.value);
+                      if (l > 0) setTotalCost(String(l * u));
+                    }} 
+                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none font-mono disabled:opacity-50" 
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Costo Total ($ ARS) *</label>
-                  <input type="number" min="1" step="any" value={totalCost} onChange={e => setTotalCost(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none" />
+                  <input 
+                    type="number" 
+                    min="1" 
+                    step="any" 
+                    disabled={stationName === 'Batán Interno'}
+                    value={totalCost} 
+                    onChange={e => {
+                      const t = parseFloat(e.target.value) || 0;
+                      const l = parseFloat(liters) || 0;
+                      setTotalCost(e.target.value);
+                      if (l > 0) setUnitPrice(String(t / l));
+                    }} 
+                    className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none font-mono font-bold text-emerald-700 disabled:opacity-50" 
+                  />
                 </div>
               </div>
 

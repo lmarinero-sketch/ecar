@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2 } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Building2, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
@@ -10,11 +9,20 @@ import { useImplementationStore } from '../store/useImplementationStore';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const SUPPLIERS = ['Shell Agro','YPF Agro','Axion','Puma','Otro'];
-const FUEL_TYPES = ['Diesel V-Power','Diesel - EVOLUX','Nafta','Aceite'];
-
+const STATIONS = ['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'];
+const SUPPLIERS = STATIONS;
+const FUEL_TYPES = [
+  'Diesel 500 / Ultradiesel',
+  'Diesel Premium / V-Power',
+  'Diesel EVOLUX',
+  'Nafta Súper',
+  'Nafta Premium',
+  'Aceite / Lubricante',
+  'Otro'
+];
 
 const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtCurrency = (n: number) => `$ ${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 type Tab = 'loads' | 'requests' | 'batan' | 'reconciliation' | 'fleet' | 'dashboard';
 
@@ -51,7 +59,7 @@ export const FuelModule: React.FC = () => {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'requests', label: 'Autorizaciones', icon: ClipboardCheck },
     { id: 'loads', label: 'Cargas Realizadas', icon: Fuel },
-    { id: 'dashboard', label: 'Dashboard', icon: PieChart },
+    { id: 'dashboard', label: 'Dashboard & Analítica', icon: PieChart },
     { id: 'batan', label: 'Batán', icon: Droplets },
     { id: 'reconciliation', label: 'Conciliación', icon: FileCheck },
     { id: 'fleet', label: 'Flota', icon: Truck },
@@ -64,7 +72,7 @@ export const FuelModule: React.FC = () => {
         <div className="absolute top-0 right-0 p-6 opacity-10"><Fuel size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><Fuel size={24} /> Control de Combustible</h3>
-          <p className="text-ecar-blueLight text-sm mt-1">Registro de cargas, control de batán y conciliación con proveedor</p>
+          <p className="text-ecar-blueLight text-sm mt-1">Gestión de vales, estaciones de servicio, consumo por vehículo y métricas de gasto</p>
         </div>
       </div>
 
@@ -73,7 +81,7 @@ export const FuelModule: React.FC = () => {
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KPI icon={Fuel} label={`Litros ${currentMonth}`} value={`${fmt(totalLiters)} L`} color="sky" />
-            <KPI icon={BarChart3} label={`Importe ${currentMonth}`} value={totalAmount > 0 ? `$ ${fmt(totalAmount)}` : 'Sin precio'} color="emerald" />
+            <KPI icon={BarChart3} label={`Importe ${currentMonth}`} value={totalAmount > 0 ? fmtCurrency(totalAmount) : 'Sin precio'} color="emerald" />
             <KPI icon={Calendar} label="Cargas del mes" value={String(monthLoads.length)} color="violet" />
             <KPI icon={Droplets} label="Saldo Batán" value={`${fmt(batanBalance)} L`} color="amber" />
           </div>
@@ -111,7 +119,7 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
   const { user, isAdmin } = useAuth();
-  const [form, setForm] = useState<Partial<FuelLoad> & { fuel_source?: 'station' | 'batan' }>(() => {
+  const [form, setForm] = useState<Partial<FuelLoad> & { fuel_source?: 'station' | 'batan'; custom_station?: string }>(() => {
     const d = new Date();
     return {
       load_date: d.toISOString().split('T')[0],
@@ -119,11 +127,14 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       year: d.getFullYear(),
       day_of_week: DAYS_ES[d.getDay()],
       driver_name: user?.email || '',
-      fuel_source: 'station'
+      fuel_source: 'station',
+      supplier: 'YPF',
+      station_name: 'YPF',
+      fuel_type: 'Diesel Premium / V-Power'
     };
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ liters: number; price_per_liter: number; total_amount: number }>({ liters: 0, price_per_liter: 0, total_amount: 0 });
+  const [editForm, setEditForm] = useState<{ liters: number; price_per_liter: number; total_amount: number; supplier: string; fuel_type: string }>({ liters: 0, price_per_liter: 0, total_amount: 0, supplier: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
   const updateLoad = useUpdateFuelLoad();
   const deleteLoad = useDeleteFuelLoad();
   const userEmail = user?.email?.toLowerCase() || '';
@@ -132,7 +143,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const handleVehicleCode = (code: string) => {
     const v = vehicles.find(x => x.code === code);
     if (v) {
-      setForm(f => ({ ...f, vehicle_code: code, vehicle_id: v.id, vehicle_description: v.description, plate: v.plate || '', vehicle_type: v.vehicle_type, fuel_type: v.preferred_fuel || '' }));
+      setForm(f => ({ ...f, vehicle_code: code, vehicle_id: v.id, vehicle_description: v.description, plate: v.plate || '', vehicle_type: v.vehicle_type, fuel_type: v.preferred_fuel || f.fuel_type || 'Diesel Premium / V-Power' }));
     } else {
       setForm(f => ({ ...f, vehicle_code: code }));
     }
@@ -146,7 +157,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const handleSubmit = async () => {
     const isBatan = form.fuel_source === 'batan';
     if (!form.load_date || !form.vehicle_code || !form.liters) {
-      alert("Por favor, complete los datos básicos.");
+      alert("Por favor, complete los datos básicos (Fecha, Vehículo, Litros).");
       return;
     }
     if (!isBatan && (!form.total_amount && !form.price_per_liter)) {
@@ -154,52 +165,79 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       return;
     }
     const nextNum = loads.length + 1;
-    const finalAmount = isBatan ? 0 : form.total_amount;
-    const finalPrice = isBatan ? 0 : form.price_per_liter;
+    const finalAmount = isBatan ? 0 : (form.total_amount || 0);
+    const finalPrice = isBatan ? 0 : (form.price_per_liter || (form.liters ? finalAmount / form.liters : 0));
+    const finalSupplier = isBatan ? 'Batán Interno' : (form.supplier === 'Otro' ? (form.custom_station || 'Otro') : form.supplier);
 
-    await createLoad.mutateAsync({ ...form, load_number: `CARGA-${String(nextNum).padStart(4, '0')}`, validation_status: 'pending', load_source: form.fuel_source || 'station', created_by: 'web', supplier: isBatan ? 'Uso Interno' : form.supplier, total_amount: finalAmount, price_per_liter: finalPrice });
+    await createLoad.mutateAsync({
+      ...form,
+      load_number: `CARGA-${String(nextNum).padStart(4, '0')}`,
+      validation_status: 'pending',
+      load_source: form.fuel_source || 'station',
+      created_by: 'web',
+      supplier: finalSupplier,
+      station_name: finalSupplier,
+      total_amount: finalAmount,
+      price_per_liter: finalPrice
+    });
 
     if (isBatan) {
       await createBatan.mutateAsync({
         movement_date: form.load_date,
         movement_type: 'discharge',
-        fuel_type: form.fuel_type || 'Diesel V-Power',
+        fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
         liters_discharged: form.liters,
         movement_status: 'completed',
         reference_load: `CARGA-${String(nextNum).padStart(4, '0')}`
       });
     }
 
-    setForm({ fuel_source: 'station' });
+    setForm({ fuel_source: 'station', supplier: 'YPF', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
     setShowForm(false);
   };
 
   const startEdit = (l: FuelLoad) => {
     setEditingId(l.id);
-    setEditForm({ liters: l.liters || 0, price_per_liter: l.price_per_liter || 0, total_amount: l.total_amount || 0 });
+    setEditForm({
+      liters: l.liters || 0,
+      price_per_liter: l.price_per_liter || 0,
+      total_amount: l.total_amount || 0,
+      supplier: l.station_name || l.supplier || 'YPF',
+      fuel_type: l.fuel_type || 'Diesel Premium / V-Power'
+    });
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
-    await updateLoad.mutateAsync({ id: editingId, liters: editForm.liters, price_per_liter: editForm.price_per_liter, total_amount: editForm.total_amount });
+    await updateLoad.mutateAsync({
+      id: editingId,
+      liters: editForm.liters,
+      price_per_liter: editForm.price_per_liter,
+      total_amount: editForm.total_amount,
+      supplier: editForm.supplier,
+      station_name: editForm.supplier,
+      fuel_type: editForm.fuel_type
+    });
     setEditingId(null);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-bold text-gray-800">Registro de Cargas</h3>
+        <h3 className="font-bold text-gray-800">Registro de Cargas Realizadas</h3>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Cancelar' : 'Nueva Carga'}
         </button>
       </div>
 
       {showForm && (
-        <div className="light-card p-5 space-y-4">
-          <h4 className="font-bold text-gray-700 text-sm">📝 Registrar Carga de Combustible</h4>
+        <div className="light-card p-5 space-y-4 border-2 border-sky-200">
+          <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+            <Fuel size={18} className="text-sky-600" /> Registrar Carga de Combustible
+          </h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs font-bold text-gray-500">Fecha</label>
+              <label className="text-xs font-bold text-gray-500">Fecha *</label>
               <input type="date" value={form.load_date || ''} onChange={e => handleDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500" />
             </div>
             <div>
@@ -215,22 +253,23 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <input readOnly value={form.year || ''} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50" />
             </div>
           </div>
+
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div>
               <label className="text-xs font-bold text-gray-500">Origen de Carga</label>
               <select value={form.fuel_source || 'station'} onChange={e => {
                 const s = e.target.value as 'station' | 'batan';
-                if (s === 'batan') setForm(f => ({ ...f, fuel_source: s, price_per_liter: 0, total_amount: 0, supplier: 'Uso Interno' }));
-                else setForm(f => ({ ...f, fuel_source: s }));
+                if (s === 'batan') setForm(f => ({ ...f, fuel_source: s, price_per_liter: 0, total_amount: 0, supplier: 'Batán Interno', station_name: 'Batán Interno' }));
+                else setForm(f => ({ ...f, fuel_source: s, supplier: 'YPF', station_name: 'YPF' }));
               }} className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 font-bold text-blue-700">
-                <option value="station">Estación / Prov.</option>
+                <option value="station">Estación de Servicio</option>
                 <option value="batan">Batán Interno</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Código Interno</label>
+              <label className="text-xs font-bold text-gray-500">Código Interno *</label>
               <select value={form.vehicle_code || ''} onChange={e => handleVehicleCode(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">Seleccioná...</option>
+                <option value="">Seleccioná vehículo...</option>
                 {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
               </select>
             </div>
@@ -243,14 +282,15 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <input readOnly value={form.plate || ''} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 font-mono" />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Tipo</label>
+              <label className="text-xs font-bold text-gray-500">Tipo Unidad</label>
               <input readOnly value={form.vehicle_type || ''} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50" />
             </div>
           </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs font-bold text-gray-500">Responsable</label>
-              <input readOnly value={form.driver_name || ''} placeholder="Nombre" className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50" />
+              <label className="text-xs font-bold text-gray-500">Responsable / Chofer</label>
+              <input value={form.driver_name || ''} onChange={e => setForm(f => ({ ...f, driver_name: e.target.value }))} placeholder="Nombre del chofer" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">Obra / Centro Costo</label>
@@ -261,46 +301,94 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Proveedor</label>
-              <select value={form.supplier || ''} onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">Seleccioná...</option>
-                {SUPPLIERS.map(s => <option key={s} value={s}>{s}</option>)}
+              <label className="text-xs font-bold text-gray-500">Estación de Servicio *</label>
+              <select 
+                disabled={form.fuel_source === 'batan'}
+                value={form.supplier || 'YPF'} 
+                onChange={e => setForm(f => ({ ...f, supplier: e.target.value, station_name: e.target.value }))} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
+              {form.supplier === 'Otro' && (
+                <input 
+                  type="text" 
+                  placeholder="Escribir nombre de estación..." 
+                  value={form.custom_station || ''} 
+                  onChange={e => setForm(f => ({ ...f, custom_station: e.target.value }))}
+                  className="w-full mt-1.5 px-3 py-1.5 border border-sky-300 rounded-lg text-xs" 
+                />
+              )}
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Tipo Combustible</label>
-              <select value={form.fuel_type || ''} onChange={e => setForm(f => ({ ...f, fuel_type: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <label className="text-xs font-bold text-gray-500">Tipo de Combustible *</label>
+              <select value={form.fuel_type || ''} onChange={e => setForm(f => ({ ...f, fuel_type: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium">
                 <option value="">Seleccioná...</option>
                 {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 bg-sky-50/60 p-3 rounded-xl border border-sky-100">
             <div>
-              <label className="text-xs font-bold text-gray-500">Litros</label>
-              <input type="number" step="0.01" value={form.liters || ''} onChange={e => { const l = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, liters: l, total_amount: l * (f.price_per_liter || 0) })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
+              <label className="text-xs font-bold text-sky-800">Litros Cargados *</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                placeholder="Ej: 50"
+                value={form.liters || ''} 
+                onChange={e => { 
+                  const l = parseFloat(e.target.value) || 0; 
+                  setForm(f => ({ ...f, liters: l, total_amount: l * (f.price_per_liter || 0) })); 
+                }} 
+                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-bold bg-white" 
+              />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">$/Litro</label>
-              <input type="number" step="0.01" value={form.price_per_liter || ''} disabled={form.fuel_source === 'batan'} onChange={e => { const p = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono disabled:opacity-50" />
+              <label className="text-xs font-bold text-sky-800">$/Litro (Precio Unitario) *</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                placeholder="Ej: 1250"
+                value={form.price_per_liter || ''} 
+                disabled={form.fuel_source === 'batan'} 
+                onChange={e => { 
+                  const p = parseFloat(e.target.value) || 0; 
+                  setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); 
+                }} 
+                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono bg-white disabled:opacity-50" 
+              />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Importe Total</label>
-              <input type="number" step="0.01" value={form.total_amount || ''} disabled={form.fuel_source === 'batan'} onChange={e => { const t = parseFloat(e.target.value) || 0; setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono font-bold disabled:opacity-50" />
+              <label className="text-xs font-bold text-sky-800">Importe Total ($) *</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                placeholder="Ej: 62500"
+                value={form.total_amount || ''} 
+                disabled={form.fuel_source === 'batan'} 
+                onChange={e => { 
+                  const t = parseFloat(e.target.value) || 0; 
+                  setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); 
+                }} 
+                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-black text-sky-900 bg-white disabled:opacity-50" 
+              />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">N° Vale</label>
-              <input value={form.voucher_number || ''} onChange={e => setForm(f => ({ ...f, voucher_number: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+              <label className="text-xs font-bold text-gray-500">N° Vale / Comprobante</label>
+              <input value={form.voucher_number || ''} onChange={e => setForm(f => ({ ...f, voucher_number: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white" />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">N° Remito</label>
-              <input value={form.remito_number || ''} onChange={e => setForm(f => ({ ...f, remito_number: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+              <label className="text-xs font-bold text-gray-500">N° Remito / Factura</label>
+              <input value={form.remito_number || ''} onChange={e => setForm(f => ({ ...f, remito_number: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white" />
             </div>
           </div>
+
           <div>
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
-            <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" />
+            <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones opcionales..." />
           </div>
+
           <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (form.fuel_source !== 'batan' && !form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
@@ -312,35 +400,59 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         <table className="data-table">
           <thead>
             <tr>
-              <th>ID</th><th>Fecha</th><th>Vehículo</th>
-              <th>Patente</th><th>Litros</th><th>$/L</th>
-              <th>Importe</th><th>Vale</th><th>Estado</th>
+              <th>ID</th>
+              <th>Fecha</th>
+              <th>Vehículo</th>
+              <th>Estación</th>
+              <th>Combustible</th>
+              <th>Litros</th>
+              <th>$/L</th>
+              <th>Importe Total</th>
+              <th>Chofer / Vale</th>
+              <th>Estado</th>
               <th className="text-center">Editar / Borrar</th>
             </tr>
           </thead>
           <tbody>
             {loads.length === 0 ? (
-              <tr><td colSpan={10} className="text-center text-gray-400"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
+              <tr><td colSpan={11} className="text-center text-gray-400 py-8"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
             ) : loads.map(l => (
               <tr key={l.id} className={`${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
                 <td className="font-mono text-xs text-gray-500">{l.load_number}</td>
-                <td>{l.load_date}</td>
-                <td className="font-medium">{l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span></td>
-                <td className="font-mono text-xs">{l.plate}</td>
+                <td className="text-xs whitespace-nowrap">{l.load_date}</td>
+                <td className="font-medium">
+                  {l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span>
+                  {l.plate && <span className="block text-[10px] text-gray-400 font-mono">{l.plate}</span>}
+                </td>
                 {editingId === l.id ? (
                   <>
-                    <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
-                    <td><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-sm font-mono" /></td>
-                    <td><input type="number" step="0.01" value={editForm.total_amount} onChange={e => { const t = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-24 px-2 py-1 border rounded text-sm font-mono font-bold" /></td>
+                    <td>
+                      <select value={editForm.supplier} onChange={e => setEditForm(f => ({ ...f, supplier: e.target.value }))} className="px-2 py-1 border rounded text-xs">
+                        {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select value={editForm.fuel_type} onChange={e => setEditForm(f => ({ ...f, fuel_type: e.target.value }))} className="px-2 py-1 border rounded text-xs">
+                        {FUEL_TYPES.map(ft => <option key={ft} value={ft}>{ft}</option>)}
+                      </select>
+                    </td>
+                    <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono" /></td>
+                    <td><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono" /></td>
+                    <td><input type="number" step="0.01" value={editForm.total_amount} onChange={e => { const t = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-24 px-2 py-1 border rounded text-xs font-mono font-bold" /></td>
                   </>
                 ) : (
                   <>
-                    <td className="font-mono font-bold">{l.liters} L</td>
+                    <td><span className="badge badge-neutral text-[11px]">{l.station_name || l.supplier || 'YPF'}</span></td>
+                    <td className="text-xs text-gray-600">{l.fuel_type || '—'}</td>
+                    <td className="font-mono font-bold text-sky-700">{l.liters} L</td>
                     <td className="font-mono text-xs">{l.price_per_liter ? `$ ${fmt(l.price_per_liter)}` : <span className="text-gray-300">—</span>}</td>
-                    <td className="font-mono font-bold">{l.total_amount ? `$ ${fmt(l.total_amount)}` : <span className="text-gray-300">Sin precio</span>}</td>
+                    <td className="font-mono font-bold text-emerald-700">{l.total_amount ? fmtCurrency(l.total_amount) : <span className="text-gray-300">Sin precio</span>}</td>
                   </>
                 )}
-                <td className="text-xs">{l.voucher_number}</td>
+                <td className="text-xs">
+                  <div className="font-medium text-gray-700">{l.driver_name || '—'}</div>
+                  {l.voucher_number && <div className="text-[10px] text-gray-400 font-mono">Vale: {l.voucher_number}</div>}
+                </td>
                 <td>
                   <span className={`badge ${l.validation_status === 'ok' ? 'badge-success' : l.validation_status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>
                     {l.validation_status === 'ok' ? 'OK' : l.validation_status === 'observed' ? 'Observado' : 'Pendiente'}
@@ -354,7 +466,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar precio retroactivo"><Pencil size={14} /></button>
+                      <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar carga"><Pencil size={14} /></button>
                       {canDelete && (
                         <button 
                           onClick={() => { if (window.confirm('¿Seguro que deseás borrar esta carga?')) deleteLoad.mutateAsync(l.id); }} 
@@ -380,14 +492,14 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 /* ── Batán Tab ── */
 const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements }) => (
   <div className="light-card overflow-hidden">
-    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Control de Batán</h3></div>
+    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Control de Batán Interno</h3></div>
     <table className="data-table">
       <thead>
         <tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Combustible</th><th>Litros</th><th>Saldo</th><th>Estado</th></tr>
       </thead>
       <tbody>
         {movements.length === 0 ? (
-          <tr><td colSpan={7} className="text-center text-gray-400"><Droplets size={40} className="mx-auto mb-2 opacity-30" /><p>Sin movimientos</p></td></tr>
+          <tr><td colSpan={7} className="text-center text-gray-400 py-8"><Droplets size={40} className="mx-auto mb-2 opacity-30" /><p>Sin movimientos en batán</p></td></tr>
         ) : movements.map(m => (
           <tr key={m.id}>
             <td className="font-mono text-xs">{m.movement_number}</td>
@@ -407,7 +519,7 @@ const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements 
 /* ── Reconciliation Tab ── */
 const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
   <div className="light-card overflow-hidden">
-    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Conciliación Mensual con Proveedor</h3></div>
+    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Conciliación Mensual con Proveedores</h3></div>
     <table className="data-table">
       <thead>
         <tr><th>Mes</th><th>Cargas</th><th>Litros</th><th>Importe Planilla</th><th>Factura Proveedor</th><th>Diferencia</th><th>Estado</th></tr>
@@ -444,7 +556,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
             <td><span className="badge badge-neutral">{v.vehicle_type}</span></td>
             <td className="font-medium">{v.description}</td>
             <td className="font-mono text-xs">{v.plate || '—'}</td>
-            <td className="text-xs">{v.preferred_fuel}</td>
+            <td className="text-xs font-semibold text-gray-700">{v.preferred_fuel}</td>
             <td className="font-mono">{v.tank_capacity_liters ? `${v.tank_capacity_liters} L` : '—'}</td>
             <td className="text-xs">{v.area || '—'}</td>
             <td className="text-xs">{v.default_driver || '—'}</td>
@@ -459,7 +571,7 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
 const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; updateLoad: any; createLoad: any; projects: any[]; createBatan: any }> = ({ loads, vehicles, updateLoad, createLoad, projects, createBatan }) => {
   const { user, isAdmin, profile } = useAuth();
   const [showReqForm, setShowReqForm] = useState(false);
-  const [reqForm, setReqForm] = useState<{ vehicle_code: string; requested_liters: string; odometer_km: string; project_name: string; observations: string; fuel_source: 'station' | 'batan' }>({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station' });
+  const [reqForm, setReqForm] = useState<{ vehicle_code: string; requested_liters: string; odometer_km: string; project_name: string; observations: string; fuel_source: 'station' | 'batan'; station_name: string; fuel_type: string }>({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
   
   // Signature registration
   const [showSignaturePanel, setShowSignaturePanel] = useState(false);
@@ -499,7 +611,6 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     const canvas = sigCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    // Scale from display size to canvas internal resolution
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     if ('touches' in e) {
@@ -568,7 +679,6 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       const { supabase } = await import('../lib/supabase');
       await supabase.from('profiles').update({ dni: sigDni, signature_data: canvasData, full_name: sigName }).eq('id', profile?.id);
       setShowSignaturePanel(false);
-      // Force page reload to get updated profile
       window.location.reload();
     } catch (e: any) {
       alert('Error al guardar firma: ' + e.message);
@@ -591,7 +701,9 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       vehicle_description: v?.description,
       plate: v?.plate,
       vehicle_type: v?.vehicle_type,
-      fuel_type: v?.preferred_fuel,
+      fuel_type: reqForm.fuel_type || v?.preferred_fuel || 'Diesel Premium / V-Power',
+      supplier: reqForm.station_name || 'YPF',
+      station_name: reqForm.station_name || 'YPF',
       requested_liters: parseFloat(reqForm.requested_liters) || 0,
       odometer_km: parseInt(reqForm.odometer_km) || null,
       project_name: reqForm.project_name || null,
@@ -601,7 +713,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       created_by: 'web',
       load_source: reqForm.fuel_source
     });
-    setReqForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station' });
+    setReqForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
     setShowReqForm(false);
   };
 
@@ -621,7 +733,14 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   };
 
   const [completingId, setCompletingId] = useState<string | null>(null);
-  const [completeForm, setCompleteForm] = useState({ liters: '', price_per_liter: '', total_amount: '', fuel_source: 'station' as 'station' | 'batan' });
+  const [completeForm, setCompleteForm] = useState({
+    liters: '',
+    price_per_liter: '',
+    total_amount: '',
+    fuel_source: 'station' as 'station' | 'batan',
+    supplier: 'YPF',
+    fuel_type: 'Diesel Premium / V-Power'
+  });
 
   const handleComplete = async () => {
     const isBatan = completeForm.fuel_source === 'batan';
@@ -633,7 +752,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     
     const finalLiters = parseFloat(completeForm.liters) || 0;
     const finalAmount = isBatan ? 0 : parseFloat(completeForm.total_amount) || 0;
-    const finalPrice = isBatan ? 0 : (finalAmount / finalLiters) || 0;
+    const finalPrice = isBatan ? 0 : (parseFloat(completeForm.price_per_liter) || (finalAmount / finalLiters) || 0);
 
     await updateLoad.mutateAsync({
       id: completingId,
@@ -642,7 +761,9 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       total_amount: finalAmount,
       workflow_status: 'completed',
       load_source: completeForm.fuel_source,
-      supplier: isBatan ? 'Uso Interno' : undefined
+      supplier: isBatan ? 'Batán Interno' : completeForm.supplier,
+      station_name: isBatan ? 'Batán Interno' : completeForm.supplier,
+      fuel_type: completeForm.fuel_type
     });
 
     if (isBatan) {
@@ -650,7 +771,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       await createBatan.mutateAsync({
         movement_date: new Date().toISOString().split('T')[0],
         movement_type: 'discharge',
-        fuel_type: loadObj?.fuel_type || 'Diesel V-Power',
+        fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
         liters_discharged: finalLiters,
         movement_status: 'completed',
         reference_load: loadObj?.load_number
@@ -660,12 +781,11 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     setCompletingId(null);
   };
 
-  // Build shareable link
   const shareableLink = `${window.location.origin}/fuel-request`;
 
   return (
     <div className="space-y-6">
-      {/* ── Shareable Link + Signature Banner ── */}
+      {/* Shareable Link + Signature Banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Shareable Link Card */}
         <div className="bg-gradient-to-br from-blue-50 to-slate-50 border border-blue-200 rounded-xl p-4 shadow-sm">
@@ -728,7 +848,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         )}
       </div>
 
-      {/* ── Signature Registration Panel (expandable) ── */}
+      {/* Signature Panel */}
       {showSignaturePanel && (
         <div className="bg-white border-2 border-blue-300 rounded-xl p-6 shadow-lg animate-fade-in">
           <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -806,7 +926,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         </div>
       )}
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-gray-800">Autorizaciones de Carga</h3>
         <button onClick={() => setShowReqForm(!showReqForm)} className="btn-primary">
@@ -817,35 +937,43 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       {showReqForm && (
         <div className="bg-white border-2 border-orange-200 rounded-xl p-5 shadow-lg space-y-4">
           <h4 className="font-bold text-gray-700 text-sm">📝 Solicitud de Carga (Operario)</h4>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <div>
               <label className="text-xs font-bold text-gray-500">Origen</label>
-              <select value={reqForm.fuel_source} onChange={e => setReqForm({ ...reqForm, fuel_source: e.target.value as any })} className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 font-bold text-blue-700">
+              <select value={reqForm.fuel_source} onChange={e => setReqForm({ ...reqForm, fuel_source: e.target.value as any, station_name: e.target.value === 'batan' ? 'Batán Interno' : 'YPF' })} className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 font-bold text-blue-700">
                 <option value="station">Estación</option>
                 <option value="batan">Batán Interno</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Vehículo</label>
-              <select value={reqForm.vehicle_code} onChange={e => setReqForm({ ...reqForm, vehicle_code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <label className="text-xs font-bold text-gray-500">Estación Sugerida</label>
+              <select disabled={reqForm.fuel_source === 'batan'} value={reqForm.station_name} onChange={e => setReqForm({ ...reqForm, station_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50">
+                {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Tipo Combustible</label>
+              <select value={reqForm.fuel_type} onChange={e => setReqForm({ ...reqForm, fuel_type: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Vehículo *</label>
+              <select value={reqForm.vehicle_code} onChange={e => {
+                const v = vehicles.find(x => x.code === e.target.value);
+                setReqForm({ ...reqForm, vehicle_code: e.target.value, fuel_type: v?.preferred_fuel || reqForm.fuel_type });
+              }} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 <option value="">Seleccioná...</option>
                 {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Litros Solicitados</label>
+              <label className="text-xs font-bold text-gray-500">Litros Solicitados *</label>
               <input type="number" step="0.1" value={reqForm.requested_liters} onChange={e => setReqForm({ ...reqForm, requested_liters: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500">Odómetro (Km) / Horómetro (Hs)</label>
+              <label className="text-xs font-bold text-gray-500">Km / Hs</label>
               <input type="number" value={reqForm.odometer_km} onChange={e => setReqForm({ ...reqForm, odometer_km: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-500">Obra / CC</label>
-              <select value={reqForm.project_name} onChange={e => setReqForm({ ...reqForm, project_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">Uso General</option>
-                {projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-              </select>
             </div>
           </div>
           <div>
@@ -900,29 +1028,22 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                 <button 
                   onClick={async () => {
                     const doc = new jsPDF('p', 'pt', 'a4');
-                    
-                    // ECAR Corporate Background (Diagonal bands)
-                    // Top Blue Band
-                    doc.setFillColor(11, 34, 64); // ECAR Blue
+                    doc.setFillColor(11, 34, 64);
                     doc.triangle(0, 0, 600, 0, 600, 100, 'F');
                     doc.triangle(0, 0, 600, 100, 0, 160, 'F');
 
-                    // Top Red Band
-                    doc.setFillColor(210, 32, 39); // ECAR Red
+                    doc.setFillColor(210, 32, 39);
                     doc.triangle(0, 160, 600, 100, 600, 115, 'F');
                     doc.triangle(0, 160, 600, 115, 0, 175, 'F');
 
-                    // Bottom Blue Band
                     doc.setFillColor(11, 34, 64);
                     doc.triangle(0, 780, 600, 700, 600, 842, 'F');
                     doc.triangle(0, 780, 600, 842, 0, 842, 'F');
 
-                    // Bottom Red Band
                     doc.setFillColor(210, 32, 39);
                     doc.triangle(0, 765, 600, 685, 600, 700, 'F');
                     doc.triangle(0, 765, 600, 700, 0, 780, 'F');
                     
-                    // Attempt to load ECAR logo
                     try {
                       const response = await fetch('/logoECAR.png');
                       if (response.ok) {
@@ -932,30 +1053,25 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                           reader.onloadend = () => resolve(reader.result as string);
                           reader.readAsDataURL(blob);
                         });
-                        // Draw white box for logo
                         doc.setFillColor(255, 255, 255);
                         doc.roundedRect(30, 30, 140, 60, 5, 5, 'F');
-                        
                         doc.addImage(base64, 'PNG', 40, 40, 120, 42);
                       }
                     } catch (e) {
-                      console.warn("No se pudo cargar el logo para el PDF", e);
+                      console.warn("Logo PDF error", e);
                     }
 
-                    // Header formatting
                     doc.setFont("helvetica", "bold");
-                    doc.setTextColor(11, 34, 64); // ECAR Blue
+                    doc.setTextColor(11, 34, 64);
                     doc.setFontSize(22);
                     doc.text("VALE DE COMBUSTIBLE Y LUBRICANTES", 40, 220);
                     
-                    // Red/Blue line separator
-                    doc.setDrawColor(210, 32, 39); // ECAR Red
+                    doc.setDrawColor(210, 32, 39);
                     doc.setLineWidth(3);
                     doc.line(40, 235, 300, 235);
-                    doc.setDrawColor(11, 34, 64); // ECAR Blue
+                    doc.setDrawColor(11, 34, 64);
                     doc.line(300, 235, 550, 235);
 
-                    // Content
                     doc.setFontSize(12);
                     doc.setTextColor(50, 50, 50);
                     doc.setFont("helvetica", "normal");
@@ -993,7 +1109,6 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     doc.setFont("helvetica", "normal");
                     doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 5);
 
-                    // Signature Section
                     const sigY = 500;
                     doc.setFontSize(16);
                     doc.setFont("helvetica", "bold");
@@ -1010,14 +1125,12 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
 
                     if (profile?.signature_data) {
                       try {
-                        // Very large signature layout
                         doc.addImage(profile.signature_data, 'PNG', 40, sigY + 45, 180, 60);
                       } catch (e) {
                         console.error("Error embedding signature", e);
                       }
                     }
 
-                    // Footer
                     doc.setFontSize(9);
                     doc.setTextColor(150, 150, 150);
                     doc.text(`ID Sistema: ${r.id}`, 40, 800);
@@ -1028,42 +1141,109 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                 >
                   <Download size={14} /> Descargar PDF Autorizado
                 </button>
+
                 {completingId === r.id ? (
-                  <div className="mt-3 bg-white p-2 rounded-lg border border-green-200 space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="mt-3 bg-white p-3 rounded-xl border border-green-300 shadow-md space-y-3">
+                    <h5 className="font-bold text-xs text-green-900 flex items-center gap-1">
+                      <Fuel size={14} className="text-green-600" /> Registrar Carga Efectiva del Vale
+                    </h5>
+                    
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-[10px] font-bold text-gray-500">Origen</label>
                         <select value={completeForm.fuel_source} onChange={e => {
                           const s = e.target.value as 'station' | 'batan';
-                          setCompleteForm(prev => ({ ...prev, fuel_source: s, total_amount: s === 'batan' ? '0' : prev.total_amount }));
+                          setCompleteForm(prev => ({ ...prev, fuel_source: s, supplier: s === 'batan' ? 'Batán Interno' : 'YPF', total_amount: s === 'batan' ? '0' : prev.total_amount }));
                         }} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-bold text-sky-700">
                           <option value="station">Estación</option>
                           <option value="batan">Batán</option>
                         </select>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-gray-500">Lts Reales</label>
-                        <input type="number" step="0.1" value={completeForm.liters} onChange={e => setCompleteForm({ ...completeForm, liters: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono" />
+                        <label className="text-[10px] font-bold text-gray-500">Estación *</label>
+                        <select disabled={completeForm.fuel_source === 'batan'} value={completeForm.supplier} onChange={e => setCompleteForm({ ...completeForm, supplier: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-medium disabled:opacity-50">
+                          {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-500">Tipo Combustible *</label>
+                      <select value={completeForm.fuel_type} onChange={e => setCompleteForm({ ...completeForm, fuel_type: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-medium">
+                        {FUEL_TYPES.map(ft => <option key={ft} value={ft}>{ft}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-500">Litros Reales *</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          value={completeForm.liters} 
+                          onChange={e => {
+                            const l = parseFloat(e.target.value) || 0;
+                            const p = parseFloat(completeForm.price_per_liter) || 0;
+                            setCompleteForm({ ...completeForm, liters: e.target.value, total_amount: p ? String(l * p) : completeForm.total_amount });
+                          }} 
+                          className="w-full px-2 py-1 text-xs border rounded bg-white font-mono font-bold text-sky-700" 
+                        />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-gray-500">Monto Final</label>
-                        <input type="number" step="0.1" disabled={completeForm.fuel_source === 'batan'} value={completeForm.total_amount} onChange={e => setCompleteForm({ ...completeForm, total_amount: e.target.value })} className="w-full px-2 py-1 text-xs border rounded bg-gray-50 font-mono disabled:opacity-50" />
+                        <label className="text-[10px] font-bold text-gray-500">$/Litro</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          disabled={completeForm.fuel_source === 'batan'} 
+                          value={completeForm.price_per_liter} 
+                          onChange={e => {
+                            const p = parseFloat(e.target.value) || 0;
+                            const l = parseFloat(completeForm.liters) || 0;
+                            setCompleteForm({ ...completeForm, price_per_liter: e.target.value, total_amount: l ? String(l * p) : completeForm.total_amount });
+                          }} 
+                          className="w-full px-2 py-1 text-xs border rounded bg-white font-mono disabled:opacity-50" 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-500">Importe ($) *</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          disabled={completeForm.fuel_source === 'batan'} 
+                          value={completeForm.total_amount} 
+                          onChange={e => {
+                            const t = parseFloat(e.target.value) || 0;
+                            const l = parseFloat(completeForm.liters) || 0;
+                            setCompleteForm({ ...completeForm, total_amount: e.target.value, price_per_liter: l ? String(t / l) : completeForm.price_per_liter });
+                          }} 
+                          className="w-full px-2 py-1 text-xs border rounded bg-white font-mono font-bold text-emerald-700 disabled:opacity-50" 
+                        />
                       </div>
                     </div>
-                    <div className="text-right text-[10px] font-bold text-gray-400">
-                       Precio Calculado: <span className="text-gray-600">${completeForm.fuel_source === 'batan' ? '0.00' : (parseFloat(completeForm.total_amount) / parseFloat(completeForm.liters) || 0).toFixed(2)}/L</span>
-                    </div>
+
                     <label className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors border border-gray-300">
-                      <Camera size={14} /> Foto del Ticket
+                      <Camera size={14} /> Foto del Ticket (Opcional)
                       <input type="file" accept="image/*" capture="environment" className="hidden" />
                     </label>
+
                     <div className="flex gap-1">
-                      <button onClick={handleComplete} disabled={updateLoad.isPending || createBatan.isPending} className="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold disabled:opacity-50">Cargar</button>
+                      <button onClick={handleComplete} disabled={updateLoad.isPending || createBatan.isPending} className="flex-1 bg-green-600 text-white py-1.5 rounded text-xs font-bold disabled:opacity-50 shadow">Finalizar Carga</button>
                       <button onClick={() => setCompletingId(null)} className="flex-1 bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold">Cancelar</button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => { setCompletingId(r.id); setCompleteForm({ liters: String(r.requested_liters || 0), price_per_liter: '', total_amount: '', fuel_source: r.load_source === 'batan' ? 'batan' : 'station' }); }} className="mt-3 w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-green-700 shadow-sm">
+                  <button onClick={() => {
+                    const vObj = vehicles.find(x => x.code === r.vehicle_code);
+                    setCompletingId(r.id); 
+                    setCompleteForm({ 
+                      liters: String(r.requested_liters || 0), 
+                      price_per_liter: '', 
+                      total_amount: '', 
+                      fuel_source: r.load_source === 'batan' ? 'batan' : 'station',
+                      supplier: r.station_name || r.supplier || 'YPF',
+                      fuel_type: r.fuel_type || vObj?.preferred_fuel || 'Diesel Premium / V-Power'
+                    }); 
+                  }} className="mt-3 w-full bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-green-700 shadow-sm">
                     <Fuel size={14} /> Completar Carga Real
                   </button>
                 )}
@@ -1076,128 +1256,273 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   );
 };
 
-
-/* ── Dashboard Tab ── */
+/* ── Fleet Dashboard & Analytics Tab ── */
 const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }> = ({ loads, vehicles }) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
-  const [chartMode, setChartMode] = useState<'grouped' | 'split'>('grouped');
+  const [metricView, setMetricView] = useState<'amount' | 'liters'>('amount');
   
-  const completedLoads = loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status);
+  const completedLoads = useMemo(() => loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status), [loads]);
 
-  // Stats
-  const totalLitersAll = completedLoads.reduce((s, l) => s + (l.liters || 0), 0);
-  
-  // Group by month
-  const loadsByMonth = completedLoads.reduce((acc, load) => {
-    const k = `${load.month} ${load.year}`;
-    if (!acc[k]) acc[k] = { name: k, liters: 0, amount: 0, count: 0 };
-    acc[k].liters += (load.liters || 0);
-    acc[k].amount += (load.total_amount || 0);
-    acc[k].count += 1;
-    // For split view
-    if (load.vehicle_code) {
-      acc[k][load.vehicle_code] = (acc[k][load.vehicle_code] || 0) + (load.liters || 0);
-    }
-    return acc;
-  }, {} as Record<string, any>);
-  const monthlyData = Object.values(loadsByMonth).reverse();
+  // Global KPIs
+  const filteredLoads = useMemo(() => {
+    if (!selectedVehicle) return completedLoads;
+    return completedLoads.filter(l => l.vehicle_code === selectedVehicle || l.vehicle_id === selectedVehicle);
+  }, [completedLoads, selectedVehicle]);
 
-  // Colors for split view
-  const COLORS = ['#0284c7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  const totalLitersAll = useMemo(() => filteredLoads.reduce((s, l) => s + (l.liters || 0), 0), [filteredLoads]);
+  const totalAmountAll = useMemo(() => filteredLoads.reduce((s, l) => s + (l.total_amount || 0), 0), [filteredLoads]);
+  const avgPricePerLiter = totalLitersAll > 0 ? totalAmountAll / totalLitersAll : 0;
 
-  // Selected vehicle data
-  const vehicleLoads = selectedVehicle ? completedLoads.filter(l => l.vehicle_code === selectedVehicle) : [];
-  const vTotalLiters = vehicleLoads.reduce((s, l) => s + (l.liters || 0), 0);
-  const vAvgLiters = vehicleLoads.length ? vTotalLiters / vehicleLoads.length : 0;
+  // Monthly aggregated data for Line Chart & Bar Chart
+  const monthlyAggregated = useMemo(() => {
+    const map = new Map<string, { name: string; liters: number; amount: number; count: number }>();
+
+    filteredLoads.forEach(l => {
+      const monthKey = `${l.month || 'Mes'} ${l.year || ''}`.trim();
+      const existing = map.get(monthKey) || { name: monthKey, liters: 0, amount: 0, count: 0 };
+      existing.liters += (l.liters || 0);
+      existing.amount += (l.total_amount || 0);
+      existing.count += 1;
+      map.set(monthKey, existing);
+    });
+
+    return Array.from(map.values()).reverse();
+  }, [filteredLoads]);
+
+  // Ranking by Vehicle
+  const vehicleStats = useMemo(() => {
+    const map = new Map<string, { code: string; desc: string; plate: string; liters: number; amount: number; loadsCount: number }>();
+
+    completedLoads.forEach(l => {
+      const key = l.vehicle_code || 'SIN_CODIGO';
+      const existing = map.get(key) || {
+        code: key,
+        desc: l.vehicle_description || 'Vehículo General',
+        plate: l.plate || '—',
+        liters: 0,
+        amount: 0,
+        loadsCount: 0
+      };
+      existing.liters += (l.liters || 0);
+      existing.amount += (l.total_amount || 0);
+      existing.loadsCount += 1;
+      map.set(key, existing);
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  }, [completedLoads]);
+
+  // Ranking by Driver/User
+  const driverStats = useMemo(() => {
+    const map = new Map<string, { name: string; liters: number; amount: number; loadsCount: number }>();
+
+    completedLoads.forEach(l => {
+      const name = l.driver_name || l.requested_by || 'Operario No Especificado';
+      const existing = map.get(name) || { name, liters: 0, amount: 0, loadsCount: 0 };
+      existing.liters += (l.liters || 0);
+      existing.amount += (l.total_amount || 0);
+      existing.loadsCount += 1;
+      map.set(name, existing);
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  }, [completedLoads]);
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4 items-center">
-        <h3 className="font-bold text-gray-800">Dashboard de Flota</h3>
-        <select value={selectedVehicle} onChange={e => setSelectedVehicle(e.target.value)} className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white min-w-[200px]">
-          <option value="">Toda la flota (Global)</option>
-          {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
-        </select>
+      {/* Selector & Header Controls */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <div>
+          <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+            <PieChart size={20} className="text-sky-600" /> Analítica y Métricas de Combustible
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">Control de litros consumidos, presupuesto invertido y costo por unidad</p>
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <select 
+            value={selectedVehicle} 
+            onChange={e => setSelectedVehicle(e.target.value)} 
+            className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white focus:ring-2 focus:ring-sky-500/20 w-full md:w-64"
+          >
+            <option value="">Toda la Flota (Global)</option>
+            {vehicles.map(v => (
+              <option key={v.id} value={v.code}>{v.code} — {v.description}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {!selectedVehicle ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase">Litros Totales Históricos</p>
-              <p className="text-2xl font-black text-sky-600 font-mono mt-1">{totalLitersAll.toLocaleString('es-AR')} L</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase">Cargas Realizadas</p>
-              <p className="text-2xl font-black text-emerald-600 font-mono mt-1">{completedLoads.length}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-              <p className="text-xs font-bold text-gray-500 uppercase">Litros Mes Actual</p>
-              <p className="text-2xl font-black text-ecar-blue font-mono mt-1">
-                {monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].liters.toLocaleString('es-AR') : 0} L
-              </p>
-            </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-sky-200 shadow-sm border-l-4 border-l-sky-500">
+          <div className="flex items-center justify-between text-xs font-bold text-sky-700 uppercase mb-2">
+            <span>Combustible Consumido</span>
+            <Fuel size={18} className="text-sky-500" />
           </div>
-          
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[350px]">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-bold text-gray-700 text-sm">Evolución de Consumo (Litros por Mes)</h4>
-              <div className="flex bg-gray-100 p-1 rounded-lg">
-                <button onClick={() => setChartMode('grouped')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartMode === 'grouped' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Global</button>
-                <button onClick={() => setChartMode('split')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartMode === 'split' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Por Vehículo</button>
-              </div>
-            </div>
-            <div className="h-[270px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tick={{fontSize: 12}} />
-                  <YAxis tick={{fontSize: 12}} />
-                  <RechartsTooltip formatter={(value: any, name: any) => [`${Number(value).toLocaleString('es-AR')} L`, name === 'liters' ? 'Total' : name]} />
-                  {chartMode === 'grouped' ? (
-                    <Bar dataKey="liters" fill="#0284c7" radius={[4, 4, 0, 0]} />
-                  ) : (
-                    vehicles.map((v, i) => (
-                      <Bar key={v.code} dataKey={v.code} stackId="a" fill={COLORS[i % COLORS.length]} />
-                    ))
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <p className="text-2xl font-black text-sky-900 font-mono">{fmt(totalLitersAll)} <span className="text-sm font-normal text-sky-700">L</span></p>
+          <p className="text-[11px] text-gray-400 mt-1">{filteredLoads.length} cargas registradas</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-emerald-200 shadow-sm border-l-4 border-l-emerald-500">
+          <div className="flex items-center justify-between text-xs font-bold text-emerald-700 uppercase mb-2">
+            <span>Importe Total Gastado</span>
+            <DollarSign size={18} className="text-emerald-500" />
+          </div>
+          <p className="text-2xl font-black text-emerald-900 font-mono">{fmtCurrency(totalAmountAll)}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Presupuesto ejecutado</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-sm border-l-4 border-l-indigo-500">
+          <div className="flex items-center justify-between text-xs font-bold text-indigo-700 uppercase mb-2">
+            <span>Precio Promedio / Litro</span>
+            <TrendingUp size={18} className="text-indigo-500" />
+          </div>
+          <p className="text-2xl font-black text-indigo-900 font-mono">$ {fmt(avgPricePerLiter)}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Costo ponderado $/L</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-violet-200 shadow-sm border-l-4 border-l-violet-500">
+          <div className="flex items-center justify-between text-xs font-bold text-violet-700 uppercase mb-2">
+            <span>Cargas Validadas</span>
+            <FileCheck size={18} className="text-violet-500" />
+          </div>
+          <p className="text-2xl font-black text-violet-900 font-mono">{filteredLoads.length}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Vales finalizados</p>
+        </div>
+      </div>
+
+      {/* Main Line Chart */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+          <div>
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+              <TrendingUp size={16} className="text-sky-600" /> 
+              {metricView === 'amount' ? 'Evolución Histórica del Gasto en Combustible ($ ARS)' : 'Evolución del Volúmen Consumido (Litros)'}
+            </h4>
+            <p className="text-xs text-gray-400">Tendencia mensual de consumo e importe gastado</p>
+          </div>
+
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button 
+              onClick={() => setMetricView('amount')} 
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${metricView === 'amount' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Importe ($ ARS)
+            </button>
+            <button 
+              onClick={() => setMetricView('liters')} 
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${metricView === 'liters' ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Litros (L)
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-sky-500">
-              <p className="text-xs font-bold text-gray-500 uppercase">Última Carga</p>
-              <p className="text-xl font-bold text-gray-800 mt-1">{vehicleLoads[0] ? new Date(vehicleLoads[0].load_date).toLocaleDateString('es-AR') : 'N/A'}</p>
-              {vehicleLoads[0] && <p className="text-xs text-gray-500 mt-1">{vehicleLoads[0].liters} L - {vehicleLoads[0].odometer_km ? `${vehicleLoads[0].odometer_km} km` : ''}</p>}
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-orange-500">
-              <p className="text-xs font-bold text-gray-500 uppercase">Carga Promedio</p>
-              <p className="text-xl font-bold text-gray-800 mt-1">{vAvgLiters.toLocaleString('es-AR', {maximumFractionDigits:1})} L</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-emerald-500">
-              <p className="text-xs font-bold text-gray-500 uppercase">Cargas Totales (Vehículo)</p>
-              <p className="text-xl font-bold text-gray-800 mt-1">{vehicleLoads.length}</p>
-            </div>
-          </div>
-          
-          <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-[300px]">
-            <h4 className="font-bold text-gray-700 text-sm mb-4">Historial Reciente de Cargas</h4>
+
+        <div className="h-[320px] w-full">
+          {monthlyAggregated.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-400 text-sm">Sin datos para graficar en el período</div>
+          ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={[...vehicleLoads].reverse().slice(-10)} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="load_date" tick={{fontSize: 10}} tickFormatter={v => new Date(v).toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'})} />
-                <YAxis tick={{fontSize: 12}} />
-                <RechartsTooltip labelFormatter={v => new Date(v).toLocaleDateString('es-AR')} formatter={(value: any) => [`${value} L`, 'Litros']} />
-                <Line type="monotone" dataKey="liters" stroke="#ea580c" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+              <LineChart data={monthlyAggregated} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={v => metricView === 'amount' ? `$ ${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}` : `${v} L`} />
+                <RechartsTooltip 
+                  formatter={(value: any) => [metricView === 'amount' ? fmtCurrency(Number(value)) : `${fmt(Number(value))} L`, metricView === 'amount' ? 'Gasto' : 'Litros']}
+                  labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey={metricView === 'amount' ? 'amount' : 'liters'} 
+                  stroke={metricView === 'amount' ? '#10b981' : '#0284c7'} 
+                  strokeWidth={3} 
+                  dot={{ r: 5, fill: metricView === 'amount' ? '#10b981' : '#0284c7', strokeWidth: 2, stroke: '#fff' }} 
+                  activeDot={{ r: 7 }} 
+                />
               </LineChart>
             </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Grid Tables: By Vehicle & By Driver */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Breakdown by Vehicle */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+              <Truck size={16} className="text-sky-600" /> Consumo e Importe por Vehículo
+            </h4>
+            <span className="text-xs text-gray-400">{vehicleStats.length} unidades con consumos</span>
+          </div>
+
+          <div className="overflow-x-auto flex-1">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Vehículo</th>
+                  <th>Patente</th>
+                  <th className="text-right">Litros Total</th>
+                  <th className="text-right">Importe Gastado ($)</th>
+                  <th className="text-center">Cargas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vehicleStats.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center text-gray-400 py-6">Sin cargas registradas</td></tr>
+                ) : vehicleStats.map(v => (
+                  <tr key={v.code}>
+                    <td className="font-medium text-xs">
+                      <span className="font-bold text-sky-700 block">{v.code}</span>
+                      <span className="text-gray-500 text-[11px]">{v.desc}</span>
+                    </td>
+                    <td className="font-mono text-xs text-gray-500">{v.plate}</td>
+                    <td className="font-mono font-bold text-right text-xs">{fmt(v.liters)} L</td>
+                    <td className="font-mono font-bold text-right text-xs text-emerald-700">{fmtCurrency(v.amount)}</td>
+                    <td className="text-center text-xs font-mono">{v.loadsCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {/* Breakdown by Driver */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+              <Users size={16} className="text-indigo-600" /> Consumo e Importe por Usuario / Chofer
+            </h4>
+            <span className="text-xs text-gray-400">{driverStats.length} responsables</span>
+          </div>
+
+          <div className="overflow-x-auto flex-1">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Chofer / Responsable</th>
+                  <th className="text-right">Litros Cargados</th>
+                  <th className="text-right">Importe Gastado ($)</th>
+                  <th className="text-center">Cargas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {driverStats.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center text-gray-400 py-6">Sin choferes registrados</td></tr>
+                ) : driverStats.map(d => (
+                  <tr key={d.name}>
+                    <td className="font-medium text-xs text-gray-800">{d.name}</td>
+                    <td className="font-mono font-bold text-right text-xs text-sky-700">{fmt(d.liters)} L</td>
+                    <td className="font-mono font-bold text-right text-xs text-emerald-700">{fmtCurrency(d.amount)}</td>
+                    <td className="text-center text-xs font-mono">{d.loadsCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

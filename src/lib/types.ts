@@ -1461,6 +1461,7 @@ export type FuelLoad = {
   project_name: string | null;
   project_id: string | null;
   supplier: string | null;
+  station_name?: string | null;
   fuel_type: string | null;
   liters: number | null;
   price_per_liter: number | null;
