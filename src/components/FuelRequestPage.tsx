@@ -73,7 +73,8 @@ export const FuelRequestPage: React.FC = () => {
     setSearching(true);
     setError('');
     try {
-      const query = searchQuery.toUpperCase().startsWith('SOL-') ? searchQuery.toUpperCase() : `SOL-${searchQuery.toUpperCase()}`;
+      const cleanQuery = searchQuery.trim().toUpperCase();
+      const query = cleanQuery.startsWith('SOL-') ? cleanQuery : `SOL-${cleanQuery}`;
       const { data: req, error: dbError } = await supabase.from('fuel_loads').select('*').eq('load_number', query).single();
       
       if (dbError || !req) throw new Error('No se encontró la solicitud.');
@@ -325,10 +326,11 @@ export const FuelRequestPage: React.FC = () => {
           {/* SEARCH COMPONENT (Only shown in Step 1) */}
           <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-center animate-fade-in">
             <p className="text-white text-sm font-bold mb-3 shadow-black drop-shadow">¿Ya tenés una solicitud autorizada?</p>
+            {error && <div className="mb-3 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold shadow-sm">{error}</div>}
             <div className="flex gap-2 max-w-sm mx-auto">
-              <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-2 rounded-lg border-0 shadow-inner font-mono text-center uppercase" />
+              <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-2 rounded-lg border-0 shadow-inner font-mono text-center uppercase" />
               <button onClick={handleSearch} disabled={searching || !searchQuery.trim()} className="bg-white text-ecar-blue font-bold px-4 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
-                Buscar
+                {searching ? '...' : 'Buscar'}
               </button>
             </div>
           </div>
