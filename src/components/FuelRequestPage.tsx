@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Send, Truck, Droplets, Gauge, FileText, AlertCircle, Building2, Camera, Upload, X, MapPin } from 'lucide-react';
+import { Check, Send, FileText, AlertCircle, Camera, Upload, X } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import type { FuelLoad } from '../lib/types';
 
@@ -11,7 +11,6 @@ const FUEL_TYPES = ['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Die
 
 export const FuelRequestPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
