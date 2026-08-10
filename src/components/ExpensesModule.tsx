@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Wallet, ChevronDown, ChevronRight, Plus, X, Save, TrendingUp, TrendingDown,
   Users, Shield, Zap, Receipt, Hammer, Fuel, HandCoins, Wrench, UtensilsCrossed,
-  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Trash2
+  Package, Check, ChevronLeft, ChevronRight as ChevronRightIcon, Trash2, Edit2
 } from 'lucide-react';
-import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem, useGastosRegistrosByItem } from '../hooks/useData';
+import { useGastosItems, useGastosRegistrosByRange, useUpsertGastoRegistro, useCreateGastoItem, useDeleteGastoItem, useUpdateGastoItem, useGastosRegistrosByItem, useCategoriaConfig, useUpdateCategoriaConfig } from '../hooks/useData';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { useModalStore } from '../store/useModalStore';
 import type { GastoItem, GastoItemCategoria, GastoRegistro } from '../lib/types';
@@ -185,12 +185,18 @@ export const ExpensesModule: React.FC = () => {
 
   const { data: items = [], isLoading: itemsLoading } = useGastosItems();
   const { data: registros = [], isLoading: regLoading } = useGastosRegistrosByRange(periodos);
+  const { data: catConfig = {}, isLoading: catLoading } = useCategoriaConfig();
   const upsertRegistro = useUpsertGastoRegistro();
   const createItem = useCreateGastoItem();
   const deleteItem = useDeleteGastoItem();
+  const updateCatConfig = useUpdateCategoriaConfig();
+  const updateGastoItem = useUpdateGastoItem();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  
+  const [editingCategory, setEditingCategory] = useState<{ cat: string; label: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ id: string; desc: string } | null>(null);
 
-  const isLoading = itemsLoading || regLoading;
+  const isLoading = itemsLoading || regLoading || catLoading;
 
   // Group items by category
   const grouped = useMemo(() => {
@@ -409,10 +415,40 @@ export const ExpensesModule: React.FC = () => {
                         className={`${cfg.bgColor} cursor-pointer hover:brightness-95 transition-all`}
                         onClick={() => toggleCollapse(cat)}
                       >
-                        <td className={`font-bold ${cfg.color} flex items-center gap-2 sticky left-0 ${cfg.bgColor} z-10`}>
+                        <td className={`font-bold ${cfg.color} flex items-center gap-2 sticky left-0 ${cfg.bgColor} z-10 group/cat`}>
                           {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                           <Icon size={16} />
-                          <span className="text-xs uppercase tracking-wider">{cfg.label}</span>
+                          {editingCategory?.cat === cat ? (
+                            <input 
+                              autoFocus
+                              onClick={e => e.stopPropagation()}
+                              value={editingCategory.label}
+                              onChange={e => setEditingCategory({ ...editingCategory, label: e.target.value })}
+                              onKeyDown={async e => {
+                                if (e.key === 'Enter') {
+                                  await updateCatConfig.mutateAsync({ ...catConfig, [cat]: editingCategory.label });
+                                  setEditingCategory(null);
+                                }
+                                if (e.key === 'Escape') setEditingCategory(null);
+                              }}
+                              onBlur={async () => {
+                                await updateCatConfig.mutateAsync({ ...catConfig, [cat]: editingCategory.label });
+                                setEditingCategory(null);
+                              }}
+                              className="px-2 py-0.5 text-xs text-gray-800 bg-white border border-gray-300 rounded font-normal"
+                            />
+                          ) : (
+                            <>
+                              <span className="text-xs uppercase tracking-wider">{catConfig[cat] || cfg.label}</span>
+                              <button
+                                onClick={e => { e.stopPropagation(); setEditingCategory({ cat, label: catConfig[cat] || cfg.label }); }}
+                                className="opacity-0 group-hover/cat:opacity-100 p-0.5 hover:bg-black/10 rounded transition-all"
+                                title="Editar nombre categoría"
+                              >
+                                <Edit2 size={12} />
+                              </button>
+                            </>
+                          )}
                           <button
                             onClick={e => { e.stopPropagation(); setShowAddItem(cat); }}
                             className="ml-auto p-0.5 rounded hover:bg-white/50 transition-colors"
@@ -441,13 +477,45 @@ export const ExpensesModule: React.FC = () => {
                         <tr className="group cursor-pointer" onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}>
                           <td className="text-gray-700 text-xs sticky left-0 bg-white group-hover:bg-gray-50 z-10">
                             <div className="flex items-center gap-2">
-                              <div className="flex-1 min-w-0">
-                                <span className="truncate block">{item.descripcion}</span>
-                                {((item as any).alias_cbu || (item as any).titular_cuenta) && (
-                                  <span className="text-[9px] text-gray-400 font-mono truncate block">
-                                    {item.alias_cbu && `📎 ${item.alias_cbu}`}
-                                    {item.titular_cuenta && ` · ${item.titular_cuenta}`}
-                                  </span>
+                              <div className="flex-1 min-w-0 group/item flex items-center gap-2">
+                                {editingItem?.id === item.id ? (
+                                  <input
+                                    autoFocus
+                                    onClick={e => e.stopPropagation()}
+                                    value={editingItem.desc}
+                                    onChange={e => setEditingItem({ ...editingItem, desc: e.target.value })}
+                                    onKeyDown={async e => {
+                                      if (e.key === 'Enter') {
+                                        await updateGastoItem.mutateAsync({ id: item.id, descripcion: editingItem.desc } as any);
+                                        setEditingItem(null);
+                                      }
+                                      if (e.key === 'Escape') setEditingItem(null);
+                                    }}
+                                    onBlur={async () => {
+                                      await updateGastoItem.mutateAsync({ id: item.id, descripcion: editingItem.desc } as any);
+                                      setEditingItem(null);
+                                    }}
+                                    className="w-full max-w-[200px] px-2 py-0.5 text-xs bg-white border border-gray-300 rounded font-normal text-gray-800"
+                                  />
+                                ) : (
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1">
+                                      <span className="truncate block">{item.descripcion}</span>
+                                      <button
+                                        onClick={e => { e.stopPropagation(); setEditingItem({ id: item.id, desc: item.descripcion }); }}
+                                        className="opacity-0 group-hover/item:opacity-100 p-0.5 text-gray-400 hover:text-ecar-blue rounded transition-all"
+                                        title="Editar nombre"
+                                      >
+                                        <Edit2 size={12} />
+                                      </button>
+                                    </div>
+                                    {((item as any).alias_cbu || (item as any).titular_cuenta) && (
+                                      <span className="text-[9px] text-gray-400 font-mono truncate block">
+                                        {item.alias_cbu && `📎 ${item.alias_cbu}`}
+                                        {item.titular_cuenta && ` · ${item.titular_cuenta}`}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               <button
@@ -594,7 +662,7 @@ export const ExpensesModule: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 block mb-1">Categoría</label>
               {globalCat ? (
                 <div className="flex items-center gap-2">
-                  {(() => { const cfg = CATEGORIA_CONFIG[globalCat]; const Icon = cfg.icon; return <span className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${cfg.bgColor} ${cfg.color}`}><Icon size={16} />{cfg.label}</span>; })()}
+                  {(() => { const cfg = CATEGORIA_CONFIG[globalCat]; const Icon = cfg.icon; return <span className={`px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${cfg.bgColor} ${cfg.color}`}><Icon size={16} />{catConfig[globalCat] || cfg.label}</span>; })()}
                   <button onClick={() => { setGlobalCat(null); setGlobalSearch(''); }} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
                 </div>
               ) : (
@@ -608,19 +676,19 @@ export const ExpensesModule: React.FC = () => {
                   />
                   <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
                     {Object.entries(CATEGORIA_CONFIG)
-                      .filter(([_, cfg]) => !globalSearch || cfg.label.toLowerCase().includes(globalSearch.toLowerCase()))
+                      .filter(([key, cfg]) => !globalSearch || (catConfig[key] || cfg.label).toLowerCase().includes(globalSearch.toLowerCase()))
                       .map(([key, cfg]) => {
                         const Icon = cfg.icon;
                         const count = (grouped[key as GastoItemCategoria] || []).length;
                         return (
                           <button key={key} onClick={() => { setGlobalCat(key as GastoItemCategoria); useImplementationStore.getState().completeItem('e2-16'); }} className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors ${cfg.color}`}>
                             <Icon size={16} />
-                            <span className="font-medium">{cfg.label}</span>
+                            <span className="font-medium">{catConfig[key] || cfg.label}</span>
                             <span className="text-xs text-gray-400 ml-auto">{count} items</span>
                           </button>
                         );
                       })}
-                    {globalSearch && !Object.values(CATEGORIA_CONFIG).some(c => c.label.toLowerCase().includes(globalSearch.toLowerCase())) && (
+                    {globalSearch && !Object.entries(CATEGORIA_CONFIG).some(([key, c]) => (catConfig[key] || c.label).toLowerCase().includes(globalSearch.toLowerCase())) && (
                       <p className="text-xs text-gray-400 text-center py-2">No se encontró "{globalSearch}". Seleccioná una categoría existente.</p>
                     )}
                   </div>

@@ -2003,11 +2003,49 @@ export function useUpdateConsultaObra() {
 }
 
 // ========== GASTOS OPERATIVOS ==========
+export function useCategoriaConfig() {
+  return useQuery({
+    queryKey: ['categoria_config'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('gastos_items').select('*').eq('descripcion', '__CONFIG_CATEGORIAS__').maybeSingle();
+      if (error) throw error;
+      if (data && data.aclaraciones) {
+        try {
+          return JSON.parse(data.aclaraciones);
+        } catch(e) { return {}; }
+      }
+      return {};
+    },
+  });
+}
+
+export function useUpdateCategoriaConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (newConfig: any) => {
+      const { data: existing } = await supabase.from('gastos_items').select('id').eq('descripcion', '__CONFIG_CATEGORIAS__').maybeSingle();
+      if (existing) {
+        const { error } = await supabase.from('gastos_items').update({ aclaraciones: JSON.stringify(newConfig) }).eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('gastos_items').insert({ 
+          tenant_id: ECAR_TENANT_ID, 
+          categoria: 'varios', 
+          descripcion: '__CONFIG_CATEGORIAS__', 
+          aclaraciones: JSON.stringify(newConfig) 
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['categoria_config'] }),
+  });
+}
+
 export function useGastosItems() {
   return useQuery({
     queryKey: ['gastos_items'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('gastos_items').select('*').eq('activo', true).order('categoria').order('orden');
+      const { data, error } = await supabase.from('gastos_items').select('*').eq('activo', true).neq('descripcion', '__CONFIG_CATEGORIAS__').order('categoria').order('orden');
       if (error) throw error;
       return data as GastoItem[];
     },
