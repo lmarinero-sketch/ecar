@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, Send, Truck, Droplets, Gauge, FileText, AlertCircle, Building2 } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 
-type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string };
+type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string; preferred_fuel?: string };
 type Project = { id: string; name: string };
 
 export const FuelRequestPage: React.FC = () => {
@@ -114,7 +114,7 @@ export const FuelRequestPage: React.FC = () => {
             Gerencia recibirá la solicitud y la autorizará desde el sistema.
           </p>
           <button
-            onClick={() => { setSubmitted(false); setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '' }); }}
+            onClick={() => { setSubmitted(false); setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' }); }}
             className="bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl w-full"
           >
             Nueva Solicitud
