@@ -4,7 +4,6 @@ import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import type { FuelLoad } from '../lib/types';
 
 type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string; preferred_fuel?: string };
-type Project = { id: string; name: string };
 
 const STATIONS = ['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'];
 const FUEL_TYPES = ['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Diesel EVOLUX', 'Nafta Súper', 'Nafta Premium', 'Aceite / Lubricante', 'Otro'];
@@ -41,12 +40,10 @@ export const FuelRequestPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [vRes, pRes] = await Promise.all([
+        const [vRes] = await Promise.all([
           supabase.from('fuel_vehicles').select('id, code, description, vehicle_type, plate, preferred_fuel').eq('status', 'active').order('code'),
-          supabase.from('projects').select('id, name').eq('status', 'active').order('name'),
         ]);
         setVehicles(vRes.data || []);
-        setProjects(pRes.data || []);
         
         const savedId = localStorage.getItem('ecar_active_fuel_request');
         if (savedId) {
