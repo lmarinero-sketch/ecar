@@ -60,7 +60,7 @@ export const FuelModule: React.FC = () => {
 
   const { seenFuelRequests, markFuelRequestsSeen } = useAppStore();
   
-  const pendingRequestsIds = useMemo(() => loads.filter(l => l.workflow_status === 'requested').map(l => l.id), [loads]);
+  const pendingRequestsIds = useMemo(() => loads.filter(l => l.workflow_status === 'requested' || (l.workflow_status === 'completed' && l.unauthorized_load)).map(l => l.id), [loads]);
   const unseenRequestsCount = useMemo(() => pendingRequestsIds.filter(id => !seenFuelRequests.includes(id)).length, [pendingRequestsIds, seenFuelRequests]);
 
   useEffect(() => {
@@ -612,7 +612,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const hasSignature = !!(profile?.dni && profile?.signature_data);
   
   // Pending authorizations
-  const pendingRequests = loads.filter(l => l.workflow_status === 'requested');
+  const pendingRequests = loads.filter(l => l.workflow_status === 'requested' || (l.workflow_status === 'completed' && l.unauthorized_load));
   // Pending loads (authorized but not completed)
   const authorizedRequests = loads.filter(l => l.workflow_status === 'authorized');
 
@@ -743,19 +743,30 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     setShowReqForm(false);
   };
 
-  const handleAuthorize = async (id: string) => {
-    if (!profile?.dni || !profile?.signature_data) {
-      setShowSignaturePanel(true);
+  const handleAuthorize = async (id: string, isCompletedWithoutAuth?: boolean) => {
+    if (!profile) {
+      alert("No tenés permisos para autorizar.");
       return;
     }
     const signature = `Firmado por: ${profile.full_name} (DNI: ${profile.dni}) - ${new Date().toLocaleString()}`;
-    await updateLoad.mutateAsync({
-      id,
-      workflow_status: 'authorized',
-      authorized_by: profile.full_name,
-      authorized_at: new Date().toISOString(),
-      supervisor_signature: signature
-    });
+    
+    if (isCompletedWithoutAuth) {
+      await updateLoad.mutateAsync({
+        id,
+        unauthorized_load: false,
+        authorized_by: profile.full_name,
+        authorized_at: new Date().toISOString(),
+        supervisor_signature: signature
+      });
+    } else {
+      await updateLoad.mutateAsync({
+        id,
+        workflow_status: 'authorized',
+        authorized_by: profile.full_name,
+        authorized_at: new Date().toISOString(),
+        supervisor_signature: signature
+      });
+    }
   };
 
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -1023,17 +1034,22 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         {pendingRequests.length === 0 ? <p className="text-sm text-gray-400 italic">No hay solicitudes pendientes.</p> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {pendingRequests.map(r => (
-              <div key={r.id} className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm relative">
-                <div className="text-xs font-bold text-orange-600 mb-1">{r.vehicle_code} - {r.vehicle_description}</div>
+              <div key={r.id} className={`${r.unauthorized_load ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-4 shadow-sm relative`}>
+                <div className={`text-xs font-bold mb-1 ${r.unauthorized_load ? 'text-red-600' : 'text-orange-600'}`}>{r.vehicle_code} - {r.vehicle_description}</div>
                 <div className="text-sm">Solicita: <span className="font-bold">{r.requested_by}</span></div>
-                <div className="text-sm">Litros: <span className="font-mono font-bold text-lg">{r.requested_liters} L</span></div>
+                <div className="text-sm">Litros pedidos: <span className="font-mono font-bold text-lg">{r.requested_liters} L</span></div>
+                {r.unauthorized_load && r.workflow_status === 'completed' && (
+                  <div className="mt-2 text-xs font-bold text-red-700 bg-red-100 p-2 rounded">
+                    ¡Atención! Carga ya realizada: {r.liters} L ({r.station_name})
+                  </div>
+                )}
                 <div className="text-xs text-gray-500 mt-1 line-clamp-1">{r.observations || 'Sin notas'}</div>
                 {(isAdmin || r.requested_by === user?.email) ? (
-                  <button onClick={() => handleAuthorize(r.id)} className="mt-3 w-full bg-orange-600 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-orange-700">
-                    <Check size={14} /> Autorizar con Firma
+                  <button onClick={() => handleAuthorize(r.id, r.unauthorized_load && r.workflow_status === 'completed')} className={`mt-3 w-full text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
+                    <Check size={14} /> {r.unauthorized_load ? 'Auditar y Aprobar Carga' : 'Autorizar con Firma'}
                   </button>
                 ) : (
-                  <div className="mt-3 w-full bg-orange-100 text-orange-700 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                  <div className={`mt-3 w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
                     Esperando Autorización
                   </div>
                 )}

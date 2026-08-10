@@ -13,7 +13,12 @@ export const FuelRequestPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const [successState, setSuccessState] = useState<'none' | 'request' | 'complete'>('none');
+  const [successLoadNumber, setSuccessLoadNumber] = useState('');
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
   
   const [activeRequest, setActiveRequest] = useState<FuelLoad | null>(null);
 
@@ -63,7 +68,27 @@ export const FuelRequestPage: React.FC = () => {
     })();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setError('');
+    try {
+      const query = searchQuery.toUpperCase().startsWith('SOL-') ? searchQuery.toUpperCase() : `SOL-${searchQuery.toUpperCase()}`;
+      const { data: req, error: dbError } = await supabase.from('fuel_loads').select('*').eq('load_number', query).single();
+      
+      if (dbError || !req) throw new Error('No se encontró la solicitud.');
+      if (req.workflow_status === 'completed') throw new Error('Esta solicitud ya fue completada.');
+      
+      localStorage.setItem('ecar_active_fuel_request', req.id);
+      setActiveRequest(req as FuelLoad);
+      setCompleteForm(f => ({ ...f, station_name: req.station_name || 'YPF', fuel_type: req.fuel_type || 'Diesel Premium / V-Power' }));
+    } catch (e: any) {
+      setError(e.message || 'Error al buscar solicitud');
+    }
+    setSearching(false);
+  };
+
+  const handleSubmit = async (action: 'wait' | 'direct') => {
     if (!form.vehicle_code || !form.requested_liters || !form.requested_by) {
       setError('Completá Vehículo, Litros y Tu Nombre');
       return;
@@ -99,9 +124,15 @@ export const FuelRequestPage: React.FC = () => {
 
       if (dbError) throw dbError;
       
-      localStorage.setItem('ecar_active_fuel_request', inserted.id);
-      setActiveRequest(inserted as FuelLoad);
-      setCompleteForm(f => ({ ...f, station_name: inserted.station_name || 'YPF', fuel_type: inserted.fuel_type || 'Diesel Premium / V-Power' }));
+      if (action === 'wait') {
+        setSuccessLoadNumber(inserted.load_number);
+        setSuccessState('request');
+        setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
+      } else {
+        localStorage.setItem('ecar_active_fuel_request', inserted.id);
+        setActiveRequest(inserted as FuelLoad);
+        setCompleteForm(f => ({ ...f, station_name: inserted.station_name || 'YPF', fuel_type: inserted.fuel_type || 'Diesel Premium / V-Power' }));
+      }
     } catch (e: any) {
       setError(e.message || 'Error al enviar solicitud');
     }
@@ -153,7 +184,7 @@ export const FuelRequestPage: React.FC = () => {
       });
       setCompleteForm({ station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power', liters: '', price_per_liter: '', total_amount: '' });
       setTicketFile(null);
-      setShowSuccess(true);
+      setSuccessState('complete');
       
     } catch (e: any) {
       setError(e.message || 'Error al completar la carga');
@@ -169,7 +200,7 @@ export const FuelRequestPage: React.FC = () => {
     }
   };
 
-  if (showSuccess) {
+  if (successState !== 'none') {
     return (
       <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-4 relative overflow-hidden">
         {/* ECAR Corporate Background */}
@@ -180,15 +211,27 @@ export const FuelRequestPage: React.FC = () => {
           <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-green-100 shadow-inner">
             <Check size={48} className="text-green-500" />
           </div>
-          <h2 className="text-3xl font-black text-ecar-blue mb-3">¡Carga Registrada!</h2>
+          <h2 className="text-3xl font-black text-ecar-blue mb-3">
+            {successState === 'request' ? '¡Solicitud Enviada!' : '¡Carga Registrada!'}
+          </h2>
           <p className="text-gray-600 mb-2">
-            La carga de combustible se ha completado exitosamente y ya está registrada en el sistema.
+            {successState === 'request' 
+              ? 'Tu pedido fue registrado exitosamente. Gerencia lo revisará pronto.' 
+              : 'La carga de combustible se ha completado exitosamente y ya está registrada en el sistema.'}
           </p>
+          
+          {successState === 'request' && (
+            <div className="my-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nº de Solicitud (Guardar para buscar)</p>
+              <p className="text-2xl font-black font-mono text-ecar-blue tracking-widest">{successLoadNumber}</p>
+            </div>
+          )}
+          
           <button
-            onClick={() => setShowSuccess(false)}
-            className="mt-8 bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl w-full"
+            onClick={() => setSuccessState('none')}
+            className="mt-4 bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl w-full"
           >
-            Nueva Carga
+            Nueva {successState === 'request' ? 'Solicitud' : 'Carga'}
           </button>
         </div>
       </div>
@@ -225,6 +268,7 @@ export const FuelRequestPage: React.FC = () => {
 
         {/* Dynamic Card (Step 1 or Step 2) */}
         {!activeRequest ? (
+          <>
           /* STEP 1: INITIAL REQUEST */
           <div className="light-card animate-fade-in-up">
             <div className="p-6 md:p-8 space-y-5">
@@ -263,12 +307,32 @@ export const FuelRequestPage: React.FC = () => {
 
               <div className="pt-2">
                 {error && <div className="bg-red-50 border border-red-200 text-ecar-red px-3 py-2 rounded-lg text-sm flex gap-2 mb-4"><AlertCircle size={16} />{error}</div>}
-                <button onClick={handleSubmit} disabled={submitting} className="w-full bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50">
-                  {submitting ? 'Enviando...' : <><Send size={20} /> Solicitar Autorización</>}
-                </button>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button onClick={() => handleSubmit('wait')} disabled={submitting} className="w-full bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
+                    <span className="flex items-center gap-2"><Send size={18} /> Solicitar</span>
+                    <span className="text-[10px] font-normal opacity-80">(Esperar Autorización)</span>
+                  </button>
+                  <button onClick={() => handleSubmit('direct')} disabled={submitting} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
+                    <span className="flex items-center gap-2"><Upload size={18} /> Cargar Ahora</span>
+                    <span className="text-[10px] font-normal opacity-80">(Auditoría Posterior)</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+          
+          {/* SEARCH COMPONENT (Only shown in Step 1) */}
+          <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-center animate-fade-in">
+            <p className="text-white text-sm font-bold mb-3 shadow-black drop-shadow">¿Ya tenés una solicitud autorizada?</p>
+            <div className="flex gap-2 max-w-sm mx-auto">
+              <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-2 rounded-lg border-0 shadow-inner font-mono text-center uppercase" />
+              <button onClick={handleSearch} disabled={searching || !searchQuery.trim()} className="bg-white text-ecar-blue font-bold px-4 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
+                Buscar
+              </button>
+            </div>
+          </div>
+        </>
         ) : (
           /* STEP 2: COMPLETE LOAD */
           <div className="light-card animate-fade-in-up border-2 border-ecar-blue/10">
