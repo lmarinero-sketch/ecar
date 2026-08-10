@@ -142,9 +142,9 @@ export const LogisticsModule: React.FC = () => {
                 </p>
               </div>
               <div className="space-y-2">
-                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota</h5>
+                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota & Combustible</h5>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Control de horas y km nos permite anticipar mantenimientos preventivos, services y VTV.
+                  Mantenimiento preventivo, control de rendimiento y sistema de cargas de combustible de 2 pasos desburocratizado (con auditoría "Sin Autorizar").
                 </p>
               </div>
               <div className="space-y-2">

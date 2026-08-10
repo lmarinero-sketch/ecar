@@ -322,11 +322,11 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
   },
   fuel: {
     title: 'Combustible',
-    description: 'Registro de cargas de combustible por vehículo. Control de consumo, costos y rendimiento (km/litro).',
+    description: 'Sistema de carga en 2 pasos. Control de consumo, tickets fotográficos y auditoría de cargas sin autorizar.',
     steps: [
-      'Seleccioná el vehículo que cargó combustible.',
-      'Indicá litros, monto, tipo de combustible y km del odómetro.',
-      'Opcionalmente, subí la foto del ticket para registro.',
+      'El operario crea una solicitud y luego completa la carga subiendo la foto del ticket desde el mismo link.',
+      'Si carga sin autorización previa, queda marcado como "Sin Autorizar" para control de gerencia.',
+      'Indicadores, rendimiento km/litro y notificaciones en tiempo real.',
       'Revisá el historial de cargas y el consumo promedio por vehículo.',
     ],
     tips: [
