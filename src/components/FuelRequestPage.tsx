@@ -21,6 +21,7 @@ export const FuelRequestPage: React.FC = () => {
   const [searching, setSearching] = useState(false);
   
   const [activeRequest, setActiveRequest] = useState<FuelLoad | null>(null);
+  const [showUnauthorizedForm, setShowUnauthorizedForm] = useState(false);
 
   const [form, setForm] = useState({
     vehicle_code: '',
@@ -360,67 +361,87 @@ export const FuelRequestPage: React.FC = () => {
                 <p><span className="text-gray-500 font-semibold">Litros Pedidos:</span> <span className="font-bold text-ecar-red">{activeRequest.requested_liters} L</span></p>
               </div>
 
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Ingresá los valores <b>reales</b> del ticket de carga. <br/>
-                {activeRequest.workflow_status !== 'authorized' && <span className="text-amber-600 font-bold">Nota: Podés proceder sin autorización, el sistema lo marcará para auditoría.</span>}
-              </p>
+              {(activeRequest.workflow_status === 'authorized' || showUnauthorizedForm) ? (
+                <div className="space-y-5 animate-fade-in">
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Ingresá los valores <b>reales</b> del ticket de carga. <br/>
+                    {activeRequest.workflow_status !== 'authorized' && <span className="text-amber-600 font-bold">Estás procediendo sin autorización, el sistema lo marcará para auditoría.</span>}
+                  </p>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Estación</label>
-                  <select value={completeForm.station_name} onChange={e => setCompleteForm({ ...completeForm, station_name: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 font-medium text-sm">
-                    {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Combustible</label>
-                  <select value={completeForm.fuel_type} onChange={e => setCompleteForm({ ...completeForm, fuel_type: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 font-medium text-sm">
-                    {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Estación</label>
+                      <select value={completeForm.station_name} onChange={e => setCompleteForm({ ...completeForm, station_name: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 font-medium text-sm">
+                        {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Combustible</label>
+                      <select value={completeForm.fuel_type} onChange={e => setCompleteForm({ ...completeForm, fuel_type: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 font-medium text-sm">
+                        {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Litros Reales</label>
-                  <input type="number" step="0.1" value={completeForm.liters} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, liters: e.target.value, total_amount: f.price_per_liter ? String(v * parseFloat(f.price_per_liter)) : f.total_amount })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-bold font-mono text-ecar-blue" placeholder="0.0" />
-                </div>
-                <div>
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">$/Litro</label>
-                  <input type="number" step="0.01" value={completeForm.price_per_liter} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, price_per_liter: e.target.value, total_amount: f.liters ? String(parseFloat(f.liters) * v) : f.total_amount })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-bold font-mono text-gray-600" placeholder="0.00" />
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Importe Total</label>
-                  <input type="number" step="0.01" value={completeForm.total_amount} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, total_amount: e.target.value, price_per_liter: f.liters && parseFloat(f.liters)>0 ? String(v / parseFloat(f.liters)) : f.price_per_liter })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-black font-mono text-emerald-600" placeholder="0.00" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Litros Reales</label>
+                      <input type="number" step="0.1" value={completeForm.liters} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, liters: e.target.value, total_amount: f.price_per_liter ? String(v * parseFloat(f.price_per_liter)) : f.total_amount })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-bold font-mono text-ecar-blue" placeholder="0.0" />
+                    </div>
+                    <div>
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">$/Litro</label>
+                      <input type="number" step="0.01" value={completeForm.price_per_liter} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, price_per_liter: e.target.value, total_amount: f.liters ? String(parseFloat(f.liters) * v) : f.total_amount })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-bold font-mono text-gray-600" placeholder="0.00" />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Importe Total</label>
+                      <input type="number" step="0.01" value={completeForm.total_amount} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, total_amount: e.target.value, price_per_liter: f.liters && parseFloat(f.liters)>0 ? String(v / parseFloat(f.liters)) : f.price_per_liter })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-black font-mono text-emerald-600" placeholder="0.00" />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Foto del Ticket</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer relative overflow-hidden">
-                  <input type="file" accept="image/*" capture="environment" onChange={e => setTicketFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                  <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
-                    {ticketFile ? (
-                      <>
-                        <Check size={24} className="text-emerald-500" />
-                        <span className="text-sm font-bold text-emerald-600">{ticketFile.name}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Camera size={28} className="text-gray-400" />
-                        <span className="text-sm text-gray-500 font-medium">Sacar foto o seleccionar archivo</span>
-                      </>
-                    )}
+                  <div>
+                    <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Foto del Ticket</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer relative overflow-hidden">
+                      <input type="file" accept="image/*" capture="environment" onChange={e => setTicketFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                      <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
+                        {ticketFile ? (
+                          <>
+                            <Check size={24} className="text-emerald-500" />
+                            <span className="text-sm font-bold text-emerald-600">{ticketFile.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Camera size={28} className="text-gray-400" />
+                            <span className="text-sm text-gray-500 font-medium">Sacar foto o seleccionar archivo</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    {error && <div className="bg-red-50 border border-red-200 text-ecar-red px-3 py-2 rounded-lg text-sm flex gap-2 mb-4"><AlertCircle size={16} />{error}</div>}
+                    <button onClick={handleCompleteLoad} disabled={submitting} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 ${activeRequest.workflow_status === 'authorized' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+                      {submitting ? 'Guardando...' : <><Upload size={20} /> Guardar Carga {activeRequest.workflow_status !== 'authorized' && '(Sin Autorizar)'}</>}
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="pt-2">
-                {error && <div className="bg-red-50 border border-red-200 text-ecar-red px-3 py-2 rounded-lg text-sm flex gap-2 mb-4"><AlertCircle size={16} />{error}</div>}
-                <button onClick={handleCompleteLoad} disabled={submitting} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 ${activeRequest.workflow_status === 'authorized' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
-                  {submitting ? 'Guardando...' : <><Upload size={20} /> Guardar Carga {activeRequest.workflow_status !== 'authorized' && '(Sin Autorizar)'}</>}
-                </button>
-              </div>
+              ) : (
+                <div className="text-center py-6 animate-fade-in">
+                  <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 mb-6 text-sm">
+                    Gerencia aún no ha autorizado esta carga. Podés esperar la autorización y volver a consultar este código más tarde.
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-3 font-bold uppercase tracking-wider">¿Ya cargaste igual?</p>
+                    <button 
+                      onClick={() => setShowUnauthorizedForm(true)} 
+                      className="text-amber-700 bg-amber-100 hover:bg-amber-200 font-bold py-3 px-6 rounded-xl transition-colors text-sm w-full shadow-sm"
+                    >
+                      Forzar Carga (Auditoría Posterior)
+                    </button>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
