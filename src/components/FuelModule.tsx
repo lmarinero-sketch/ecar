@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppStore } from '../store/useStore';
+import { MONTHS_ES, DAYS_ES } from '../lib/constants';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const STATIONS = ['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'];
 const FUEL_TYPES = [
   'Diesel 500 / Ultradiesel',
@@ -55,8 +55,22 @@ export const FuelModule: React.FC = () => {
   const totalAmount = monthLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
   const batanBalance = batanMovements.length > 0 ? (batanMovements[0].balance_after || 0) : 0;
 
-  const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: 'requests', label: 'Autorizaciones', icon: ClipboardCheck },
+  const { seenFuelRequests, markFuelRequestsSeen } = useAppStore();
+  
+  const pendingRequestsIds = useMemo(() => loads.filter(l => l.workflow_status === 'requested').map(l => l.id), [loads]);
+  const unseenRequestsCount = useMemo(() => pendingRequestsIds.filter(id => !seenFuelRequests.includes(id)).length, [pendingRequestsIds, seenFuelRequests]);
+
+  useEffect(() => {
+    if (tab === 'requests' && unseenRequestsCount > 0) {
+      const unseenIds = pendingRequestsIds.filter(id => !seenFuelRequests.includes(id));
+      if (unseenIds.length > 0) {
+        markFuelRequestsSeen(unseenIds);
+      }
+    }
+  }, [tab, unseenRequestsCount, pendingRequestsIds, seenFuelRequests, markFuelRequestsSeen]);
+
+  const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
+    { id: 'requests', label: 'Autorizaciones', icon: ClipboardCheck, badge: unseenRequestsCount },
     { id: 'loads', label: 'Cargas Realizadas', icon: Fuel },
     { id: 'dashboard', label: 'Dashboard & Analítica', icon: PieChart },
     { id: 'batan', label: 'Batán', icon: Droplets },
@@ -89,7 +103,11 @@ export const FuelModule: React.FC = () => {
           <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
             {tabs.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === t.id ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                <t.icon size={16} /> {t.label}
+                <t.icon size={16} /> 
+                {t.label}
+                {(t.badge || 0) > 0 && (
+                  <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1">{t.badge}</span>
+                )}
               </button>
             ))}
           </div>
@@ -456,6 +474,12 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                   <span className={`badge ${l.validation_status === 'ok' ? 'badge-success' : l.validation_status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>
                     {l.validation_status === 'ok' ? 'OK' : l.validation_status === 'observed' ? 'Observado' : 'Pendiente'}
                   </span>
+                  {l.unauthorized_load && <span className="block mt-1 badge bg-amber-100 text-amber-800 text-[9px] border-amber-200">Sin Autorizar</span>}
+                  {l.ticket_photo_url && (
+                    <a href={l.ticket_photo_url} target="_blank" rel="noreferrer" className="mt-1 flex items-center justify-center gap-1 text-[10px] font-bold text-ecar-blue hover:bg-blue-100 bg-blue-50 border border-blue-100 px-1 py-0.5 rounded transition-colors">
+                      <ImageIcon size={10} /> Ver Ticket
+                    </a>
+                  )}
                 </td>
                 <td className="text-center">
                   {editingId === l.id ? (

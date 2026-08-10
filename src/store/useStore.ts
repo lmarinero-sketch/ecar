@@ -9,6 +9,8 @@ type AppState = {
   setSidebarOpen: (open: boolean) => void;
   tutorialMode: boolean;
   setTutorialMode: (on: boolean) => void;
+  seenFuelRequests: string[];
+  markFuelRequestsSeen: (ids: string[]) => void;
 };
 
 export const useAppStore = create<AppState>()(
@@ -20,10 +22,14 @@ export const useAppStore = create<AppState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       tutorialMode: false,
       setTutorialMode: (on) => set({ tutorialMode: on }),
+      seenFuelRequests: [],
+      markFuelRequestsSeen: (ids) => set((state) => ({ 
+        seenFuelRequests: Array.from(new Set([...state.seenFuelRequests, ...ids])) 
+      })),
     }),
     {
       name: 'ecar-nav',
-      partialize: (state) => ({ activeModule: state.activeModule }),
+      partialize: (state) => ({ activeModule: state.activeModule, seenFuelRequests: state.seenFuelRequests }),
     }
   )
 );

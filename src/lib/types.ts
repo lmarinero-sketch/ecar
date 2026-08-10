@@ -1489,6 +1489,7 @@ export type FuelLoad = {
   authorized_at?: string | null;
   supervisor_signature?: string | null;
   ticket_photo_url?: string | null;
+  unauthorized_load?: boolean;
   // Joined
   vehicle?: FuelVehicle | null;
 };

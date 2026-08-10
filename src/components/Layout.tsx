@@ -10,7 +10,7 @@ import {
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
   Activity, BookOpen, FileText, PieChart, Mail, Building2
 } from 'lucide-react';
-import { usePurchaseRequests } from '../hooks/useData';
+import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
 import { MODULE_LABELS } from '../lib/types';
 import { TutorialPanel } from './TutorialPanel';
@@ -193,7 +193,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
 /*                          LAYOUT                             */
 /* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode } = useAppStore();
+  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode, seenFuelRequests } = useAppStore();
   const { profile, signOut, changePassword, hasModule, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
@@ -209,6 +209,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { startTour } = useOnboardingStore();
   const { data: purchaseRequests = [] } = usePurchaseRequests();
   const pendingRequests = purchaseRequests.filter(r => r.status === 'pending').length;
+
+  const { data: fuelLoads = [] } = useFuelLoads();
+  const unseenFuelReqs = fuelLoads.filter(l => l.workflow_status === 'requested' && !seenFuelRequests.includes(l.id)).length;
 
   // Trigger content animation on module change
   useEffect(() => {
@@ -329,7 +332,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         expanded={expanded}
                         onSelect={handleSelect}
                         delay={idx * 20}
-                        badgeCount={item.id === 'purchase_requests' ? pendingRequests : 0}
+                        badgeCount={item.id === 'purchase_requests' ? pendingRequests : item.id === 'fuel' ? unseenFuelReqs : 0}
                       />
                     ))}
                   </div>
