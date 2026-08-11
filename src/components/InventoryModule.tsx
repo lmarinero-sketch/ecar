@@ -267,7 +267,7 @@ export const InventoryModule: React.FC = () => {
         await updateItem.mutateAsync({ id: editingItem.id, ...payload });
         useModalStore.getState().showAlert('Éxito', 'Ítem actualizado correctamente.');
       } else {
-        const created: any = await createItem.mutateAsync(payload);
+        const created: any = await createItem.mutateAsync({ ...payload, current_stock: 0 });
         // Create initial stock movement if stock > 0
         if (payload.current_stock > 0 && (created?.id || (Array.isArray(created) && created[0]?.id))) {
           const itemId = created?.id || created[0]?.id;
