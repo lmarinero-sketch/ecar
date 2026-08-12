@@ -189,8 +189,10 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     const finalPrice = isBatan ? 0 : (form.price_per_liter || (form.liters ? finalAmount / form.liters : 0));
     const finalSupplier = isBatan ? 'Batán Interno' : (form.supplier === 'Otro' ? (form.custom_station || 'Otro') : form.supplier);
 
+    const { fuel_source, custom_station, ...validForm } = form;
+
     await createLoad.mutateAsync({
-      ...form,
+      ...validForm,
       load_number: `CARGA-${String(nextNum).padStart(4, '0')}`,
       validation_status: 'pending',
       load_source: form.fuel_source || 'station',
@@ -203,12 +205,13 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
     if (isBatan) {
       await createBatan.mutateAsync({
+        movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
         movement_date: form.load_date,
         movement_type: 'discharge',
         fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
         liters_discharged: form.liters,
         movement_status: 'completed',
-        reference_load: `CARGA-${String(nextNum).padStart(4, '0')}`
+        observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')}`
       });
     }
 
