@@ -157,7 +157,8 @@ export const VehicleTrackingPage: React.FC = () => {
           tenant_id: ECAR_TENANT_ID,
           vehicle_id: selectedVehicleId,
           driver_name: driverName,
-          is_active: true
+          is_active: true,
+          source: 'web'
         })
         .select()
         .single();
@@ -178,7 +179,8 @@ export const VehicleTrackingPage: React.FC = () => {
               tenant_id: ECAR_TENANT_ID,
               vehicle_id: selectedVehicleId,
               driver_name: driverName,
-              is_active: true
+              is_active: true,
+              source: 'web'
             })
             .select()
             .single();
@@ -265,6 +267,7 @@ export const VehicleTrackingPage: React.FC = () => {
             payload: {
               vehicle_id: selectedVehicleId,
               driver_name: driverName,
+              source: 'web',
               ...pt,
               timestamp: new Date().toISOString()
             }

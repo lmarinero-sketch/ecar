@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline, DirectionsRenderer, OverlayView } from '@react-google-maps/api';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Clock, Calendar, Truck, User, Gauge } from 'lucide-react';
+import { Loader2, Navigation, AlertTriangle, RefreshCw, Share2, Check, HelpCircle, X, MapPin, MousePointerClick, Smartphone, Globe, Clock, Calendar, Truck, User, Gauge } from 'lucide-react';
 
 const VEHICLE_COLORS = [
   '#4F46E5', '#E11D48', '#059669', '#D97706', '#7C3AED', 
@@ -48,6 +48,7 @@ interface ActiveVehicle {
   heading: number | null;
   speed: number | null;
   last_update: string;
+  source?: 'web' | 'mobile_app';
   vehicle_code?: string;
   vehicle_description?: string;
   destination_lat?: number | null;
@@ -110,6 +111,7 @@ export const FleetTrackingMap: React.FC = () => {
           last_heading,
           last_speed,
           last_update_at,
+          source,
           fuel_vehicles(code, description)
         `)
         .eq('is_active', true)
@@ -128,6 +130,7 @@ export const FleetTrackingMap: React.FC = () => {
           heading: d.last_heading,
           speed: d.last_speed,
           last_update: d.last_update_at,
+          source: (d as any).source || 'web',
           vehicle_code: (d.fuel_vehicles as any)?.code,
           vehicle_description: (d.fuel_vehicles as any)?.description
         };
@@ -297,7 +300,8 @@ export const FleetTrackingMap: React.FC = () => {
           lng: data.lng,
           heading: data.heading,
           speed: data.speed,
-          last_update: data.timestamp
+          last_update: data.timestamp,
+          source: data.source || prev[data.vehicle_id]?.source || 'web'
         }
       }));
 
@@ -556,9 +560,20 @@ export const FleetTrackingMap: React.FC = () => {
                           <div className={`w-2.5 h-2.5 rounded-full ${isOverSpeed ? 'bg-red-600 animate-pulse' : ''}`} style={{ backgroundColor: isOverSpeed ? undefined : getColorForVehicle(v.vehicle_id) }}></div>
                           {v.vehicle_code || 'Unidad'}
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isOverSpeed ? 'bg-red-100 text-red-700 animate-pulse border border-red-200' : 'bg-green-100 text-green-700'}`}>
-                          {speedKmh} km/h
-                        </span>
+                        <div className="flex items-center gap-1">
+                          {v.source === 'mobile_app' ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5" title="Origen: App Móvil">
+                              <Smartphone className="w-2.5 h-2.5" /> App
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-0.5" title="Origen: Navegador Web">
+                              <Globe className="w-2.5 h-2.5" /> Web
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isOverSpeed ? 'bg-red-100 text-red-700 animate-pulse border border-red-200' : 'bg-green-100 text-green-700'}`}>
+                            {speedKmh} km/h
+                          </span>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-600">{v.driver_name}</p>
                       {isOverSpeed && (
@@ -741,11 +756,22 @@ export const FleetTrackingMap: React.FC = () => {
                         <h4 className="font-extrabold text-gray-900 text-[16px] leading-tight">
                           {selectedVehicle.vehicle_code || 'Unidad'}
                         </h4>
-                        {selectedVehicle.destination_lat && (
-                          <span className="inline-block mt-0.5 text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border border-emerald-200">
-                            En Ruta
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 mt-1">
+                          {selectedVehicle.source === 'mobile_app' ? (
+                            <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase border border-emerald-300">
+                              <Smartphone className="w-3 h-3" /> App Móvil
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase border border-blue-200">
+                              <Globe className="w-3 h-3" /> Web
+                            </span>
+                          )}
+                          {selectedVehicle.destination_lat && (
+                            <span className="inline-block text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border border-emerald-200">
+                              En Ruta
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

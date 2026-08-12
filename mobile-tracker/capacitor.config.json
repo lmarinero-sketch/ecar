@@ -1,0 +1,16 @@
+{
+  "appId": "com.ecar.logistics.tracker",
+  "appName": "ECAR Logística Tracker",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "BackgroundGeolocation": {
+      "notificationTitle": "ECAR Logística — Rastreo Activo",
+      "notificationText": "Transmitiendo ubicación GPS en segundo plano",
+      "iconColor": "#0284C7"
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

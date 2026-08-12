@@ -195,12 +195,12 @@ export const FuelRequestPage: React.FC = () => {
     setSubmitting(false);
   };
 
-  const resetRequest = () => {
-    useModalStore.getState().showConfirm('¿Estás seguro de cancelar esta solicitud y crear una nueva?', async () => {
+  const resetRequest = async () => {
+    if (await useModalStore.getState().showConfirm('Confirmar', '¿Estás seguro de cancelar esta solicitud y crear una nueva?')) {
       localStorage.removeItem('ecar_active_fuel_request');
       setActiveRequest(null);
       setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
-    });
+    }
   };
 
   if (successState !== 'none') {
