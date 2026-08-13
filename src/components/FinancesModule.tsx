@@ -189,7 +189,7 @@ export const FinancesModule: React.FC = () => {
         c.due_date === form.due_date
       );
       if (isDuplicate) {
-        if (!window.confirm(`Posible cheque duplicado detectado (Nro ${form.cheque_number}, Banco ${form.bank_name}, Vto ${form.due_date}). ¿Desea cargarlo de todas formas?`)) {
+        if (!(await useModalStore.getState().showConfirm('Duplicado Detectado', `Posible cheque duplicado detectado (Nro ${form.cheque_number}, Banco ${form.bank_name}, Vto ${form.due_date}). ¿Desea cargarlo de todas formas?`))) {
           return;
         }
       }

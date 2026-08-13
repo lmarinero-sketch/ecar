@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useLegalEntities, useCreateLegalEntity, useDeleteLegalEntity, usePurchaseInvoices } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { Building2, Plus, Trash2, Upload, Download } from 'lucide-react';
+import { useModalStore } from '../store/useModalStore';
 
 export const LegalEntitiesPanel: React.FC = () => {
   const { data: entities = [], isLoading } = useLegalEntities();
@@ -170,9 +171,10 @@ export const LegalEntitiesPanel: React.FC = () => {
           return (
           <div key={entity.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
             <button
-              onClick={() => {
-                if (confirm(`¿Estás seguro de eliminar ${entity.name}? Esto podría afectar facturas asociadas.`)) {
+              onClick={async () => {
+                if (await useModalStore.getState().showConfirm('Confirmar Eliminación', `¿Estás seguro de eliminar ${entity.name}? Esto podría afectar facturas asociadas.`)) {
                   deleteEntity.mutate(entity.id);
+                  useModalStore.getState().showAlert('Éxito', 'Razón social eliminada.');
                 }
               }}
               className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"

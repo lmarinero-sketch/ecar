@@ -42,8 +42,9 @@ const BancoPreciosTab: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if(window.confirm('¿Eliminar este insumo del Banco de Precios?')) {
+    if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Eliminar este insumo del Banco de Precios?')) {
       await deleteResource.mutateAsync(id);
+      useModalStore.getState().showAlert('Éxito', 'Insumo eliminado del Banco de Precios.');
     }
   };
 

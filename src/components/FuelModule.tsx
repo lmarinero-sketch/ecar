@@ -529,7 +529,16 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                       <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar carga"><Pencil size={14} /></button>
                       {canDelete && (
                         <button 
-                          onClick={() => { if (window.confirm('¿Seguro que deseás borrar esta carga?')) deleteLoad.mutateAsync(l.id); }} 
+                          onClick={async () => {
+                            if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta carga realizada?')) {
+                              try {
+                                await deleteLoad.mutateAsync(l.id);
+                                useModalStore.getState().showAlert('Éxito', 'La carga de combustible se eliminó correctamente.');
+                              } catch (err: any) {
+                                useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la carga.');
+                              }
+                            }
+                          }} 
                           disabled={deleteLoad.isPending}
                           className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all" 
                           title="Borrar carga"
