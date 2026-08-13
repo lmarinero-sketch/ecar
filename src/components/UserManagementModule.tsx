@@ -72,8 +72,12 @@ export const UserManagementModule: React.FC = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [guideStep, setGuideStep] = useState(1);
 
+  const [formDomain, setFormDomain] = useState<'@growlabs.lat' | '@growlabs.com'>('@growlabs.lat');
+
   const generatedEmail = formUsername.trim()
-    ? `${formUsername.trim().toLowerCase().replace(/\s+/g, '.')}@growlabs.com`
+    ? (formUsername.includes('@') 
+        ? formUsername.trim().toLowerCase() 
+        : `${formUsername.trim().toLowerCase().replace(/\s+/g, '.')}${formDomain}`)
     : '';
 
   const fetchUsers = async () => {
@@ -85,7 +89,7 @@ export const UserManagementModule: React.FC = () => {
       .order('full_name');
     if (!error && data) {
       const profiles = (data as UserProfile[]).filter(p =>
-        p.email.endsWith('@growlabs.com') || p.email === 'lucasmmarinero@gmail.com'
+        p.email.endsWith('@growlabs.com') || p.email.endsWith('@growlabs.lat') || p.email === 'lucasmmarinero@gmail.com'
       );
       setUsers(profiles);
       // Fetch permissions for all users
@@ -537,7 +541,14 @@ export const UserManagementModule: React.FC = () => {
                   <input type="text" required value={formUsername} onChange={e => setFormUsername(e.target.value)}
                     placeholder="ezequiel"
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue transition-all pr-[140px]" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">@growlabs.com</span>
+                  <select
+                    value={formDomain}
+                    onChange={e => setFormDomain(e.target.value as '@growlabs.lat' | '@growlabs.com')}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-xs text-gray-600 font-mono bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 focus:outline-none"
+                  >
+                    <option value="@growlabs.lat">@growlabs.lat</option>
+                    <option value="@growlabs.com">@growlabs.com</option>
+                  </select>
                 </div>
                 {generatedEmail && (
                   <p className="text-[10px] text-ecar-blue font-mono mt-0.5">→ {generatedEmail}</p>
