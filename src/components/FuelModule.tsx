@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
+import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 
@@ -180,11 +181,11 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const handleSubmit = async () => {
     const isBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
     if (!form.load_date || !form.vehicle_code || !form.liters) {
-      alert("Por favor, complete los datos básicos (Fecha, Vehículo, Litros).");
+      useModalStore.getState().showAlert("Atención", "Por favor, complete los datos básicos (Fecha, Vehículo, Litros).");
       return;
     }
     if (!isBatan && (!form.total_amount && !form.price_per_liter)) {
-      alert("Por favor, ingrese el Importe Total o el Precio por Litro facturado.");
+      useModalStore.getState().showAlert("Atención", "Por favor, ingrese el Importe Total o el Precio por Litro facturado.");
       return;
     }
     
@@ -216,15 +217,22 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
           liters_discharged: form.liters,
           movement_status: 'completed',
-          observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')}`
+          observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')} (${form.vehicle_code})`
         });
       }
+
+      useModalStore.getState().showAlert(
+        'Carga Registrada', 
+        isBatan 
+          ? `✅ Carga a Batán Interno de ${form.liters} L registrada correctamente. Se descontaron ${form.liters} L del stock de Batán y el importe se guardó en $0.`
+          : `✅ Carga de ${form.liters} L registrada correctamente.`
+      );
 
       setForm({ fuel_source: 'station', supplier: 'YPF', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
       setShowForm(false);
     } catch (err: any) {
       console.error("Error al registrar carga:", err);
-      alert("Error al registrar la carga: " + (err.message || 'Error desconocido'));
+      useModalStore.getState().showAlert("Error al Guardar", err?.message || 'Error desconocido al registrar la carga.');
     }
   };
 
@@ -252,8 +260,9 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         fuel_type: editForm.fuel_type
       });
       setEditingId(null);
+      useModalStore.getState().showAlert("Éxito", "Edición guardada correctamente.");
     } catch (err: any) {
-      alert("Error al guardar edición: " + (err.message || 'Error desconocido'));
+      useModalStore.getState().showAlert("Error al Guardar", err.message || 'Error desconocido');
     }
   };
 
@@ -339,8 +348,8 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <div>
               <label className="text-xs font-bold text-gray-500">Estación de Servicio *</label>
               <select 
-                disabled={form.fuel_source === 'batan'}
-                value={form.supplier || 'YPF'} 
+                disabled={isFormBatan}
+                value={isFormBatan ? 'Batán Interno' : (form.supplier || 'YPF')} 
                 onChange={e => {
                   const s = e.target.value;
                   if (s === 'Batán Interno') {
@@ -349,7 +358,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                     setForm(f => ({ ...f, supplier: s, station_name: s }));
                   }
                 }} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:bg-gray-100 disabled:opacity-80"
               >
                 {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -382,7 +391,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                 value={form.liters || ''} 
                 onChange={e => { 
                   const l = parseFloat(e.target.value) || 0; 
-                  setForm(f => ({ ...f, liters: l, total_amount: l * (f.price_per_liter || 0) })); 
+                  setForm(f => ({ ...f, liters: l, total_amount: isFormBatan ? 0 : l * (f.price_per_liter || 0) })); 
                 }} 
                 className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-bold bg-white" 
               />
@@ -392,30 +401,32 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <input 
                 type="number" 
                 step="0.01" 
-                placeholder="Ej: 1250"
-                value={form.price_per_liter || ''} 
+                placeholder={isFormBatan ? "0.00 (Interno)" : "Ej: 1250"}
+                value={isFormBatan ? 0 : (form.price_per_liter || '')} 
                 disabled={isFormBatan} 
                 onChange={e => { 
                   const p = parseFloat(e.target.value) || 0; 
                   setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); 
                 }} 
-                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono bg-white disabled:opacity-50" 
+                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-bold text-gray-700 bg-gray-100/90 disabled:opacity-80" 
               />
+              {isFormBatan && <span className="text-[10px] text-amber-700 font-bold block mt-0.5">🔒 $0 (Consumo Interno)</span>}
             </div>
             <div>
               <label className="text-xs font-bold text-sky-800">Importe Total ($) *</label>
               <input 
                 type="number" 
                 step="0.01" 
-                placeholder="Ej: 62500"
-                value={form.total_amount || ''} 
+                placeholder={isFormBatan ? "0.00 (Interno)" : "Ej: 62500"}
+                value={isFormBatan ? 0 : (form.total_amount || '')} 
                 disabled={isFormBatan} 
                 onChange={e => { 
                   const t = parseFloat(e.target.value) || 0; 
                   setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); 
                 }} 
-                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-black text-sky-900 bg-white disabled:opacity-50" 
+                className="w-full px-3 py-2 border border-sky-300 rounded-xl text-sm font-mono font-black text-sky-900 bg-gray-100/90 disabled:opacity-80" 
               />
+              {isFormBatan && <span className="text-[10px] text-amber-700 font-bold block mt-0.5">🔒 $0 (Sin Factura Externa)</span>}
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500">N° Vale / Comprobante</label>
