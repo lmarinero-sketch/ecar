@@ -11,6 +11,7 @@ const FUEL_TYPES = ['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Die
 
 export const FuelRequestPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -48,10 +49,12 @@ export const FuelRequestPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [vRes] = await Promise.all([
+        const [vRes, pRes] = await Promise.all([
           supabase.from('fuel_vehicles').select('id, code, description, vehicle_type, plate, preferred_fuel').eq('status', 'active').order('code'),
+          supabase.from('projects').select('id, name').eq('status', 'active').order('name'),
         ]);
         setVehicles(vRes.data || []);
+        setProjects(pRes.data || []);
         
         const savedId = localStorage.getItem('ecar_active_fuel_request');
         if (savedId) {
@@ -104,7 +107,7 @@ export const FuelRequestPage: React.FC = () => {
       const { data: inserted, error: dbError } = await supabase.from('fuel_loads').insert({
         tenant_id: ECAR_TENANT_ID,
         load_number: `SOL-${Date.now().toString(36).toUpperCase()}`,
-        load_date: new Date().toISOString().slice(0, 10),
+        load_date: new Date().toLocaleDateString('sv-SE'),
         vehicle_code: form.vehicle_code,
         vehicle_id: vehicle?.id,
         vehicle_description: vehicle?.description || '',
@@ -291,9 +294,21 @@ export const FuelRequestPage: React.FC = () => {
 
               <div>
                 <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Vehículo / Máquina <span className="text-ecar-red">*</span></label>
-                <select value={form.vehicle_code} onChange={e => setForm({ ...form, vehicle_code: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-gray-800 font-medium">
+                <select value={form.vehicle_code} onChange={e => {
+                  const v = vehicles.find(x => x.code === e.target.value);
+                  setForm({ ...form, vehicle_code: e.target.value, fuel_type: v?.preferred_fuel || form.fuel_type });
+                }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-gray-800 font-medium">
                   <option value="">Seleccionar vehículo...</option>
                   {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Obra / Centro de Costo</label>
+                <select value={form.project_name} onChange={e => setForm({ ...form, project_name: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-gray-800 font-medium text-sm">
+                  <option value="">Uso General</option>
+                  {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                  <option value="Movimientos Internos">Movimientos Internos</option>
                 </select>
               </div>
 

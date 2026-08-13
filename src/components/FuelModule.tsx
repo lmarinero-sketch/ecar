@@ -160,6 +160,8 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const userEmail = user?.email?.toLowerCase() || '';
   const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
 
+  const isFormBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
+
   const handleVehicleCode = (code: string) => {
     const v = vehicles.find(x => x.code === code);
     if (v) {
@@ -170,12 +172,13 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   };
 
   const handleDate = (dateStr: string) => {
-    const d = new Date(dateStr + 'T12:00:00');
-    setForm(f => ({ ...f, load_date: dateStr, month: MONTHS_ES[d.getMonth()], year: d.getFullYear(), day_of_week: DAYS_ES[d.getDay()] }));
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    setForm(f => ({ ...f, load_date: dateStr, month: MONTHS_ES[dateObj.getMonth()], year: dateObj.getFullYear(), day_of_week: DAYS_ES[dateObj.getDay()] }));
   };
 
   const handleSubmit = async () => {
-    const isBatan = form.fuel_source === 'batan';
+    const isBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
     if (!form.load_date || !form.vehicle_code || !form.liters) {
       alert("Por favor, complete los datos básicos (Fecha, Vehículo, Litros).");
       return;
@@ -184,39 +187,45 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       alert("Por favor, ingrese el Importe Total o el Precio por Litro facturado.");
       return;
     }
-    const nextNum = loads.length + 1;
-    const finalAmount = isBatan ? 0 : (form.total_amount || 0);
-    const finalPrice = isBatan ? 0 : (form.price_per_liter || (form.liters ? finalAmount / form.liters : 0));
-    const finalSupplier = isBatan ? 'Batán Interno' : (form.supplier === 'Otro' ? (form.custom_station || 'Otro') : form.supplier);
+    
+    try {
+      const nextNum = loads.length + 1;
+      const finalAmount = isBatan ? 0 : (form.total_amount || 0);
+      const finalPrice = isBatan ? 0 : (form.price_per_liter || (form.liters ? finalAmount / form.liters : 0));
+      const finalSupplier = isBatan ? 'Batán Interno' : (form.supplier === 'Otro' ? (form.custom_station || 'Otro') : form.supplier);
 
-    const { fuel_source, custom_station, ...validForm } = form;
+      const { fuel_source, custom_station, ...validForm } = form;
 
-    await createLoad.mutateAsync({
-      ...validForm,
-      load_number: `CARGA-${String(nextNum).padStart(4, '0')}`,
-      validation_status: 'pending',
-      load_source: form.fuel_source || 'station',
-      created_by: 'web',
-      supplier: finalSupplier,
-      station_name: finalSupplier,
-      total_amount: finalAmount,
-      price_per_liter: finalPrice
-    });
-
-    if (isBatan) {
-      await createBatan.mutateAsync({
-        movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
-        movement_date: form.load_date,
-        movement_type: 'discharge',
-        fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
-        liters_discharged: form.liters,
-        movement_status: 'completed',
-        observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')}`
+      await createLoad.mutateAsync({
+        ...validForm,
+        load_number: `CARGA-${String(nextNum).padStart(4, '0')}`,
+        validation_status: 'pending',
+        load_source: isBatan ? 'batan' : (form.fuel_source || 'station'),
+        created_by: 'web',
+        supplier: finalSupplier,
+        station_name: finalSupplier,
+        total_amount: finalAmount,
+        price_per_liter: finalPrice
       });
-    }
 
-    setForm({ fuel_source: 'station', supplier: 'YPF', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
-    setShowForm(false);
+      if (isBatan) {
+        await createBatan.mutateAsync({
+          movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
+          movement_date: form.load_date,
+          movement_type: 'discharge',
+          fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
+          liters_discharged: form.liters,
+          movement_status: 'completed',
+          observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')}`
+        });
+      }
+
+      setForm({ fuel_source: 'station', supplier: 'YPF', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
+      setShowForm(false);
+    } catch (err: any) {
+      console.error("Error al registrar carga:", err);
+      alert("Error al registrar la carga: " + (err.message || 'Error desconocido'));
+    }
   };
 
   const startEdit = (l: FuelLoad) => {
@@ -232,16 +241,20 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
   const saveEdit = async () => {
     if (!editingId) return;
-    await updateLoad.mutateAsync({
-      id: editingId,
-      liters: editForm.liters,
-      price_per_liter: editForm.price_per_liter,
-      total_amount: editForm.total_amount,
-      supplier: editForm.supplier,
-      station_name: editForm.supplier,
-      fuel_type: editForm.fuel_type
-    });
-    setEditingId(null);
+    try {
+      await updateLoad.mutateAsync({
+        id: editingId,
+        liters: editForm.liters,
+        price_per_liter: editForm.price_per_liter,
+        total_amount: editForm.total_amount,
+        supplier: editForm.supplier,
+        station_name: editForm.supplier,
+        fuel_type: editForm.fuel_type
+      });
+      setEditingId(null);
+    } catch (err: any) {
+      alert("Error al guardar edición: " + (err.message || 'Error desconocido'));
+    }
   };
 
   return (
@@ -280,7 +293,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div>
               <label className="text-xs font-bold text-gray-500">Origen de Carga</label>
-              <select value={form.fuel_source || 'station'} onChange={e => {
+              <select value={form.fuel_source || (isFormBatan ? 'batan' : 'station')} onChange={e => {
                 const s = e.target.value as 'station' | 'batan';
                 if (s === 'batan') setForm(f => ({ ...f, fuel_source: s, price_per_liter: 0, total_amount: 0, supplier: 'Batán Interno', station_name: 'Batán Interno' }));
                 else setForm(f => ({ ...f, fuel_source: s, supplier: 'YPF', station_name: 'YPF' }));
@@ -328,7 +341,14 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
               <select 
                 disabled={form.fuel_source === 'batan'}
                 value={form.supplier || 'YPF'} 
-                onChange={e => setForm(f => ({ ...f, supplier: e.target.value, station_name: e.target.value }))} 
+                onChange={e => {
+                  const s = e.target.value;
+                  if (s === 'Batán Interno') {
+                    setForm(f => ({ ...f, fuel_source: 'batan', supplier: s, station_name: s, price_per_liter: 0, total_amount: 0 }));
+                  } else {
+                    setForm(f => ({ ...f, supplier: s, station_name: s }));
+                  }
+                }} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -374,7 +394,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                 step="0.01" 
                 placeholder="Ej: 1250"
                 value={form.price_per_liter || ''} 
-                disabled={form.fuel_source === 'batan'} 
+                disabled={isFormBatan} 
                 onChange={e => { 
                   const p = parseFloat(e.target.value) || 0; 
                   setForm(f => ({ ...f, price_per_liter: p, total_amount: (f.liters || 0) * p })); 
@@ -389,7 +409,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                 step="0.01" 
                 placeholder="Ej: 62500"
                 value={form.total_amount || ''} 
-                disabled={form.fuel_source === 'batan'} 
+                disabled={isFormBatan} 
                 onChange={e => { 
                   const t = parseFloat(e.target.value) || 0; 
                   setForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); 
@@ -412,7 +432,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones opcionales..." />
           </div>
 
-          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (form.fuel_source !== 'batan' && !form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (!isFormBatan && !form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
           </button>
         </div>
@@ -1153,13 +1173,22 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     doc.setTextColor(50, 50, 50);
                     doc.setFont("helvetica", "normal");
                     
-                    const startY = 280;
+                    const startY = 270;
                     const lineSpacing = 28;
                     
+                    const formatLocalDate = (dateStr?: string) => {
+                      if (!dateStr) return '-';
+                      const parts = dateStr.split('T')[0].split('-');
+                      if (parts.length === 3) {
+                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                      }
+                      return dateStr;
+                    };
+
                     doc.setFont("helvetica", "bold");
                     doc.text("Fecha Solicitud:", 40, startY);
                     doc.setFont("helvetica", "normal");
-                    doc.text(new Date(r.load_date).toLocaleDateString(), 140, startY);
+                    doc.text(formatLocalDate(r.load_date), 140, startY);
 
                     doc.setFont("helvetica", "bold");
                     doc.text("Vehículo / Máquina:", 40, startY + lineSpacing);
@@ -1172,19 +1201,24 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     doc.text(String(r.odometer_km || '-'), 190, startY + lineSpacing * 2);
 
                     doc.setFont("helvetica", "bold");
-                    doc.text("Litros Solicitados:", 40, startY + lineSpacing * 3);
+                    doc.text("Tipo de Combustible:", 40, startY + lineSpacing * 3);
                     doc.setFont("helvetica", "normal");
-                    doc.text(`${r.requested_liters} L`, 160, startY + lineSpacing * 3);
+                    doc.text(r.fuel_type || 'Diesel Premium / V-Power', 180, startY + lineSpacing * 3);
 
                     doc.setFont("helvetica", "bold");
-                    doc.text("Solicitante:", 40, startY + lineSpacing * 4);
+                    doc.text("Litros Solicitados:", 40, startY + lineSpacing * 4);
                     doc.setFont("helvetica", "normal");
-                    doc.text(r.requested_by || '', 120, startY + lineSpacing * 4);
+                    doc.text(`${r.requested_liters} L`, 160, startY + lineSpacing * 4);
 
                     doc.setFont("helvetica", "bold");
-                    doc.text("Centro de Costo / Obra:", 40, startY + lineSpacing * 5);
+                    doc.text("Solicitante:", 40, startY + lineSpacing * 5);
                     doc.setFont("helvetica", "normal");
-                    doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 5);
+                    doc.text(r.requested_by || '', 120, startY + lineSpacing * 5);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Centro de Costo / Obra:", 40, startY + lineSpacing * 6);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 6);
 
                     const sigY = 500;
                     doc.setFontSize(16);
