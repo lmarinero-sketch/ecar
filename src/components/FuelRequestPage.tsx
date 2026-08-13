@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Send, FileText, AlertCircle, Camera, Upload, X } from 'lucide-react';
+import { Check, Send, FileText, AlertCircle, Camera, Upload, X, Copy } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useModalStore } from '../store/useModalStore';
+import { generateFuelValePdf } from '../lib/generateFuelValePdf';
 import type { FuelLoad } from '../lib/types';
 
 type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string; preferred_fuel?: string };
@@ -18,6 +19,7 @@ export const FuelRequestPage: React.FC = () => {
   
   const [successState, setSuccessState] = useState<'none' | 'request' | 'complete'>('none');
   const [successLoadNumber, setSuccessLoadNumber] = useState('');
+  const [createdLoad, setCreatedLoad] = useState<FuelLoad | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
@@ -132,6 +134,7 @@ export const FuelRequestPage: React.FC = () => {
       
       if (action === 'wait') {
         setSuccessLoadNumber(inserted.load_number);
+        setCreatedLoad(inserted as FuelLoad);
         setSuccessState('request');
         setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
       } else {
@@ -227,9 +230,31 @@ export const FuelRequestPage: React.FC = () => {
           </p>
           
           {successState === 'request' && (
-            <div className="my-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <div className="my-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
               <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nº de Solicitud (Guardar para buscar)</p>
-              <p className="text-2xl font-black font-mono text-ecar-blue tracking-widest">{successLoadNumber}</p>
+              <p className="text-3xl font-black font-mono text-ecar-red tracking-widest">{successLoadNumber}</p>
+              
+              <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(successLoadNumber);
+                    useModalStore.getState().showAlert('Copiado', `Código ${successLoadNumber} copiado al portapapeles.`);
+                  }}
+                  className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <Copy size={14} /> Copiar Código
+                </button>
+                {createdLoad && (
+                  <button
+                    type="button"
+                    onClick={() => generateFuelValePdf(createdLoad)}
+                    className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    <FileText size={14} /> Descargar Vale PDF
+                  </button>
+                )}
+              </div>
             </div>
           )}
           
@@ -393,7 +418,20 @@ export const FuelRequestPage: React.FC = () => {
                 <button onClick={resetRequest} className="text-gray-400 hover:text-red-500 transition-colors" title="Cancelar Solicitud"><X size={20}/></button>
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm space-y-2">
+                <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-200 shadow-xs flex-wrap gap-2">
+                  <div>
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Nº de Solicitud</span>
+                    <span className="text-xl font-black font-mono text-ecar-red tracking-wider">{activeRequest.load_number}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => generateFuelValePdf(activeRequest)}
+                    className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow transition-all"
+                  >
+                    <FileText size={14} /> Descargar Vale PDF
+                  </button>
+                </div>
                 <p className="mb-1"><span className="text-gray-500 font-semibold">Vehículo:</span> <span className="font-bold text-ecar-blue">{activeRequest.vehicle_description} ({activeRequest.vehicle_code})</span></p>
                 <p><span className="text-gray-500 font-semibold">Litros Pedidos:</span> <span className="font-bold text-ecar-red">{activeRequest.requested_liters} L</span></p>
               </div>

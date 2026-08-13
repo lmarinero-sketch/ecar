@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import jsPDF from 'jspdf';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
+import { generateFuelValePdf } from '../lib/generateFuelValePdf';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -1211,134 +1211,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                   {r.supervisor_signature}
                 </div>
                 <button 
-                  onClick={async () => {
-                    const doc = new jsPDF('p', 'pt', 'a4');
-                    doc.setFillColor(11, 34, 64);
-                    doc.triangle(0, 0, 600, 0, 600, 100, 'F');
-                    doc.triangle(0, 0, 600, 100, 0, 160, 'F');
-
-                    doc.setFillColor(210, 32, 39);
-                    doc.triangle(0, 160, 600, 100, 600, 115, 'F');
-                    doc.triangle(0, 160, 600, 115, 0, 175, 'F');
-
-                    doc.setFillColor(11, 34, 64);
-                    doc.triangle(0, 780, 600, 700, 600, 842, 'F');
-                    doc.triangle(0, 780, 600, 842, 0, 842, 'F');
-
-                    doc.setFillColor(210, 32, 39);
-                    doc.triangle(0, 765, 600, 685, 600, 700, 'F');
-                    doc.triangle(0, 765, 600, 700, 0, 780, 'F');
-                    
-                    try {
-                      const response = await fetch('/logoECAR.png');
-                      if (response.ok) {
-                        const blob = await response.blob();
-                        const base64 = await new Promise<string>((resolve) => {
-                          const reader = new FileReader();
-                          reader.onloadend = () => resolve(reader.result as string);
-                          reader.readAsDataURL(blob);
-                        });
-                        doc.setFillColor(255, 255, 255);
-                        doc.roundedRect(30, 30, 140, 60, 5, 5, 'F');
-                        doc.addImage(base64, 'PNG', 40, 40, 120, 42);
-                      }
-                    } catch (e) {
-                      console.warn("Logo PDF error", e);
-                    }
-
-                    doc.setFont("helvetica", "bold");
-                    doc.setTextColor(11, 34, 64);
-                    doc.setFontSize(22);
-                    doc.text("VALE DE COMBUSTIBLE Y LUBRICANTES", 40, 220);
-                    
-                    doc.setDrawColor(210, 32, 39);
-                    doc.setLineWidth(3);
-                    doc.line(40, 235, 300, 235);
-                    doc.setDrawColor(11, 34, 64);
-                    doc.line(300, 235, 550, 235);
-
-                    doc.setFontSize(12);
-                    doc.setTextColor(50, 50, 50);
-                    doc.setFont("helvetica", "normal");
-                    
-                    const startY = 270;
-                    const lineSpacing = 28;
-                    
-                    const formatLocalDate = (dateStr?: string) => {
-                      if (!dateStr) return '-';
-                      const parts = dateStr.split('T')[0].split('-');
-                      if (parts.length === 3) {
-                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                      }
-                      return dateStr;
-                    };
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Fecha Solicitud:", 40, startY);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(formatLocalDate(r.load_date), 140, startY);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Vehículo / Máquina:", 40, startY + lineSpacing);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(`${r.vehicle_code} - ${r.vehicle_description || ''}`, 170, startY + lineSpacing);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Odómetro / Horómetro:", 40, startY + lineSpacing * 2);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(String(r.odometer_km || '-'), 190, startY + lineSpacing * 2);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Tipo de Combustible:", 40, startY + lineSpacing * 3);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(r.fuel_type || 'Diesel Premium / V-Power', 180, startY + lineSpacing * 3);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Litros Solicitados:", 40, startY + lineSpacing * 4);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(`${r.requested_liters} L`, 160, startY + lineSpacing * 4);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Solicitante:", 40, startY + lineSpacing * 5);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(r.requested_by || '', 120, startY + lineSpacing * 5);
-
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Centro de Costo / Obra:", 40, startY + lineSpacing * 6);
-                    doc.setFont("helvetica", "normal");
-                    doc.text(r.project_name || 'Uso General', 190, startY + lineSpacing * 6);
-
-                    const sigY = 500;
-                    doc.setFontSize(16);
-                    doc.setFont("helvetica", "bold");
-                    doc.setTextColor(11, 34, 64);
-                    doc.text("Autorización de Gerencia", 40, sigY);
-                    
-                    doc.setFontSize(12);
-                    doc.setFont("helvetica", "normal");
-                    doc.setTextColor(60, 60, 60);
-                    
-                    const sigText = r.supervisor_signature || '';
-                    const splitText = doc.splitTextToSize(sigText, 500);
-                    doc.text(splitText, 40, sigY + 25);
-
-                    if (profile?.signature_data) {
-                      try {
-                        doc.addImage(profile.signature_data, 'PNG', 40, sigY + 45, 180, 60);
-                      } catch (e) {
-                        console.error("Error embedding signature", e);
-                      }
-                    }
-
-                    doc.setFontSize(9);
-                    doc.setTextColor(150, 150, 150);
-                    doc.text(`ID Sistema: ${r.id}`, 40, 800);
-                    
-                    doc.save(`Vale_Combustible_${r.vehicle_code}_${r.id.substring(0,6)}.pdf`);
-                  }}
+                  onClick={() => generateFuelValePdf(r, profile?.signature_data)}
                   className="mt-2 text-xs font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1"
                 >
-                  <Download size={14} /> Descargar PDF Autorizado
+                  <Download size={14} /> Descargar PDF Autorizado (con N° de Solicitud)
                 </button>
 
                 {completingId === r.id ? (
