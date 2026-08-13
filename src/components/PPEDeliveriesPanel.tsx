@@ -334,9 +334,4 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
       )}
     </div>
   );
-};table>
-        </div>
-      )}
-    </div>
-  );
 };

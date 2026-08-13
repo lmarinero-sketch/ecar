@@ -3,7 +3,7 @@ import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
   LayoutGrid, MapPin, Trash2, Edit3, ShoppingBag,
-  ShieldCheck, CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight
+  CheckCircle2, ChevronDown, History, Zap, ArrowUpRight
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -344,7 +344,6 @@ export const InventoryModule: React.FC = () => {
   const [viewingShelf, setViewingShelf] = useState<WarehouseShelf | null>(null);
 
   // EPP Form State
-  const [selectedEppEmployeeId, setSelectedEppEmployeeId] = useState<string>('');
 
   const selectedShelfCode = useMemo(() => {
     const s = (shelves || []).find(x => x.id === newItem.shelf_id);
@@ -444,20 +443,18 @@ export const InventoryModule: React.FC = () => {
   };
 
   const filtered = useMemo(() => {
-    if (!items) return [];
-    return items.filter(i => {
-      if (search) {
-        const q = search.toLowerCase();
-        const matchesName = i.name.toLowerCase().includes(q);
-        const matchesBarcode = i.barcode?.toLowerCase().includes(q);
-        const matchesPosition = i.shelf_position?.toLowerCase().includes(q);
-        const matchesLocation = i.location?.toLowerCase().includes(q);
     return (items || []).filter(i => {
-      const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase()) || (i.barcode && i.barcode.toLowerCase().includes(search.toLowerCase())) || (i.shelf_position && i.shelf_position.toLowerCase().includes(search.toLowerCase()));
+      const q = search ? search.toLowerCase() : '';
+      const matchSearch = !q || 
+        i.name.toLowerCase().includes(q) || 
+        (i.barcode && i.barcode.toLowerCase().includes(q)) || 
+        (i.shelf_position && i.shelf_position.toLowerCase().includes(q)) ||
+        (i.location && i.location.toLowerCase().includes(q));
       const matchCat = !filterCat || i.category === filterCat;
+      if (tab === 'tools' && !i.is_tool) return false;
       return matchSearch && matchCat;
     });
-  }, [items, search, filterCat]);
+  }, [items, search, filterCat, tab]);
 
   const lowStockItems = useMemo(() => (items || []).filter(i => i.current_stock <= i.min_stock && i.min_stock > 0), [items]);
   const totalValue = useMemo(() => (items || []).reduce((s, i) => s + i.current_stock * i.unit_cost, 0), [items]);
