@@ -174,6 +174,25 @@ export function useCreateEmployeePPE() {
   });
 }
 
+export function useUpdateEmployeePPE() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...ppe }: Partial<EmployeePPEDelivery> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('employee_ppe_deliveries')
+        .update(ppe)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries'] });
+    },
+  });
+}
+
 export function useDeleteEmployeePPE() {
   const qc = useQueryClient();
   return useMutation({

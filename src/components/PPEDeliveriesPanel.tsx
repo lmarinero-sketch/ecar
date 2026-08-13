@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { PackageOpen, Plus, Trash2, Calendar, ShieldCheck, Search, User, Filter } from 'lucide-react';
-import { useEmployeePPE, useCreateEmployeePPE, useDeleteEmployeePPE, useEmployees } from '../hooks/useData';
+import { PackageOpen, Plus, Trash2, Edit3, Calendar, ShieldCheck, Search, User, Filter } from 'lucide-react';
+import { useEmployeePPE, useCreateEmployeePPE, useUpdateEmployeePPE, useDeleteEmployeePPE, useEmployees } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 
 export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employeeId }) => {
@@ -11,9 +11,11 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
 
   const { data: rawDeliveries = [], isLoading } = useEmployeePPE(filterEmpId || null);
   const createDelivery = useCreateEmployeePPE();
+  const updateDelivery = useUpdateEmployeePPE();
   const deleteDelivery = useDeleteEmployeePPE();
 
   const [showAdd, setShowAdd] = useState(false);
+  const [editingDelivery, setEditingDelivery] = useState<any | null>(null);
   const [form, setForm] = useState({
     employee_id: employeeId || '',
     item_type: 'pantalon',
@@ -59,6 +61,19 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
     });
   }, [rawDeliveries, filterItemType, searchTerm]);
 
+  const handleCancelForm = () => {
+    setShowAdd(false);
+    setEditingDelivery(null);
+    setForm({
+      employee_id: employeeId || filterEmpId || '',
+      item_type: 'pantalon',
+      size: 'M',
+      quantity: 1,
+      delivery_date: new Date().toISOString().split('T')[0],
+      notes: '',
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetEmpId = form.employee_id || filterEmpId || employeeId;
@@ -68,26 +83,31 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
     }
 
     try {
-      await createDelivery.mutateAsync({
-        employee_id: targetEmpId,
-        item_type: form.item_type as any,
-        size: form.size || 'Único',
-        quantity: form.quantity || 1,
-        delivery_date: form.delivery_date,
-        notes: form.notes || null,
-      });
-      useModalStore.getState().showAlert('Éxito', 'Entrega de EPP registrada correctamente.');
-      setShowAdd(false);
-      setForm({
-        employee_id: employeeId || filterEmpId || '',
-        item_type: 'pantalon',
-        size: 'M',
-        quantity: 1,
-        delivery_date: new Date().toISOString().split('T')[0],
-        notes: '',
-      });
+      if (editingDelivery) {
+        await updateDelivery.mutateAsync({
+          id: editingDelivery.id,
+          employee_id: targetEmpId,
+          item_type: form.item_type as any,
+          size: form.size || 'Único',
+          quantity: form.quantity || 1,
+          delivery_date: form.delivery_date,
+          notes: form.notes || null,
+        });
+        useModalStore.getState().showAlert('Éxito', 'Registro de entrega actualizado correctamente.');
+      } else {
+        await createDelivery.mutateAsync({
+          employee_id: targetEmpId,
+          item_type: form.item_type as any,
+          size: form.size || 'Único',
+          quantity: form.quantity || 1,
+          delivery_date: form.delivery_date,
+          notes: form.notes || null,
+        });
+        useModalStore.getState().showAlert('Éxito', 'Entrega de EPP registrada correctamente.');
+      }
+      handleCancelForm();
     } catch (err: any) {
-      console.error('Error al registrar entrega EPP:', err);
+      console.error('Error al guardar entrega EPP:', err);
       useModalStore.getState().showAlert('Error al Guardar', err?.message || 'No se pudo guardar el registro de EPP.');
     }
   };
@@ -105,14 +125,16 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
         </div>
         <button
           onClick={() => {
-            setShowAdd(!showAdd);
-            if (!showAdd && !form.employee_id) {
+            if (showAdd || editingDelivery) {
+              handleCancelForm();
+            } else {
+              setShowAdd(true);
               setForm(f => ({ ...f, employee_id: filterEmpId || '' }));
             }
           }}
           className="bg-emerald-600 hover:bg-emerald-700 text-white shadow px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
         >
-          {showAdd ? 'Cancelar' : <><Plus size={16} /> Registrar Entrega</>}
+          {showAdd || editingDelivery ? 'Cancelar' : <><Plus size={16} /> Registrar Entrega</>}
         </button>
       </div>
 
@@ -169,11 +191,11 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
         </div>
       </div>
 
-      {/* Add New Delivery Form */}
-      {showAdd && (
+      {/* Add / Edit Delivery Form */}
+      {(showAdd || editingDelivery) && (
         <form onSubmit={handleSubmit} className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 space-y-3 shadow-md">
           <h5 className="font-bold text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-            <Plus size={14} /> Registrar Nueva Entrega de EPP / Ropa de Trabajo
+            {editingDelivery ? <><Edit3 size={14} /> Editar Registro de Entrega de EPP</> : <><Plus size={14} /> Registrar Nueva Entrega de EPP / Ropa de Trabajo</>}
           </h5>
 
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
@@ -254,17 +276,17 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={() => setShowAdd(false)}
+              onClick={handleCancelForm}
               className="px-3 py-1.5 border border-gray-300 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={createDelivery.isPending}
+              disabled={createDelivery.isPending || updateDelivery.isPending}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all shadow disabled:opacity-50"
             >
-              {createDelivery.isPending ? 'Guardando...' : '✅ Confirmar Entrega'}
+              {createDelivery.isPending || updateDelivery.isPending ? 'Guardando...' : editingDelivery ? '✏️ Guardar Cambios' : '✅ Confirmar Entrega'}
             </button>
           </div>
         </form>
@@ -314,17 +336,37 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
                     {d.notes || '—'}
                   </td>
                   <td className="text-right">
-                    <button
-                      onClick={async () => {
-                        if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este registro de entrega?')) {
-                          deleteDelivery.mutate({ id: d.id, employee_id: d.employee_id });
-                        }
-                      }}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
-                      title="Eliminar registro"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => {
+                          setEditingDelivery(d);
+                          setForm({
+                            employee_id: d.employee_id,
+                            item_type: d.item_type,
+                            size: d.size || 'M',
+                            quantity: d.quantity || 1,
+                            delivery_date: d.delivery_date || new Date().toISOString().split('T')[0],
+                            notes: d.notes || '',
+                          });
+                          setShowAdd(true);
+                        }}
+                        className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded hover:bg-blue-50"
+                        title="Editar entrega"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este registro de entrega?')) {
+                            deleteDelivery.mutate({ id: d.id, employee_id: d.employee_id });
+                          }
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded hover:bg-red-50"
+                        title="Eliminar registro"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
