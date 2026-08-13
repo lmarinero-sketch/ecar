@@ -14,7 +14,8 @@ import {
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
-import type { InventoryItem, WarehouseShelf } from '../lib/types';
+import { createPortal } from 'react-dom';
+import type { InventoryItem, WarehouseShelf, ToolAssignment } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
@@ -324,6 +325,150 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
   );
 };
 
+/* ── Modal de Devolución de Herramientas con Novedades ── */
+const ReturnToolModal: React.FC<{
+  assignment: ToolAssignment;
+  onClose: () => void;
+  onConfirm: (data: { status: 'returned' | 'damaged'; notes: string }) => Promise<void>;
+}> = ({ assignment, onClose, onConfirm }) => {
+  const [returnType, setReturnType] = useState<'normal' | 'damaged'>('normal');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (returnType === 'damaged' && !notes.trim()) {
+      useModalStore.getState().showAlert('Atención', 'Por favor explicá el detalle de la novedad o rotura de la herramienta.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onConfirm({
+        status: returnType === 'damaged' ? 'damaged' : 'returned',
+        notes: notes.trim(),
+      });
+      onClose();
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar la devolución.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-gray-100 overflow-hidden animate-fade-in-up">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue p-5 text-white flex justify-between items-center relative overflow-hidden">
+          <div className="absolute right-0 top-0 opacity-10 p-4"><RotateCcw size={80} /></div>
+          <div className="relative z-10">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <RotateCcw size={20} className="text-emerald-400" /> Devolución de Herramienta a Pañol
+            </h3>
+            <p className="text-xs text-ecar-blueLight mt-0.5">Control de estado físico y registro de novedades al devolver</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors relative z-10"><X size={20} /></button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Item details card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Herramienta</span>
+              <span className="font-mono text-ecar-blue font-bold">{(assignment.item as any)?.barcode || 'SIN-CÓDIGO'}</span>
+            </div>
+            <p className="text-sm font-black text-gray-800">{(assignment.item as any)?.name || 'Herramienta Pañol'}</p>
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200 text-gray-600">
+              <div><span className="text-gray-400 font-semibold">Devuelve:</span> <span className="font-bold text-gray-800">{(assignment.employee as any)?.full_name || 'Sin especificar'}</span></div>
+              <div><span className="text-gray-400 font-semibold">Obra Destino:</span> <span className="font-bold text-gray-800">{(assignment.project as any)?.name || 'Uso General'}</span></div>
+            </div>
+          </div>
+
+          {/* Condition Selector */}
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-wider text-gray-700 block">
+              Estado Físico al Entregar <span className="text-ecar-red">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setReturnType('normal')}
+                className={`p-3.5 rounded-xl border-2 text-left transition-all flex flex-col justify-between ${
+                  returnType === 'normal'
+                    ? 'border-emerald-500 bg-emerald-50/80 text-emerald-900 shadow-sm ring-2 ring-emerald-400/30'
+                    : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-lg">🟢</span>
+                  {returnType === 'normal' && <CheckCircle2 size={16} className="text-emerald-600" />}
+                </div>
+                <div>
+                  <span className="font-bold text-xs block">En Buen Estado</span>
+                  <span className="text-[10px] text-gray-500 font-medium">Reingresa al stock operativo normalmente.</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReturnType('damaged')}
+                className={`p-3.5 rounded-xl border-2 text-left transition-all flex flex-col justify-between ${
+                  returnType === 'damaged'
+                    ? 'border-red-500 bg-red-50/80 text-red-900 shadow-sm ring-2 ring-red-400/30'
+                    : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-lg">🔴</span>
+                  {returnType === 'damaged' && <AlertTriangle size={16} className="text-red-600" />}
+                </div>
+                <div>
+                  <span className="font-bold text-xs block text-red-700">Con Novedad / Rota</span>
+                  <span className="text-[10px] text-gray-500 font-medium">Bloquea la máquina y la pasa a Mantenimiento.</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Observations / Novedad detail */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-700 block flex items-center justify-between">
+              <span>Observaciones / Novedad {returnType === 'damaged' && <span className="text-red-600 font-bold">*</span>}</span>
+              <span className="text-[10px] text-gray-400 font-normal">Detallá cualquier rotura o desperfecto</span>
+            </label>
+            <textarea
+              rows={3}
+              required={returnType === 'damaged'}
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder={returnType === 'damaged' ? "Ej: Máquina rota, se quemó el inducido y no enciende..." : "Ej: Devolución normal en pañol..."}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue transition-all"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+            <button type="button" onClick={onClose} className="btn-secondary text-xs px-4 py-2.5">
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`text-xs font-bold px-5 py-2.5 rounded-xl text-white shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 disabled:opacity-50 ${
+                returnType === 'damaged' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
+            >
+              {submitting ? 'Guardando...' : returnType === 'damaged' ? '🔴 Registrar Devolución con Novedad' : '🟢 Registrar Devolución Normal'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 export const InventoryModule: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const isPanolero = profile?.role === 'panolero';
@@ -508,6 +653,51 @@ export const InventoryModule: React.FC = () => {
   const lowStockItems = useMemo(() => (items || []).filter(i => i.current_stock <= i.min_stock && i.min_stock > 0), [items]);
   const totalValue = useMemo(() => (items || []).reduce((s, i) => s + i.current_stock * i.unit_cost, 0), [items]);
   const activeAssignments = useMemo(() => (assignments || []).filter(a => a.status === 'assigned'), [assignments]);
+  const returnedAssignments = useMemo(() => (assignments || []).filter(a => a.status === 'returned' || a.status === 'damaged'), [assignments]);
+  const [returningAssignment, setReturningAssignment] = useState<ToolAssignment | null>(null);
+
+  const handleReturnWithNovelty = async (data: { status: 'returned' | 'damaged'; notes: string }) => {
+    if (!returningAssignment) return;
+    const assignment = returningAssignment;
+    const isDamaged = data.status === 'damaged';
+    const returnDate = new Date().toISOString().split('T')[0];
+
+    try {
+      await updateAssignment.mutateAsync({
+        id: assignment.id,
+        status: data.status,
+        returned_date: returnDate,
+        notes: data.notes || (isDamaged ? 'Devuelta con novedad / dañada' : 'Devolución normal')
+      });
+
+      await createMovement.mutateAsync({
+        item_id: assignment.item_id,
+        project_id: assignment.project_id,
+        movement_type: 'return',
+        quantity: 1,
+        notes: `Devolución ${isDamaged ? 'CON NOVEDAD (ROTA)' : 'NORMAL'}: ${data.notes || 'Sin notas'} (Empleado: ${(assignment.employee as any)?.full_name || '—'})`,
+        created_by: profile?.full_name || 'Pañol Central'
+      });
+
+      if (isDamaged && assignment.item_id) {
+        await updateItem.mutateAsync({
+          id: assignment.item_id,
+          tool_status: 'mantenimiento',
+        });
+        useModalStore.getState().showAlert(
+          'Novedad Registrada',
+          `🔴 Se registró la devolución con novedad para ${(assignment.item as any)?.name}. La máquina fue marcada en MANTENIMIENTO y deshabilitada para nuevos préstamos.`
+        );
+      } else {
+        useModalStore.getState().showAlert(
+          'Devolución Exitosa',
+          `🟢 La herramienta ${(assignment.item as any)?.name} fue devuelta en buen estado a Pañol.`
+        );
+      }
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo completar la devolución.');
+    }
+  };
 
   const handleNewItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1026,10 +1216,11 @@ export const InventoryModule: React.FC = () => {
                       <td className="font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
                       <td className="text-center">
                         <button
-                          onClick={() => updateAssignment.mutateAsync({ id: a.id, status: 'returned', returned_date: new Date().toISOString().split('T')[0] })}
-                          className="badge badge-success hover:bg-emerald-600 cursor-pointer"
+                          onClick={() => setReturningAssignment(a)}
+                          className="badge badge-success hover:bg-emerald-600 cursor-pointer shadow-2xs font-bold text-xs py-1.5 px-3"
+                          title="Registrar devolución normal o con novedad/rotura"
                         >
-                          <RotateCcw size={12} /> Registrar Devolución
+                          <RotateCcw size={13} /> Registrar Devolución
                         </button>
                       </td>
                     </tr>
@@ -1038,6 +1229,68 @@ export const InventoryModule: React.FC = () => {
               </table>
             ) : (
               <div className="text-center py-8 text-gray-400"><Wrench size={32} className="mx-auto mb-2 opacity-30" /><p className="text-sm">Todas las herramientas están guardadas en pañol</p></div>
+            )}
+          </div>
+
+          {/* Returned Tool Assignments History & Novelties */}
+          <div className="light-card overflow-hidden mt-6">
+            <div className="p-4 border-b border-gray-100 bg-slate-100/80 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-gray-800 flex items-center gap-2 text-sm">
+                  <History size={16} className="text-ecar-blue" /> Historial de Devoluciones y Registro de Novedades
+                </h3>
+                <p className="text-xs text-gray-500">Auditoría completa de herramientas devueltas, roturas reportadas y estado físico de entrega.</p>
+              </div>
+              <span className="text-xs font-bold text-gray-700 bg-white px-2.5 py-1 rounded-full border border-gray-200 shadow-2xs">
+                {returnedAssignments.length} devoluciones
+              </span>
+            </div>
+            {returnedAssignments.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Herramienta</th>
+                      <th>Empleado (Retiró)</th>
+                      <th>Obra / Destino</th>
+                      <th>Fecha Retiro</th>
+                      <th>Fecha Devolución</th>
+                      <th className="text-center">Estado Entrega</th>
+                      <th>Novedad / Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {returnedAssignments.map(a => {
+                      const isDamaged = a.status === 'damaged';
+                      return (
+                        <tr key={a.id} className={isDamaged ? 'bg-red-50/50' : ''}>
+                          <td className="font-medium text-gray-900">{(a.item as any)?.name || '—'}</td>
+                          <td className="text-gray-800 font-medium">{(a.employee as any)?.full_name || 'Sin asignar'}</td>
+                          <td className="text-gray-600 font-medium">{(a.project as any)?.name || 'Sin obra'}</td>
+                          <td className="font-mono text-xs text-gray-500">{new Date(a.assigned_date).toLocaleDateString('es-AR')}</td>
+                          <td className="font-mono text-xs text-gray-500 font-bold">{a.returned_date ? new Date(a.returned_date).toLocaleDateString('es-AR') : '-'}</td>
+                          <td className="text-center">
+                            <span className={`badge ${isDamaged ? 'badge-danger' : 'badge-success'}`}>
+                              {isDamaged ? '🔴 Con Novedad (Rota)' : '🟢 En Buen Estado'}
+                            </span>
+                          </td>
+                          <td className="text-xs text-gray-700 font-medium">
+                            {a.notes ? (
+                              <span className={`p-1.5 rounded-md inline-block font-semibold ${isDamaged ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-gray-100 text-gray-700'}`}>
+                                {a.notes}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 italic">Sin novedades</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-400"><History size={28} className="mx-auto mb-2 opacity-30" /><p className="text-xs">No hay historial de devoluciones aún</p></div>
             )}
           </div>
         </div>
@@ -1741,6 +1994,15 @@ export const InventoryModule: React.FC = () => {
             <WarehouseExcelImporter existingShelves={shelves || []} onComplete={() => { setShowImporter(false); window.location.reload(); }} />
           </div>
         </div>
+      )}
+
+      {/* Return Tool Modal */}
+      {returningAssignment && (
+        <ReturnToolModal
+          assignment={returningAssignment}
+          onClose={() => setReturningAssignment(null)}
+          onConfirm={handleReturnWithNovelty}
+        />
       )}
     </div>
   );

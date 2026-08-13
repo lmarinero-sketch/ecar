@@ -676,6 +676,7 @@ export type InventoryItem = {
   is_tool: boolean;
   shelf_id: string | null;
   shelf_position: string | null;
+  tool_status?: 'operativa' | 'mantenimiento' | 'no_funciona' | null;
   created_at: string;
   shelf?: WarehouseShelf;
 };
