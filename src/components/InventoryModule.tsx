@@ -3,7 +3,7 @@ import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
   LayoutGrid, MapPin, Trash2, Edit3, ShoppingBag,
-  ShieldCheck, CheckCircle2
+  ShieldCheck, CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
@@ -48,6 +48,233 @@ const formatShelfPosition = (shelfCode?: string, position?: string | null) => {
   return pos;
 };
 
+interface ItemMovementsAccordionProps {
+  item: InventoryItem;
+  projects: any[];
+}
+
+const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, projects }) => {
+  const { data: itemMovements, isLoading } = useInventoryMovements(item.id);
+  const createMovement = useCreateInventoryMovement();
+
+  const [quickType, setQuickType] = useState<'in' | 'out'>('in');
+  const [quickQty, setQuickQty] = useState('1');
+  const [quickNotes, setQuickNotes] = useState('');
+  const [quickProjectId, setQuickProjectId] = useState('');
+
+  const handleQuickSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = parseFloat(quickQty);
+    if (isNaN(q) || q <= 0) {
+      useModalStore.getState().showAlert('Atención', 'Ingresa una cantidad válida.');
+      return;
+    }
+
+    try {
+      await createMovement.mutateAsync({
+        item_id: item.id,
+        movement_type: quickType,
+        quantity: q,
+        project_id: quickProjectId || null,
+        notes: quickNotes || (quickType === 'in' ? 'Ingreso rápido de stock' : 'Egreso rápido de stock'),
+      });
+
+      useModalStore.getState().showAlert('Éxito', `Movimiento de ${quickType === 'in' ? 'Ingreso' : 'Egreso'} registrado.`);
+      setQuickQty('1');
+      setQuickNotes('');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 text-slate-800 space-y-4 my-1">
+      {/* Header bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 text-ecar-blue flex items-center justify-center font-bold">
+            <History size={18} />
+          </div>
+          <div>
+            <h4 className="font-bold text-sm text-slate-800">
+              Histórico & Movimiento Rápido: <span className="text-ecar-blue">{item.name}</span>
+            </h4>
+            <p className="text-xs text-slate-500">Kardex de transacciones y registro inmediato de stock.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium">
+          <span className="text-slate-500">Stock Actual:</span>
+          <span className="font-mono font-bold text-slate-900 text-sm">{item.current_stock} {item.unit}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Movement Form */}
+        <div className="lg:col-span-1 bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <Zap size={14} className="text-amber-500 fill-amber-500" />
+            <span>Registrar Movimiento Rápido</span>
+          </div>
+
+          <form onSubmit={handleQuickSubmit} className="space-y-3">
+            {/* Tipo switch */}
+            <div className="grid grid-cols-2 gap-1.5 bg-slate-200/60 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setQuickType('in')}
+                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                  quickType === 'in'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ArrowDownToLine size={14} /> + Ingreso
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickType('out')}
+                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                  quickType === 'out'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ArrowUpRight size={14} /> - Egreso
+              </button>
+            </div>
+
+            {/* Cantidad & Obra */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Cantidad ({item.unit})</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  required
+                  value={quickQty}
+                  onChange={e => setQuickQty(e.target.value)}
+                  className="w-full text-xs font-mono font-bold px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                  placeholder="1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Obra / Proyecto</label>
+                <select
+                  value={quickProjectId}
+                  onChange={e => setQuickProjectId(e.target.value)}
+                  className="w-full text-xs px-2 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none bg-white"
+                >
+                  <option value="">(Sin asignar / Pañol)</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Nota */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 mb-1">Nota / Motivo</label>
+              <input
+                type="text"
+                value={quickNotes}
+                onChange={e => setQuickNotes(e.target.value)}
+                className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                placeholder={quickType === 'in' ? 'Ej. Ingreso inicial de stock' : 'Ej. Consumo directo en obra'}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={createMovement.isPending}
+              className={`w-full py-2 px-3 text-xs font-bold text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 ${
+                quickType === 'in'
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }`}
+            >
+              <Zap size={14} />
+              {createMovement.isPending ? 'Procesando...' : `Confirmar ${quickType === 'in' ? 'Ingreso' : 'Egreso'}`}
+            </button>
+          </form>
+        </div>
+
+        {/* Movements History Table */}
+        <div className="lg:col-span-2 space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5">
+              <History size={14} className="text-ecar-blue" />
+              Movimientos Recientes en Kardex
+            </span>
+            <span className="text-[11px] text-slate-400 font-normal normal-case">Histórico exclusivo de este ítem</span>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-8 text-xs text-slate-400 animate-pulse">Cargando Kardex...</div>
+          ) : !itemMovements || itemMovements.length === 0 ? (
+            <div className="text-center py-8 bg-slate-50 border border-slate-200/60 rounded-xl text-slate-400 text-xs">
+              No hay movimientos registrados para este artículo aún.
+            </div>
+          ) : (
+            <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl shadow-inner">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-600 font-semibold text-[11px] sticky top-0">
+                  <tr>
+                    <th className="py-2 px-3">Fecha</th>
+                    <th className="py-2 px-3">Tipo</th>
+                    <th className="py-2 px-3 text-right">Cant.</th>
+                    <th className="py-2 px-3">Obra</th>
+                    <th className="py-2 px-3">Notas</th>
+                    <th className="py-2 px-3">Registrado Por</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {itemMovements.map((m: any) => {
+                    const isIngreso = m.movement_type === 'in' || m.movement_type === 'ingreso' || m.movement_type === 'purchase' || m.movement_type === 'return';
+                    const isAjuste = m.movement_type === 'adjustment' || m.movement_type === 'ajuste';
+                    return (
+                      <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-2 px-3 text-slate-500 font-mono text-[11px]">
+                          {m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isAjuste ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                            isIngreso ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                            'bg-red-100 text-red-700 border border-red-200'
+                          }`}>
+                            {isAjuste ? '🔧 Ajuste' : isIngreso ? '📥 Ingreso' : '📤 Egreso'}
+                          </span>
+                        </td>
+                        <td className={`py-2 px-3 text-right font-mono font-bold ${
+                          isIngreso ? 'text-emerald-600' : isAjuste ? 'text-amber-600' : 'text-red-600'
+                        }`}>
+                          {isIngreso ? `+${m.quantity}` : isAjuste ? m.quantity : `-${m.quantity}`} {item.unit}
+                        </td>
+                        <td className="py-2 px-3 text-slate-700 text-[11px] truncate max-w-[120px]">
+                          {m.project?.name || '-'}
+                        </td>
+                        <td className="py-2 px-3 text-slate-500 text-[11px] truncate max-w-[180px]" title={m.notes || ''}>
+                          {m.notes || '-'}
+                        </td>
+                        <td className="py-2 px-3 text-slate-400 text-[10px]">
+                          {m.created_by || 'Web'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const InventoryModule: React.FC = () => {
   const { isAdmin, profile } = useAuth();
   const isPanolero = profile?.role === 'panolero';
@@ -79,6 +306,7 @@ export const InventoryModule: React.FC = () => {
   const [showAssign, setShowAssign] = useState<InventoryItem | null>(null);
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   
   // Item Form state with Location/Bin coding [Letra]-[Estante]-[Bin]
   const [newItem, setNewItem] = useState({
@@ -224,14 +452,12 @@ export const InventoryModule: React.FC = () => {
         const matchesBarcode = i.barcode?.toLowerCase().includes(q);
         const matchesPosition = i.shelf_position?.toLowerCase().includes(q);
         const matchesLocation = i.location?.toLowerCase().includes(q);
-        const matchesMeasure = i.measure?.toLowerCase().includes(q);
-        if (!matchesName && !matchesBarcode && !matchesPosition && !matchesLocation && !matchesMeasure) return false;
-      }
-      if (filterCat && i.category !== filterCat) return false;
-      if (tab === 'tools' && !i.is_tool) return false;
-      return true;
+    return (items || []).filter(i => {
+      const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase()) || (i.barcode && i.barcode.toLowerCase().includes(search.toLowerCase())) || (i.shelf_position && i.shelf_position.toLowerCase().includes(search.toLowerCase()));
+      const matchCat = !filterCat || i.category === filterCat;
+      return matchSearch && matchCat;
     });
-  }, [items, search, filterCat, tab]);
+  }, [items, search, filterCat]);
 
   const lowStockItems = useMemo(() => (items || []).filter(i => i.current_stock <= i.min_stock && i.min_stock > 0), [items]);
   const totalValue = useMemo(() => (items || []).reduce((s, i) => s + i.current_stock * i.unit_cost, 0), [items]);
@@ -524,6 +750,7 @@ export const InventoryModule: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-8"></th>
                 <th>Ítem / Descripción</th>
                 <th>Categoría</th>
                 <th>Ubicación Bin (Est-Estante-Bin)</th>
@@ -536,84 +763,120 @@ export const InventoryModule: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(item => (
-                <tr key={item.id} className={item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : ''}>
-                  <td className="font-medium text-gray-800">
-                    <div>{item.name}</div>
-                    {item.barcode && <span className="font-mono text-[10px] text-gray-400">🏷️ {item.barcode}</span>}
-                  </td>
-                  <td>
-                    <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
-                      {item.category}
-                    </span>
-                  </td>
-                  <td>
-                    {item.shelf ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
-                        <span className="text-xs font-bold text-gray-800 font-mono">
-                          {formatShelfPosition((item.shelf as any)?.code, item.shelf_position)}
-                        </span>
-                      </div>
-                    ) : item.shelf_position ? (
-                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                        📍 {formatShelfPosition(undefined, item.shelf_position)}
-                      </span>
-                    ) : (
-                      <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
-                        <MapPin size={12} /> Asignar
-                      </button>
-                    )}
-                  </td>
-                  <td className="text-gray-600 font-medium">{item.measure || '-'}</td>
-                  <td className="text-gray-500 text-xs uppercase">{item.unit || 'un'}</td>
-                  <td className="text-center font-mono font-bold text-gray-800">{item.current_stock}</td>
-                  <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
-                  {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
-                  <td className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => {
-                          setEditingItem(item);
-                          setNewItem({
-                            name: item.name,
-                            category: item.category as any,
-                            unit: item.unit,
-                            measure: item.measure || '',
-                            current_stock: String(item.current_stock),
-                            min_stock: String(item.min_stock),
-                            unit_cost: String(item.unit_cost),
-                            is_tool: item.is_tool,
-                            barcode: item.barcode || '',
-                            location: item.location || '',
-                            shelf_id: item.shelf_id || '',
-                            shelf_position: item.shelf_position || '',
-                            tool_status: 'operativa'
-                          });
-                          setShowNewItem(true);
-                        }}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit3 size={14} className="text-gray-600" />
-                      </button>
-                      {isAdmin && (
+              {filtered.map(item => {
+                const isExpanded = expandedItemId === item.id;
+                return (
+                  <React.Fragment key={item.id}>
+                    <tr className={`transition-colors ${isExpanded ? 'bg-blue-50/50 font-medium' : (item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : '')}`}>
+                      <td className="text-center px-1">
                         <button
-                          onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg"
-                          title="Eliminar"
+                          onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                          className={`p-1 rounded-lg transition-transform ${isExpanded ? 'bg-ecar-blue text-white rotate-180' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'}`}
+                          title={isExpanded ? "Ocultar movimientos" : "Desplegar movimientos y carga rápida"}
                         >
-                          <Trash2 size={14} className="text-red-500" />
+                          <ChevronDown size={16} />
                         </button>
-                      )}
-                      <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
-                      {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
-                      <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación bin"><MapPin size={14} className="text-orange-500" /></button>
-                      <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                      <td 
+                        className="font-medium text-gray-800 cursor-pointer group"
+                        onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{item.name}</span>
+                          <span className="text-[10px] text-ecar-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                            {isExpanded ? '▲ Ocultar' : '▼ Kardex / Rápido'}
+                          </span>
+                        </div>
+                        {item.barcode && <span className="font-mono text-[10px] text-gray-400 block">🏷️ {item.barcode}</span>}
+                      </td>
+                      <td>
+                        <span className={`badge ${item.category === 'herramienta' ? 'badge-info' : item.category === 'consumible' ? 'badge-neutral' : 'badge-warning'}`}>
+                          {item.category}
+                        </span>
+                      </td>
+                      <td>
+                        {item.shelf ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: (item.shelf as any)?.color || '#6B7280' }} />
+                            <span className="text-xs font-bold text-gray-800 font-mono">
+                              {formatShelfPosition((item.shelf as any)?.code, item.shelf_position)}
+                            </span>
+                          </div>
+                        ) : item.shelf_position ? (
+                          <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            📍 {formatShelfPosition(undefined, item.shelf_position)}
+                          </span>
+                        ) : (
+                          <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: '', shelf_position: '' }); }} className="text-xs text-gray-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
+                            <MapPin size={12} /> Asignar
+                          </button>
+                        )}
+                      </td>
+                      <td className="text-gray-600 font-medium">{item.measure || '-'}</td>
+                      <td className="text-gray-500 text-xs uppercase">{item.unit || 'un'}</td>
+                      <td className="text-center font-mono font-bold text-gray-800">{item.current_stock}</td>
+                      <td className="text-center font-mono text-gray-400">{item.min_stock}</td>
+                      {!isPanolero && <td className="text-right font-mono text-gray-600">{fmt(item.unit_cost)}</td>}
+                      <td className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                            className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-ecar-blue text-white' : 'hover:bg-gray-100 text-ecar-blue'}`}
+                            title="Desplegar movimientos y carga rápida"
+                          >
+                            <History size={14} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingItem(item);
+                              setNewItem({
+                                name: item.name,
+                                category: item.category as any,
+                                unit: item.unit,
+                                measure: item.measure || '',
+                                current_stock: String(item.current_stock),
+                                min_stock: String(item.min_stock),
+                                unit_cost: String(item.unit_cost),
+                                is_tool: item.is_tool,
+                                barcode: item.barcode || '',
+                                location: item.location || '',
+                                shelf_id: item.shelf_id || '',
+                                shelf_position: item.shelf_position || '',
+                                tool_status: 'operativa'
+                              });
+                              setShowNewItem(true);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg"
+                            title="Editar"
+                          >
+                            <Edit3 size={14} className="text-gray-600" />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={async () => { if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este ítem?')) deleteItem.mutateAsync(item.id); }}
+                              className="p-1.5 hover:bg-gray-100 rounded-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} className="text-red-500" />
+                            </button>
+                          )}
+                          <button onClick={() => setShowMovement(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Registrar movimiento"><ArrowDownToLine size={14} className="text-blue-600" /></button>
+                          {item.is_tool && <button onClick={() => setShowAssign(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Asignar herramienta"><User size={14} className="text-ecar-blue" /></button>}
+                          <button onClick={() => { setAssignShelfItem(item); setShelfAssignForm({ shelf_id: item.shelf_id || '', shelf_position: item.shelf_position || '' }); }} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Cambiar ubicación bin"><MapPin size={14} className="text-orange-500" /></button>
+                          <button onClick={() => setShowBarcode(item)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Código de barras"><Barcode size={14} className="text-gray-500" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className="bg-slate-50/90 border-b-2 border-slate-300">
+                        <td colSpan={isPanolero ? 9 : 10} className="p-3">
+                          <ItemMovementsAccordion item={item} projects={projects || []} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
           {filtered.length === 0 && <div className="text-center py-12 text-gray-400"><Package size={48} className="mx-auto mb-3 opacity-30" /><p>No hay ítems registrados</p></div>}
