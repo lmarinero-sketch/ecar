@@ -1236,7 +1236,7 @@ export const InventoryModule: React.FC = () => {
                         <td><span className="badge badge-neutral">{SHELF_TYPES[s.shelf_type]?.icon} {SHELF_TYPES[s.shelf_type]?.label}</span></td>
                         <td className="text-center font-mono">{s.rows_count} Niveles × {s.columns_count} Bins</td>
                         <td className="text-center"><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${s.color}20`, color: s.color }}>{itemsByShelf[s.id] || 0}</span></td>
-                        <td className="text-gray-500 text-xs">{s.notes || '—'}</td>
+                      <td className="text-gray-500 text-xs">{s.notes || '—'}</td>
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => setViewingShelf(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Ver niveles y bins"><Search size={14} className="text-gray-600" /></button>
@@ -1257,34 +1257,7 @@ export const InventoryModule: React.FC = () => {
       {/* EPP Tab */}
       {tab === 'epp' && (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-6 rounded-xl shadow-lg">
-            <h3 className="font-bold text-xl flex items-center gap-2"><ShieldCheck size={24} /> Registro de Entrega de EPP (Elementos de Protección Personal)</h3>
-            <p className="text-emerald-100 text-xs mt-1">Integración unificada Pañol & Recursos Humanos para control por colaborador (Estantería E).</p>
-          </div>
-
-          <div className="light-card p-5">
-            <label className="text-xs font-bold text-gray-700 block mb-2">👤 Seleccionar Colaborador / Empleado para ver o registrar Entregas de Ropa y EPP</label>
-            <select
-              value={selectedEppEmployeeId}
-              onChange={e => setSelectedEppEmployeeId(e.target.value)}
-              className="w-full max-w-md px-3.5 py-2.5 border-2 border-emerald-200 rounded-xl text-sm font-bold text-gray-800 bg-white shadow-sm focus:border-emerald-500 focus:outline-none mb-4"
-            >
-              <option value="">-- Seleccionar empleado de la lista... --</option>
-              {(employees || []).map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.legajo || 'Sin legajo'})</option>
-              ))}
-            </select>
-
-            {selectedEppEmployeeId ? (
-              <PPEDeliveriesPanel employeeId={selectedEppEmployeeId} />
-            ) : (
-              <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                <ShieldCheck size={48} className="mx-auto mb-2 opacity-30 text-emerald-600" />
-                <p className="text-sm font-bold text-gray-700">Seleccioná un empleado del desplegable superior</p>
-                <p className="text-xs text-gray-400 mt-1">Podrás cargar entregas de casco, ropa, calzado, arnés o guantes y auditar su historial completo.</p>
-              </div>
-            )}
-          </div>
+          <PPEDeliveriesPanel />
         </div>
       )}
 

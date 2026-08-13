@@ -136,20 +136,23 @@ export function useDeleteEmployee() {
 }
 
 // ========== EMPLOYEE PPE DELIVERIES ==========
-export function useEmployeePPE(employeeId: string | null) {
+export function useEmployeePPE(employeeId?: string | null) {
   return useQuery({
-    queryKey: ['employee_ppe_deliveries', employeeId],
+    queryKey: ['employee_ppe_deliveries', employeeId || 'all'],
     queryFn: async () => {
-      if (!employeeId) return [];
-      const { data, error } = await supabase
+      let q = supabase
         .from('employee_ppe_deliveries')
-        .select('*')
-        .eq('employee_id', employeeId)
+        .select('*, employee:employees(id, full_name, legajo, dni)')
         .order('delivery_date', { ascending: false });
+
+      if (employeeId) {
+        q = q.eq('employee_id', employeeId);
+      }
+
+      const { data, error } = await q;
       if (error) throw error;
-      return data as EmployeePPEDelivery[];
+      return data as (EmployeePPEDelivery & { employee?: { id: string; full_name: string; legajo?: string; dni?: string } })[];
     },
-    enabled: !!employeeId,
   });
 }
 
@@ -165,8 +168,8 @@ export function useCreateEmployeePPE() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries', variables.employee_id] });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries'] });
     },
   });
 }
@@ -174,11 +177,11 @@ export function useCreateEmployeePPE() {
 export function useDeleteEmployeePPE() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string, employee_id: string }) => {
+    mutationFn: async ({ id }: { id: string, employee_id?: string }) => {
       const { error } = await supabase.from('employee_ppe_deliveries').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: (_, variables) => qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries', variables.employee_id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['employee_ppe_deliveries'] }),
   });
 }
 

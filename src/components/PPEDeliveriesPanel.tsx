@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
-import { PackageOpen, Plus, Trash2, Calendar, ShieldCheck } from 'lucide-react';
-import { useEmployeePPE, useCreateEmployeePPE, useDeleteEmployeePPE } from '../hooks/useData';
+import React, { useState, useMemo } from 'react';
+import { PackageOpen, Plus, Trash2, Calendar, ShieldCheck, Search, User, Filter } from 'lucide-react';
+import { useEmployeePPE, useCreateEmployeePPE, useDeleteEmployeePPE, useEmployees } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 
-export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeId }) => {
-  const { data: deliveries = [], isLoading } = useEmployeePPE(employeeId);
+export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employeeId }) => {
+  const { data: employees = [] } = useEmployees();
+  const [filterEmpId, setFilterEmpId] = useState<string>(employeeId || '');
+  const [filterItemType, setFilterItemType] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const { data: rawDeliveries = [], isLoading } = useEmployeePPE(filterEmpId || null);
   const createDelivery = useCreateEmployeePPE();
   const deleteDelivery = useDeleteEmployeePPE();
 
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({
+    employee_id: employeeId || '',
     item_type: 'pantalon',
     size: 'M',
     quantity: 1,
@@ -30,11 +36,40 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
     'otro': '📦 Otro Elemento de Protección'
   };
 
+  // Filter deliveries in memory by itemType and searchTerm
+  const filteredDeliveries = useMemo(() => {
+    return (rawDeliveries || []).filter(d => {
+      // Item type filter
+      if (filterItemType && d.item_type !== filterItemType) return false;
+
+      // Search term filter (employee name, legajo, notes, item label)
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        const empName = d.employee?.full_name?.toLowerCase() || '';
+        const empLegajo = d.employee?.legajo?.toLowerCase() || '';
+        const itemLabel = (itemLabels[d.item_type] || d.item_type).toLowerCase();
+        const notes = (d.notes || '').toLowerCase();
+
+        if (!empName.includes(q) && !empLegajo.includes(q) && !itemLabel.includes(q) && !notes.includes(q)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [rawDeliveries, filterItemType, searchTerm]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const targetEmpId = form.employee_id || filterEmpId || employeeId;
+    if (!targetEmpId) {
+      useModalStore.getState().showAlert('Atención', 'Selecciona un colaborador para registrar la entrega.');
+      return;
+    }
+
     try {
       await createDelivery.mutateAsync({
-        employee_id: employeeId,
+        employee_id: targetEmpId,
         item_type: form.item_type as any,
         size: form.size || 'Único',
         quantity: form.quantity || 1,
@@ -44,6 +79,7 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
       useModalStore.getState().showAlert('Éxito', 'Entrega de EPP registrada correctamente.');
       setShowAdd(false);
       setForm({
+        employee_id: employeeId || filterEmpId || '',
         item_type: 'pantalon',
         size: 'M',
         quantity: 1,
@@ -56,59 +92,177 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
     }
   };
 
-  if (isLoading) return <div className="text-center py-4 text-xs text-gray-400">Cargando entregas de EPP...</div>;
-
   return (
-    <div className="light-card p-5 mt-6 border-t-4 border-t-emerald-600">
-      <div className="flex justify-between items-center mb-4">
+    <div className="light-card p-5 mt-4 border-t-4 border-t-emerald-600 space-y-4">
+      {/* Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-100">
         <div>
-          <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <ShieldCheck size={18} className="text-emerald-600" />
-            Entrega de Ropa de Trabajo y EPP (Integración Pañol & RRHH)
+          <h4 className="font-bold text-gray-900 text-base flex items-center gap-2">
+            <ShieldCheck size={20} className="text-emerald-600" />
+            Registro & Auditoría Global de Entrega de EPP y Ropa de Trabajo
           </h4>
-          <p className="text-xs text-gray-400 mt-0.5">Control por colaborador para auditoría e higiene y seguridad.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Control unificado Pañol & RRHH para seguimiento e higiene y seguridad laboral.</p>
         </div>
         <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center gap-1"
+          onClick={() => {
+            setShowAdd(!showAdd);
+            if (!showAdd && !form.employee_id) {
+              setForm(f => ({ ...f, employee_id: filterEmpId || '' }));
+            }
+          }}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
         >
-          {showAdd ? 'Cancelar' : <><Plus size={14} /> Registrar Entrega</>}
+          {showAdd ? 'Cancelar' : <><Plus size={16} /> Registrar Entrega</>}
         </button>
       </div>
 
+      {/* Filters Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+        <div>
+          <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <User size={12} /> Filtrar por Colaborador
+          </label>
+          <select
+            value={filterEmpId}
+            onChange={e => setFilterEmpId(e.target.value)}
+            className="w-full px-3 py-1.5 border border-emerald-200 rounded-lg text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="">-- Todos los Colaboradores ({employees.length}) --</option>
+            {employees.map(emp => (
+              <option key={emp.id} value={emp.id}>
+                {emp.full_name} {emp.legajo ? `(Legajo: ${emp.legajo})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Filter size={12} /> Elemento / Prenda EPP
+          </label>
+          <select
+            value={filterItemType}
+            onChange={e => setFilterItemType(e.target.value)}
+            className="w-full px-3 py-1.5 border border-emerald-200 rounded-lg text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="">-- Todos los Elementos EPP --</option>
+            {Object.entries(itemLabels).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Search size={12} /> Buscar en Entregas
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar por empleado, legajo o nota..."
+              className="w-full pl-8 pr-3 py-1.5 border border-emerald-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <Search size={14} className="absolute left-2.5 top-2 text-emerald-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Add New Delivery Form */}
       {showAdd && (
-        <form onSubmit={handleSubmit} className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 mb-4 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <form onSubmit={handleSubmit} className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 space-y-3 shadow-md">
+          <h5 className="font-bold text-xs text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+            <Plus size={14} /> Registrar Nueva Entrega de EPP / Ropa de Trabajo
+          </h5>
+
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <div className="md:col-span-2">
-              <label className="text-xs font-bold text-gray-500 block mb-1">Prenda / Elemento EPP *</label>
-              <select value={form.item_type} onChange={e => setForm({ ...form, item_type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white font-medium">
+              <label className="text-xs font-bold text-gray-700 block mb-1">Colaborador / Empleado *</label>
+              <select
+                required
+                value={form.employee_id}
+                onChange={e => setForm({ ...form, employee_id: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-xs bg-white font-bold text-gray-800"
+              >
+                <option value="">-- Seleccionar empleado * --</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.full_name} {emp.legajo ? `(${emp.legajo})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-bold text-gray-700 block mb-1">Prenda / Elemento EPP *</label>
+              <select
+                value={form.item_type}
+                onChange={e => setForm({ ...form, item_type: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium"
+              >
                 {Object.entries(itemLabels).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Talle / Dimensión</label>
-              <input value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} placeholder="Ej: 42, L, XL" className="w-full px-3 py-2 border rounded-lg text-sm bg-white" />
+              <label className="text-xs font-bold text-gray-700 block mb-1">Talle / Medida</label>
+              <input
+                value={form.size}
+                onChange={e => setForm({ ...form, size: e.target.value })}
+                placeholder="Ej: 42, L, XL"
+                className="w-full px-3 py-2 border rounded-lg text-xs bg-white font-bold"
+              />
             </div>
+
             <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad</label>
-              <input type="number" min="1" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border rounded-lg text-sm font-mono bg-white" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Fecha Entrega</label>
-              <input type="date" value={form.delivery_date} onChange={e => setForm({ ...form, delivery_date: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" />
+              <label className="text-xs font-bold text-gray-700 block mb-1">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                value={form.quantity}
+                onChange={e => setForm({ ...form, quantity: parseInt(e.target.value) || 1 })}
+                className="w-full px-3 py-2 border rounded-lg text-xs font-mono font-bold bg-white text-center"
+              />
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1">Observaciones / Planilla Firma</label>
-            <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Ej: Entregado según planilla N° 45..." className="w-full px-3 py-2 border rounded-lg text-sm bg-white" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Fecha de Entrega</label>
+              <input
+                type="date"
+                value={form.delivery_date}
+                onChange={e => setForm({ ...form, delivery_date: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-xs bg-white font-mono"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-xs font-bold text-gray-700 block mb-1">Observaciones / Planilla Firma</label>
+              <input
+                value={form.notes}
+                onChange={e => setForm({ ...form, notes: e.target.value })}
+                placeholder="Ej: Entregado según planilla firmada N° 45..."
+                className="w-full px-3 py-2 border rounded-lg text-xs bg-white"
+              />
+            </div>
           </div>
-          <div className="flex justify-end">
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowAdd(false)}
+              className="px-3 py-1.5 border border-gray-300 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-100"
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
               disabled={createDelivery.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition-all shadow"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all shadow disabled:opacity-50"
             >
               {createDelivery.isPending ? 'Guardando...' : '✅ Confirmar Entrega'}
             </button>
@@ -116,42 +270,57 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
         </form>
       )}
 
-      {deliveries.length === 0 ? (
-        <div className="text-center py-6 text-gray-400">
-          <PackageOpen size={24} className="mx-auto mb-2 opacity-30 text-emerald-600" />
-          <p className="text-xs">No hay entregas de Ropa o EPP registradas para este empleado.</p>
+      {/* Main Deliveries Table */}
+      {isLoading ? (
+        <div className="text-center py-8 text-xs text-gray-400 animate-pulse">Cargando registro histórico de EPP...</div>
+      ) : filteredDeliveries.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+          <PackageOpen size={32} className="mx-auto mb-2 opacity-30 text-emerald-600" />
+          <p className="text-xs font-bold text-gray-600">No se encontraron entregas de Ropa o EPP</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Prueba ajustar los filtros superiores o registra una nueva entrega.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="data-table text-xs">
+        <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
+          <table className="data-table text-xs w-full">
             <thead>
-              <tr>
+              <tr className="bg-gray-50 text-gray-600">
                 <th>Fecha</th>
+                <th>Colaborador / Empleado</th>
                 <th>Elemento Entregado</th>
                 <th>Talle</th>
                 <th className="text-center">Cant.</th>
-                <th>Observaciones</th>
+                <th>Observaciones / Firma</th>
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody>
-              {deliveries.map(d => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="font-mono text-gray-500">
+            <tbody className="divide-y divide-gray-100 font-medium">
+              {filteredDeliveries.map(d => (
+                <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="font-mono text-gray-500 whitespace-nowrap">
                     <div className="flex items-center gap-1"><Calendar size={12} /> {d.delivery_date}</div>
+                  </td>
+                  <td className="font-bold text-gray-900">
+                    {d.employee?.full_name || 'Empleado'}
+                    {d.employee?.legajo && (
+                      <span className="ml-1.5 text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                        {d.employee.legajo}
+                      </span>
+                    )}
                   </td>
                   <td className="font-bold text-gray-800">{itemLabels[d.item_type] || d.item_type}</td>
                   <td className="text-emerald-700 font-bold font-mono">{d.size || 'Único'}</td>
                   <td className="text-center font-mono font-bold text-gray-900">{d.quantity}</td>
-                  <td className="text-gray-500 italic">{d.notes || '—'}</td>
+                  <td className="text-gray-500 italic max-w-xs truncate" title={d.notes || ''}>
+                    {d.notes || '—'}
+                  </td>
                   <td className="text-right">
                     <button
                       onClick={async () => {
                         if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar este registro de entrega?')) {
-                          deleteDelivery.mutate({ id: d.id, employee_id: employeeId });
+                          deleteDelivery.mutate({ id: d.id, employee_id: d.employee_id });
                         }
                       }}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
                       title="Eliminar registro"
                     >
                       <Trash2 size={16} />
@@ -161,6 +330,11 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId: string }> = ({ employeeI
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  );
+};table>
         </div>
       )}
     </div>
