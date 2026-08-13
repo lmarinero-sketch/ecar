@@ -1361,6 +1361,62 @@ export function useCreateInventoryMovement() {
   });
 }
 
+export function useDeleteInventoryMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ movementId, itemId, movementType, quantity, notes }: {
+      movementId: string;
+      itemId: string;
+      movementType: string;
+      quantity: number;
+      notes?: string | null;
+    }) => {
+      // 1. Revert stock in inventory_items
+      const { data: inv } = await supabase
+        .from('inventory_items')
+        .select('current_stock')
+        .eq('id', itemId)
+        .maybeSingle();
+
+      if (inv) {
+        const current = Number(inv.current_stock) || 0;
+        const qty = Math.abs(Number(quantity) || 0);
+        let newStock = current;
+
+        const type = (movementType || '').toLowerCase();
+        if (type === 'in' || type === 'ingreso' || type === 'purchase' || type === 'return') {
+          // Annulling an addition subtracts quantity
+          newStock = Math.max(0, current - qty);
+        } else if (type === 'out' || type === 'salida' || type === 'discharge') {
+          // Annulling a deduction adds quantity back
+          newStock = current + qty;
+        }
+
+        await supabase
+          .from('inventory_items')
+          .update({ current_stock: newStock })
+          .eq('id', itemId);
+      }
+
+      // 2. Mark movement as ANULADO in notes so it renders transparently for audit
+      const cleanNotes = (notes || '').replace(/^\[ANULADO\]\s*/i, '');
+      const annulNote = `[ANULADO] ${cleanNotes}`.trim();
+
+      const { error } = await supabase
+        .from('inventory_movements')
+        .update({ notes: annulNote })
+        .eq('id', movementId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['project_inventory_movements'] });
+    },
+  });
+}
+
 export function useToolAssignments() {
   return useQuery({
     queryKey: ['tool_assignments'],

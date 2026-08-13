@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
-  useCreateInventoryMovement, useToolAssignments, useCreateToolAssignment,
+  useCreateInventoryMovement, useDeleteInventoryMovement, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest, useDeleteInventoryItem, useDeleteAllInventory, useCreateProject
@@ -56,6 +56,7 @@ interface ItemMovementsAccordionProps {
 const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, projects }) => {
   const { data: itemMovements, isLoading } = useInventoryMovements(item.id);
   const createMovement = useCreateInventoryMovement();
+  const deleteMovement = useDeleteInventoryMovement();
 
   const [quickType, setQuickType] = useState<'in' | 'out'>('in');
   const [quickQty, setQuickQty] = useState('1');
@@ -228,39 +229,87 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                     <th className="py-2 px-3">Obra</th>
                     <th className="py-2 px-3">Notas</th>
                     <th className="py-2 px-3">Registrado Por</th>
+                    <th className="py-2 px-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {itemMovements.map((m: any) => {
                     const isIngreso = m.movement_type === 'in' || m.movement_type === 'ingreso' || m.movement_type === 'purchase' || m.movement_type === 'return';
                     const isAjuste = m.movement_type === 'adjustment' || m.movement_type === 'ajuste';
+                    const isAnnulled = (m.notes || '').includes('[ANULADO]');
+
                     return (
-                      <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr 
+                        key={m.id} 
+                        className={`transition-colors ${
+                          isAnnulled 
+                            ? 'opacity-40 bg-slate-100/70 select-none' 
+                            : 'hover:bg-slate-50/80'
+                        }`}
+                      >
                         <td className="py-2 px-3 text-slate-500 font-mono text-[11px]">
                           {m.created_at ? new Date(m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
                         </td>
                         <td className="py-2 px-3">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            isAjuste ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                            isIngreso ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                            'bg-red-100 text-red-700 border border-red-200'
-                          }`}>
-                            {isAjuste ? '🔧 Ajuste' : isIngreso ? '📥 Ingreso' : '📤 Egreso'}
-                          </span>
+                          {isAnnulled ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                              🚫 MOVIMIENTO ANULADO
+                            </span>
+                          ) : (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isAjuste ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                              isIngreso ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                              'bg-red-100 text-red-700 border border-red-200'
+                            }`}>
+                              {isAjuste ? '🔧 Ajuste' : isIngreso ? '📥 Ingreso' : '📤 Egreso'}
+                            </span>
+                          )}
                         </td>
                         <td className={`py-2 px-3 text-right font-mono font-bold ${
-                          isIngreso ? 'text-emerald-600' : isAjuste ? 'text-amber-600' : 'text-red-600'
+                          isAnnulled ? 'line-through text-slate-400' : isIngreso ? 'text-emerald-600' : isAjuste ? 'text-amber-600' : 'text-red-600'
                         }`}>
                           {isIngreso ? `+${m.quantity}` : isAjuste ? m.quantity : `-${m.quantity}`} {item.unit}
                         </td>
-                        <td className="py-2 px-3 text-slate-700 text-[11px] truncate max-w-[120px]">
+                        <td className={`py-2 px-3 text-slate-700 text-[11px] truncate max-w-[120px] ${isAnnulled ? 'line-through text-slate-400' : ''}`}>
                           {m.project?.name || '-'}
                         </td>
-                        <td className="py-2 px-3 text-slate-500 text-[11px] truncate max-w-[180px]" title={m.notes || ''}>
+                        <td className={`py-2 px-3 text-slate-500 text-[11px] truncate max-w-[180px] ${isAnnulled ? 'line-through italic text-slate-400' : ''}`} title={m.notes || ''}>
                           {m.notes || '-'}
                         </td>
                         <td className="py-2 px-3 text-slate-400 text-[10px]">
                           {m.created_by || 'Web'}
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          {isAnnulled ? (
+                            <span className="text-[10px] text-slate-400 font-semibold uppercase italic">Anulado</span>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                const actionName = isIngreso ? `Ingreso (+${m.quantity} ${item.unit})` : `Egreso (-${m.quantity} ${item.unit})`;
+                                const newStockCalc = isIngreso ? Math.max(0, item.current_stock - m.quantity) : item.current_stock + m.quantity;
+                                const confirmMsg = `¿Anular este movimiento de ${actionName}? El stock cambiará de ${item.current_stock} a ${newStockCalc}. El registro se conservará de forma transparente.`;
+                                if (await useModalStore.getState().showConfirm('Confirmar Anulación de Kardex', confirmMsg)) {
+                                  try {
+                                    await deleteMovement.mutateAsync({
+                                      movementId: m.id,
+                                      itemId: item.id,
+                                      movementType: m.movement_type,
+                                      quantity: m.quantity,
+                                      notes: m.notes
+                                    });
+                                    useModalStore.getState().showAlert('Éxito', 'Movimiento anulado correctamente y stock revertido.');
+                                  } catch (err: any) {
+                                    useModalStore.getState().showAlert('Error', err?.message || 'No se pudo anular el movimiento.');
+                                  }
+                                }
+                              }}
+                              disabled={deleteMovement.isPending}
+                              className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-colors disabled:opacity-50"
+                              title="Anular movimiento y revertir stock"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
