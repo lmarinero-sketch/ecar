@@ -664,6 +664,9 @@ const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
 /* ── Requests Tab ── */
 const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; updateLoad: any; createLoad: any; projects: any[]; createBatan: any }> = ({ loads, vehicles, updateLoad, createLoad, projects, createBatan }) => {
   const { user, isAdmin, profile } = useAuth();
+  const deleteLoad = useDeleteFuelLoad();
+  const userEmail = user?.email?.toLowerCase() || '';
+  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
   const [showReqForm, setShowReqForm] = useState(false);
   const [reqForm, setReqForm] = useState<{ vehicle_code: string; requested_liters: string; odometer_km: string; project_name: string; observations: string; fuel_source: 'station' | 'batan'; station_name: string; fuel_type: string }>({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
   
@@ -1102,8 +1105,29 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         {pendingRequests.length === 0 ? <p className="text-sm text-gray-400 italic">No hay solicitudes pendientes.</p> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {pendingRequests.map(r => (
-              <div key={r.id} className={`${r.unauthorized_load ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-4 shadow-sm relative`}>
-                <div className={`text-xs font-bold mb-1 ${r.unauthorized_load ? 'text-red-600' : 'text-orange-600'}`}>{r.vehicle_code} - {r.vehicle_description}</div>
+              <div key={r.id} className={`${r.unauthorized_load ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-4 shadow-sm relative group`}>
+                <div className="flex justify-between items-start mb-1">
+                  <div className={`text-xs font-bold ${r.unauthorized_load ? 'text-red-600' : 'text-orange-600'}`}>{r.vehicle_code} - {r.vehicle_description}</div>
+                  {canDelete && (
+                    <button 
+                      onClick={async () => {
+                        if (await useModalStore.getState().showConfirm('Confirmar Eliminación', `¿Seguro que deseás borrar la solicitud de autorización para ${r.vehicle_code}?`)) {
+                          try {
+                            await deleteLoad.mutateAsync(r.id);
+                            useModalStore.getState().showAlert('Éxito', 'Solicitud eliminada correctamente.');
+                          } catch (err: any) {
+                            useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la solicitud.');
+                          }
+                        }
+                      }}
+                      disabled={deleteLoad.isPending}
+                      className="text-gray-400 hover:text-red-600 p-1 rounded-lg hover:bg-orange-100/80 transition-colors"
+                      title="Borrar solicitud"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
                 <div className="text-sm">Solicita: <span className="font-bold">{r.requested_by}</span></div>
                 <div className="text-sm">Litros pedidos: <span className="font-mono font-bold text-lg">{r.requested_liters} L</span></div>
                 {r.unauthorized_load && r.workflow_status === 'completed' && (
@@ -1133,10 +1157,31 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         {authorizedRequests.length === 0 ? <p className="text-sm text-gray-400 italic">No hay cargas autorizadas pendientes.</p> : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {authorizedRequests.map(r => (
-              <div key={r.id} className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
+              <div key={r.id} className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm relative group">
                 <div className="flex justify-between items-start mb-2">
                   <div className="text-xs font-bold text-green-700">{r.vehicle_code}</div>
-                  <div className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-mono">Autorizado</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-mono font-bold">Autorizado</span>
+                    {canDelete && (
+                      <button 
+                        onClick={async () => {
+                          if (await useModalStore.getState().showConfirm('Confirmar Eliminación', `¿Seguro que deseás borrar la autorización de carga para ${r.vehicle_code}?`)) {
+                            try {
+                              await deleteLoad.mutateAsync(r.id);
+                              useModalStore.getState().showAlert('Éxito', 'Autorización eliminada correctamente.');
+                            } catch (err: any) {
+                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la autorización.');
+                            }
+                          }
+                        }}
+                        disabled={deleteLoad.isPending}
+                        className="text-gray-400 hover:text-red-600 p-1 rounded-lg hover:bg-green-200/60 transition-colors"
+                        title="Borrar autorización"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="text-sm">Litros autorizados: <span className="font-mono font-bold">{r.requested_liters} L</span></div>
                 <div className="text-[10px] text-gray-500 font-mono mt-1 bg-white p-1 rounded border border-green-100 line-clamp-2">
