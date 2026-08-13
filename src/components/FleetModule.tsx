@@ -18,14 +18,43 @@ import { WorkshopPanel } from './WorkshopPanel';
 import { TiresPanel } from './TiresPanel';
 type FleetView = 'overview' | 'fuel' | 'maintenance' | 'daily_report' | 'tracking' | 'drivers' | 'vehicle_kpis';
 
-const CONDITION_BADGE: Record<string, { icon: string; cls: string }> = {
-  operativo: { icon: '🟢', cls: 'badge-success' },
-  con_observaciones: { icon: '🟡', cls: 'badge-warning' },
-  fuera_de_servicio: { icon: '🔴', cls: 'badge-danger' },
-};
-
 const VEHICLE_ICON: Record<string, string> = {
   camion: '🚛', camioneta: '🛻', auto: '🚗', maquinaria: '🏗️', moto: '🏍️', otro: '🚐',
+};
+
+/* ── iOS Style Toggle Switch ── */
+export const IosToggleSwitch: React.FC<{
+  checked: boolean; // true = Fuera de Servicio, false = Operativo / En Servicio
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  size?: 'sm' | 'md';
+}> = ({ checked, onChange, disabled = false, size = 'md' }) => {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!checked);
+      }}
+      className={`relative inline-flex items-center shrink-0 cursor-pointer rounded-full transition-colors duration-300 ease-in-out border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 disabled:opacity-50 select-none shadow-inner ${
+        size === 'sm' ? 'w-11 h-6' : 'w-14 h-7.5'
+      } ${
+        checked ? 'bg-red-500' : 'bg-emerald-500'
+      }`}
+      title={checked ? 'Fuera de Servicio (Hacé clic para cambiar a Operativo)' : 'En Servicio / Operativo (Hacé clic para pasar a Fuera de Servicio)'}
+    >
+      <span
+        className={`inline-block transform rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out ${
+          size === 'sm'
+            ? `w-5 h-5 ${checked ? 'translate-x-5' : 'translate-x-0'}`
+            : `w-6.5 h-6.5 ${checked ? 'translate-x-6.5' : 'translate-x-0'}`
+        }`}
+      />
+    </button>
+  );
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -38,16 +67,16 @@ const isDueOrOverdue = (dateStr: string | null) => {
 const isDueSoon = (dateStr: string | null, days = 7) => {
   if (!dateStr) return false;
   const d = new Date(dateStr);
-  const limit = new Date();
-  limit.setDate(limit.getDate() + days);
-  return d <= limit && d >= new Date(today());
+  const t = new Date();
+  t.setDate(t.getDate() + days);
+  return d <= t && d >= new Date();
 };
 
 export const FleetModule: React.FC = () => {
   const [view, setView] = useState<FleetView>('overview');
   const { data: vehicles = [], isLoading } = useFuelVehicles();
-  const updateVehicle = useUpdateFuelVehicle();
   const createVehicle = useCreateFuelVehicle();
+  const updateVehicle = useUpdateFuelVehicle();
   const deleteVehicle = useDeleteFuelVehicle();
 
   useEffect(() => {
@@ -103,6 +132,7 @@ export const FleetModule: React.FC = () => {
       maintenance_notes: v.maintenance_notes,
       insurance_expiry: v.insurance_expiry,
       vtv_expiry: v.vtv_expiry,
+      vehicle_condition: v.vehicle_condition || 'operativo',
     });
   };
 
@@ -409,11 +439,29 @@ export const FleetModule: React.FC = () => {
                       {v.plate && <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.plate}</span>}
                       {overdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
                       {!overdue && soon && <span className="badge badge-warning text-[10px]">Service próximo</span>}
-                      {v.vehicle_condition && CONDITION_BADGE[v.vehicle_condition] && (
-                        <span className={`badge text-[10px] ${CONDITION_BADGE[v.vehicle_condition].cls}`}>
-                          {CONDITION_BADGE[v.vehicle_condition].icon} {v.vehicle_condition === 'operativo' ? '' : v.vehicle_condition === 'con_observaciones' ? 'Observado' : 'Fuera de servicio'}
+                      <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-0.5 rounded-full shadow-xs">
+                        <IosToggleSwitch
+                          size="sm"
+                          checked={v.vehicle_condition === 'fuera_de_servicio'}
+                          onChange={async (isFuera) => {
+                            const newCondition = isFuera ? 'fuera_de_servicio' : 'operativo';
+                            try {
+                              await updateVehicle.mutateAsync({ id: v.id, vehicle_condition: newCondition });
+                              useModalStore.getState().showAlert(
+                                'Estado de Vehículo Actualizado',
+                                isFuera 
+                                  ? `🔴 El vehículo ${v.code} fue marcado como FUERA DE SERVICIO.`
+                                  : `🟢 El vehículo ${v.code} se habilitó como OPERATIVO (En Servicio).`
+                              );
+                            } catch (err: any) {
+                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo cambiar el estado.');
+                            }
+                          }}
+                        />
+                        <span className={`text-[10px] font-extrabold ${v.vehicle_condition === 'fuera_de_servicio' ? 'text-red-600' : 'text-emerald-700'}`}>
+                          {v.vehicle_condition === 'fuera_de_servicio' ? '🔴 Fuera de servicio' : '🟢 En servicio'}
                         </span>
-                      )}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
                       {v.brand && <span>{v.brand} {v.model || ''}</span>}
@@ -445,6 +493,28 @@ export const FleetModule: React.FC = () => {
                 {/* Edit inline */}
                 {isEditing && (
                   <div className="mt-3 ml-14 bg-gray-50 rounded-xl p-4 space-y-4 border border-gray-200">
+                    <div className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${editForm.vehicle_condition === 'fuera_de_servicio' ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-gray-700 block">Estado Operativo del Vehículo</span>
+                        <span className="text-xs font-semibold text-gray-600">
+                          {editForm.vehicle_condition === 'fuera_de_servicio' 
+                            ? '🔴 Unidad declarada FUERA DE SERVICIO' 
+                            : '🟢 Unidad habilitada OPERATIVA (En Servicio)'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-500">
+                          {editForm.vehicle_condition === 'fuera_de_servicio' ? 'Fuera de servicio' : 'En servicio'}
+                        </span>
+                        <IosToggleSwitch
+                          size="md"
+                          checked={editForm.vehicle_condition === 'fuera_de_servicio'}
+                          onChange={(isFuera) => {
+                            setEditForm(f => ({ ...f, vehicle_condition: isFuera ? 'fuera_de_servicio' : 'operativo' }));
+                          }}
+                        />
+                      </div>
+                    </div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Datos del Vehículo</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div>

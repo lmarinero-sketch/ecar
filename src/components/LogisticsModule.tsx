@@ -7,8 +7,8 @@ import {
 import {
   useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
-   useCreateLogisticsMaintenanceLog,
-  usePurchaseRequests, useUpdatePurchaseRequest, useEmployees
+  useCreateLogisticsMaintenanceLog,
+  usePurchaseRequests, useUpdatePurchaseRequest, useEmployees, useUpdateFuelVehicle
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom';
 import { exportDispatchPdf } from '../lib/orderPdfExport';
 import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
+import { IosToggleSwitch } from './FleetModule';
 
 type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
 
@@ -39,12 +40,6 @@ const MAINT_TYPE_LABEL: Record<string, string> = {
 
 const VEHICLE_ICON: Record<string, string> = {
   camion: '🚛', camioneta: '🛻', auto: '🚗', maquinaria: '🏗️', moto: '🏍️', otro: '🚐',
-};
-
-const CONDITION_CLS: Record<string, string> = {
-  operativo: 'badge-success',
-  con_observaciones: 'badge-warning',
-  fuera_de_servicio: 'badge-danger',
 };
 
 export const LogisticsModule: React.FC = () => {
@@ -874,6 +869,7 @@ const DeliveriesTab: React.FC<{
 /* ═══════════════════════ FLEET TAB ═══════════════════════ */
 
 export const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ vehicles, loading }) => {
+  const updateVehicle = useUpdateFuelVehicle();
   const [search, setSearch] = useState('');
   const [filterCondition, setFilterCondition] = useState<string>('all');
 
@@ -971,9 +967,29 @@ export const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> =
                       {insExpired && <span className="ml-1">⚠️</span>}
                     </td>
                     <td>
-                      <span className={`badge ${CONDITION_CLS[v.vehicle_condition] || 'badge-neutral'}`}>
-                        {v.vehicle_condition === 'operativo' ? 'Operativo' : v.vehicle_condition === 'con_observaciones' ? 'c/ Obs.' : 'F/S'}
-                      </span>
+                      <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-0.5 rounded-full shadow-xs">
+                        <IosToggleSwitch
+                          size="sm"
+                          checked={v.vehicle_condition === 'fuera_de_servicio'}
+                          onChange={async (isFuera) => {
+                            const newCondition = isFuera ? 'fuera_de_servicio' : 'operativo';
+                            try {
+                              await updateVehicle.mutateAsync({ id: v.id, vehicle_condition: newCondition });
+                              useModalStore.getState().showAlert(
+                                'Estado de Vehículo Actualizado',
+                                isFuera 
+                                  ? `🔴 El vehículo ${v.code} fue marcado como FUERA DE SERVICIO.`
+                                  : `🟢 El vehículo ${v.code} está de nuevo OPERATIVO (En servicio).`
+                              );
+                            } catch (err: any) {
+                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo cambiar el estado.');
+                            }
+                          }}
+                        />
+                        <span className={`text-[10px] font-extrabold ${v.vehicle_condition === 'fuera_de_servicio' ? 'text-red-600' : 'text-emerald-700'}`}>
+                          {v.vehicle_condition === 'fuera_de_servicio' ? 'Fuera Serv.' : 'Operativo'}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 );
