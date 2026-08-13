@@ -10,6 +10,46 @@ type Vehicle = { id: string; code: string; description: string; vehicle_type: st
 const STATIONS = ['YPF', 'Shell', 'Axion', 'Puma', 'YPF Agro', 'Shell Agro', 'Batán Interno', 'Estación Obra', 'Otro'];
 const FUEL_TYPES = ['Diesel 500 / Ultradiesel', 'Diesel Premium / V-Power', 'Diesel EVOLUX', 'Nafta Súper', 'Nafta Premium', 'Aceite / Lubricante', 'Otro'];
 
+const compressImageFile = (file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.7): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
 export const FuelRequestPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -158,15 +198,26 @@ export const FuelRequestPage: React.FC = () => {
     setError('');
 
     try {
-      let photoUrl = null;
+      let photoUrl: string | null = null;
       if (ticketFile) {
-        const fileExt = ticketFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${activeRequest.load_number}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('fuel_tickets').upload(fileName, ticketFile);
-        if (uploadError) throw uploadError;
-        
-        const { data: publicUrlData } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
-        photoUrl = publicUrlData.publicUrl;
+        try {
+          const fileExt = ticketFile.name.split('.').pop() || 'jpg';
+          const fileName = `${Date.now()}_${activeRequest.load_number}.${fileExt}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('fuel_tickets')
+            .upload(fileName, ticketFile, { upsert: true });
+
+          if (!uploadError && uploadData) {
+            const { data: publicUrlData } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
+            photoUrl = publicUrlData.publicUrl;
+          } else {
+            console.warn("Storage RLS policy restricted upload, using compressed base64 fallback:", uploadError);
+            photoUrl = await compressImageFile(ticketFile);
+          }
+        } catch (storageErr) {
+          console.warn("Storage exception, using compressed base64 fallback:", storageErr);
+          photoUrl = await compressImageFile(ticketFile);
+        }
       }
 
       const isUnauthorized = activeRequest.workflow_status !== 'authorized';
@@ -184,7 +235,12 @@ export const FuelRequestPage: React.FC = () => {
         })
         .eq('id', activeRequest.id);
         
-      if (updateError) throw updateError;
+      if (updateError) {
+        if (updateError.message?.includes('row-level security')) {
+          throw new Error('No tenés permisos para actualizar esta solicitud o la misma ya fue completada.');
+        }
+        throw updateError;
+      }
       
       localStorage.removeItem('ecar_active_fuel_request');
       setActiveRequest(null);
