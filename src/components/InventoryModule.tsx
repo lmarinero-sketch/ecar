@@ -89,21 +89,21 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 text-slate-800 space-y-4 my-1">
+    <div className="bg-slate-100/90 border-2 border-slate-300 rounded-2xl shadow-inner p-4 text-slate-800 space-y-4 my-1">
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 text-ecar-blue flex items-center justify-center font-bold">
+          <div className="w-8 h-8 rounded-lg bg-ecar-blue text-white flex items-center justify-center font-bold shadow-sm">
             <History size={18} />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-slate-800">
-              Histórico & Movimiento Rápido: <span className="text-ecar-blue">{item.name}</span>
+            <h4 className="font-bold text-sm text-slate-900">
+              Histórico & Movimiento Rápido: <span className="text-ecar-blue font-black">{item.name}</span>
             </h4>
             <p className="text-xs text-slate-500">Kardex de transacciones y registro inmediato de stock.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium">
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
           <span className="text-slate-500">Stock Actual:</span>
           <span className="font-mono font-bold text-slate-900 text-sm">{item.current_stock} {item.unit}</span>
         </div>
@@ -111,7 +111,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Movement Form */}
-        <div className="lg:col-span-1 bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3">
+        <div className="lg:col-span-1 bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
             <Zap size={14} className="text-amber-500 fill-amber-500" />
             <span>Registrar Movimiento Rápido</span>
@@ -813,7 +813,7 @@ export const InventoryModule: React.FC = () => {
                 const isExpanded = expandedItemId === item.id;
                 return (
                   <React.Fragment key={item.id}>
-                    <tr className={`transition-colors ${isExpanded ? 'bg-blue-50/50 font-medium' : (item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : '')}`}>
+                    <tr className={`transition-colors ${isExpanded ? 'bg-slate-100 font-bold border-l-4 border-l-ecar-blue border-t border-t-slate-300' : (item.current_stock <= item.min_stock && item.min_stock > 0 ? 'bg-red-50/50' : '')}`}>
                       <td className="text-center px-1">
                         <button
                           onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
@@ -828,7 +828,7 @@ export const InventoryModule: React.FC = () => {
                         onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
                       >
                         <div className="flex items-center gap-2">
-                          <span>{item.name}</span>
+                          <span className={isExpanded ? 'text-ecar-blue font-bold' : ''}>{item.name}</span>
                           <span className="text-[10px] text-ecar-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                             {isExpanded ? '▲ Ocultar' : '▼ Kardex / Rápido'}
                           </span>
@@ -914,8 +914,8 @@ export const InventoryModule: React.FC = () => {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr className="bg-slate-50/90 border-b-2 border-slate-300">
-                        <td colSpan={isPanolero ? 9 : 10} className="p-3">
+                      <tr className="bg-slate-200/80 border-b-2 border-slate-300 shadow-inner">
+                        <td colSpan={isPanolero ? 9 : 10} className="p-3 bg-slate-200/80">
                           <ItemMovementsAccordion item={item} projects={projects || []} />
                         </td>
                       </tr>
