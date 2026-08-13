@@ -332,12 +332,23 @@ export const InventoryModule: React.FC = () => {
     e.preventDefault();
     if (!showAssign) return;
     try {
+      const emp = (employees || []).find(x => x.id === assignForm.employee_id);
       await createAssignment.mutateAsync({
         item_id: showAssign.id,
         employee_id: assignForm.employee_id,
         project_id: assignForm.project_id || null,
         notes: assignForm.notes || null,
       });
+
+      // Record Kardex 'out' movement for assigned tool to balance return (+1) movement and prevent stock inflation
+      await createMovement.mutateAsync({
+        item_id: showAssign.id,
+        movement_type: 'out',
+        quantity: 1,
+        project_id: assignForm.project_id || null,
+        notes: `Préstamo de herramienta a ${emp?.full_name || 'colaborador'}. ${assignForm.notes || ''}`.trim(),
+      });
+
       useModalStore.getState().showAlert('Éxito', 'Herramienta asignada al colaborador.');
       setShowAssign(null);
       setAssignForm({ employee_id: '', project_id: '', notes: '' });

@@ -171,8 +171,15 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
         }
       }
 
-      // 2. Prepare items for bulk insertion
-      const itemsToInsert: any[] = [];
+      // 2. Fetch existing items in DB to avoid duplicate items
+      const { data: dbItems } = await supabase
+        .from('inventory_items')
+        .select('id, name, current_stock')
+        .eq('tenant_id', ECAR_TENANT_ID);
+
+      const existingItemMap = new Map((dbItems || []).map(i => [i.name.trim().toLowerCase(), i]));
+      const itemsToInsertMap = new Map<string, any>();
+      const itemsToUpdate: { id: string; current_stock: number; shelf_id: string | null; shelf_position: string | null }[] = [];
 
       for (let i = 0; i < parsedData.length; i++) {
         const row = parsedData[i];
@@ -223,20 +230,51 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
           fullName += ` - ${String(rawObs).trim()}`;
         }
 
-        itemsToInsert.push({
-          tenant_id: ECAR_TENANT_ID,
-          name: fullName,
-          category,
-          current_stock: qty,
-          min_stock: 0,
-          unit: unit,
-          location: 'panol',
-          shelf_id: shelfId,
-          shelf_position: shelfPos
-        });
+        const normKey = fullName.toLowerCase();
+
+        // Check if item already exists in DB
+        const existingDbItem = existingItemMap.get(normKey);
+        if (existingDbItem) {
+          itemsToUpdate.push({
+            id: existingDbItem.id,
+            current_stock: qty,
+            shelf_id: shelfId,
+            shelf_position: shelfPos
+          });
+        } else if (itemsToInsertMap.has(normKey)) {
+          // Consolidate stock for duplicate rows within the same Excel file
+          const prev = itemsToInsertMap.get(normKey)!;
+          prev.current_stock += qty;
+        } else {
+          itemsToInsertMap.set(normKey, {
+            tenant_id: ECAR_TENANT_ID,
+            name: fullName,
+            category,
+            current_stock: qty,
+            min_stock: 0,
+            unit: unit,
+            location: 'panol',
+            shelf_id: shelfId,
+            shelf_position: shelfPos
+          });
+        }
       }
 
-      // Insert items in batches of 100
+      const itemsToInsert = Array.from(itemsToInsertMap.values());
+
+      // Update existing items
+      for (const itemUpd of itemsToUpdate) {
+        await supabase
+          .from('inventory_items')
+          .update({
+            current_stock: itemUpd.current_stock,
+            shelf_id: itemUpd.shelf_id,
+            shelf_position: itemUpd.shelf_position
+          })
+          .eq('id', itemUpd.id);
+      }
+
+      // Insert new items in batches of 100
       const BATCH_SIZE = 100;
       let insertedCount = 0;
 
@@ -250,7 +288,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
         }
 
         insertedCount += batch.length;
-        setProgress(Math.round((insertedCount / itemsToInsert.length) * 100));
+        setProgress(Math.round((insertedCount / (itemsToInsert.length || 1)) * 100));
       }
 
       // Invalidate query caches so UI updates immediately

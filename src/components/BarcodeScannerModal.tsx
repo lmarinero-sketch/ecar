@@ -233,11 +233,21 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     e.preventDefault();
     if (!matchedItem) return;
 
+    const emp = employees.find(x => x.id === assignForm.employee_id);
+
     await createAssignment.mutateAsync({
       item_id: matchedItem.id,
       employee_id: assignForm.employee_id,
       project_id: assignForm.project_id || null,
       notes: assignForm.notes || null,
+    });
+
+    await createMovement.mutateAsync({
+      item_id: matchedItem.id,
+      movement_type: 'out',
+      quantity: 1,
+      project_id: assignForm.project_id || null,
+      notes: `Préstamo de herramienta a ${emp?.full_name || 'colaborador'}`
     });
 
     handleReset();
