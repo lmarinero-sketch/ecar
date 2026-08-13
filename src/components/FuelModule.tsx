@@ -508,10 +508,33 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                   {l.voucher_number && <div className="text-[10px] text-gray-400 font-mono">Vale: {l.voucher_number}</div>}
                 </td>
                 <td>
-                  <span className={`badge ${l.validation_status === 'ok' ? 'badge-success' : l.validation_status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>
-                    {l.validation_status === 'ok' ? 'OK' : l.validation_status === 'observed' ? 'Observado' : 'Pendiente'}
-                  </span>
-                  {l.unauthorized_load && <span className="block mt-1 badge bg-amber-100 text-amber-800 text-[9px] border-amber-200">Sin Autorizar</span>}
+                  <select
+                    value={l.validation_status || 'pending'}
+                    onChange={async (e) => {
+                      const newStatus = e.target.value as 'pending' | 'ok' | 'observed';
+                      try {
+                        await updateLoad.mutateAsync({ id: l.id, validation_status: newStatus });
+                        useModalStore.getState().showAlert(
+                          'Estado de Auditoría Actualizado', 
+                          `La carga cambio a estado: ${newStatus === 'ok' ? '✅ OK (Validada)' : newStatus === 'observed' ? '⚠️ Observada' : '⏳ Pendiente'}`
+                        );
+                      } catch (err: any) {
+                        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo cambiar el estado.');
+                      }
+                    }}
+                    className={`text-xs font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer shadow-xs ${
+                      l.validation_status === 'ok' 
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200' 
+                        : l.validation_status === 'observed' 
+                          ? 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200' 
+                          : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'
+                    }`}
+                  >
+                    <option value="pending">⏳ Pendiente</option>
+                    <option value="ok">✅ OK (Validada)</option>
+                    <option value="observed">⚠️ Observado</option>
+                  </select>
+                  {l.unauthorized_load && <span className="block mt-1 badge bg-amber-100 text-amber-800 text-[9px] border-amber-200 font-bold">Sin Autorizar</span>}
                   {l.ticket_photo_url && (
                     <button onClick={() => setViewingTicket(l.ticket_photo_url!)} className="mt-1 flex w-full items-center justify-center gap-1 text-[10px] font-bold text-ecar-blue hover:bg-blue-100 bg-blue-50 border border-blue-100 px-1 py-0.5 rounded transition-colors">
                       <ImageIcon size={10} /> Ver Ticket
