@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +8,7 @@ import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { generateFuelValePdf } from '../lib/generateFuelValePdf';
+import { FuelTicketScannerModal } from './FuelTicketScannerModal';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -140,6 +141,15 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
   const { user, isAdmin } = useAuth();
   const [viewingTicket, setViewingTicket] = useState<string | null>(null);
+  const [showScannerModal, setShowScannerModal] = useState(false);
+
+  // Search & Filter state for global historical lookup
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
+  const [filterStation, setFilterStation] = useState<string>('all');
+  const [filterVehicle, setFilterVehicle] = useState<string>('all');
+
   const [form, setForm] = useState<Partial<FuelLoad> & { fuel_source?: 'station' | 'batan'; custom_station?: string }>(() => {
     const d = new Date();
     return {
@@ -162,6 +172,62 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
 
   const isFormBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
+
+  // Multi-month & Multi-term filtering logic
+  const filteredLoads = useMemo(() => {
+    let list = loads;
+    if (filterYear !== 'all') {
+      list = list.filter(l => l.year === Number(filterYear) || (l.load_date && l.load_date.startsWith(filterYear)));
+    }
+    if (filterMonth !== 'all') {
+      list = list.filter(l => l.month === filterMonth);
+    }
+    if (filterStation !== 'all') {
+      list = list.filter(l => (l.supplier || l.station_name) === filterStation);
+    }
+    if (filterVehicle !== 'all') {
+      list = list.filter(l => l.vehicle_code === filterVehicle || l.vehicle_id === filterVehicle);
+    }
+    if (searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase();
+      list = list.filter(l =>
+        (l.remito_number && l.remito_number.toLowerCase().includes(term)) ||
+        (l.voucher_number && l.voucher_number.toLowerCase().includes(term)) ||
+        (l.plate && l.plate.toLowerCase().includes(term)) ||
+        (l.driver_name && l.driver_name.toLowerCase().includes(term)) ||
+        (l.vehicle_code && l.vehicle_code.toLowerCase().includes(term)) ||
+        (l.vehicle_description && l.vehicle_description.toLowerCase().includes(term)) ||
+        (l.load_number && l.load_number.toLowerCase().includes(term)) ||
+        (l.supplier && l.supplier.toLowerCase().includes(term)) ||
+        (l.load_date && l.load_date.includes(term)) ||
+        (l.liters && String(l.liters).includes(term))
+      );
+    }
+    return list;
+  }, [loads, filterYear, filterMonth, filterStation, filterVehicle, searchTerm]);
+
+  const handleConfirmLoadFromScanner = (extracted: Partial<FuelLoad>) => {
+    setForm(f => ({
+      ...f,
+      ...extracted,
+      load_date: extracted.load_date || f.load_date,
+      vehicle_code: extracted.vehicle_code || f.vehicle_code,
+      vehicle_id: extracted.vehicle_id || f.vehicle_id,
+      vehicle_description: extracted.vehicle_description || f.vehicle_description,
+      plate: extracted.plate || f.plate,
+      supplier: extracted.supplier || f.supplier,
+      station_name: extracted.supplier || f.station_name,
+      fuel_type: extracted.fuel_type || f.fuel_type,
+      liters: extracted.liters || f.liters,
+      price_per_liter: extracted.price_per_liter || f.price_per_liter,
+      total_amount: extracted.total_amount || f.total_amount,
+      driver_name: extracted.driver_name || f.driver_name,
+      remito_number: extracted.remito_number || f.remito_number,
+      voucher_number: extracted.voucher_number || f.voucher_number,
+    }));
+    setShowScannerModal(false);
+    setShowForm(true);
+  };
 
   const handleVehicleCode = (code: string) => {
     const v = vehicles.find(x => x.code === code);
@@ -268,11 +334,32 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-bold text-gray-800">Registro de Cargas Realizadas</h3>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
-          {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Cancelar' : 'Nueva Carga'}
-        </button>
+      {/* Scanner Modal */}
+      {showScannerModal && (
+        <FuelTicketScannerModal
+          vehicles={vehicles}
+          onClose={() => setShowScannerModal(false)}
+          onConfirmLoad={handleConfirmLoadFromScanner}
+        />
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+          <Fuel size={20} className="text-ecar-blue" />
+          Registro de Cargas Realizadas
+        </h3>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowScannerModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-ecar-blue text-white font-bold text-xs shadow-md hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center gap-2"
+          >
+            <Camera size={16} /> Escanear / Verificar Ticket IA
+          </button>
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+            {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Cancelar' : 'Nueva Carga'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -449,12 +536,104 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         </div>
       )}
 
+      {/* Search & Filter Bar */}
+      <div className="light-card p-4 space-y-3 bg-white border border-gray-200">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Main Search Input */}
+          <div className="relative flex-1 min-w-[240px]">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar por N° Remito (ej: 0014-00004686), Vale, Patente, Chofer, Litros..."
+              className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-ecar-blueLight focus:border-ecar-blue font-medium"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Year Filter */}
+          <div className="w-28">
+            <select
+              value={filterYear}
+              onChange={e => setFilterYear(e.target.value)}
+              className="w-full px-2.5 py-2 border border-gray-300 rounded-xl text-xs bg-white font-medium"
+            >
+              <option value="all">Todos los años</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+
+          {/* Month Filter */}
+          <div className="w-36">
+            <select
+              value={filterMonth}
+              onChange={e => setFilterMonth(e.target.value)}
+              className="w-full px-2.5 py-2 border border-gray-300 rounded-xl text-xs bg-white font-medium"
+            >
+              <option value="all">Todos los meses</option>
+              {MONTHS_ES.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Station Filter */}
+          <div className="w-36">
+            <select
+              value={filterStation}
+              onChange={e => setFilterStation(e.target.value)}
+              className="w-full px-2.5 py-2 border border-gray-300 rounded-xl text-xs bg-white font-medium"
+            >
+              <option value="all">Todas las estaciones</option>
+              {STATIONS.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Vehicle Filter */}
+          <div className="w-36">
+            <select
+              value={filterVehicle}
+              onChange={e => setFilterVehicle(e.target.value)}
+              className="w-full px-2.5 py-2 border border-gray-300 rounded-xl text-xs bg-white font-medium"
+            >
+              <option value="all">Todos los vehículos</option>
+              {vehicles.map(v => (
+                <option key={v.id} value={v.code}>{v.code} — {v.plate || v.description}</option>
+              ))}
+            </select>
+          </div>
+
+          {(searchTerm || filterMonth !== 'all' || filterStation !== 'all' || filterVehicle !== 'all') && (
+            <button
+              onClick={() => { setSearchTerm(''); setFilterMonth('all'); setFilterStation('all'); setFilterVehicle('all'); }}
+              className="text-xs text-slate-500 hover:text-red-600 font-semibold px-2 py-1 underline"
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-100">
+          <span>Mostrando <strong>{filteredLoads.length}</strong> de <strong>{loads.length}</strong> cargas históricas</span>
+          {searchTerm && <span className="text-ecar-blue font-semibold">🔍 Filtrado por: "{searchTerm}"</span>}
+        </div>
+      </div>
+
       {/* Table */}
       <div className="light-card overflow-hidden">
         <table className="data-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>ID / Remito</th>
               <th>Fecha</th>
               <th>Vehículo</th>
               <th>Estación</th>
@@ -468,11 +647,14 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             </tr>
           </thead>
           <tbody>
-            {loads.length === 0 ? (
-              <tr><td colSpan={11} className="text-center text-gray-400 py-8"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p>No hay cargas registradas</p></td></tr>
-            ) : loads.map(l => (
+            {filteredLoads.length === 0 ? (
+              <tr><td colSpan={11} className="text-center text-gray-400 py-12"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No se encontraron cargas con los filtros seleccionados</p></td></tr>
+            ) : filteredLoads.map(l => (
               <tr key={l.id} className={`${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
-                <td className="font-mono text-xs text-gray-500">{l.load_number}</td>
+                <td className="font-mono text-xs text-gray-500">
+                  <span className="font-bold text-gray-800">{l.load_number}</span>
+                  {l.remito_number && <span className="block text-[10px] text-blue-700 font-bold">R: {l.remito_number}</span>}
+                </td>
                 <td className="text-xs whitespace-nowrap">{l.load_date}</td>
                 <td className="font-medium">
                   {l.vehicle_description} <span className="text-gray-400 text-xs">({l.vehicle_code})</span>
@@ -505,6 +687,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                 )}
                 <td className="text-xs">
                   <div className="font-medium text-gray-700">{l.driver_name || '—'}</div>
+                  {l.remito_number && <div className="text-[10px] text-blue-700 font-mono font-bold">Remito: {l.remito_number}</div>}
                   {l.voucher_number && <div className="text-[10px] text-gray-400 font-mono">Vale: {l.voucher_number}</div>}
                 </td>
                 <td>

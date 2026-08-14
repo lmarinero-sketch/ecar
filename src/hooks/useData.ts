@@ -2833,11 +2833,64 @@ export function useFuelLoads() {
   return useQuery({
     queryKey: ['fuel_loads'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('fuel_loads').select('*').order('load_date', { ascending: false }).limit(200);
+      const { data, error } = await supabase.from('fuel_loads').select('*').order('load_date', { ascending: false }).limit(1000);
       if (error) throw error;
       return data as FuelLoad[];
     },
   });
+}
+
+export async function checkFuelLoadDuplicate(params: {
+  remito_number?: string | null;
+  voucher_number?: string | null;
+  plate?: string | null;
+  load_date?: string | null;
+  liters?: number | null;
+}): Promise<FuelLoad | null> {
+  const { remito_number, voucher_number, plate, load_date, liters } = params;
+
+  // 1. Match por número de remito
+  if (remito_number && remito_number.trim()) {
+    const cleanRemito = remito_number.trim();
+    const { data } = await supabase
+      .from('fuel_loads')
+      .select('*')
+      .or(`remito_number.ilike.%${cleanRemito}%,voucher_number.ilike.%${cleanRemito}%`)
+      .limit(1);
+    if (data && data.length > 0) return data[0] as FuelLoad;
+  }
+
+  // 2. Match por número de vale / voucher
+  if (voucher_number && voucher_number.trim()) {
+    const cleanVoucher = voucher_number.trim();
+    const { data } = await supabase
+      .from('fuel_loads')
+      .select('*')
+      .or(`voucher_number.ilike.%${cleanVoucher}%,remito_number.ilike.%${cleanVoucher}%`)
+      .limit(1);
+    if (data && data.length > 0) return data[0] as FuelLoad;
+  }
+
+  // 3. Match por Fecha + Patente + Litros (±0.5 L)
+  if (load_date && plate && liters) {
+    const cleanPlate = plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const minL = Math.max(0, liters - 0.5);
+    const maxL = liters + 0.5;
+
+    const { data } = await supabase
+      .from('fuel_loads')
+      .select('*')
+      .eq('load_date', load_date)
+      .gte('liters', minL)
+      .lte('liters', maxL);
+
+    if (data && data.length > 0) {
+      const match = data.find(l => l.plate && l.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === cleanPlate);
+      if (match) return match as FuelLoad;
+    }
+  }
+
+  return null;
 }
 
 export function useCreateFuelLoad() {
