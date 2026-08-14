@@ -2988,6 +2988,25 @@ export function useCreateVehicleDailyReport() {
   });
 }
 
+export function useUpdateVehicleDailyReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { id: string; updates: Partial<VehicleDailyReport> }) => {
+      const { data, error } = await supabase
+        .from('vehicle_daily_reports')
+        .update(params.updates)
+        .eq('id', params.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vehicle_daily_reports'] });
+    },
+  });
+}
+
 // ========== PROJECT HUB: FILTERED HOOKS ==========
 
 export function useProjectEmployees(projectId?: string) {

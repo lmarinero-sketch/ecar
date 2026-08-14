@@ -4,7 +4,7 @@ import {
   Truck, Wrench, QrCode, Calendar, Eye,
   CircleCheck, CircleX, ChevronDown, ChevronUp, Download
 } from 'lucide-react';
-import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport } from '../hooks/useData';
+import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 
 // ── Constants ──
@@ -444,10 +444,30 @@ const ReportForm: React.FC<{
 };
 
 // ── Detail View ──
-const ReportDetail: React.FC<{ report: VehicleDailyReport; onClose: () => void }> = ({ report, onClose }) => {
+const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onClose: () => void }> = ({ report, projects, onClose }) => {
+  const updateReport = useUpdateVehicleDailyReport();
+  const [editingProject, setEditingProject] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(report.project_id || '');
+  const [isSaving, setIsSaving] = useState(false);
+
   const condition = CONDITION_BADGE[report.vehicle_condition_after] || CONDITION_BADGE.operativo;
   const faultsCount = (report.checklist || []).filter(c => c.estado === 'falla').length;
   const fuelInfo = FUEL_LEVELS.find(f => f.value === report.fuel_level);
+
+  const handleSaveProject = async () => {
+    setIsSaving(true);
+    try {
+      await updateReport.mutateAsync({
+        id: report.id,
+        updates: { project_id: selectedProjectId || null }
+      });
+      setEditingProject(false);
+    } catch (e) {
+      console.error('Error al actualizar obra del reporte:', e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -474,9 +494,49 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; onClose: () => void }
 
         {/* Info Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-[10px] font-bold text-gray-500 uppercase">Obra</p>
-            <p className="text-sm font-medium text-gray-800">{report.project?.name || 'Sin asignar'}</p>
+          <div className="bg-gray-50 rounded-lg p-3 relative">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] font-bold text-gray-500 uppercase">Obra / Destino</p>
+              {!editingProject && (
+                <button
+                  onClick={() => setEditingProject(true)}
+                  className="text-[11px] text-ecar-blue hover:underline font-semibold"
+                >
+                  {report.project_id ? 'Cambiar' : '+ Asignar'}
+                </button>
+              )}
+            </div>
+            {editingProject ? (
+              <div className="flex items-center gap-1 mt-1">
+                <select
+                  value={selectedProjectId}
+                  onChange={e => setSelectedProjectId(e.target.value)}
+                  className="text-xs border border-gray-300 rounded px-2 py-1 bg-white font-medium flex-1 focus:ring-1 focus:ring-ecar-blue"
+                >
+                  <option value="">Sin asignar</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSaveProject}
+                  disabled={isSaving}
+                  className="px-2 py-1 bg-ecar-blue text-white rounded text-xs font-bold hover:bg-ecar-blueDark transition-colors"
+                >
+                  {isSaving ? '...' : 'OK'}
+                </button>
+                <button
+                  onClick={() => setEditingProject(false)}
+                  className="text-xs text-gray-400 hover:text-gray-600 px-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm font-medium text-gray-800">
+                {report.project?.name || <span className="text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-xs">⚠️ Sin asignar</span>}
+              </p>
+            )}
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-[10px] font-bold text-gray-500 uppercase">Medición</p>
@@ -573,7 +633,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
 
   // Detail view
   if (view === 'detail' && selectedReport) {
-    return <ReportDetail report={selectedReport} onClose={() => { setView('list'); setSelectedReport(null); }} />;
+    return <ReportDetail report={selectedReport} projects={projects} onClose={() => { setView('list'); setSelectedReport(null); }} />;
   }
 
   // Form view

@@ -105,12 +105,13 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
       if (v.default_driver) setDriverName(v.default_driver);
 
       // Load projects
-      const { data: p } = await supabase
+      const { data: p, error: pErr } = await supabase
         .from('projects')
         .select('id, name, status')
-        .eq('status', 'active')
         .order('name');
-      setProjects(p || []);
+      if (pErr) console.warn('Error al cargar proyectos en checkin:', pErr);
+      const activeProjects = (p || []).filter(proj => !proj.status || proj.status === 'active');
+      setProjects(activeProjects.length > 0 ? activeProjects : (p || []));
 
       setStatus('form');
     } catch {
@@ -349,17 +350,20 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Obra / Proyecto</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Obra / Destino</label>
                 <select
                   value={projectId}
                   onChange={e => setProjectId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-ecar-blueLight focus:border-ecar-blue shadow-sm font-medium text-gray-800"
                 >
-                  <option value="">Sin asignar</option>
+                  <option value="">Seleccioná la obra a la que está destinada...</option>
                   {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {projects.length === 0 && (
+                  <p className="text-[11px] text-amber-600 mt-1 font-medium">Cargando obras activas...</p>
+                )}
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Km Odómetro</label>
