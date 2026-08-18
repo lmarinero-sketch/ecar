@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -57,7 +57,59 @@ export const FuelModule: React.FC = () => {
   const monthLoads = useMemo(() => loads.filter(l => l.month === currentMonth && l.year === now.getFullYear()), [loads, currentMonth]);
   const totalLiters = monthLoads.reduce((s, l) => s + (l.liters || 0), 0);
   const totalAmount = monthLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
-  const batanBalance = batanMovements.length > 0 ? (batanMovements[0].balance_after || 0) : 0;
+
+  // Robust Batán movement calculations & running stock tracking
+  const enrichedBatanMovements = useMemo(() => {
+    if (!batanMovements || batanMovements.length === 0) return [];
+    
+    // Sort chronologically (oldest first)
+    const sorted = [...batanMovements].sort((a, b) => {
+      const dateA = new Date(a.movement_date || a.created_at).getTime();
+      const dateB = new Date(b.movement_date || b.created_at).getTime();
+      return dateA - dateB;
+    });
+
+    let runningStock = 200; // Nominal initial stock
+    if (sorted.length > 0 && ((sorted[0].movement_type as string) === 'purchase' || (sorted[0].movement_type as string) === 'ingreso')) {
+      runningStock = 0;
+    }
+
+    const result = sorted.map(m => {
+      const typeStr = (m.movement_type || '') as string;
+      const isPurchase = typeStr === 'purchase' || typeStr === 'ingreso';
+      const isDischarge = typeStr === 'discharge' || typeStr === 'egreso';
+      const isAdjustment = typeStr === 'adjustment' || typeStr === 'ajuste';
+
+      if (isPurchase) {
+        runningStock += (m.liters_loaded || 0);
+      } else if (isDischarge) {
+        runningStock -= (m.liters_discharged || 0);
+      } else if (isAdjustment) {
+        if (m.balance_after !== null && m.balance_after !== undefined) {
+          runningStock = Number(m.balance_after);
+        } else if (m.liters_loaded !== null && m.liters_loaded !== undefined) {
+          runningStock = Number(m.liters_loaded);
+        }
+      }
+
+      const calcBal = (m.balance_after !== null && m.balance_after !== undefined && m.balance_after > 0)
+        ? Number(m.balance_after)
+        : Math.max(0, Number(runningStock.toFixed(2)));
+
+      return {
+        ...m,
+        computed_balance: calcBal
+      };
+    });
+
+    return result.reverse();
+  }, [batanMovements]);
+
+  const currentBatanStock = enrichedBatanMovements.length > 0 
+    ? enrichedBatanMovements[0].computed_balance 
+    : 200;
+
+  const batanBalance = currentBatanStock;
 
   const { seenFuelRequests, markFuelRequestsSeen } = useAppStore();
   
@@ -120,7 +172,7 @@ export const FuelModule: React.FC = () => {
           {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} createBatan={createBatan} />}
           {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} />}
           {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} />}
-          {tab === 'batan' && <BatanTab movements={batanMovements} createBatan={createBatan} />}
+          {tab === 'batan' && <BatanTab movements={enrichedBatanMovements} vehicles={vehicles} createBatan={createBatan} currentStock={currentBatanStock} />}
           {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
           {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
         </div>
@@ -789,32 +841,751 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   );
 };
 
-/* ── Batán Tab ── */
-const BatanTab: React.FC<{ movements: any[]; createBatan: any }> = ({ movements }) => (
-  <div className="light-card overflow-hidden">
-    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Control de Batán Interno</h3></div>
-    <table className="data-table">
-      <thead>
-        <tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Combustible</th><th>Litros</th><th>Saldo</th><th>Estado</th></tr>
-      </thead>
-      <tbody>
-        {movements.length === 0 ? (
-          <tr><td colSpan={7} className="text-center text-gray-400 py-8"><Droplets size={40} className="mx-auto mb-2 opacity-30" /><p>Sin movimientos en batán</p></td></tr>
-        ) : movements.map(m => (
-          <tr key={m.id}>
-            <td className="font-mono text-xs">{m.movement_number}</td>
-            <td>{m.movement_date}</td>
-            <td><span className={`badge ${m.movement_type === 'purchase' ? 'badge-info' : 'badge-warning'}`}>{m.movement_type === 'purchase' ? 'Compra' : 'Descarga'}</span></td>
-            <td>{m.fuel_type}</td>
-            <td className="font-mono font-bold">{m.liters_loaded || m.liters_discharged} L</td>
-            <td className="font-mono font-bold text-sky-600">{m.balance_after} L</td>
-            <td><span className="badge badge-success">{m.movement_status}</span></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+/* ── Batán Tab (Enhanced with QOAG Clinical Aesthetics) ── */
+const BatanTab: React.FC<{
+  movements: any[];
+  vehicles: FuelVehicle[];
+  createBatan: any;
+  currentStock: number;
+}> = ({ movements, vehicles, createBatan, currentStock }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'purchase' | 'discharge' | 'adjustment'>('all');
+  const [selectedMov, setSelectedMov] = useState<any | null>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+
+  // Default tank capacity (can be 200 L nominal)
+  const nominalCapacity = 200;
+  const stockPct = Math.min(100, Math.max(0, Math.round((currentStock / nominalCapacity) * 100)));
+
+  // Current month stats
+  const now = new Date();
+  const currentMonthNum = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthMovements = useMemo(() => {
+    return movements.filter(m => {
+      if (!m.movement_date) return false;
+      const d = new Date(m.movement_date);
+      return d.getMonth() === currentMonthNum && d.getFullYear() === currentYear;
+    });
+  }, [movements, currentMonthNum, currentYear]);
+
+  const monthPurchases = useMemo(() => {
+    return monthMovements
+      .filter(m => m.movement_type === 'purchase' || m.movement_type === 'ingreso')
+      .reduce((acc, m) => acc + (m.liters_loaded || 0), 0);
+  }, [monthMovements]);
+
+  const monthDischarges = useMemo(() => {
+    return monthMovements
+      .filter(m => m.movement_type === 'discharge' || m.movement_type === 'egreso')
+      .reduce((acc, m) => acc + (m.liters_discharged || 0), 0);
+  }, [monthMovements]);
+
+  // Filtered movements for table display
+  const filteredMovements = useMemo(() => {
+    return movements.filter(m => {
+      // Type filter
+      if (filterType !== 'all') {
+        if (filterType === 'purchase' && m.movement_type !== 'purchase' && m.movement_type !== 'ingreso') return false;
+        if (filterType === 'discharge' && m.movement_type !== 'discharge' && m.movement_type !== 'egreso') return false;
+        if (filterType === 'adjustment' && m.movement_type !== 'adjustment' && m.movement_type !== 'ajuste') return false;
+      }
+      // Search term
+      if (searchTerm.trim() !== '') {
+        const term = searchTerm.toLowerCase();
+        const num = (m.movement_number || '').toLowerCase();
+        const code = (m.vehicle_code || '').toLowerCase();
+        const driver = (m.driver_name || '').toLowerCase();
+        const project = (m.project_name || '').toLowerCase();
+        const fuel = (m.fuel_type || '').toLowerCase();
+        const supplier = (m.supplier || '').toLowerCase();
+        const obs = (m.observations || '').toLowerCase();
+        return num.includes(term) || code.includes(term) || driver.includes(term) || project.includes(term) || fuel.includes(term) || supplier.includes(term) || obs.includes(term);
+      }
+      return true;
+    });
+  }, [movements, filterType, searchTerm]);
+
+  // Determine stock alert level
+  let stockBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  let progressColor = 'bg-emerald-500';
+  let alertText = 'Nivel Óptimo';
+
+  if (currentStock <= 30) {
+    stockBadgeColor = 'bg-red-50 text-red-700 border-red-200';
+    progressColor = 'bg-red-500';
+    alertText = '⚠️ Stock Crítico - Requiere Recarga';
+  } else if (currentStock <= 80) {
+    stockBadgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+    progressColor = 'bg-amber-500';
+    alertText = 'Atención: Nivel Medio';
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Batán Status Header Card */}
+      <div className="light-card p-6 bg-white border border-gray-100 rounded-xl shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-sky-100 text-sky-700 rounded-xl">
+              <Droplets size={32} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold text-gray-900">Batán de Combustible Interno</h3>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${stockBadgeColor}`}>
+                  {alertText}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Control de inventario, ingresos por compra y consumo por vehículo/equipo</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <button
+              onClick={() => setShowPurchaseModal(true)}
+              className="flex-1 md:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <Plus size={16} /> Registrar Compra / Ingreso
+            </button>
+            <button
+              onClick={() => setShowAdjustmentModal(true)}
+              className="flex-1 md:flex-initial px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border border-gray-300 transition-all"
+            >
+              <Sliders size={16} /> Ajustar Stock Real
+            </button>
+          </div>
+        </div>
+
+        {/* Level Progress Gauge and Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+          {/* Gauge card */}
+          <div className="md:col-span-2 bg-gradient-to-br from-gray-50 to-sky-50/40 p-4 rounded-xl border border-sky-100 flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold uppercase text-gray-500 tracking-wider flex items-center gap-1.5">
+                <Gauge size={14} className="text-sky-600" /> Nivel Actual del Tanque
+              </span>
+              <span className="text-sm font-black text-sky-800 font-mono">{stockPct}%</span>
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="text-2xl font-black text-gray-900 font-mono">{fmt(currentStock)} L</span>
+                <span className="text-xs font-semibold text-gray-500 font-mono">Capacidad: {nominalCapacity} L</span>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-3.5 p-0.5 overflow-hidden">
+                <div className={`${progressColor} h-full rounded-full transition-all duration-500`} style={{ width: `${stockPct}%` }} />
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-500">
+              * El saldo se actualiza automáticamente con cada carga a vehículos o compra registrada.
+            </p>
+          </div>
+
+          {/* Monthly Purchases */}
+          <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex flex-col justify-between">
+            <span className="text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+              <ArrowDownLeft size={16} className="text-emerald-600" /> Ingresos este Mes
+            </span>
+            <div className="mt-2">
+              <p className="text-xl font-black text-emerald-800 font-mono">+{fmt(monthPurchases)} L</p>
+              <p className="text-xs text-emerald-600 mt-1">Cargas de llenado de batán</p>
+            </div>
+          </div>
+
+          {/* Monthly Discharges */}
+          <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 flex flex-col justify-between">
+            <span className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+              <ArrowUpRight size={16} className="text-amber-600" /> Descargas este Mes
+            </span>
+            <div className="mt-2">
+              <p className="text-xl font-black text-amber-800 font-mono">-{fmt(monthDischarges)} L</p>
+              <p className="text-xs text-amber-600 mt-1">Consumo en flota y equipos</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Section */}
+      <div className="light-card overflow-hidden bg-white border border-gray-100 rounded-xl shadow-sm">
+        {/* Table header & controls */}
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row gap-3 justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Droplets className="text-sky-600" size={18} />
+            <h3 className="font-bold text-gray-800 text-sm">Histórico de Movimientos y Detalle</h3>
+            <span className="bg-sky-100 text-sky-700 font-bold text-xs px-2 py-0.5 rounded-full">{filteredMovements.length}</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
+              <input
+                type="text"
+                placeholder="Buscar por vehículo, obra, operador..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              />
+            </div>
+
+            {/* Filter */}
+            <select
+              value={filterType}
+              onChange={e => setFilterType(e.target.value as any)}
+              className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="all">Todos los tipos</option>
+              <option value="purchase">Ingresos / Compras</option>
+              <option value="discharge">Descargas / Consumos</option>
+              <option value="adjustment">Ajustes de Stock</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="overflow-x-auto">
+          <table className="data-table w-full text-left text-xs">
+            <thead>
+              <tr className="bg-gray-100 text-gray-600 uppercase font-bold text-[10px] tracking-wider border-b border-gray-200">
+                <th className="py-3 px-4">ID / Ref</th>
+                <th className="py-3 px-4">Fecha</th>
+                <th className="py-3 px-4">Tipo</th>
+                <th className="py-3 px-4">Combustible & Proveedor</th>
+                <th className="py-3 px-4">Destino / Vehículo</th>
+                <th className="py-3 px-4">Operador / Conductor</th>
+                <th className="py-3 px-4">Obra / Proyecto</th>
+                <th className="py-3 px-4 text-right">Movimiento</th>
+                <th className="py-3 px-4 text-right">Saldo Batán</th>
+                <th className="py-3 px-4 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredMovements.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="text-center text-gray-400 py-10">
+                    <Droplets size={40} className="mx-auto mb-2 opacity-30 text-sky-400" />
+                    <p className="font-semibold text-gray-500 text-sm">No se encontraron movimientos registrados en Batán</p>
+                    <p className="text-xs text-gray-400 mt-1">Pruebe cambiando los filtros de búsqueda</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredMovements.map(m => {
+                  const isPurchase = m.movement_type === 'purchase' || m.movement_type === 'ingreso';
+                  const isAdjustment = m.movement_type === 'adjustment' || m.movement_type === 'ajuste';
+
+                  // Vehicle lookup
+                  const veh = vehicles.find(v => v.code === m.vehicle_code);
+
+                  return (
+                    <tr key={m.id} className="hover:bg-sky-50/40 transition-colors">
+                      <td className="py-2.5 px-4 font-mono font-bold text-gray-700">{m.movement_number || '—'}</td>
+                      <td className="py-2.5 px-4 text-gray-600 whitespace-nowrap">{m.movement_date || '—'}</td>
+                      <td className="py-2.5 px-4 whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                          isPurchase 
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                            : isAdjustment 
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}>
+                          {isPurchase ? 'Ingreso / Compra' : isAdjustment ? 'Ajuste' : 'Descarga'}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <p className="font-semibold text-gray-800">{m.fuel_type || 'Diesel EVOLUX'}</p>
+                        {m.supplier && <p className="text-[10px] text-gray-500 font-medium">{m.supplier}</p>}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        {m.vehicle_code ? (
+                          <div>
+                            <p className="font-bold text-sky-700 font-mono">{m.vehicle_code}</p>
+                            <p className="text-[10px] text-gray-500">{veh?.description || veh?.plate || ''}</p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic">{isPurchase ? 'Batán (Stock General)' : 'Sin vehículo asignado'}</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4 text-gray-700 font-medium">{m.driver_name || '—'}</td>
+                      <td className="py-2.5 px-4 text-gray-700">{m.project_name || '—'}</td>
+                      <td className="py-2.5 px-4 text-right font-mono font-bold whitespace-nowrap">
+                        {isPurchase ? (
+                          <span className="text-emerald-600">+{fmt(m.liters_loaded || 0)} L</span>
+                        ) : isAdjustment ? (
+                          <span className="text-blue-600">Ajuste</span>
+                        ) : (
+                          <span className="text-amber-600">-{fmt(m.liters_discharged || 0)} L</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono font-extrabold text-sky-700 text-sm whitespace-nowrap bg-sky-50/30">
+                        {fmt(m.computed_balance ?? m.balance_after ?? 0)} L
+                      </td>
+                      <td className="py-2.5 px-4 text-center">
+                        <button
+                          onClick={() => setSelectedMov(m)}
+                          className="p-1.5 bg-gray-100 hover:bg-sky-100 text-gray-600 hover:text-sky-700 rounded-md transition-colors"
+                          title="Ver Detalle Completo"
+                        >
+                          <Eye size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal: Ver Detalle Completo de Movimiento */}
+      {selectedMov && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Droplets className="text-sky-600" size={20} />
+                <h3 className="font-bold text-gray-900 text-lg">Detalle del Movimiento de Batán</h3>
+              </div>
+              <button onClick={() => setSelectedMov(null)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-3 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="font-mono font-bold text-gray-500">Comprobante ID</span>
+                <span className="font-mono font-bold text-gray-900 text-sm">{selectedMov.movement_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-medium">Fecha</span>
+                <span className="font-semibold text-gray-900">{selectedMov.movement_date}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-medium">Tipo de Movimiento</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                  selectedMov.movement_type === 'purchase' || selectedMov.movement_type === 'ingreso'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : selectedMov.movement_type === 'adjustment' || selectedMov.movement_type === 'ajuste'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {selectedMov.movement_type === 'purchase' || selectedMov.movement_type === 'ingreso' ? 'Ingreso / Compra' : selectedMov.movement_type === 'adjustment' || selectedMov.movement_type === 'ajuste' ? 'Ajuste Stock' : 'Descarga'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 font-medium">Combustible</span>
+                <span className="font-semibold text-gray-900">{selectedMov.fuel_type || 'Diesel EVOLUX'}</span>
+              </div>
+              {selectedMov.supplier && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">Proveedor / Estación</span>
+                  <span className="font-semibold text-gray-900">{selectedMov.supplier}</span>
+                </div>
+              )}
+              {selectedMov.vehicle_code && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">Vehículo Cargado</span>
+                  <span className="font-mono font-bold text-sky-700">{selectedMov.vehicle_code}</span>
+                </div>
+              )}
+              {selectedMov.driver_name && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">Operador / Conductor</span>
+                  <span className="font-semibold text-gray-900">{selectedMov.driver_name}</span>
+                </div>
+              )}
+              {selectedMov.project_name && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">Proyecto / Obra</span>
+                  <span className="font-semibold text-gray-900">{selectedMov.project_name}</span>
+                </div>
+              )}
+              {selectedMov.remito_number && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">N° Remito / Ticket</span>
+                  <span className="font-mono font-bold text-gray-800">{selectedMov.remito_number}</span>
+                </div>
+              )}
+              
+              <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                <span className="text-gray-600 font-bold">Volumen del Movimiento</span>
+                <span className="font-mono font-black text-sm text-gray-900">
+                  {selectedMov.movement_type === 'purchase' || selectedMov.movement_type === 'ingreso'
+                    ? `+${fmt(selectedMov.liters_loaded || 0)} L`
+                    : selectedMov.movement_type === 'adjustment'
+                      ? 'Ajuste'
+                      : `-${fmt(selectedMov.liters_discharged || 0)} L`}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center bg-sky-100/60 p-2.5 rounded-lg border border-sky-200">
+                <span className="text-sky-900 font-extrabold">Saldo Resultante en Batán</span>
+                <span className="font-mono font-black text-base text-sky-800">
+                  {fmt(selectedMov.computed_balance ?? selectedMov.balance_after ?? 0)} L
+                </span>
+              </div>
+
+              {selectedMov.observations && (
+                <div className="pt-2">
+                  <p className="text-gray-500 font-semibold mb-1">Observaciones / Notas:</p>
+                  <p className="p-2 bg-white rounded border border-gray-200 text-gray-700 text-xs italic">
+                    {selectedMov.observations}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setSelectedMov(null)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-xs transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Registrar Compra / Ingreso a Batán */}
+      {showPurchaseModal && (
+        <ModalNewBatanPurchase
+          onClose={() => setShowPurchaseModal(false)}
+          onSubmit={async (data) => {
+            const nextBalance = Number(currentStock) + Number(data.liters_loaded);
+            await createBatan.mutateAsync({
+              movement_number: `COMPRA-${String(Date.now()).slice(-6)}`,
+              movement_date: data.movement_date,
+              movement_type: 'purchase',
+              supplier: data.supplier,
+              fuel_type: data.fuel_type,
+              liters_loaded: Number(data.liters_loaded),
+              price_per_liter: data.price_per_liter ? Number(data.price_per_liter) : null,
+              total_amount: data.total_amount ? Number(data.total_amount) : null,
+              remito_number: data.remito_number || null,
+              balance_after: nextBalance,
+              movement_status: 'available',
+              observations: data.observations || 'Ingreso / Carga de combustible a Batán'
+            });
+            useModalStore.getState().showAlert('Ingreso Registrado', `✅ Se registraron +${data.liters_loaded} L ingresados al Batán. Nuevo Saldo: ${fmt(nextBalance)} L.`);
+            setShowPurchaseModal(false);
+          }}
+        />
+      )}
+
+      {/* Modal: Ajustar Stock Real */}
+      {showAdjustmentModal && (
+        <ModalBatanAdjustment
+          currentStock={currentStock}
+          onClose={() => setShowAdjustmentModal(false)}
+          onSubmit={async (data) => {
+            const newBal = Number(data.new_balance);
+            await createBatan.mutateAsync({
+              movement_number: `AJUSTE-${String(Date.now()).slice(-6)}`,
+              movement_date: data.movement_date,
+              movement_type: 'adjustment',
+              fuel_type: 'Diesel EVOLUX',
+              balance_after: newBal,
+              movement_status: 'completed',
+              observations: data.observations || `Ajuste manual de stock de Batán. Saldo ajustado a ${newBal} L.`
+            });
+            useModalStore.getState().showAlert('Stock Ajustado', `✅ Saldo de Batán actualizado a ${fmt(newBal)} L.`);
+            setShowAdjustmentModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+/* ── Modal: Registrar Compra de Combustible a Batán ── */
+const ModalNewBatanPurchase: React.FC<{
+  onClose: () => void;
+  onSubmit: (data: any) => Promise<void>;
+}> = ({ onClose, onSubmit }) => {
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    movement_date: new Date().toISOString().split('T')[0],
+    supplier: 'Shell Agro',
+    fuel_type: 'Diesel EVOLUX',
+    liters_loaded: '',
+    price_per_liter: '',
+    total_amount: '',
+    remito_number: '',
+    observations: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.liters_loaded || Number(form.liters_loaded) <= 0) {
+      useModalStore.getState().showAlert('Error', 'Ingrese una cantidad de litros válida mayor a 0.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSubmit(form);
+    } catch (err: any) {
+      console.error(err);
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar la compra.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Droplets className="text-emerald-600" size={20} />
+            <h3 className="font-bold text-gray-900 text-lg">Registrar Compra / Llenado de Batán</h3>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-gray-700 mb-1">Fecha de Recepción *</label>
+            <input
+              type="date"
+              required
+              value={form.movement_date}
+              onChange={e => setForm({ ...form, movement_date: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white font-medium"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Proveedor *</label>
+              <select
+                value={form.supplier}
+                onChange={e => setForm({ ...form, supplier: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white font-medium"
+              >
+                <option value="Shell Agro">Shell Agro</option>
+                <option value="YPF Agro">YPF Agro</option>
+                <option value="Axion">Axion</option>
+                <option value="Puma">Puma</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Tipo Combustible *</label>
+              <select
+                value={form.fuel_type}
+                onChange={e => setForm({ ...form, fuel_type: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white font-medium"
+              >
+                <option value="Diesel EVOLUX">Diesel EVOLUX</option>
+                <option value="Diesel Premium / V-Power">Diesel Premium / V-Power</option>
+                <option value="Diesel 500 / Ultradiesel">Diesel 500 / Ultradiesel</option>
+                <option value="Nafta Súper">Nafta Súper</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-gray-700 mb-1">Litros Ingresados al Batán *</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="Ej: 200.00"
+              value={form.liters_loaded}
+              onChange={e => setForm({ ...form, liters_loaded: e.target.value })}
+              className="w-full p-2 border border-sky-300 rounded-lg bg-sky-50 text-sky-900 font-bold text-sm focus:bg-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-gray-600 mb-1">Precio por Litro ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ej: 1150.00"
+                value={form.price_per_liter}
+                onChange={e => {
+                  const p = e.target.value;
+                  const l = form.liters_loaded;
+                  const tot = p && l ? (Number(p) * Number(l)).toFixed(2) : form.total_amount;
+                  setForm({ ...form, price_per_liter: p, total_amount: tot });
+                }}
+                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-600 mb-1">Importe Total ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ej: 230000.00"
+                value={form.total_amount}
+                onChange={e => setForm({ ...form, total_amount: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600 mb-1">N° Remito / Factura</label>
+            <input
+              type="text"
+              placeholder="Ej: REM-000418"
+              value={form.remito_number}
+              onChange={e => setForm({ ...form, remito_number: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600 mb-1">Observaciones</label>
+            <textarea
+              rows={2}
+              placeholder="Notas sobre el envío, orden de compra, etc."
+              value={form.observations}
+              onChange={e => setForm({ ...form, observations: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg text-xs transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition-colors shadow flex items-center gap-1.5"
+          >
+            {loading ? 'Guardando...' : 'Confirmar Ingreso'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+/* ── Modal: Ajustar Stock Real de Batán ── */
+const ModalBatanAdjustment: React.FC<{
+  currentStock: number;
+  onClose: () => void;
+  onSubmit: (data: any) => Promise<void>;
+}> = ({ currentStock, onClose, onSubmit }) => {
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    movement_date: new Date().toISOString().split('T')[0],
+    new_balance: String(currentStock),
+    observations: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.new_balance === '' || Number(form.new_balance) < 0) {
+      useModalStore.getState().showAlert('Error', 'Ingrese un saldo de stock válido.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSubmit(form);
+    } catch (err: any) {
+      console.error(err);
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo ajustar el stock.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Sliders className="text-sky-600" size={20} />
+            <h3 className="font-bold text-gray-900 text-lg">Ajuste Manual de Stock Batán</h3>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-3 text-xs">
+          <div className="bg-sky-50 border border-sky-100 p-3 rounded-lg flex items-center justify-between">
+            <span className="text-gray-600 font-semibold">Stock Calculado Actual:</span>
+            <span className="font-mono font-black text-sky-900 text-sm">{fmt(currentStock)} L</span>
+          </div>
+
+          <div>
+            <label className="block font-bold text-gray-700 mb-1">Fecha del Ajuste *</label>
+            <input
+              type="date"
+              required
+              value={form.movement_date}
+              onChange={e => setForm({ ...form, movement_date: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-gray-700 mb-1">Nuevo Stock Real (Litros) *</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="Ej: 180.00"
+              value={form.new_balance}
+              onChange={e => setForm({ ...form, new_balance: e.target.value })}
+              className="w-full p-2 border border-sky-300 rounded-lg bg-sky-50 text-sky-900 font-bold text-sm focus:bg-white font-mono"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">Utilice esta función tras medir el nivel real del tanque con varilla o calibración manual.</p>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-gray-600 mb-1">Motivo / Observación del Ajuste *</label>
+            <textarea
+              rows={2}
+              required
+              placeholder="Ej: Medición varilla turno mañana / Corrección por evaporación o merma"
+              value={form.observations}
+              onChange={e => setForm({ ...form, observations: e.target.value })}
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg text-xs transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition-colors shadow flex items-center gap-1.5"
+          >
+            {loading ? 'Guardando...' : 'Aplicar Ajuste'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 /* ── Reconciliation Tab ── */
 const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
