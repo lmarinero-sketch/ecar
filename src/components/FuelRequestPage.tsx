@@ -190,8 +190,10 @@ export const FuelRequestPage: React.FC = () => {
 
   const handleCompleteLoad = async () => {
     if (!activeRequest) return;
-    if (!completeForm.liters || !completeForm.total_amount) {
-      setError('Debe ingresar Litros y el Importe Total para completar la carga.');
+    const isBatan = completeForm.station_name === 'Surtidor Propio / Batán' || completeForm.station_name === 'Batán Interno' || activeRequest.station_name === 'Surtidor Propio / Batán' || activeRequest.station_name === 'Batán Interno' || activeRequest.load_source === 'batan';
+    
+    if (!completeForm.liters || (!isBatan && !completeForm.total_amount)) {
+      setError(isBatan ? 'Debe ingresar la cantidad de litros cargados.' : 'Debe ingresar Litros y el Importe Total para completar la carga.');
       return;
     }
     setSubmitting(true);
@@ -221,14 +223,17 @@ export const FuelRequestPage: React.FC = () => {
       }
 
       const isUnauthorized = activeRequest.workflow_status !== 'authorized';
+      const finalLiters = parseFloat(completeForm.liters);
+      const finalAmount = isBatan ? 0 : (parseFloat(completeForm.total_amount) || 0);
+      const finalPrice = isBatan ? 0 : (parseFloat(completeForm.price_per_liter) || (finalLiters > 0 ? finalAmount / finalLiters : 0));
 
       const { error: updateError } = await supabase.from('fuel_loads')
         .update({
           workflow_status: 'completed',
-          liters: parseFloat(completeForm.liters),
-          price_per_liter: parseFloat(completeForm.price_per_liter) || null,
-          total_amount: parseFloat(completeForm.total_amount),
-          station_name: completeForm.station_name,
+          liters: finalLiters,
+          price_per_liter: finalPrice,
+          total_amount: finalAmount,
+          station_name: isBatan ? 'Batán Interno' : completeForm.station_name,
           fuel_type: completeForm.fuel_type,
           unauthorized_load: isUnauthorized,
           ticket_photo_url: photoUrl
@@ -240,6 +245,22 @@ export const FuelRequestPage: React.FC = () => {
           throw new Error('No tenés permisos para actualizar esta solicitud o la misma ya fue completada.');
         }
         throw updateError;
+      }
+
+      if (isBatan) {
+        await supabase.from('fuel_batan_movements').insert({
+          tenant_id: ECAR_TENANT_ID,
+          movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
+          movement_date: new Date().toISOString().split('T')[0],
+          movement_type: 'discharge',
+          fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
+          liters_discharged: finalLiters,
+          vehicle_code: activeRequest.vehicle_code,
+          driver_name: activeRequest.driver_name || activeRequest.requested_by,
+          project_name: activeRequest.project_name,
+          movement_status: 'completed',
+          observations: `Carga directa realizada desde app móvil (${activeRequest.load_number})`
+        });
       }
       
       localStorage.removeItem('ecar_active_fuel_request');
