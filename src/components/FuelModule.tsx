@@ -80,6 +80,33 @@ export const FuelModule: React.FC = () => {
       const isDischarge = typeStr === 'discharge' || typeStr === 'egreso';
       const isAdjustment = typeStr === 'adjustment' || typeStr === 'ajuste';
 
+      // Retroactive resolution for vehicle_code, driver_name, project_name if null on past records
+      let resolvedVehicleCode: string | null = m.vehicle_code || null;
+      let resolvedDriverName: string | null = m.driver_name || null;
+      let resolvedProjectName: string | null = m.project_name || null;
+
+      const refLoad = (m as any).reference_load;
+
+      if (!resolvedVehicleCode && isDischarge) {
+        const matchedLoad = loads.find(l => {
+          if (refLoad && l.load_number === refLoad) return true;
+          if (m.observations && l.load_number && m.observations.includes(l.load_number)) return true;
+          if (l.load_date === m.movement_date && Math.abs((l.liters || 0) - (m.liters_discharged || 0)) < 0.05) return true;
+          return false;
+        });
+
+        if (matchedLoad) {
+          resolvedVehicleCode = matchedLoad.vehicle_code || null;
+          resolvedDriverName = resolvedDriverName || matchedLoad.driver_name || matchedLoad.requested_by || null;
+          resolvedProjectName = resolvedProjectName || matchedLoad.project_name || null;
+        } else if (m.observations) {
+          const match = m.observations.match(/\(([^)]+)\)/);
+          if (match && match[1]) {
+            resolvedVehicleCode = match[1].trim();
+          }
+        }
+      }
+
       if (isPurchase) {
         runningStock += (m.liters_loaded || 0);
       } else if (isDischarge) {
@@ -98,12 +125,15 @@ export const FuelModule: React.FC = () => {
 
       return {
         ...m,
+        vehicle_code: resolvedVehicleCode,
+        driver_name: resolvedDriverName,
+        project_name: resolvedProjectName,
         computed_balance: calcBal
       };
     });
 
     return result.reverse();
-  }, [batanMovements]);
+  }, [batanMovements, loads]);
 
   const currentBatanStock = enrichedBatanMovements.length > 0 
     ? enrichedBatanMovements[0].computed_balance 
@@ -1077,7 +1107,7 @@ const BatanTab: React.FC<{
                   const isAdjustment = m.movement_type === 'adjustment' || m.movement_type === 'ajuste';
 
                   // Vehicle lookup
-                  const veh = vehicles.find(v => v.code === m.vehicle_code);
+                  const veh = vehicles.find(v => v.code === m.vehicle_code || v.plate === m.vehicle_code);
 
                   return (
                     <tr key={m.id} className="hover:bg-sky-50/40 transition-colors">
