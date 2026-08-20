@@ -49,6 +49,31 @@ const formatShelfPosition = (shelfCode?: string, position?: string | null) => {
   return pos;
 };
 
+const parseShelfPosition = (shelfPos?: string | null): { level: string; bin: string } => {
+  if (!shelfPos) return { level: '1', bin: '1' };
+  const clean = shelfPos.trim().toUpperCase();
+  
+  // Format 1: "C-2-12", "C-1-10", "EST-01-2-12", "A-1-1"
+  const parts = clean.split('-');
+  if (parts.length >= 3) {
+    const lvl = parts[parts.length - 2].replace(/\D/g, '');
+    const bin = parts[parts.length - 1].replace(/\D/g, '');
+    if (lvl && bin) return { level: lvl, bin: bin };
+  } else if (parts.length === 2) {
+    const lvl = parts[0].replace(/\D/g, '');
+    const bin = parts[1].replace(/\D/g, '');
+    if (lvl && bin) return { level: lvl, bin: bin };
+  }
+
+  // Format 2: "N2-C12" or "N2-B12" or "N2-12"
+  const matchN = clean.match(/N?(\d+)[-_\s]*[CB]?(\d+)/i);
+  if (matchN) {
+    return { level: matchN[1], bin: matchN[2] };
+  }
+
+  return { level: '1', bin: '1' };
+};
+
 interface ItemMovementsAccordionProps {
   item: InventoryItem;
   projects: any[];
@@ -1064,6 +1089,20 @@ export const InventoryModule: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
+                              const { level, bin } = parseShelfPosition(item.shelf_position);
+                              setShelfLevel(level);
+                              setShelfBin(bin);
+
+                              // Auto-detect shelf_id if null on item object but present in shelf_position string (e.g. "C-2-12")
+                              let detectedShelfId = item.shelf_id || '';
+                              if (!detectedShelfId && item.shelf_position) {
+                                const codeMatch = item.shelf_position.trim().toUpperCase().split('-')[0];
+                                const matchingShelf = (shelves || []).find(s => s.code === codeMatch || s.code === `EST-${codeMatch}`);
+                                if (matchingShelf) {
+                                  detectedShelfId = matchingShelf.id;
+                                }
+                              }
+
                               setEditingItem(item);
                               setNewItem({
                                 name: item.name,
@@ -1076,7 +1115,7 @@ export const InventoryModule: React.FC = () => {
                                 is_tool: item.is_tool,
                                 barcode: item.barcode || '',
                                 location: item.location || '',
-                                shelf_id: item.shelf_id || '',
+                                shelf_id: detectedShelfId,
                                 shelf_position: item.shelf_position || '',
                                 tool_status: 'operativa'
                               });
@@ -1561,7 +1600,7 @@ export const InventoryModule: React.FC = () => {
       )}
 
       {/* Modal Nuevo / Editar Ítem */}
-      {showNewItem && (
+      {showNewItem && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
@@ -1750,11 +1789,12 @@ export const InventoryModule: React.FC = () => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Movimiento */}
-      {showMovement && (
+      {showMovement && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Movimiento: {showMovement.name}</h3><button onClick={() => setShowMovement(null)}><X size={20} className="text-gray-400" /></button></div>
@@ -1790,11 +1830,12 @@ export const InventoryModule: React.FC = () => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Asignar Herramienta */}
-      {showAssign && (
+      {showAssign && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Asignar / Préstamo: {showAssign.name}</h3><button onClick={() => setShowAssign(null)}><X size={20} className="text-gray-400" /></button></div>
@@ -1807,11 +1848,12 @@ export const InventoryModule: React.FC = () => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Nueva/Editar Estantería */}
-      {showNewShelf && (
+      {showNewShelf && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{editingShelf ? 'Editar' : 'Nueva'} Estantería</h3><button onClick={() => { setShowNewShelf(false); setEditingShelf(null); }}><X size={20} className="text-gray-400" /></button></div>
@@ -1842,11 +1884,12 @@ export const InventoryModule: React.FC = () => {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Asignar Ubicación Bin */}
-      {assignShelfItem && (
+      {assignShelfItem && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">📍 Ubicación: {assignShelfItem.name}</h3><button onClick={() => setAssignShelfItem(null)}><X size={20} className="text-gray-400" /></button></div>
@@ -1878,7 +1921,8 @@ export const InventoryModule: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showScanner && (
@@ -1892,7 +1936,7 @@ export const InventoryModule: React.FC = () => {
         />
       )}
 
-      {showBarcode && (
+      {showBarcode && createPortal(
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4">
             <div className="flex justify-between items-center border-b pb-2">
@@ -1901,11 +1945,12 @@ export const InventoryModule: React.FC = () => {
             </div>
             <BarcodeLabel item={showBarcode} onClose={() => setShowBarcode(null)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Solicitar Reposición a Compras */}
-      {showRepoModal && (
+      {showRepoModal && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="bg-gradient-to-r from-red-600 to-orange-600 p-4 text-white flex justify-between items-center">
@@ -1983,17 +2028,19 @@ export const InventoryModule: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Excel Importer Modal */}
-      {showImporter && (
+      {showImporter && createPortal(
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-3xl relative">
             <button onClick={() => setShowImporter(false)} className="absolute -top-12 right-0 text-white hover:text-slate-200"><X size={24} /></button>
             <WarehouseExcelImporter existingShelves={shelves || []} onComplete={() => { setShowImporter(false); window.location.reload(); }} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Return Tool Modal */}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, Barcode, Camera, Keyboard, Check, Search, ArrowRight,
   Plus, AlertTriangle, ArrowDownToLine, Wrench, User, RotateCcw, HelpCircle
@@ -301,7 +302,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     i.name.toLowerCase().includes(associateSearch.toLowerCase()) && !i.barcode
   );
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden flex flex-col my-8 max-h-[90vh]">
         {/* Header Banner */}
@@ -785,6 +786,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

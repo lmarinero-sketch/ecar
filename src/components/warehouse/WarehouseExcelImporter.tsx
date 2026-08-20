@@ -191,14 +191,15 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
         if (!description || !String(description).trim()) continue;
 
         const rawRubro = getRowValue(row, ['Rubro', 'Rubros', 'Categoría', 'Categoria', 'Category', 'RUBRO']);
-        const rawMeasure = getRowValue(row, ['medida', 'Medida', 'Medidas', 'Unidad de Medida']);
-        const rawStock = getRowValue(row, ['Stock ', 'Stock', 'stock', 'Stock_Actual', 'Cantidad', 'CANTIDAD', 'Qty']);
+        const rawMeasure = getRowValue(row, ['medida', 'Medida', 'Medidas', 'Dimensión', 'Dimension']);
+        const rawUnit = getRowValue(row, ['Unidad de Medida', 'Unidad', 'unidad', 'UNIDAD', 'U.M.', 'UM']);
+        const rawStock = getRowValue(row, ['Stock ', 'Stock', 'stock', 'Stock_Actual', 'Cantidad', 'CANTIDAD', 'Qty', 'Existencia', 'Existencias']);
         const rawShelf = getRowValue(row, ['Estanteria', 'Estantería', 'Shelf', 'Estante', 'Ubicacion', 'Ubicación']);
         const rawNivel = getRowValue(row, ['nivel', 'Nivel', 'NIVEL', 'Fila', 'Row']);
         const rawBin = getRowValue(row, ['bin', 'Bin', 'BIN', 'Casillero', 'Columna', 'Column']);
         const rawObs = getRowValue(row, ['observaciones', 'Observaciones', 'Notas', 'Notes', 'Comentarios', 'OBS']);
 
-        const { qty, unit } = parseStockAndUnit(rawStock, rawMeasure);
+        const { qty, unit } = parseStockAndUnit(rawStock, rawUnit || (rawMeasure && isNaN(Number(rawMeasure)) ? rawMeasure : undefined));
         
         let shelfId: string | null = null;
         let shelfPos: string | null = null;
@@ -222,15 +223,9 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
           else if (lower.includes('consumible')) category = 'consumible';
         }
 
-        let fullName = String(description).trim();
-        if (rawMeasure && String(rawMeasure).trim() !== '-' && String(rawMeasure).trim().toLowerCase() !== 'unidad') {
-          fullName += ` (${String(rawMeasure).trim()})`;
-        }
-        if (rawObs && String(rawObs).trim()) {
-          fullName += ` - ${String(rawObs).trim()}`;
-        }
-
-        const normKey = fullName.toLowerCase();
+        const itemName = String(description).trim();
+        const normKey = itemName.toLowerCase();
+        const measureVal = rawMeasure ? String(rawMeasure).trim() : null;
 
         // Check if item already exists in DB
         const existingDbItem = existingItemMap.get(normKey);
@@ -248,11 +243,14 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
         } else {
           itemsToInsertMap.set(normKey, {
             tenant_id: ECAR_TENANT_ID,
-            name: fullName,
+            name: itemName,
             category,
             current_stock: qty,
             min_stock: 0,
             unit: unit,
+            measure: measureVal,
+            rubro: rubroStr,
+            notes: rawObs ? String(rawObs).trim() : null,
             location: 'panol',
             shelf_id: shelfId,
             shelf_position: shelfPos
