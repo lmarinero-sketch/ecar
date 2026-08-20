@@ -62,6 +62,7 @@ export const FuelRequestPage: React.FC = () => {
   const [createdLoad, setCreatedLoad] = useState<FuelLoad | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchVehicle, setSearchVehicle] = useState('');
   const [searching, setSearching] = useState(false);
   
   const [activeRequest, setActiveRequest] = useState<FuelLoad | null>(null);
@@ -98,16 +99,8 @@ export const FuelRequestPage: React.FC = () => {
         setVehicles(vRes.data || []);
         setProjects(pRes.data || []);
         
-        const savedId = localStorage.getItem('ecar_active_fuel_request');
-        if (savedId) {
-          const { data: req } = await supabase.from('fuel_loads').select('*').eq('id', savedId).single();
-          if (req && (req.workflow_status === 'requested' || req.workflow_status === 'authorized')) {
-            setActiveRequest(req as FuelLoad);
-            setCompleteForm(f => ({ ...f, station_name: req.station_name || 'YPF', fuel_type: req.fuel_type || 'Diesel Premium / V-Power' }));
-          } else {
-            localStorage.removeItem('ecar_active_fuel_request');
-          }
-        }
+        // Removido el auto-load desde localStorage para evitar problemas en tablets compartidas
+        // donde el Usuario 2 vería la solicitud del Usuario 1.
       } catch (e) {
         console.error(e);
       }
@@ -116,15 +109,31 @@ export const FuelRequestPage: React.FC = () => {
   }, []);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() && !searchVehicle) return;
     setSearching(true);
     setError('');
     try {
-      const cleanQuery = searchQuery.trim().toUpperCase();
-      const query = cleanQuery.startsWith('SOL-') ? cleanQuery : `SOL-${cleanQuery}`;
-      const { data: req, error: dbError } = await supabase.from('fuel_loads').select('*').eq('load_number', query).single();
-      
-      if (dbError || !req) throw new Error('No se encontró la solicitud.');
+      let req;
+      if (searchQuery.trim()) {
+        const cleanQuery = searchQuery.trim().toUpperCase();
+        const query = cleanQuery.startsWith('SOL-') ? cleanQuery : `SOL-${cleanQuery}`;
+        const { data, error: dbError } = await supabase.from('fuel_loads').select('*').eq('load_number', query).single();
+        if (dbError || !data) throw new Error('No se encontró la solicitud por número de seguimiento.');
+        req = data;
+      } else if (searchVehicle) {
+        const { data, error: dbError } = await supabase.from('fuel_loads')
+          .select('*')
+          .eq('vehicle_code', searchVehicle)
+          .in('workflow_status', ['requested', 'authorized'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (dbError || !data) throw new Error(`No se encontraron solicitudes pendientes o autorizadas para el vehículo ${searchVehicle}.`);
+        req = data;
+      }
+
+      if (!req) throw new Error('No se encontró la solicitud.');
       if (req.workflow_status === 'completed') throw new Error('Esta solicitud ya fue completada.');
       
       localStorage.setItem('ecar_active_fuel_request', req.id);
@@ -148,7 +157,7 @@ export const FuelRequestPage: React.FC = () => {
       const vehicle = vehicles.find(v => v.code === form.vehicle_code);
       const { data: inserted, error: dbError } = await supabase.from('fuel_loads').insert({
         tenant_id: ECAR_TENANT_ID,
-        load_number: `SOL-${Date.now().toString(36).toUpperCase()}`,
+        load_number: `SOL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
         load_date: new Date().toLocaleDateString('sv-SE'),
         vehicle_code: form.vehicle_code,
         vehicle_id: vehicle?.id,
@@ -307,9 +316,12 @@ export const FuelRequestPage: React.FC = () => {
           </p>
           
           {successState === 'request' && (
-            <div className="my-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nº de Solicitud (Guardar para buscar)</p>
-              <p className="text-3xl font-black font-mono text-ecar-red tracking-widest">{successLoadNumber}</p>
+            <div className="my-6 bg-red-50 border-2 border-red-200 rounded-xl p-5 space-y-3 shadow-sm">
+              <p className="text-sm text-red-700 font-black uppercase tracking-wider mb-1">
+                ⚠️ IMPORTANTE: GUARDÁ ESTE NÚMERO
+                <span className="block text-xs font-medium mt-1 text-red-600">Lo necesitarás para completar la carga luego de surtir.</span>
+              </p>
+              <p className="text-4xl font-black font-mono text-ecar-red tracking-widest">{successLoadNumber}</p>
               
               <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
                 <button
@@ -464,15 +476,27 @@ export const FuelRequestPage: React.FC = () => {
           </div>
           
           {/* SEARCH COMPONENT (Only shown in Step 1) */}
-          <div className="mt-6 bg-gray-800/90 backdrop-blur-md rounded-xl p-4 border border-gray-700 text-center animate-fade-in shadow-xl">
-            <p className="text-gray-300 text-sm font-bold mb-3">¿Ya tenés una solicitud autorizada?</p>
+          <div className="mt-6 bg-gray-800/90 backdrop-blur-md rounded-xl p-5 border border-red-500/50 text-center animate-fade-in shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"></div>
+            <h3 className="text-white text-lg font-black mb-1 flex items-center justify-center gap-2">
+              <AlertCircle className="text-red-400" size={20} />
+              ¿Ya tenés una solicitud pendiente?
+            </h3>
+            <p className="text-red-300 text-sm font-bold mb-4">NO CREES UNA NUEVA. Buscala por Nº Seguimiento o Vehículo:</p>
             {error && <div className="mb-3 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold shadow-sm">{error}</div>}
-            <div className="flex gap-2 max-w-sm mx-auto">
-              <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-2 rounded-lg border-0 shadow-inner font-mono text-center uppercase" />
-              <button onClick={handleSearch} disabled={searching || !searchQuery.trim()} className="bg-white text-ecar-blue font-bold px-4 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
-                {searching ? '...' : 'Buscar'}
-              </button>
+            
+            <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+              <input type="text" placeholder="Ej: SOL-XXXXX" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setSearchVehicle(''); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSearch()} className="flex-1 px-4 py-3 rounded-lg border-0 shadow-inner font-mono text-center uppercase text-sm" />
+              <div className="text-gray-400 font-bold self-center text-xs">O</div>
+              <select value={searchVehicle} onChange={e => { setSearchVehicle(e.target.value); setSearchQuery(''); setError(''); }} className="flex-1 px-3 py-3 rounded-lg border-0 shadow-inner text-sm text-gray-800 font-medium">
+                <option value="">Vehículo...</option>
+                {vehicles.map(v => <option key={`search-${v.id}`} value={v.code}>{v.code} — {v.description}</option>)}
+              </select>
             </div>
+            
+            <button onClick={handleSearch} disabled={searching || (!searchQuery.trim() && !searchVehicle)} className="mt-4 w-full max-w-md mx-auto bg-white text-ecar-blue font-bold px-4 py-3 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
+              {searching ? 'Buscando...' : 'Buscar Solicitud'}
+            </button>
           </div>
         </>
         ) : (
