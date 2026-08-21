@@ -22,7 +22,8 @@ import type {
   LogisticsDelivery, LogisticsDeliveryItem, LogisticsMaintenanceLog,
   EmployeePPEDelivery, LegalEntity,
   FleetMaintenanceOrder, FleetTire,
-  QualityChecklist
+  QualityChecklist,
+  PurchaseInvoiceItem, InventoryItemPriceHistory
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -517,6 +518,206 @@ export function usePurchaseInvoices() {
       const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*)').order('created_at', { ascending: false });
       if (error) throw error;
       return data as PurchaseInvoice[];
+    },
+  });
+}
+
+export function usePurchaseInvoiceItems(invoiceId?: string) {
+  return useQuery({
+    queryKey: ['purchase_invoice_items', invoiceId],
+    queryFn: async () => {
+      let q = supabase
+        .from('purchase_invoice_items')
+        .select('*, inventory_item:inventory_items(*)');
+      if (invoiceId) {
+        q = q.eq('invoice_id', invoiceId);
+      }
+      const { data, error } = await q.order('created_at', { ascending: true });
+      if (error) throw error;
+      return data as PurchaseInvoiceItem[];
+    },
+    enabled: !!invoiceId || invoiceId === undefined,
+  });
+}
+
+export function useItemPriceHistory(itemId?: string) {
+  return useQuery({
+    queryKey: ['inventory_item_price_history', itemId],
+    queryFn: async () => {
+      let q = supabase
+        .from('inventory_item_price_history')
+        .select('*, item:inventory_items(*), supplier:suppliers(*)');
+      if (itemId) {
+        q = q.eq('item_id', itemId);
+      }
+      const { data, error } = await q.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as InventoryItemPriceHistory[];
+    },
+  });
+}
+
+export function useAllPriceHistories() {
+  return useQuery({
+    queryKey: ['all_price_histories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('inventory_item_price_history')
+        .select('*, item:inventory_items(*), supplier:suppliers(*)')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data as InventoryItemPriceHistory[];
+    },
+  });
+}
+
+export function useCreatePurchaseInvoiceWithItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      invoice: Partial<PurchaseInvoice>;
+      items: Array<{
+        inventory_item_id?: string | null;
+        item_code?: string | null;
+        description: string;
+        quantity: number;
+        unit: string;
+        unit_price: number;
+        discount_percentage: number;
+        subtotal: number;
+      }>;
+      user_name?: string;
+    }) => {
+      const { invoice, items, user_name } = payload;
+      const isCreditNote = (invoice.invoice_type || '').toUpperCase().startsWith('NC') || 
+                           (invoice.invoice_type || '').toUpperCase().includes('CREDITO');
+
+      // 1. Insert invoice
+      const { data: invData, error: invError } = await supabase
+        .from('purchase_invoices')
+        .insert({
+          ...invoice,
+          tenant_id: ECAR_TENANT_ID,
+        })
+        .select('*, supplier:suppliers(*)')
+        .single();
+
+      if (invError) throw invError;
+      const invoiceId = invData.id;
+
+      // 2. Process each item
+      if (items && items.length > 0) {
+        const invoiceItemsToInsert = [];
+
+        for (const itm of items) {
+          const itemId = itm.inventory_item_id;
+          let prevPrice = 0;
+          let currentStock = 0;
+
+          // If inventory_item_id exists, fetch current details
+          if (itemId) {
+            const { data: existingItem } = await supabase
+              .from('inventory_items')
+              .select('id, name, unit_cost, current_stock')
+              .eq('id', itemId)
+              .maybeSingle();
+
+            if (existingItem) {
+              prevPrice = Number(existingItem.unit_cost) || 0;
+              currentStock = Number(existingItem.current_stock) || 0;
+            }
+          }
+
+          invoiceItemsToInsert.push({
+            tenant_id: ECAR_TENANT_ID,
+            invoice_id: invoiceId,
+            inventory_item_id: itemId || null,
+            item_code: itm.item_code || null,
+            description: itm.description,
+            quantity: itm.quantity,
+            unit: itm.unit || 'unidad',
+            unit_price: itm.unit_price,
+            discount_percentage: itm.discount_percentage || 0,
+            subtotal: itm.subtotal,
+            previous_price: prevPrice,
+          });
+
+          // If reception is enabled and item is linked to inventory
+          if (invoice.has_reception && itemId) {
+            const qty = Number(itm.quantity) || 0;
+            // For credit note, it's an outgoing / return deduction; for regular invoice, it's incoming stock
+            const stockDelta = isCreditNote ? -qty : qty;
+            const newStock = Math.max(0, currentStock + stockDelta);
+
+            // Update item stock and new unit cost
+            const updatePayload: Record<string, unknown> = {
+              current_stock: newStock,
+              unit_cost: itm.unit_price,
+            };
+            if (invoice.supplier_id) {
+              updatePayload.last_supplier_id = invoice.supplier_id;
+            }
+
+            await supabase
+              .from('inventory_items')
+              .update(updatePayload)
+              .eq('id', itemId);
+
+            // Create inventory movement
+            await supabase
+              .from('inventory_movements')
+              .insert({
+                tenant_id: ECAR_TENANT_ID,
+                item_id: itemId,
+                movement_type: isCreditNote ? 'out' : 'in',
+                quantity: Math.abs(qty),
+                notes: `${isCreditNote ? 'Nota de Crédito' : 'Ingreso por Compra'}: ${invoice.invoice_type || 'FC'} ${invoice.point_of_sale || '0001'}-${invoice.invoice_number || ''} | Proveedor: ${invData.supplier?.name || 'S/D'}${invoice.deposit_location ? ` | Depósito: ${invoice.deposit_location}` : ''}`,
+                created_by: user_name || 'Compras',
+              });
+
+            // Create Price History Record if unit price changed or recorded
+            const newPrice = Number(itm.unit_price) || 0;
+            const priceDiffArs = prevPrice > 0 ? (newPrice - prevPrice) : 0;
+            const priceDiffPct = prevPrice > 0 ? ((newPrice - prevPrice) / prevPrice) * 100 : 0;
+
+            await supabase
+              .from('inventory_item_price_history')
+              .insert({
+                tenant_id: ECAR_TENANT_ID,
+                item_id: itemId,
+                invoice_id: invoiceId,
+                invoice_type: invoice.invoice_type || 'Factura',
+                invoice_number: `${invoice.point_of_sale || '0001'}-${invoice.invoice_number || ''}`,
+                supplier_id: invoice.supplier_id || null,
+                supplier_name: invData.supplier?.name || 'Proveedor',
+                old_price: prevPrice,
+                new_price: newPrice,
+                price_diff_ars: priceDiffArs,
+                price_diff_pct: priceDiffPct,
+                created_by: user_name || 'Compras',
+                notes: `Comprobante ${invoice.invoice_type || 'FC'} ${invoice.point_of_sale || '0001'}-${invoice.invoice_number || ''}`,
+              });
+          }
+        }
+
+        if (invoiceItemsToInsert.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('purchase_invoice_items')
+            .insert(invoiceItemsToInsert);
+          if (itemsError) console.error('Error inserting invoice items:', itemsError);
+        }
+      }
+
+      return invData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase_invoice_items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_item_price_history'] });
+      queryClient.invalidateQueries({ queryKey: ['all_price_histories'] });
     },
   });
 }

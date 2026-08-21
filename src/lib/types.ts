@@ -238,6 +238,43 @@ export type PurchaseInvoiceAllocation = {
   project?: Project;
 };
 
+export type PurchaseInvoiceItem = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  inventory_item_id?: string | null;
+  item_code?: string | null;
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  discount_percentage: number;
+  subtotal: number;
+  previous_price: number;
+  created_at: string;
+  inventory_item?: InventoryItem | null;
+};
+
+export type InventoryItemPriceHistory = {
+  id: string;
+  tenant_id: string;
+  item_id: string;
+  invoice_id?: string | null;
+  invoice_type?: string | null;
+  invoice_number?: string | null;
+  supplier_id?: string | null;
+  supplier_name?: string | null;
+  old_price: number;
+  new_price: number;
+  price_diff_ars: number;
+  price_diff_pct: number;
+  created_by?: string | null;
+  created_at: string;
+  notes?: string | null;
+  item?: InventoryItem | null;
+  supplier?: Supplier | null;
+};
+
 export type PurchaseInvoice = {
   id: string;
   tenant_id: string;
@@ -246,6 +283,7 @@ export type PurchaseInvoice = {
   supplier_id: string | null;
   project_id: string | null; // Legacy, optional
   allocations?: PurchaseInvoiceAllocation[];
+  items?: PurchaseInvoiceItem[];
   invoice_type: string | null;
   point_of_sale: string | null;
   invoice_number: string | null;
@@ -264,8 +302,16 @@ export type PurchaseInvoice = {
   ocr_raw_data: Record<string, unknown> | null;
   ocr_validated: boolean;
   gasto_item_id: string | null;
+  related_invoice_id?: string | null;
+  payment_condition?: string | null;
+  deposit_location?: string | null;
+  has_reception?: boolean;
+  discount_percentage?: number;
+  discount_amount?: number;
+  notes?: string | null;
   created_at: string;
   supplier?: Supplier;
+  related_invoice?: PurchaseInvoice | null;
 };
 
 export type Cheque = {
@@ -661,6 +707,7 @@ export type WarehouseShelf = {
 export type InventoryItem = {
   id: string;
   tenant_id: string;
+  item_code?: string | null;
   name: string;
   category: 'material' | 'herramienta' | 'consumible' | string;
   rubro: string | null;
@@ -669,6 +716,8 @@ export type InventoryItem = {
   unit: string;
   current_stock: number;
   min_stock: number;
+  ideal_stock?: number;
+  reserved_stock?: number;
   location: string;
   qr_code: string | null;
   barcode: string | null;
@@ -677,6 +726,8 @@ export type InventoryItem = {
   shelf_id: string | null;
   shelf_position: string | null;
   tool_status?: 'operativa' | 'mantenimiento' | 'no_funciona' | null;
+  last_supplier_id?: string | null;
+  last_supplier?: Supplier | null;
   created_at: string;
   shelf?: WarehouseShelf;
 };

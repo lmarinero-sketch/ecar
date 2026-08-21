@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Landmark, TrendingUp, TrendingDown, CreditCard, X, Camera, Edit3, Plus, Upload, FileText, Trash2, History, Pencil, CheckCircle2, Search } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Landmark, TrendingUp, X, Camera, Edit3, Plus,
+  Upload, FileText, Trash2, History, Pencil, CheckCircle2, Search,
+  CheckCircle, Clock, AlertTriangle,
+  ArrowUpRight, ArrowDownRight, CheckCheck, Undo2,
+  FileSpreadsheet, RotateCcw
+} from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useCheques, useCreateCheque, useUpdateCheque, useDeleteCheque, useCreateChequeAuditLog, useChequeAuditLog, useFixedExpenses, usePaymentRecords, useCreatePaymentRecord, useBankAccounts, useInvoices, usePurchaseInvoices } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { InvoiceSearchSelector } from './InvoiceSearchSelector';
@@ -40,6 +47,11 @@ export const FinancesModule: React.FC = () => {
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
   const [searchCheque, setSearchCheque] = useState<string>('');
+  const [filterBeneficiary, setFilterBeneficiary] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterDirection, setFilterDirection] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [chequeViewMode, setChequeViewMode] = useState<'all' | 'payable' | 'receivable' | 'paid' | 'pending'>('all');
   
   const { data: paymentRecords = [], isLoading: isLoadingPayments } = usePaymentRecords();
   const createPaymentRecord = useCreatePaymentRecord();
@@ -94,23 +106,83 @@ export const FinancesModule: React.FC = () => {
     return getNextBusinessDay(original) !== original;
   };
 
-  const payable = cheques.filter(c => c.direction === 'payable' && c.status === 'pending');
-  const receivable = cheques.filter(c => c.direction === 'receivable' && c.status === 'pending');
-  const totalPayable = payable.reduce((a, c) => a + c.amount_ars, 0);
-  const totalReceivable = receivable.reduce((a, c) => a + c.amount_ars, 0);
-  
-  const payableThisMonth = payable.filter(c => {
-    const dStr = c.due_date || c.issue_date;
-    if (!dStr) return false;
-    const d = new Date(dStr + 'T12:00:00');
-    const today = new Date();
-    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-  });
+  // --- CHEQUE METRICS & SEGMENTATION ---
+  const paidPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'cashed'), [cheques]);
+  const paidReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && (c.status === 'deposited' || c.status === 'cashed')), [cheques]);
+  const pendingPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'pending'), [cheques]);
+  const pendingReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && c.status === 'pending'), [cheques]);
+  const allPaidCheques = useMemo(() => cheques.filter(c => c.status === 'cashed' || c.status === 'deposited'), [cheques]);
+  const allPendingCheques = useMemo(() => cheques.filter(c => c.status === 'pending'), [cheques]);
+
+  const totalPaidPayable = paidPayable.reduce((a, c) => a + c.amount_ars, 0);
+  const totalPaidReceivable = paidReceivable.reduce((a, c) => a + c.amount_ars, 0);
+  const totalPendingPayable = pendingPayable.reduce((a, c) => a + c.amount_ars, 0);
+  const totalPendingReceivable = pendingReceivable.reduce((a, c) => a + c.amount_ars, 0);
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const paidPayableThisMonth = useMemo(() => {
+    return paidPayable.filter(c => {
+      const dStr = c.due_date || c.issue_date;
+      if (!dStr) return false;
+      const d = new Date(dStr + 'T12:00:00');
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+  }, [paidPayable, currentMonth, currentYear]);
+
+  const totalPaidPayableThisMonth = paidPayableThisMonth.reduce((a, c) => a + c.amount_ars, 0);
+
+  const paidReceivableThisMonth = useMemo(() => {
+    return paidReceivable.filter(c => {
+      const dStr = c.due_date || c.issue_date;
+      if (!dStr) return false;
+      const d = new Date(dStr + 'T12:00:00');
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+  }, [paidReceivable, currentMonth, currentYear]);
+
+  const totalPaidReceivableThisMonth = paidReceivableThisMonth.reduce((a, c) => a + c.amount_ars, 0);
+
+  const payableThisMonth = useMemo(() => {
+    return pendingPayable.filter(c => {
+      const dStr = c.due_date || c.issue_date;
+      if (!dStr) return false;
+      const d = new Date(dStr + 'T12:00:00');
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+  }, [pendingPayable, currentMonth, currentYear]);
+
   const totalPayableThisMonth = payableThisMonth.reduce((a, c) => a + c.amount_ars, 0);
   const totalFixed = expenses.filter(e => e.status === 'active').reduce((a, e) => a + e.estimated_amount_ars, 0);
 
-  const filteredCheques = React.useMemo(() => {
+  // List of unique beneficiaries with count
+  const uniqueBeneficiaries = useMemo(() => {
+    const map = new Map<string, number>();
+    cheques.forEach(c => {
+      const name = c.beneficiary_or_issuer?.trim();
+      if (name) {
+        map.set(name, (map.get(name) || 0) + 1);
+      }
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, count]) => ({ name, count }));
+  }, [cheques]);
+
+  // Overdue count check
+  const overduePendingCheques = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return cheques.filter(c => {
+      const d = c.due_date || c.issue_date;
+      return d && d < todayStr && c.status === 'pending';
+    });
+  }, [cheques]);
+
+  const filteredCheques = useMemo(() => {
     return cheques.filter(ch => {
+      // Free text search
       if (searchCheque.trim() !== '') {
         const search = searchCheque.toLowerCase().trim();
         const fieldsToSearch = [
@@ -125,39 +197,173 @@ export const FinancesModule: React.FC = () => {
         if (!matchesSearch) return false;
       }
 
-      if (!filterDate) return true;
-      const dateStr = ch.due_date || ch.issue_date;
-      if (!dateStr) return false;
-      const d = new Date(dateStr + 'T12:00:00');
-      const today = new Date();
-      today.setHours(12,0,0,0);
-      
-      if (filterDate === 'today') {
-        return d.toDateString() === today.toDateString();
+      // Filter by Quick View mode tab
+      if (chequeViewMode === 'payable' && ch.direction !== 'payable') return false;
+      if (chequeViewMode === 'receivable' && ch.direction !== 'receivable') return false;
+      if (chequeViewMode === 'paid' && ch.status !== 'cashed' && ch.status !== 'deposited') return false;
+      if (chequeViewMode === 'pending' && ch.status !== 'pending') return false;
+
+      // Filter by Direction
+      if (filterDirection !== 'all' && ch.direction !== filterDirection) return false;
+
+      // Filter by Status
+      if (filterStatus === 'paid' && ch.status !== 'cashed' && ch.status !== 'deposited') return false;
+      if (filterStatus === 'pending' && ch.status !== 'pending') return false;
+      if (filterStatus === 'bounced' && ch.status !== 'bounced') return false;
+      if (filterStatus === 'cancelled' && ch.status !== 'cancelled') return false;
+
+      // Filter by Beneficiary
+      if (filterBeneficiary.trim() !== '') {
+        const b = (ch.beneficiary_or_issuer || '').toLowerCase();
+        if (!b.includes(filterBeneficiary.toLowerCase().trim())) return false;
       }
-      if (filterDate === 'week') {
-        const start = new Date(today);
-        start.setDate(today.getDate() - today.getDay());
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        return d >= start && d <= end;
+
+      // Filter by Type
+      if (filterType !== 'all' && ch.type !== filterType) return false;
+
+      // Filter by Date
+      if (filterDate) {
+        const dateStr = ch.due_date || ch.issue_date;
+        if (!dateStr) return false;
+        const d = new Date(dateStr + 'T12:00:00');
+        const today = new Date();
+        today.setHours(12,0,0,0);
+        
+        if (filterDate === 'today') {
+          return d.toDateString() === today.toDateString();
+        }
+        if (filterDate === 'week') {
+          const start = new Date(today);
+          start.setDate(today.getDate() - today.getDay());
+          const end = new Date(start);
+          end.setDate(start.getDate() + 6);
+          return d >= start && d <= end;
+        }
+        if (filterDate === 'month') {
+          return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+        }
+        if (filterDate === 'last_month') {
+          const lastMonth = new Date(today);
+          lastMonth.setMonth(today.getMonth() - 1);
+          return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear();
+        }
+        if (filterDate === 'next_month') {
+          const nextMonth = new Date(today);
+          nextMonth.setMonth(today.getMonth() + 1);
+          return d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear();
+        }
+        if (filterDate === 'custom') {
+          if (customStart && d < new Date(customStart + 'T12:00:00')) return false;
+          if (customEnd && d > new Date(customEnd + 'T12:00:00')) return false;
+          return true;
+        }
       }
-      if (filterDate === 'month') {
-        return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-      }
-      if (filterDate === 'next_month') {
-        const nextMonth = new Date(today);
-        nextMonth.setMonth(today.getMonth() + 1);
-        return d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear();
-      }
-      if (filterDate === 'custom') {
-        if (customStart && d < new Date(customStart + 'T12:00:00')) return false;
-        if (customEnd && d > new Date(customEnd + 'T12:00:00')) return false;
-        return true;
-      }
+
       return true;
     });
-  }, [cheques, filterDate, customStart, customEnd, searchCheque]);
+  }, [cheques, searchCheque, chequeViewMode, filterDirection, filterStatus, filterBeneficiary, filterType, filterDate, customStart, customEnd]);
+
+  // Export to Excel
+  const handleExportExcel = () => {
+    if (filteredCheques.length === 0) {
+      useModalStore.getState().showAlert('Atención', 'No hay cheques para exportar con los filtros seleccionados.');
+      return;
+    }
+    const data = filteredCheques.map(ch => ({
+      'Nro Cheque': ch.cheque_number,
+      'Banco': ch.bank_name,
+      'Dirección': ch.direction === 'payable' ? 'A Pagar (Emitido)' : 'A Cobrar (Recibido)',
+      'Tipo': ch.type === 'echeq' ? 'eCheq' : 'Físico',
+      'Beneficiario / Emisor': ch.beneficiary_or_issuer || 'Sin especificar',
+      'Razón Social Emisora': ch.issuer_company || '-',
+      'Monto ($)': ch.amount_ars,
+      'Fecha Emisión': ch.issue_date || '-',
+      'Fecha Vencimiento': ch.due_date || '-',
+      'Estado': ch.status === 'cashed' ? (ch.direction === 'payable' ? 'PAGADO (Debitado)' : 'COBRADO') : ch.status === 'deposited' ? 'DEPOSITADO / COBRADO' : ch.status === 'pending' ? 'PENDIENTE' : ch.status === 'bounced' ? 'RECHAZADO' : 'ANULADO',
+      'Factura Asociada': ch.linked_purchase_invoice_id ? 'Factura Compra' : ch.linked_invoice_id ? 'Factura Venta' : 'No'
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cartera_Cheques");
+    XLSX.writeFile(wb, `Cartera_Cheques_ECAR_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  // Batch update overdue cheques to paid
+  const handleMarkAllOverdueAsPaid = async () => {
+    if (!canWrite) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const overduePending = cheques.filter(ch => {
+      const d = ch.due_date || ch.issue_date;
+      return d && d < todayStr && ch.status === 'pending';
+    });
+
+    if (overduePending.length === 0) {
+      useModalStore.getState().showAlert('Cheques al Día', 'Todos los cheques vencidos a la fecha ya están marcados como pagados/cobrados.');
+      return;
+    }
+
+    const confirm = await useModalStore.getState().showConfirm(
+      'Actualizar Cheques Vencidos a Pagados',
+      `Se encontraron ${overduePending.length} cheque(s) con fecha de vencimiento anterior a hoy en estado pendiente.\n\n¿Deseas marcarlos a todos como PAGADOS (Emitidos) / DEPOSITADOS (Recibidos)?`
+    );
+    if (!confirm) return;
+
+    try {
+      for (const ch of overduePending) {
+        const nextStatus = ch.direction === 'payable' ? 'cashed' : 'deposited';
+        await updateCheque.mutateAsync({ id: ch.id, status: nextStatus });
+        auditLog.mutate({
+          cheque_id: ch.id,
+          action: 'status_changed',
+          user_id: profile?.id || null,
+          user_name: profile?.full_name || 'Sistema',
+          changes: { status: { old: ch.status, new: nextStatus } },
+          snapshot: { ...ch, status: nextStatus },
+        });
+      }
+      useModalStore.getState().showAlert(
+        'Actualización Exitosa',
+        `Se actualizaron ${overduePending.length} cheques vencidos a estado Pagado/Cobrado.`
+      );
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'Error al actualizar cheques.');
+    }
+  };
+
+  // Revert status to pending
+  const handleRevertToPending = async (ch: Cheque) => {
+    if (!canWrite) return;
+    const confirm = await useModalStore.getState().showConfirm(
+      'Revertir Estado',
+      `¿Deseas volver a marcar el cheque #${ch.cheque_number} como PENDIENTE?`
+    );
+    if (!confirm) return;
+    try {
+      await updateCheque.mutateAsync({ id: ch.id, status: 'pending' });
+      auditLog.mutate({
+        cheque_id: ch.id,
+        action: 'status_changed',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        changes: { status: { old: ch.status, new: 'pending' } },
+        snapshot: { ...ch, status: 'pending' },
+      });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'Error al revertir estado');
+    }
+  };
+
+  const handleResetFilters = () => {
+    setSearchCheque('');
+    setFilterBeneficiary('');
+    setFilterStatus('all');
+    setFilterDirection('all');
+    setFilterType('all');
+    setFilterDate('');
+    setCustomStart('');
+    setCustomEnd('');
+    setChequeViewMode('all');
+  };
 
   const [ocrData, setOcrData] = useState<any | null>(null);
 
@@ -335,11 +541,6 @@ export const FinancesModule: React.FC = () => {
     setForm({ cheque_number: '', bank_name: '', type: 'physical', direction: 'receivable', beneficiary_or_issuer: '', issuer_company: 'ECAR SAS', amount_ars: 0, due_date: '', issue_date: '', scan_url: '', linked_invoice_id: null, linked_purchase_invoice_id: null });
   };
 
-  const statusColor: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700', deposited: 'bg-blue-100 text-blue-700',
-    cashed: 'bg-green-100 text-green-700', bounced: 'bg-red-100 text-red-700', cancelled: 'bg-gray-100 text-gray-600',
-  };
-
   if (isLoading) return <div className="text-center py-12 text-gray-400">Cargando finanzas...</div>;
 
   return (
@@ -451,29 +652,91 @@ export const FinancesModule: React.FC = () => {
         );
       })()}
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="light-card p-5 relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-red-50 to-transparent pointer-events-none" />
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingDown size={16} className="text-red-500" /> Cheques a Pagar</div>
-          <p className="text-2xl font-black text-red-600 font-mono">{formatARS(totalPayable)}</p>
-          <div className="flex justify-between items-end mt-1 relative z-10">
-            <p className="text-xs text-gray-400">{payable.length} pendientes en total</p>
-            <div className="text-right">
-              <p className="text-xs font-bold text-red-800">Este mes:</p>
-              <p className="text-sm font-mono font-bold text-red-700">{formatARS(totalPayableThisMonth)} <span className="text-[10px] font-normal text-red-500">({payableThisMonth.length})</span></p>
+      {/* KPIs DE CHEQUES Y LIQUIDEZ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Cheques Pagados (Emitidos debitados) */}
+        <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-xs relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-emerald-50/60 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider">
+              <CheckCircle size={16} className="text-emerald-600" />
+              Cheques Pagados (Emitidos)
             </div>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+              {paidPayable.length} cheques
+            </span>
+          </div>
+          <p className="text-2xl font-black text-emerald-700 font-mono tracking-tight">
+            {formatARS(totalPaidPayable)}
+          </p>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-emerald-50 text-xs">
+            <span className="text-slate-500 font-medium">Debitado este mes:</span>
+            <span className="font-mono font-bold text-emerald-800">{formatARS(totalPaidPayableThisMonth)}</span>
           </div>
         </div>
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><TrendingUp size={16} className="text-green-500" /> Cheques a Cobrar</div>
-          <p className="text-2xl font-black text-green-600 font-mono">{formatARS(totalReceivable)}</p>
-          <p className="text-xs text-gray-400 mt-1">{receivable.length} pendientes</p>
+
+        {/* Card 2: Cheques Cobrados / Depositados (Recibidos) */}
+        <div className="bg-white rounded-2xl p-5 border border-blue-100 shadow-xs relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-blue-50/60 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-800 uppercase tracking-wider">
+              <ArrowDownRight size={16} className="text-blue-600" />
+              Cobrados / Depositados
+            </div>
+            <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">
+              {paidReceivable.length} cheques
+            </span>
+          </div>
+          <p className="text-2xl font-black text-blue-700 font-mono tracking-tight">
+            {formatARS(totalPaidReceivable)}
+          </p>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-50 text-xs">
+            <span className="text-slate-500 font-medium">Acreditado este mes:</span>
+            <span className="font-mono font-bold text-blue-800">{formatARS(totalPaidReceivableThisMonth)}</span>
+          </div>
         </div>
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><CreditCard size={16} className="text-ecar-blue" /> Gastos Fijos Mes</div>
-          <p className="text-2xl font-black text-ecar-blue font-mono">{formatARS(totalFixed)}</p>
-          <p className="text-xs text-gray-400 mt-1">{expenses.filter(e => e.status === 'active').length} activos</p>
+
+        {/* Card 3: Cheques Pendientes a Pagar */}
+        <div className="bg-white rounded-2xl p-5 border border-rose-100 shadow-xs relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-rose-50/60 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-rose-800 uppercase tracking-wider">
+              <Clock size={16} className="text-rose-600" />
+              Pendientes a Pagar
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pendingPayable.length > 0 ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}`}>
+              {pendingPayable.length} pendientes
+            </span>
+          </div>
+          <p className="text-2xl font-black text-rose-600 font-mono tracking-tight">
+            {formatARS(totalPendingPayable)}
+          </p>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-rose-50 text-xs">
+            <span className="text-slate-500 font-medium">A vencer este mes:</span>
+            <span className="font-mono font-bold text-rose-700">
+              {formatARS(totalPayableThisMonth)} <span className="text-[10px] font-normal text-rose-500">({payableThisMonth.length})</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: En Cartera / Gastos Fijos */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <TrendingUp size={16} className="text-ecar-blue" />
+              En Cartera a Cobrar
+            </div>
+            <span className="text-[10px] bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full">
+              {pendingReceivable.length} cheques
+            </span>
+          </div>
+          <p className="text-2xl font-black text-slate-800 font-mono tracking-tight">
+            {formatARS(totalPendingReceivable)}
+          </p>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100 text-xs">
+            <span className="text-slate-500 font-medium">Gastos Fijos Mes:</span>
+            <span className="font-mono font-bold text-ecar-blue">{formatARS(totalFixed)}</span>
+          </div>
         </div>
       </div>
 
@@ -512,15 +775,244 @@ export const FinancesModule: React.FC = () => {
       </div>
 
       {activeTab === 'cheques' && (
-        <div className="space-y-6">
-          {/* Action buttons */}
-          <div className="flex justify-end gap-3">
-            <button onClick={() => { setScanUrl(''); setMode('form'); }} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`btn-secondary ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <Edit3 size={16} /> Carga Manual
-            </button>
-            <button onClick={() => setMode('scan')} disabled={!canWrite} title={!canWrite ? 'Sin permisos de edición' : ''} className={`btn-primary ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <Camera size={16} /> Escanear Cheque
-            </button>
+        <div className="space-y-5">
+          {/* Action Header & Quick View Pills */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Quick View Modes */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
+              <button
+                onClick={() => setChequeViewMode('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  chequeViewMode === 'all'
+                    ? 'bg-white text-slate-800 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                Todos ({cheques.length})
+              </button>
+
+              <button
+                onClick={() => setChequeViewMode('paid')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  chequeViewMode === 'paid'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50'
+                }`}
+              >
+                <CheckCircle2 size={13} />
+                Pagados / Cobrados ({allPaidCheques.length})
+              </button>
+
+              <button
+                onClick={() => setChequeViewMode('pending')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  chequeViewMode === 'pending'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'text-amber-700 hover:text-amber-900 hover:bg-amber-50'
+                }`}
+              >
+                <Clock size={13} />
+                Pendientes ({allPendingCheques.length})
+              </button>
+
+              <button
+                onClick={() => setChequeViewMode('payable')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  chequeViewMode === 'payable'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-rose-700 hover:text-rose-900 hover:bg-rose-50'
+                }`}
+              >
+                <ArrowUpRight size={13} />
+                Emitidos (A Pagar) ({cheques.filter(c => c.direction === 'payable').length})
+              </button>
+
+              <button
+                onClick={() => setChequeViewMode('receivable')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  chequeViewMode === 'receivable'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-blue-700 hover:text-blue-900 hover:bg-blue-50'
+                }`}
+              >
+                <ArrowDownRight size={13} />
+                Recibidos (A Cobrar) ({cheques.filter(c => c.direction === 'receivable').length})
+              </button>
+            </div>
+
+            {/* Top Action buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {overduePendingCheques.length > 0 && (
+                <button
+                  onClick={handleMarkAllOverdueAsPaid}
+                  disabled={!canWrite}
+                  className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 animate-pulse-subtle"
+                  title="Marcar todos los cheques cuya fecha de cobro es anterior a hoy como Pagados"
+                >
+                  <CheckCheck size={15} />
+                  Pasar Vencidos a Pagados ({overduePendingCheques.length})
+                </button>
+              )}
+
+              <button
+                onClick={handleExportExcel}
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5"
+                title="Exportar vista actual a Excel"
+              >
+                <FileSpreadsheet size={15} className="text-emerald-600" />
+                Exportar Excel
+              </button>
+
+              <button
+                onClick={() => { setScanUrl(''); setMode('form'); }}
+                disabled={!canWrite}
+                className={`px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Edit3 size={15} className="text-ecar-blue" />
+                Carga Manual
+              </button>
+
+              <button
+                onClick={() => setMode('scan')}
+                disabled={!canWrite}
+                className={`px-4 py-2 bg-ecar-blue hover:bg-ecar-blueDark text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ${!canWrite ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Camera size={15} />
+                Escanear Cheque
+              </button>
+            </div>
+          </div>
+
+          {/* Advanced Filter Toolbar */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* Buscador de texto libre */}
+              <div className="lg:col-span-2 relative">
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                  Búsqueda General
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Buscar cheque, banco o monto..."
+                    value={searchCheque}
+                    onChange={e => setSearchCheque(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-ecar-blue/20 focus:border-ecar-blue"
+                  />
+                </div>
+              </div>
+
+              {/* Filtro por Beneficiario / Emisor */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                  Beneficiario / Emisor
+                </label>
+                <select
+                  value={filterBeneficiary}
+                  onChange={e => setFilterBeneficiary(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-ecar-blue font-medium text-slate-700"
+                >
+                  <option value="">Todos los Beneficiarios ({uniqueBeneficiaries.length})</option>
+                  {uniqueBeneficiaries.map(({ name, count }) => (
+                    <option key={name} value={name}>
+                      {name} ({count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Estado */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                  Estado
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={e => setFilterStatus(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-ecar-blue font-medium text-slate-700"
+                >
+                  <option value="all">Todos los Estados</option>
+                  <option value="paid">🟢 Pagados / Cobrados</option>
+                  <option value="pending">⏳ Pendientes</option>
+                  <option value="bounced">🔴 Rechazados</option>
+                  <option value="cancelled">⚪ Anulados</option>
+                </select>
+              </div>
+
+              {/* Filtro por Dirección */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                  Dirección
+                </label>
+                <select
+                  value={filterDirection}
+                  onChange={e => setFilterDirection(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-ecar-blue font-medium text-slate-700"
+                >
+                  <option value="all">Todas las Direcciones</option>
+                  <option value="payable">↑ A Pagar (Emitidos)</option>
+                  <option value="receivable">↓ A Cobrar (Recibidos)</option>
+                </select>
+              </div>
+
+              {/* Filtro por Período / Fecha */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                  Período Fecha Vto
+                </label>
+                <select
+                  value={filterDate}
+                  onChange={e => setFilterDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-ecar-blue font-medium text-slate-700"
+                >
+                  <option value="">Histórico Completo</option>
+                  <option value="today">Hoy</option>
+                  <option value="week">Esta semana</option>
+                  <option value="month">Este mes</option>
+                  <option value="last_month">Mes anterior</option>
+                  <option value="next_month">Próximo mes</option>
+                  <option value="custom">Rango personalizado</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Custom Date Range & Reset Button */}
+            {(filterDate === 'custom' || searchCheque || filterBeneficiary || filterStatus !== 'all' || filterDirection !== 'all' || filterType !== 'all') && (
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+                {filterDate === 'custom' ? (
+                  <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <span className="font-bold text-slate-600">Desde:</span>
+                    <input
+                      type="date"
+                      value={customStart}
+                      onChange={e => setCustomStart(e.target.value)}
+                      className="bg-white border rounded px-2 py-0.5 text-xs"
+                    />
+                    <span className="font-bold text-slate-600">Hasta:</span>
+                    <input
+                      type="date"
+                      value={customEnd}
+                      onChange={e => setCustomEnd(e.target.value)}
+                      className="bg-white border rounded px-2 py-0.5 text-xs"
+                    />
+                  </div>
+                ) : <div />}
+
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-500 font-medium">
+                    Mostrando <strong className="text-slate-800">{filteredCheques.length}</strong> de {cheques.length} cheques
+                  </span>
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 hover:underline"
+                  >
+                    <RotateCcw size={12} />
+                    Limpiar Filtros
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Scan modal */}
@@ -632,141 +1124,251 @@ export const FinancesModule: React.FC = () => {
           )}
 
           {/* Cheques table */}
-          <div className="light-card overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h3 className="font-bold text-gray-800 shrink-0">Cartera de Cheques</h3>
-              <div className="flex flex-wrap items-center gap-2 flex-1 justify-end">
-                <div className="relative mr-2">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                  <input 
-                    type="text" 
-                    placeholder="Buscar cheque, banco o monto..." 
-                    value={searchCheque} 
-                    onChange={e => setSearchCheque(e.target.value)} 
-                    className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-48 sm:w-64 transition-all shadow-sm"
-                  />
-                </div>
-                <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm overflow-x-auto max-w-full no-scrollbar">
-                  {[
-                    { id: '', label: 'Todos' },
-                    { id: 'month', label: 'Este mes' },
-                    { id: 'week', label: 'Esta semana' },
-                    { id: 'today', label: 'Hoy' },
-                    { id: 'custom', label: 'Personalizado' }
-                  ].map(filter => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setFilterDate(filter.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
-                        filterDate === filter.id 
-                          ? 'bg-ecar-blue text-white shadow-sm' 
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-
-                {filterDate === 'custom' && (
-                  <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1 shadow-sm">
-                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="px-1 py-1 text-xs outline-none bg-transparent" />
-                    <span className="text-gray-400 text-xs">-</span>
-                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="px-1 py-1 text-xs outline-none bg-transparent" />
-                  </div>
-                )}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-slate-800 text-sm">Listado Detallado de Cheques</h3>
+                <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-mono">
+                  {filteredCheques.length} registros
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 font-mono">
+                Total en vista: <strong className="text-slate-900 font-bold">{formatARS(filteredCheques.reduce((s, c) => s + c.amount_ars, 0))}</strong>
               </div>
             </div>
+
             {filteredCheques.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 text-sm">Sin cheques registrados. Escaneá o cargá el primero.</div>
+              <div className="text-center py-16 text-slate-400 text-sm space-y-2">
+                <p className="font-medium">No se encontraron cheques con los filtros seleccionados.</p>
+                <button
+                  onClick={handleResetFilters}
+                  className="text-xs text-ecar-blue hover:underline font-bold"
+                >
+                  Restablecer todos los filtros
+                </button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-100/50 border-b text-xs font-bold text-gray-500 uppercase">
+                  <thead className="bg-slate-100 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-3">Nro</th>
+                      <th className="px-4 py-3">Nro Cheque</th>
                       <th className="px-4 py-3">Banco</th>
-                      <th className="px-4 py-3">Dir.</th>
+                      <th className="px-4 py-3">Dirección</th>
                       <th className="px-4 py-3">Tipo</th>
                       <th className="px-4 py-3">Beneficiario / Emisor</th>
-                      <th className="px-4 py-3 text-right">Monto</th>
-                      <th className="px-4 py-3">Vto</th>
+                      <th className="px-4 py-3 text-right">Monto ($)</th>
+                      <th className="px-4 py-3">Fecha Vto</th>
                       <th className="px-4 py-3 text-center">Estado</th>
                       <th className="px-4 py-3 text-center">Scan</th>
                       <th className="px-4 py-3 text-center">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredCheques.map(ch => (
-                      <tr key={ch.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-mono text-xs">{ch.cheque_number}</td>
-                        <td className="px-4 py-3">{ch.bank_name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`text-xs font-bold ${ch.direction === 'payable' ? 'text-red-500' : 'text-green-500'}`}>
-                            {ch.direction === 'payable' ? '↑ Pagar' : '↓ Cobrar'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${ch.type === 'echeq' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                            {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {ch.direction === 'payable' ? (
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredCheques.map(ch => {
+                      const isPayable = ch.direction === 'payable';
+                      const isPaid = ch.status === 'cashed' || ch.status === 'deposited';
+                      const isPending = ch.status === 'pending';
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const isOverdue = isPending && ((ch.due_date && ch.due_date < todayStr) || (!ch.due_date && ch.issue_date && ch.issue_date < todayStr));
+
+                      return (
+                        <tr
+                          key={ch.id}
+                          className={`hover:bg-slate-50 transition-colors ${
+                            isPaid ? 'bg-emerald-50/20' : isOverdue ? 'bg-rose-50/20' : ''
+                          }`}
+                        >
+                          {/* Nro Cheque */}
+                          <td className="px-4 py-3.5">
+                            <span className="font-mono text-xs font-bold text-slate-800">
+                              #{ch.cheque_number}
+                            </span>
+                          </td>
+
+                          {/* Banco */}
+                          <td className="px-4 py-3.5 font-medium text-slate-800">
+                            {ch.bank_name}
+                          </td>
+
+                          {/* Dirección */}
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+                              isPayable ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {isPayable ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {isPayable ? 'Emitido (Pagar)' : 'Recibido (Cobrar)'}
+                            </span>
+                          </td>
+
+                          {/* Tipo */}
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                              ch.type === 'echeq' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {ch.type === 'echeq' ? '⚡ eCheq' : '📄 Físico'}
+                            </span>
+                          </td>
+
+                          {/* Beneficiario / Emisor */}
+                          <td className="px-4 py-3.5">
                             <div className="flex flex-col">
-                              <span className="font-medium text-gray-900">{ch.beneficiary_or_issuer || '—'}</span>
-                              {ch.issuer_company && <span className="text-xs text-gray-400">Emisor: {ch.issuer_company}</span>}
-                              {ch.linked_purchase_invoice_id && <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded w-max mt-1" title="Factura de Compra asociada">Factura Asoc.</span>}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col">
-                              <span className="font-medium text-gray-900">{ch.beneficiary_or_issuer || '—'}</span>
-                              {ch.linked_invoice_id && <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded w-max mt-1" title="Factura de Venta asociada">Factura Asoc.</span>}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-bold">{formatARS(ch.amount_ars)}</td>
-                        <td className="px-4 py-3 text-xs">
-                          {ch.due_date ? (
-                            <div>
-                              {isPostponed(ch.due_date) ? (
-                                <>
-                                  <span className="line-through text-gray-400">{ch.due_date}</span>
-                                  <span className="block text-green-600 font-bold">→ {getNextBusinessDay(ch.due_date)}</span>
-                                </>
-                              ) : (
-                                <span className="text-gray-500">{ch.due_date}</span>
+                              <span className="font-bold text-slate-900">
+                                {ch.beneficiary_or_issuer || '—'}
+                              </span>
+                              {ch.issuer_company && (
+                                <span className="text-[11px] text-slate-400">
+                                  Emisor: {ch.issuer_company}
+                                </span>
+                              )}
+                              {ch.linked_purchase_invoice_id && (
+                                <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded w-max mt-0.5 font-medium">
+                                  Factura Compra Asoc.
+                                </span>
+                              )}
+                              {ch.linked_invoice_id && (
+                                <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded w-max mt-0.5 font-medium">
+                                  Factura Venta Asoc.
+                                </span>
                               )}
                             </div>
-                          ) : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor[ch.status]}`}>{ch.status}</span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {(ch as any).scan_url ? (
-                            <button onClick={() => setViewerUrl((ch as any).scan_url)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1 rounded transition-colors" title="Ver imagen"><Camera size={14} /></button>
-                          ) : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {ch.status === 'pending' && (
-                              <button
-                                onClick={() => handleQuickStatus(ch, ch.direction === 'payable' ? 'cashed' : 'deposited')}
-                                disabled={!canWrite}
-                                className={`p-1.5 rounded-lg hover:bg-green-50 text-green-600 hover:text-green-700 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`}
-                                title={ch.direction === 'payable' ? 'Marcar como Pagado' : 'Marcar como Depositado'}
-                              >
-                                <CheckCircle2 size={16} />
-                              </button>
+                          </td>
+
+                          {/* Monto */}
+                          <td className="px-4 py-3.5 text-right font-mono font-black text-slate-900 text-sm">
+                            {formatARS(ch.amount_ars)}
+                          </td>
+
+                          {/* Vencimiento */}
+                          <td className="px-4 py-3.5 text-xs">
+                            {ch.due_date ? (
+                              <div className="space-y-0.5">
+                                {isPostponed(ch.due_date) ? (
+                                  <>
+                                    <span className="line-through text-slate-400 block">{ch.due_date}</span>
+                                    <span className="text-emerald-700 font-bold block">→ {getNextBusinessDay(ch.due_date)}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-slate-700 font-medium">{ch.due_date}</span>
+                                )}
+                                {isPaid && (
+                                  <span className="inline-block text-[10px] text-emerald-700 font-bold">
+                                    ✓ Efectivizado
+                                  </span>
+                                )}
+                                {isOverdue && (
+                                  <span className="inline-block text-[10px] text-rose-700 font-bold bg-rose-100 px-1 rounded">
+                                    ⚠️ Vencido
+                                  </span>
+                                )}
+                              </div>
+                            ) : '—'}
+                          </td>
+
+                          {/* Estado con Badge Claro */}
+                          <td className="px-4 py-3.5 text-center">
+                            {ch.status === 'cashed' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <CheckCircle2 size={13} className="text-emerald-600" />
+                                {isPayable ? 'PAGADO' : 'COBRADO'}
+                              </span>
+                            ) : ch.status === 'deposited' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                                <CheckCircle2 size={13} className="text-blue-600" />
+                                DEPOSITADO
+                              </span>
+                            ) : ch.status === 'pending' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                <Clock size={13} className="text-amber-600" />
+                                PENDIENTE
+                              </span>
+                            ) : ch.status === 'bounced' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                <AlertTriangle size={13} className="text-rose-600" />
+                                RECHAZADO
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                                ANULADO
+                              </span>
                             )}
-                            <button onClick={() => handleEdit(ch)} disabled={!canWrite} className={`p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canWrite ? 'Sin permisos de edición' : 'Editar'}><Pencil size={14} /></button>
-                            <button onClick={() => setAuditChequeId(ch.id)} className="p-1.5 rounded-lg hover:bg-slate-50 text-gray-400 hover:text-ecar-blue transition-colors" title="Historial"><History size={14} /></button>
-                            <button onClick={() => setDeleteTarget(ch)} disabled={!canDelete} className={`p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`} title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar'}><Trash2 size={14} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+
+                          {/* Scan */}
+                          <td className="px-4 py-3.5 text-center">
+                            {(ch as any).scan_url ? (
+                              <button
+                                onClick={() => setViewerUrl((ch as any).scan_url)}
+                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded-lg transition-colors inline-block"
+                                title="Ver imagen del cheque"
+                              >
+                                <Camera size={15} />
+                              </button>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="px-4 py-3.5 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {/* Botón rápido: Marcar como Pagado / Cobrado */}
+                              {isPending && (
+                                <button
+                                  onClick={() => handleQuickStatus(ch, isPayable ? 'cashed' : 'deposited')}
+                                  disabled={!canWrite}
+                                  className={`p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                  title={isPayable ? 'Marcar como Pagado (Debitado)' : 'Marcar como Depositado / Cobrado'}
+                                >
+                                  <CheckCircle2 size={16} />
+                                </button>
+                              )}
+
+                              {/* Botón rápido: Revertir a Pendiente si ya fue pagado */}
+                              {isPaid && (
+                                <button
+                                  onClick={() => handleRevertToPending(ch)}
+                                  disabled={!canWrite}
+                                  className={`p-1.5 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-700 transition-all ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                  title="Revertir estado a Pendiente"
+                                >
+                                  <Undo2 size={15} />
+                                </button>
+                              )}
+
+                              {/* Editar */}
+                              <button
+                                onClick={() => handleEdit(ch)}
+                                disabled={!canWrite}
+                                className={`p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors ${!canWrite ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                title={!canWrite ? 'Sin permisos de edición' : 'Editar Cheque'}
+                              >
+                                <Pencil size={14} />
+                              </button>
+
+                              {/* Historial Auditoría */}
+                              <button
+                                onClick={() => setAuditChequeId(ch.id)}
+                                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-ecar-blue transition-colors"
+                                title="Historial de Auditoría"
+                              >
+                                <History size={14} />
+                              </button>
+
+                              {/* Eliminar */}
+                              <button
+                                onClick={() => setDeleteTarget(ch)}
+                                disabled={!canDelete}
+                                className={`p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar Cheque'}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

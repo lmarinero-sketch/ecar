@@ -9,6 +9,7 @@ import { useImplementationStore } from '../store/useImplementationStore';
 import * as XLSX from 'xlsx';
 
 import { LegalEntitiesPanel } from './LegalEntitiesPanel';
+import { NewPurchaseInvoiceModal } from './purchases/NewPurchaseInvoiceModal';
 
 type InvoiceTab = 'compras' | 'ventas' | 'banco' | 'razones_sociales';
 
@@ -282,6 +283,7 @@ export const PurchasesModule: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
   const [searchProvider, setSearchProvider] = useState('');
+  const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
 
   // Periodo for Libro IVA export
   const now = new Date();
@@ -565,30 +567,10 @@ export const PurchasesModule: React.FC = () => {
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-gray-400">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-ecar-blue' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
             <button 
-              onClick={() => {
-                if (!selectedLegalEntityId) {
-                  useModalStore.getState().showAlert('Atención', 'Debe seleccionar una Razón Social primero.');
-                  return;
-                }
-                setEditingInvoice({ id: 'new', status: 'validated', legal_entity_id: selectedLegalEntityId });
-                setEditForm({
-                  supplier_name: '',
-                  supplier_cuit: '',
-                  invoice_type: 'FA',
-                  point_of_sale: '0001',
-                  invoice_number: '',
-                  issue_date: new Date().toISOString().split('T')[0],
-                  net_amount_ars: 0,
-                  iva_21_ars: 0,
-                  total_ars: 0,
-                  status: 'validated',
-                  tipo_operacion: uploadTipo,
-                  related_invoice_id: ''
-                });
-              }}
-              className="text-xs font-bold text-ecar-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+              onClick={() => setShowNewInvoiceModal(true)}
+              className="text-xs font-bold text-ecar-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
             >
-              <Plus size={14} /> Carga Manual
+              <Plus size={14} /> Nuevo Comprobante / Carga Manual
             </button>
           </div>
         </div>
@@ -1320,6 +1302,18 @@ export const PurchasesModule: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Nuevo Comprobante de Compra Modal */}
+      {showNewInvoiceModal && (
+        <NewPurchaseInvoiceModal
+          onClose={() => setShowNewInvoiceModal(false)}
+          onSuccess={() => {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
+          }}
+        />
       )}
     </div>
   );
