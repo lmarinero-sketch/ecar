@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search, Building2 } from 'lucide-react';
+import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search, Building2, CreditCard } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePurchaseInvoices, useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
+import { usePurchaseInvoices, useSuppliers, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { useModalStore } from '../store/useModalStore';
 import { useImplementationStore } from '../store/useImplementationStore';
+import type { Supplier } from '../lib/types';
 import * as XLSX from 'xlsx';
 
 import { LegalEntitiesPanel } from './LegalEntitiesPanel';
 import { NewPurchaseInvoiceModal } from './purchases/NewPurchaseInvoiceModal';
+import { SupplierMaster } from './purchases/SupplierMaster';
+import { SupplierPaymentModal } from './purchases/SupplierPaymentModal';
 
-type InvoiceTab = 'compras' | 'ventas' | 'banco' | 'razones_sociales';
+type InvoiceTab = 'compras' | 'ventas' | 'proveedores' | 'banco' | 'razones_sociales';
 
 const BancoPreciosTab: React.FC = () => {
   const { data: resources = [], isLoading } = useBudgetResources();
@@ -258,7 +261,6 @@ export const PurchasesModule: React.FC = () => {
   }, []);
   const { data: invoices = [], isLoading, refetch } = usePurchaseInvoices();
   const { data: suppliers = [] } = useSuppliers();
-  const createSupplier = useCreateSupplier();
   const { data: gastosItems = [] } = useGastosItems();
   const { data: projects = [] } = useProjects();
   const [uploading, setUploading] = useState(false);
@@ -268,22 +270,17 @@ export const PurchasesModule: React.FC = () => {
   const [allocations, setAllocations] = useState<{project_id: string, percentage: number, amount_ars: number}[]>([]);
   const updateAllocations = useUpdateInvoiceAllocations();
   const [ocrError, setOcrError] = useState('');
-  const [showSupplierForm, setShowSupplierForm] = useState(false);
-  const [supplierForm, setSupplierForm] = useState({ name: '', cuit: '', tax_condition: 'RI' });
-  const [selectedLegalEntityLibro, setSelectedLegalEntityLibro] = useState<string>('');
-  const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
-  const [editingSupplierForm, setEditingSupplierForm] = useState({ name: '', cuit: '' });
-  const updateSupplier = useUpdateSupplier();
-  const deleteSupplier = useDeleteSupplier();
   const [activeTab, setActiveTab] = useState<InvoiceTab>('compras');
-  const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const [selectedLegalEntityLibro, setSelectedLegalEntityLibro] = useState<string>('');
+  const [editingPurchaseInvoice, setEditingPurchaseInvoice] = useState<any>(null);
   const { data: legalEntities = [] } = useLegalEntities();
   const [selectedLegalEntityId, setSelectedLegalEntityId] = useState<string>('');
-  const [editForm, setEditForm] = useState<any>({});
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
   const [searchProvider, setSearchProvider] = useState('');
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
+  const [payingSupplier, setPayingSupplier] = useState<Supplier | null>(null);
+  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
 
   // Periodo for Libro IVA export
   const now = new Date();
@@ -506,120 +503,86 @@ export const PurchasesModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Upload + Suppliers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-3">
-          {/* Tipo selector */}
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-            <button onClick={() => setUploadTipo('compra')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'compra' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-              <TrendingDown size={14} /> Compra
-            </button>
-            <button onClick={() => setUploadTipo('venta')} className={`flex-1 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${uploadTipo === 'venta' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-              <TrendingUp size={14} /> Venta
-            </button>
+      {/* Carga de Comprobantes & OCR Header */}
+      <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-3xl p-6 shadow-2xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Main Action: Carga Detallada Artículo por Artículo */}
+          <div className="lg:col-span-6 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-ecar-blue border border-blue-200/60 rounded-full text-xs font-bold">
+              <ShoppingCart size={14} /> Nuevo Circuito de Compras
+            </div>
+            <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+              Carga Detallada de Comprobantes
+            </h3>
+            <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+              Cargá facturas y notas de crédito/débito artículo por artículo, vinculando directamente los productos del inventario para actualizar stock, precios y bitácora de variaciones en tiempo real.
+            </p>
+
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setEditingPurchaseInvoice(null);
+                  setShowNewInvoiceModal(true);
+                }}
+                className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-ecar-blue via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 active:scale-98 transition-all flex items-center justify-center gap-2.5"
+              >
+                <Plus size={20} className="stroke-[3]" />
+                <span>+ Cargar Comprobante de Compra</span>
+              </button>
+            </div>
           </div>
-          
-          {legalEntities.length === 0 && (
-            <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 text-sm flex items-start gap-3">
-              <AlertCircle className="shrink-0 mt-0.5 text-yellow-600" size={18} />
-              <div>
-                <p className="font-bold mb-1">¡Falta configurar las Razones Sociales!</p>
-                <p>Para poder cargar facturas, primero debes registrar al menos una Razón Social (ej. ECAR SAS) desde la pestaña <strong>"Razones Sociales"</strong>. Una vez creada, podrás seleccionarla aquí.</p>
+
+          {/* Secondary Action: Escaneo Inteligente OCR */}
+          <div className="lg:col-span-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Upload size={14} className="text-ecar-blue" />
+                Carga Asistida con IA / Subir Archivo
+              </span>
+              <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+                <button onClick={() => setUploadTipo('compra')} className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${uploadTipo === 'compra' ? 'bg-white text-ecar-blue shadow-2xs' : 'text-slate-500'}`}>
+                  📥 Compra
+                </button>
+                <button onClick={() => setUploadTipo('venta')} className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${uploadTipo === 'venta' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-500'}`}>
+                  📤 Venta
+                </button>
               </div>
             </div>
-          )}
 
-          <div className="mb-4">
-            <label className="block text-xs font-bold text-gray-700 mb-1">Seleccionar Razón Social *</label>
-            <select
-              value={selectedLegalEntityId}
-              onChange={e => setSelectedLegalEntityId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-            >
-              <option value="">-- Requerido para cargar factura --</option>
-              {legalEntities.map(entity => (
-                <option key={entity.id} value={entity.id}>{entity.name} (CUIT: {entity.cuit})</option>
-              ))}
-            </select>
-          </div>
-
-          <label className={`border-2 border-dashed rounded-xl p-8 text-center transition-all block ${!selectedLegalEntityId ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed' : uploading || processing ? 'border-blue-300 bg-blue-50 cursor-pointer' : 'border-gray-300 hover:border-ecar-blue hover:bg-blue-50/50 cursor-pointer'}`}>
-          {processing ? (
-            <>
-              <Loader2 size={36} className="mx-auto mb-3 text-blue-500 animate-spin" />
-              <p className="font-bold text-blue-700">🤖 IA analizando factura...</p>
-              <p className="text-xs text-blue-400 mt-1">Extrayendo CUIT, montos, IVA y clasificando compra/venta</p>
-            </>
-          ) : uploading ? (
-            <>
-              <Loader2 size={36} className="mx-auto mb-3 text-gray-400 animate-spin" />
-              <p className="font-bold text-gray-700">Subiendo archivo...</p>
-            </>
-          ) : (
-            <>
-              <Upload size={36} className="mx-auto mb-3 text-gray-400" />
-              <p className="font-bold text-gray-700">Subir Factura</p>
-              <p className="text-xs text-gray-400 mt-1">PDF o foto (JPG, PNG). Asegúrate de que la foto sea legible y todos los datos se vean de forma correcta.</p>
-            </>
-          )}
-          <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
-          </label>
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-gray-400">Se cargará como <span className={`font-bold ${uploadTipo === 'compra' ? 'text-ecar-blue' : 'text-emerald-600'}`}>{uploadTipo === 'compra' ? '📥 Compra' : '📤 Venta'}</span></p>
-            <button 
-              onClick={() => setShowNewInvoiceModal(true)}
-              className="text-xs font-bold text-ecar-blue hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-            >
-              <Plus size={14} /> Nuevo Comprobante / Carga Manual
-            </button>
-          </div>
-        </div>
-
-        <div className="light-card p-5">
-          <div className="flex justify-between items-center mb-3">
-            <h4 className="font-bold text-gray-900">Proveedores ({suppliers.length})</h4>
-            <button onClick={() => setShowSupplierForm(!showSupplierForm)} className="text-ecar-blue text-sm font-bold flex items-center gap-1"><Plus size={14} /> Nuevo</button>
-          </div>
-          {showSupplierForm && (
-            <div className="space-y-2 mb-3 p-3 bg-gray-50 rounded-lg">
-              <input placeholder="Razón Social" value={supplierForm.name} onChange={e => setSupplierForm({ ...supplierForm, name: e.target.value })} className="w-full px-3 py-2 border rounded text-sm" />
-              <input placeholder="CUIT" value={supplierForm.cuit} onChange={e => setSupplierForm({ ...supplierForm, cuit: e.target.value })} className="w-full px-3 py-2 border rounded text-sm" />
-              <button onClick={async () => { await createSupplier.mutateAsync(supplierForm); setShowSupplierForm(false); setSupplierForm({ name: '', cuit: '', tax_condition: 'RI' }); }} className="btn-primary px-4 py-1.5 text-sm w-full">Guardar</button>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Razón Social Receptora / Emisora *</label>
+              <select
+                value={selectedLegalEntityId}
+                onChange={e => setSelectedLegalEntityId(e.target.value)}
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 font-medium"
+              >
+                <option value="">-- Seleccionar Empresa --</option>
+                {legalEntities.map(entity => (
+                  <option key={entity.id} value={entity.id}>{entity.name} (CUIT: {entity.cuit})</option>
+                ))}
+              </select>
             </div>
-          )}
-          <div className="space-y-1 max-h-40 overflow-y-auto">
-            {suppliers.map((s: any) => (
-              <div key={s.id} className="group flex justify-between items-center text-sm py-1.5 px-2 hover:bg-gray-50 rounded">
-                {editingSupplier === s.id ? (
-                  <div className="flex items-center gap-2 w-full">
-                    <input className="border rounded px-2 py-1 text-xs w-1/2" value={editingSupplierForm.name} onChange={e => setEditingSupplierForm({ ...editingSupplierForm, name: e.target.value })} />
-                    <input className="border rounded px-2 py-1 text-xs w-1/3" value={editingSupplierForm.cuit} onChange={e => setEditingSupplierForm({ ...editingSupplierForm, cuit: e.target.value })} />
-                    <button onClick={async () => { await updateSupplier.mutateAsync({ id: s.id, ...editingSupplierForm }); setEditingSupplier(null); }} className="text-green-600 hover:bg-green-100 p-1 rounded"><Check size={14}/></button>
-                    <button onClick={() => setEditingSupplier(null)} className="text-gray-400 hover:bg-gray-100 p-1 rounded"><X size={14}/></button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-800">{s.name}</span>
-                      <span className="text-gray-400 font-mono text-xs ml-2">{s.cuit || '—'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingSupplier(s.id); setEditingSupplierForm({ name: s.name, cuit: s.cuit || '' }); }} className="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><Pencil size={14} /></button>
-                      <button onClick={async () => {
-                        if (await useModalStore.getState().showConfirm('Confirmar', '¿Eliminar proveedor?')) {
-                          try {
-                            await deleteSupplier.mutateAsync(s.id);
-                          } catch (err: any) {
-                            useModalStore.getState().showAlert('Error', 'No se puede eliminar el proveedor porque tiene facturas u otros registros asociados.');
-                          }
-                        }
-                      }} className="text-red-500 hover:bg-red-50 p-1 rounded" title="Eliminar"><Trash2 size={14} /></button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-            {suppliers.length === 0 && <p className="text-gray-400 text-sm">Sin proveedores</p>}
+
+            <label className={`border-2 border-dashed rounded-xl p-4 text-center transition-all block ${!selectedLegalEntityId ? 'border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed' : uploading || processing ? 'border-blue-300 bg-blue-50 cursor-pointer' : 'border-slate-300 hover:border-ecar-blue hover:bg-blue-50/40 cursor-pointer'}`}>
+              {processing ? (
+                <div className="py-2">
+                  <Loader2 size={24} className="mx-auto mb-1 text-blue-500 animate-spin" />
+                  <p className="font-bold text-blue-700 text-xs">🤖 IA analizando factura...</p>
+                </div>
+              ) : uploading ? (
+                <div className="py-2">
+                  <Loader2 size={24} className="mx-auto mb-1 text-slate-400 animate-spin" />
+                  <p className="font-bold text-slate-700 text-xs">Subiendo archivo...</p>
+                </div>
+              ) : (
+                <div className="py-2">
+                  <Upload size={24} className="mx-auto mb-1 text-slate-400" />
+                  <p className="font-bold text-slate-700 text-xs">Arrastrá o hacé clic para subir PDF o Foto</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">La IA clasificará y extraerá CUIT, montos e IVA</p>
+                </div>
+              )}
+              <input type="file" className="hidden" accept="image/*,.pdf" disabled={!selectedLegalEntityId || uploading || processing} onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
+            </label>
           </div>
         </div>
       </div>
@@ -679,13 +642,16 @@ export const PurchasesModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs: Compras / Ventas / Banco */}
+      {/* Tabs: Compras / Ventas / Proveedores / Banco / Razones Sociales */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
         <button onClick={() => setActiveTab('compras')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <TrendingDown size={16} /> Compras ({compras.length})
         </button>
         <button onClick={() => setActiveTab('ventas')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'ventas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <TrendingUp size={16} /> Ventas ({ventas.length})
+        </button>
+        <button onClick={() => setActiveTab('proveedores')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'proveedores' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <Building2 size={16} /> Proveedores ({suppliers.length})
         </button>
         <button onClick={() => setActiveTab('banco')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'banco' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
           <Database size={16} /> Banco de Precios
@@ -696,7 +662,7 @@ export const PurchasesModule: React.FC = () => {
       </div>
 
       {/* Posicion IVA - Sutil */}
-      {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
+      {(activeTab === 'compras' || activeTab === 'ventas') && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
           {legalEntities.map((entity: any) => {
             const { posicion, ivaVentas, ivaCompras } = calculatePosicionIva(entity.id);
@@ -729,7 +695,7 @@ export const PurchasesModule: React.FC = () => {
       )}
 
       {/* Totals bar (Only for invoices) */}
-      {activeTab !== 'banco' && activeTab !== 'razones_sociales' && (
+      {(activeTab === 'compras' || activeTab === 'ventas') && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="light-card p-4">
             <p className="text-xs text-gray-400 font-bold uppercase">Neto Gravado</p>
@@ -751,6 +717,8 @@ export const PurchasesModule: React.FC = () => {
         <BancoPreciosTab />
       ) : activeTab === 'razones_sociales' ? (
         <LegalEntitiesPanel />
+      ) : activeTab === 'proveedores' ? (
+        <SupplierMaster />
       ) : (
         <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
@@ -895,13 +863,33 @@ export const PurchasesModule: React.FC = () => {
                         {inv.original_file_url && (
                           <a href={inv.original_file_url} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-50 rounded" title="Ver original"><Eye size={16} /></a>
                         )}
+                        {activeTab === 'compras' && (
+                          <button
+                            onClick={() => {
+                              const targetSup = suppliers.find(s => s.id === inv.supplier_id) || {
+                                id: inv.supplier_id || '',
+                                name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Proveedor',
+                                cuit: inv.ocr_raw_data?.cuit || inv.supplier?.cuit || null,
+                                tax_condition: 'RI',
+                                address: null, phone: null, email: null, bank_cbu: null, is_fixed: false,
+                                tenant_id: ECAR_TENANT_ID, created_at: ''
+                              } as Supplier;
+                              setPayingSupplier(targetSup);
+                              setPayingInvoiceId(inv.id);
+                            }}
+                            className={`p-1 rounded transition-colors ${inv.payment_status === 'paid' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-blue-500 hover:bg-blue-50'}`}
+                            title={inv.payment_status === 'paid' ? 'Factura Pagada' : 'Pagar con Cheque / Transf.'}
+                          >
+                            <CreditCard size={15} />
+                          </button>
+                        )}
                         {inv.status === 'pending_review' && (
                           <>
                             <button onClick={() => handleValidate(inv.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Validar"><Check size={16} /></button>
                             <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
                           </>
                         )}
-                        <button onClick={() => { setEditingInvoice(inv); setEditForm({ supplier_name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '', supplier_cuit: inv.ocr_raw_data?.cuit || '', invoice_type: inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '', point_of_sale: inv.point_of_sale || inv.ocr_raw_data?.punto_venta || '', invoice_number: inv.invoice_number || inv.ocr_raw_data?.numero_factura || '', issue_date: inv.issue_date || '', net_amount_ars: inv.net_amount_ars || 0, iva_21_ars: inv.iva_21_ars || 0, total_ars: inv.total_ars || 0, status: inv.status, tipo_operacion: inv.ocr_raw_data?.tipo || classifyInvoice(inv), related_invoice_id: inv.related_invoice_id || '' }); }} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => setEditingPurchaseInvoice(inv)} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar Comprobante"><Pencil size={14} /></button>
                         <button onClick={() => setDeleteTarget(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -1098,186 +1086,6 @@ export const PurchasesModule: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Invoice Modal */}
-      {editingInvoice && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Editar Factura</h3>
-              <button onClick={() => setEditingInvoice(null)}><X size={20} className="text-gray-400" /></button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="text-xs font-bold text-gray-500">Proveedor / Cliente</label>
-                <input value={editForm.supplier_name} onChange={e => setEditForm({ ...editForm, supplier_name: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Clasificación</label>
-                <select value={editForm.tipo_operacion} onChange={e => setEditForm({ ...editForm, tipo_operacion: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
-                  <option value="compra">Compra</option>
-                  <option value="venta">Venta</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">CUIT</label>
-                <input value={editForm.supplier_cuit} onChange={e => setEditForm({ ...editForm, supplier_cuit: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Tipo Factura</label>
-                <select value={editForm.invoice_type} onChange={e => setEditForm({ ...editForm, invoice_type: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm bg-white">
-                  <optgroup label="Facturas">
-                    <option value="A">Factura A</option>
-                    <option value="B">Factura B</option>
-                    <option value="C">Factura C</option>
-                    <option value="M">Factura M</option>
-                  </optgroup>
-                  <optgroup label="Notas de Crédito">
-                    <option value="NCA">Nota de Crédito A (NCA)</option>
-                    <option value="NCB">Nota de Crédito B (NCB)</option>
-                    <option value="NCC">Nota de Crédito C (NCC)</option>
-                    <option value="NCM">Nota de Crédito M (NCM)</option>
-                  </optgroup>
-                  <optgroup label="Notas de Débito">
-                    <option value="NDA">Nota de Débito A (NDA)</option>
-                    <option value="NDB">Nota de Débito B (NDB)</option>
-                    <option value="NDC">Nota de Débito C (NDC)</option>
-                    <option value="NDM">Nota de Débito M (NDM)</option>
-                  </optgroup>
-                  <option value={editForm.invoice_type} hidden>{editForm.invoice_type}</option>
-                </select>
-              </div>
-
-              {isCreditNote(editForm.invoice_type) && (
-                <div className="col-span-2 space-y-2">
-                  <label className="text-xs font-bold text-gray-500">Factura Asociada (Buscador)</label>
-                  {editForm.related_invoice_id ? (
-                    <div className="flex justify-between items-center bg-blue-50 border border-blue-200 p-2 rounded-lg">
-                      <span className="text-sm font-medium text-blue-800 truncate">
-                        {invoices.find((i:any) => i.id === editForm.related_invoice_id) 
-                          ? (() => {
-                              const i = invoices.find((inv:any) => inv.id === editForm.related_invoice_id);
-                              return i ? `${i.invoice_type || 'FA'} ${i.point_of_sale}-${i.invoice_number} | ${formatARS(i.total_ars)}` : '';
-                            })()
-                          : `ID: ${editForm.related_invoice_id.substring(0,8)}...`
-                        }
-                      </span>
-                      <button onClick={() => setEditForm({...editForm, related_invoice_id: null})} className="text-blue-500 hover:text-blue-700 text-xs font-bold bg-white px-2 py-1 rounded shadow-sm border border-blue-100">Cambiar</button>
-                    </div>
-                  ) : (
-                    <>
-                      <input type="text" placeholder="🔍 Escribí para buscar por proveedor o n° comprobante..." value={searchProvider} onChange={e => setSearchProvider(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all" />
-                      <div className="max-h-32 overflow-y-auto border rounded-lg bg-gray-50 divide-y shadow-inner">
-                        {invoices
-                          .filter((inv: any) => !isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura))
-                          .filter((inv: any) => {
-                             const prov = (inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '').toLowerCase();
-                             const invNum = String(inv.invoice_number || '').toLowerCase();
-                             const pointSale = String(inv.point_of_sale || '').toLowerCase();
-                             const q = searchProvider.toLowerCase();
-                             return q === '' || prov.includes(q) || invNum.includes(q) || `${pointSale}-${invNum}`.includes(q);
-                          })
-                          .map((inv: any) => (
-                          <div key={inv.id} onClick={() => setEditForm({...editForm, related_invoice_id: inv.id})} className="p-2 hover:bg-blue-100 cursor-pointer text-sm flex flex-col md:flex-row md:justify-between transition-colors">
-                            <span className="font-bold truncate max-w-[50%]">{(inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Sin Proveedor')}</span>
-                            <span className="text-gray-600 text-xs md:text-sm mt-0.5 md:mt-0">{inv.invoice_type || 'FA'} {inv.point_of_sale}-{inv.invoice_number} | <span className="font-bold font-mono">{formatARS(inv.total_ars)}</span></span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-bold text-gray-500">Punto de Venta</label>
-                <input value={editForm.point_of_sale} onChange={e => setEditForm({ ...editForm, point_of_sale: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">N° Factura</label>
-                <input value={editForm.invoice_number} onChange={e => setEditForm({ ...editForm, invoice_number: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Fecha Emisión</label>
-                <input type="date" value={editForm.issue_date} onChange={e => setEditForm({ ...editForm, issue_date: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Neto Gravado ($)</label>
-                <input type="number" value={editForm.net_amount_ars} onChange={e => { const net = parseFloat(e.target.value) || 0; setEditForm({ ...editForm, net_amount_ars: net, iva_21_ars: Math.round(net * 0.21 * 100) / 100, total_ars: Math.round((net + net * 0.21) * 100) / 100 }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">IVA 21% ($)</label>
-                <input type="number" value={editForm.iva_21_ars} onChange={e => { const iva = parseFloat(e.target.value) || 0; setEditForm({ ...editForm, iva_21_ars: iva, total_ars: Math.round(((editForm.net_amount_ars || 0) + iva) * 100) / 100 }); }} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Total ($)</label>
-                <input type="number" value={editForm.total_ars} onChange={e => setEditForm({ ...editForm, total_ars: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500">Estado</label>
-                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm">
-                  <option value="pending_review">Revisar</option>
-                  <option value="validated">Validado</option>
-                  <option value="rejected">Rechazado</option>
-                  <option value="exported">Exportado</option>
-                </select>
-              </div>
-            </div>
-            <button
-              onClick={async () => {
-                try {
-                  // Validación de duplicados en Frontend
-                  const isDuplicate = invoices.some((i: any) => 
-                    i.id !== editingInvoice.id &&
-                    i.supplier_id === editingInvoice.supplier_id &&
-                    i.invoice_type === editForm.invoice_type &&
-                    i.invoice_number === editForm.invoice_number &&
-                    (i.point_of_sale || '') === (editForm.point_of_sale || '') &&
-                    i.status !== 'rejected'
-                  );
-
-                  if (isDuplicate) {
-                    useModalStore.getState().showAlert('Factura Duplicada', `Ya existe una factura ${editForm.invoice_type} ${editForm.point_of_sale}-${editForm.invoice_number} cargada para este proveedor.`);
-                    return;
-                  }
-
-                  const ocr = { ...(editingInvoice.ocr_raw_data || {}), proveedor_cliente: editForm.supplier_name, cuit: editForm.supplier_cuit, tipo_factura: editForm.invoice_type, punto_venta: editForm.point_of_sale, numero_factura: editForm.invoice_number, tipo: editForm.tipo_operacion };
-                  
-                  if (editingInvoice.id === 'new') {
-                    const { error } = await supabase.from('purchase_invoices').insert({
-                      tenant_id: ECAR_TENANT_ID,
-                      legal_entity_id: editingInvoice.legal_entity_id,
-                      invoice_type: editForm.invoice_type,
-                      point_of_sale: editForm.point_of_sale,
-                      invoice_number: editForm.invoice_number,
-                      issue_date: editForm.issue_date,
-                      net_amount_ars: editForm.net_amount_ars,
-                      iva_21_ars: editForm.iva_21_ars,
-                      total_ars: editForm.total_ars,
-                      status: editForm.status,
-                      ocr_raw_data: ocr,
-                      related_invoice_id: editForm.related_invoice_id || null
-                    });
-                    if (error) throw error;
-                  } else {
-                    const { error } = await supabase.from('purchase_invoices').update({ invoice_type: editForm.invoice_type, point_of_sale: editForm.point_of_sale, invoice_number: editForm.invoice_number, issue_date: editForm.issue_date, net_amount_ars: editForm.net_amount_ars, iva_21_ars: editForm.iva_21_ars, total_ars: editForm.total_ars, status: editForm.status, ocr_raw_data: ocr, related_invoice_id: editForm.related_invoice_id || null }).eq('id', editingInvoice.id);
-                    if (error) throw error;
-                    
-                    if (editingInvoice.supplier_id) {
-                      await supabase.from('suppliers').update({ name: editForm.supplier_name, cuit: editForm.supplier_cuit }).eq('id', editingInvoice.supplier_id);
-                    }
-                  }
-                  
-                  setEditingInvoice(null);
-                  refetch();
-                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-              }}
-              className="btn-primary w-full py-3 text-sm"
-            >
-              ✓ Guardar Cambios
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Delete Invoice Confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1304,14 +1112,37 @@ export const PurchasesModule: React.FC = () => {
         </div>
       )}
 
-      {/* Nuevo Comprobante de Compra Modal */}
-      {showNewInvoiceModal && (
+      {/* Nuevo Comprobante de Compra / Editar Comprobante Modal */}
+      {(showNewInvoiceModal || editingPurchaseInvoice) && (
         <NewPurchaseInvoiceModal
-          onClose={() => setShowNewInvoiceModal(false)}
+          invoiceToEdit={editingPurchaseInvoice}
+          onClose={() => {
+            setShowNewInvoiceModal(false);
+            setEditingPurchaseInvoice(null);
+          }}
           onSuccess={() => {
             refetch();
             queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] });
             queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory_item_price_history'] });
+          }}
+        />
+      )}
+
+      {/* Modal de Pago a Proveedor (Cheque / Transf) */}
+      {payingSupplier && (
+        <SupplierPaymentModal
+          supplier={payingSupplier}
+          preselectedInvoiceId={payingInvoiceId}
+          onClose={() => {
+            setPayingSupplier(null);
+            setPayingInvoiceId(null);
+          }}
+          onSuccess={() => {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            queryClient.invalidateQueries({ queryKey: ['cheques'] });
           }}
         />
       )}

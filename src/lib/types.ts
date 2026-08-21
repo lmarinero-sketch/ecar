@@ -217,14 +217,46 @@ export type Supplier = {
   id: string;
   tenant_id: string;
   name: string;
+  commercial_name?: string | null;
   cuit: string | null;
   tax_condition: string;
-  address: string | null;
+  category?: string | null;
+  payment_methods?: string[] | null;
+  has_checking_account?: boolean;
+  credit_limit_ars?: number;
+  credit_days?: number;
+  default_payment_condition?: string;
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  bank_cbu: string | null;
+  bank_alias?: string | null;
+  bank_account_holder?: string | null;
+  contact_person?: string | null;
   phone: string | null;
   email: string | null;
-  bank_cbu: string | null;
+  address: string | null;
+  notes?: string | null;
   is_fixed: boolean;
   created_at: string;
+};
+
+export type SupplierPayment = {
+  id: string;
+  tenant_id: string;
+  supplier_id: string;
+  payment_date: string;
+  payment_method: 'cheque_issued' | 'cheque_third_party' | 'transfer' | 'cash';
+  amount_ars: number;
+  cheque_id?: string | null;
+  purchase_invoice_id?: string | null;
+  bank_account_id?: string | null;
+  receipt_number?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  supplier?: Supplier | null;
+  cheque?: Cheque | null;
+  purchase_invoice?: PurchaseInvoice | null;
 };
 
 export type PurchaseInvoiceAllocation = {
@@ -275,6 +307,8 @@ export type InventoryItemPriceHistory = {
   supplier?: Supplier | null;
 };
 
+export const formatARS = (v: number | null | undefined) => (v != null && !isNaN(v)) ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v) : '$ 0,00';
+
 export type PurchaseInvoice = {
   id: string;
   tenant_id: string;
@@ -285,6 +319,7 @@ export type PurchaseInvoice = {
   allocations?: PurchaseInvoiceAllocation[];
   items?: PurchaseInvoiceItem[];
   invoice_type: string | null;
+  type?: 'compra' | 'venta';
   point_of_sale: string | null;
   invoice_number: string | null;
   issue_date: string | null;
@@ -298,6 +333,7 @@ export type PurchaseInvoice = {
   total_ars: number;
   cae_number: string | null;
   status: 'pending_review' | 'validated' | 'rejected' | 'exported';
+  payment_status?: 'pending' | 'partially_paid' | 'paid' | string;
   original_file_url: string | null;
   ocr_raw_data: Record<string, unknown> | null;
   ocr_validated: boolean;

@@ -23,7 +23,8 @@ import type {
   EmployeePPEDelivery, LegalEntity,
   FleetMaintenanceOrder, FleetTire,
   QualityChecklist,
-  PurchaseInvoiceItem, InventoryItemPriceHistory
+  PurchaseInvoiceItem, InventoryItemPriceHistory,
+  SupplierPayment
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -464,6 +465,146 @@ export function useDeleteSupplier() {
   });
 }
 
+// ========== SUPPLIER PAYMENTS & CHECKING ACCOUNTS ==========
+export function useSupplierPayments(supplierId?: string) {
+  return useQuery({
+    queryKey: ['supplier_payments', supplierId || 'all'],
+    queryFn: async () => {
+      let query = supabase
+        .from('supplier_payments')
+        .select(`
+          *,
+          supplier:suppliers(*),
+          cheque:cheques(*),
+          purchase_invoice:purchase_invoices(*)
+        `)
+        .order('payment_date', { ascending: false });
+
+      if (supplierId) {
+        query = query.eq('supplier_id', supplierId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as SupplierPayment[];
+    },
+  });
+}
+
+export type CreateSupplierPaymentParams = {
+  supplier_id: string;
+  payment_date: string;
+  payment_method: 'cheque_issued' | 'cheque_third_party' | 'transfer' | 'cash';
+  amount_ars: number;
+  purchase_invoice_id?: string | null;
+  bank_account_id?: string | null;
+  receipt_number?: string | null;
+  notes?: string | null;
+  cheque_number?: string;
+  bank_name?: string;
+  due_date?: string;
+  issue_date?: string;
+  issuer_company?: string;
+  cheque_type?: 'physical' | 'echeq';
+  third_party_cheque_id?: string;
+};
+
+export function useCreateSupplierPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateSupplierPaymentParams) => {
+      let linkedChequeId: string | null = null;
+
+      // 1. If paying with a newly issued cheque
+      if (payload.payment_method === 'cheque_issued') {
+        if (!payload.cheque_number || !payload.bank_name) {
+          throw new Error('Debe especificar número de cheque y banco emisor.');
+        }
+        const { data: sup } = await supabase.from('suppliers').select('name').eq('id', payload.supplier_id).single();
+        const supplierName = sup?.name || 'Proveedor';
+
+        const { data: createdCheque, error: chError } = await supabase
+          .from('cheques')
+          .insert({
+            tenant_id: ECAR_TENANT_ID,
+            cheque_number: payload.cheque_number.trim(),
+            bank_name: payload.bank_name.trim(),
+            type: payload.cheque_type || 'physical',
+            direction: 'payable',
+            beneficiary_or_issuer: supplierName,
+            issuer_company: payload.issuer_company || 'ECAR SAS',
+            amount_ars: payload.amount_ars,
+            issue_date: payload.issue_date || payload.payment_date,
+            due_date: payload.due_date || payload.payment_date,
+            status: 'pending',
+            linked_purchase_invoice_id: payload.purchase_invoice_id || null
+          })
+          .select()
+          .single();
+
+        if (chError) throw chError;
+        linkedChequeId = createdCheque.id;
+
+        // Log audit
+        await supabase.from('cheque_audit_logs').insert({
+          cheque_id: createdCheque.id,
+          action: 'created',
+          user_name: 'Sistema / Compras',
+          snapshot: createdCheque
+        });
+      } else if (payload.payment_method === 'cheque_third_party' && payload.third_party_cheque_id) {
+        linkedChequeId = payload.third_party_cheque_id;
+        await supabase.from('cheques').update({
+          status: 'cashed'
+        }).eq('id', payload.third_party_cheque_id);
+
+        await supabase.from('cheque_audit_logs').insert({
+          cheque_id: payload.third_party_cheque_id,
+          action: 'status_changed',
+          user_name: 'Sistema / Compras (Endosado a Proveedor)',
+          changes: { status: { old: 'pending', new: 'cashed' } }
+        });
+      }
+
+      // 2. Insert into supplier_payments
+      const { data: paymentRecord, error: payError } = await supabase
+        .from('supplier_payments')
+        .insert({
+          tenant_id: ECAR_TENANT_ID,
+          supplier_id: payload.supplier_id,
+          payment_date: payload.payment_date,
+          payment_method: payload.payment_method,
+          amount_ars: payload.amount_ars,
+          cheque_id: linkedChequeId,
+          purchase_invoice_id: payload.purchase_invoice_id || null,
+          bank_account_id: payload.bank_account_id || null,
+          receipt_number: payload.receipt_number || null,
+          notes: payload.notes || null,
+        })
+        .select()
+        .single();
+
+      if (payError) throw payError;
+
+      // 3. Update invoice payment_status if assigned
+      if (payload.purchase_invoice_id) {
+        await supabase
+          .from('purchase_invoices')
+          .update({ payment_status: 'paid' })
+          .eq('id', payload.purchase_invoice_id);
+      }
+
+      return paymentRecord;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['supplier_payments'] });
+      qc.invalidateQueries({ queryKey: ['suppliers'] });
+      qc.invalidateQueries({ queryKey: ['cheques'] });
+      qc.invalidateQueries({ queryKey: ['purchase_invoices'] });
+    },
+  });
+}
+
 // ========== LEGAL ENTITIES ==========
 export function useLegalEntities() {
   return useQuery({
@@ -706,6 +847,140 @@ export function useCreatePurchaseInvoiceWithItems() {
             .from('purchase_invoice_items')
             .insert(invoiceItemsToInsert);
           if (itemsError) console.error('Error inserting invoice items:', itemsError);
+        }
+      }
+
+      return invData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase_invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase_invoice_items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory_item_price_history'] });
+      queryClient.invalidateQueries({ queryKey: ['all_price_histories'] });
+    },
+  });
+}
+
+export function useUpdatePurchaseInvoiceWithItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      invoiceId: string;
+      invoice: Partial<PurchaseInvoice>;
+      items: Array<{
+        id?: string;
+        inventory_item_id?: string | null;
+        item_code?: string | null;
+        description: string;
+        quantity: number;
+        unit: string;
+        unit_price: number;
+        discount_percentage: number;
+        subtotal: number;
+      }>;
+      user_name?: string;
+    }) => {
+      const { invoiceId, invoice, items, user_name } = payload;
+      const isCreditNote = (invoice.invoice_type || '').toUpperCase().startsWith('NC') || 
+                           (invoice.invoice_type || '').toUpperCase().includes('CREDITO');
+
+      // 1. Update invoice
+      const { data: invData, error: invError } = await supabase
+        .from('purchase_invoices')
+        .update(invoice)
+        .eq('id', invoiceId)
+        .select('*, supplier:suppliers(*)')
+        .single();
+
+      if (invError) throw invError;
+
+      // 2. Clear old items and insert updated items
+      await supabase.from('purchase_invoice_items').delete().eq('invoice_id', invoiceId);
+
+      if (items && items.length > 0) {
+        const invoiceItemsToInsert = [];
+
+        for (const itm of items) {
+          const itemId = itm.inventory_item_id;
+          let prevPrice = 0;
+          let currentStock = 0;
+
+          if (itemId) {
+            const { data: existingItem } = await supabase
+              .from('inventory_items')
+              .select('id, name, unit_cost, current_stock')
+              .eq('id', itemId)
+              .maybeSingle();
+
+            if (existingItem) {
+              prevPrice = Number(existingItem.unit_cost) || 0;
+              currentStock = Number(existingItem.current_stock) || 0;
+            }
+          }
+
+          invoiceItemsToInsert.push({
+            tenant_id: ECAR_TENANT_ID,
+            invoice_id: invoiceId,
+            inventory_item_id: itemId || null,
+            item_code: itm.item_code || null,
+            description: itm.description,
+            quantity: itm.quantity,
+            unit: itm.unit || 'unidad',
+            unit_price: itm.unit_price,
+            discount_percentage: itm.discount_percentage || 0,
+            subtotal: itm.subtotal,
+            previous_price: prevPrice,
+          });
+
+          // If reception is enabled and item is linked to inventory
+          if (invoice.has_reception && itemId) {
+            const qty = Number(itm.quantity) || 0;
+            const stockDelta = isCreditNote ? -qty : qty;
+            const newStock = Math.max(0, currentStock + stockDelta);
+
+            const updatePayload: Record<string, unknown> = {
+              current_stock: newStock,
+              unit_cost: itm.unit_price,
+            };
+            if (invoice.supplier_id) {
+              updatePayload.last_supplier_id = invoice.supplier_id;
+            }
+
+            await supabase
+              .from('inventory_items')
+              .update(updatePayload)
+              .eq('id', itemId);
+
+            const priceDiffArs = itm.unit_price - prevPrice;
+            const priceDiffPct = prevPrice > 0 ? (priceDiffArs / prevPrice) * 100 : 0;
+
+            await supabase
+              .from('inventory_item_price_history')
+              .insert({
+                tenant_id: ECAR_TENANT_ID,
+                item_id: itemId,
+                invoice_id: invoiceId,
+                invoice_type: invoice.invoice_type || 'COMPROBANTE COMPRA',
+                invoice_number: `${invoice.point_of_sale || '0001'}-${invoice.invoice_number || ''}`,
+                supplier_id: invoice.supplier_id || null,
+                supplier_name: invData?.supplier?.name || null,
+                old_price: prevPrice,
+                new_price: itm.unit_price,
+                price_diff_ars: priceDiffArs,
+                price_diff_pct: priceDiffPct,
+                created_by: user_name || 'Sistema',
+                notes: `Comprobante ${invoice.invoice_type || 'FC'} ${invoice.point_of_sale || '0001'}-${invoice.invoice_number || ''}`,
+              });
+          }
+        }
+
+        if (invoiceItemsToInsert.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('purchase_invoice_items')
+            .insert(invoiceItemsToInsert);
+          if (itemsError) console.error('Error inserting updated invoice items:', itemsError);
         }
       }
 

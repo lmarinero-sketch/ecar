@@ -7,7 +7,8 @@ import {
 import {
   useSuppliers, useCreateSupplier, useLegalEntities,
   useInventoryItems,
-  useProjects, usePurchaseInvoices, useCreatePurchaseInvoiceWithItems
+  useProjects, usePurchaseInvoices, usePurchaseInvoiceItems,
+  useCreatePurchaseInvoiceWithItems, useUpdatePurchaseInvoiceWithItems
 } from '../../hooks/useData';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModalStore } from '../../store/useModalStore';
@@ -17,6 +18,7 @@ const fmt = (n: number | null | undefined) =>
   `$ ${(Number(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface Props {
+  invoiceToEdit?: any | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -66,30 +68,32 @@ const PAYMENT_CONDITIONS = [
   'eCheq'
 ];
 
-export const NewPurchaseInvoiceModal: React.FC<Props> = ({ onClose, onSuccess }) => {
+export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClose, onSuccess }) => {
   const { profile } = useAuth();
   const { data: suppliers = [] } = useSuppliers();
   const { data: legalEntities = [] } = useLegalEntities();
   const { data: inventoryItems = [] } = useInventoryItems();
   const { data: projects = [] } = useProjects();
   const { data: pastInvoices = [] } = usePurchaseInvoices();
+  const { data: existingItems = [] } = usePurchaseInvoiceItems(invoiceToEdit?.id);
 
   const createSupplierMutation = useCreateSupplier();
   const createInvoiceMutation = useCreatePurchaseInvoiceWithItems();
+  const updateInvoiceMutation = useUpdatePurchaseInvoiceWithItems();
 
   // Header form state
-  const [supplierId, setSupplierId] = useState('');
-  const [supplierSearch, setSupplierSearch] = useState('');
+  const [supplierId, setSupplierId] = useState(invoiceToEdit?.supplier_id || '');
+  const [supplierSearch, setSupplierSearch] = useState(invoiceToEdit?.supplier?.name || invoiceToEdit?.ocr_raw_data?.proveedor_cliente || '');
   const [isSupplierOpen, setIsSupplierOpen] = useState(false);
-  const [legalEntityId, setLegalEntityId] = useState(legalEntities[0]?.id || '');
-  const [invoiceType, setInvoiceType] = useState('COMPROBANTE COMPRA');
-  const [pointOfSale, setPointOfSale] = useState('0001');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [paymentCondition, setPaymentCondition] = useState('Contado');
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [hasReception, setHasReception] = useState(true);
-  const [depositLocation, setDepositLocation] = useState('DEPOSITO RAWSON');
-  const [relatedInvoiceId, setRelatedInvoiceId] = useState<string | null>(null);
+  const [legalEntityId, setLegalEntityId] = useState(invoiceToEdit?.legal_entity_id || legalEntities[0]?.id || '');
+  const [invoiceType, setInvoiceType] = useState(invoiceToEdit?.invoice_type || 'COMPROBANTE COMPRA');
+  const [pointOfSale, setPointOfSale] = useState(invoiceToEdit?.point_of_sale || '0001');
+  const [invoiceNumber, setInvoiceNumber] = useState(invoiceToEdit?.invoice_number || '');
+  const [paymentCondition, setPaymentCondition] = useState(invoiceToEdit?.payment_condition || 'Contado');
+  const [issueDate, setIssueDate] = useState(invoiceToEdit?.issue_date || new Date().toISOString().split('T')[0]);
+  const [hasReception, setHasReception] = useState(invoiceToEdit?.has_reception ?? true);
+  const [depositLocation, setDepositLocation] = useState(invoiceToEdit?.deposit_location || 'DEPOSITO RAWSON');
+  const [relatedInvoiceId, setRelatedInvoiceId] = useState<string | null>(invoiceToEdit?.related_invoice_id || null);
   const [relatedInvoiceSearch, setRelatedInvoiceSearch] = useState('');
   const [isRelatedOpen, setIsRelatedOpen] = useState(false);
 
@@ -108,13 +112,41 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ onClose, onSuccess })
   const [items, setItems] = useState<FormItem[]>([]);
 
   // Taxes & Extras
-  const [iva21, setIva21] = useState<string>('0');
-  const [iva105, setIva105] = useState<string>('0');
-  const [iva27] = useState<string>('0');
-  const [perceptionsIva] = useState<string>('0');
-  const [perceptionsIibb, setPerceptionsIibb] = useState<string>('0');
-  const [globalDiscount, setGlobalDiscount] = useState<string>('0');
-  const [notes, setNotes] = useState('');
+  const [iva21, setIva21] = useState<string>(String(invoiceToEdit?.iva_21_ars || 0));
+  const [iva105, setIva105] = useState<string>(String(invoiceToEdit?.iva_105_ars || 0));
+  const [iva27] = useState<string>(String(invoiceToEdit?.iva_27_ars || 0));
+  const [perceptionsIva] = useState<string>(String(invoiceToEdit?.perceptions_iva_ars || 0));
+  const [perceptionsIibb, setPerceptionsIibb] = useState<string>(String(invoiceToEdit?.perceptions_iibb_ars || 0));
+  const [globalDiscount, setGlobalDiscount] = useState<string>(String(invoiceToEdit?.discount_amount || 0));
+  const [notes, setNotes] = useState(invoiceToEdit?.notes || '');
+
+  // Populate items from existing invoice if editing
+  useEffect(() => {
+    if (invoiceToEdit && existingItems.length > 0 && items.length === 0) {
+      setItems(existingItems.map((ei: any) => ({
+        inventory_item_id: ei.inventory_item_id,
+        item_code: ei.item_code || '',
+        description: ei.description,
+        quantity: Number(ei.quantity) || 1,
+        unit: ei.unit || 'unidad',
+        unit_price: Number(ei.unit_price) || 0,
+        discount_percentage: Number(ei.discount_percentage) || 0,
+        subtotal: Number(ei.subtotal) || 0,
+        previous_price: ei.previous_price
+      })));
+    } else if (invoiceToEdit && existingItems.length === 0 && items.length === 0 && invoiceToEdit.total_ars > 0) {
+      setItems([{
+        inventory_item_id: null,
+        item_code: 'COMPRA-GEN',
+        description: `Gasto / Factura ${invoiceToEdit.invoice_type || 'FC'} ${invoiceToEdit.invoice_number || ''}`,
+        quantity: 1,
+        unit: 'global',
+        unit_price: invoiceToEdit.net_amount_ars || invoiceToEdit.total_ars,
+        discount_percentage: 0,
+        subtotal: invoiceToEdit.net_amount_ars || invoiceToEdit.total_ars,
+      }]);
+    }
+  }, [invoiceToEdit, existingItems, items.length]);
 
   // Modals inside
   const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -354,25 +386,48 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ onClose, onSuccess })
         }
       };
 
-      await createInvoiceMutation.mutateAsync({
-        invoice: invoicePayload,
-        items: items.map(i => ({
-          inventory_item_id: i.inventory_item_id,
-          item_code: i.item_code,
-          description: i.description,
-          quantity: i.quantity,
-          unit: i.unit,
-          unit_price: i.unit_price,
-          discount_percentage: i.discount_percentage,
-          subtotal: i.subtotal,
-        })),
-        user_name: profile?.full_name || 'Compras'
-      });
+      if (invoiceToEdit?.id) {
+        await updateInvoiceMutation.mutateAsync({
+          invoiceId: invoiceToEdit.id,
+          invoice: invoicePayload,
+          items: items.map(i => ({
+            inventory_item_id: i.inventory_item_id,
+            item_code: i.item_code,
+            description: i.description,
+            quantity: i.quantity,
+            unit: i.unit,
+            unit_price: i.unit_price,
+            discount_percentage: i.discount_percentage,
+            subtotal: i.subtotal,
+          })),
+          user_name: profile?.full_name || 'Compras'
+        });
 
-      useModalStore.getState().showAlert(
-        '¡Comprobante Registrado!',
-        `El comprobante ${invoiceType} ${pointOfSale.padStart(4, '0')}-${invoiceNumber.padStart(8, '0')} fue guardado con éxito.${hasReception ? ' Se actualizaron las existencias y los precios en el inventario.' : ''}`
-      );
+        useModalStore.getState().showAlert(
+          '¡Comprobante Actualizado!',
+          `El comprobante ${invoiceType} ${pointOfSale.padStart(4, '0')}-${invoiceNumber.padStart(8, '0')} fue actualizado con éxito.${hasReception ? ' Se actualizaron las existencias y los precios en el inventario.' : ''}`
+        );
+      } else {
+        await createInvoiceMutation.mutateAsync({
+          invoice: invoicePayload,
+          items: items.map(i => ({
+            inventory_item_id: i.inventory_item_id,
+            item_code: i.item_code,
+            description: i.description,
+            quantity: i.quantity,
+            unit: i.unit,
+            unit_price: i.unit_price,
+            discount_percentage: i.discount_percentage,
+            subtotal: i.subtotal,
+          })),
+          user_name: profile?.full_name || 'Compras'
+        });
+
+        useModalStore.getState().showAlert(
+          '¡Comprobante Registrado!',
+          `El comprobante ${invoiceType} ${pointOfSale.padStart(4, '0')}-${invoiceNumber.padStart(8, '0')} fue guardado con éxito.${hasReception ? ' Se actualizaron las existencias y los precios en el inventario.' : ''}`
+        );
+      }
 
       if (onSuccess) onSuccess();
       onClose();
@@ -398,7 +453,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ onClose, onSuccess })
             <div>
               <h1 className="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <ShoppingCart size={20} className="text-blue-400" />
-                Nuevo Comprobante de Compra
+                {invoiceToEdit ? 'Editar Comprobante de Compra' : 'Nuevo Comprobante de Compra'}
               </h1>
               <p className="text-xs text-slate-400">
                 Carga detallada por artículos con impacto en stock y trazabilidad de precios
@@ -430,11 +485,11 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ onClose, onSuccess })
             <button
               type="button"
               onClick={handleGenerateInvoice}
-              disabled={createInvoiceMutation.isPending}
+              disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 active:scale-95 text-white shadow-md shadow-blue-600/30 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <Check size={16} />
-              {createInvoiceMutation.isPending ? 'Guardando...' : 'Generar Comprobante'}
+              {createInvoiceMutation.isPending || updateInvoiceMutation.isPending ? 'Guardando...' : invoiceToEdit ? 'Guardar Cambios' : 'Generar Comprobante'}
             </button>
 
             <button
