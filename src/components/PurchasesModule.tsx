@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye, TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search, Building2, CreditCard } from 'lucide-react';
+import {
+  ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye,
+  TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search,
+  Building2, CreditCard, ChevronDown, ChevronRight, Package, Truck,
+  CheckCircle2, Clock, FileText
+} from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
@@ -275,12 +280,38 @@ export const PurchasesModule: React.FC = () => {
   const [editingPurchaseInvoice, setEditingPurchaseInvoice] = useState<any>(null);
   const { data: legalEntities = [] } = useLegalEntities();
   const [selectedLegalEntityId, setSelectedLegalEntityId] = useState<string>('');
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [uploadTipo, setUploadTipo] = useState<'compra' | 'venta'>('compra');
   const [searchProvider, setSearchProvider] = useState('');
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [payingSupplier, setPayingSupplier] = useState<Supplier | null>(null);
   const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+
+  const toggleExpandInvoice = (id: string) => {
+    setExpandedInvoiceId(prev => prev === id ? null : id);
+  };
+
+  const handleDeleteInvoice = async (inv: any) => {
+    const provName = inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Proveedor';
+    const num = `${inv.invoice_type || 'FC'} ${inv.point_of_sale || '0001'}-${inv.invoice_number || ''}`;
+    const total = formatARS(inv.total_ars);
+
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Factura',
+      `¿Estás seguro de que deseás eliminar la factura de "${provName}" (${num}) por un total de ${total}? Se borrarán también los artículos y distribuciones asociadas.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase.from('purchase_invoices').delete().eq('id', inv.id);
+      if (error) throw error;
+      useModalStore.getState().showAlert('Comprobante Eliminado', `El comprobante ${num} fue eliminado correctamente.`);
+      refetch();
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error al eliminar', err?.message || 'No se pudo eliminar el comprobante.');
+    }
+  };
 
   // Periodo for Libro IVA export
   const now = new Date();
@@ -762,6 +793,7 @@ export const PurchasesModule: React.FC = () => {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th className="w-8 px-2 text-center"></th>
                   <th>Razón Social</th>
                   <th>{activeTab === 'compras' ? 'Proveedor' : 'Cliente'}</th>
                   <th>CUIT</th>
@@ -779,121 +811,454 @@ export const PurchasesModule: React.FC = () => {
               <tbody>
                 {currentList.map((inv: any) => {
                   const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
+                  const isExpanded = expandedInvoiceId === inv.id;
+                  const itemsCount = inv.items?.length || 0;
+
                   return (
-                  <tr key={inv.id} className={isNC ? 'bg-red-50/50 border-l-4 border-red-500' : ''}>
-                    <td className="text-xs font-bold text-ecar-blue">
-                      {inv.legal_entity?.name || '-'}
-                    </td>
-                    <td className="font-medium">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</td>
-                    <td className="font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || '—'}</td>
-                    <td className="font-mono text-xs">{inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}</td>
-                    <td className="text-gray-600">{inv.issue_date || '—'}</td>
-                    <td className="text-right font-mono">
-                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
-                      {formatARS(inv.net_amount_ars)}
-                    </td>
-                    <td className="text-right font-mono text-gray-500">
-                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
-                      {formatARS(inv.iva_21_ars)}
-                    </td>
-                    <td className="text-right font-mono font-bold">
-                      {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
-                      {formatARS(inv.total_ars)}
-                    </td>
-                    {activeTab === 'compras' && (
-                      <td>
-                        <select
-                          value={inv.gasto_item_id || ''}
-                          onChange={async (e) => {
-                            try {
-                              const val = e.target.value || null;
-                              const { error } = await supabase
-                                .from('purchase_invoices')
-                                .update({ gasto_item_id: val })
-                                .eq('id', inv.id);
-                              if (error) throw error;
-                              refetch();
-                            } catch (error: any) {
-                              useModalStore.getState().showAlert('Error', 'Error al asociar rubro: ' + error.message);
-                            }
-                          }}
-                          className="px-2 py-1 text-[10px] border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[130px] truncate"
-                        >
-                          <option value="">-- Sin Rubro --</option>
-                          {gastosItems.map((item: any) => (
-                            <option key={item.id} value={item.id}>
-                              {item.categoria.toUpperCase()} - {item.descripcion}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                    )}
-                    {activeTab === 'compras' && (
-                      <td>
-                        <button
-                          onClick={() => {
-                            setDistributeInvoice(inv);
-                            if (inv.allocations && inv.allocations.length > 0) {
-                              setAllocations(inv.allocations.map((a: any) => ({
-                                project_id: a.project_id,
-                                percentage: a.percentage,
-                                amount_ars: a.amount_ars
-                              })));
-                            } else if (inv.project_id) {
-                              setAllocations([{ project_id: inv.project_id, percentage: 100, amount_ars: inv.total_ars }]);
-                            } else {
-                              setAllocations([]);
-                            }
-                          }}
-                          className="px-2 py-1 text-[10px] border border-blue-200 rounded-lg bg-blue-50 text-blue-800 font-bold focus:outline-none hover:bg-blue-100 transition-all truncate"
-                        >
-                          {(inv.allocations && inv.allocations.length > 0) 
-                            ? `Dividido (${inv.allocations.length})` 
-                            : inv.project_id 
-                              ? '🚧 Obra (100%)' 
-                              : '🏢 ECAR (100%)'}
-                        </button>
-                      </td>
-                    )}
-                    <td className="text-center">
-                      <span className={`badge ${inv.status === 'pending_review' ? 'badge-warning' : inv.status === 'validated' ? 'badge-success' : inv.status === 'rejected' ? 'badge-danger' : 'badge-info'}`}>{statusLabel[inv.status] || inv.status}</span>
-                    </td>
-                    <td className="text-center">
-                      <div className="flex justify-center gap-1">
-                        {inv.original_file_url && (
-                          <a href={inv.original_file_url} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-50 rounded" title="Ver original"><Eye size={16} /></a>
+                    <React.Fragment key={inv.id}>
+                      <tr
+                        onClick={() => toggleExpandInvoice(inv.id)}
+                        className={`cursor-pointer transition-colors select-none ${
+                          isNC
+                            ? 'bg-red-50/50 hover:bg-red-100/50 border-l-4 border-red-500'
+                            : isExpanded
+                            ? 'bg-blue-50/70 hover:bg-blue-50/90 border-l-4 border-ecar-blue shadow-xs'
+                            : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        <td className="w-8 px-2 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpandInvoice(inv.id);
+                            }}
+                            className={`p-1 rounded-md transition-all ${
+                              isExpanded ? 'text-ecar-blue bg-blue-100/70' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title={isExpanded ? "Colapsar detalle de artículos" : "Ver artículos e información detallada"}
+                          >
+                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                          </button>
+                        </td>
+                        <td className="text-xs font-bold text-ecar-blue">
+                          {inv.legal_entity?.name || '-'}
+                        </td>
+                        <td className="font-medium">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-slate-800">{inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || '(Sin datos)'}</span>
+                            {itemsCount > 0 && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100/80 text-blue-700">
+                                {itemsCount} art.
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="font-mono text-xs text-gray-500">{inv.ocr_raw_data?.cuit || inv.supplier?.cuit || '—'}</td>
+                        <td className="font-mono text-xs font-bold text-slate-700">
+                          {inv.invoice_type || inv.ocr_raw_data?.tipo_factura || '—'} {inv.point_of_sale || inv.ocr_raw_data?.punto_venta || ''}-{inv.invoice_number || inv.ocr_raw_data?.numero_factura || ''}
+                        </td>
+                        <td className="text-gray-600 font-mono text-xs">{inv.issue_date || '—'}</td>
+                        <td className="text-right font-mono">
+                          {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                          {formatARS(inv.net_amount_ars)}
+                        </td>
+                        <td className="text-right font-mono text-gray-500">
+                          {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                          {formatARS(inv.iva_21_ars)}
+                        </td>
+                        <td className="text-right font-mono font-bold text-slate-900">
+                          {isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) && <span className="text-red-500 font-bold mr-1">-</span>}
+                          {formatARS(inv.total_ars)}
+                        </td>
+                        {activeTab === 'compras' && (
+                          <td onClick={e => e.stopPropagation()}>
+                            <select
+                              value={inv.gasto_item_id || ''}
+                              onChange={async (e) => {
+                                try {
+                                  const val = e.target.value || null;
+                                  const { error } = await supabase
+                                    .from('purchase_invoices')
+                                    .update({ gasto_item_id: val })
+                                    .eq('id', inv.id);
+                                  if (error) throw error;
+                                  refetch();
+                                } catch (error: any) {
+                                  useModalStore.getState().showAlert('Error', 'Error al asociar rubro: ' + error.message);
+                                }
+                              }}
+                              className="px-2 py-1 text-[10px] border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all max-w-[130px] truncate"
+                            >
+                              <option value="">-- Sin Rubro --</option>
+                              {gastosItems.map((item: any) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.categoria.toUpperCase()} - {item.descripcion}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
                         )}
                         {activeTab === 'compras' && (
-                          <button
-                            onClick={() => {
-                              const targetSup = suppliers.find(s => s.id === inv.supplier_id) || {
-                                id: inv.supplier_id || '',
-                                name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Proveedor',
-                                cuit: inv.ocr_raw_data?.cuit || inv.supplier?.cuit || null,
-                                tax_condition: 'RI',
-                                address: null, phone: null, email: null, bank_cbu: null, is_fixed: false,
-                                tenant_id: ECAR_TENANT_ID, created_at: ''
-                              } as Supplier;
-                              setPayingSupplier(targetSup);
-                              setPayingInvoiceId(inv.id);
-                            }}
-                            className={`p-1 rounded transition-colors ${inv.payment_status === 'paid' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-blue-500 hover:bg-blue-50'}`}
-                            title={inv.payment_status === 'paid' ? 'Factura Pagada' : 'Pagar con Cheque / Transf.'}
-                          >
-                            <CreditCard size={15} />
-                          </button>
+                          <td onClick={e => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                setDistributeInvoice(inv);
+                                if (inv.allocations && inv.allocations.length > 0) {
+                                  setAllocations(inv.allocations.map((a: any) => ({
+                                    project_id: a.project_id,
+                                    percentage: a.percentage,
+                                    amount_ars: a.amount_ars
+                                  })));
+                                } else if (inv.project_id) {
+                                  setAllocations([{ project_id: inv.project_id, percentage: 100, amount_ars: inv.total_ars }]);
+                                } else {
+                                  setAllocations([]);
+                                }
+                              }}
+                              className="px-2 py-1 text-[10px] border border-blue-200 rounded-lg bg-blue-50 text-blue-800 font-bold focus:outline-none hover:bg-blue-100 transition-all truncate"
+                            >
+                              {(inv.allocations && inv.allocations.length > 0) 
+                                ? `Dividido (${inv.allocations.length})` 
+                                : inv.project_id 
+                                  ? '🚧 Obra (100%)' 
+                                  : '🏢 ECAR (100%)'}
+                            </button>
+                          </td>
                         )}
-                        {inv.status === 'pending_review' && (
-                          <>
-                            <button onClick={() => handleValidate(inv.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Validar"><Check size={16} /></button>
-                            <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
-                          </>
-                        )}
-                        <button onClick={() => setEditingPurchaseInvoice(inv)} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar Comprobante"><Pencil size={14} /></button>
-                        <button onClick={() => setDeleteTarget(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
+                        <td className="text-center">
+                          <span className={`badge ${inv.status === 'pending_review' ? 'badge-warning' : inv.status === 'validated' ? 'badge-success' : inv.status === 'rejected' ? 'badge-danger' : 'badge-info'}`}>{statusLabel[inv.status] || inv.status}</span>
+                        </td>
+                        <td className="text-center" onClick={e => e.stopPropagation()}>
+                          <div className="flex justify-center gap-1">
+                            {inv.original_file_url && (
+                              <a href={inv.original_file_url} target="_blank" rel="noopener noreferrer" className="p-1 text-blue-500 hover:bg-blue-50 rounded" title="Ver original"><Eye size={16} /></a>
+                            )}
+                            {activeTab === 'compras' && (
+                              <button
+                                onClick={() => {
+                                  const targetSup = suppliers.find(s => s.id === inv.supplier_id) || {
+                                    id: inv.supplier_id || '',
+                                    name: inv.ocr_raw_data?.proveedor_cliente || inv.supplier?.name || 'Proveedor',
+                                    cuit: inv.ocr_raw_data?.cuit || inv.supplier?.cuit || null,
+                                    tax_condition: 'RI',
+                                    address: null, phone: null, email: null, bank_cbu: null, is_fixed: false,
+                                    tenant_id: ECAR_TENANT_ID, created_at: ''
+                                  } as Supplier;
+                                  setPayingSupplier(targetSup);
+                                  setPayingInvoiceId(inv.id);
+                                }}
+                                className={`p-1 rounded transition-colors ${inv.payment_status === 'paid' ? 'text-emerald-600 hover:bg-emerald-50' : 'text-blue-500 hover:bg-blue-50'}`}
+                                title={inv.payment_status === 'paid' ? 'Factura Pagada' : 'Pagar con Cheque / Transf.'}
+                              >
+                                <CreditCard size={15} />
+                              </button>
+                            )}
+                            {inv.status === 'pending_review' && (
+                              <>
+                                <button onClick={() => handleValidate(inv.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Validar"><Check size={16} /></button>
+                                <button onClick={() => handleReject(inv.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Rechazar"><X size={16} /></button>
+                              </>
+                            )}
+                            <button onClick={() => setEditingPurchaseInvoice(inv)} className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Editar Comprobante"><Pencil size={14} /></button>
+                            <button onClick={() => handleDeleteInvoice(inv)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* EXPANDABLE SUB-ROW DRAWER */}
+                      {isExpanded && (
+                        <tr className="bg-slate-50 border-b-2 border-slate-300">
+                          <td colSpan={13} className="p-0">
+                            <div className="p-4 md:p-6 bg-gradient-to-b from-blue-50/50 via-white to-slate-50/90 border-x border-b border-blue-200/80 rounded-b-2xl shadow-inner space-y-4">
+                              
+                              {/* TOP HEADER IN EXPANDED VIEW */}
+                              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-xs">
+                                    <Package size={22} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-extrabold text-slate-900 text-base font-mono">
+                                        {inv.invoice_type || 'FC'} {inv.point_of_sale || '0001'}-{inv.invoice_number || 'S/N'}
+                                      </span>
+                                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                        inv.status === 'validated' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                        inv.status === 'pending_review' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                                      }`}>
+                                        {statusLabel[inv.status] || inv.status}
+                                      </span>
+                                      {inv.payment_status === 'paid' ? (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                          <CheckCircle2 size={13} /> Pagado
+                                        </span>
+                                      ) : (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                          <Clock size={13} /> Pago Pendiente
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                      Proveedor: <strong className="text-slate-800">{inv.supplier?.name || inv.ocr_raw_data?.proveedor_cliente}</strong>
+                                      {inv.supplier?.cuit && <span className="font-mono ml-1">({inv.supplier.cuit})</span>} • Empresa: <strong className="text-slate-800">{inv.legal_entity?.name || 'ECAR'}</strong>
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Quick actions */}
+                                <div className="flex items-center gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingPurchaseInvoice(inv)}
+                                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5"
+                                  >
+                                    <Pencil size={13} />
+                                    Editar Comprobante / Ítems
+                                  </button>
+                                  {inv.original_file_url && (
+                                    <a
+                                      href={inv.original_file_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5"
+                                    >
+                                      <Eye size={13} className="text-blue-600" />
+                                      Ver Comprobante PDF / Original
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* 4 METADATA CARDS */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                {/* 1. Recepción & Stock */}
+                                <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-1">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                                    <Truck size={13} className="text-ecar-blue" /> Recepción en Depósito
+                                  </span>
+                                  <div className="font-bold text-xs">
+                                    {inv.has_reception !== false ? (
+                                      <span className="text-emerald-700 flex items-center gap-1">
+                                        ✓ Ingresó al Kardex / Stock
+                                      </span>
+                                    ) : (
+                                      <span className="text-amber-700 flex items-center gap-1">
+                                        ⚠ Sin ingreso a stock
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 font-mono truncate">
+                                    {inv.deposit_location || 'DEPOSITO RAWSON'}
+                                  </div>
+                                </div>
+
+                                {/* 2. Condición de Pago */}
+                                <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-1">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                                    <CreditCard size={13} className="text-ecar-blue" /> Condición de Pago
+                                  </span>
+                                  <div className="font-bold text-xs text-slate-800">
+                                    {inv.payment_condition || 'Contado'}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 font-mono">
+                                    Fecha Emisión: {inv.issue_date || 'S/F'}
+                                  </div>
+                                </div>
+
+                                {/* 3. Imputación de Costos */}
+                                <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-1">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                                    <Building2 size={13} className="text-ecar-blue" /> Imputación / Centro de Costo
+                                  </span>
+                                  <div className="font-bold text-xs text-slate-800 truncate">
+                                    {inv.allocations && inv.allocations.length > 0
+                                      ? `Dividido en ${inv.allocations.length} obras`
+                                      : inv.project_id
+                                      ? 'Obra Directa'
+                                      : '🏢 Gasto General ECAR'}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 truncate">
+                                    {inv.gasto_item_id ? (
+                                      (() => {
+                                        const g = gastosItems.find((gi: any) => gi.id === inv.gasto_item_id);
+                                        return g ? `${g.categoria} - ${g.descripcion}` : 'Sin rubro';
+                                      })()
+                                    ) : 'Sin rubro de gasto asignado'}
+                                  </div>
+                                </div>
+
+                                {/* 4. Notas & Comprobante Vinculado */}
+                                <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-1">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                                    <FileText size={13} className="text-ecar-blue" /> Observaciones / Notas
+                                  </span>
+                                  <div className="font-medium text-xs text-slate-700 truncate" title={inv.notes || 'Sin observaciones'}>
+                                    {inv.notes ? inv.notes : 'Sin observaciones cargadas'}
+                                  </div>
+                                  {inv.related_invoice_id && (
+                                    <div className="text-[11px] text-amber-700 font-semibold truncate">
+                                      🔗 Vinculada a Factura Previa
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* DETALLE DE ARTÍCULOS TABLE */}
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center px-1">
+                                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                    <Package size={15} className="text-ecar-blue" />
+                                    Artículos y Renglones de la Factura ({itemsCount})
+                                  </h4>
+                                  <span className="text-[11px] text-slate-500 font-medium">
+                                    * Todos los precios unitarios son netos sin IVA
+                                  </span>
+                                </div>
+
+                                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                                  <table className="w-full text-left text-xs border-collapse">
+                                    <thead className="bg-slate-100/90 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                                      <tr>
+                                        <th className="py-2.5 px-3 w-10 text-center">#</th>
+                                        <th className="py-2.5 px-3">Código</th>
+                                        <th className="py-2.5 px-3">Descripción del Producto / Insumo</th>
+                                        <th className="py-2.5 px-3 text-center">Cantidad</th>
+                                        <th className="py-2.5 px-3 text-right">Precio Unit. (s/IVA)</th>
+                                        <th className="py-2.5 px-3 text-center">% Desc</th>
+                                        <th className="py-2.5 px-3 text-center">Alícuota IVA</th>
+                                        <th className="py-2.5 px-3 text-right">Subtotal Neto</th>
+                                        <th className="py-2.5 px-3 text-right">Total c/IVA</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                      {itemsCount > 0 ? (
+                                        inv.items.map((itm: any, itmIdx: number) => {
+                                          const rate = itm.iva_rate !== undefined && itm.iva_rate !== null ? Number(itm.iva_rate) : 21;
+                                          const itemNet = Number(itm.subtotal) || (Number(itm.quantity) * Number(itm.unit_price) * (1 - (Number(itm.discount_percentage) || 0) / 100));
+                                          const itemTotal = itemNet * (1 + rate / 100);
+
+                                          return (
+                                            <tr key={itm.id || itmIdx} className="hover:bg-slate-50/80 transition-colors">
+                                              <td className="py-2.5 px-3 text-center text-slate-400 font-mono text-[11px]">
+                                                {itmIdx + 1}
+                                              </td>
+                                              <td className="py-2.5 px-3 font-mono text-slate-500 text-xs">
+                                                {itm.item_code || itm.inventory_item?.item_code || itm.inventory_item?.barcode || '—'}
+                                              </td>
+                                              <td className="py-2.5 px-3 font-semibold text-slate-800">
+                                                <div className="flex items-center gap-2">
+                                                  <span>{itm.description}</span>
+                                                  {itm.inventory_item && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                                      En Inventario ({itm.inventory_item.current_stock} {itm.inventory_item.unit})
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </td>
+                                              <td className="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
+                                                {itm.quantity} {itm.unit || 'un'}
+                                              </td>
+                                              <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                                {formatARS(itm.unit_price)}
+                                              </td>
+                                              <td className="py-2.5 px-3 text-center font-mono text-slate-500">
+                                                {Number(itm.discount_percentage) > 0 ? `${itm.discount_percentage}%` : '0%'}
+                                              </td>
+                                              <td className="py-2.5 px-3 text-center">
+                                                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                                  rate === 0
+                                                    ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                                                    : rate === 10.5
+                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                    : rate === 27
+                                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                }`}>
+                                                  {rate}%
+                                                </span>
+                                              </td>
+                                              <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
+                                                {formatARS(itemNet)}
+                                              </td>
+                                              <td className="py-2.5 px-3 text-right font-mono font-bold text-ecar-blue">
+                                                {formatARS(itemTotal)}
+                                              </td>
+                                            </tr>
+                                          );
+                                        })
+                                      ) : (
+                                        <tr>
+                                          <td colSpan={9} className="py-6 px-4 text-center text-slate-400 bg-slate-50/50">
+                                            <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                              <p className="text-xs italic">
+                                                Este comprobante fue registrado de forma global sin desglose por artículos.
+                                              </p>
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingPurchaseInvoice(inv)}
+                                                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-ecar-blue border border-blue-200 rounded-lg text-xs font-bold transition-colors"
+                                              >
+                                                + Cargar desglose de artículos
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                              {/* FINANCIAL SUMMARY / TAXES BREAKDOWN */}
+                              <div className="flex flex-wrap justify-end gap-3 pt-1">
+                                <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-wrap gap-4 text-xs font-mono">
+                                  <div className="text-right">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Neto Gravado</span>
+                                    <span className="font-bold text-slate-800">{formatARS(inv.net_amount_ars)}</span>
+                                  </div>
+                                  {Number(inv.iva_21_ars) > 0 && (
+                                    <div className="text-right border-l pl-4 border-slate-100">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">IVA 21%</span>
+                                      <span className="font-bold text-blue-700">{formatARS(inv.iva_21_ars)}</span>
+                                    </div>
+                                  )}
+                                  {Number(inv.iva_105_ars) > 0 && (
+                                    <div className="text-right border-l pl-4 border-slate-100">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">IVA 10.5%</span>
+                                      <span className="font-bold text-emerald-700">{formatARS(inv.iva_105_ars)}</span>
+                                    </div>
+                                  )}
+                                  {Number(inv.iva_27_ars) > 0 && (
+                                    <div className="text-right border-l pl-4 border-slate-100">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">IVA 27%</span>
+                                      <span className="font-bold text-purple-700">{formatARS(inv.iva_27_ars)}</span>
+                                    </div>
+                                  )}
+                                  {(Number(inv.perceptions_iibb_ars) > 0 || Number(inv.perceptions_iva_ars) > 0) && (
+                                    <div className="text-right border-l pl-4 border-slate-100">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Percepciones</span>
+                                      <span className="font-bold text-amber-700">{formatARS((Number(inv.perceptions_iibb_ars) || 0) + (Number(inv.perceptions_iva_ars) || 0))}</span>
+                                    </div>
+                                  )}
+                                  {Number(inv.discount_amount) > 0 && (
+                                    <div className="text-right border-l pl-4 border-slate-100">
+                                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Descuento</span>
+                                      <span className="font-bold text-emerald-700">-{formatARS(inv.discount_amount)}</span>
+                                    </div>
+                                  )}
+                                  <div className="text-right border-l pl-4 border-slate-200">
+                                    <span className="text-[10px] uppercase font-bold text-ecar-blue block font-sans">Total Factura</span>
+                                    <span className="font-bold text-sm text-ecar-blue">{formatARS(inv.total_ars)}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -1081,32 +1446,6 @@ export const PurchasesModule: React.FC = () => {
               >
                 {updateAllocations.isPending ? 'Guardando...' : 'Guardar Distribución'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Invoice Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Factura</h3>
-            <p className="text-sm text-gray-600">
-              ¿Eliminás la factura de <span className="font-bold">{deleteTarget.ocr_raw_data?.proveedor_cliente || deleteTarget.supplier?.name || 'Sin datos'}</span> por <span className="font-mono font-bold">{formatARS(deleteTarget.total_ars)}</span>?
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
-              <button
-                onClick={async () => {
-                  try {
-                    const { error } = await supabase.from('purchase_invoices').delete().eq('id', deleteTarget.id);
-                    if (error) throw error;
-                    setDeleteTarget(null);
-                    refetch();
-                  } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-                }}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600"
-              >Eliminar</button>
             </div>
           </div>
         </div>

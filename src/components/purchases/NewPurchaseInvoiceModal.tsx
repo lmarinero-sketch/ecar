@@ -31,9 +31,19 @@ type FormItem = {
   unit: string;
   unit_price: number;
   discount_percentage: number;
+  iva_rate: number;
   subtotal: number;
   previous_price?: number;
 };
+
+const IVA_RATES = [
+  { value: 21, label: '21% (IVA General)' },
+  { value: 10.5, label: '10.5% (IVA Reducido)' },
+  { value: 27, label: '27% (IVA Servicios / Increm.)' },
+  { value: 0, label: '0% (Exento / No Gravado)' },
+  { value: 5, label: '5%' },
+  { value: 2.5, label: '2.5%' },
+];
 
 const COMPROBANTE_TYPES = [
   { group: 'Facturas', items: [
@@ -107,6 +117,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
   const [unit, setUnit] = useState('unidad');
   const [unitPrice, setUnitPrice] = useState<string>('0');
   const [discountPerc, setDiscountPerc] = useState<string>('0');
+  const [ivaRate, setIvaRate] = useState<number>(21);
 
   // Items grid list
   const [items, setItems] = useState<FormItem[]>([]);
@@ -114,7 +125,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
   // Taxes & Extras
   const [iva21, setIva21] = useState<string>(String(invoiceToEdit?.iva_21_ars || 0));
   const [iva105, setIva105] = useState<string>(String(invoiceToEdit?.iva_105_ars || 0));
-  const [iva27] = useState<string>(String(invoiceToEdit?.iva_27_ars || 0));
+  const [iva27, setIva27] = useState<string>(String(invoiceToEdit?.iva_27_ars || 0));
   const [perceptionsIva] = useState<string>(String(invoiceToEdit?.perceptions_iva_ars || 0));
   const [perceptionsIibb, setPerceptionsIibb] = useState<string>(String(invoiceToEdit?.perceptions_iibb_ars || 0));
   const [globalDiscount, setGlobalDiscount] = useState<string>(String(invoiceToEdit?.discount_amount || 0));
@@ -131,6 +142,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
         unit: ei.unit || 'unidad',
         unit_price: Number(ei.unit_price) || 0,
         discount_percentage: Number(ei.discount_percentage) || 0,
+        iva_rate: ei.iva_rate !== undefined && ei.iva_rate !== null ? Number(ei.iva_rate) : 21,
         subtotal: Number(ei.subtotal) || 0,
         previous_price: ei.previous_price
       })));
@@ -143,6 +155,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
         unit: 'global',
         unit_price: invoiceToEdit.net_amount_ars || invoiceToEdit.total_ars,
         discount_percentage: 0,
+        iva_rate: 21,
         subtotal: invoiceToEdit.net_amount_ars || invoiceToEdit.total_ars,
       }]);
     }
@@ -236,6 +249,32 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
     return Math.max(0, base * (1 - disc / 100));
   }, [quantity, unitPrice, discountPerc]);
 
+  const rowIva = useMemo(() => {
+    return (rowSubtotal * (Number(ivaRate) || 0)) / 100;
+  }, [rowSubtotal, ivaRate]);
+
+  // Recalculate estimated IVA breakdown from items
+  const recalculateIvaFromItems = (itemList: FormItem[]) => {
+    let net21 = 0;
+    let net105 = 0;
+    let net27 = 0;
+
+    for (const itm of itemList) {
+      const rate = Number(itm.iva_rate);
+      if (rate === 21) {
+        net21 += itm.subtotal;
+      } else if (rate === 10.5) {
+        net105 += itm.subtotal;
+      } else if (rate === 27) {
+        net27 += itm.subtotal;
+      }
+    }
+
+    setIva21(String(Math.round(net21 * 0.21 * 100) / 100));
+    setIva105(String(Math.round(net105 * 0.105 * 100) / 100));
+    setIva27(String(Math.round(net27 * 0.27 * 100) / 100));
+  };
+
   // Add Item to table
   const handleAddItem = () => {
     if (!productName.trim()) {
@@ -262,15 +301,14 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
       unit: unit.trim() || 'unidad',
       unit_price: price,
       discount_percentage: disc,
+      iva_rate: Number(ivaRate) || 0,
       subtotal: rowSubtotal,
       previous_price: selectedInventoryItem?.unit_cost || 0
     };
 
-    setItems([...items, newItem]);
-
-    // Recalculate estimated iva 21%
-    const currentNet = items.reduce((s, i) => s + i.subtotal, 0) + rowSubtotal;
-    setIva21(String(Math.round(currentNet * 0.21 * 100) / 100));
+    const nextItems = [...items, newItem];
+    setItems(nextItems);
+    recalculateIvaFromItems(nextItems);
 
     // Reset item form
     setItemCode('');
@@ -279,14 +317,14 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
     setQuantity('1');
     setUnitPrice('0');
     setDiscountPerc('0');
+    setIvaRate(21);
   };
 
   const handleRemoveItem = (index: number) => {
     const next = [...items];
     next.splice(index, 1);
     setItems(next);
-    const nextNet = next.reduce((s, i) => s + i.subtotal, 0);
-    setIva21(String(Math.round(nextNet * 0.21 * 100) / 100));
+    recalculateIvaFromItems(next);
   };
 
   // Calculations
@@ -399,6 +437,8 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
             unit_price: i.unit_price,
             discount_percentage: i.discount_percentage,
             subtotal: i.subtotal,
+            iva_rate: i.iva_rate,
+            iva_amount: Math.round((i.subtotal * (i.iva_rate / 100)) * 100) / 100,
           })),
           user_name: profile?.full_name || 'Compras'
         });
@@ -419,6 +459,8 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
             unit_price: i.unit_price,
             discount_percentage: i.discount_percentage,
             subtotal: i.subtotal,
+            iva_rate: i.iva_rate,
+            iva_amount: Math.round((i.subtotal * (i.iva_rate / 100)) * 100) / 100,
           })),
           user_name: profile?.full_name || 'Compras'
         });
@@ -820,11 +862,11 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
               </span>
             </div>
 
-            {/* Inputs de Carga de Ítem Renglón por Renglón (Inspired by Image 1) */}
+            {/* Inputs de Carga de Ítem Renglón por Renglón */}
             <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                 {/* Código de Producto */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Código de Producto
                   </label>
@@ -931,10 +973,10 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                   </div>
                 </div>
 
-                {/* Precio Unitario */}
-                <div className="md:col-span-3">
+                {/* Precio Unitario (Sin IVA) */}
+                <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Precio Unitario ($)
+                    Precio Unitario <span className="text-amber-700 font-semibold">(sin IVA)</span>
                   </label>
                   <input
                     type="number"
@@ -946,13 +988,31 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono text-right font-bold focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue"
                   />
                 </div>
+
+                {/* Alícuota / Tipo de IVA */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Tipo IVA (*)
+                  </label>
+                  <select
+                    value={ivaRate}
+                    onChange={e => setIvaRate(parseFloat(e.target.value) || 0)}
+                    className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue"
+                  >
+                    {IVA_RATES.map(rate => (
+                      <option key={rate.value} value={rate.value}>
+                        {rate.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end pt-1">
                 {/* % Descuento */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Porc Descuento (%)
+                    % Descuento
                   </label>
                   <div className="relative">
                     <input
@@ -969,13 +1029,25 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                   </div>
                 </div>
 
-                {/* Total Renglón Calculado */}
-                <div className="md:col-span-6">
+                {/* Subtotal Neto Renglón */}
+                <div className="md:col-span-4">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Total Renglón
+                    Subtotal Neto Renglón
                   </label>
-                  <div className="px-3 py-2 bg-slate-200/70 border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 text-right">
-                    {fmt(rowSubtotal)}
+                  <div className="px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-800 flex justify-between items-center">
+                    <span className="text-[11px] text-slate-500 font-normal">Neto:</span>
+                    <span>{fmt(rowSubtotal)}</span>
+                  </div>
+                </div>
+
+                {/* Total Renglón c/IVA */}
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Total c/IVA ({ivaRate}%)
+                  </label>
+                  <div className="px-3 py-2 bg-blue-50/80 border border-blue-200 rounded-xl text-sm font-mono font-bold text-ecar-blue flex justify-between items-center">
+                    <span className="text-[11px] text-blue-600 font-normal">c/IVA:</span>
+                    <span>{fmt(rowSubtotal + rowIva)}</span>
                   </div>
                 </div>
 
@@ -993,7 +1065,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
               </div>
             </div>
 
-            {/* TABLA DE DETALLES DEL COMPROBANTE (Inspired by Image 1) */}
+            {/* TABLA DE DETALLES DEL COMPROBANTE */}
             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
@@ -1001,9 +1073,11 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                     <th className="py-2.5 px-3">Código</th>
                     <th className="py-2.5 px-3">Producto</th>
                     <th className="py-2.5 px-3 text-center">Cantidad</th>
-                    <th className="py-2.5 px-3 text-right">Precio Unitario</th>
+                    <th className="py-2.5 px-3 text-right">Precio Unit. (s/IVA)</th>
                     <th className="py-2.5 px-3 text-center">% Desc</th>
-                    <th className="py-2.5 px-3 text-right">Total</th>
+                    <th className="py-2.5 px-3 text-center">IVA</th>
+                    <th className="py-2.5 px-3 text-right">Subtotal Neto</th>
+                    <th className="py-2.5 px-3 text-right">Total c/IVA</th>
                     <th className="py-2.5 px-3 text-center">Acciones</th>
                   </tr>
                 </thead>
@@ -1025,8 +1099,24 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                       <td className="py-2 px-3 text-center font-mono text-slate-500">
                         {item.discount_percentage > 0 ? `${item.discount_percentage}%` : '0%'}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                      <td className="py-2 px-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          item.iva_rate === 0
+                            ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                            : item.iva_rate === 10.5
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : item.iva_rate === 27
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                            : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {item.iva_rate}%
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-slate-800">
                         {fmt(item.subtotal)}
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-ecar-blue">
+                        {fmt(item.subtotal * (1 + (item.iva_rate || 0) / 100))}
                       </td>
                       <td className="py-2 px-3 text-center">
                         <button
@@ -1042,7 +1132,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                   ))}
                   {items.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 italic">
+                      <td colSpan={9} className="py-8 text-center text-slate-400 italic">
                         No se encontraron registros. Agrega artículos utilizando el formulario superior.
                       </td>
                     </tr>
@@ -1051,16 +1141,17 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
               </table>
             </div>
 
-            {/* SECCIÓN TOTALES Y LIQUIDACIÓN (Inspired by Image 1) */}
+            {/* SECCIÓN TOTALES Y LIQUIDACIÓN */}
             <div className="flex flex-col md:flex-row justify-between items-start gap-4 pt-2">
               <div className="w-full md:w-1/2 space-y-2">
                 <div className="p-3 bg-blue-50/60 border border-blue-100 rounded-xl text-xs text-slate-600 space-y-1">
                   <div className="font-bold text-ecar-blue flex items-center gap-1.5">
                     <HelpCircle size={14} /> Información de Carga:
                   </div>
-                  <p>• Los productos cargados actualizarán automáticamente su costo unitario en el inventario.</p>
+                  <p>• <strong>Precio Unitario:</strong> Ingrese siempre el precio neto sin IVA.</p>
+                  <p>• <strong>Tipo de IVA:</strong> Seleccione la alícuota que aplica a cada producto (21%, 10.5%, 27% o 0% Exento) para discriminar los impuestos automáticamente.</p>
+                  <p>• Los productos cargados actualizarán automáticamente su costo unitario neto en el inventario.</p>
                   <p>• Si "Realiza Recepción" está activo, se registrará el ingreso físico en el Kardex.</p>
-                  <p>• Se guardará el registro comparativo de precio anterior vs nuevo precio ($ y %).</p>
                 </div>
               </div>
 
@@ -1096,6 +1187,17 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                     step="any"
                     value={iva105}
                     onChange={e => setIva105(e.target.value)}
+                    className="w-24 px-2 py-0.5 text-right font-mono text-xs border rounded bg-white"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-slate-600">
+                  <span>IVA 27%:</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={iva27}
+                    onChange={e => setIva27(e.target.value)}
                     className="w-24 px-2 py-0.5 text-right font-mono text-xs border rounded bg-white"
                   />
                 </div>

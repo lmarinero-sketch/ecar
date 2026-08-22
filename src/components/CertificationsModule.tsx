@@ -79,10 +79,21 @@ export const CertificationsModule: React.FC = () => {
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [editingCert, setEditingCert] = useState<ProjectCertificate | null>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [deleteTarget, setDeleteTarget] = useState<ProjectCertificate | null>(null);
+
+  const handleDeleteCert = async (c: ProjectCertificate) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Certificado',
+      `¿Eliminás el certificado #${c.certificate_number} por ${fmtM(c.total_certified)}?`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteCert.mutateAsync(c.id);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
 
   // Only projects with contract_amount > 0
   const contractProjects = useMemo(() => (projects || []).filter((p: any) => p.contract_amount > 0), [projects]);
@@ -296,7 +307,7 @@ export const CertificationsModule: React.FC = () => {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setDeleteTarget(c);
+                                    handleDeleteCert(c);
                                   }}
                                   className="p-1 bg-white/70 hover:bg-red-100 rounded text-amber-800 hover:text-red-600 transition-colors"
                                   title="Eliminar certificado"
@@ -514,28 +525,6 @@ export const CertificationsModule: React.FC = () => {
             >
               {updateCert.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Certificado</h3>
-            <p className="text-sm text-gray-600">
-              ¿Eliminás el certificado <span className="font-bold">#{deleteTarget.certificate_number}</span> por <span className="font-mono font-bold">{fmtM(deleteTarget.total_certified)}</span>?
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
-              <button
-                onClick={async () => {
-                  try { await deleteCert.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-                }}
-                disabled={deleteCert.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Eliminar</button>
-            </div>
           </div>
         </div>
       )}

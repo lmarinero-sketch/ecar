@@ -90,11 +90,22 @@ export const FleetModule: React.FC = () => {
   }, [view]);
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
-  const [showNew, setShowNew] = useState(false);
   const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
-  const [deleteTarget, setDeleteTarget] = useState<FuelVehicle | null>(null);
   const [qrVehicle, setQrVehicle] = useState<FuelVehicle | null>(null);
   const [newForm, setNewForm] = useState({ code: '', description: '', vehicle_type: 'camioneta', tracking_type: 'km' as 'km'|'hours', brand: '', model: '', plate: '', year: '', preferred_fuel: 'diesel', tank_capacity_liters: '', area: '', default_driver: '' });
+
+  const handleDeleteVehicle = async (v: FuelVehicle) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Vehículo',
+      `¿Eliminás "${v.code} — ${v.description}"? El vehículo se desactivará y no aparecerá más en el listado.`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteVehicle.mutateAsync(v.id);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
 
   const maintenanceDue = useMemo(() =>
     vehicles.filter(v => isDueOrOverdue(v.next_maintenance_date)),
@@ -484,7 +495,7 @@ export const FleetModule: React.FC = () => {
                     <button onClick={() => setQrVehicle(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-500 transition-all" title="Imprimir QR para Parte Diario">
                       <QrCode size={16} />
                     </button>
-                    <button onClick={() => setDeleteTarget(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all" title="Eliminar vehículo">
+                    <button onClick={() => handleDeleteVehicle(v)} className="p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all" title="Eliminar vehículo">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -657,28 +668,6 @@ export const FleetModule: React.FC = () => {
                 {createVehicle.isPending ? 'Creando...' : '🚛 Registrar Vehículo'}
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Vehículo</h3>
-            <p className="text-sm text-gray-600">
-              ¿Eliminás <span className="font-bold">{deleteTarget.code} — {deleteTarget.description}</span>? El vehículo se desactivará y no aparecerá más en el listado.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
-              <button
-                onClick={async () => {
-                  try { await deleteVehicle.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-                }}
-                disabled={deleteVehicle.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Eliminar</button>
-            </div>
           </div>
         </div>
       )}

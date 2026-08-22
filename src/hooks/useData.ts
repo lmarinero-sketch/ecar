@@ -656,7 +656,10 @@ export function usePurchaseInvoices() {
   return useQuery({
     queryKey: ['purchase_invoices'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('purchase_invoices').select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*)').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('purchase_invoices')
+        .select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*), items:purchase_invoice_items(*, inventory_item:inventory_items(*))')
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data as PurchaseInvoice[];
     },
@@ -727,6 +730,8 @@ export function useCreatePurchaseInvoiceWithItems() {
         unit_price: number;
         discount_percentage: number;
         subtotal: number;
+        iva_rate?: number;
+        iva_amount?: number;
       }>;
       user_name?: string;
     }) => {
@@ -770,6 +775,9 @@ export function useCreatePurchaseInvoiceWithItems() {
             }
           }
 
+          const ivaRate = itm.iva_rate !== undefined ? itm.iva_rate : 21;
+          const ivaAmount = itm.iva_amount !== undefined ? itm.iva_amount : Math.round((itm.subtotal * (ivaRate / 100)) * 100) / 100;
+
           invoiceItemsToInsert.push({
             tenant_id: ECAR_TENANT_ID,
             invoice_id: invoiceId,
@@ -781,6 +789,8 @@ export function useCreatePurchaseInvoiceWithItems() {
             unit_price: itm.unit_price,
             discount_percentage: itm.discount_percentage || 0,
             subtotal: itm.subtotal,
+            iva_rate: ivaRate,
+            iva_amount: ivaAmount,
             previous_price: prevPrice,
           });
 
@@ -879,6 +889,8 @@ export function useUpdatePurchaseInvoiceWithItems() {
         unit_price: number;
         discount_percentage: number;
         subtotal: number;
+        iva_rate?: number;
+        iva_amount?: number;
       }>;
       user_name?: string;
     }) => {
@@ -920,6 +932,9 @@ export function useUpdatePurchaseInvoiceWithItems() {
             }
           }
 
+          const ivaRate = itm.iva_rate !== undefined ? itm.iva_rate : 21;
+          const ivaAmount = itm.iva_amount !== undefined ? itm.iva_amount : Math.round((itm.subtotal * (ivaRate / 100)) * 100) / 100;
+
           invoiceItemsToInsert.push({
             tenant_id: ECAR_TENANT_ID,
             invoice_id: invoiceId,
@@ -931,6 +946,8 @@ export function useUpdatePurchaseInvoiceWithItems() {
             unit_price: itm.unit_price,
             discount_percentage: itm.discount_percentage || 0,
             subtotal: itm.subtotal,
+            iva_rate: ivaRate,
+            iva_amount: ivaAmount,
             previous_price: prevPrice,
           });
 

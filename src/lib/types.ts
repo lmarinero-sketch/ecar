@@ -282,6 +282,8 @@ export type PurchaseInvoiceItem = {
   unit_price: number;
   discount_percentage: number;
   subtotal: number;
+  iva_rate?: number;
+  iva_amount?: number;
   previous_price: number;
   created_at: string;
   inventory_item?: InventoryItem | null;

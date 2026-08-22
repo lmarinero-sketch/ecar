@@ -39,8 +39,30 @@ export const FinancesModule: React.FC = () => {
   // Edit/Delete state
   const [editingCheque, setEditingCheque] = useState<Cheque | null>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [deleteTarget, setDeleteTarget] = useState<Cheque | null>(null);
   const [auditChequeId, setAuditChequeId] = useState<string | null>(null);
+
+  const handleDeleteCheque = async (ch: Cheque) => {
+    if (!canDelete) return;
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Cheque',
+      `¿Estás seguro de eliminar el cheque #${ch.cheque_number} de "${ch.bank_name}" por ${formatARS(ch.amount_ars)}? Esta acción quedará registrada en el historial de auditoría.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await auditLog.mutateAsync({
+        cheque_id: ch.id,
+        action: 'deleted',
+        user_id: profile?.id || null,
+        user_name: profile?.full_name || 'Sistema',
+        snapshot: ch as any,
+      });
+      await deleteCheque.mutateAsync(ch.id);
+      useModalStore.getState().showAlert('Cheque Eliminado', `El cheque #${ch.cheque_number} fue eliminado con éxito.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message || 'Error al eliminar');
+    }
+  };
   
   // Filters
   const [filterDate, setFilterDate] = useState<string>('');
@@ -494,24 +516,6 @@ export const FinancesModule: React.FC = () => {
       setEditingCheque(null);
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message || 'Error al actualizar');
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      // Audit BEFORE delete
-      await auditLog.mutateAsync({
-        cheque_id: deleteTarget.id,
-        action: 'deleted',
-        user_id: profile?.id || null,
-        user_name: profile?.full_name || 'Sistema',
-        snapshot: deleteTarget as any,
-      });
-      await deleteCheque.mutateAsync(deleteTarget.id);
-      setDeleteTarget(null);
-    } catch (err: any) {
-      useModalStore.getState().showAlert('Error', err.message || 'Error al eliminar');
     }
   };
 
@@ -1357,7 +1361,7 @@ export const FinancesModule: React.FC = () => {
 
                               {/* Eliminar */}
                               <button
-                                onClick={() => setDeleteTarget(ch)}
+                                onClick={() => handleDeleteCheque(ch)}
                                 disabled={!canDelete}
                                 className={`p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors ${!canDelete ? 'opacity-40 cursor-not-allowed' : ''}`}
                                 title={!canDelete ? 'Sin permisos de eliminación' : 'Eliminar Cheque'}
@@ -1712,23 +1716,6 @@ export const FinancesModule: React.FC = () => {
             <button onClick={handleSaveEdit} disabled={updateCheque.isPending} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors">
               {updateCheque.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Cheque</h3>
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro de eliminar el cheque <span className="font-mono font-bold">#{deleteTarget.cheque_number}</span> de <span className="font-bold">{deleteTarget.bank_name}</span> por <span className="font-mono font-bold">{formatARS(deleteTarget.amount_ars)}</span>?
-            </p>
-            <p className="text-xs text-gray-400">Esta acción quedará registrada en el historial de auditoría.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
-              <button onClick={handleDelete} disabled={deleteCheque.isPending} className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50">Eliminar</button>
-            </div>
           </div>
         </div>
       )}

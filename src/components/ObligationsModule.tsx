@@ -17,12 +17,24 @@ export const ObligationsModule: React.FC = () => {
   const [uploadFeedback, setUploadFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [editingObl, setEditingObl] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [payingObl, setPayingObl] = useState<any>(null);
   const [payMonth, setPayMonth] = useState(new Date().getMonth());
   const [payYear, setPayYear] = useState(new Date().getFullYear());
   const [payAmount, setPayAmount] = useState('');
   const [viewPayments, setViewPayments] = useState<string | null>(null);
+
+  const handleDeleteObligation = async (obl: any) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Obligación',
+      `¿Eliminás "${obl.name}"? Se borrarán también los pagos asociados.`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteObligation.mutateAsync(obl.id);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
 
   const today = new Date().getDate();
 
@@ -186,7 +198,7 @@ export const ObligationsModule: React.FC = () => {
                       <button onClick={() => setViewPayments(viewPayments === obl.id ? null : obl.id)} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors" title="Ver pagos"><Eye size={14} /></button>
                     )}
                     <button onClick={() => { setEditingObl(obl); setEditForm({ name: obl.name, description: obl.description || '', due_day_of_month: obl.due_day_of_month, amount_ars: obl.amount_ars, status: obl.status }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
-                    <button onClick={() => setDeleteTarget(obl)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                    <button onClick={() => handleDeleteObligation(obl)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 {/* Payments History */}
@@ -290,26 +302,6 @@ export const ObligationsModule: React.FC = () => {
             >
               {updateObligation.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Obligación</h3>
-            <p className="text-sm text-gray-600">
-              ¿Eliminás <span className="font-bold">{deleteTarget.name}</span>? Se borrarán también los pagos asociados.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
-              <button
-                onClick={async () => { try { await deleteObligation.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); } }}
-                disabled={deleteObligation.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Eliminar</button>
-            </div>
           </div>
         </div>
       )}

@@ -42,8 +42,20 @@ export const RrhhModule: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [showInactive, setShowInactive] = useState(false);
+
+  const handleDeleteEmployee = async (emp: any) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Dar de Baja Empleado',
+      `¿Dás de baja a "${emp.full_name}"? El empleado pasará a estado "Desvinculado" y no se eliminará del sistema.`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteEmployee.mutateAsync(emp.id);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
   const [form, setForm] = useState({
     legajo: '', full_name: '', cuil: '', dni: '', birth_date: '', address: '', phone: '',
     emergency_contact: '', category_id: '', current_project_id: '', hire_date: '',
@@ -202,7 +214,7 @@ export const RrhhModule: React.FC = () => {
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => { setSelectedId(emp.id); setTab('legajo'); }} className="text-ecar-blue hover:underline text-xs font-bold">Ver legajo</button>
                           <button onClick={() => { setEditingEmployee(emp); setEditForm({ legajo: emp.legajo || '', full_name: emp.full_name, cuil: emp.cuil || '', dni: emp.dni || '', birth_date: emp.birth_date || '', address: emp.address || '', phone: emp.phone || '', emergency_contact: emp.emergency_contact || '', category_id: emp.category_id || '', current_project_id: emp.current_project_id || '', hire_date: emp.hire_date || '', bank_name: emp.bank_name || '', bank_alias_cbu: emp.bank_alias_cbu || '', trial_start_date: emp.trial_start_date || '', obra_social: emp.obra_social || '', art_provider: emp.art_provider || '', modo_liquidacion: emp.modo_liquidacion || 'mensual', retribucion_pactada: emp.retribucion_pactada || '', employer_entity: emp.employer_entity || 'ECAR SAS', gender: emp.gender || '', marital_status: emp.marital_status || '', children_info: JSON.stringify(emp.children_info || []), education_level: emp.education_level || '', union_name: emp.union_name || 'UOCRA', observations: emp.observations || '', debt_to_employee: emp.debt_to_employee || '', debt_notes: emp.debt_notes || '', does_overtime: emp.does_overtime || false, overtime_rate: emp.overtime_rate || '50', shirt_size: emp.shirt_size || '', pants_size: emp.pants_size || '', shoe_size: emp.shoe_size || '' }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil size={14} /></button>
-                          <button onClick={() => setDeleteTarget(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
+                          <button onClick={() => handleDeleteEmployee(emp)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Dar de baja"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -734,28 +746,6 @@ export const RrhhModule: React.FC = () => {
             >
               {updateEmployee.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Employee Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Dar de Baja</h3>
-            <p className="text-sm text-gray-600">
-              ¿Dás de baja a <span className="font-bold">{deleteTarget.full_name}</span>? El empleado pasará a estado "Desvinculado" y no se eliminará del sistema.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-200">Cancelar</button>
-              <button
-                onClick={async () => {
-                  try { await deleteEmployee.mutateAsync(deleteTarget.id); setDeleteTarget(null); } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-                }}
-                disabled={deleteEmployee.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Dar de Baja</button>
-            </div>
           </div>
         </div>
       )}

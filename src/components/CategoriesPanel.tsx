@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tag, Plus, X, TrendingUp, History, Pencil, Trash2, Clock } from 'lucide-react';
 import type { UnionCategory } from '../lib/types';
+import { useModalStore } from '../store/useModalStore';
 
 interface Props {
   categories: UnionCategory[];
@@ -15,8 +16,20 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
   const [createForm, setCreateForm] = useState({ name: '', hourly_rate_ars: '', daily_rate_ars: '' });
   const [editingCat, setEditingCat] = useState<UnionCategory | null>(null);
   const [editRate, setEditRate] = useState({ hourly_rate_ars: '', daily_rate_ars: '' });
-  const [deleteTarget, setDeleteTarget] = useState<UnionCategory | null>(null);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
+
+  const handleDeleteCategory = async (cat: UnionCategory) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Categoría',
+      `¿Eliminás la categoría "${cat.name}"? Los empleados asignados quedarán sin categoría.`
+    );
+    if (!confirmed) return;
+    try {
+      await deleteCategory.mutateAsync(cat.id);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
 
   const handleCreate = async () => {
     if (!createForm.name) return;
@@ -200,58 +213,40 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
       {editingCat && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg">Actualizar Valor — {editingCat.name}</h3>
-              <button onClick={() => setEditingCat(null)}><X size={20} className="text-gray-400" /></button>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-700 font-bold flex items-center gap-1"><TrendingUp size={12} /> El cambio NO es retroactivo</p>
-              <p className="text-[10px] text-amber-600 mt-0.5">El valor anterior se archivará con fecha de hoy. El nuevo valor aplica desde hoy hacia adelante.</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 mb-1">Valor actual</p>
-              <p className="font-mono font-bold text-gray-600">{formatARS(editingCat.hourly_rate_ars)}/hora · {formatARS(editingCat.daily_rate_ars)}/día</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex justify-between items-center border-b pb-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Nuevo Valor Hora ($)</label>
-                <input type="number" value={editRate.hourly_rate_ars} onChange={e => setEditRate({ ...editRate, hourly_rate_ars: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
+                <h3 className="font-bold text-lg text-gray-900">Actualizar Valor de Categoría</h3>
+                <p className="text-xs text-gray-500">Categoría: {editingCat.name}</p>
               </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Nuevo Valor Día ($)</label>
-                <input type="number" value={editRate.daily_rate_ars} onChange={e => setEditRate({ ...editRate, daily_rate_ars: e.target.value })} className="w-full px-3 py-2 border rounded-xl text-sm font-mono" />
-              </div>
+              <button onClick={() => setEditingCat(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
-            {parseFloat(editRate.hourly_rate_ars) > 0 && editingCat.hourly_rate_ars > 0 && (
-              <div className="text-center">
-                <span className="text-sm font-bold text-green-600">
-                  +{Math.round(((parseFloat(editRate.hourly_rate_ars) - editingCat.hourly_rate_ars) / editingCat.hourly_rate_ars) * 100)}% de aumento
-                </span>
-              </div>
-            )}
+            <div>
+              <label className="text-xs font-bold text-gray-600 uppercase">Valor Hora Actual</label>
+              <p className="text-xl font-bold font-mono text-gray-400">{formatARS(editingCat.hourly_rate_ars)}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-600 uppercase">Nuevo Valor Hora (ARS) *</label>
+              <input
+                type="number"
+                value={editRate.hourly_rate_ars}
+                onChange={e => setEditRate(p => ({ ...p, hourly_rate_ars: e.target.value }))}
+                placeholder="Ej: 8500"
+                className="input-field mt-1 font-mono text-lg"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-600 uppercase">Nuevo Valor Diario (ARS)</label>
+              <input
+                type="number"
+                value={editRate.daily_rate_ars}
+                onChange={e => setEditRate(p => ({ ...p, daily_rate_ars: e.target.value }))}
+                placeholder="Ej: 68000"
+                className="input-field mt-1 font-mono"
+              />
+            </div>
             <button onClick={handleUpdateRate} disabled={updateCategoryRate.isPending} className="btn-primary w-full">
               {updateCategoryRate.isPending ? 'Actualizando...' : '✓ Aplicar Nuevo Valor'}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="font-bold text-lg text-red-600">Eliminar Categoría</h3>
-            <p className="text-sm text-gray-600">
-              ¿Eliminás la categoría <span className="font-bold">{deleteTarget.name}</span>? Los empleados asignados quedarán sin categoría.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="badge badge-neutral">Cancelar</button>
-              <button
-                onClick={async () => { await deleteCategory.mutateAsync(deleteTarget.id); setDeleteTarget(null); }}
-                disabled={deleteCategory.isPending}
-                className="flex-1 bg-red-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-red-600 disabled:opacity-50"
-              >Eliminar</button>
-            </div>
           </div>
         </div>
       )}
