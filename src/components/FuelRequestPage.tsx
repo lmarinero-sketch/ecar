@@ -111,23 +111,23 @@ export const FuelRequestPage: React.FC = () => {
         setVehicles(vRes.data || []);
         setProjects(pRes.data || []);
           
-        // Restaurado auto-load (con validación de tiempo) para evitar background kill en Chrome/Android
+        // Restaurado auto-load EXCLUSIVO para recuperación de cámara (Background Kill)
+        // Solo se recupera si se hizo clic en el botón de cámara en los últimos 5 minutos.
         const pendingId = localStorage.getItem('ecar_active_fuel_request');
-        if (pendingId) {
-          const { data: req } = await supabase.from('fuel_loads').select('*').eq('id', pendingId).single();
-          if (req && req.workflow_status === 'requested') {
-            // Solo recuperar si fue creado en las ultimas 4 horas para evitar problemas en tablets compartidas
-            const hoursSince = (new Date().getTime() - new Date(req.created_at).getTime()) / (1000 * 60 * 60);
-            if (hoursSince < 4) {
+        const photoTimeStr = localStorage.getItem('taking_photo_timestamp');
+        
+        if (pendingId && photoTimeStr) {
+          const timeSincePhotoClick = Date.now() - parseInt(photoTimeStr);
+          if (timeSincePhotoClick < 5 * 60 * 1000) { // 5 minutos de ventana
+            const { data: req } = await supabase.from('fuel_loads').select('*').eq('id', pendingId).single();
+            if (req && req.workflow_status === 'requested') {
               setActiveRequest(req as FuelLoad);
               setCompleteForm(f => ({ ...f, station_name: req.station_name || 'YPF', fuel_type: req.fuel_type || 'Diesel Premium / V-Power' }));
-            } else {
-              localStorage.removeItem('ecar_active_fuel_request');
             }
-          } else {
-            localStorage.removeItem('ecar_active_fuel_request');
           }
         }
+        // Limpiamos el flag para que futuras visitas a la página no auto-carguen por error
+        localStorage.removeItem('taking_photo_timestamp');
       } catch (e) {
         console.error(e);
       }
@@ -607,9 +607,16 @@ export const FuelRequestPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Foto del Ticket</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer relative overflow-hidden">
-                      <input type="file" accept="image/*" capture="environment" onChange={e => setTicketFile(e.target.files?.[0] || null)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Foto del Ticket</label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer relative overflow-hidden">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment" 
+                          onClick={() => localStorage.setItem('taking_photo_timestamp', Date.now().toString())}
+                          onChange={e => setTicketFile(e.target.files?.[0] || null)} 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                        />
                       <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
                         {ticketFile ? (
                           <>
