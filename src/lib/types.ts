@@ -473,7 +473,7 @@ export interface EmployeePPEDelivery {
   id: string;
   tenant_id: string;
   employee_id: string;
-  item_type: 'pantalon' | 'zapatos' | 'campera' | 'camisa' | 'remera' | 'otro';
+  item_type: string;
   size: string;
   quantity: number;
   delivery_date: string;

@@ -35,7 +35,9 @@ export const PPEDeliveriesPanel: React.FC<{ employeeId?: string }> = ({ employee
     'guantes': '🧤 Guantes de Protección (EPP)',
     'anteojos': '🥽 Anteojos de Seguridad (EPP)',
     'arnes': '🦺 Arnés de Seguridad (EPP)',
-    'otro': '📦 Otro Elemento de Protección'
+    'materiales': '🧱 Materiales / Consumibles',
+    'herramientas': '🔧 Herramientas de Mano',
+    'otro': '📦 Otro Elemento / Prenda'
   };
 
   // Filter deliveries in memory by itemType and searchTerm
