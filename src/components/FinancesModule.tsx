@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Landmark, TrendingUp, X, Camera, Edit3, Plus,
@@ -1028,7 +1029,7 @@ export const FinancesModule: React.FC = () => {
           )}
 
           {/* Form modal (pre-filled from OCR or empty for manual) */}
-          {mode === 'form' && (
+          {mode === 'form' && createPortal(
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center">
@@ -1125,7 +1126,7 @@ export const FinancesModule: React.FC = () => {
                 </button>
               </div>
             </div>
-          )}
+          , document.body)}
 
           {/* Cheques table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -1456,7 +1457,7 @@ export const FinancesModule: React.FC = () => {
       )}
 
       {/* Upload Receipt Modal */}
-      {showReceiptModal && (
+      {showReceiptModal && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex justify-between items-center">
@@ -1632,10 +1633,10 @@ export const FinancesModule: React.FC = () => {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Edit Cheque Modal */}
-      {editingCheque && (
+      {editingCheque && createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
@@ -1718,7 +1719,7 @@ export const FinancesModule: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Audit Log Modal */}
       {auditChequeId && <ChequeAuditModal chequeId={auditChequeId} onClose={() => setAuditChequeId(null)} />}
@@ -1745,7 +1746,7 @@ const ChequeAuditModal: React.FC<{ chequeId: string; onClose: () => void }> = ({
     issue_date: 'Fecha emisión', status: 'Estado',
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center">
@@ -1787,5 +1788,5 @@ const ChequeAuditModal: React.FC<{ chequeId: string; onClose: () => void }> = ({
         )}
       </div>
     </div>
-  );
+  , document.body);
 };
