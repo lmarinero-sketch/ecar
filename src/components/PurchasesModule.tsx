@@ -3,7 +3,7 @@ import {
   ShoppingCart, Upload, Check, X, AlertCircle, Plus, Loader2, Eye,
   TrendingUp, TrendingDown, Download, Pencil, Trash2, Database, Search,
   Building2, CreditCard, ChevronDown, ChevronRight, Package, Truck,
-  CheckCircle2, Clock, FileText
+  CheckCircle2, Clock, FileText, Landmark
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePurchaseInvoices, useSuppliers, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
@@ -18,8 +18,9 @@ import { LegalEntitiesPanel } from './LegalEntitiesPanel';
 import { NewPurchaseInvoiceModal } from './purchases/NewPurchaseInvoiceModal';
 import { SupplierMaster } from './purchases/SupplierMaster';
 import { SupplierPaymentModal } from './purchases/SupplierPaymentModal';
+import { PaymentOrdersTab } from './purchases/PaymentOrdersTab';
 
-type InvoiceTab = 'compras' | 'ventas' | 'proveedores' | 'banco' | 'razones_sociales';
+type InvoiceTab = 'compras' | 'ventas' | 'proveedores' | 'banco' | 'razones_sociales' | 'ordenes_pago';
 
 const BancoPreciosTab: React.FC = () => {
   const { data: resources = [], isLoading } = useBudgetResources();
@@ -688,7 +689,10 @@ export const PurchasesModule: React.FC = () => {
           <Database size={16} /> Banco de Precios
         </button>
         <button onClick={() => setActiveTab('razones_sociales')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'razones_sociales' ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-          <Building2 size={16} /> Razones Sociales
+          <Building2 size={16} /> Entidades
+        </button>
+        <button onClick={() => setActiveTab('ordenes_pago')} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${activeTab === 'ordenes_pago' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <Landmark size={16} /> Órdenes de Pago
         </button>
       </div>
 
@@ -748,6 +752,8 @@ export const PurchasesModule: React.FC = () => {
         <BancoPreciosTab />
       ) : activeTab === 'razones_sociales' ? (
         <LegalEntitiesPanel />
+      ) : activeTab === 'ordenes_pago' ? (
+        <PaymentOrdersTab />
       ) : activeTab === 'proveedores' ? (
         <SupplierMaster />
       ) : (
