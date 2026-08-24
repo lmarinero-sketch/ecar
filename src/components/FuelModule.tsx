@@ -1859,6 +1859,9 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
 
   const handleComplete = async () => {
     const isBatan = completeForm.fuel_source === 'batan';
+    const loadObj = loads.find(x => x.id === completingId);
+    const isFillingBatan = loadObj?.vehicle_code?.startsWith('BT-');
+
     if (!completingId || !completeForm.liters) return;
     if (!isBatan && !completeForm.total_amount && !completeForm.price_per_liter) {
       alert("Por favor, ingrese el Importe Total.");
@@ -1882,7 +1885,6 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     });
 
     if (isBatan) {
-      const loadObj = loads.find(x => x.id === completingId);
       await createBatan.mutateAsync({
         movement_date: new Date().toISOString().split('T')[0],
         movement_type: 'discharge',
@@ -1890,6 +1892,21 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
         liters_discharged: finalLiters,
         movement_status: 'completed',
         reference_load: loadObj?.load_number
+      });
+    }
+
+    if (isFillingBatan && !isBatan) {
+      await createBatan.mutateAsync({
+        movement_date: new Date().toISOString().split('T')[0],
+        movement_type: 'purchase',
+        fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
+        liters_loaded: finalLiters,
+        unit_price: finalPrice,
+        total_amount: finalAmount,
+        supplier: completeForm.supplier,
+        movement_status: 'completed',
+        reference_load: loadObj?.load_number,
+        observations: `Carga al Batán finalizada desde panel (${loadObj?.load_number})`
       });
     }
 

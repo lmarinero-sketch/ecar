@@ -303,6 +303,24 @@ export const FuelRequestPage: React.FC = () => {
           observations: `Carga directa realizada desde app móvil (${activeRequest.load_number})`
         });
       }
+
+      const isFillingBatan = activeRequest.vehicle_code?.startsWith('BT-');
+      if (isFillingBatan && !isBatan) {
+        await supabase.from('fuel_batan_movements').insert({
+          tenant_id: ECAR_TENANT_ID,
+          movement_number: `INGRESO-${String(Date.now()).slice(-6)}`,
+          movement_date: new Date().toISOString().split('T')[0],
+          movement_type: 'purchase',
+          fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
+          liters_loaded: finalLiters,
+          unit_price: finalPrice,
+          total_amount: finalAmount,
+          supplier: completeForm.station_name,
+          driver_name: activeRequest.driver_name || activeRequest.requested_by,
+          movement_status: 'completed',
+          observations: `Carga al Batán finalizada desde app móvil (${activeRequest.load_number})`
+        });
+      }
       
       localStorage.removeItem('ecar_active_fuel_request');
       setActiveRequest(null);
