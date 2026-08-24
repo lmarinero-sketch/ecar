@@ -115,6 +115,8 @@ export const FleetModule: React.FC = () => {
     vehicles.filter(v => !isDueOrOverdue(v.next_maintenance_date) && isDueSoon(v.next_maintenance_date, 7)),
     [vehicles]
   );
+  const vtvDue = useMemo(() => vehicles.filter(v => isDueOrOverdue(v.vtv_expiry)), [vehicles]);
+  const insuranceDue = useMemo(() => vehicles.filter(v => isDueOrOverdue(v.insurance_expiry)), [vehicles]);
   const allMaintenance = useMemo(() =>
     vehicles.filter(v => v.next_maintenance_date).sort((a, b) => (a.next_maintenance_date || '').localeCompare(b.next_maintenance_date || '')),
     [vehicles]
@@ -366,7 +368,7 @@ export const FleetModule: React.FC = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-slate-500" /> Total Vehículos</div>
           <p className="text-2xl font-black text-slate-600 font-mono relative z-10">{vehicles.length}</p>
@@ -374,6 +376,10 @@ export const FleetModule: React.FC = () => {
         <div className={`kpi-card ${maintenanceDue.length > 0 ? '!border-red-200 !bg-red-50/70' : ''}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Mant. Vencido</div>
           <p className="text-2xl font-black text-red-600 font-mono relative z-10">{maintenanceDue.length}</p>
+        </div>
+        <div className={`kpi-card ${(vtvDue.length > 0 || insuranceDue.length > 0) ? '!border-red-200 !bg-red-50/70' : ''}`}>
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><FileText size={16} className="text-red-500" /> Docs. Vencidos</div>
+          <p className="text-2xl font-black text-red-600 font-mono relative z-10">{vtvDue.length + insuranceDue.length}</p>
         </div>
         <div className={`kpi-card ${maintenanceSoon.length > 0 ? '!border-yellow-200 !bg-yellow-50/70' : ''}`}>
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Clock size={16} className="text-yellow-500" /> Próx. 7 días</div>
@@ -438,9 +444,11 @@ export const FleetModule: React.FC = () => {
           ) : vehicles.map(v => {
             const overdue = isDueOrOverdue(v.next_maintenance_date);
             const soon = isDueSoon(v.next_maintenance_date, 7);
+            const vtvOverdue = isDueOrOverdue(v.vtv_expiry);
+            const insuranceOverdue = isDueOrOverdue(v.insurance_expiry);
             const isEditing = editId === v.id;
             return (
-              <div key={v.id} className={`p-4 ${overdue ? 'bg-red-50/40' : ''}`}>
+              <div key={v.id} className={`p-4 ${overdue || vtvOverdue || insuranceOverdue ? 'bg-red-50/40' : ''}`}>
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</div>
                   <div className="flex-1 min-w-0">
@@ -450,6 +458,8 @@ export const FleetModule: React.FC = () => {
                       {v.plate && <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.plate}</span>}
                       {overdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
                       {!overdue && soon && <span className="badge badge-warning text-[10px]">Service próximo</span>}
+                      {vtvOverdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><FileText size={10} /> VTV Vencida</span>}
+                      {insuranceOverdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><Shield size={10} /> Seguro Vencido</span>}
                       <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-0.5 rounded-full shadow-xs">
                         <IosToggleSwitch
                           size="sm"
