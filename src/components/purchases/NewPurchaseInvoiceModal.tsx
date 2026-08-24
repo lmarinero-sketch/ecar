@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
-  X, Search, Plus, Info, Check, Trash2, ArrowLeft,
+  X, Search, Plus, Info, Check, Trash2, ArrowLeft, Save,
   FileText, Package, Percent,
   Building2, AlertCircle, ShoppingCart, HelpCircle
 } from 'lucide-react';
 import {
   useSuppliers, useCreateSupplier, useLegalEntities,
-  useInventoryItems,
+  useInventoryItems, useCreateInventoryItem,
   useProjects, usePurchaseInvoices, usePurchaseInvoiceItems,
   useCreatePurchaseInvoiceWithItems, useUpdatePurchaseInvoiceWithItems
 } from '../../hooks/useData';
@@ -110,6 +110,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
   // Line Item entry form state
   const [itemCode, setItemCode] = useState('');
   const [productName, setProductName] = useState('');
+  const [showQuickModal, setShowQuickModal] = useState(false);
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -1426,6 +1427,80 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
           </div>
         </div>
       )}
+      {showQuickModal && <QuickItemModal initialName={productSearch} onClose={() => setShowQuickModal(false)} onSuccess={(item) => { handleSelectProduct(item); setShowQuickModal(false); }} />}
+    </div>
+  );
+};
+
+
+const QuickItemModal: React.FC<{
+  initialName: string;
+  onClose: () => void;
+  onSuccess: (item: any) => void;
+}> = ({ initialName, onClose, onSuccess }) => {
+  const [name, setName] = useState(initialName);
+  const [rubro, setRubro] = useState('');
+  const [unit, setUnit] = useState('unidad');
+  const [unitCost, setUnitCost] = useState('0');
+  const createItem = useCreateInventoryItem();
+  const { user } = useAuth();
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    try {
+      const payload = {
+        tenant_id: (user as any)?.tenant_id || user?.id,
+        name: name.trim(),
+        category: 'material',
+        rubro: rubro.trim() || null,
+        unit: unit.trim() || 'unidad',
+        current_stock: 0,
+        min_stock: 0,
+        unit_cost: parseFloat(unitCost) || 0,
+        location: 'Pañol Principal',
+      };
+      const created: any = await createItem.mutateAsync(payload);
+      onSuccess(created);
+    } catch (err: any) {
+      alert(err.message || 'Error creating item');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+        <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center justify-between">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <Plus size={18} className="text-ecar-blue" />
+            Crear Producto Rápido
+          </h3>
+          <button onClick={onClose}><X size={18} className="text-slate-400" /></button>
+        </div>
+        <form onSubmit={handleSave} className="p-4 space-y-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Nombre</label>
+            <input autoFocus value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Rubro</label>
+            <input value={rubro} onChange={e => setRubro(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Ej: Herrajes, Pintura..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Unidad</label>
+              <input value={unit} onChange={e => setUnit(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-1">Costo Estimado</label>
+              <input type="number" step="0.01" value={unitCost} onChange={e => setUnitCost(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+          </div>
+          <button type="submit" disabled={createItem.isPending} className="w-full py-2.5 mt-2 bg-ecar-blue text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+            {createItem.isPending ? 'Guardando...' : <><Save size={16} /> Guardar y Seleccionar</>}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

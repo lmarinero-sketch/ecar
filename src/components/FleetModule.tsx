@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Truck, Wrench, Fuel, ArrowLeft, Plus, X, Save, AlertTriangle,
-  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users, QrCode
+  Gauge, Shield, FileText, CheckCircle2, Clock, Bell, Edit2, ClipboardCheck, Trash2, Navigation, Users, QrCode, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
 import { VehicleDailyReportModule } from './VehicleDailyReportModule';
+import { VehicleExpandedData } from './VehicleExpandedData';
 import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle } from '../lib/types';
@@ -89,6 +90,7 @@ export const FleetModule: React.FC = () => {
     }
   }, [view]);
   const [editId, setEditId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [showNew, setShowNew] = useState(false);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
   const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
@@ -448,11 +450,25 @@ export const FleetModule: React.FC = () => {
             const vtvOverdue = isDueOrOverdue(v.vtv_expiry);
             const insuranceOverdue = isDueOrOverdue(v.insurance_expiry);
             const isEditing = editId === v.id;
+            const isExpanded = expandedIds.has(v.id);
+
+            const toggleExpand = () => {
+              const newSet = new Set(expandedIds);
+              if (newSet.has(v.id)) newSet.delete(v.id);
+              else newSet.add(v.id);
+              setExpandedIds(newSet);
+            };
+
             return (
-              <div key={v.id} className={`p-4 ${overdue || vtvOverdue || insuranceOverdue ? 'bg-red-50/40' : ''}`}>
+              <div key={v.id} className={`p-4 transition-colors ${overdue || vtvOverdue || insuranceOverdue ? 'bg-red-50/40' : 'hover:bg-slate-50'}`}>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</div>
-                  <div className="flex-1 min-w-0">
+                  <button onClick={toggleExpand} className="mt-2 text-gray-400 hover:text-gray-600 transition-colors">
+                    {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                  </button>
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0 cursor-pointer" onClick={toggleExpand}>
+                    {VEHICLE_ICON[v.vehicle_type] || '🚐'}
+                  </div>
+                  <div className="flex-1 min-w-0 cursor-pointer" onClick={toggleExpand}>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm text-gray-800">{v.code}</span>
                       <span className="text-sm text-gray-600">{v.description}</span>
@@ -636,6 +652,11 @@ export const FleetModule: React.FC = () => {
                       {updateVehicle.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Cambios</>}
                     </button>
                   </div>
+                )}
+
+                {/* Expanded View (QR and Fuel) */}
+                {isExpanded && !isEditing && (
+                  <VehicleExpandedData vehicleId={v.id} />
                 )}
               </div>
             );

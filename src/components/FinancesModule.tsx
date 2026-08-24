@@ -130,12 +130,50 @@ export const FinancesModule: React.FC = () => {
   };
 
   // --- CHEQUE METRICS & SEGMENTATION ---
-  const paidPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'cashed'), [cheques]);
-  const paidReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && (c.status === 'deposited' || c.status === 'cashed')), [cheques]);
-  const pendingPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'pending'), [cheques]);
-  const pendingReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && c.status === 'pending'), [cheques]);
-  const allPaidCheques = useMemo(() => cheques.filter(c => c.status === 'cashed' || c.status === 'deposited'), [cheques]);
-  const allPendingCheques = useMemo(() => cheques.filter(c => c.status === 'pending'), [cheques]);
+  const isDateInFilter = (dateStr: string | null, filter: string, customStart: string, customEnd: string) => {
+    if (!filter) return true;
+    if (!dateStr) return false;
+    const d = new Date(dateStr + 'T12:00:00');
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+
+    if (filter === 'today') {
+      return d.toDateString() === today.toDateString();
+    }
+    if (filter === 'week') {
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return d >= start && d <= end;
+    }
+    if (filter === 'month') {
+      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    }
+    if (filter === 'last_month') {
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(today.getMonth() - 1);
+      return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear();
+    }
+    if (filter === 'next_month') {
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(today.getMonth() + 1);
+      return d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear();
+    }
+    if (filter === 'custom') {
+      if (customStart && d < new Date(customStart + 'T12:00:00')) return false;
+      if (customEnd && d > new Date(customEnd + 'T12:00:00')) return false;
+      return true;
+    }
+    return true;
+  };
+
+  const paidPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'cashed' && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
+  const paidReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && (c.status === 'deposited' || c.status === 'cashed') && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
+  const pendingPayable = useMemo(() => cheques.filter(c => c.direction === 'payable' && c.status === 'pending' && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
+  const pendingReceivable = useMemo(() => cheques.filter(c => c.direction === 'receivable' && c.status === 'pending' && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
+  const allPaidCheques = useMemo(() => cheques.filter(c => (c.status === 'cashed' || c.status === 'deposited') && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
+  const allPendingCheques = useMemo(() => cheques.filter(c => c.status === 'pending' && isDateInFilter(c.due_date || c.issue_date, filterDate, customStart, customEnd)), [cheques, filterDate, customStart, customEnd]);
 
   const totalPaidPayable = paidPayable.reduce((a, c) => a + c.amount_ars, 0);
   const totalPaidReceivable = paidReceivable.reduce((a, c) => a + c.amount_ars, 0);
@@ -245,42 +283,7 @@ export const FinancesModule: React.FC = () => {
       if (filterType !== 'all' && ch.type !== filterType) return false;
 
       // Filter by Date
-      if (filterDate) {
-        const dateStr = ch.due_date || ch.issue_date;
-        if (!dateStr) return false;
-        const d = new Date(dateStr + 'T12:00:00');
-        const today = new Date();
-        today.setHours(12,0,0,0);
-        
-        if (filterDate === 'today') {
-          return d.toDateString() === today.toDateString();
-        }
-        if (filterDate === 'week') {
-          const start = new Date(today);
-          start.setDate(today.getDate() - today.getDay());
-          const end = new Date(start);
-          end.setDate(start.getDate() + 6);
-          return d >= start && d <= end;
-        }
-        if (filterDate === 'month') {
-          return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-        }
-        if (filterDate === 'last_month') {
-          const lastMonth = new Date(today);
-          lastMonth.setMonth(today.getMonth() - 1);
-          return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear();
-        }
-        if (filterDate === 'next_month') {
-          const nextMonth = new Date(today);
-          nextMonth.setMonth(today.getMonth() + 1);
-          return d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear();
-        }
-        if (filterDate === 'custom') {
-          if (customStart && d < new Date(customStart + 'T12:00:00')) return false;
-          if (customEnd && d > new Date(customEnd + 'T12:00:00')) return false;
-          return true;
-        }
-      }
+      if (!isDateInFilter(ch.due_date || ch.issue_date, filterDate, customStart, customEnd)) return false;
 
       return true;
     });
@@ -1708,7 +1711,7 @@ export const FinancesModule: React.FC = () => {
                 <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
                   <option value="pending">Pendiente</option>
                   <option value="deposited">Depositado</option>
-                  <option value="cashed">{editForm.direction === 'payable' ? 'Pagado (Debitado)' : 'Cobrado'}</option>
+                  <option value="cashed">{editForm.direction === 'payable' ? 'Pagado' : 'Cobrado'}</option>
                   <option value="bounced">Rechazado</option>
                   <option value="cancelled">Cancelado</option>
                 </select>
