@@ -50,6 +50,18 @@ const compressImageFile = (file: File, maxWidth = 1000, maxHeight = 1000, qualit
   });
 };
 
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
+
 export const FuelRequestPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -98,9 +110,24 @@ export const FuelRequestPage: React.FC = () => {
         ]);
         setVehicles(vRes.data || []);
         setProjects(pRes.data || []);
-        
-        // Removido el auto-load desde localStorage para evitar problemas en tablets compartidas
-        // donde el Usuario 2 vería la solicitud del Usuario 1.
+          
+        // Restaurado auto-load (con validación de tiempo) para evitar background kill en Chrome/Android
+        const pendingId = localStorage.getItem('ecar_active_fuel_request');
+        if (pendingId) {
+          const { data: req } = await supabase.from('fuel_loads').select('*').eq('id', pendingId).single();
+          if (req && req.workflow_status === 'requested') {
+            // Solo recuperar si fue creado en las ultimas 4 horas para evitar problemas en tablets compartidas
+            const hoursSince = (new Date().getTime() - new Date(req.created_at).getTime()) / (1000 * 60 * 60);
+            if (hoursSince < 4) {
+              setActiveRequest(req as FuelLoad);
+              setCompleteForm(f => ({ ...f, station_name: req.station_name || 'YPF', fuel_type: req.fuel_type || 'Diesel Premium / V-Power' }));
+            } else {
+              localStorage.removeItem('ecar_active_fuel_request');
+            }
+          } else {
+            localStorage.removeItem('ecar_active_fuel_request');
+          }
+        }
       } catch (e) {
         console.error(e);
       }
@@ -214,16 +241,21 @@ export const FuelRequestPage: React.FC = () => {
         try {
           const fileExt = ticketFile.name.split('.').pop() || 'jpg';
           const fileName = `${Date.now()}_${activeRequest.load_number}.${fileExt}`;
+          
+          // COMPRESS ALWAYS BEFORE UPLOAD (Fix for Android stalling on 15MB images)
+          const base64Compressed = await compressImageFile(ticketFile);
+          const compressedFile = dataURLtoFile(base64Compressed, fileName);
+
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('fuel_tickets')
-            .upload(fileName, ticketFile, { upsert: true });
+            .upload(fileName, compressedFile, { upsert: true });
 
           if (!uploadError && uploadData) {
             const { data: publicUrlData } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
             photoUrl = publicUrlData.publicUrl;
           } else {
             console.warn("Storage RLS policy restricted upload, using compressed base64 fallback:", uploadError);
-            photoUrl = await compressImageFile(ticketFile);
+            photoUrl = base64Compressed;
           }
         } catch (storageErr) {
           console.warn("Storage exception, using compressed base64 fallback:", storageErr);
