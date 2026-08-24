@@ -81,6 +81,7 @@ export const CertificationsModule: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [editingCert, setEditingCert] = useState<ProjectCertificate | null>(null);
   const [editForm, setEditForm] = useState<any>({});
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const handleDeleteCert = async (c: ProjectCertificate) => {
     const confirmed = await useModalStore.getState().showConfirm(

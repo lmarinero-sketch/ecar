@@ -1708,7 +1708,7 @@ export const FinancesModule: React.FC = () => {
                 <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
                   <option value="pending">Pendiente</option>
                   <option value="deposited">Depositado</option>
-                  <option value="cashed">Cobrado</option>
+                  <option value="cashed">{editForm.direction === 'payable' ? 'Pagado (Debitado)' : 'Cobrado'}</option>
                   <option value="bounced">Rechazado</option>
                   <option value="cancelled">Cancelado</option>
                 </select>

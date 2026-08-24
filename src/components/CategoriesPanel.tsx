@@ -114,7 +114,7 @@ export const CategoriesPanel: React.FC<Props> = ({ categories, allHistory, creat
                   <div className="flex gap-1">
                     <button onClick={() => { setEditingCat(cat); setEditRate({ hourly_rate_ars: String(cat.hourly_rate_ars), daily_rate_ars: String(cat.daily_rate_ars) }); }} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Actualizar valor"><Pencil size={14} /></button>
                     <button onClick={() => setShowHistoryFor(showHistoryFor === cat.name ? null : cat.name)} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors" title="Ver historial"><History size={14} /></button>
-                    <button onClick={() => setDeleteTarget(cat)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
+                    <button onClick={() => handleDeleteCategory(cat)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 {/* Last increase badge */}

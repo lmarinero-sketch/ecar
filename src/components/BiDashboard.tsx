@@ -79,6 +79,11 @@ export const BiDashboard: React.FC = () => {
   const totalInventoryValue = (inventoryItems || []).reduce((s, i) => s + i.current_stock * i.unit_cost, 0);
   const fleetOperative = vehicles.filter(v => v.vehicle_condition === 'operativo').length;
 
+  // Alertas de flota
+  const vtvDueCount = vehicles.filter(v => v.vtv_expiry && v.vtv_expiry <= today).length;
+  const serviceDueCount = vehicles.filter(v => v.next_maintenance_date && v.next_maintenance_date <= today).length;
+  const vehiclesAlertCount = vtvDueCount + serviceDueCount;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -308,6 +313,14 @@ export const BiDashboard: React.FC = () => {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Flota OK</p>
                 <p className="text-2xl font-black text-slate-700 font-mono">{fleetOperative} <span className="text-xs font-medium text-gray-400">/ {vehicles.length}</span></p>
               </div>
+            </div>
+            <div className="px-5 pb-5">
+              {vehiclesAlertCount > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-sm mt-3">
+                  <AlertTriangle size={16} className="text-red-500" />
+                  <span className="text-red-700 font-medium">Hay <span className="font-bold">{vehiclesAlertCount} alertas</span> vehiculares (VTV o Service vencido)</span>
+                </div>
+              )}
             </div>
             {lowStockItems > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2 text-sm">

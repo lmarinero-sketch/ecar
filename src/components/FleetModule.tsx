@@ -89,6 +89,7 @@ export const FleetModule: React.FC = () => {
     }
   }, [view]);
   const [editId, setEditId] = useState<string | null>(null);
+  const [showNew, setShowNew] = useState(false);
   const [editForm, setEditForm] = useState<Partial<FuelVehicle>>({});
   const [maintenanceTab, setMaintenanceTab] = useState<'schedule' | 'workshop' | 'tires'>('schedule');
   const [qrVehicle, setQrVehicle] = useState<FuelVehicle | null>(null);
