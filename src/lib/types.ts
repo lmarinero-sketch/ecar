@@ -1675,6 +1675,7 @@ export const ALL_MODULES = [
   'obra_intro',
   'finanzas_intro',
   'rrhh_intro',
+  'payment_orders',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1688,6 +1689,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   purchases: 'Compras & Libro IVA',
   purchase_requests: 'Pedidos de Compra',
   purchase_orders: 'Órdenes de Compra / OT',
+  payment_orders: 'Órdenes de Pago',
   finances: 'Gerencia de Administración y Finanzas',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'Gerencia de RRHH',

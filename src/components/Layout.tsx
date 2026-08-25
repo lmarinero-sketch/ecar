@@ -19,6 +19,7 @@ import { UserProfileModal } from './UserProfileModal';
 import { GlobalOnboarding } from './onboarding/GlobalOnboarding';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { HelpCircle } from 'lucide-react';
+import { PaymentOrdersTab } from './purchases/PaymentOrdersTab';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {
@@ -34,6 +35,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   compras_intro: ShoppingCart, logistics_intro: Warehouse, obra_intro: Building2,
   finanzas_intro: Landmark, rrhh_intro: Users,
   payments: Banknote,
+  payment_orders: Banknote,
   worker_payments: HardHat,
   nonconformities: ShieldAlert,
   supplier_eval: ClipboardCheck,
@@ -60,6 +62,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   compras_intro: 'Introducción Compras', logistics_intro: 'Introducción Logística',
   obra_intro: 'Introducción Obra', finanzas_intro: 'Introducción Finanzas', rrhh_intro: 'Introducción RRHH',
   payments: 'Pagos',
+  payment_orders: 'Órdenes Pago',
   worker_payments: 'Pagos Trabajadores',
   nonconformities: 'No Conf.',
   supplier_eval: 'Eval. Prov.',
@@ -88,6 +91,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   compras_intro: 'bg-ecar-blue', logistics_intro: 'bg-slate-600', obra_intro: 'bg-amber-600',
   finanzas_intro: 'bg-emerald-600', rrhh_intro: 'bg-indigo-600',
   payments: 'text-emerald-500 bg-emerald-50',
+  payment_orders: 'bg-purple-600',
   worker_payments: 'text-amber-600 bg-amber-50',
   nonconformities: 'bg-red-600',
   supplier_eval: 'bg-ecar-blue',
@@ -126,6 +130,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'compras_intro', requires: true },
       { id: 'purchases', requires: true },
       { id: 'purchase_orders', requires: true },
+      { id: 'payment_orders', requires: true },
       { id: 'supplier_eval', requires: true },
     ],
   },

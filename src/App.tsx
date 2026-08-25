@@ -41,6 +41,7 @@ import { OpportunitiesModule } from './components/OpportunitiesModule';
 import { NonConformitiesModule } from './components/NonConformitiesModule';
 import { PurchaseOrdersModule } from './components/PurchaseOrdersModule';
 import { SupplierEvalModule } from './components/SupplierEvalModule';
+import { PaymentOrdersTab } from './components/purchases/PaymentOrdersTab';
 import { GuideModule } from './components/GuideModule';
 import { ManualModule } from './components/ManualModule';
 import { ImplementationModule } from './components/ImplementationModule';
@@ -164,6 +165,7 @@ function AppContent() {
       case 'rrhh_intro': return <GerenciaLandingModule gerenciaKey="rrhh" />;
       case 'nonconformities': return <NonConformitiesModule />;
       case 'purchase_orders': return <PurchaseOrdersModule />;
+      case 'payment_orders': return <div className="p-2 md:p-6 w-full max-w-7xl mx-auto"><PaymentOrdersTab /></div>;
       case 'supplier_eval': return <SupplierEvalModule />;
 
       case 'documents': return <DocumentsModule />;
