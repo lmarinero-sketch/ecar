@@ -93,6 +93,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
   const [quickQty, setQuickQty] = useState('1');
   const [quickNotes, setQuickNotes] = useState('');
   const [quickProjectId, setQuickProjectId] = useState('');
+  const [quickAssignedTo, setQuickAssignedTo] = useState('');
 
   const handleQuickSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,12 +109,14 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
         movement_type: quickType,
         quantity: q,
         project_id: quickProjectId || null,
+        assigned_to: quickAssignedTo || null,
         notes: quickNotes || (quickType === 'in' ? 'Ingreso rápido de stock' : 'Egreso rápido de stock'),
       });
 
       useModalStore.getState().showAlert('Éxito', `Movimiento de ${quickType === 'in' ? 'Ingreso' : 'Egreso'} registrado.`);
       setQuickQty('1');
       setQuickNotes('');
+      setQuickAssignedTo('');
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
     }
@@ -206,6 +209,18 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
               </div>
             </div>
 
+            {/* Asignado a */}
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 mb-1">Entregado a (Empleado/Chofer)</label>
+              <input
+                type="text"
+                value={quickAssignedTo}
+                onChange={e => setQuickAssignedTo(e.target.value)}
+                className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                placeholder="Ej. Juan Pérez"
+              />
+            </div>
+
             {/* Nota */}
             <div>
               <label className="block text-[11px] font-medium text-slate-600 mb-1">Nota / Motivo</label>
@@ -257,7 +272,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                     <th className="py-2 px-3">Fecha</th>
                     <th className="py-2 px-3">Tipo</th>
                     <th className="py-2 px-3 text-right">Cant.</th>
-                    <th className="py-2 px-3">Obra</th>
+                    <th className="py-2 px-3">Obra / Destinatario</th>
                     <th className="py-2 px-3">Notas</th>
                     <th className="py-2 px-3">Registrado Por</th>
                     <th className="py-2 px-3 text-center">Acciones</th>
@@ -302,7 +317,10 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                           {isIngreso ? `+${m.quantity}` : isAjuste ? m.quantity : `-${m.quantity}`} {item.unit}
                         </td>
                         <td className={`py-2 px-3 text-slate-700 text-[11px] truncate max-w-[120px] ${isAnnulled ? 'line-through text-slate-400' : ''}`}>
-                          {m.project?.name || '-'}
+                          <div className="flex flex-col">
+                            <span>{m.project?.name || '-'}</span>
+                            {m.assigned_to && <span className="text-[9px] text-ecar-blue font-semibold uppercase">👤 {m.assigned_to}</span>}
+                          </div>
                         </td>
                         <td className={`py-2 px-3 text-slate-500 text-[11px] truncate max-w-[180px] ${isAnnulled ? 'line-through italic text-slate-400' : ''}`} title={m.notes || ''}>
                           {m.notes || '-'}
@@ -1094,9 +1112,6 @@ export const InventoryModule: React.FC = () => {
                   <option value="">TODOS LOS DEPÓSITOS</option>
                   <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Pañol Central)</option>
                   <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
-                  {(projects || []).map(p => (
-                    <option key={p.id} value={p.name}>OBRA: {p.name}</option>
-                  ))}
                 </select>
               </div>
 
@@ -1259,6 +1274,7 @@ export const InventoryModule: React.FC = () => {
                     <th className="py-3 px-3 text-center">Stock Mínimo</th>
                     <th className="py-3 px-3 text-center">Stock Ideal</th>
                     {!isPanolero && <th className="py-3 px-3 text-right">Último Costo</th>}
+                    {!isPanolero && <th className="py-3 px-3 text-right text-emerald-700">Total ($)</th>}
                     <th className="py-3 px-3 text-center">Acciones</th>
                   </tr>
                 </thead>
@@ -1344,6 +1360,13 @@ export const InventoryModule: React.FC = () => {
                           {!isPanolero && (
                             <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-700">
                               {fmt(item.unit_cost)}
+                            </td>
+                          )}
+
+                          {/* Total Valorizado */}
+                          {!isPanolero && (
+                            <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600 bg-emerald-50/30">
+                              {fmt((Number(item.current_stock) || 0) * (Number(item.unit_cost) || 0))}
                             </td>
                           )}
 
