@@ -1,12 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Search, CreditCard, Landmark, DollarSign, Activity } from 'lucide-react';
-import { useSupplierPayments } from '../../hooks/useData';
+import { FileText, Search, CreditCard, Landmark, DollarSign, Activity, Plus, X } from 'lucide-react';
+import { useSupplierPayments, useSuppliers } from '../../hooks/useData';
 import { formatARS } from '../../lib/types';
-import type { SupplierPayment } from '../../lib/types';
+import type { SupplierPayment, Supplier } from '../../lib/types';
+import { SupplierPaymentModal } from './SupplierPaymentModal';
 
 export const PaymentOrdersTab: React.FC = () => {
   const { data: payments = [], isLoading } = useSupplierPayments();
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [isSelectingSupplier, setIsSelectingSupplier] = useState(false);
+  const [selectedSupplierForPayment, setSelectedSupplierForPayment] = useState<Supplier | null>(null);
 
   const filteredPayments = useMemo(() => {
     let list = [...payments];
@@ -89,15 +94,24 @@ export const PaymentOrdersTab: React.FC = () => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h3 className="font-bold text-slate-800 text-lg">Historial y Trazabilidad de Pagos</h3>
-        <div className="relative w-full md:w-64">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por proveedor, cheque..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-ecar-blue focus:ring-2 focus:ring-ecar-blue/20"
-          />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por proveedor, cheque..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-ecar-blue focus:ring-2 focus:ring-ecar-blue/20"
+            />
+          </div>
+          <button
+            onClick={() => setIsSelectingSupplier(true)}
+            className="flex items-center gap-2 bg-ecar-blue text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-ecar-blue/20 hover:bg-blue-700 transition-colors whitespace-nowrap"
+          >
+            <Plus size={16} />
+            Nueva Orden
+          </button>
         </div>
       </div>
 
@@ -157,6 +171,57 @@ export const PaymentOrdersTab: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Select Supplier Modal */}
+      {isSelectingSupplier && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="font-bold text-slate-800">Seleccionar Proveedor</h3>
+              <button
+                onClick={() => setIsSelectingSupplier(false)}
+                className="p-1.5 hover:bg-slate-200 text-slate-500 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              {isLoadingSuppliers ? (
+                <div className="text-center text-slate-500 py-4">Cargando proveedores...</div>
+              ) : (
+                <div className="space-y-2">
+                  {suppliers.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        setSelectedSupplierForPayment(s);
+                        setIsSelectingSupplier(false);
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-ecar-blue hover:bg-blue-50/50 transition-all group text-left"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-800 group-hover:text-ecar-blue transition-colors">
+                          {s.name}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">CUIT: {s.cuit || 'S/D'}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Order Modal */}
+      {selectedSupplierForPayment && (
+        <SupplierPaymentModal
+          supplier={selectedSupplierForPayment}
+          onClose={() => setSelectedSupplierForPayment(null)}
+          onSuccess={() => setSelectedSupplierForPayment(null)}
+        />
+      )}
     </div>
   );
 };
