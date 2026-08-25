@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Search, CreditCard, Landmark, DollarSign } from 'lucide-react';
+import { FileText, Search, CreditCard, Landmark, DollarSign, Activity } from 'lucide-react';
 import { useSupplierPayments } from '../../hooks/useData';
 import { formatARS } from '../../lib/types';
 import type { SupplierPayment } from '../../lib/types';
@@ -23,6 +23,20 @@ export const PaymentOrdersTab: React.FC = () => {
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [payments, searchTerm]);
 
+  const metrics = useMemo(() => {
+    return filteredPayments.reduce((acc, curr) => {
+      acc.total += curr.amount_ars;
+      if (curr.payment_method.includes('cheque')) {
+        acc.cheques += curr.amount_ars;
+      } else if (curr.payment_method === 'transfer') {
+        acc.transfers += curr.amount_ars;
+      } else if (curr.payment_method === 'cash') {
+        acc.cash += curr.amount_ars;
+      }
+      return acc;
+    }, { total: 0, cheques: 0, transfers: 0, cash: 0 });
+  }, [filteredPayments]);
+
   const renderPaymentMethod = (p: SupplierPayment) => {
     switch (p.payment_method) {
       case 'cheque_issued': return <span className="flex items-center gap-1 text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-xs font-bold"><Landmark size={12} /> Cheque Propio {p.cheque?.cheque_number ? `#${p.cheque.cheque_number}` : ''}</span>;
@@ -39,8 +53,42 @@ export const PaymentOrdersTab: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      
+      {/* Metrics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-500 uppercase">Total Pagado</h4>
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Activity size={16} /></div>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatARS(metrics.total)}</p>
+          <p className="text-xs text-slate-400 mt-1">En el período filtrado</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-500 uppercase">En Cheques</h4>
+            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CreditCard size={16} /></div>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatARS(metrics.cheques)}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-500 uppercase">Transferencias</h4>
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Landmark size={16} /></div>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatARS(metrics.transfers)}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-500 uppercase">Efectivo</h4>
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><DollarSign size={16} /></div>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatARS(metrics.cash)}</p>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h3 className="font-bold text-slate-800 text-lg">Órdenes de Pago a Proveedores</h3>
+        <h3 className="font-bold text-slate-800 text-lg">Historial y Trazabilidad de Pagos</h3>
         <div className="relative w-full md:w-64">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -62,7 +110,7 @@ export const PaymentOrdersTab: React.FC = () => {
                 <th className="px-4 py-3 font-semibold">Proveedor</th>
                 <th className="px-4 py-3 font-semibold">Método de Pago</th>
                 <th className="px-4 py-3 font-semibold">Factura Asoc.</th>
-                <th className="px-4 py-3 font-semibold">Nº Recibo</th>
+                <th className="px-4 py-3 font-semibold">Nº Recibo / Doc</th>
                 <th className="px-4 py-3 font-semibold text-right">Monto</th>
               </tr>
             </thead>
@@ -78,6 +126,7 @@ export const PaymentOrdersTab: React.FC = () => {
                   <tr key={payment.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-slate-600">
                       {new Date(payment.payment_date).toLocaleDateString('es-AR')}
+                      <div className="text-[10px] text-slate-400">Generado: {new Date(payment.created_at).toLocaleDateString('es-AR')}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-bold text-slate-700">{payment.supplier?.name || 'Proveedor Eliminado'}</span>
