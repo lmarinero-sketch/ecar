@@ -19,7 +19,6 @@ import { UserProfileModal } from './UserProfileModal';
 import { GlobalOnboarding } from './onboarding/GlobalOnboarding';
 import { useOnboardingStore } from '../store/useOnboardingStore';
 import { HelpCircle } from 'lucide-react';
-import { PaymentOrdersTab } from './purchases/PaymentOrdersTab';
 
 /* ─── Icon map ─── */
 const iconMap: Record<ModuleId, React.ElementType> = {

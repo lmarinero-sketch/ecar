@@ -603,8 +603,21 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Revisá la guía de entrega de EPP e indumentaria de trabajo.',
     ],
     tips: [
+      'El Parte Diario de Obra pre-carga las horas del personal en este módulo.',
+      'Recordá actualizar la Ficha de Entrega de EPP con la firma del trabajador.',
       'La firma digital de entrega de EPP cumple con los requerimientos de auditoría de ART.',
     ],
   },
+  payment_orders: {
+    title: 'Órdenes de Pago a Proveedores',
+    description: 'Gestión y trazabilidad de los pagos emitidos a proveedores, cheques, transferencias y efectivo.',
+    steps: [
+      'Visualizá el total de pagos emitidos y su desglose por método de pago.',
+      'Buscá pagos por proveedor, número de cheque o número de factura.',
+      'Llevá un control cruzado con los cheques emitidos y facturas abonadas.',
+    ],
+    tips: [
+      'Los pagos realizados con "Cheque Propio" se registran automáticamente en el módulo de Finanzas y Cheques.',
+    ],
+  },
 };
-
