@@ -952,9 +952,15 @@ export const InventoryModule: React.FC = () => {
       return;
     }
     
-    // Check if any quantity is invalid or exceeds stock (warn only, allow negative stock if needed by business rules, or block if you prefer. Here we allow but could block if qty <= 0)
+    // Check if any quantity is invalid or exceeds stock (block negative stock strictly as requested)
     if (dispatchCartItems.some(i => parseFloat(i.qty) <= 0 || isNaN(parseFloat(i.qty)))) {
       useModalStore.getState().showAlert('Error', 'Asegurate de que todos los ítems tengan una cantidad mayor a 0.');
+      return;
+    }
+
+    const exceedsStock = dispatchCartItems.find(i => parseFloat(i.qty) > i.item.current_stock);
+    if (exceedsStock) {
+      useModalStore.getState().showAlert('Error', `La cantidad a despachar de "${exceedsStock.item.name}" (${exceedsStock.qty}) supera el stock actual (${exceedsStock.item.current_stock}). El stock no puede quedar en negativo.`);
       return;
     }
 
@@ -2849,6 +2855,10 @@ export const InventoryModule: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => {
+                              if (item.current_stock <= 0) {
+                                useModalStore.getState().showAlert('Sin Stock', `El artículo "${item.name}" no tiene stock disponible para despachar.`);
+                                return;
+                              }
                               if (!dispatchCartItems.find(i => i.item.id === item.id)) {
                                 setDispatchCartItems([...dispatchCartItems, { item, qty: '1' }]);
                               }
@@ -2898,10 +2908,15 @@ export const InventoryModule: React.FC = () => {
                                 type="number"
                                 step="any"
                                 min="0.01"
+                                max={cartItem.item.current_stock}
                                 value={cartItem.qty}
                                 onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (parseFloat(val) > cartItem.item.current_stock) {
+                                    val = String(cartItem.item.current_stock);
+                                  }
                                   const newCart = [...dispatchCartItems];
-                                  newCart[idx].qty = e.target.value;
+                                  newCart[idx].qty = val;
                                   setDispatchCartItems(newCart);
                                 }}
                                 className={`w-20 px-2 py-1.5 border rounded-lg text-sm font-mono font-bold text-right focus:outline-none focus:ring-2 ${isWarning ? 'border-red-300 focus:ring-red-500/50 bg-red-50' : 'border-slate-300 focus:ring-orange-500 bg-slate-50'}`}
