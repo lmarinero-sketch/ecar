@@ -600,6 +600,14 @@ export const InventoryModule: React.FC = () => {
   const [quickAdjQty, setQuickAdjQty] = useState('');
   const [quickAdjNotes, setQuickAdjNotes] = useState('');
 
+  // Dispatch Cart State
+  const [showDispatchCart, setShowDispatchCart] = useState(false);
+  const [dispatchCartItems, setDispatchCartItems] = useState<{item: InventoryItem, qty: string}[]>([]);
+  const [dispatchProject, setDispatchProject] = useState('');
+  const [dispatchEmployee, setDispatchEmployee] = useState('');
+  const [dispatchNotes, setDispatchNotes] = useState('');
+  const [dispatchSearch, setDispatchSearch] = useState('');
+
   // EPP Form State
 
   const selectedShelfCode = useMemo(() => {
@@ -942,6 +950,47 @@ export const InventoryModule: React.FC = () => {
     }
   };
 
+  const handleDispatchCartSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (dispatchCartItems.length === 0) {
+      useModalStore.getState().showAlert('Error', 'No hay ítems en el remito.');
+      return;
+    }
+    
+    // Check if any quantity is invalid or exceeds stock (warn only, allow negative stock if needed by business rules, or block if you prefer. Here we allow but could block if qty <= 0)
+    if (dispatchCartItems.some(i => parseFloat(i.qty) <= 0 || isNaN(parseFloat(i.qty)))) {
+      useModalStore.getState().showAlert('Error', 'Asegurate de que todos los ítems tengan una cantidad mayor a 0.');
+      return;
+    }
+
+    try {
+      // Loop over items and create an OUT movement for each
+      for (const cartItem of dispatchCartItems) {
+        await createMovement.mutateAsync({
+          item_id: cartItem.item.id,
+          movement_type: 'out',
+          quantity: parseFloat(cartItem.qty),
+          project_id: dispatchProject || null,
+          assigned_to: dispatchEmployee || null,
+          notes: dispatchNotes || 'Despacho múltiple a obra / Remito',
+        });
+      }
+
+      useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente.`);
+      
+      // Reset state
+      setShowDispatchCart(false);
+      setDispatchCartItems([]);
+      setDispatchProject('');
+      setDispatchEmployee('');
+      setDispatchNotes('');
+      setDispatchSearch('');
+
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'Hubo un problema al procesar el remito múltiple.');
+    }
+  };
+
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showAssign) return;
@@ -1203,11 +1252,18 @@ export const InventoryModule: React.FC = () => {
               </div>
 
               {/* Botón de Carga y Acciones Rápidas */}
-              <div className="flex items-end gap-2">
+              <div className="flex flex-col md:flex-row items-stretch md:items-end gap-2 mt-4 md:mt-0 col-span-1 sm:col-span-2 md:col-span-4">
                 <button
-                  onClick={() => {
-                    setShowNewItem(true);
-                    setEditingItem(null);
+                  onClick={() => setShowDispatchCart(true)}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 active:scale-95 text-white font-bold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <Truck size={18} /> Despachar a Obra (Remito)
+                </button>
+                <div className="flex gap-2 flex-1">
+                  <button
+                    onClick={() => {
+                      setShowNewItem(true);
+                      setEditingItem(null);
                     setNewItem({
                       name: '',
                       category: 'material',
@@ -2685,6 +2741,192 @@ export const InventoryModule: React.FC = () => {
           item={selectedHistoryItem}
           onClose={() => setSelectedHistoryItem(null)}
         />
+      )}
+
+      {/* Dispatch Cart Modal (Remito) */}
+      {showDispatchCart && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-gradient-to-r from-orange-600 to-orange-500 p-5 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
+              <div className="absolute right-0 top-0 opacity-10 p-2"><Truck size={100} /></div>
+              <div className="relative z-10">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Truck size={20} /> Despacho de Materiales a Obra (Remito Interno)
+                </h3>
+                <p className="text-xs text-orange-100 mt-0.5">Asigna múltiples productos a un proyecto y destinatario de una sola vez.</p>
+              </div>
+              <button onClick={() => setShowDispatchCart(false)} className="text-white/70 hover:text-white transition-colors relative z-10"><X size={20} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Header Info Form */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Obra / Proyecto Destino *</label>
+                  <select
+                    value={dispatchProject}
+                    onChange={e => setDispatchProject(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none bg-white font-medium"
+                  >
+                    <option value="">— Seleccionar Obra —</option>
+                    {(projects || []).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Entregado a (Retira) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={dispatchEmployee}
+                    onChange={e => setDispatchEmployee(e.target.value)}
+                    placeholder="Ej. Juan Pérez"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nota del Remito</label>
+                  <input
+                    type="text"
+                    value={dispatchNotes}
+                    onChange={e => setDispatchNotes(e.target.value)}
+                    placeholder="Ej. Para armar 3 servicios de agua"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Layout for Search and Cart */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Side: Search and Add Items */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <Search size={16} className="text-orange-600" /> Buscar Productos
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o código..."
+                    value={dispatchSearch}
+                    onChange={e => setDispatchSearch(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-orange-200 focus:border-orange-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-orange-500/20"
+                  />
+                  <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-xl shadow-inner bg-white divide-y divide-slate-100">
+                    {items?.filter(i => {
+                        if (!dispatchSearch) return false;
+                        const s = dispatchSearch.toLowerCase();
+                        return i.name.toLowerCase().includes(s) || (i.item_code || '').toLowerCase().includes(s) || (i.barcode || '').toLowerCase().includes(s);
+                      }).slice(0, 20).map(item => (
+                        <div key={item.id} className="p-3 hover:bg-orange-50/50 flex justify-between items-center transition-colors">
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm">{item.name}</p>
+                            <p className="text-xs text-slate-500 font-mono">Stock actual: <span className="font-bold text-slate-700">{item.current_stock} {item.unit}</span> | Cód: {item.item_code || item.barcode || 'S/C'}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!dispatchCartItems.find(i => i.item.id === item.id)) {
+                                setDispatchCartItems([...dispatchCartItems, { item, qty: '1' }]);
+                              }
+                              setDispatchSearch('');
+                            }}
+                            className="bg-orange-100 text-orange-700 hover:bg-orange-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                          >
+                            + Añadir
+                          </button>
+                        </div>
+                    ))}
+                    {dispatchSearch && items?.filter(i => i.name.toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.item_code || '').toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.barcode || '').toLowerCase().includes(dispatchSearch.toLowerCase())).length === 0 && (
+                      <div className="p-4 text-center text-slate-500 text-sm">No se encontraron productos.</div>
+                    )}
+                    {!dispatchSearch && (
+                      <div className="p-4 text-center text-slate-400 text-xs italic">Ingresá el nombre o código para buscar un producto.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Side: Cart Items */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <ShoppingBag size={16} className="text-emerald-600" /> Ítems en el Remito ({dispatchCartItems.length})
+                  </label>
+                  <div className="max-h-80 overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-2">
+                    {dispatchCartItems.length === 0 ? (
+                      <div className="h-full min-h-48 flex flex-col items-center justify-center text-slate-400">
+                        <ShoppingBag size={32} className="mb-2 opacity-30" />
+                        <p className="text-sm font-semibold">El carrito está vacío</p>
+                        <p className="text-xs">Buscá y agregá ítems desde el panel izquierdo.</p>
+                      </div>
+                    ) : (
+                      dispatchCartItems.map((cartItem, idx) => {
+                        const remaining = cartItem.item.current_stock - (parseFloat(cartItem.qty) || 0);
+                        const isWarning = remaining < 0;
+                        return (
+                          <div key={cartItem.item.id} className={`bg-white p-3 rounded-lg border shadow-sm flex items-center justify-between gap-3 ${isWarning ? 'border-red-300' : 'border-slate-200'}`}>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-slate-800 text-sm truncate">{cartItem.item.name}</p>
+                              <p className={`text-[10px] font-mono mt-0.5 ${isWarning ? 'text-red-600 font-bold' : 'text-slate-500'}`}>
+                                Quedarían en stock: {remaining} {cartItem.item.unit}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <input
+                                type="number"
+                                step="any"
+                                min="0.01"
+                                value={cartItem.qty}
+                                onChange={(e) => {
+                                  const newCart = [...dispatchCartItems];
+                                  newCart[idx].qty = e.target.value;
+                                  setDispatchCartItems(newCart);
+                                }}
+                                className={`w-20 px-2 py-1.5 border rounded-lg text-sm font-mono font-bold text-right focus:outline-none focus:ring-2 ${isWarning ? 'border-red-300 focus:ring-red-500/50 bg-red-50' : 'border-slate-300 focus:ring-orange-500 bg-slate-50'}`}
+                              />
+                              <span className="text-xs text-slate-500 font-bold w-6">{cartItem.item.unit}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newCart = [...dispatchCartItems];
+                                  newCart.splice(idx, 1);
+                                  setDispatchCartItems(newCart);
+                                }}
+                                className="p-1.5 hover:bg-red-100 text-slate-400 hover:text-red-600 rounded-lg transition-colors ml-1"
+                                title="Quitar del carrito"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowDispatchCart(false)}
+                className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={dispatchCartItems.length === 0 || !dispatchProject || !dispatchEmployee || createMovement.isPending}
+                onClick={handleDispatchCartSubmit}
+                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {createMovement.isPending ? 'Procesando Remito...' : '🚚 Confirmar Despacho Múltiple'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
