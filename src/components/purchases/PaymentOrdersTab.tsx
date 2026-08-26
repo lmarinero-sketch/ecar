@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, Search, CreditCard, Landmark, DollarSign, Activity, Plus, X } from 'lucide-react';
 import { useSupplierPayments, useSuppliers } from '../../hooks/useData';
 import { formatARS } from '../../lib/types';
@@ -173,7 +174,7 @@ export const PaymentOrdersTab: React.FC = () => {
       </div>
 
       {/* Select Supplier Modal */}
-      {isSelectingSupplier && (
+      {isSelectingSupplier && createPortal(
         <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
@@ -211,7 +212,8 @@ export const PaymentOrdersTab: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Payment Order Modal */}

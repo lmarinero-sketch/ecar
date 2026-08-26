@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, CreditCard, Landmark, DollarSign, FileText,
   ShieldCheck, CheckCheck
@@ -150,7 +151,7 @@ export const SupplierPaymentModal: React.FC<Props> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in">
         {/* Header */}
@@ -521,6 +522,7 @@ export const SupplierPaymentModal: React.FC<Props> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
