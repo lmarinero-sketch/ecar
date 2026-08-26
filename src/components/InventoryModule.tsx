@@ -560,6 +560,7 @@ export const InventoryModule: React.FC = () => {
     is_tool: false,
     barcode: '',
     location: '',
+    deposit: 'DEPOSITO RAWSON',
     shelf_id: '',
     shelf_position: '',
     measure: '',
@@ -692,13 +693,14 @@ export const InventoryModule: React.FC = () => {
       barcode: newItem.barcode,
       category: newItem.category || 'material',
       location: newItem.location || 'Depósito',
+      deposit: newItem.deposit || 'DEPOSITO RAWSON',
+      shelf_id: newItem.shelf_id || null,
       current_stock: parseFloat(newItem.current_stock) || 0,
       unit: newItem.unit || 'unidad',
       is_tool: newItem.category === 'herramienta',
       min_stock: parseFloat(newItem.min_stock) || 0,
       unit_cost: parseFloat(newItem.unit_cost) || 0,
       qr_code: '',
-      shelf_id: null,
       shelf_position: null,
       rubro: null,
       measure: null,
@@ -732,16 +734,7 @@ export const InventoryModule: React.FC = () => {
 
       // Filter by Deposit / Location
       if (filterDeposit) {
-        const loc = (i.location || '').toLowerCase();
-        if (filterDeposit === 'DEPOSITO RAWSON') {
-          const isRawson = loc.includes('rawson') || loc.includes('pañol') || loc.includes('deposito') || loc.includes('depósito') || loc.includes('ubicación') || loc.includes('ubicacion');
-          if (!isRawson) return false;
-        } else if (filterDeposit === 'ALMACEN CENTRAL') {
-          const isAlmacen = loc.includes('almacen') || loc.includes('almacén') || loc.includes('central');
-          if (!isAlmacen) return false;
-        } else {
-          if (!loc.includes(filterDeposit.toLowerCase())) return false;
-        }
+        if (i.deposit !== filterDeposit) return false;
       }
 
       // Filter by Code
@@ -881,6 +874,7 @@ export const InventoryModule: React.FC = () => {
         is_tool: newItem.is_tool || newItem.category === 'herramienta',
         barcode: newItem.barcode ? newItem.barcode.trim() : null,
         location: computedPos ? `Ubicación ${computedPos}` : (newItem.location || 'Depósito'),
+        deposit: newItem.deposit || 'DEPOSITO RAWSON',
         shelf_id: newItem.shelf_id || null,
         shelf_position: computedPos || null,
       };
@@ -921,6 +915,7 @@ export const InventoryModule: React.FC = () => {
         is_tool: false,
         barcode: '',
         location: '',
+        deposit: 'DEPOSITO RAWSON',
         shelf_id: '',
         shelf_position: '',
         tool_status: 'operativa'
@@ -1276,6 +1271,7 @@ export const InventoryModule: React.FC = () => {
                       is_tool: false,
                       barcode: '',
                       location: '',
+                      deposit: 'DEPOSITO RAWSON',
                       shelf_id: '',
                       shelf_position: '',
                       tool_status: 'operativa'
@@ -1498,6 +1494,7 @@ export const InventoryModule: React.FC = () => {
                                     is_tool: item.is_tool,
                                     barcode: item.barcode || '',
                                     location: item.location || '',
+                                    deposit: item.deposit || 'DEPOSITO RAWSON',
                                     shelf_id: detectedShelfId,
                                     shelf_position: item.shelf_position || '',
                                     tool_status: 'operativa'
@@ -2287,6 +2284,29 @@ export const InventoryModule: React.FC = () => {
                     <option value="par">Par</option>
                     <option value="juego">Juego</option>
                   </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Depósito</label>
+                  <select
+                    value={newItem.deposit}
+                    onChange={e => setNewItem({ ...newItem, deposit: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white"
+                  >
+                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Pañol Central)</option>
+                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Observación de Ubicación Antigua</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Estante 3, Pasillo B..."
+                    value={newItem.location}
+                    onChange={e => setNewItem({ ...newItem, location: e.target.value })}
+                    className="input-standard"
+                  />
                 </div>
               </div>
 

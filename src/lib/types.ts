@@ -757,6 +757,7 @@ export type InventoryItem = {
   ideal_stock?: number;
   reserved_stock?: number;
   location: string;
+  deposit?: string;
   qr_code: string | null;
   barcode: string | null;
   unit_cost: number;
