@@ -603,11 +603,26 @@ export const InventoryModule: React.FC = () => {
 
   // Dispatch Cart State
   const [showDispatchCart, setShowDispatchCart] = useState(false);
-  const [dispatchCartItems, setDispatchCartItems] = useState<{item: InventoryItem, qty: string}[]>([]);
-  const [dispatchProject, setDispatchProject] = useState('');
-  const [dispatchEmployee, setDispatchEmployee] = useState('');
+  const [dispatchCartItems, setDispatchCartItems] = useState<{item: InventoryItem, qty: string}[]>(() => {
+    try {
+      const saved = localStorage.getItem('ecar_dispatch_cart_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [dispatchProject, setDispatchProject] = useState(() => localStorage.getItem('ecar_dispatch_cart_project') || '');
+  const [dispatchEmployee, setDispatchEmployee] = useState(() => localStorage.getItem('ecar_dispatch_cart_employee') || '');
   const [dispatchNotes, setDispatchNotes] = useState('');
   const [dispatchSearch, setDispatchSearch] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('ecar_dispatch_cart_items', JSON.stringify(dispatchCartItems));
+  }, [dispatchCartItems]);
+  useEffect(() => {
+    localStorage.setItem('ecar_dispatch_cart_project', dispatchProject);
+  }, [dispatchProject]);
+  useEffect(() => {
+    localStorage.setItem('ecar_dispatch_cart_employee', dispatchEmployee);
+  }, [dispatchEmployee]);
 
   // EPP Form State
 
@@ -960,8 +975,8 @@ export const InventoryModule: React.FC = () => {
 
     const exceedsStock = dispatchCartItems.find(i => parseFloat(i.qty) > i.item.current_stock);
     if (exceedsStock) {
-      useModalStore.getState().showAlert('Error', `La cantidad a despachar de "${exceedsStock.item.name}" (${exceedsStock.qty}) supera el stock actual (${exceedsStock.item.current_stock}). El stock no puede quedar en negativo.`);
-      return;
+      const confirm = await useModalStore.getState().showConfirm('Stock Negativo', `La cantidad a despachar de "${exceedsStock.item.name}" (${exceedsStock.qty}) supera el stock actual (${exceedsStock.item.current_stock}). El stock quedará en negativo. ¿Deseas continuar de todos modos?`);
+      if (!confirm) return;
     }
 
     try {
@@ -987,6 +1002,9 @@ export const InventoryModule: React.FC = () => {
       setDispatchEmployee('');
       setDispatchNotes('');
       setDispatchSearch('');
+      localStorage.removeItem('ecar_dispatch_cart_items');
+      localStorage.removeItem('ecar_dispatch_cart_project');
+      localStorage.removeItem('ecar_dispatch_cart_employee');
 
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'Hubo un problema al procesar el remito múltiple.');
@@ -2854,10 +2872,10 @@ export const InventoryModule: React.FC = () => {
                           </div>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (item.current_stock <= 0) {
-                                useModalStore.getState().showAlert('Sin Stock', `El artículo "${item.name}" no tiene stock disponible para despachar.`);
-                                return;
+                                const confirm = await useModalStore.getState().showConfirm('Sin Stock', `El artículo "${item.name}" no tiene stock disponible para despachar. ¿Deseas agregarlo de todos modos?`);
+                                if (!confirm) return;
                               }
                               if (!dispatchCartItems.find(i => i.item.id === item.id)) {
                                 setDispatchCartItems([...dispatchCartItems, { item, qty: '1' }]);
@@ -2908,15 +2926,10 @@ export const InventoryModule: React.FC = () => {
                                 type="number"
                                 step="any"
                                 min="0.01"
-                                max={cartItem.item.current_stock}
                                 value={cartItem.qty}
                                 onChange={(e) => {
-                                  let val = e.target.value;
-                                  if (parseFloat(val) > cartItem.item.current_stock) {
-                                    val = String(cartItem.item.current_stock);
-                                  }
                                   const newCart = [...dispatchCartItems];
-                                  newCart[idx].qty = val;
+                                  newCart[idx].qty = e.target.value;
                                   setDispatchCartItems(newCart);
                                 }}
                                 className={`w-20 px-2 py-1.5 border rounded-lg text-sm font-mono font-bold text-right focus:outline-none focus:ring-2 ${isWarning ? 'border-red-300 focus:ring-red-500/50 bg-red-50' : 'border-slate-300 focus:ring-orange-500 bg-slate-50'}`}
