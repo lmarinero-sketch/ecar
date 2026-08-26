@@ -5,7 +5,7 @@ import {
   LayoutGrid, Trash2, Edit3, ShoppingBag,
   CheckCircle2, ChevronDown, History, Zap, ArrowUpRight,
   TrendingUp, TrendingDown, Filter, Download, RefreshCw,
-  Eye
+  Eye, Truck
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
@@ -1303,6 +1303,7 @@ export const InventoryModule: React.FC = () => {
                 >
                   <Barcode size={15} />
                 </button>
+                </div>
               </div>
             </div>
           </div>
