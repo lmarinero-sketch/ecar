@@ -109,7 +109,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
         movement_type: quickType,
         quantity: q,
         project_id: quickProjectId || null,
-        assigned_to: quickAssignedTo || null,
+        delivered_to_text: quickAssignedTo || null,
         notes: quickNotes || (quickType === 'in' ? 'Ingreso rápido de stock' : 'Egreso rápido de stock'),
       });
 
@@ -971,7 +971,8 @@ export const InventoryModule: React.FC = () => {
           movement_type: 'out',
           quantity: parseFloat(cartItem.qty),
           project_id: dispatchProject || null,
-          assigned_to: dispatchEmployee || null,
+          assigned_to: null,
+          delivered_to_text: dispatchEmployee || null,
           notes: dispatchNotes || 'Despacho múltiple a obra / Remito',
         });
       }

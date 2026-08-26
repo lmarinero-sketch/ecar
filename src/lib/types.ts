@@ -799,6 +799,7 @@ export type InventoryMovement = {
   quantity: number;
   project_id: string | null;
   assigned_to: string | null;
+  delivered_to_text?: string | null;
   notes: string | null;
   created_by: string;
   created_at: string;
