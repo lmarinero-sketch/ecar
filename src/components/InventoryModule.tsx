@@ -725,7 +725,15 @@ export const InventoryModule: React.FC = () => {
       // Filter by Deposit / Location
       if (filterDeposit) {
         const loc = (i.location || '').toLowerCase();
-        if (!loc.includes(filterDeposit.toLowerCase())) return false;
+        if (filterDeposit === 'DEPOSITO RAWSON') {
+          const isRawson = loc.includes('rawson') || loc.includes('pañol') || loc.includes('deposito') || loc.includes('depósito') || loc.includes('ubicación') || loc.includes('ubicacion');
+          if (!isRawson) return false;
+        } else if (filterDeposit === 'ALMACEN CENTRAL') {
+          const isAlmacen = loc.includes('almacen') || loc.includes('almacén') || loc.includes('central');
+          if (!isAlmacen) return false;
+        } else {
+          if (!loc.includes(filterDeposit.toLowerCase())) return false;
+        }
       }
 
       // Filter by Code
