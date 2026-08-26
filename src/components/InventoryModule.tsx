@@ -738,12 +738,14 @@ export const InventoryModule: React.FC = () => {
       // General search or specific search
       const q = search ? search.toLowerCase().trim() : '';
       if (q) {
+        const shelfName = i.shelf_id ? (shelves || []).find(s => s.id === i.shelf_id)?.name?.toLowerCase() : '';
         const matchSearch = 
           i.name.toLowerCase().includes(q) || 
           (i.item_code && i.item_code.toLowerCase().includes(q)) ||
           (i.barcode && i.barcode.toLowerCase().includes(q)) || 
           (i.shelf_position && i.shelf_position.toLowerCase().includes(q)) ||
-          (i.location && i.location.toLowerCase().includes(q));
+          (i.location && i.location.toLowerCase().includes(q)) ||
+          (shelfName && shelfName.includes(q));
         if (!matchSearch) return false;
       }
 
@@ -795,7 +797,7 @@ export const InventoryModule: React.FC = () => {
       if (tab === 'tools' && !i.is_tool) return false;
       return true;
     });
-  }, [items, search, filterCat, filterDeposit, filterCode, filterProduct, filterMeasure, filterRubro, filterSupplier, filterStockStatus, tab]);
+  }, [items, search, filterCat, filterDeposit, filterCode, filterProduct, filterMeasure, filterRubro, filterSupplier, filterStockStatus, tab, shelves]);
 
   const exportStockExcel = () => {
     const data = filtered.map(item => ({
