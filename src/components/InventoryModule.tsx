@@ -1774,6 +1774,7 @@ export const InventoryModule: React.FC = () => {
                   is_tool: true,
                   barcode: '',
                   location: 'Estantería A - Herramientas Eléctricas',
+                  deposit: 'DEPOSITO RAWSON',
                   shelf_id: (shelves || []).find(s => s.code === 'A')?.id || '',
                   shelf_position: 'A-1-1',
                   tool_status: 'operativa'
