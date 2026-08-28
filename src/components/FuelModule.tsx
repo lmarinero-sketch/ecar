@@ -61,9 +61,17 @@ export const FuelModule: React.FC = () => {
     
     // Sort chronologically (oldest first)
     const sorted = [...batanMovements].sort((a, b) => {
-      const dateA = new Date(a.movement_date || a.created_at).getTime();
-      const dateB = new Date(b.movement_date || b.created_at).getTime();
-      return dateA - dateB;
+      const dateA = new Date(a.movement_date).getTime();
+      const dateB = new Date(b.movement_date).getTime();
+      
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+      
+      // If same date, sort by created_at to maintain logical sequence of entries
+      const createdA = new Date(a.created_at || a.movement_date).getTime();
+      const createdB = new Date(b.created_at || b.movement_date).getTime();
+      return createdA - createdB;
     });
 
     let runningStock = 200; // Nominal initial stock
