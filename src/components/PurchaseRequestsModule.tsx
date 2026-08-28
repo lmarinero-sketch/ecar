@@ -340,7 +340,7 @@ export const PurchaseRequestsModule: React.FC = () => {
       {/* Requests list */}
       <div className="space-y-3">
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-gray-400"><ShoppingBag size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">No hay pedidos de compra</p><p className="text-sm">Los pedidos se pueden crear desde acá o por WhatsApp con Rombo</p></div>
+          <div className="text-center py-16 text-gray-400"><ShoppingBag size={48} className="mx-auto mb-3 opacity-30" /><p className="font-medium">No hay pedidos</p><p className="text-sm">Los pedidos se pueden crear desde acá o por WhatsApp con Rombo</p></div>
         )}
         {filtered.map(req => {
           const items = (req.items || []) as PurchaseRequestItem[];
@@ -599,14 +599,14 @@ export const PurchaseRequestsModule: React.FC = () => {
       {showNew && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Pedido de Compra</h3><button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button></div>
+            <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Nuevo Pedido</h3><button onClick={() => setShowNew(false)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Obra *</label><select required value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="">Seleccioná...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
                 <div><label className="text-xs font-bold text-gray-500">Urgencia *</label><select required value={form.urgency} onChange={e => setForm({ ...form, urgency: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="low">Baja</option><option value="normal">Normal</option><option value="urgent">Urgente</option></select></div>
               </div>
               {form.urgency === 'urgent' && (
-                <div><label className="text-xs font-bold text-red-500">Motivo de Urgencia (Impacto si no se compra) *</label><input required value={form.urgency_reason} onChange={e => setForm({ ...form, urgency_reason: e.target.value })} className="w-full px-3 py-2 border border-red-300 rounded-xl text-sm bg-red-50 focus:ring-red-500" placeholder="Ej: Obra frenada por falta de material" /></div>
+                <div><label className="text-xs font-bold text-red-500">Motivo de Urgencia (Impacto si no se consigue) *</label><input required value={form.urgency_reason} onChange={e => setForm({ ...form, urgency_reason: e.target.value })} className="w-full px-3 py-2 border border-red-300 rounded-xl text-sm bg-red-50 focus:ring-red-500" placeholder="Ej: Obra frenada por falta de material" /></div>
               )}
               <div><label className="text-xs font-bold text-gray-500">Solicitado por *</label><input required value={form.requested_by || userName} onChange={e => setForm({ ...form, requested_by: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" readOnly /></div>
 
@@ -705,7 +705,7 @@ export const PurchaseRequestsModule: React.FC = () => {
               <div><label className="text-xs font-bold text-gray-500">Notas</label><textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" rows={2} placeholder="Notas adicionales" /></div>
 
               <button type="submit" disabled={createRequest.isPending || !formItems.some(fi => fi.inventoryItemId)} className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm hover:bg-ecar-blue transition-all shadow-md disabled:opacity-50">
-                {createRequest.isPending ? 'Creando...' : '🛒 Crear Pedido de Compra'}
+                {createRequest.isPending ? 'Creando...' : '🛒 Crear Pedido'}
               </button>
             </form>
           </div>

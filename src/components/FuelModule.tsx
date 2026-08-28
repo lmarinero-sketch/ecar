@@ -257,7 +257,13 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
       list = list.filter(l => l.year === Number(filterYear) || (l.load_date && l.load_date.startsWith(filterYear)));
     }
     if (filterMonth !== 'all') {
-      list = list.filter(l => l.month === filterMonth);
+      const monthIndex = MONTHS_ES.indexOf(filterMonth) + 1;
+      const monthStr = monthIndex < 10 ? `0${monthIndex}` : `${monthIndex}`;
+      list = list.filter(l => {
+        if (l.month === filterMonth) return true;
+        if (l.load_date && l.load_date.split('-')[1] === monthStr) return true;
+        return false;
+      });
     }
     if (filterStation !== 'all') {
       list = list.filter(l => (l.supplier || l.station_name) === filterStation);
@@ -1612,22 +1618,6 @@ const ModalBatanAdjustment: React.FC<{
   );
 };
 
-      <tbody>
-        {data.map(r => (
-          <tr key={r.id}>
-            <td className="font-medium">{r.month_name} {r.year}</td>
-            <td className="font-mono">{r.total_loads}</td>
-            <td className="font-mono">{fmt(r.total_liters)} L</td>
-            <td className="font-mono">$ {fmt(r.total_amount_sheet)}</td>
-            <td className="font-mono font-bold">{r.supplier_invoice_amount ? `$ ${fmt(r.supplier_invoice_amount)}` : '—'}</td>
-            <td className="font-mono font-bold">{r.difference ? <span className={r.difference > 0 ? 'text-red-600' : 'text-green-600'}>$ {fmt(r.difference)}</span> : '—'}</td>
-            <td><span className={`badge ${r.status === 'controlled' ? 'badge-success' : r.status === 'observed' ? 'badge-danger' : 'badge-warning'}`}>{r.status === 'controlled' ? 'Controlado' : r.status === 'observed' ? 'Observado' : 'Pendiente'}</span></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
 
 /* ── Fleet Tab ── */
 const FleetTab: React.FC<{ vehicles: FuelVehicle[] }> = ({ vehicles }) => (
@@ -1673,6 +1663,8 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const [sigSaving, setSigSaving] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const [ticketFile, setTicketFile] = useState<File | null>(null);
 
   const hasSignature = !!(profile?.dni && profile?.signature_data);
   
@@ -1879,7 +1871,8 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       load_source: completeForm.fuel_source,
       supplier: isBatan ? 'Batán Interno' : completeForm.supplier,
       station_name: isBatan ? 'Batán Interno' : completeForm.supplier,
-      fuel_type: completeForm.fuel_type
+      fuel_type: completeForm.fuel_type,
+      ...(ticketUrl && { ticket_photo_url: ticketUrl })
     });
 
     if (isBatan) {

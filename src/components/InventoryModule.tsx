@@ -19,6 +19,7 @@ import {
   useAllPriceHistories
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { exportDispatchPdf } from '../lib/orderPdfExport';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
 import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
@@ -121,34 +122,6 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
       setQuickAssignedTo('');
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
-    }
-  };
-
-  const handleSaveDeposit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingDeposit) {
-        await updateDeposit.mutateAsync({ id: editingDeposit.id, ...depositForm });
-        useModalStore.getState().showAlert('Éxito', 'Depósito actualizado correctamente.');
-      } else {
-        await createDeposit.mutateAsync(depositForm);
-        useModalStore.getState().showAlert('Éxito', 'Depósito creado correctamente.');
-      }
-      setShowDepositModal(false);
-      setEditingDeposit(null);
-    } catch (err: any) {
-      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar el depósito.');
-    }
-  };
-
-  const handleDeleteDeposit = async (id: string) => {
-    const confirm = await useModalStore.getState().showConfirm('Eliminar Depósito', '¿Está seguro de eliminar este depósito?');
-    if (!confirm) return;
-    try {
-      await deleteDeposit.mutateAsync(id);
-      useModalStore.getState().showAlert('Éxito', 'Depósito eliminado.');
-    } catch (err: any) {
-      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el depósito.');
     }
   };
 
@@ -575,7 +548,7 @@ export const InventoryModule: React.FC = () => {
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
-  const [filterCat, setFilterCat] = useState<string>('');
+  const [filterCat] = useState<string>('');
   const [filterShelf, setFilterShelf] = useState<string>('');
   const [showNewItem, setShowNewItem] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -1084,6 +1057,34 @@ export const InventoryModule: React.FC = () => {
     }
   };
 
+  const handleSaveDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingDeposit) {
+        await updateDeposit.mutateAsync({ id: editingDeposit.id, ...depositForm });
+        useModalStore.getState().showAlert('Éxito', 'Depósito actualizado correctamente.');
+      } else {
+        await createDeposit.mutateAsync(depositForm);
+        useModalStore.getState().showAlert('Éxito', 'Depósito creado correctamente.');
+      }
+      setShowDepositModal(false);
+      setEditingDeposit(null);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar el depósito.');
+    }
+  };
+
+  const handleDeleteDeposit = async (id: string) => {
+    const confirm = await useModalStore.getState().showConfirm('Eliminar Depósito', '¿Está seguro de eliminar este depósito?');
+    if (!confirm) return;
+    try {
+      await deleteDeposit.mutateAsync(id);
+      useModalStore.getState().showAlert('Éxito', 'Depósito eliminado.');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el depósito.');
+    }
+  };
+
   const handleSaveShelf = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -1343,51 +1344,53 @@ export const InventoryModule: React.FC = () => {
                 >
                   <Truck size={18} /> Despachar a Obra (Remito)
                 </button>
-                <div className="flex gap-2 flex-1">
-                  <button
-                    onClick={() => {
-                      setShowNewItem(true);
-                      setEditingItem(null);
-                    setNewItem({
-                      name: '',
-                      category: 'material',
-                      unit: 'unidad',
-                      measure: '',
-                      current_stock: '',
-                      min_stock: '',
-                      unit_cost: '',
-                      is_tool: false,
-                      barcode: '',
-                      location: '',
-                      deposit: 'DEPOSITO RAWSON',
-                      shelf_id: '',
-                      shelf_position: '',
-                      tool_status: 'operativa'
-                    });
-                    setShelfLevel('1');
-                    setShelfBin('1');
-                  }}
-                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-1"
-                >
-                  <Plus size={15} /> Nuevo Ítem
-                </button>
+                {isAdmin && (
+                  <div className="flex gap-2 flex-1">
+                    <button
+                      onClick={() => {
+                        setShowNewItem(true);
+                        setEditingItem(null);
+                        setNewItem({
+                          name: '',
+                          category: 'material',
+                          unit: 'unidad',
+                          measure: '',
+                          current_stock: '',
+                          min_stock: '',
+                          unit_cost: '',
+                          is_tool: false,
+                          barcode: '',
+                          location: '',
+                          deposit: 'DEPOSITO RAWSON',
+                          shelf_id: '',
+                          shelf_position: '',
+                          tool_status: 'operativa'
+                        });
+                        setShelfLevel('1');
+                        setShelfBin('1');
+                      }}
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center justify-center gap-1"
+                    >
+                      <Plus size={15} /> Nuevo Ítem
+                    </button>
 
-                <button
-                  onClick={() => setShowImporter(true)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
-                  title="Importar catálogo desde Excel"
-                >
-                  <ArrowDownToLine size={15} />
-                </button>
+                    <button
+                      onClick={() => setShowImporter(true)}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                      title="Importar catálogo desde Excel"
+                    >
+                      <ArrowDownToLine size={15} />
+                    </button>
 
-                <button
-                  onClick={() => setShowScanner(true)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
-                  title="Escanear código de barras"
-                >
-                  <Barcode size={15} />
-                </button>
-                </div>
+                    <button
+                      onClick={() => setShowScanner(true)}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                      title="Escanear código de barras"
+                    >
+                      <Barcode size={15} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1752,6 +1755,7 @@ export const InventoryModule: React.FC = () => {
                     <th className="py-3 px-3">Solicitante</th>
                     <th className="py-3 px-3">Despachó</th>
                     <th className="py-3 px-3">Detalle de Ítems</th>
+                    <th className="py-3 px-3 text-center">Remito</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1770,11 +1774,20 @@ export const InventoryModule: React.FC = () => {
                           ))}
                         </ul>
                       </td>
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          onClick={() => exportDispatchPdf(req)}
+                          className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors font-bold text-xs inline-flex flex-col items-center gap-1"
+                          title="Descargar Remito PDF"
+                        >
+                          <ArrowDownToLine size={16} /> Remito
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {(purchaseRequests || []).filter(r => r.status === 'ordered').length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-400">
+                      <td colSpan={6} className="py-12 text-center text-slate-400">
                         <Truck size={36} className="mx-auto mb-2 opacity-30" />
                         <p className="font-semibold text-slate-600">No hay despachos en tránsito</p>
                         <p className="text-xs text-slate-400 mt-1">Todos los envíos han sido recibidos en sus respectivas obras.</p>
@@ -2680,7 +2693,7 @@ export const InventoryModule: React.FC = () => {
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">Asignar / Préstamo: {showAssign.name}</h3><button onClick={() => setShowAssign(null)}><X size={20} className="text-gray-400" /></button></div>
             <form onSubmit={handleAssign} className="space-y-3">
               <div><label className="text-xs font-bold text-gray-500">Empleado *</label><select value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Seleccioná empleado...</option>{(employees || []).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}</select></div>
-              <div><label className="text-xs font-bold text-gray-500">Obra / Destino</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Sin asignar</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+              <div><label className="text-xs font-bold text-gray-500">Obra / Destino *</label><select value={assignForm.project_id} onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })} required className="w-full px-3 py-2 border rounded-lg text-sm bg-white"><option value="">Seleccioná obra...</option>{(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               <div><label className="text-xs font-bold text-gray-500">Observaciones</label><input value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Opcional..." /></div>
               <button type="submit" disabled={createAssignment.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                 {createAssignment.isPending ? 'Asignando...' : '👤 Confirmar Préstamo'}

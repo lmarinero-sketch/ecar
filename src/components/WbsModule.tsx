@@ -24,7 +24,7 @@ import {
   useOpportunities, useUpdateOpportunity
 } from '../hooks/useData';
 import type {
-  WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount, Opportunity
+  WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
 } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 
@@ -351,7 +351,7 @@ export const WbsModule: React.FC = () => {
     } else {
       newProject = await createProject.mutateAsync(form as any);
       if (form.opportunity_id && newProject && newProject.id) {
-        await updateOpportunity.mutateAsync({ id: form.opportunity_id, updates: { project_id: newProject.id, stage: 'adjudicada' } });
+        await updateOpportunity.mutateAsync({ id: form.opportunity_id, project_id: newProject.id, stage: 'adjudicada' });
       }
     }
     setShowForm(false);
