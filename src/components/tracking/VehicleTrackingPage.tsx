@@ -314,8 +314,15 @@ export const VehicleTrackingPage: React.FC = () => {
       watchIdRef.current = null;
     }
     
-    // 2. Limpiar Realtime
+    // 2. Limpiar Realtime y notificar fin
     if (channelRef.current) {
+      if (updateDb && sessionId) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'session_ended',
+          payload: { vehicle_id: selectedVehicleId }
+        });
+      }
       channelRef.current.unsubscribe();
       channelRef.current = null;
     }

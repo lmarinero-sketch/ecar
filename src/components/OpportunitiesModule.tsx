@@ -5,7 +5,7 @@ import {
   BarChart3, Eye, Download, Upload, Trash2, Paperclip, Image as ImageIcon, File,
   Briefcase, User, FileCheck, Mic, Square, Loader2
 } from 'lucide-react';
-import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useDeleteOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets } from '../hooks/useData';
+import { useOpportunities, useCreateOpportunity, useUpdateOpportunity, useDeleteOpportunity, useProjects, useUploadOpportunityFile, useDeleteOpportunityFile, useOpportunityBudgets, useCreateProject } from '../hooks/useData';
 import type { Opportunity, OpportunityStage } from '../lib/types';
 import { exportOpportunityPdf } from '../lib/pdfExport';
 import { ImageViewer } from './ImageViewer';
@@ -77,6 +77,7 @@ export const OpportunitiesModule: React.FC = () => {
   const uploadFile = useUploadOpportunityFile();
   const deleteFile = useDeleteOpportunityFile();
   const deleteOpp = useDeleteOpportunity();
+  const createProject = useCreateProject();
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const { data: oppBudgets, isLoading: loadingBudgets } = useOpportunityBudgets(selectedOpp?.id);
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -312,6 +313,32 @@ export const OpportunitiesModule: React.FC = () => {
       if (selectedOpp?.id === id) {
         setShowForm(false);
         setSelectedOpp(null);
+      }
+    }
+  };
+
+  const handlePassToProject = async (opp: Opportunity) => {
+    if (await useModalStore.getState().showConfirm('Pasar a Obra', `¿Deseas crear una nueva obra para ${opp.client_name}?`)) {
+      try {
+        const newProject = await createProject.mutateAsync({
+          name: opp.description || opp.client_name,
+          client_name: opp.client_name,
+          client_cuit: '',
+          location: opp.location || '',
+          budget_ars: opp.estimated_amount || 0,
+          start_date: new Date().toISOString().split('T')[0],
+          status: 'active'
+        } as any);
+
+        if (newProject && newProject.id) {
+          await updateOpp.mutateAsync({ id: opp.id, project_id: newProject.id, stage: 'adjudicada' });
+          useModalStore.getState().showAlert('Éxito', 'Obra creada exitosamente y oportunidad vinculada.');
+          setShowForm(false);
+          setSelectedOpp(null);
+        }
+      } catch (error) {
+        console.error(error);
+        useModalStore.getState().showAlert('Error', 'No se pudo crear la obra.');
       }
     }
   };
@@ -994,7 +1021,13 @@ export const OpportunitiesModule: React.FC = () => {
               <div className="flex items-center gap-4">
                 {selectedOpp && (
                   <>
-                  <button onClick={() => exportOpportunityPdf(selectedOpp, projects?.find(p => p.id === selectedOpp.project_id)?.name)} 
+                  {!selectedOpp.project_id && (
+                    <button onClick={(e) => { e.preventDefault(); handlePassToProject(selectedOpp); }} 
+                      className="text-emerald-600 hover:text-emerald-800 font-bold text-sm flex items-center gap-2">
+                      <Briefcase size={16} /> Pasar a Obra
+                    </button>
+                  )}
+                  <button onClick={(e) => { e.preventDefault(); exportOpportunityPdf(selectedOpp, projects?.find(p => p.id === selectedOpp.project_id)?.name); }} 
                     className="text-ecar-blue hover:text-ecar-blueDark font-bold text-sm flex items-center gap-2">
                     <Download size={16} /> Descargar PDF
                   </button>

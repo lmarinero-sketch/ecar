@@ -723,6 +723,13 @@ export type PaymentRecord = {
 
 // ========== INVENTARIO / PAÑOL ==========
 
+export type InventoryDeposit = {
+  id: string;
+  name: string;
+  location: string | null;
+  created_at: string;
+};
+
 export type WarehouseShelf = {
   id: string;
   tenant_id: string;
@@ -758,6 +765,7 @@ export type InventoryItem = {
   reserved_stock?: number;
   location: string;
   deposit?: string;
+  deposit_id?: string | null;
   qr_code: string | null;
   barcode: string | null;
   unit_cost: number;

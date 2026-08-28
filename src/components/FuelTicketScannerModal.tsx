@@ -17,6 +17,7 @@ interface ExtractedTicketData {
   total_amount: number | null;
   driver_name: string | null;
   payment_method: string | null;
+  ticket_photo_url?: string | null;
 }
 
 interface Props {
@@ -94,7 +95,16 @@ export const FuelTicketScannerModal: React.FC<Props> = ({ vehicles, onClose, onC
         throw new Error(data?.error || fnErr?.message || 'No se pudieron extraer los datos del ticket');
       }
 
-      const extracted: ExtractedTicketData = data.data;
+      // Upload file to Supabase storage
+      const fileName = `ticket_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      const { error: uploadError } = await supabase.storage.from('fuel_tickets').upload(fileName, file);
+      let ticketUrl = null;
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
+        ticketUrl = publicUrlData.publicUrl;
+      }
+
+      const extracted: ExtractedTicketData = { ...data.data, ticket_photo_url: ticketUrl };
       setExtractedData(extracted);
 
       // Match vehicle by plate if available
@@ -142,6 +152,7 @@ export const FuelTicketScannerModal: React.FC<Props> = ({ vehicles, onClose, onC
       vehicle_code: matchedVehicle?.code || undefined,
       vehicle_description: matchedVehicle?.description || extractedData.vehicle_name || undefined,
       payment_method: extractedData.payment_method || 'Cuenta Corriente',
+      ticket_photo_url: extractedData.ticket_photo_url || undefined,
     };
 
     onConfirmLoad(loadPayload);

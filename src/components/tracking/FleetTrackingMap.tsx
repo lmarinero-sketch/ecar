@@ -327,6 +327,16 @@ export const FleetTrackingMap: React.FC = () => {
           }
         };
       });
+    });
+
+    channel.on('broadcast', { event: 'session_ended' }, (payload) => {
+      const data = payload.payload;
+      setActiveVehicles(prev => {
+        const next = { ...prev };
+        delete next[data.vehicle_id];
+        return next;
+      });
+      // Optionally remove routes if desired, but keeping them until reload is fine too.
     }).subscribe();
 
     channelRef.current = channel;

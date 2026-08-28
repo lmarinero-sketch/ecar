@@ -20,10 +20,11 @@ import {
   useProjectFuelLoads, useProjectPurchaseRequests, useProjectCertificates,
   useCreateToolAssignment, useUpdateToolAssignment, useCreateInventoryMovement,
   useCreateFuelLoad, useCreatePurchaseRequest, useCreateProjectCertificate,
-  useUpdateProjectCertificate, useInventoryItems, useFuelVehicles, useBankAccounts
+  useUpdateProjectCertificate, useInventoryItems, useFuelVehicles, useBankAccounts,
+  useOpportunities, useUpdateOpportunity
 } from '../hooks/useData';
 import type {
-  WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
+  WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount, Opportunity
 } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 
@@ -45,6 +46,7 @@ const GANTT_BAR_COLORS: Record<string, string> = {
 
 export const WbsModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();
+  const { data: opportunities = [] } = useOpportunities();
 
   useEffect(() => {
     useImplementationStore.getState().completeItem('g18');
@@ -52,6 +54,7 @@ export const WbsModule: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const updateOpportunity = useUpdateOpportunity();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectSearch, setProjectSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'suspended'>('all');
@@ -74,7 +77,7 @@ export const WbsModule: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [editTask, setEditTask] = useState<WbsElement | null>(null);
-  const [form, setForm] = useState({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
+  const [form, setForm] = useState({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' });
   const createWbs = useCreateWbsElement();
   const updateWbs = useUpdateWbsElement();
   const deleteWbs = useDeleteWbsElement();
@@ -342,13 +345,17 @@ export const WbsModule: React.FC = () => {
   });
 
   const handleSaveProject = async () => {
+    let newProject;
     if (form.id) {
-      await updateProject.mutateAsync({ id: form.id, updates: form as any });
+      newProject = await updateProject.mutateAsync({ id: form.id, updates: form as any });
     } else {
-      await createProject.mutateAsync(form as any);
+      newProject = await createProject.mutateAsync(form as any);
+      if (form.opportunity_id && newProject && newProject.id) {
+        await updateOpportunity.mutateAsync({ id: form.opportunity_id, updates: { project_id: newProject.id, stage: 'adjudicada' } });
+      }
     }
     setShowForm(false);
-    setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' });
+    setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' });
   };
 
   const handleEditProject = () => {
@@ -360,7 +367,8 @@ export const WbsModule: React.FC = () => {
       client_cuit: selectedProject.client_cuit || '',
       location: selectedProject.location || '',
       budget_ars: selectedProject.budget_ars || 0,
-      start_date: selectedProject.start_date || ''
+      start_date: selectedProject.start_date || '',
+      opportunity_id: ''
     });
     setShowForm(true);
   };
@@ -514,7 +522,7 @@ export const WbsModule: React.FC = () => {
             </div>
 
             <button
-              onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }}
+              onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' }); setShowForm(true); }}
               className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg transition-all shrink-0"
             >
               <Plus size={18} /> Nueva Obra
@@ -694,7 +702,7 @@ export const WbsModule: React.FC = () => {
                   <Trash2 size={18} />
                 </button>
                 <button
-                  onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '' }); setShowForm(true); }}
+                  onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' }); setShowForm(true); }}
                   className="btn-primary text-xs font-bold py-2.5 px-4 shadow-md"
                 >
                   <Plus size={16} /> Nueva Obra
@@ -758,6 +766,38 @@ export const WbsModule: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
             <div className="flex justify-between items-center"><h3 className="font-bold text-lg">{form.id ? 'Editar Obra' : 'Nueva Obra'}</h3><button onClick={() => setShowForm(false)}><X size={20} className="text-gray-400" /></button></div>
+            
+            {!form.id && (
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <label className="text-xs font-bold text-slate-600 mb-1.5 block">Crear desde Presupuesto Comercial (Opcional)</label>
+                <select 
+                  value={form.opportunity_id || ''}
+                  onChange={e => {
+                    const oppId = e.target.value;
+                    const opp = opportunities.find(o => o.id === oppId);
+                    if (opp) {
+                      setForm({
+                        ...form,
+                        opportunity_id: oppId,
+                        name: opp.description || form.name,
+                        client_name: opp.client_name || form.client_name,
+                        location: opp.location || form.location,
+                        budget_ars: opp.estimated_amount || form.budget_ars
+                      });
+                    } else {
+                      setForm({ ...form, opportunity_id: '' });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                >
+                  <option value="">-- No vincular a un presupuesto --</option>
+                  {opportunities.filter(o => !o.project_id && o.stage !== 'rechazada').map(o => (
+                    <option key={o.id} value={o.id}>{o.client_name} - {formatARS(o.estimated_amount || 0)} - {o.description}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <input placeholder="Nombre de la obra *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2.5 border rounded-xl text-sm" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input placeholder="Cliente" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
@@ -2154,6 +2194,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
   }[]>([]);
 
   const [selectedItemId, setSelectedItemId] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
   const [customDescription, setCustomDescription] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unitCost, setUnitCost] = useState('0');
@@ -2175,6 +2216,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
     ]);
 
     setSelectedItemId('');
+    setItemSearch('');
     setCustomDescription('');
     setQuantity('1');
     setUnitCost('0');
@@ -2290,7 +2332,7 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                <ShoppingCart size={18} className="text-ecar-blue" /> Crear Pedido de Compras
+                <ShoppingCart size={18} className="text-ecar-blue" /> Crear Pedido
               </h3>
               <button onClick={() => setShowNewOrderModal(false)}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
@@ -2315,17 +2357,37 @@ const PedidosTab: React.FC<{ projectId: string }> = ({ projectId }) => {
               <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Agregar ítem al pedido</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
+                <div className="relative">
                   <label className="text-xs font-bold text-gray-500 block mb-1">Item del Catálogo (Opcional)</label>
-                  <select value={selectedItemId} onChange={e => {
-                    setSelectedItemId(e.target.value);
-                    if (e.target.value) setCustomDescription('');
-                  }} className="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none bg-white">
-                    <option value="">Seleccionar del pañol...</option>
-                    {inventoryItems.map(item => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="text"
+                           value={itemSearch}
+                           onChange={e => {
+                             setItemSearch(e.target.value);
+                             setSelectedItemId('');
+                             if(e.target.value) setCustomDescription('');
+                           }}
+                           placeholder="Buscar por nombre o código..."
+                           className="w-full pl-8 pr-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 bg-white" />
+                  </div>
+                  {itemSearch && !selectedItemId && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                      {inventoryItems.filter(i => i.name.toLowerCase().includes(itemSearch.toLowerCase()) || (i.item_code||'').toLowerCase().includes(itemSearch.toLowerCase()) || (i.barcode||'').toLowerCase().includes(itemSearch.toLowerCase())).slice(0, 15).map(item => (
+                        <div key={item.id} className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0" onClick={() => {
+                          setSelectedItemId(item.id);
+                          setItemSearch(`${item.name} (${item.unit})`);
+                          setCustomDescription('');
+                        }}>
+                          <div className="font-bold text-sm text-gray-800">{item.name}</div>
+                          <div className="text-[10px] text-gray-500 font-mono">Stock: {item.current_stock} {item.unit} | Cód: {item.item_code || item.barcode || 'S/C'}</div>
+                        </div>
+                      ))}
+                      {inventoryItems.filter(i => i.name.toLowerCase().includes(itemSearch.toLowerCase()) || (i.item_code||'').toLowerCase().includes(itemSearch.toLowerCase()) || (i.barcode||'').toLowerCase().includes(itemSearch.toLowerCase())).length === 0 && (
+                        <div className="p-3 text-xs text-gray-500 text-center">No se encontraron productos en el pañol</div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1">Descripción Manual (Si no está en catálogo)</label>

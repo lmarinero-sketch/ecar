@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useFuelReconciliation, useProjects } from '../hooks/useData';
+import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
@@ -27,7 +27,7 @@ const FUEL_TYPES = [
 const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtCurrency = (n: number) => `$ ${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-type Tab = 'loads' | 'requests' | 'batan' | 'reconciliation' | 'fleet' | 'dashboard';
+type Tab = 'loads' | 'requests' | 'batan' | 'fleet' | 'dashboard';
 
 export const FuelModule: React.FC = () => {
   const [tab, setTab] = useState<Tab>('loads');
@@ -37,8 +37,6 @@ export const FuelModule: React.FC = () => {
       useImplementationStore.getState().completeItem('e60');
     } else if (tab === 'batan') {
       useImplementationStore.getState().completeItem('e61');
-    } else if (tab === 'reconciliation') {
-      useImplementationStore.getState().completeItem('e62');
     }
   }, [tab]);
 
@@ -46,7 +44,6 @@ export const FuelModule: React.FC = () => {
   const { data: vehicles = [] } = useFuelVehicles();
   const { data: loads = [] } = useFuelLoads();
   const { data: batanMovements = [] } = useFuelBatanMovements();
-  const { data: reconciliation = [] } = useFuelReconciliation();
   const { data: projects = [] } = useProjects();
   const createLoad = useCreateFuelLoad();
   const updateLoad = useUpdateFuelLoad();
@@ -160,7 +157,6 @@ export const FuelModule: React.FC = () => {
     { id: 'loads', label: 'Cargas Realizadas', icon: Fuel },
     { id: 'dashboard', label: 'Dashboard & Analítica', icon: PieChart },
     { id: 'batan', label: 'Batán', icon: Droplets },
-    { id: 'reconciliation', label: 'Conciliación', icon: FileCheck },
     { id: 'fleet', label: 'Flota', icon: Truck },
   ];
 
@@ -203,7 +199,6 @@ export const FuelModule: React.FC = () => {
           {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} />}
           {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} />}
           {tab === 'batan' && <BatanTab movements={enrichedBatanMovements} vehicles={vehicles} createBatan={createBatan} currentStock={currentBatanStock} />}
-          {tab === 'reconciliation' && <ReconciliationTab data={reconciliation} />}
           {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
         </div>
       </div>
@@ -1617,14 +1612,6 @@ const ModalBatanAdjustment: React.FC<{
   );
 };
 
-/* ── Reconciliation Tab ── */
-const ReconciliationTab: React.FC<{ data: any[] }> = ({ data }) => (
-  <div className="light-card overflow-hidden">
-    <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Conciliación Mensual con Proveedores</h3></div>
-    <table className="data-table">
-      <thead>
-        <tr><th>Mes</th><th>Cargas</th><th>Litros</th><th>Importe Planilla</th><th>Factura Proveedor</th><th>Diferencia</th><th>Estado</th></tr>
-      </thead>
       <tbody>
         {data.map(r => (
           <tr key={r.id}>
@@ -1861,6 +1848,17 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     const isBatan = completeForm.fuel_source === 'batan';
     const loadObj = loads.find(x => x.id === completingId);
     const isFillingBatan = loadObj?.vehicle_code?.startsWith('BT-');
+    
+    let ticketUrl = undefined;
+    if (ticketFile) {
+      const fileName = `ticket_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+      const { supabase } = await import('../lib/supabase');
+      const { error: uploadError } = await supabase.storage.from('fuel_tickets').upload(fileName, ticketFile);
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
+        ticketUrl = publicUrlData.publicUrl;
+      }
+    }
 
     if (!completingId || !completeForm.liters) return;
     if (!isBatan && !completeForm.total_amount && !completeForm.price_per_liter) {
@@ -2298,8 +2296,8 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                     </div>
 
                     <label className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors border border-gray-300">
-                      <Camera size={14} /> Foto del Ticket (Opcional)
-                      <input type="file" accept="image/*" capture="environment" className="hidden" />
+                      <Camera size={14} /> {ticketFile ? ticketFile.name : 'Foto del Ticket (Opcional)'}
+                      <input type="file" accept="image/*,application/pdf" capture="environment" className="hidden" onChange={e => setTicketFile(e.target.files?.[0] || null)} />
                     </label>
 
                     <div className="flex gap-1">

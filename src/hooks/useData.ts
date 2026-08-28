@@ -7,7 +7,7 @@ import type {
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting, PaymentRecord,
-  InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf,
+  InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf, InventoryDeposit,
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
   SeguridadIncidente, SeguridadObservacion,
@@ -1688,6 +1688,54 @@ export function useDeleteWarehouseShelf() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['warehouse_shelves'] }),
+  });
+}
+
+// ========== DEPOSITS ==========
+
+export function useInventoryDeposits() {
+  return useQuery({
+    queryKey: ['inventory_deposits'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('inventory_deposits').select('*').order('name');
+      if (error) throw error;
+      return data as InventoryDeposit[];
+    },
+  });
+}
+
+export function useCreateDeposit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (deposit: Partial<InventoryDeposit>) => {
+      const { data, error } = await supabase.from('inventory_deposits').insert([deposit]).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
+  });
+}
+
+export function useUpdateDeposit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<InventoryDeposit> & { id: string }) => {
+      const { data, error } = await supabase.from('inventory_deposits').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
+  });
+}
+
+export function useDeleteDeposit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('inventory_deposits').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
   });
 }
 

@@ -14,12 +14,14 @@ import {
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest, useDeleteInventoryItem, useCreateProject,
+  useInventoryDeposits, useCreateDeposit, useUpdateDeposit, useDeleteDeposit,
+  usePurchaseRequests,
   useAllPriceHistories
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
-import type { InventoryItem, WarehouseShelf, ToolAssignment } from '../lib/types';
+import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
@@ -30,7 +32,7 @@ import { ItemPriceHistoryModal } from './inventory/ItemPriceHistoryModal';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
-type Tab = 'stock' | 'movements' | 'reserved' | 'price_history' | 'tools' | 'shelves' | 'epp';
+type Tab = 'stock' | 'movements' | 'reserved' | 'price_history' | 'deposits' | 'tools' | 'shelves' | 'epp';
 type RepoItem = { name: string; quantity: number; unit: string; unit_cost: number; id: string; current_stock: number; min_stock: number };
 
 const SHELF_TYPES: Record<WarehouseShelf['shelf_type'], { label: string, icon: string }> = {
@@ -119,6 +121,34 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
       setQuickAssignedTo('');
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
+    }
+  };
+
+  const handleSaveDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingDeposit) {
+        await updateDeposit.mutateAsync({ id: editingDeposit.id, ...depositForm });
+        useModalStore.getState().showAlert('Éxito', 'Depósito actualizado correctamente.');
+      } else {
+        await createDeposit.mutateAsync(depositForm);
+        useModalStore.getState().showAlert('Éxito', 'Depósito creado correctamente.');
+      }
+      setShowDepositModal(false);
+      setEditingDeposit(null);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar el depósito.');
+    }
+  };
+
+  const handleDeleteDeposit = async (id: string) => {
+    const confirm = await useModalStore.getState().showConfirm('Eliminar Depósito', '¿Está seguro de eliminar este depósito?');
+    if (!confirm) return;
+    try {
+      await deleteDeposit.mutateAsync(id);
+      useModalStore.getState().showAlert('Éxito', 'Depósito eliminado.');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el depósito.');
     }
   };
 
@@ -526,6 +556,8 @@ export const InventoryModule: React.FC = () => {
   const { data: projects } = useProjects();
   const { data: employees } = useEmployees();
   const { data: shelves } = useWarehouseShelves();
+  const { data: deposits } = useInventoryDeposits();
+  const { data: purchaseRequests } = usePurchaseRequests();
   const createItem = useCreateInventoryItem();
   const createMovement = useCreateInventoryMovement();
   const createAssignment = useCreateToolAssignment();
@@ -537,10 +569,14 @@ export const InventoryModule: React.FC = () => {
   const createPurchaseReq = useCreatePurchaseRequest();
   const deleteItem = useDeleteInventoryItem();
   const createProject = useCreateProject();
+  const createDeposit = useCreateDeposit();
+  const updateDeposit = useUpdateDeposit();
+  const deleteDeposit = useDeleteDeposit();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
-  const [filterCat] = useState<string>('');
+  const [filterCat, setFilterCat] = useState<string>('');
+  const [filterShelf, setFilterShelf] = useState<string>('');
   const [showNewItem, setShowNewItem] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showMovement, setShowMovement] = useState<InventoryItem | null>(null);
@@ -578,6 +614,9 @@ export const InventoryModule: React.FC = () => {
   const [assignShelfItem, setAssignShelfItem] = useState<InventoryItem | null>(null);
   const [shelfAssignForm, setShelfAssignForm] = useState({ shelf_id: '', shelf_position: '' });
   
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [editingDeposit, setEditingDeposit] = useState<InventoryDeposit | null>(null);
+  const [depositForm, setDepositForm] = useState({ name: '', location: '' });
   const [showRepoModal, setShowRepoModal] = useState(false);
   const [repoProjectId, setRepoProjectId] = useState<string>('');
   const [repoItems, setRepoItems] = useState<RepoItem[]>([]);
@@ -751,7 +790,10 @@ export const InventoryModule: React.FC = () => {
 
       // Filter by Deposit / Location
       if (filterDeposit) {
-        if (i.deposit !== filterDeposit) return false;
+        if (i.deposit !== filterDeposit && i.deposit_id !== filterDeposit) return false;
+      }
+      if (filterShelf) {
+        if (i.shelf_id !== filterShelf) return false;
       }
 
       // Filter by Code
@@ -797,7 +839,7 @@ export const InventoryModule: React.FC = () => {
       if (tab === 'tools' && !i.is_tool) return false;
       return true;
     });
-  }, [items, search, filterCat, filterDeposit, filterCode, filterProduct, filterMeasure, filterRubro, filterSupplier, filterStockStatus, tab, shelves]);
+  }, [items, search, filterCat, filterDeposit, filterShelf, filterCode, filterProduct, filterMeasure, filterRubro, filterSupplier, filterStockStatus, tab, shelves]);
 
   const exportStockExcel = () => {
     const data = filtered.map(item => ({
@@ -1126,10 +1168,11 @@ export const InventoryModule: React.FC = () => {
       {/* Tabs Navigation */}
       <div className="flex gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl overflow-x-auto shadow-inner">
         {([
-          ['stock', '📊 Consulta Stock'],
-          ['movements', '📋 Kardex Movimientos'],
+          ['stock', '📊 Stock'],
+          ['movements', '📋 Movimientos'],
           ['reserved', '🔒 Stock Reservado'],
           ['price_history', '📈 Historial de Precios'],
+          ['deposits', '🏢 Depósitos'],
           ['shelves', '🗄️ Estanterías Almacén (A-E)'],
           ['tools', '⚡ Herramientas Eléctricas'],
           ['epp', '🦺 Entrega de EPP']
@@ -1159,6 +1202,7 @@ export const InventoryModule: React.FC = () => {
                   onClick={() => {
                     setSearch('');
                     setFilterDeposit('');
+                    setFilterShelf('');
                     setFilterCode('');
                     setFilterProduct('');
                     setFilterMeasure('');
@@ -1189,8 +1233,26 @@ export const InventoryModule: React.FC = () => {
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white"
                 >
                   <option value="">TODOS LOS DEPÓSITOS</option>
-                  <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Pañol Central)</option>
-                  <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                  {(deposits || []).map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                  <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Legado)</option>
+                  <option value="ALMACEN CENTRAL">ALMACEN CENTRAL (Legado)</option>
+                </select>
+              </div>
+
+              {/* Estantería */}
+              <div>
+                <label className="block font-bold text-slate-600 mb-1">Estantería:</label>
+                <select
+                  value={filterShelf}
+                  onChange={e => setFilterShelf(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white"
+                >
+                  <option value="">TODAS LAS ESTANTERÍAS</option>
+                  {(shelves || []).map(s => (
+                    <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
+                  ))}
                 </select>
               </div>
 
@@ -1335,7 +1397,7 @@ export const InventoryModule: React.FC = () => {
             <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
               <h2 className="font-bold text-sm text-slate-800 flex items-center gap-2">
                 <Boxes size={16} className="text-ecar-blue" />
-                Consulta Stock ({filtered.length} artículos)
+                Stock ({filtered.length} artículos)
               </h2>
               <div className="flex items-center gap-3 text-xs">
                 <span className="flex items-center gap-1 text-slate-500">
@@ -1657,6 +1719,65 @@ export const InventoryModule: React.FC = () => {
                         <ShoppingBag size={36} className="mx-auto mb-2 opacity-30" />
                         <p className="font-semibold text-slate-600">No hay stock reservado actualmente</p>
                         <p className="text-xs text-slate-400 mt-1">Todo el stock físico registrado está 100% disponible para operaciones.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="font-bold text-base text-slate-800 flex items-center gap-2">
+                  <Truck size={18} className="text-orange-500" />
+                  Despachos en Camino (Pendientes de Recepción)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Trazabilidad de materiales que ya salieron de pañol y están viajando hacia la obra.
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded-full font-bold text-xs">
+                {(purchaseRequests || []).filter(r => r.status === 'ordered').length} despachos en tránsito
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-3">Fecha Despacho</th>
+                    <th className="py-3 px-3">Destino (Obra)</th>
+                    <th className="py-3 px-3">Solicitante</th>
+                    <th className="py-3 px-3">Despachó</th>
+                    <th className="py-3 px-3">Detalle de Ítems</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {(purchaseRequests || []).filter(r => r.status === 'ordered').map(req => (
+                    <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-3 font-mono text-slate-600">
+                        {req.dispatched_at ? new Date(req.dispatched_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-slate-800">{req.project?.name || 'Stock General'}</td>
+                      <td className="py-3 px-3 text-slate-700">{req.requested_by || '—'}</td>
+                      <td className="py-3 px-3 text-slate-700">{req.dispatched_by || '—'}</td>
+                      <td className="py-3 px-3 text-xs text-slate-600">
+                        <ul className="list-disc list-inside">
+                          {(req.items || []).map(i => (
+                            <li key={i.id}>{i.quantity_sent || i.quantity}x {i.description}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                  {(purchaseRequests || []).filter(r => r.status === 'ordered').length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-400">
+                        <Truck size={36} className="mx-auto mb-2 opacity-30" />
+                        <p className="font-semibold text-slate-600">No hay despachos en tránsito</p>
+                        <p className="text-xs text-slate-400 mt-1">Todos los envíos han sido recibidos en sus respectivas obras.</p>
                       </td>
                     </tr>
                   )}
@@ -2014,6 +2135,78 @@ export const InventoryModule: React.FC = () => {
         </div>
       )}
 
+      {/* Deposits tab */}
+      {tab === 'deposits' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+              <Boxes className="text-ecar-blue" size={24} /> Gestión de Depósitos
+            </h2>
+            <button
+              onClick={() => {
+                setEditingDeposit(null);
+                setDepositForm({ name: '', location: '' });
+                setShowDepositModal(true);
+              }}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2"
+            >
+              <Plus size={16} /> Nuevo Depósito
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider">Nombre</th>
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider">Ubicación / Detalles</th>
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(deposits || []).map(d => (
+                    <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4 font-bold text-slate-800">{d.name}</td>
+                      <td className="p-4 text-slate-600">{d.location || '—'}</td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingDeposit(d);
+                              setDepositForm({ name: d.name, location: d.location || '' });
+                              setShowDepositModal(true);
+                            }}
+                            className="p-2 text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDeposit(d.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {deposits?.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-slate-500 text-sm">
+                        No hay depósitos creados.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Shelves tab (Plano de distribución A-E) */}
       {tab === 'shelves' && (() => {
         const shelfList = shelves || [];
@@ -2321,8 +2514,11 @@ export const InventoryModule: React.FC = () => {
                     onChange={e => setNewItem({ ...newItem, deposit: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white"
                   >
-                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Pañol Central)</option>
-                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                    {(deposits || []).map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Legado)</option>
+                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL (Legado)</option>
                   </select>
                 </div>
                 <div>
@@ -2489,6 +2685,52 @@ export const InventoryModule: React.FC = () => {
               <button type="submit" disabled={createAssignment.isPending} className="btn-primary w-full py-3 text-sm flex items-center justify-center disabled:opacity-50">
                 {createAssignment.isPending ? 'Asignando...' : '👤 Confirmar Préstamo'}
               </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal Depósito */}
+      {showDepositModal && createPortal(
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <Boxes size={20} className="text-ecar-blue" /> {editingDeposit ? 'Editar' : 'Nuevo'} Depósito
+              </h3>
+              <button onClick={() => setShowDepositModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors bg-white hover:bg-slate-100 p-1.5 rounded-lg shadow-sm border border-slate-200">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveDeposit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Nombre del Depósito *</label>
+                <input
+                  required
+                  value={depositForm.name}
+                  onChange={e => setDepositForm({ ...depositForm, name: e.target.value.toUpperCase() })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white transition-all"
+                  placeholder="Ej. DEPÓSITO CENTRAL"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Ubicación / Notas</label>
+                <input
+                  value={depositForm.location}
+                  onChange={e => setDepositForm({ ...depositForm, location: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white transition-all"
+                  placeholder="Ej. Nave 1, Sector Norte..."
+                />
+              </div>
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={() => setShowDepositModal(false)} className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors shadow-sm">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={createDeposit.isPending || updateDeposit.isPending} className="flex-1 py-3 bg-ecar-blue hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                  <CheckCircle2 size={18} /> Guardar
+                </button>
+              </div>
             </form>
           </div>
         </div>,
