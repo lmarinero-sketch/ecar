@@ -613,6 +613,10 @@ export const InventoryModule: React.FC = () => {
   const [quickAdjQty, setQuickAdjQty] = useState('');
   const [quickAdjNotes, setQuickAdjNotes] = useState('');
 
+  // Reserve Stock State
+  const [showReserveModal, setShowReserveModal] = useState(false);
+  const [reserveForm, setReserveForm] = useState({ itemId: '', quantity: '' });
+
   // Dispatch Cart State
   const [showDispatchCart, setShowDispatchCart] = useState(false);
   const [dispatchCartItems, setDispatchCartItems] = useState<{item: InventoryItem, qty: string}[]>(() => {
@@ -974,6 +978,37 @@ export const InventoryModule: React.FC = () => {
       setMovForm({ movement_type: 'out', quantity: '', notes: '', project_id: '' });
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo registrar el movimiento.');
+    }
+  };
+
+  const handleReserveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reserveForm.itemId || !reserveForm.quantity) return;
+    
+    const qty = parseFloat(reserveForm.quantity);
+    if (isNaN(qty) || qty <= 0) {
+      useModalStore.getState().showAlert('Error', 'La cantidad a reservar debe ser mayor a cero.');
+      return;
+    }
+
+    const item = items.find(i => i.id === reserveForm.itemId);
+    if (!item) return;
+
+    if (qty > (item.current_stock || 0) - (item.reserved_stock || 0)) {
+      const confirm = await useModalStore.getState().showConfirm('Stock Insuficiente', 'La cantidad a reservar supera el stock disponible. ¿Deseas continuar?');
+      if (!confirm) return;
+    }
+
+    try {
+      await updateItem.mutateAsync({
+        id: item.id,
+        reserved_stock: (item.reserved_stock || 0) + qty
+      } as any);
+      useModalStore.getState().showAlert('Éxito', 'Stock reservado correctamente.');
+      setShowReserveModal(false);
+      setReserveForm({ itemId: '', quantity: '' });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err.message || 'Error al reservar stock.');
     }
   };
 
@@ -1667,9 +1702,17 @@ export const InventoryModule: React.FC = () => {
                   Control de stock físico comprometido en órdenes de trabajo, despachos pendientes y reservas para obras activas.
                 </p>
               </div>
-              <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-xs">
-                {(items || []).filter(i => (i.reserved_stock || 0) > 0).length} artículos comprometidos
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowReserveModal(true)}
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <Plus size={14} /> Nueva Reserva
+                </button>
+                <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-xs">
+                  {(items || []).filter(i => (i.reserved_stock || 0) > 0).length} artículos comprometidos
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -3232,6 +3275,73 @@ export const InventoryModule: React.FC = () => {
                 {createMovement.isPending ? 'Procesando Remito...' : '🚚 Confirmar Despacho Múltiple'}
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* MODAL NUEVA RESERVA */}
+      {showReserveModal && createPortal(
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
+            <div className="bg-gradient-to-r from-amber-600 to-amber-500 p-6 flex justify-between items-center text-white">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <ShoppingBag size={22} /> Nueva Reserva de Stock
+              </h3>
+              <button onClick={() => setShowReserveModal(false)} className="text-white/70 hover:text-white transition-colors relative z-10">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleReserveSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Seleccionar Material</label>
+                <select
+                  required
+                  value={reserveForm.itemId}
+                  onChange={e => setReserveForm({ ...reserveForm, itemId: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                >
+                  <option value="">Buscar o seleccionar ítem...</option>
+                  {(items || []).map(i => (
+                    <option key={i.id} value={i.id}>
+                      {i.item_code ? `[${i.item_code}] ` : ''}{i.name} - Disp: {(i.current_stock || 0) - (i.reserved_stock || 0)} {i.unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Cantidad a Reservar</label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  min="0.01"
+                  value={reserveForm.quantity}
+                  onChange={e => setReserveForm({ ...reserveForm, quantity: e.target.value })}
+                  placeholder="Ej. 5"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowReserveModal(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateItem.isPending}
+                  className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors disabled:opacity-50"
+                >
+                  {updateItem.isPending ? 'Guardando...' : 'Confirmar Reserva'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body
