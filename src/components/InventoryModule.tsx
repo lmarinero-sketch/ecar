@@ -991,7 +991,7 @@ export const InventoryModule: React.FC = () => {
       return;
     }
 
-    const item = items.find(i => i.id === reserveForm.itemId);
+    const item = (items || []).find(i => i.id === reserveForm.itemId);
     if (!item) return;
 
     if (qty > (item.current_stock || 0) - (item.reserved_stock || 0)) {
