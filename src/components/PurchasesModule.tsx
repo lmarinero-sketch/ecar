@@ -1014,7 +1014,7 @@ export const PurchasesModule: React.FC = () => {
                                     </div>
                                     <p className="text-xs text-slate-500 mt-0.5">
                                       Proveedor: <strong className="text-slate-800">{inv.supplier?.name || inv.ocr_raw_data?.proveedor_cliente}</strong>
-                                      {inv.supplier?.cuit && <span className="font-mono ml-1">({inv.supplier.cuit})</span>} • Empresa: <strong className="text-slate-800">{inv.legal_entity?.name || 'ECAR'}</strong>
+                                      {inv.supplier?.cuit && <span className="font-mono ml-1">({inv.supplier.cuit})</span>} • Empresa: <strong className="text-slate-800">{inv.legal_entity?.name || 'ECAR'}</strong> • Cargado por: <strong className="text-slate-800">{inv.uploader?.full_name || '—'}</strong>
                                     </p>
                                   </div>
                                 </div>
