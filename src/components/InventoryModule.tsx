@@ -3167,7 +3167,10 @@ export const InventoryModule: React.FC = () => {
                       }).slice(0, 20).map(item => (
                         <div key={item.id} className="p-3 hover:bg-orange-50/50 flex justify-between items-center transition-colors">
                           <div>
-                            <p className="font-bold text-slate-800 text-sm">{item.name}</p>
+                            <p className="font-bold text-slate-800 text-sm">
+                              {item.name}
+                              {item.measure && <span className="ml-2 text-slate-500 font-normal">({item.measure})</span>}
+                            </p>
                             <p className="text-xs text-slate-500 font-mono">Stock actual: <span className="font-bold text-slate-700">{item.current_stock} {item.unit}</span> | Cód: {item.item_code || item.barcode || 'S/C'}</p>
                           </div>
                           <button
@@ -3216,7 +3219,10 @@ export const InventoryModule: React.FC = () => {
                         return (
                           <div key={cartItem.item.id} className={`bg-white p-3 rounded-lg border shadow-sm flex items-center justify-between gap-3 ${isWarning ? 'border-red-300' : 'border-slate-200'}`}>
                             <div className="flex-1 min-w-0">
-                              <p className="font-bold text-slate-800 text-sm truncate">{cartItem.item.name}</p>
+                              <p className="font-bold text-slate-800 text-sm truncate">
+                                {cartItem.item.name}
+                                {cartItem.item.measure && <span className="ml-2 text-slate-500 font-normal">({cartItem.item.measure})</span>}
+                              </p>
                               <p className={`text-[10px] font-mono mt-0.5 ${isWarning ? 'text-red-600 font-bold' : 'text-slate-500'}`}>
                                 Quedarían en stock: {remaining} {cartItem.item.unit}
                               </p>
@@ -3305,7 +3311,7 @@ export const InventoryModule: React.FC = () => {
                   <option value="">Buscar o seleccionar ítem...</option>
                   {(items || []).map(i => (
                     <option key={i.id} value={i.id}>
-                      {i.item_code ? `[${i.item_code}] ` : ''}{i.name} - Disp: {(i.current_stock || 0) - (i.reserved_stock || 0)} {i.unit}
+                      {i.item_code ? `[${i.item_code}] ` : ''}{i.name} {i.measure ? `(${i.measure}) ` : ''}- Disp: {(i.current_stock || 0) - (i.reserved_stock || 0)} {i.unit}
                     </option>
                   ))}
                 </select>
