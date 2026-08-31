@@ -6,6 +6,7 @@ import {
   CheckCircle2, Clock, FileText, Landmark
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { usePurchaseInvoices, useSuppliers, useGastosItems, useProjects, useUpdateInvoiceAllocations, useBudgetResources, useCreateBudgetResource, useUpdateBudgetResource, useDeleteBudgetResource, useLegalEntities } from '../hooks/useData';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { generateLibroIVA } from '../lib/generateLibroIVA';
@@ -261,6 +262,7 @@ const BancoPreciosTab: React.FC = () => {
 
 export const PurchasesModule: React.FC = () => {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   useEffect(() => {
     useImplementationStore.getState().completeItem('e2-7');
@@ -364,6 +366,7 @@ export const PurchasesModule: React.FC = () => {
         original_file_url: publicUrl,
         status: 'pending_review',
         issue_date: new Date().toISOString().split('T')[0],
+        uploaded_by: profile?.id || null,
       }).select().single();
       if (insertError) throw insertError;
 
@@ -810,6 +813,7 @@ export const PurchasesModule: React.FC = () => {
                   <th className="text-right">Total</th>
                   {activeTab === 'compras' && <th>Rubro de Gasto</th>}
                   {activeTab === 'compras' && <th>Centro de Costo</th>}
+                  <th className="text-center">Cargado Por</th>
                   <th className="text-center">Estado</th>
                   <th className="text-center">Acciones</th>
                 </tr>
@@ -932,6 +936,9 @@ export const PurchasesModule: React.FC = () => {
                             </button>
                           </td>
                         )}
+                        <td className="text-center text-xs font-medium text-slate-600">
+                          {inv.uploader?.full_name || '—'}
+                        </td>
                         <td className="text-center">
                           <span className={`badge ${inv.status === 'pending_review' ? 'badge-warning' : inv.status === 'validated' ? 'badge-success' : inv.status === 'rejected' ? 'badge-danger' : 'badge-info'}`}>{statusLabel[inv.status] || inv.status}</span>
                         </td>

@@ -465,6 +465,11 @@ export const OpportunitiesModule: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs font-bold text-gray-700">{fmt(opp.estimated_amount)}</span>
                         <div className="flex items-center gap-1">
+                          {opp.project_id && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 flex items-center gap-0.5" title="Vinculada a Obra en Ejecución">
+                              <Briefcase size={10} /> En Obra
+                            </span>
+                          )}
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${RISK_COLORS[opp.risk_level]}`}>
                             R: {opp.risk_level.charAt(0).toUpperCase()}
                           </span>
@@ -475,6 +480,12 @@ export const OpportunitiesModule: React.FC = () => {
                       </div>
                       {/* Quick stage move */}
                       <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap items-center">
+                        {opp.stage === 'adjudicada' && !opp.project_id && (
+                          <button onClick={e => { e.stopPropagation(); handlePassToProject(opp); }}
+                            className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all flex items-center gap-1" title="Pasar a Obra">
+                            <Briefcase size={10} /> A Obra
+                          </button>
+                        )}
                         {STAGES.filter(s => s.id !== opp.stage && s.id !== 'rechazada').slice(0, 3).map(s => (
                           <button key={s.id} onClick={e => { e.stopPropagation(); moveStage(opp, s.id); }}
                             className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${s.bgColor} ${s.color} hover:opacity-80 transition-all`}>
@@ -525,7 +536,14 @@ export const OpportunitiesModule: React.FC = () => {
                 return (
                   <tr key={opp.id} className="hover:bg-gray-50">
                     <td >
-                      <div className="font-medium text-gray-800">{opp.client_name}</div>
+                      <div className="font-medium text-gray-800 flex items-center gap-2">
+                        {opp.client_name}
+                        {opp.project_id && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 flex items-center gap-0.5" title="Vinculada a Obra en Ejecución">
+                            <Briefcase size={10} /> En Obra
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500 line-clamp-1">{opp.description}</div>
                     </td>
                     <td className="text-xs text-gray-600">{WORK_TYPES[opp.work_type]}</td>
@@ -543,6 +561,11 @@ export const OpportunitiesModule: React.FC = () => {
                     <td className="text-right font-mono font-bold text-gray-800">{fmt(opp.estimated_amount)}</td>
                     <td className="text-center">
                       <div className="flex items-center justify-center gap-2">
+                        {opp.stage === 'adjudicada' && !opp.project_id && (
+                          <button onClick={e => { e.stopPropagation(); handlePassToProject(opp); }} className="text-purple-600 hover:text-purple-800 p-1" title="Pasar a Obra">
+                            <Briefcase size={16} />
+                          </button>
+                        )}
                         <button onClick={e => handleExportPdf(e, opp)} disabled={isExporting === opp.id} className={`text-gray-400 hover:text-ecar-blue p-1 ${isExporting === opp.id ? 'opacity-50 cursor-wait' : ''}`} title="Descargar PDF">
                           {isExporting === opp.id ? <div className="w-4 h-4 border-2 border-ecar-blue border-t-transparent rounded-full animate-spin"/> : <Download size={16} />}
                         </button>

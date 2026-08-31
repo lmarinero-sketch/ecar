@@ -658,7 +658,7 @@ export function usePurchaseInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchase_invoices')
-        .select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*), items:purchase_invoice_items(*, inventory_item:inventory_items(*))')
+        .select('*, supplier:suppliers(*), allocations:purchase_invoice_allocations(*), legal_entity:legal_entities(*), items:purchase_invoice_items(*, inventory_item:inventory_items(*)), uploader:profiles!purchase_invoices_uploaded_by_fkey(full_name)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as PurchaseInvoice[];
