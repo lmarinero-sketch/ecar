@@ -289,6 +289,12 @@ export const PurchasesModule: React.FC = () => {
   const [payingSupplier, setPayingSupplier] = useState<Supplier | null>(null);
   const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchProvider, activeTab, selectedLegalEntityLibro]);
 
   const toggleExpandInvoice = (id: string) => {
     setExpandedInvoiceId(prev => prev === id ? null : id);
@@ -500,6 +506,8 @@ export const PurchasesModule: React.FC = () => {
   const compras = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'compra');
   const ventas = filteredInvoices.filter((i: any) => classifyInvoice(i) === 'venta');
   const currentList = activeTab === 'compras' ? compras : ventas;
+  const paginatedList = currentList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.ceil(currentList.length / pageSize);
 
   const getMultiplier = (inv: any) => isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura) ? -1 : 1;
   const totNeto = currentList.reduce((s: number, i: any) => s + (Number(i.net_amount_ars || 0) * getMultiplier(i)), 0);
@@ -819,7 +827,7 @@ export const PurchasesModule: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentList.map((inv: any) => {
+                {paginatedList.map((inv: any) => {
                   const isNC = isCreditNote(inv.invoice_type || inv.ocr_raw_data?.tipo_factura);
                   const isExpanded = expandedInvoiceId === inv.id;
                   const itemsCount = inv.items?.length || 0;
@@ -1276,6 +1284,27 @@ export const PurchasesModule: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+        {totalPages > 1 && currentList.length > 0 && (
+          <div className="flex justify-center items-center gap-2 p-4 border-t border-slate-100 bg-white rounded-b-xl">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-slate-600 font-medium px-2">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+            >
+              Siguiente
+            </button>
           </div>
         )}
       </div>
