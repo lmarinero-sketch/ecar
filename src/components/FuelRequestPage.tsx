@@ -398,6 +398,7 @@ export const FuelRequestPage: React.FC = () => {
           )}
           
           <button
+            type="button"
             onClick={() => setSuccessState('none')}
             className="mt-4 bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl w-full"
           >
@@ -512,11 +513,11 @@ export const FuelRequestPage: React.FC = () => {
                 {error && <div className="bg-red-50 border border-red-200 text-ecar-red px-3 py-2 rounded-lg text-sm flex gap-2 mb-4"><AlertCircle size={16} />{error}</div>}
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button onClick={() => handleSubmit('wait')} disabled={submitting} className="w-full bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
+                  <button type="button" onClick={() => handleSubmit('wait')} disabled={submitting} className="w-full bg-ecar-blue hover:bg-ecar-blueDark text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
                     <span className="flex items-center gap-2"><Send size={18} /> Solicitar</span>
                     <span className="text-[10px] font-normal opacity-80">(Esperar Autorización)</span>
                   </button>
-                  <button onClick={() => handleSubmit('direct')} disabled={submitting} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
+                  <button type="button" onClick={() => handleSubmit('direct')} disabled={submitting} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-2 rounded-xl transition-all flex flex-col items-center justify-center gap-1 shadow-lg hover:shadow-xl disabled:opacity-50">
                     <span className="flex items-center gap-2"><Upload size={18} /> Cargar Ahora</span>
                     <span className="text-[10px] font-normal opacity-80">(Auditoría Posterior)</span>
                   </button>
@@ -544,7 +545,7 @@ export const FuelRequestPage: React.FC = () => {
               </select>
             </div>
             
-            <button onClick={handleSearch} disabled={searching || (!searchQuery.trim() && !searchVehicle)} className="mt-4 w-full max-w-md mx-auto bg-white text-ecar-blue font-bold px-4 py-3 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
+            <button type="button" onClick={handleSearch} disabled={searching || (!searchQuery.trim() && !searchVehicle)} className="mt-4 w-full max-w-md mx-auto bg-white text-ecar-blue font-bold px-4 py-3 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow">
               {searching ? 'Buscando...' : 'Buscar Solicitud'}
             </button>
           </div>
@@ -566,7 +567,7 @@ export const FuelRequestPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <button onClick={resetRequest} className="text-gray-400 hover:text-red-500 transition-colors" title="Cancelar Solicitud"><X size={20}/></button>
+                <button type="button" onClick={resetRequest} className="text-gray-400 hover:text-red-500 transition-colors" title="Cancelar Solicitud"><X size={20}/></button>
               </div>
 
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm space-y-2">
@@ -653,7 +654,7 @@ export const FuelRequestPage: React.FC = () => {
 
                   <div className="pt-2">
                     {error && <div className="bg-red-50 border border-red-200 text-ecar-red px-3 py-2 rounded-lg text-sm flex gap-2 mb-4"><AlertCircle size={16} />{error}</div>}
-                    <button onClick={handleCompleteLoad} disabled={submitting} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 ${activeRequest.workflow_status === 'authorized' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+                    <button type="button" onClick={handleCompleteLoad} disabled={submitting} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 ${activeRequest.workflow_status === 'authorized' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
                       {submitting ? 'Guardando...' : <><Upload size={20} /> Guardar Carga {activeRequest.workflow_status !== 'authorized' && '(Sin Autorizar)'}</>}
                     </button>
                   </div>
@@ -667,6 +668,7 @@ export const FuelRequestPage: React.FC = () => {
                   <div className="pt-4 border-t border-gray-100">
                     <p className="text-xs text-gray-500 mb-3 font-bold uppercase tracking-wider">¿Ya cargaste igual?</p>
                     <button 
+                      type="button"
                       onClick={() => setShowUnauthorizedForm(true)} 
                       className="text-amber-700 bg-amber-100 hover:bg-amber-200 font-bold py-3 px-6 rounded-xl transition-colors text-sm w-full shadow-sm"
                     >
