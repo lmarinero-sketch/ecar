@@ -162,13 +162,15 @@ Deno.serve(async (req: Request) => {
           .eq("profile_id", profileId);
 
         // Insert new permissions
-        const permRows = Object.entries(permissions).map(([moduleId, p]: [string, any]) => ({
-          profile_id: profileId,
-          module_id: moduleId,
-          can_read: p.read ?? true,
-          can_write: p.write ?? false,
-          can_delete: p.delete ?? false,
-        }));
+        const permRows = Object.entries(permissions)
+          .filter(([_, p]: [string, any]) => p.read || p.write || p.delete)
+          .map(([moduleId, p]: [string, any]) => ({
+            profile_id: profileId,
+            module_id: moduleId,
+            can_read: p.read ?? true,
+            can_write: p.write ?? false,
+            can_delete: p.delete ?? false,
+          }));
 
         if (permRows.length > 0) {
           await supabaseAdmin.from("user_module_permissions").insert(permRows);
@@ -206,7 +208,21 @@ Deno.serve(async (req: Request) => {
       }
 
       // Permissions are deleted by CASCADE
-      await supabaseAdmin.from("profiles").delete().eq("id", profileId);
+      const { error: deleteProfileError } = await supabaseAdmin.from("profiles").delete().eq("id", profileId);
+      
+      if (deleteProfileError) {
+        if (deleteProfileError.code === '23503') {
+           return new Response(JSON.stringify({ error: "No se puede eliminar el usuario porque tiene registros (auditoría, cheques, pagos, etc.) asociados en el sistema. Quítale los módulos asignados para restringir su acceso." }), {
+             status: 400,
+             headers: { "Content-Type": "application/json", ...corsHeaders },
+           });
+        }
+        return new Response(JSON.stringify({ error: deleteProfileError.message }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
       await supabaseAdmin.auth.admin.deleteUser(authUserId);
 
       return new Response(JSON.stringify({ success: true }), {
