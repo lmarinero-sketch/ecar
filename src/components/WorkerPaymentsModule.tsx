@@ -3,13 +3,13 @@ import {
   HardHat, Search, Download, Users, Plus,
   ChevronDown, ChevronUp, Edit2, BarChart3,
   TableProperties, TrendingUp, Crown, Banknote,
-  Check, Trash2, X, Calendar, Eye
+  Check, Trash2, X, Calendar, Eye, ChevronRight
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
   useEmployees, useUpdateEmployee, useAllWorkerPaymentItems,
-  useWeeklyPayments, useCreateWeeklyPayment,
+  useWeeklyPayments, useCreateWeeklyPayment, useDeleteWeeklyPayment,
   useWeeklyPaymentItems, useCreateWeeklyPaymentItem,
   useUpdateWeeklyPaymentItem, useDeleteWeeklyPaymentItem
 } from '../hooks/useData';
@@ -355,54 +355,92 @@ const PaymentManagementTab: React.FC = () => {
           <p className="text-xs mt-1">Creá una nueva semana de pago para comenzar.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {workerPayments.map(p => (
-            <PaymentWeekCard key={p.id} payment={p} onClick={() => setSelectedPaymentId(p.id)} />
-          ))}
+        <div className="light-card overflow-hidden border border-gray-100">
+          <table className="w-full text-sm data-table">
+            <thead>
+              <tr className="bg-slate-800 text-white">
+                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Fecha de Pago</th>
+                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Responsable</th>
+                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Estado</th>
+                <th className="px-3 py-2.5 text-right text-[10px] uppercase tracking-wider font-bold">Total a Pagar</th>
+                <th className="px-3 py-2.5 text-center text-[10px] uppercase tracking-wider font-bold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workerPayments.map(p => (
+                <PaymentWeekRow 
+                  key={p.id} 
+                  payment={p} 
+                  onClick={() => setSelectedPaymentId(p.id)} 
+                  onDelete={async () => {
+                    if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta planilla de pagos de forma definitiva? Se perderán todos sus ítems.')) {
+                      try {
+                        await deletePayment.mutateAsync(p.id);
+                        useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
+                      } catch (err: any) {
+                        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
+                      }
+                    }
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   );
 };
 
-// ─── Payment Week Card ───
-const PaymentWeekCard: React.FC<{ payment: any; onClick: () => void }> = ({ payment, onClick }) => {
+// ─── Payment Week Row ───
+const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDelete: () => void }> = ({ payment, onClick, onDelete }) => {
   const { data: items = [] } = useWeeklyPaymentItems(payment.id);
   const workerItems = items.filter((i: any) => i.source_type === 'sueldos_obreros');
   const total = workerItems.reduce((s: number, i: any) => s + Number(i.monto || 0), 0);
   const pagados = workerItems.filter((i: any) => i.pagado).length;
   const d = new Date(payment.payment_date + 'T12:00:00');
-  const dateLabel = d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const dateLabel = d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
-    <div onClick={onClick} className="light-card p-4 cursor-pointer hover:shadow-md hover:border-amber-200 transition-all group">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Calendar size={14} className="text-amber-600" />
-          <span className="text-sm font-bold text-gray-800 capitalize">{dateLabel}</span>
+    <tr className="group hover:bg-amber-50/50 transition-colors cursor-pointer" onClick={onClick}>
+      <td>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+            <Calendar size={14} className="text-amber-600" />
+          </div>
+          <span className="font-bold text-gray-800 text-sm">{dateLabel}</span>
         </div>
-        <Eye size={14} className="text-gray-300 group-hover:text-amber-600 transition-colors" />
-      </div>
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[10px] text-gray-400 uppercase font-bold">Trabajadores</p>
-          <p className="text-lg font-black font-mono text-gray-800">{workerItems.length > 0 ? formatARS(total) : '—'}</p>
+      </td>
+      <td>
+        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{payment.responsible}</span>
+      </td>
+      <td>
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-gray-800">{workerItems.length} Trab.</span>
+          <span className="text-[10px] text-gray-500 uppercase">{pagados} Pagados</span>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] text-gray-400 uppercase font-bold">Pagados</p>
-          <p className="text-sm font-bold">
-            <span className="text-emerald-600">{pagados}</span>
-            <span className="text-gray-300"> / </span>
-            <span className="text-gray-500">{workerItems.length}</span>
-          </p>
+      </td>
+      <td className="text-right">
+        <span className="font-mono font-bold text-gray-900">{workerItems.length > 0 ? formatARS(total) : '—'}</span>
+      </td>
+      <td className="text-center">
+        <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="p-2 rounded-lg bg-gray-50 hover:bg-amber-100 text-gray-400 hover:text-amber-600 transition-colors" title="Ver Detalles">
+            <ChevronRight size={14} />
+          </button>
+          <button 
+            onClick={async (e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-2 rounded-lg bg-gray-50 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+            title="Eliminar Planilla"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
-      </div>
-      {workerItems.length > 0 && (
-        <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-          <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${workerItems.length > 0 ? (pagados / workerItems.length) * 100 : 0}%` }} />
-        </div>
-      )}
-    </div>
+      </td>
+    </tr>
   );
 };
 
