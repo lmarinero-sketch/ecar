@@ -9,6 +9,7 @@ import type { FuelVehicle, FuelLoad } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { generateFuelValePdf } from '../lib/generateFuelValePdf';
 import { FuelTicketScannerModal } from './FuelTicketScannerModal';
+import * as XLSX from 'xlsx';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -423,6 +424,37 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     }
   };
 
+  const exportToExcel = () => {
+    if (filteredLoads.length === 0) {
+      useModalStore.getState().showAlert("Atención", "No hay datos para exportar con los filtros actuales.");
+      return;
+    }
+
+    const dataToExport = filteredLoads.map(l => ({
+      "ID / Carga": l.load_number,
+      "Remito / Factura": l.remito_number || '',
+      "Vale": l.voucher_number || '',
+      "Fecha": l.load_date,
+      "Código Vehículo": l.vehicle_code,
+      "Vehículo": l.vehicle_description,
+      "Patente": l.plate || '',
+      "Chofer / Responsable": l.driver_name || '',
+      "Estación de Servicio": l.station_name || l.supplier || '',
+      "Tipo Combustible": l.fuel_type || '',
+      "Litros": l.liters,
+      "Precio por Litro": l.price_per_liter || 0,
+      "Importe Total": l.total_amount || 0,
+      "Obra / Centro Costo": l.project_name || '',
+      "Estado": l.validation_status === 'ok' ? 'Validada' : l.validation_status === 'observed' ? 'Observada' : 'Pendiente'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Cargas");
+    
+    XLSX.writeFile(workbook, `Cargas_Combustible_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="space-y-4">
       {/* Scanner Modal */}
@@ -440,6 +472,13 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           Registro de Cargas Realizadas
         </h3>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={exportToExcel}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md hover:shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
+          >
+            <Download size={16} /> Exportar Excel
+          </button>
           <button
             type="button"
             onClick={() => setShowScannerModal(true)}
