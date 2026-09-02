@@ -4,11 +4,12 @@ import {
   Edit2, ChevronRight, ArrowLeft, Building2
 } from 'lucide-react';
 import {
-  useWeeklyPayments, useCreateWeeklyPayment,
+  useWeeklyPayments, useCreateWeeklyPayment, useDeleteWeeklyPayment,
   useWeeklyPaymentItems, useCreateWeeklyPaymentItem, useUpdateWeeklyPaymentItem, useDeleteWeeklyPaymentItem,
   useGastosItems, useGastosRegistrosByRange,
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
+import { useModalStore } from '../store/useModalStore';
 
 
 function formatARS(v: number) {
@@ -466,6 +467,7 @@ export const PaymentsModule: React.FC = () => {
   const { profile } = useAuth();
   const { data: payments = [], isLoading } = useWeeklyPayments();
   const createPayment = useCreateWeeklyPayment();
+  const deletePayment = useDeleteWeeklyPayment();
 
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
@@ -548,34 +550,71 @@ export const PaymentsModule: React.FC = () => {
           <p className="text-sm text-gray-400 mt-1">Creá tu primera planilla semanal para empezar a controlar pagos.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {payments.map(p => (
-            <button key={p.id} onClick={() => setSelectedPayment(p)}
-              className="light-card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-lg bg-ecar-blueLight flex items-center justify-center">
-                    <Calendar size={16} className="text-ecar-blue" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-800 text-sm">
-                      {new Date(p.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">{p.responsible}</p>
-                  </div>
-                </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  p.status === 'executed' ? 'bg-green-100 text-green-700' :
-                  p.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                  'bg-gray-100 text-gray-500'
-                }`}>{p.status === 'executed' ? 'Ejecutado' : p.status === 'approved' ? 'Aprobado' : 'Borrador'}</span>
-              </div>
-              {p.notes && <p className="text-xs text-gray-400 truncate">{p.notes}</p>}
-              <div className="mt-2 flex items-center gap-1 text-xs font-bold text-ecar-blue opacity-0 group-hover:opacity-100 transition-opacity">
-                Ver detalle <ChevronRight size={12} />
-              </div>
-            </button>
-          ))}
+        <div className="light-card overflow-hidden border border-gray-100">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Fecha de Pago</th>
+                <th>Responsable</th>
+                <th>Estado</th>
+                <th>Notas</th>
+                <th className="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map(p => (
+                <tr key={p.id} className="group hover:bg-blue-50/50 transition-colors">
+                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-ecar-blueLight flex items-center justify-center shrink-0">
+                        <Calendar size={14} className="text-ecar-blue" />
+                      </div>
+                      <span className="font-bold text-gray-800 text-sm">
+                        {new Date(p.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </td>
+                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{p.responsible}</span>
+                  </td>
+                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                      p.status === 'executed' ? 'bg-green-100 text-green-700' :
+                      p.status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>{p.status === 'executed' ? 'Ejecutado' : p.status === 'approved' ? 'Aprobado' : 'Borrador'}</span>
+                  </td>
+                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer w-1/3">
+                    <span className="text-xs text-gray-500 truncate max-w-[250px] block">{p.notes || '—'}</span>
+                  </td>
+                  <td className="text-center">
+                    <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => { e.stopPropagation(); setSelectedPayment(p); }} className="p-2 rounded-lg bg-gray-50 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
+                        <ChevronRight size={14} />
+                      </button>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta planilla de pagos de forma definitiva? Se perderán todos sus ítems.')) {
+                            try {
+                              await deletePayment.mutateAsync(p.id);
+                              useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
+                            } catch (err: any) {
+                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
+                            }
+                          }
+                        }}
+                        className="p-2 rounded-lg bg-gray-50 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Eliminar Planilla"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
