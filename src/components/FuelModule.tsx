@@ -225,7 +225,7 @@ const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; col
 
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, profile } = useAuth();
   const [viewingTicket, setViewingTicket] = useState<string | null>(null);
   const [showScannerModal, setShowScannerModal] = useState(false);
 
@@ -255,7 +255,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const updateLoad = useUpdateFuelLoad();
   const deleteLoad = useDeleteFuelLoad();
   const userEmail = user?.email?.toLowerCase() || '';
-  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
+  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas') || profile?.role === 'colaborador';
 
   const isFormBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
 
@@ -1697,7 +1697,8 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const { user, isAdmin, profile } = useAuth();
   const deleteLoad = useDeleteFuelLoad();
   const userEmail = user?.email?.toLowerCase() || '';
-  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas');
+  const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas') || profile?.role === 'colaborador';
+  const canAuthorize = isAdmin || profile?.role === 'colaborador';
   const [showReqForm, setShowReqForm] = useState(false);
   const [reqForm, setReqForm] = useState<{ vehicle_code: string; requested_liters: string; odometer_km: string; project_name: string; observations: string; fuel_source: 'station' | 'batan'; station_name: string; fuel_type: string }>({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', observations: '', fuel_source: 'station', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
   
@@ -1852,24 +1853,30 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       alert("No tenés permisos para autorizar.");
       return;
     }
-    const signature = `Firmado por: ${profile.full_name} (DNI: ${profile.dni}) - ${new Date().toLocaleString()}`;
+    if (!profile.dni || !profile.signature_data) {
+      setShowSignaturePanel(true);
+      return;
+    }
+    const signature = `Firmado por: ${profile.full_name || profile.email} (DNI: ${profile.dni}) - ${new Date().toLocaleString('es-AR')}`;
     
     if (isCompletedWithoutAuth) {
       await updateLoad.mutateAsync({
         id,
         unauthorized_load: false,
-        authorized_by: profile.full_name,
+        authorized_by: profile.full_name || profile.email,
         authorized_at: new Date().toISOString(),
         supervisor_signature: signature
       });
+      useModalStore.getState().showAlert('Carga Auditada', 'La carga realizada fue auditada y aprobada correctamente.');
     } else {
       await updateLoad.mutateAsync({
         id,
         workflow_status: 'authorized',
-        authorized_by: profile.full_name,
+        authorized_by: profile.full_name || profile.email,
         authorized_at: new Date().toISOString(),
         supervisor_signature: signature
       });
+      useModalStore.getState().showAlert('Solicitud Autorizada', 'La solicitud fue autorizada con tu firma digital.');
     }
   };
 
@@ -2198,7 +2205,7 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                   </div>
                 )}
                 <div className="text-xs text-gray-500 mt-1 line-clamp-1">{r.observations || 'Sin notas'}</div>
-                {(isAdmin || r.requested_by === user?.email) ? (
+                {canAuthorize ? (
                   <button onClick={() => handleAuthorize(r.id, r.unauthorized_load && r.workflow_status === 'completed')} className={`mt-3 w-full text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
                     <Check size={14} /> {r.unauthorized_load ? 'Auditar y Aprobar Carga' : 'Autorizar con Firma'}
                   </button>

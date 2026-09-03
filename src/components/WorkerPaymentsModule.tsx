@@ -3,7 +3,7 @@ import {
   HardHat, Search, Download, Users, Plus,
   ChevronDown, ChevronUp, Edit2, BarChart3,
   TableProperties, TrendingUp, Crown, Banknote,
-  Check, Trash2, X, Calendar, Eye, ChevronRight
+  Check, Trash2, X, Calendar, ChevronRight
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -293,6 +293,7 @@ const PayWorkerModal: React.FC<{
 const PaymentManagementTab: React.FC = () => {
   const { data: weeklyPayments = [], isLoading: loadingPayments } = useWeeklyPayments();
   const createPayment = useCreateWeeklyPayment();
+  const deletePayment = useDeleteWeeklyPayment();
 
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const [showNewPayment, setShowNewPayment] = useState(false);
