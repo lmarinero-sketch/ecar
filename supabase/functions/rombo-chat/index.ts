@@ -39,6 +39,7 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Este módulo permite subir fotos/PDFs de facturas de compra. La IA extrae los datos con OCR automáticamente.
 - El usuario puede ver el Libro IVA (compras y ventas), filtrar por fechas, y descargar el libro en Excel. Ahora el libro se descarga de forma separada por empresa (Razón Social: ECAR SAS o CARLOS ADOLFO REGALADO).
 - También se calcula automáticamente la Posición IVA mensual (IVA Ventas - IVA Compras) por empresa de forma automática en la pantalla.
+- Si el usuario pide consultar o descargar el Libro IVA de un mes (ej: agosto de 2026) o de una empresa (ej: Regalado), usá query_invoices o download_libro_iva. Mostrale el total de facturas, importe total e IVA acumulado, e incluí SIEMPRE en tu texto el tag que devuelve la herramienta (ej: [DOWNLOAD_LIBRO_IVA:YYYY-MM:entityId:Nombre]) para que la interfaz web le muestre el botón de descarga automática en Excel.
 - Ayudalo a: revisar facturas pendientes de validación, calcular IVA crédito fiscal del mes, buscar facturas por proveedor.
 - Datos clave: proveedor, CUIT, tipo/número factura, neto gravado, IVA 21%, total, estado (Revisar/Validado).
 - Sugerí: "¿Querés que revise las facturas sin validar?" o "Puedo calcular tu posición de IVA este mes".`,
@@ -306,8 +307,30 @@ const tools = [
   {
     type: 'function', function: {
       name: 'query_invoices',
-      description: 'Consultar facturas de compra. Puede filtrar por mes o proveedor.',
-      parameters: { type: 'object', properties: { month: { type: 'string', description: 'YYYY-MM' }, supplier_name: { type: 'string' }, status: { type: 'string' } } }
+      description: 'Consultar facturas de compra y Libro IVA. Puede filtrar por mes (YYYY-MM), razón social / empresa (ECAR o Regalado), proveedor o estado.',
+      parameters: { 
+        type: 'object', 
+        properties: { 
+          month: { type: 'string', description: 'Mes en formato YYYY-MM (ej: 2026-08)' }, 
+          entity_name: { type: 'string', description: 'Nombre o filtro de la empresa/razón social (ej: Regalado o ECAR)' },
+          supplier_name: { type: 'string', description: 'Nombre o filtro del proveedor' }, 
+          status: { type: 'string' } 
+        } 
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'download_libro_iva',
+      description: 'Generar la descarga del Libro IVA de compras en Excel para un mes y empresa específica (ej: agosto 2026 de Regalado). Devuelve los datos y la etiqueta de descarga para la interfaz.',
+      parameters: {
+        type: 'object',
+        properties: {
+          month: { type: 'string', description: 'Mes en formato YYYY-MM (ej: 2026-08)' },
+          entity_name: { type: 'string', description: 'Nombre de la empresa (ej: Regalado o ECAR)' }
+        },
+        required: ['month']
+      }
     }
   },
   {
@@ -570,14 +593,109 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         return JSON.stringify(summary)
       }
       case 'query_invoices': {
-        let q = sb.from('purchase_invoices').select('supplier_name, invoice_number, invoice_date, total_ars, iva_total_ars, status, invoice_type')
-        if (args.month) { q = q.gte('invoice_date', `${args.month}-01`).lte('invoice_date', `${args.month}-31`) }
-        if (args.supplier_name) q = q.ilike('supplier_name', `%${args.supplier_name}%`)
+        let q = sb.from('purchase_invoices').select(`
+          id, invoice_number, point_of_sale, issue_date, total_ars, net_amount_ars, 
+          iva_21_ars, iva_105_ars, iva_27_ars, perceptions_iibb_ars, status, invoice_type,
+          legal_entity_id, legal_entity:legal_entities(id, name, cuit),
+          supplier:suppliers(name, cuit), ocr_raw_data
+        `)
+        if (args.month) {
+          const m = String(args.month).trim()
+          q = q.gte('issue_date', `${m}-01`).lte('issue_date', `${m}-31`)
+        }
         if (args.status) q = q.eq('status', args.status)
-        const { data } = await q.order('invoice_date', { ascending: false }).limit(30)
-        if (!data?.length) return '[]'
-        const total = data.reduce((s, i) => s + (i.total_ars || 0), 0)
-        return JSON.stringify({ invoices: data, total_ars: total, count: data.length })
+        const { data, error } = await q.order('issue_date', { ascending: false }).limit(200)
+        if (error) {
+          console.error('Error query_invoices:', error)
+          return JSON.stringify({ error: error.message })
+        }
+        if (!data?.length) return JSON.stringify({ count: 0, message: `No se encontraron facturas para el período ${args.month || 'indicado'}.` })
+
+        let filtered = data
+        if (args.entity_name) {
+          const entSearch = args.entity_name.toLowerCase().trim()
+          filtered = filtered.filter((i: any) => {
+            const entName = (i.legal_entity?.name || '').toLowerCase()
+            if (entSearch.includes('regalado') && entName.includes('regalado')) return true
+            if (entSearch.includes('ecar') && entName.includes('ecar')) return true
+            const words = entSearch.split(/\s+/).filter((w: string) => w.length > 2)
+            return words.some((w: string) => entName.includes(w))
+          })
+        }
+        if (args.supplier_name) {
+          const supSearch = args.supplier_name.toLowerCase().trim()
+          filtered = filtered.filter((i: any) => {
+            const supName = (i.supplier?.name || i.ocr_raw_data?.proveedor_cliente || '').toLowerCase()
+            return supName.includes(supSearch)
+          })
+        }
+
+        const total = filtered.reduce((s: number, i: any) => s + (Number(i.total_ars) || 0), 0)
+        const totalIva = filtered.reduce((s: number, i: any) => s + (Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)), 0)
+        const totalNeto = filtered.reduce((s: number, i: any) => s + (Number(i.net_amount_ars) || 0), 0)
+
+        const matchedEntity = filtered.find((i: any) => i.legal_entity)?.legal_entity || null
+        const mStr = args.month || (filtered[0]?.issue_date ? filtered[0].issue_date.slice(0, 7) : '2026-08')
+        const tag = `[DOWNLOAD_LIBRO_IVA:${mStr}:${matchedEntity?.id || 'all'}:${matchedEntity?.name || 'General'}]`
+
+        return JSON.stringify({
+          periodo: mStr,
+          empresa: matchedEntity?.name || args.entity_name || 'Todas',
+          total_facturas: filtered.length,
+          total_facturado_ars: total,
+          total_iva_credito_fiscal_ars: totalIva,
+          total_neto_gravado_ars: totalNeto,
+          download_tag: tag,
+          detalle_primeras_10: filtered.slice(0, 10).map((i: any) => ({
+            fecha: i.issue_date,
+            comprobante: `${i.invoice_type || 'FC'} ${i.point_of_sale || ''}-${i.invoice_number || ''}`,
+            proveedor: i.supplier?.name || i.ocr_raw_data?.proveedor_cliente || 'Proveedor',
+            total: i.total_ars,
+            empresa: i.legal_entity?.name || 'Sin entidad'
+          }))
+        })
+      }
+      case 'download_libro_iva': {
+        const m = String(args.month || '2026-08').trim()
+        let q = sb.from('purchase_invoices').select(`
+          id, invoice_number, point_of_sale, issue_date, total_ars, net_amount_ars, 
+          iva_21_ars, iva_105_ars, iva_27_ars, perceptions_iibb_ars, status, invoice_type,
+          legal_entity_id, legal_entity:legal_entities(id, name, cuit),
+          supplier:suppliers(name, cuit), ocr_raw_data
+        `).gte('issue_date', `${m}-01`).lte('issue_date', `${m}-31`)
+
+        const { data, error } = await q.order('issue_date', { ascending: false })
+        if (error) return JSON.stringify({ error: error.message })
+        if (!data?.length) return JSON.stringify({ error: `No hay facturas registradas en ${m}` })
+
+        let filtered = data
+        if (args.entity_name) {
+          const entSearch = args.entity_name.toLowerCase().trim()
+          filtered = filtered.filter((i: any) => {
+            const entName = (i.legal_entity?.name || '').toLowerCase()
+            if (entSearch.includes('regalado') && entName.includes('regalado')) return true
+            if (entSearch.includes('ecar') && entName.includes('ecar')) return true
+            const words = entSearch.split(/\s+/).filter((w: string) => w.length > 2)
+            return words.some((w: string) => entName.includes(w))
+          })
+        }
+
+        const matchedEntity = filtered.find((i: any) => i.legal_entity)?.legal_entity || null
+        const total = filtered.reduce((s: number, i: any) => s + (Number(i.total_ars) || 0), 0)
+        const totalIva = filtered.reduce((s: number, i: any) => s + (Number(i.iva_21_ars || 0) + Number(i.iva_105_ars || 0) + Number(i.iva_27_ars || 0)), 0)
+
+        const tag = `[DOWNLOAD_LIBRO_IVA:${m}:${matchedEntity?.id || 'all'}:${matchedEntity?.name || 'General'}]`
+
+        return JSON.stringify({
+          success: true,
+          periodo: m,
+          empresa: matchedEntity?.name || args.entity_name || 'General',
+          total_facturas: filtered.length,
+          total_facturado_ars: total,
+          total_iva_ars: totalIva,
+          download_tag: tag,
+          instruccion: `Informale al usuario que encontraste ${filtered.length} facturas por un total de $${total.toLocaleString('es-AR')} con IVA de $${totalIva.toLocaleString('es-AR')}, y poné obligatoriamente al final de tu respuesta la etiqueta ${tag} para que aparezca el botón de descarga.`
+        })
       }
       case 'query_projects': {
         let q = sb.from('projects').select('name, status, location, start_date, end_date')

@@ -323,13 +323,19 @@ export const PurchasesModule: React.FC = () => {
   };
 
   // Periodo for Libro IVA export
+  const formatLocalDate = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const [periodoDesde, setPeriodoDesde] = useState(firstDay.toISOString().split('T')[0]);
-  const [periodoHasta, setPeriodoHasta] = useState(lastDay.toISOString().split('T')[0]);
+  const [periodoDesde, setPeriodoDesde] = useState(formatLocalDate(firstDay));
+  const [periodoHasta, setPeriodoHasta] = useState(formatLocalDate(lastDay));
   const [dateFilterMode, setDateFilterMode] = useState<'current' | 'last_month' | 'last_3_months' | 'custom'>('current');
-
 
   const applyQuickFilter = (mode: 'current' | 'last_month' | 'last_3_months' | 'custom') => {
     setDateFilterMode(mode);
@@ -337,18 +343,18 @@ export const PurchasesModule: React.FC = () => {
     if (mode === 'current') {
       const first = new Date(today.getFullYear(), today.getMonth(), 1);
       const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      setPeriodoDesde(first.toISOString().split('T')[0]);
-      setPeriodoHasta(last.toISOString().split('T')[0]);
+      setPeriodoDesde(formatLocalDate(first));
+      setPeriodoHasta(formatLocalDate(last));
     } else if (mode === 'last_month') {
       const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const last = new Date(today.getFullYear(), today.getMonth(), 0);
-      setPeriodoDesde(first.toISOString().split('T')[0]);
-      setPeriodoHasta(last.toISOString().split('T')[0]);
+      setPeriodoDesde(formatLocalDate(first));
+      setPeriodoHasta(formatLocalDate(last));
     } else if (mode === 'last_3_months') {
       const first = new Date(today.getFullYear(), today.getMonth() - 2, 1);
       const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      setPeriodoDesde(first.toISOString().split('T')[0]);
-      setPeriodoHasta(last.toISOString().split('T')[0]);
+      setPeriodoDesde(formatLocalDate(first));
+      setPeriodoHasta(formatLocalDate(last));
     }
   };
 
@@ -478,6 +484,10 @@ export const PurchasesModule: React.FC = () => {
     if (!i.issue_date) return false;
     const inDateRange = i.issue_date >= periodoDesde && i.issue_date <= periodoHasta;
     if (!inDateRange) return false;
+    
+    if (selectedLegalEntityLibro && i.legal_entity_id !== selectedLegalEntityLibro) {
+      return false;
+    }
     
     if (searchProvider.trim() !== '') {
       const search = searchProvider.toLowerCase().trim();
@@ -655,15 +665,28 @@ export const PurchasesModule: React.FC = () => {
       {/* Global Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="text-sm font-bold text-gray-700">Filtro de período</div>
+          <div className="text-sm font-bold text-gray-700">Filtro de período:</div>
           <div className="flex bg-gray-100 rounded-lg p-1">
-            <button onClick={() => applyQuickFilter('current')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'current' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Mes Actual</button>
-            <button onClick={() => applyQuickFilter('last_month')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_month' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Mes Pasado</button>
-            <button onClick={() => applyQuickFilter('last_3_months')} className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'last_3_months' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Últ. 3 Meses</button>
+            <button onClick={() => applyQuickFilter('current')} className={`px-3 py-1 rounded text-xs font-semibold transition-all ${dateFilterMode === 'current' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Mes Actual</button>
+            <button onClick={() => applyQuickFilter('last_month')} className={`px-3 py-1 rounded text-xs font-semibold transition-all ${dateFilterMode === 'last_month' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Agosto 2026 (Mes Pasado)</button>
+            <button onClick={() => applyQuickFilter('last_3_months')} className={`px-3 py-1 rounded text-xs font-semibold transition-all ${dateFilterMode === 'last_3_months' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500 hover:text-gray-700'}`}>Últ. 3 Meses</button>
             <div className={`px-3 py-1 rounded text-xs font-medium transition-all ${dateFilterMode === 'custom' ? 'bg-white shadow-sm text-ecar-blue' : 'text-gray-500'}`}>Personalizado</div>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <label className="text-gray-500 text-xs font-medium">Empresa:</label>
+            <select
+              value={selectedLegalEntityLibro}
+              onChange={e => setSelectedLegalEntityLibro(e.target.value)}
+              className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs bg-gray-50 focus:bg-white text-gray-700 font-semibold focus:outline-none focus:border-ecar-blue shadow-sm"
+            >
+              <option value="">Todas las Empresas</option>
+              {legalEntities.map((e: any) => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input 
@@ -671,15 +694,15 @@ export const PurchasesModule: React.FC = () => {
               placeholder="Buscar proveedor o n° comprobante..." 
               value={searchProvider} 
               onChange={e => setSearchProvider(e.target.value)} 
-              className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-48 transition-all shadow-sm"
+              className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-gray-50 focus:bg-white focus:outline-none focus:border-ecar-blue w-44 transition-all shadow-sm"
             />
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <label className="text-gray-500 font-medium">Desde:</label>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-gray-500 font-medium">Desde:</span>
             <input type="date" value={periodoDesde} onChange={e => { setPeriodoDesde(e.target.value); setDateFilterMode('custom'); }} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <label className="text-gray-500 font-medium">Hasta:</label>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-gray-500 font-medium">Hasta:</span>
             <input type="date" value={periodoHasta} onChange={e => { setPeriodoHasta(e.target.value); setDateFilterMode('custom'); }} className="border rounded px-2 py-1.5 text-xs bg-gray-50 focus:bg-white" />
           </div>
         </div>
@@ -770,31 +793,72 @@ export const PurchasesModule: React.FC = () => {
       ) : (
         <div className="light-card overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center flex-wrap gap-3">
-          <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
           <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-gray-800">Libro IVA — {activeTab === 'compras' ? 'Compras' : 'Ventas'}</h3>
+            <span className="text-xs bg-blue-100 text-ecar-blue font-bold px-2 py-0.5 rounded-full">
+              {currentList.length} comprobantes
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Month Filter Buttons */}
+            <div className="flex bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => applyQuickFilter('current')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${dateFilterMode === 'current' ? 'bg-ecar-blue text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Mes Actual
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickFilter('last_month')}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${dateFilterMode === 'last_month' ? 'bg-ecar-blue text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Agosto 2026 (Mes Pasado)
+              </button>
+            </div>
+
+            {/* Date Inputs */}
+            <div className="flex items-center gap-1.5 text-xs bg-white border border-gray-200 rounded-lg px-2.5 py-1 shadow-2xs">
+              <span className="text-gray-500 font-medium">Período:</span>
+              <input
+                type="date"
+                value={periodoDesde}
+                onChange={e => { setPeriodoDesde(e.target.value); setDateFilterMode('custom'); }}
+                className="text-xs border-0 p-0 text-gray-700 font-mono focus:ring-0"
+              />
+              <span className="text-gray-400">al</span>
+              <input
+                type="date"
+                value={periodoHasta}
+                onChange={e => { setPeriodoHasta(e.target.value); setDateFilterMode('custom'); }}
+                className="text-xs border-0 p-0 text-gray-700 font-mono focus:ring-0"
+              />
+            </div>
+
+            {/* Entity Selector */}
             <select
               value={selectedLegalEntityLibro}
               onChange={e => setSelectedLegalEntityLibro(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white text-gray-700 focus:outline-none focus:border-ecar-blue shadow-sm"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs bg-white text-gray-700 font-semibold focus:outline-none focus:border-ecar-blue shadow-2xs"
             >
-              <option value="">Seleccionar Empresa...</option>
+              <option value="">Todas las Empresas</option>
               {legalEntities.map((e: any) => (
                 <option key={e.id} value={e.id}>{e.name}</option>
               ))}
             </select>
+
+            {/* Download Button */}
             <button
               onClick={() => {
-                if (!selectedLegalEntityLibro) {
-                  useModalStore.getState().showAlert('Atención', 'Debe seleccionar una empresa para descargar el libro IVA.');
-                  return;
-                }
                 const selectedEntity = legalEntities.find((e: any) => e.id === selectedLegalEntityLibro);
                 generateLibroIVA(filteredInvoices as any, periodoDesde, periodoHasta, selectedEntity);
                 useImplementationStore.getState().completeItem('e2-11');
                 useImplementationStore.getState().completeItem('c2-6');
               }}
               disabled={filteredInvoices.length === 0}
-              className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <Download size={14} /> Descargar Libro IVA (.xlsx)
             </button>

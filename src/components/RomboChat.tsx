@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck } from 'lucide-react';
+import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useStore';
+import { useModalStore } from '../store/useModalStore';
+import { generateLibroIVA } from '../lib/generateLibroIVA';
 import { MODULE_LABELS } from '../lib/types';
 import type { ModuleId } from '../lib/types';
 import { useAITokenUsage } from '../hooks/useData';
@@ -18,9 +20,9 @@ const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; 
   ],
   purchases: [
     { icon: ShoppingCart, label: 'Facturas del mes', prompt: '¿Cuántas facturas de compra tengo este mes y cuál es el total?' },
+    { icon: Download, label: 'Libro IVA Agosto (Regalado)', prompt: 'Quiero descargar el Libro IVA de compras de agosto de 2026 de Regalado' },
     { icon: Receipt, label: 'IVA acumulado', prompt: '¿Cuánto IVA crédito fiscal tengo acumulado este mes?' },
     { icon: FileText, label: 'Proveedores top', prompt: '¿Cuáles son mis principales proveedores por monto facturado?' },
-    { icon: Zap, label: 'Facturas sin validar', prompt: '¿Cuántas facturas están pendientes de revisión?' },
   ],
   finances: [
     { icon: Banknote, label: 'Cheques por vencer', prompt: '¿Qué cheques vencen esta semana?' },
@@ -211,7 +213,8 @@ export const RomboChat: React.FC = () => {
   const prevModuleRef = useRef<ModuleId>(activeModule);
   const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open, activeModule);
   const { data: aiUsage } = useAITokenUsage();
-  
+  const [downloadingIvaMonth, setDownloadingIvaMonth] = useState<string | null>(null);
+
   const tokenLimitReached = (aiUsage?.costUsd || 0) >= 10;
 
   // Build the contextual greeting based on the active module
@@ -635,15 +638,94 @@ export const RomboChat: React.FC = () => {
     setLoading(false);
   };
 
-  const renderContent = (text: string) => text.split('\n').map((line, i) => (
-    <p key={i} className={i > 0 ? 'mt-1.5' : ''}>
-      {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={j} className="font-bold">{part.slice(2, -2)}</strong>
-          : part
-      )}
-    </p>
-  ));
+  const handleDownloadFromRombo = async (month: string, entityId?: string, entityName?: string) => {
+    setDownloadingIvaMonth(month);
+    try {
+      const [yearStr, monthStr] = month.split('-');
+      const y = parseInt(yearStr, 10);
+      const m = parseInt(monthStr, 10);
+      const lastDay = new Date(y, m, 0).getDate();
+      const periodoDesde = `${month}-01`;
+      const periodoHasta = `${month}-${String(lastDay).padStart(2, '0')}`;
+
+      let query = supabase.from('purchase_invoices')
+        .select(`
+          id, invoice_number, point_of_sale, issue_date, total_ars, net_amount_ars, 
+          iva_21_ars, iva_105_ars, iva_27_ars, perceptions_iibb_ars, perceptions_iva_ars, exempt_ars, status, invoice_type,
+          legal_entity_id, supplier:suppliers(name, cuit), ocr_raw_data
+        `)
+        .gte('issue_date', periodoDesde)
+        .lte('issue_date', periodoHasta);
+
+      if (entityId && entityId !== 'all') {
+        query = query.eq('legal_entity_id', entityId);
+      }
+
+      const { data: invs, error } = await query;
+      if (error) throw error;
+      if (!invs || invs.length === 0) {
+        useModalStore.getState().showAlert('Sin facturas', `No se encontraron facturas de compra registradas para ${month}.`);
+        return;
+      }
+
+      let entityObj: any = undefined;
+      if (entityId && entityId !== 'all') {
+        const { data: ent } = await supabase.from('legal_entities').select('id, name, cuit').eq('id', entityId).single();
+        entityObj = ent || { id: entityId, name: entityName || 'Empresa', cuit: null };
+      }
+
+      generateLibroIVA(invs as any, periodoDesde, periodoHasta, entityObj);
+      useModalStore.getState().showAlert(
+        'Descarga Lista',
+        `Se descargó el Libro IVA de ${month} (${entityObj?.name || 'General'}) con ${invs.length} comprobantes.`
+      );
+    } catch (err: any) {
+      console.error('Error al generar libro IVA desde Rombo:', err);
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo generar el Libro IVA.');
+    } finally {
+      setDownloadingIvaMonth(null);
+    }
+  };
+
+  const renderContent = (text: string) => {
+    const tagRegex = /\[DOWNLOAD_LIBRO_IVA:([^:]+):([^:]+)(?::([^\]]+))?\]/g;
+    const matches: { month: string; entityId: string; entityName?: string }[] = [];
+    let match;
+    while ((match = tagRegex.exec(text)) !== null) {
+      matches.push({ month: match[1], entityId: match[2], entityName: match[3] });
+    }
+
+    const cleanText = text.replace(/\[DOWNLOAD_LIBRO_IVA:[^\]]+\]/g, '').trim();
+
+    return (
+      <div className="space-y-1">
+        {cleanText.split('\n').map((line, i) => (
+          <p key={i} className={i > 0 ? 'mt-1' : ''}>
+            {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
+              part.startsWith('**') && part.endsWith('**')
+                ? <strong key={j} className="font-bold">{part.slice(2, -2)}</strong>
+                : part
+            )}
+          </p>
+        ))}
+        {matches.map((m, idx) => (
+          <div key={idx} className="pt-2 mt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => handleDownloadFromRombo(m.month, m.entityId, m.entityName)}
+              disabled={downloadingIvaMonth === m.month}
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-98 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Download size={14} className="shrink-0" />
+              <span>
+                {downloadingIvaMonth === m.month ? 'Generando Excel...' : `Descargar Libro IVA ${m.month} ${m.entityName ? `(${m.entityName.split(' ')[0]})` : ''} (.xlsx)`}
+              </span>
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const showQuickActions = messages.length <= 1 && !loading;
 

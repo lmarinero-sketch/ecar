@@ -539,11 +539,15 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         return JSON.stringify(data || [])
       }
       case 'query_invoices': {
-        let q = supabase.from('purchase_invoices').select('supplier_name, invoice_number, invoice_date, total_ars, status')
-        if (args.month) { q = q.gte('invoice_date', `${args.month}-01`).lte('invoice_date', `${args.month}-31`) }
-        if (args.supplier_name) q = q.ilike('supplier_name', `%${args.supplier_name}%`)
-        const { data } = await q.order('invoice_date', { ascending: false }).limit(20)
-        return JSON.stringify(data || [])
+        let q = supabase.from('purchase_invoices').select('id, invoice_number, point_of_sale, issue_date, total_ars, net_amount_ars, iva_21_ars, iva_105_ars, iva_27_ars, status, invoice_type, legal_entity:legal_entities(id, name), supplier:suppliers(name), ocr_raw_data')
+        if (args.month) { q = q.gte('issue_date', `${args.month}-01`).lte('issue_date', `${args.month}-31`) }
+        const { data } = await q.order('issue_date', { ascending: false }).limit(200)
+        let filtered = data || []
+        if (args.supplier_name) {
+          const s = args.supplier_name.toLowerCase().trim()
+          filtered = filtered.filter((i: any) => (i.supplier?.name || i.ocr_raw_data?.proveedor_cliente || '').toLowerCase().includes(s))
+        }
+        return JSON.stringify(filtered.slice(0, 30))
       }
       case 'calculate_cashflow': {
         const days = args.days_ahead || 30
