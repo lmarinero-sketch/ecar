@@ -1379,7 +1379,7 @@ export const InventoryModule: React.FC = () => {
                 >
                   <Truck size={18} /> Despachar a Obra (Remito)
                 </button>
-                {isAdmin && (
+                {(isAdmin || isPanolero) && (
                   <div className="flex gap-2 flex-1">
                     <button
                       onClick={() => {
