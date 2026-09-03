@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects } from '../hooks/useData';
@@ -52,9 +52,63 @@ export const FuelModule: React.FC = () => {
 
   const now = new Date();
   const currentMonth = MONTHS_ES[now.getMonth()];
-  const monthLoads = useMemo(() => loads.filter(l => l.month === currentMonth && l.year === now.getFullYear()), [loads, currentMonth]);
-  const totalLiters = monthLoads.reduce((s, l) => s + (l.liters || 0), 0);
-  const totalAmount = monthLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
+  const currentYear = now.getFullYear();
+
+  // Period filter mode: 'current' | 'last_month' | 'global'
+  const [periodMode, setPeriodMode] = useState<'current' | 'last_month' | 'global'>('current');
+
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthName = MONTHS_ES[lastMonthDate.getMonth()];
+  const lastMonthYear = lastMonthDate.getFullYear();
+
+  // Helper to extract clean year and month from any load record
+  const getLoadPeriod = useCallback((l: FuelLoad) => {
+    if (l.load_date) {
+      const parts = l.load_date.split('-');
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0], 10);
+        const mIdx = parseInt(parts[1], 10) - 1;
+        if (!isNaN(y) && !isNaN(mIdx) && mIdx >= 0 && mIdx < 12) {
+          return { year: y, month: MONTHS_ES[mIdx], monthIndex: mIdx };
+        }
+      }
+    }
+    const mIdx = l.month ? MONTHS_ES.indexOf(l.month) : -1;
+    return {
+      year: l.year || currentYear,
+      month: l.month || currentMonth,
+      monthIndex: mIdx >= 0 ? mIdx : now.getMonth()
+    };
+  }, [currentMonth, currentYear, now]);
+
+  // Loads filtered by active period mode
+  const periodLoads = useMemo(() => {
+    return loads.filter(l => {
+      const p = getLoadPeriod(l);
+      if (periodMode === 'current') {
+        return p.year === currentYear && p.month === currentMonth;
+      }
+      if (periodMode === 'last_month') {
+        return p.year === lastMonthYear && p.month === lastMonthName;
+      }
+      return true; // 'global'
+    });
+  }, [loads, periodMode, currentYear, currentMonth, lastMonthYear, lastMonthName, getLoadPeriod]);
+
+  // Breakdown of loads in the selected period
+  const fleetLoads = useMemo(() => periodLoads.filter(l => !l.vehicle_code?.startsWith('BT-')), [periodLoads]);
+  const batanFills = useMemo(() => periodLoads.filter(l => l.vehicle_code?.startsWith('BT-')), [periodLoads]);
+
+  // Liters
+  const totalFleetLiters = fleetLoads.reduce((s, l) => s + (l.liters || 0), 0);
+  const totalPurchasedLiters = periodLoads
+    .filter(l => l.load_source !== 'batan')
+    .reduce((s, l) => s + (l.liters || 0), 0);
+
+  // Invoiced money spent at gas stations / suppliers
+  const totalInvoicedAmount = periodLoads
+    .filter(l => l.load_source !== 'batan')
+    .reduce((s, l) => s + (l.total_amount || 0), 0);
 
   // Robust Batán movement calculations & running stock tracking
   const enrichedBatanMovements = useMemo(() => {
@@ -182,12 +236,83 @@ export const FuelModule: React.FC = () => {
 
       <div className="flex flex-col gap-6 items-start">
         <div className="w-full space-y-6">
+          {/* Period Mode Selector & Key Metrics */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Período analizado:</span>
+              <div className="flex bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode('current')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${periodMode === 'current' ? 'bg-white text-ecar-blue shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  Mes Actual ({currentMonth})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode('last_month')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${periodMode === 'last_month' ? 'bg-white text-ecar-blue shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  Mes Pasado ({lastMonthName})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodMode('global')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${periodMode === 'global' ? 'bg-white text-ecar-blue shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  Histórico Global (Todo)
+                </button>
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-500 font-medium">
+              Mostrando <strong className="text-gray-800">{periodLoads.length}</strong> cargas del período
+            </div>
+          </div>
+
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KPI icon={Fuel} label={`Litros ${currentMonth}`} value={`${fmt(totalLiters)} L`} color="sky" />
-            <KPI icon={BarChart3} label={`Importe ${currentMonth}`} value={totalAmount > 0 ? fmtCurrency(totalAmount) : 'Sin precio'} color="emerald" />
-            <KPI icon={Calendar} label="Cargas del mes" value={String(monthLoads.length)} color="violet" />
-            <KPI icon={Droplets} label="Saldo Batán" value={`${fmt(batanBalance)} L`} color="amber" />
+            <div className="light-card p-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1">
+                <Fuel size={15} className="text-sky-500" /> Litros Consumidos (Flota)
+              </div>
+              <p className="text-xl font-black text-sky-700 font-mono">{fmt(totalFleetLiters)} L</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {fmt(totalPurchasedLiters)} L comprados en estación
+              </p>
+            </div>
+
+            <div className="light-card p-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1">
+                <BarChart3 size={15} className="text-emerald-500" /> Gasto Facturado
+              </div>
+              <p className="text-xl font-black text-emerald-700 font-mono">
+                {totalInvoicedAmount > 0 ? fmtCurrency(totalInvoicedAmount) : 'Sin compras'}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {periodMode === 'current' ? `En ${currentMonth}` : periodMode === 'last_month' ? `En ${lastMonthName}` : 'Acumulado histórico'}
+              </p>
+            </div>
+
+            <div className="light-card p-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1">
+                <Calendar size={15} className="text-violet-500" /> Cargas Realizadas
+              </div>
+              <p className="text-xl font-black text-violet-700 font-mono">{fleetLoads.length} a flota</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {batanFills.length > 0 ? `+ ${batanFills.length} llenado(s) de Batán` : 'Suministro directo a flota'}
+              </p>
+            </div>
+
+            <div className="light-card p-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-1">
+                <Droplets size={15} className="text-amber-500" /> Saldo Actual Batán
+              </div>
+              <p className="text-xl font-black text-amber-600 font-mono">{fmt(batanBalance)} L</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                Capacidad: 200 L ({Math.min(100, Math.round((batanBalance / 200) * 100))}%)
+              </p>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -215,13 +340,6 @@ export const FuelModule: React.FC = () => {
   );
 };
 
-/* ── KPI Card ── */
-const KPI: React.FC<{ icon: React.ElementType; label: string; value: string; color: string }> = ({ icon: Icon, label, value, color }) => (
-  <div className="light-card p-5">
-    <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Icon size={16} className={`text-${color}-500`} /> {label}</div>
-    <p className={`text-xl font-black text-${color}-600 font-mono`}>{value}</p>
-  </div>
-);
 
 /* ── Loads Tab ── */
 const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
@@ -862,21 +980,28 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all" title="Editar carga"><Pencil size={14} /></button>
+                      <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all cursor-pointer" title="Editar carga"><Pencil size={14} /></button>
                       {canDelete && (
                         <button 
                           onClick={async () => {
-                            if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta carga realizada?')) {
+                            if (await useModalStore.getState().showConfirm('Confirmar Eliminación', `¿Seguro que deseás borrar la carga realizada ${l.load_number} (${l.liters} L)?`)) {
                               try {
                                 await deleteLoad.mutateAsync(l.id);
-                                useModalStore.getState().showAlert('Éxito', 'La carga de combustible se eliminó correctamente.');
+                                // Delete corresponding batan movement if this load came from or filled batan!
+                                if (l.load_source === 'batan' || l.vehicle_code?.startsWith('BT-')) {
+                                  const { supabase } = await import('../lib/supabase');
+                                  await supabase.from('fuel_batan_movements')
+                                    .delete()
+                                    .or(`reference_load.eq.${l.load_number},observations.ilike.%${l.load_number}%`);
+                                }
+                                useModalStore.getState().showAlert('Carga Eliminada', `La carga ${l.load_number} y sus registros de stock se eliminaron correctamente.`);
                               } catch (err: any) {
                                 useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la carga.');
                               }
                             }
                           }} 
                           disabled={deleteLoad.isPending}
-                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all" 
+                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all cursor-pointer" 
                           title="Borrar carga"
                         >
                           <Trash2 size={14} />
@@ -944,8 +1069,13 @@ const BatanTab: React.FC<{
   const monthMovements = useMemo(() => {
     return movements.filter(m => {
       if (!m.movement_date) return false;
-      const d = new Date(m.movement_date);
-      return d.getMonth() === currentMonthNum && d.getFullYear() === currentYear;
+      const parts = m.movement_date.split('-');
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0], 10);
+        const mIdx = parseInt(parts[1], 10) - 1;
+        return mIdx === currentMonthNum && y === currentYear;
+      }
+      return false;
     });
   }, [movements, currentMonthNum, currentYear]);
 
@@ -1916,6 +2046,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
     const finalAmount = isBatan ? 0 : parseFloat(completeForm.total_amount) || 0;
     const finalPrice = isBatan ? 0 : (parseFloat(completeForm.price_per_liter) || (finalAmount / finalLiters) || 0);
 
+    const completeDateObj = new Date();
+    const [cy, cm, cd] = (loadObj?.load_date || completeDateObj.toLocaleDateString('sv-SE')).split('-').map(Number);
+    const resolvedDateObj = new Date(cy, (cm || 1) - 1, cd || 1);
+
     await updateLoad.mutateAsync({
       id: completingId,
       liters: finalLiters,
@@ -1926,33 +2060,55 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
       supplier: isBatan ? 'Batán Interno' : completeForm.supplier,
       station_name: isBatan ? 'Batán Interno' : completeForm.supplier,
       fuel_type: completeForm.fuel_type,
+      month: loadObj?.month || MONTHS_ES[resolvedDateObj.getMonth()],
+      year: loadObj?.year || resolvedDateObj.getFullYear(),
+      day_of_week: loadObj?.day_of_week || DAYS_ES[resolvedDateObj.getDay()],
       ...(ticketUrl && { ticket_photo_url: ticketUrl })
     });
 
     if (isBatan) {
-      await createBatan.mutateAsync({
-        movement_date: new Date().toISOString().split('T')[0],
-        movement_type: 'discharge',
-        fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
-        liters_discharged: finalLiters,
-        movement_status: 'completed',
-        reference_load: loadObj?.load_number
-      });
+      // Check if discharge was already registered for this load
+      const { supabase } = await import('../lib/supabase');
+      const { data: existingDischarge } = await supabase.from('fuel_batan_movements')
+        .select('id')
+        .eq('reference_load', loadObj?.load_number)
+        .maybeSingle();
+
+      if (!existingDischarge) {
+        await createBatan.mutateAsync({
+          movement_date: loadObj?.load_date || new Date().toISOString().split('T')[0],
+          movement_type: 'discharge',
+          fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
+          liters_discharged: finalLiters,
+          movement_status: 'completed',
+          reference_load: loadObj?.load_number,
+          observations: `Consumo asociado a la carga: ${loadObj?.load_number} (${loadObj?.vehicle_code || ''})`
+        });
+      }
     }
 
     if (isFillingBatan && !isBatan) {
-      await createBatan.mutateAsync({
-        movement_date: new Date().toISOString().split('T')[0],
-        movement_type: 'purchase',
-        fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
-        liters_loaded: finalLiters,
-        unit_price: finalPrice,
-        total_amount: finalAmount,
-        supplier: completeForm.supplier,
-        movement_status: 'completed',
-        reference_load: loadObj?.load_number,
-        observations: `Carga al Batán finalizada desde panel (${loadObj?.load_number})`
-      });
+      // Check if purchase/ingreso was already registered for this load
+      const { supabase } = await import('../lib/supabase');
+      const { data: existingPurchase } = await supabase.from('fuel_batan_movements')
+        .select('id')
+        .eq('reference_load', loadObj?.load_number)
+        .maybeSingle();
+
+      if (!existingPurchase) {
+        await createBatan.mutateAsync({
+          movement_date: loadObj?.load_date || new Date().toISOString().split('T')[0],
+          movement_type: 'purchase',
+          fuel_type: completeForm.fuel_type || loadObj?.fuel_type || 'Diesel Premium / V-Power',
+          liters_loaded: finalLiters,
+          unit_price: finalPrice,
+          total_amount: finalAmount,
+          supplier: completeForm.supplier,
+          movement_status: 'completed',
+          reference_load: loadObj?.load_number,
+          observations: `Carga al Batán finalizada desde panel (${loadObj?.load_number})`
+        });
+      }
     }
 
     setCompletingId(null);

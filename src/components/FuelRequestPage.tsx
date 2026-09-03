@@ -182,10 +182,18 @@ export const FuelRequestPage: React.FC = () => {
 
     try {
       const vehicle = vehicles.find(v => v.code === form.vehicle_code);
+      const now = new Date();
+      const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const todayDateStr = now.toLocaleDateString('sv-SE');
+
       const { data: inserted, error: dbError } = await supabase.from('fuel_loads').insert({
         tenant_id: ECAR_TENANT_ID,
         load_number: `SOL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        load_date: new Date().toLocaleDateString('sv-SE'),
+        load_date: todayDateStr,
+        month: MONTHS_ES[now.getMonth()],
+        year: now.getFullYear(),
+        day_of_week: DAYS_ES[now.getDay()],
         vehicle_code: form.vehicle_code,
         vehicle_id: vehicle?.id,
         vehicle_description: vehicle?.description || '',
@@ -268,6 +276,14 @@ export const FuelRequestPage: React.FC = () => {
       const finalAmount = isBatan ? 0 : (parseFloat(completeForm.total_amount) || 0);
       const finalPrice = isBatan ? 0 : (parseFloat(completeForm.price_per_liter) || (finalLiters > 0 ? finalAmount / finalLiters : 0));
 
+      const completionDate = new Date();
+      const completionDateStr = completionDate.toLocaleDateString('sv-SE');
+      const loadDateToUse = activeRequest.load_date || completionDateStr;
+      const [ly, lm, ld] = loadDateToUse.split('-').map(Number);
+      const loadDateObj = new Date(ly, (lm || 1) - 1, ld || 1);
+      const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const DAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
       const { error: updateError } = await supabase.from('fuel_loads')
         .update({
           workflow_status: 'completed',
@@ -277,7 +293,10 @@ export const FuelRequestPage: React.FC = () => {
           station_name: isBatan ? 'Batán Interno' : completeForm.station_name,
           fuel_type: completeForm.fuel_type,
           unauthorized_load: isUnauthorized,
-          ticket_photo_url: photoUrl
+          ticket_photo_url: photoUrl,
+          month: activeRequest.month || MONTHS_ES[loadDateObj.getMonth()],
+          year: activeRequest.year || loadDateObj.getFullYear(),
+          day_of_week: activeRequest.day_of_week || DAYS_ES[loadDateObj.getDay()]
         })
         .eq('id', activeRequest.id);
         
@@ -289,37 +308,56 @@ export const FuelRequestPage: React.FC = () => {
       }
 
       if (isBatan) {
-        await supabase.from('fuel_batan_movements').insert({
-          tenant_id: ECAR_TENANT_ID,
-          movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
-          movement_date: new Date().toISOString().split('T')[0],
-          movement_type: 'discharge',
-          fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
-          liters_discharged: finalLiters,
-          vehicle_code: activeRequest.vehicle_code,
-          driver_name: activeRequest.driver_name || activeRequest.requested_by,
-          project_name: activeRequest.project_name,
-          movement_status: 'completed',
-          observations: `Carga directa realizada desde app móvil (${activeRequest.load_number})`
-        });
+        // Prevent duplicate batan discharge for the same load number
+        const { data: existingDischarge } = await supabase.from('fuel_batan_movements')
+          .select('id')
+          .eq('reference_load', activeRequest.load_number)
+          .maybeSingle();
+
+        if (!existingDischarge) {
+          await supabase.from('fuel_batan_movements').insert({
+            tenant_id: ECAR_TENANT_ID,
+            movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
+            movement_date: loadDateToUse,
+            movement_type: 'discharge',
+            fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
+            liters_discharged: finalLiters,
+            vehicle_code: activeRequest.vehicle_code,
+            driver_name: activeRequest.driver_name || activeRequest.requested_by,
+            project_name: activeRequest.project_name,
+            movement_status: 'completed',
+            reference_load: activeRequest.load_number,
+            observations: `Consumo asociado a la carga: ${activeRequest.load_number} (${activeRequest.vehicle_code})`
+          });
+        }
       }
 
       const isFillingBatan = activeRequest.vehicle_code?.startsWith('BT-');
       if (isFillingBatan && !isBatan) {
-        await supabase.from('fuel_batan_movements').insert({
-          tenant_id: ECAR_TENANT_ID,
-          movement_number: `INGRESO-${String(Date.now()).slice(-6)}`,
-          movement_date: new Date().toISOString().split('T')[0],
-          movement_type: 'purchase',
-          fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
-          liters_loaded: finalLiters,
-          unit_price: finalPrice,
-          total_amount: finalAmount,
-          supplier: completeForm.station_name,
-          driver_name: activeRequest.driver_name || activeRequest.requested_by,
-          movement_status: 'completed',
-          observations: `Carga al Batán finalizada desde app móvil (${activeRequest.load_number})`
-        });
+        // Check if an ingreso was already registered for this load number
+        const { data: existingIngreso } = await supabase.from('fuel_batan_movements')
+          .select('id')
+          .eq('reference_load', activeRequest.load_number)
+          .maybeSingle();
+
+        if (!existingIngreso) {
+          await supabase.from('fuel_batan_movements').insert({
+            tenant_id: ECAR_TENANT_ID,
+            movement_number: `INGRESO-${String(Date.now()).slice(-6)}`,
+            movement_date: loadDateToUse,
+            movement_type: 'purchase',
+            fuel_type: completeForm.fuel_type || activeRequest.fuel_type || 'Diesel EVOLUX',
+            liters_loaded: finalLiters,
+            unit_price: finalPrice,
+            total_amount: finalAmount,
+            supplier: completeForm.station_name,
+            vehicle_code: activeRequest.vehicle_code,
+            driver_name: activeRequest.driver_name || activeRequest.requested_by,
+            movement_status: 'completed',
+            reference_load: activeRequest.load_number,
+            observations: `Carga al Batán finalizada desde app móvil (${activeRequest.load_number})`
+          });
+        }
       }
       
       localStorage.removeItem('ecar_active_fuel_request');
