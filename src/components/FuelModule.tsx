@@ -897,7 +897,9 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           <tbody>
             {filteredLoads.length === 0 ? (
               <tr><td colSpan={11} className="text-center text-gray-400 py-12"><Fuel size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No se encontraron cargas con los filtros seleccionados</p></td></tr>
-            ) : filteredLoads.map(l => (
+            ) : filteredLoads.map(l => {
+              const isLoadBatan = l.load_source === 'batan' || l.supplier === 'Batán Interno' || l.station_name === 'Batán Interno';
+              return (
               <tr key={l.id} className={`${editingId === l.id ? 'bg-blue-50/50' : ''}`}>
                 <td className="font-mono text-xs text-gray-500">
                   <span className="font-bold text-gray-800">{l.load_number}</span>
@@ -920,17 +922,35 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                         {FUEL_TYPES.map(ft => <option key={ft} value={ft}>{ft}</option>)}
                       </select>
                     </td>
-                    <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono" /></td>
-                    <td><input type="number" step="0.01" value={editForm.price_per_liter} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono" /></td>
-                    <td><input type="number" step="0.01" value={editForm.total_amount} onChange={e => { const t = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-24 px-2 py-1 border rounded text-xs font-mono font-bold" /></td>
+                    <td><input type="number" step="0.01" value={editForm.liters} onChange={e => { const lit = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, liters: lit, total_amount: isLoadBatan ? 0 : lit * f.price_per_liter })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono" /></td>
+                    <td><input type="number" step="0.01" value={isLoadBatan ? 0 : editForm.price_per_liter} disabled={isLoadBatan} onChange={e => { const p = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, price_per_liter: p, total_amount: f.liters * p })); }} className="w-20 px-2 py-1 border rounded text-xs font-mono disabled:opacity-50" /></td>
+                    <td><input type="number" step="0.01" value={isLoadBatan ? 0 : editForm.total_amount} disabled={isLoadBatan} onChange={e => { const t = parseFloat(e.target.value) || 0; setEditForm(f => ({ ...f, total_amount: t, price_per_liter: f.liters ? t / f.liters : f.price_per_liter })); }} className="w-24 px-2 py-1 border rounded text-xs font-mono font-bold disabled:opacity-50" /></td>
                   </>
                 ) : (
                   <>
                     <td><span className="badge badge-neutral text-[11px]">{l.station_name || l.supplier || 'YPF'}</span></td>
                     <td className="text-xs text-gray-600">{l.fuel_type || '—'}</td>
                     <td className="font-mono font-bold text-sky-700">{l.liters} L</td>
-                    <td className="font-mono text-xs">{l.price_per_liter ? `$ ${fmt(l.price_per_liter)}` : <span className="text-gray-300">—</span>}</td>
-                    <td className="font-mono font-bold text-emerald-700">{l.total_amount ? fmtCurrency(l.total_amount) : <span className="text-gray-300">Sin precio</span>}</td>
+                    <td className="font-mono text-xs">
+                      {isLoadBatan ? (
+                        <span className="text-gray-400 font-mono">—</span>
+                      ) : l.price_per_liter ? (
+                        `$ ${fmt(l.price_per_liter)}`
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="font-mono font-bold text-emerald-700">
+                      {isLoadBatan ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">
+                          Solo Litros (Batán)
+                        </span>
+                      ) : l.total_amount ? (
+                        fmtCurrency(l.total_amount)
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
+                    </td>
                   </>
                 )}
                 <td className="text-xs">
@@ -1011,7 +1031,8 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
                   )}
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>
