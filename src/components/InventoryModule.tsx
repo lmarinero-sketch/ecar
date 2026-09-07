@@ -1032,6 +1032,22 @@ export const InventoryModule: React.FC = () => {
     }
 
     try {
+      const pName = projects?.find(p => p.id === dispatchProject)?.name || 'Obra no especificada';
+      try {
+        await exportManualDispatchPdf({
+          project_name: pName,
+          dispatched_by: profile?.full_name || profile?.email || 'Usuario ECAR',
+          notes: dispatchNotes,
+          items: dispatchCartItems.map(i => ({
+            description: i.item.name,
+            quantity: parseFloat(i.qty),
+            unit: i.item.unit
+          }))
+        });
+      } catch (pdfErr) {
+        console.error('Error generando PDF de remito:', pdfErr);
+      }
+
       // Loop over items and create an OUT movement for each
       for (const cartItem of dispatchCartItems) {
         await createMovement.mutateAsync({
@@ -1044,18 +1060,6 @@ export const InventoryModule: React.FC = () => {
           notes: dispatchNotes || 'Despacho múltiple a obra / Remito',
         });
       }
-
-      const pName = projects?.find(p => p.id === dispatchProject)?.name || 'Obra no especificada';
-      await exportManualDispatchPdf({
-        project_name: pName,
-        dispatched_by: profile?.full_name || profile?.email || 'Usuario ECAR',
-        notes: dispatchNotes,
-        items: dispatchCartItems.map(i => ({
-          description: i.item.name,
-          quantity: parseFloat(i.qty),
-          unit: i.item.unit
-        }))
-      });
 
       useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente y se descargó el remito.`);
       
