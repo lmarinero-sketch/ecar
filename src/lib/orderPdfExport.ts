@@ -332,3 +332,144 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
 
   doc.save(`ECAR_Trazabilidad_Tripartita_${docCode}.pdf`);
 }
+
+/**
+ * 4. PDF: Remito de Despacho Manual (Inventario)
+ */
+export async function exportManualDispatchPdf(data: {
+  project_name: string;
+  dispatched_by: string;
+  notes: string;
+  items: { description: string; quantity: number; unit: string }[];
+}) {
+  const doc = new jsPDF('p', 'pt', 'a4');
+  await loadEcarLogo(doc);
+
+  const randomId = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const docCode = `REM-${randomId}`;
+  drawHeaderBar(doc, 'REMITO DE DESPACHO INTERNO', 'Salida de Materiales / Pañol', docCode);
+
+  let y = 105;
+
+  // Metadata Grid Box
+  doc.setFillColor(240, 249, 255);
+  doc.roundedRect(40, y, 515, 65, 8, 8, 'F');
+
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(COLOR_NAVY);
+  doc.text(`OBRA / DESTINO: ${data.project_name || 'No especificado'}`, 55, y + 20);
+
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(COLOR_DARK);
+  doc.text(`Despachante: ${data.dispatched_by || 'Pañolero'}`, 55, y + 36);
+  doc.text(`Fecha Despacho: ${new Date().toLocaleDateString('es-AR')}`, 55, y + 50);
+
+  doc.text(`ID Despacho: ${docCode}`, 320, y + 20);
+  if (data.notes) {
+    doc.text(`Notas: ${data.notes.slice(0, 45)}`, 320, y + 36);
+  }
+
+  y += 85;
+
+  // Items Table
+  const tableData = (data.items || []).map((it, idx) => [
+    String(idx + 1),
+    it.description,
+    `${it.quantity} ${it.unit || 'UN'}`
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head: [['#', 'Descripción de Materiales', 'Cantidad Enviada']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: COLOR_BLUE, textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9 },
+    bodyStyles: { fontSize: 8.5, textColor: COLOR_DARK },
+    columnStyles: {
+      0: { cellWidth: 40, halign: 'center' },
+      1: { cellWidth: 350 },
+      2: { cellWidth: 125, halign: 'center' }
+    },
+    margin: { left: 40, right: 40 }
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY + 40;
+  drawSignatures(doc, Math.max(finalY, 680), 'Despachante (Pañol Central)', 'Receptor');
+  drawFooter(doc);
+
+  doc.save(`ECAR_Remito_Manual_${docCode}.pdf`);
+}
+
+/**
+ * 5. PDF: Orden de Compra / Remito OC
+ */
+export async function exportPurchaseOrderPdf(po: import('./types').PurchaseOrder) {
+  const doc = new jsPDF('p', 'pt', 'a4');
+  await loadEcarLogo(doc);
+
+  const docCode = po.po_number || `OC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  drawHeaderBar(doc, 'ORDEN DE COMPRA / SERVICIO', 'Documento Oficial ECAR', docCode);
+
+  let y = 105;
+
+  // Metadata Grid Box
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(40, y, 515, 65, 8, 8, 'F');
+
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(COLOR_NAVY);
+  doc.text(`PROVEEDOR: ${po.supplier_name || 'No especificado'}`, 55, y + 20);
+
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(COLOR_DARK);
+  doc.text(`Proyecto / Destino: ${po.project?.name || 'Central'}`, 55, y + 36);
+  doc.text(`Condición Pago: ${po.payment_condition || 'A convenir'}`, 55, y + 50);
+
+  doc.text(`Fecha Emisión: ${new Date(po.created_at).toLocaleDateString('es-AR')}`, 320, y + 20);
+  doc.text(`Entrega: ${po.delivery_date ? new Date(po.delivery_date).toLocaleDateString('es-AR') : 'A convenir'}`, 320, y + 36);
+  doc.text(`Estado: ${(po.status || 'Emitida').toUpperCase()}`, 320, y + 50);
+
+  y += 85;
+
+  // Items Table
+  const tableData = (po.items || []).map((it: any, idx: number) => [
+    String(idx + 1),
+    it.description,
+    `${it.quantity} ${it.unit || 'UN'}`,
+    `$ ${(it.unit_price || 0).toLocaleString('es-AR')}`,
+    `$ ${(it.subtotal || 0).toLocaleString('es-AR')}`
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head: [['#', 'Descripción', 'Cantidad', 'Precio Unit.', 'Subtotal']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: COLOR_NAVY, textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9 },
+    bodyStyles: { fontSize: 8.5, textColor: COLOR_DARK },
+    columnStyles: {
+      0: { cellWidth: 25, halign: 'center' },
+      1: { cellWidth: 230 },
+      2: { cellWidth: 70, halign: 'center' },
+      3: { cellWidth: 95, halign: 'right' },
+      4: { cellWidth: 95, halign: 'right' }
+    },
+    margin: { left: 40, right: 40 }
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY;
+  
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(COLOR_NAVY);
+  doc.text(`TOTAL OC: $ ${(po.total_amount || 0).toLocaleString('es-AR')}`, 390, finalY + 25);
+
+  drawSignatures(doc, Math.max(finalY + 80, 680), 'Emisor (Compras)', 'Autorización / Gerencia');
+  drawFooter(doc);
+
+  doc.save(`ECAR_${docCode}.pdf`);
+}

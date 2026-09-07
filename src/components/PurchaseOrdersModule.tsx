@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import {
   FileSignature, Search, Plus, X, Save, Eye, Trash2,
-  Clock, DollarSign, AlertTriangle, Package, BarChart3,
+  Clock, DollarSign, AlertTriangle, Package, BarChart3, FileDown
 } from 'lucide-react';
 import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useProjects, useSuppliers, usePurchaseRequests } from '../hooks/useData';
+import { exportPurchaseOrderPdf } from '../lib/orderPdfExport';
 import type { PurchaseOrder } from '../lib/types';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -235,8 +236,9 @@ export const PurchaseOrdersModule: React.FC = () => {
                   </span>
                 </td>
                 <td className="text-right font-mono font-bold text-gray-800">{fmt(po.total_amount)}</td>
-                <td className="text-center">
-                  <button onClick={() => openEdit(po)} className="text-ecar-blue hover:text-ecar-blueDark p-1"><Eye size={16} /></button>
+                <td className="text-center flex justify-center items-center gap-2">
+                  <button onClick={() => openEdit(po)} className="text-ecar-blue hover:text-ecar-blueDark p-1" title="Ver OC"><Eye size={16} /></button>
+                  <button onClick={() => exportPurchaseOrderPdf(po)} className="text-orange-600 hover:text-orange-700 p-1" title="Descargar Remito PDF"><FileDown size={16} /></button>
                 </td>
               </tr>
             ))}

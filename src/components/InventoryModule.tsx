@@ -19,7 +19,7 @@ import {
   useAllPriceHistories
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import { exportDispatchPdf } from '../lib/orderPdfExport';
+import { exportDispatchPdf, exportManualDispatchPdf } from '../lib/orderPdfExport';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
 import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
@@ -1045,7 +1045,19 @@ export const InventoryModule: React.FC = () => {
         });
       }
 
-      useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente.`);
+      const pName = projects?.find(p => p.id === dispatchProject)?.name || 'Obra no especificada';
+      await exportManualDispatchPdf({
+        project_name: pName,
+        dispatched_by: profile?.full_name || profile?.email || 'Usuario ECAR',
+        notes: dispatchNotes,
+        items: dispatchCartItems.map(i => ({
+          description: i.item.name,
+          quantity: parseFloat(i.qty),
+          unit: i.item.unit
+        }))
+      });
+
+      useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente y se descargó el remito.`);
       
       // Reset state
       setShowDispatchCart(false);
