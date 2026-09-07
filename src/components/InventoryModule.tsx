@@ -3,8 +3,8 @@ import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
   LayoutGrid, Trash2, Edit3, ShoppingBag,
-  CheckCircle2, ChevronDown, History, Zap, ArrowUpRight,
-  TrendingUp, TrendingDown, Filter, Download, RefreshCw,
+  CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight,
+  TrendingUp, TrendingDown, Filter, Download, FileDown, RefreshCw,
   Eye, Truck
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -578,6 +578,37 @@ export const InventoryModule: React.FC = () => {
   
   const [shelfLevel, setShelfLevel] = useState('1');
   const [shelfBin, setShelfBin] = useState('1');
+
+  const [expandedMovements, setExpandedMovements] = useState<Record<string, boolean>>({});
+
+  const groupedMovements = useMemo(() => {
+    if (!movements) return [];
+    const groups = new Map<string, any>();
+    
+    movements.forEach(m => {
+      // Group by exact minute, project, user, type and notes
+      const timeKey = new Date(m.created_at).toISOString().slice(0, 16);
+      const groupKey = `${timeKey}_${m.project_id || 'none'}_${m.created_by || 'none'}_${m.movement_type}_${m.notes || 'none'}`;
+      
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          id: groupKey,
+          created_at: m.created_at,
+          movement_type: m.movement_type,
+          project: m.project,
+          project_id: m.project_id,
+          created_by: m.created_by,
+          notes: m.notes,
+          items: []
+        });
+      }
+      groups.get(groupKey).items.push(m);
+    });
+    
+    return Array.from(groups.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [movements]);
+
+  const toggleGroup = (id: string) => setExpandedMovements(prev => ({ ...prev, [id]: !prev[id] }));
 
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
@@ -2186,7 +2217,7 @@ export const InventoryModule: React.FC = () => {
               {(movements || []).length} registros
             </span>
           </div>
-          {(movements || []).length > 0 ? (
+          {(groupedMovements || []).length > 0 ? (
             <div className="overflow-x-auto">
               <table className="data-table w-full">
                 <thead>
@@ -2201,24 +2232,87 @@ export const InventoryModule: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(movements || []).map(m => (
-                    <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="font-mono text-xs text-gray-500 whitespace-nowrap">
-                        {new Date(m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td className="font-bold text-gray-800">{(m.item as any)?.name || '—'}</td>
-                      <td>
-                        <span className={`badge ${m.movement_type === 'in' ? 'badge-success' : m.movement_type === 'out' ? 'badge-danger' : m.movement_type === 'return' ? 'badge-info' : 'badge-neutral'}`}>
-                          {m.movement_type === 'in' ? '🟢 Ingreso Stock' : m.movement_type === 'out' ? '🔴 Egreso / Despacho' : m.movement_type === 'return' ? '🔵 Devolución' : '⚙️ Ajuste'}
-                        </span>
-                      </td>
-                      <td className="text-center font-mono font-bold text-sm text-gray-900">{m.quantity}</td>
-                      <td className="text-gray-700 font-medium">{(m.project as any)?.name || '—'}</td>
-                      <td className="text-gray-800 font-bold text-xs bg-slate-100 px-2 py-1 rounded-md inline-block my-1">
-                        👤 {m.created_by || 'Pañol Central'}
-                      </td>
-                      <td className="text-gray-600 text-xs italic">{m.notes || 'Sin observaciones'}</td>
-                    </tr>
+                  {(groupedMovements || []).map(group => (
+                    <React.Fragment key={group.id}>
+                      <tr className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => toggleGroup(group.id)}>
+                        <td className="font-mono text-xs text-gray-500 whitespace-nowrap">
+                          {new Date(group.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="font-bold text-gray-800">
+                          <div className="flex items-center gap-2">
+                            {group.items.length === 1 ? (group.items[0].item as any)?.name || '—' : `📦 Varios ítems (${group.items.length})`}
+                            {group.items.length > 1 && (
+                              <button className="text-gray-400 hover:text-ecar-blue p-1 rounded-md">
+                                {expandedMovements[group.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`badge ${group.movement_type === 'in' ? 'badge-success' : group.movement_type === 'out' ? 'badge-danger' : group.movement_type === 'return' ? 'badge-info' : 'badge-neutral'}`}>
+                            {group.movement_type === 'in' ? '🟢 Ingreso Stock' : group.movement_type === 'out' ? '🔴 Egreso / Despacho' : group.movement_type === 'return' ? '🔵 Devolución' : '⚙️ Ajuste'}
+                          </span>
+                        </td>
+                        <td className="text-center font-mono font-bold text-sm text-gray-900">
+                          {group.items.length === 1 ? group.items[0].quantity : '—'}
+                        </td>
+                        <td className="text-gray-700 font-medium">{(group.project as any)?.name || '—'}</td>
+                        <td className="text-gray-800 font-bold text-xs bg-slate-100 px-2 py-1 rounded-md inline-block my-1">
+                          👤 {group.created_by || 'Pañol Central'}
+                        </td>
+                        <td className="text-gray-600 text-xs italic">
+                          <div className="flex items-center justify-between">
+                            <span>{group.notes || 'Sin observaciones'}</span>
+                            {group.movement_type === 'out' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportManualDispatchPdf({
+                                    project_name: (group.project as any)?.name || 'Obra no especificada',
+                                    dispatched_by: group.created_by || 'Usuario ECAR',
+                                    notes: group.notes,
+                                    items: group.items.map((i: any) => ({
+                                      description: i.item?.name || 'Ítem desconocido',
+                                      quantity: i.quantity,
+                                      unit: i.item?.unit || 'UN'
+                                    }))
+                                  });
+                                }}
+                                className="ml-2 bg-orange-100 text-orange-700 hover:bg-orange-200 p-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
+                                title="Descargar Remito PDF"
+                              >
+                                <FileDown size={14} /> PDF
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {group.items.length > 1 && expandedMovements[group.id] && (
+                        <tr>
+                          <td colSpan={7} className="p-0 border-b-2 border-b-ecar-blue">
+                            <div className="bg-slate-50 p-4 pl-12 border-l-4 border-l-ecar-blue shadow-inner">
+                              <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase">Detalle de ítems del despacho</h4>
+                              <table className="w-full text-xs text-left bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden">
+                                <thead className="bg-slate-100 border-b border-slate-200 text-slate-600">
+                                  <tr>
+                                    <th className="px-3 py-2 font-bold">Ítem / Material</th>
+                                    <th className="px-3 py-2 font-bold text-center">Cantidad</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {group.items.map((it: any) => (
+                                    <tr key={it.id} className="hover:bg-slate-50">
+                                      <td className="px-3 py-2 font-medium text-slate-700">{it.item?.name || '—'}</td>
+                                      <td className="px-3 py-2 text-center font-mono font-bold">{it.quantity} {it.item?.unit || 'un'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
