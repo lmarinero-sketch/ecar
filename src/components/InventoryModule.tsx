@@ -1061,6 +1061,28 @@ export const InventoryModule: React.FC = () => {
         });
       }
 
+      // Create a "Purchase Request" in 'ordered' status so it shows up in "Despachos en Camino"
+      try {
+        await createPurchaseReq.mutateAsync({
+          project_id: dispatchProject || null,
+          requested_by: dispatchEmployee || 'Despacho Manual',
+          dispatched_by: profile?.full_name || profile?.email || 'Usuario ECAR',
+          dispatched_at: new Date().toISOString(),
+          status: 'ordered',
+          request_type: 'purchase',
+          urgency: 'normal',
+          notes: dispatchNotes || 'Despacho generado manualmente desde Inventario',
+          items: dispatchCartItems.map(i => ({
+            description: i.item.name,
+            quantity: parseFloat(i.qty),
+            quantity_sent: parseFloat(i.qty),
+            unit: i.item.unit
+          }))
+        } as any);
+      } catch (reqErr) {
+        console.error('Error creando el registro de despacho en camino:', reqErr);
+      }
+
       useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente y se descargó el remito.`);
       
       // Reset state
