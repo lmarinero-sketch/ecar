@@ -111,7 +111,7 @@ export async function exportRequestPdf(req: PurchaseRequest) {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(10);
   doc.setTextColor(COLOR_NAVY);
-  doc.text(`OBRA / PROYECTO: ${req.project?.name || 'Barrio San Martín'}`, 55, y + 20);
+  doc.text(`OBRA / PROYECTO: ${(req.project?.name || 'Barrio San Martín').replace(/\n/g, ' - ')}`, 55, y + 20);
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
@@ -179,7 +179,7 @@ export async function exportDispatchPdf(req: PurchaseRequest) {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(10);
   doc.setTextColor(COLOR_NAVY);
-  doc.text(`OBRA DESTINO: ${req.project?.name || 'Barrio San Martín'}`, 55, y + 20);
+  doc.text(`OBRA DESTINO: ${(req.project?.name || 'Barrio San Martín').replace(/\n/g, ' - ')}`, 55, y + 20);
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
@@ -254,7 +254,7 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(10);
   doc.setTextColor(COLOR_NAVY);
-  doc.text(`OBRA: ${req.project?.name || 'Barrio San Martín'}`, 55, y + 20);
+  doc.text(`OBRA: ${(req.project?.name || 'Barrio San Martín').replace(/\n/g, ' - ')}`, 55, y + 20);
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
@@ -358,7 +358,7 @@ export async function exportManualDispatchPdf(data: {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(10);
   doc.setTextColor(COLOR_NAVY);
-  doc.text(`OBRA / DESTINO: ${data.project_name || 'No especificado'}`, 55, y + 20);
+  doc.text(`OBRA / DESTINO: ${(data.project_name || 'No especificado').replace(/\n/g, ' - ')}`, 55, y + 20);
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
@@ -426,7 +426,7 @@ export async function exportPurchaseOrderPdf(po: import('./types').PurchaseOrder
   doc.setFont(FONT, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(COLOR_DARK);
-  doc.text(`Proyecto / Destino: ${po.project?.name || 'Central'}`, 55, y + 36);
+  doc.text(`Proyecto / Destino: ${(po.project?.name || 'Central').replace(/\n/g, ' - ')}`, 55, y + 36);
   doc.text(`Condición Pago: ${po.payment_condition || 'A convenir'}`, 55, y + 50);
 
   doc.text(`Fecha Emisión: ${new Date(po.created_at).toLocaleDateString('es-AR')}`, 320, y + 20);
