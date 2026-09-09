@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import {
   ClipboardCheck, CheckCircle2, Loader2, AlertTriangle,
-  CircleCheck, CircleX, ChevronDown, ChevronUp, WifiOff
+  CircleCheck, CircleX, ChevronDown, ChevronUp, WifiOff,
+  Camera, Sparkles, Check
 } from 'lucide-react';
 import type { FuelVehicle, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { useOfflineStore } from '../store/useOfflineStore';
@@ -39,6 +40,57 @@ const VEHICLE_ICON: Record<string, string> = {
   'Camioneta': '🛻', 'Camión': '🚛', 'Equipo': '🏗️', 'Mini cargadora': '🏗️', 'Retroexcavadora': '🏗️', 'Batán': '🛢️',
 };
 
+
+const compressImageFile = (file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.75): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
 type PageStatus = 'loading' | 'form' | 'success' | 'error' | 'offline_saved';
 
 export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId }) => {
@@ -62,6 +114,90 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const [observations, setObservations] = useState('');
   const [signedBy, setSignedBy] = useState('');
   const [showChecklist, setShowChecklist] = useState(false);
+
+  // 4-Angle Photographic Inspection with AI
+  type PhotoSlot = {
+    id: 'frente' | 'lateral_izquierdo' | 'lateral_derecho' | 'trasera';
+    label: string;
+    icon: string;
+    file: File | null;
+    preview: string | null;
+  };
+
+  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>([
+    { id: 'frente', label: 'Frente', icon: '🚗', file: null, preview: null },
+    { id: 'lateral_izquierdo', label: 'Lateral Izq.', icon: '◀️', file: null, preview: null },
+    { id: 'lateral_derecho', label: 'Lateral Der.', icon: '▶️', file: null, preview: null },
+    { id: 'trasera', label: 'Trasera', icon: '🔙', file: null, preview: null },
+  ]);
+
+  const [inspectingAi, setInspectingAi] = useState(false);
+  const [aiInspectionResult, setAiInspectionResult] = useState<{
+    has_damage: boolean;
+    severity: 'ninguno' | 'leve' | 'moderado' | 'critico';
+    detected_issues: string[];
+    summary: string;
+    recommended_condition: 'operativo' | 'con_observaciones' | 'fuera_de_servicio';
+  } | null>(null);
+  const [aiInspectionError, setAiInspectionError] = useState<string | null>(null);
+
+  const handlePhotoCapture = async (slotId: PhotoSlot['id'], file: File) => {
+    try {
+      const preview = await compressImageFile(file, 800, 800, 0.7);
+      setPhotoSlots(prev => prev.map(s => s.id === slotId ? { ...s, file, preview } : s));
+    } catch (e) {
+      console.warn('Error reading photo:', e);
+    }
+  };
+
+  const handleInspectPhotosWithAi = async () => {
+    const filledSlots = photoSlots.filter(s => s.file);
+    if (filledSlots.length === 0) return;
+    setInspectingAi(true);
+    setAiInspectionError(null);
+
+    try {
+      const photosPayload = await Promise.all(
+        filledSlots.map(async s => {
+          const compressed = await compressImageFile(s.file!, 1000, 1000, 0.8);
+          return {
+            angle: s.label,
+            image_base64: compressed.split(',')[1],
+            mime_type: 'image/jpeg',
+          };
+        })
+      );
+
+      const { data, error: fnErr } = await supabase.functions.invoke('inspect-vehicle-photos', {
+        body: {
+          photos: photosPayload,
+          vehicle_info: {
+            code: vehicle?.code,
+            plate: vehicle?.plate,
+            description: vehicle?.description,
+          },
+        },
+      });
+
+      if (fnErr || !data?.success) {
+        throw new Error(data?.error || fnErr?.message || 'Error al inspeccionar fotos.');
+      }
+
+      const res = data.data;
+      setAiInspectionResult(res);
+
+      if (res.has_damage) {
+        setHasDamage(true);
+        const desc = `${res.summary || ''}\n${(res.detected_issues || []).join('\n')}`.trim();
+        setDamageDescription(prev => prev ? `${prev}\n${desc}` : desc);
+      }
+    } catch (err: any) {
+      console.error('Error inspecting photos:', err);
+      setAiInspectionError(err.message || 'No se pudo completar el peritaje de IA.');
+    } finally {
+      setInspectingAi(false);
+    }
+  };
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -142,6 +278,39 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
     setSaving(true);
     const today = new Date().toISOString().slice(0, 10);
 
+    // Upload 4-angle inspection photos
+    const uploadedPhotoUrls: string[] = [];
+    const filledSlots = photoSlots.filter(s => s.file);
+    if (filledSlots.length > 0 && isOnline) {
+      for (const slot of filledSlots) {
+        try {
+          const fileName = `checkin_${vehicle?.code || 'veh'}_${slot.id}_${Date.now()}.jpg`;
+          const base64 = await compressImageFile(slot.file!, 1200, 1200, 0.8);
+          const fileObj = dataURLtoFile(base64, fileName);
+
+          const { data: upData, error: upErr } = await supabase.storage
+            .from('parte-diario-fotos')
+            .upload(fileName, fileObj, { upsert: true });
+
+          if (!upErr && upData) {
+            const { data: pUrl } = supabase.storage.from('parte-diario-fotos').getPublicUrl(fileName);
+            uploadedPhotoUrls.push(pUrl.publicUrl);
+          } else {
+            const { data: fData, error: fErr } = await supabase.storage
+              .from('fuel_tickets')
+              .upload(fileName, fileObj, { upsert: true });
+            if (!fErr && fData) {
+              const { data: pUrl } = supabase.storage.from('fuel_tickets').getPublicUrl(fileName);
+              uploadedPhotoUrls.push(pUrl.publicUrl);
+            } else {
+              uploadedPhotoUrls.push(base64);
+            }
+          }
+        } catch (photoErr) {
+          console.warn('Error saving checkin photo:', photoErr);
+        }
+      }
+    }
     const reportPayload = {
       tenant_id: ECAR_TENANT_ID,
       vehicle_id: vehicleId,
@@ -155,7 +324,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
       checklist,
       has_damage: hasDamage,
       damage_description: hasDamage ? damageDescription : null,
-      damage_photos: [],
+      damage_photos: uploadedPhotoUrls,
       observations: observations.trim() || null,
       signed_by: signedBy.trim() || driverName.trim(),
       vehicle_condition_after: computedCondition,
@@ -475,6 +644,109 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+
+            {/* 4-Angle Photographic Inspection */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-gray-800 flex items-center gap-1.5">
+                    <Camera size={16} className="text-ecar-blue" />
+                    Inspección Visual (4 Ángulos)
+                  </h3>
+                  <p className="text-[11px] text-gray-500">Sacá foto de cada lado para control pericial</p>
+                </div>
+                {photoSlots.some(s => s.file) && !inspectingAi && (
+                  <button
+                    type="button"
+                    onClick={handleInspectPhotosWithAi}
+                    className="bg-ecar-blue hover:bg-blue-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+                  >
+                    <Sparkles size={13} />
+                    Inspeccionar con IA
+                  </button>
+                )}
+              </div>
+
+              {/* 4 Slots Grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {photoSlots.map(slot => (
+                  <div key={slot.id} className="relative border-2 border-dashed border-gray-200 hover:border-ecar-blue/40 rounded-xl p-2.5 text-center bg-gray-50 hover:bg-white transition-all overflow-hidden flex flex-col items-center justify-center min-h-[90px]">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) handlePhotoCapture(slot.id, f);
+                      }}
+                    />
+                    {slot.preview ? (
+                      <div className="w-full flex flex-col items-center gap-1">
+                        <img src={slot.preview} alt={slot.label} className="w-full h-16 object-cover rounded-lg shadow-xs" />
+                        <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                          <Check size={11} /> {slot.label}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 text-gray-400">
+                        <span className="text-xl">{slot.icon}</span>
+                        <span className="text-xs font-bold text-gray-600">{slot.label}</span>
+                        <span className="text-[9px] text-gray-400 font-medium">Tocar para foto</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* AI Inspection Loading State */}
+              {inspectingAi && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-2.5 text-ecar-blue animate-pulse">
+                  <Sparkles className="animate-spin text-ecar-blue shrink-0" size={17} />
+                  <div className="text-xs">
+                    <p className="font-bold">Analizando ángulos del vehículo con Inteligencia Artificial...</p>
+                    <p className="text-blue-600">Detectando abolladuras, ópticas o daños estructurales (ignorando polvo).</p>
+                  </div>
+                </div>
+              )}
+
+              {/* AI Inspection Error */}
+              {aiInspectionError && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-800 flex items-center gap-2">
+                  <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                  <span>{aiInspectionError}</span>
+                </div>
+              )}
+
+              {/* AI Inspection Result Feedback */}
+              {aiInspectionResult && !inspectingAi && (
+                <div className={`rounded-xl p-3 text-xs border space-y-1.5 animate-fade-in ${
+                  aiInspectionResult.has_damage ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                }`}>
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles size={14} className={aiInspectionResult.has_damage ? 'text-amber-600' : 'text-emerald-600'} />
+                      Peritaje IA: {aiInspectionResult.has_damage ? 'Daños detectados' : 'Sin daños estructurales'}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                      aiInspectionResult.has_damage ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900'
+                    }`}>
+                      {aiInspectionResult.severity || (aiInspectionResult.has_damage ? 'con daño' : 'óptimo')}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed">{aiInspectionResult.summary}</p>
+
+                  {aiInspectionResult.detected_issues && aiInspectionResult.detected_issues.length > 0 && (
+                    <ul className="list-disc list-inside text-[11px] space-y-0.5 pt-1 border-t border-amber-200/60 font-medium">
+                      {aiInspectionResult.detected_issues.map((issue, i) => (
+                        <li key={i}>{issue}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>

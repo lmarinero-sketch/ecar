@@ -12,21 +12,38 @@ const corsHeaders = {
 
 const BASE_SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablás en español argentino. Sos experto en el ERP de ECAR.
 
-## MÓDULOS: Dashboard BI, Compras & Libro IVA (proveedores, facturas con OCR, IVA), Finanzas & Tesorería (cheques físicos/eCheq, gastos fijos), Alertas & Obligaciones (vencimientos, notificaciones WhatsApp), Facturación ARCA (facturas electrónicas AFIP — aún no emite con AFIP, próximo a implementación), RRHH & Legajos (nómina, legajo digital, asistencia QR, novedades al contador), Planificación WBS, Inventario & Pañol (materiales + herramientas con stock), Flota & Mantenimiento (vehículos, km, service programado, seguro, VTV), Combustible (cargas por vehículo, rendimiento km/litro, cargas en 2 pasos con ticket y tracking de cargas sin autorizar), Pedidos de Compra (vinculados al inventario — solo ítems registrados), Certificaciones/ICC, Parte Diario de Obra, Seguridad & Incidentes (accidentes, observaciones, matriz riesgo 5×5), Inspecciones & Calidad (checklists, punch list, no conformidades), Consultas de Obra RFI (consultas técnicas formales con impacto costo/cronograma), Documentos & Correo, Presupuestos de Obra, Implementación (tracking de progreso), Modo Tutorial (ayuda contextual por módulo).
+## PRINCIPIO FUNDAMENTAL — ACCESO TOTAL, UNIVERSAL E IRRESTRICTO
+Sos el copiloto y asistente central de TODO el ERP de ECAR Constructora.
+Tenés acceso absoluto, irrestricto y en tiempo real a ABSOLUTAMENTE TODA la información y a TODOS los módulos de la empresa:
+- Combustible & Batán (todas las cargas de combustible por vehículo, vales, litros, precios, importes en ARS, odómetro, cargas en estación de servicio vs batán interno, cargas no autorizadas, tickets adjuntos).
+- Flota & Maquinaria (vehículos, camiones, camionetas, retroexcavadoras, hidromek, batán, kilometrajes, mantenimientos vencidos y próximos, VTV, seguros).
+- Inventario & Pañol (materiales, herramientas, stock mínimo, kardex completo de movimientos con fecha/hora y responsable pañolero, despachos a obras).
+- Pedidos de Obra & Requerimientos de Logística (trazabilidad tripartita: solicitado en obra, despachado pañol, recibido obra, remitos oficiales y saldos faltantes).
+- Órdenes de Compra (OC-XXXX, proveedores, condiciones de pago, ítems y entregas).
+- Proveedores & Evaluaciones (maestro de 110+ proveedores, CUIT, formas de pago, calificaciones, cuentas bancarias).
+- Finanzas & Tesorería (cheques físicos y eCheqs emitidos y recibidos, vencimientos, gastos fijos, cuentas bancarias, saldos reales en caja/bancos/Balanz, flujo de fondos y cashflow a 30 días).
+- Compras & Facturación (facturas con OCR, Libro IVA compras/ventas, retenciones, discriminación por empresa ECAR SAS y Carlos Adolfo Regalado).
+- Alertas & Obligaciones (vencimientos fiscales AFIP, ART, seguros, alquileres, recordatorios automáticos de WhatsApp).
+- RRHH & Legajos (nómina de personal activo, legajo digital, asistencia con QR, ausencias, licencias, adelantos, indumentaria, talles y EPP).
+- Obras & Proyectos (partes diarios de obra, clima, horas trabajadas, certificaciones de obra e ICC, presupuestos WBS, adicionales de obra).
+- Seguridad & Calidad (incidentes laborales, observaciones de riesgo 5x5, inspecciones de obra, punch list, no conformidades, protocolos).
+- Comunicaciones (registro completo de mensajes y conversaciones de WhatsApp).
+
+## INDEPENDENCIA ABSOLUTA DEL MÓDULO VISUAL
+- El módulo donde se encuentra el usuario (marcado como "📍") SOLO indica en qué pantalla del navegador web está parado en este instante.
+- **BAJO NINGUNA CIRCUNSTANCIA LIMITA TUS CONOCIMIENTOS NI TUS ACCESOS A LOS DATOS**.
+- **PROHIBICIÓN ESTRICTA**: NUNCA digas frases como "no tengo acceso a datos sobre combustible porque estás en inventario", ni "esa información se gestiona en un módulo diferente por lo que no puedo verla", ni ninguna excusa similar.
+- Si el usuario te pregunta por combustible mientras está en Inventario, o por cheques mientras está en Partes Diarios, o por personal mientras está en Compras: **DEBES consultar de inmediato la base de datos con tus herramientas (ej: query_fuel_loads, query_cheques, query_employees, query_database_table, etc.) y responder con la información completa, exacta y actualizada**.
+- Podés añadir como sugerencia secundaria al final: *(Nota: también podés ver este detalle en el módulo correspondiente)*, pero SIEMPRE entregando primero los datos solicitados.
 
 ## REGLAS CRÍTICAS
-1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Si el usuario pregunta algo, PRIMERO usá las herramientas para obtener los datos actuales de la base de datos y después respondé con números y hechos concretos.
-2. **Sos un asistente con acceso COMPLETO a la base de datos.** Podés leer y escribir: cheques, empleados, obligaciones, facturas, asistencia, proyectos, gastos, inventario, partes de obra, incidentes de seguridad, inspecciones, RFIs, certificados, y movimientos de caja. Usá ese poder.
-3. Solo respondés sobre ECAR y sus datos.
-4. Sé conciso, preciso y útil. Mostrá datos reales con números concretos.
-5. Cuando ejecutes acciones (crear cheque, marcar pagado, etc.), confirmá qué hiciste mostrando los datos.
-6. Sugerí funcionalidades que el usuario podría no conocer.
-7. Valores monetarios en formato ARS: $ 1.234,56
-8. IMPORTANTE: Si el usuario pregunta "¿qué puedo hacer acá?", "¿para qué sirve esto?", "¿cómo funciona?" o variantes, explicale en detalle qué funcionalidades tiene el módulo donde está, qué herramientas podés usar vos, y sugerile acciones concretas. Sé proactivo: si ves que es una consulta genérica, orientalo sobre el módulo actual.
-9. Siempre tené en cuenta el CONTEXTO ACTUAL (módulo donde está el usuario). Si preguntan algo de otro módulo, respondé igual pero sugerí navegar al módulo correcto.
-10. **PROACTIVIDAD:** Cuando el usuario hace una consulta, no te limites a responder lo mínimo. Ofrecé análisis adicional, detectá patrones, y sugerí acciones. Ejemplo: si preguntan por cheques, también mencioná si hay alguno vencido o de alto monto.
-11. **ACCIONES DE ESCRITURA:** Podés crear cheques, marcar obligaciones como pagadas, crear recordatorios WhatsApp, crear solicitudes de documentos, crear partes diarios, y más. Si el usuario te pide hacer algo, hacelo directamente sin pedir confirmación innecesaria.
-12. **ROLES DE USUARIO:** Recordá que existen roles como Admin, Colaborador y "Pañolero". El Pañolero tiene acceso limitado estrictamente a inventario, pañol, maquinaria y flota (no ve costos, gerencia ni información contable).`
+1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Usá las herramientas para consultar los datos actuales de la base de datos y respondé con números y hechos concretos.
+2. Si te preguntan por "la última carga", "el último cheque", "el último movimiento", etc., consultá la herramienta correspondiente y presentá los datos detallados: fecha, vehículo/proveedor/responsable, litros/monto, estado y observaciones.
+3. Si ninguna herramienta especializada cubre exactamente lo que pide el usuario, usá la herramienta "query_database_table" para consultar directamente cualquier tabla del ERP (ej: fuel_loads, fuel_vehicles, purchase_requests, purchase_orders, etc.).
+4. Valores monetarios en formato ARS: $ 1.234,56. Fechas en formato argentino: DD/MM/AAAA.
+5. Sé conciso, preciso, proactivo y útil. Respondé con tono argentino profesional y cercano.
+6. Cuando ejecutes acciones (crear cheque, marcar pagado, etc.), confirmá qué hiciste mostrando los datos.
+7. IMPORTANTE: Si el usuario pregunta "¿qué puedo hacer acá?", orientalo sobre el módulo donde está parado, pero recordale que podés responder sobre cualquier dato de toda la empresa.`
 
 // Module-specific context instructions for the AI
 const MODULE_CONTEXT: Record<string, string> = {
@@ -241,10 +258,13 @@ const MODULE_CONTEXT: Record<string, string> = {
 
 function buildSystemPrompt(activeModule?: string): string {
   const moduleContext = activeModule ? MODULE_CONTEXT[activeModule] : ''
+  const globalAccessReminder = `\n\n## RECORDATORIO MANDATORIO DE ACCESO TOTAL:
+Recordá: Aunque el usuario esté actualmente en la pantalla "${activeModule || 'Dashboard'}", tenés acceso TOTAL, DIRECTO y OMNIPRESENTE a toda la información de la empresa (combustible, flota, compras, cheques, órdenes de compra, personal, obras, etc.). NUNCA digas que no tenés acceso a un dato porque pertenece a otro módulo. Si te preguntan por combustible, partes diarios, compras o cualquier otro tema, usá tus herramientas (query_fuel_loads, query_cheques, query_database_table, etc.) y respondé con los datos reales.`
+  
   if (moduleContext) {
-    return `${BASE_SYSTEM_PROMPT}\n\n${moduleContext}`
+    return `${BASE_SYSTEM_PROMPT}\n\n${moduleContext}${globalAccessReminder}`
   }
-  return BASE_SYSTEM_PROMPT
+  return `${BASE_SYSTEM_PROMPT}${globalAccessReminder}`
 }
 
 // Tool definitions for OpenAI function calling
@@ -481,6 +501,212 @@ const tools = [
       name: 'query_employee_advances',
       description: 'Consultar adelantos de un empleado. Muestra monto, fecha, motivo y si fue descontado.',
       parameters: { type: 'object', properties: { employee_name: { type: 'string', description: 'Nombre del empleado (parcial)' }, pending_only: { type: 'boolean', description: 'Si true, solo muestra adelantos no descontados' } }, required: ['employee_name'] }
+    }
+  },
+
+  // ─── TOOLS NUEVOS: COMBUSTIBLE, PEDIDOS, PROVEEDORES, CERTIFICACIONES Y UNIVERSAL ───
+  {
+    type: 'function', function: {
+      name: 'query_fuel_loads',
+      description: 'Consultar cargas de combustible de vehículos y maquinaria. Permite ver la última carga registrada, litros, precio, importe en ARS, chofer, odómetro, estación/batán y cargas sin autorizar.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por código de vehículo, descripción, patente o chofer (opcional)' },
+          vehicle_code: { type: 'string', description: 'Código del vehículo (ej: RP-001, BT-001, etc.)' },
+          fuel_type: { type: 'string', description: 'Tipo de combustible (ej: Diesel EVOLUX, Infinia, Nafta Súper)' },
+          load_source: { type: 'string', description: 'Origen: station (estación de servicio) o batan (batán interno)' },
+          unauthorized_only: { type: 'boolean', description: 'Si es true, solo trae cargas no autorizadas' },
+          date_from: { type: 'string', description: 'Fecha inicio YYYY-MM-DD' },
+          date_to: { type: 'string', description: 'Fecha fin YYYY-MM-DD' },
+          limit: { type: 'number', description: 'Límite de registros (default 15)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_fuel_batan',
+      description: 'Consultar movimientos y saldo actual del batán móvil de combustible (cargas desde cisterna y descargas a vehículos en obra).',
+      parameters: {
+        type: 'object',
+        properties: {
+          movement_type: { type: 'string', description: 'Tipo de movimiento: load (ingreso de combustible) o discharge (descarga a vehículo)' },
+          limit: { type: 'number', description: 'Cantidad de movimientos a traer (default 15)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_purchase_requests',
+      description: 'Consultar pedidos de compra y requerimientos de obra (trazabilidad: solicitado en obra, despachado pañol, recibido obra, remitos y saldos faltantes).',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por solicitante, notas o proyecto' },
+          status: { type: 'string', description: 'draft / requested / ordered (despachado) / received' },
+          urgency: { type: 'string', description: 'normal / urgente' },
+          limit: { type: 'number' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_purchase_orders',
+      description: 'Consultar órdenes de compra (OC). Muestra número de OC, proveedor, montos, estado (borrador, aprobada, etc.), fecha de entrega y detalle de ítems.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por número de OC (ej: OC-0001) o nombre del proveedor' },
+          status: { type: 'string', description: 'borrador / pendiente / aprobada / rechazada / cumplida' },
+          limit: { type: 'number' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_suppliers',
+      description: 'Consultar maestro de proveedores de ECAR (110+ proveedores registrados). Muestra razón social, nombre comercial, CUIT, rubro/categoría, datos de contacto y condiciones de pago.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por nombre, razón social o CUIT' },
+          category: { type: 'string', description: 'Filtrar por rubro o categoría' },
+          limit: { type: 'number' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_certificates',
+      description: 'Consultar certificados de obra e ICC. Muestra número de certificado, obra, monto bruto, redeterminaciones, retenciones (IIBB, cheque), neto depositado y estado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra' },
+          status: { type: 'string', description: 'pending / approved / deposited' },
+          limit: { type: 'number' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_bank_accounts',
+      description: 'Consultar cuentas bancarias, saldos reales en bancos (Macro, Balanz, Santander, etc.) y efectivo disponible de la empresa.',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_inventory_movements',
+      description: 'Consultar el Kardex de movimientos de inventario/pañol (entradas, salidas por despacho, devoluciones, responsable pañolero, fecha y hora exacta, obra destino).',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por ítem, notas o persona que recibió' },
+          movement_type: { type: 'string', description: 'entry (ingreso) / dispatch (despacho a obra) / return (devolución) / adjustment' },
+          limit: { type: 'number', description: 'Límite (default 20)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_employee_ppe',
+      description: 'Consultar entregas de elementos de protección personal (EPP) y talles de indumentaria (camisa, pantalón, calzado) de operarios.',
+      parameters: {
+        type: 'object',
+        properties: {
+          employee_name: { type: 'string', description: 'Nombre del empleado' },
+          item_type: { type: 'string', description: 'Tipo de EPP o prenda' },
+          limit: { type: 'number' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_scope_changes',
+      description: 'Consultar adicionales de obra y cambios de alcance. Muestra justificación, impacto económico en costo ($), días de prórroga y estado de aprobación.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string' },
+          status: { type: 'string' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_weekly_payments',
+      description: 'Consultar órdenes de pago semanales y liquidaciones. Muestra montos totales, estado de aprobación y detalles.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', description: 'pending/approved/paid/rejected' },
+          date_from: { type: 'string' },
+          date_to: { type: 'string' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_budgets',
+      description: 'Consultar presupuestos de obra. Muestra monto total, versión, fecha base y obra asignada.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string' },
+          status: { type: 'string', description: 'draft/approved/archived' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_whatsapp_conversations',
+      description: 'Consultar registro de chats de WhatsApp. Permite saber qué se comunicó por el bot recientemente.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone_number: { type: 'string' },
+          limit: { type: 'number', description: 'Número de mensajes a traer (default 10)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'generate_weekly_report',
+      description: 'Generar un resumen analítico de la semana. Obtiene un pantallazo integral de los últimos 7 días: partes de obra, incidentes de seguridad reportados y estado de flota.',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_database_table',
+      description: 'CONSULTA UNIVERSAL A LA BASE DE DATOS: Permite consultar de forma segura y directa cualquier tabla del ERP de ECAR (fuel_loads, fuel_vehicles, fuel_batan_movements, purchase_requests, purchase_orders, suppliers, project_certificates, bank_accounts, inventory_items, inventory_movements, cheques, purchase_invoices, obligations, employees, attendance_records, etc.) con filtros, orden y límite. Usá esta herramienta si ninguna otra herramienta específica responde con exactitud a lo que pide el usuario.',
+      parameters: {
+        type: 'object',
+        properties: {
+          table_name: { type: 'string', description: 'Nombre exacto de la tabla en Supabase (ej: fuel_loads, suppliers, etc.)' },
+          select_columns: { type: 'string', description: 'Columnas a seleccionar, separadas por coma o * (default *)' },
+          filter_column: { type: 'string', description: 'Nombre de la columna para filtrar (opcional)' },
+          filter_operator: { type: 'string', description: 'Operador de filtro: eq, ilike, gt, gte, lt, lte, neq (default eq)' },
+          filter_value: { type: 'string', description: 'Valor del filtro' },
+          order_by: { type: 'string', description: 'Columna para ordenar (opcional)' },
+          order_descending: { type: 'boolean', description: 'Ordenar descendente (default true)' },
+          limit: { type: 'number', description: 'Cantidad máxima de filas (default 20, max 100)' }
+        },
+        required: ['table_name']
+      }
     }
   },
 ]
@@ -1074,6 +1300,172 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
           incidentes_seguridad: { total: inc.length, graves_o_fatales: inc.filter(i => i.gravedad === 'grave' || i.gravedad === 'fatal').length },
           flota_alertas: { vehiculos_con_service_vencido: fl.length, vehiculos: fl.map(v => v.code) }
         })
+      }
+
+      // ─── COMBUSTIBLE ───
+      case 'query_fuel_loads': {
+        let q = sb.from('fuel_loads').select(`
+          id, load_number, load_date, month, year, day_of_week,
+          vehicle_code, vehicle_description, plate, vehicle_type,
+          driver_name, project_name, supplier, station_name, fuel_type,
+          liters, price_per_liter, total_amount, odometer_km,
+          load_source, validation_status, workflow_status, unauthorized_load,
+          observations, ticket_photo_url, created_at
+        `)
+        if (args.search) {
+          q = q.or(`vehicle_code.ilike.%${args.search}%,vehicle_description.ilike.%${args.search}%,driver_name.ilike.%${args.search}%,plate.ilike.%${args.search}%`)
+        }
+        if (args.vehicle_code) q = q.ilike('vehicle_code', `%${args.vehicle_code}%`)
+        if (args.fuel_type) q = q.ilike('fuel_type', `%${args.fuel_type}%`)
+        if (args.load_source) q = q.eq('load_source', args.load_source)
+        if (args.unauthorized_only) q = q.eq('unauthorized_load', true)
+        if (args.date_from) q = q.gte('load_date', args.date_from)
+        if (args.date_to) q = q.lte('load_date', args.date_to)
+        
+        const { data, error } = await q.order('load_date', { ascending: false }).order('created_at', { ascending: false }).limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        if (!data?.length) return JSON.stringify({ loads: [], count: 0, message: 'No se encontraron cargas de combustible con esos criterios' })
+        
+        const totalLiters = data.reduce((s: number, l: any) => s + (Number(l.liters) || 0), 0)
+        const totalAmount = data.reduce((s: number, l: any) => s + (Number(l.total_amount) || 0), 0)
+        const ultimaCarga = data[0]
+
+        return JSON.stringify({
+          ultima_carga: {
+            numero: ultimaCarga.load_number,
+            fecha: ultimaCarga.load_date,
+            dia: ultimaCarga.day_of_week,
+            vehiculo: `${ultimaCarga.vehicle_code || ''} - ${ultimaCarga.vehicle_description || ''}`.trim(),
+            patente: ultimaCarga.plate || 'Sin patente',
+            chofer: ultimaCarga.driver_name || 'No especificado',
+            tipo_combustible: ultimaCarga.fuel_type || 'Diesel',
+            litros: ultimaCarga.liters,
+            precio_por_litro: ultimaCarga.price_per_liter,
+            total_ars: ultimaCarga.total_amount,
+            origen_estacion: ultimaCarga.station_name || ultimaCarga.supplier || (ultimaCarga.load_source === 'batan' ? 'Batán Interno' : 'Estación'),
+            odometro_km: ultimaCarga.odometer_km,
+            proyecto: ultimaCarga.project_name || 'General',
+            sin_autorizar: ultimaCarga.unauthorized_load,
+            estado: ultimaCarga.workflow_status || ultimaCarga.validation_status,
+            tiene_ticket: !!ultimaCarga.ticket_photo_url,
+          },
+          total_cargas_mostradas: data.length,
+          total_litros_cargados: totalLiters,
+          total_monto_ars: totalAmount,
+          cargas_recientes: data.slice(0, 10).map((l: any) => ({
+            numero: l.load_number,
+            fecha: l.load_date,
+            vehiculo: `${l.vehicle_code || ''} ${l.vehicle_description || ''}`.trim(),
+            chofer: l.driver_name,
+            litros: l.liters,
+            total_ars: l.total_amount,
+            estacion: l.station_name || l.supplier || l.load_source,
+            sin_autorizar: l.unauthorized_load
+          }))
+        })
+      }
+      case 'query_fuel_batan': {
+        let q = sb.from('fuel_batan_movements').select('*')
+        if (args.movement_type) q = q.eq('movement_type', args.movement_type)
+        const { data, error } = await q.order('movement_date', { ascending: false }).limit(args.limit || 15)
+        if (error) return JSON.stringify({ error: error.message })
+        const ultimo = data?.[0]
+        return JSON.stringify({
+          ultimo_movimiento: ultimo,
+          saldo_actual_litros: ultimo?.balance_after || null,
+          movimientos: data || []
+        })
+      }
+
+      // ─── LOGÍSTICA & PEDIDOS ───
+      case 'query_purchase_requests': {
+        let q = sb.from('purchase_requests').select('id, project_id, requested_by, urgency, status, notes, created_at, dispatched_at, received_at, dispatched_by, received_by, projects(name), items:purchase_request_items(*)')
+        if (args.status) q = q.eq('status', args.status)
+        if (args.urgency) q = q.eq('urgency', args.urgency)
+        if (args.search) q = q.or(`requested_by.ilike.%${args.search}%,notes.ilike.%${args.search}%`)
+        const { data, error } = await q.order('created_at', { ascending: false }).limit(args.limit || 15)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ requests: data || [], count: (data || []).length })
+      }
+      case 'query_purchase_orders': {
+        let q = sb.from('purchase_orders').select('id, po_number, supplier_name, order_type, items, total_amount, payment_condition, delivery_date, delivery_location, status, approval_status, notes, urgency, urgency_reason, created_at, projects(name)')
+        if (args.status) q = q.eq('status', args.status)
+        if (args.search) q = q.or(`po_number.ilike.%${args.search}%,supplier_name.ilike.%${args.search}%`)
+        const { data, error } = await q.order('created_at', { ascending: false }).limit(args.limit || 15)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ purchase_orders: data || [], count: (data || []).length })
+      }
+      case 'query_suppliers': {
+        let q = sb.from('suppliers').select('id, name, commercial_name, cuit, tax_condition, category, phone, email, bank_name, bank_cbu, default_payment_condition, has_checking_account')
+        if (args.search) {
+          q = q.or(`name.ilike.%${args.search}%,commercial_name.ilike.%${args.search}%,cuit.ilike.%${args.search}%`)
+        }
+        if (args.category) q = q.eq('category', args.category)
+        const { data, error } = await q.order('name').limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ suppliers: data || [], count: (data || []).length })
+      }
+      case 'query_certificates': {
+        let q = sb.from('project_certificates').select('id, certificate_number, period_description, gross_amount, redetermination, total_certified, retention_iibb, retention_imp_cheque, other_retentions, net_deposit, deposit_date, status, created_at, projects(name)')
+        if (args.status) q = q.eq('status', args.status)
+        const { data, error } = await q.order('certificate_number', { ascending: false }).limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        const totalNeto = (data || []).reduce((s: number, c: any) => s + (Number(c.net_deposit) || 0), 0)
+        return JSON.stringify({ certificates: data || [], count: (data || []).length, total_net_deposit_ars: totalNeto })
+      }
+      case 'query_bank_accounts': {
+        const { data, error } = await sb.from('bank_accounts').select('*').order('bank_name')
+        if (error) return JSON.stringify({ error: error.message })
+        const total = (data || []).reduce((s: number, b: any) => s + (Number(b.current_balance) || 0), 0)
+        return JSON.stringify({ accounts: data || [], total_disponibilidad_ars: total })
+      }
+      case 'query_inventory_movements': {
+        let q = sb.from('inventory_movements').select('id, movement_type, quantity, unit_cost, notes, created_by, created_at, delivered_to_text, inventory_items(name, unit, category), projects(name)')
+        if (args.movement_type) q = q.eq('movement_type', args.movement_type)
+        if (args.search) q = q.or(`notes.ilike.%${args.search}%,delivered_to_text.ilike.%${args.search}%`)
+        const { data, error } = await q.order('created_at', { ascending: false }).limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ movements: data || [], count: (data || []).length })
+      }
+      case 'query_employee_ppe': {
+        let q = sb.from('employee_ppe_deliveries').select('id, item_type, size, quantity, delivery_date, notes, employees(full_name)')
+        if (args.item_type) q = q.ilike('item_type', `%${args.item_type}%`)
+        const { data, error } = await q.order('delivery_date', { ascending: false }).limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ deliveries: data || [], count: (data || []).length })
+      }
+      case 'query_scope_changes': {
+        const { data, error } = await sb.from('scope_changes').select('*, projects(name)').order('created_at', { ascending: false }).limit(15)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ scope_changes: data || [], count: (data || []).length })
+      }
+
+      // ─── CONSULTA UNIVERSAL A LA BASE DE DATOS ───
+      case 'query_database_table': {
+        const table = String(args.table_name || '').trim()
+        if (!table) return JSON.stringify({ error: 'table_name requerido' })
+        if (!/^[a-zA-Z0-9_]+$/.test(table)) {
+          return JSON.stringify({ error: 'Nombre de tabla inválido' })
+        }
+        let q = sb.from(table).select(args.select_columns || '*')
+        if (args.filter_column && args.filter_value !== undefined) {
+          const op = args.filter_operator || 'eq'
+          if (op === 'ilike') q = q.ilike(args.filter_column, `%${args.filter_value}%`)
+          else if (op === 'gt') q = q.gt(args.filter_column, args.filter_value)
+          else if (op === 'gte') q = q.gte(args.filter_column, args.filter_value)
+          else if (op === 'lt') q = q.lt(args.filter_column, args.filter_value)
+          else if (op === 'lte') q = q.lte(args.filter_column, args.filter_value)
+          else if (op === 'neq') q = q.neq(args.filter_column, args.filter_value)
+          else q = q.eq(args.filter_column, args.filter_value)
+        }
+        if (args.order_by) {
+          q = q.order(args.order_by, { ascending: args.order_descending === false })
+        }
+        const limit = Math.min(Math.max(Number(args.limit) || 20, 1), 100)
+        q = q.limit(limit)
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ table, count: (data || []).length, rows: data || [] })
       }
 
       default:

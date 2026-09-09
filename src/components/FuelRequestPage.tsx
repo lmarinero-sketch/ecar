@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Send, FileText, AlertCircle, Camera, Upload, X, Copy } from 'lucide-react';
+import { Check, Send, FileText, AlertCircle, Camera, Upload, X, Copy, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useModalStore } from '../store/useModalStore';
 import { generateFuelValePdf } from '../lib/generateFuelValePdf';
@@ -94,11 +94,97 @@ export const FuelRequestPage: React.FC = () => {
   const [completeForm, setCompleteForm] = useState({
     station_name: 'YPF',
     fuel_type: 'Diesel Premium / V-Power',
+    remito_number: '',
     liters: '',
     price_per_liter: '',
     total_amount: ''
   });
   const [ticketFile, setTicketFile] = useState<File | null>(null);
+  const [analyzingTicket, setAnalyzingTicket] = useState(false);
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<any | null>(null);
+  const [ticketAiError, setTicketAiError] = useState<string | null>(null);
+  const [ticketPreview, setTicketPreview] = useState<string | null>(null);
+
+  const analyzeTicketWithAI = async (file: File, isStep1 = false) => {
+    setTicketFile(file);
+    setTicketAiError(null);
+    setAnalyzingTicket(true);
+
+    try {
+      // 1. Compress image before upload/invoke (prevents mobile crashes/timeouts)
+      const compressedDataUrl = await compressImageFile(file, 1200, 1200, 0.85);
+      setTicketPreview(compressedDataUrl);
+
+      const base64Data = compressedDataUrl.split(',')[1];
+      const mimeType = 'image/jpeg';
+
+      // 2. Call Edge Function extract-fuel-ticket-data
+      const { data, error: fnErr } = await supabase.functions.invoke('extract-fuel-ticket-data', {
+        body: { image_base64: base64Data, mime_type: mimeType }
+      });
+
+      if (fnErr || !data?.success) {
+        throw new Error(data?.error || fnErr?.message || 'No se pudieron extraer datos del comprobante.');
+      }
+
+      const extracted = data.data;
+      setAiAnalysisResult(extracted);
+
+      if (isStep1) {
+        // Step 1: Match vehicle by plate if detected
+        if (extracted.plate) {
+          const cleanP = extracted.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+          const matchV = vehicles.find(v => v.plate && v.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === cleanP);
+          if (matchV) {
+            setForm(f => ({ ...f, vehicle_code: matchV.code, fuel_type: matchV.preferred_fuel || f.fuel_type }));
+          }
+        }
+        if (extracted.liters != null) {
+          setForm(f => ({ ...f, requested_liters: String(extracted.liters) }));
+        }
+        if (extracted.supplier) {
+          const suppUpper = extracted.supplier.toUpperCase();
+          const matchedStation = STATIONS.find(s => suppUpper.includes(s.toUpperCase()));
+          if (matchedStation) setForm(f => ({ ...f, station_name: matchedStation }));
+        }
+      }
+
+      // Populate Step 2 completeForm
+      setCompleteForm(prev => {
+        const next = { ...prev };
+        if (extracted.remito_number) next.remito_number = extracted.remito_number;
+        if (extracted.liters != null) next.liters = String(extracted.liters);
+        if (extracted.total_amount != null) next.total_amount = String(extracted.total_amount);
+        if (extracted.price_per_liter != null) {
+          next.price_per_liter = String(extracted.price_per_liter);
+        } else if (extracted.liters && extracted.total_amount) {
+          next.price_per_liter = (extracted.total_amount / extracted.liters).toFixed(2);
+        }
+        if (extracted.supplier) {
+          const suppUpper = extracted.supplier.toUpperCase();
+          const matchedStation = STATIONS.find(s => suppUpper.includes(s.toUpperCase()));
+          if (matchedStation) next.station_name = matchedStation;
+        }
+        if (extracted.fuel_type) {
+          const ftUpper = extracted.fuel_type.toUpperCase();
+          if (ftUpper.includes('V-POWER') || ftUpper.includes('PREMIUM') || ftUpper.includes('INFINIA')) {
+            next.fuel_type = ftUpper.includes('NAFTA') ? 'Nafta Premium' : 'Diesel Premium / V-Power';
+          } else if (ftUpper.includes('SUPER') || ftUpper.includes('SÚPER')) {
+            next.fuel_type = 'Nafta Súper';
+          } else if (ftUpper.includes('EVOLUX') || ftUpper.includes('500') || ftUpper.includes('ULTRA')) {
+            next.fuel_type = ftUpper.includes('EVOLUX') ? 'Diesel EVOLUX' : 'Diesel 500 / Ultradiesel';
+          }
+        }
+        return next;
+      });
+
+    } catch (err: any) {
+      console.error('Error analyzing ticket with AI:', err);
+      setTicketAiError(err.message || 'No se pudo analizar el ticket automáticamente. Podés ingresar los datos a mano.');
+    } finally {
+      setAnalyzingTicket(false);
+    }
+  };
 
   // Load data
   useEffect(() => {
@@ -287,6 +373,7 @@ export const FuelRequestPage: React.FC = () => {
       const { error: updateError } = await supabase.from('fuel_loads')
         .update({
           workflow_status: 'completed',
+          remito_number: completeForm.remito_number?.trim() || null,
           liters: finalLiters,
           price_per_liter: finalPrice,
           total_amount: finalAmount,
@@ -365,7 +452,7 @@ export const FuelRequestPage: React.FC = () => {
       setForm({
         vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power'
       });
-      setCompleteForm({ station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power', liters: '', price_per_liter: '', total_amount: '' });
+      setCompleteForm({ station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power', remito_number: '', liters: '', price_per_liter: '', total_amount: '' });
       setTicketFile(null);
       setSuccessState('complete');
       
@@ -487,6 +574,33 @@ export const FuelRequestPage: React.FC = () => {
                   <h2 className="text-ecar-blue font-black text-xl">1. Nueva Solicitud</h2>
                   <p className="text-gray-400 text-sm">Pedí autorización para cargar</p>
                 </div>
+              </div>
+
+              {/* Quick AI Ticket Scanner Step 1 */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-ecar-blue text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-ecar-blue">¿Ya tenés el ticket / remito?</p>
+                    <p className="text-[11px] text-gray-500">Escanealo con IA para auto-completar datos</p>
+                  </div>
+                </div>
+                <label className="bg-white hover:bg-blue-50 border border-ecar-blue/40 text-ecar-blue font-bold text-xs px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0">
+                  <Camera size={15} />
+                  <span>Escanear</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) analyzeTicketWithAI(f, true);
+                    }}
+                  />
+                </label>
               </div>
 
               {/* Form Fields Step 1 */}
@@ -648,6 +762,122 @@ export const FuelRequestPage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Foto del Ticket y Escaneo con IA */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-ecar-blue" />
+                        Foto del Ticket / Remito (Escaneo IA)
+                      </label>
+                      {ticketFile && !analyzingTicket && (
+                        <button
+                          type="button"
+                          onClick={() => analyzeTicketWithAI(ticketFile, false)}
+                          className="text-[11px] font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1"
+                        >
+                          <RefreshCw size={11} /> Reanalizar con IA
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="border-2 border-dashed border-blue-300 bg-blue-50/20 hover:bg-blue-50/40 rounded-xl p-4 text-center transition-all cursor-pointer relative overflow-hidden">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        capture="environment" 
+                        onClick={() => localStorage.setItem('taking_photo_timestamp', Date.now().toString())}
+                        onChange={e => {
+                          const f = e.target.files?.[0];
+                          if (f) analyzeTicketWithAI(f, false);
+                        }} 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" 
+                      />
+                      <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
+                        {ticketPreview ? (
+                          <div className="flex items-center gap-3">
+                            <img src={ticketPreview} alt="Comprobante" className="w-16 h-16 object-cover rounded-lg border border-gray-300 shadow-sm" />
+                            <div className="text-left">
+                              <span className="text-xs font-bold text-gray-800 block truncate max-w-[200px]">{ticketFile?.name || 'Comprobante cargado'}</span>
+                              <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                                <CheckCircle2 size={13} /> Foto lista para guardar
+                              </span>
+                              <span className="text-[10px] text-gray-400 block mt-0.5">Toca para cambiar de foto</span>
+                            </div>
+                          </div>
+                        ) : ticketFile ? (
+                          <>
+                            <Check size={24} className="text-emerald-500" />
+                            <span className="text-sm font-bold text-emerald-600">{ticketFile.name}</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-ecar-blue mb-1">
+                              <Camera size={24} />
+                            </div>
+                            <span className="text-sm text-gray-800 font-bold">Tomar foto o subir comprobante</span>
+                            <span className="text-xs text-gray-500">La Inteligencia Artificial extraerá los datos automáticamente</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Feedback de Análisis IA */}
+                    {analyzingTicket && (
+                      <div className="mt-2.5 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3 text-ecar-blue animate-pulse">
+                        <Sparkles className="animate-spin text-ecar-blue shrink-0" size={18} />
+                        <div className="text-xs">
+                          <p className="font-bold">Analizando ticket con Inteligencia Artificial...</p>
+                          <p className="text-blue-600">Extrayendo N° de remito, litros, estación y montos.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {ticketAiError && (
+                      <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-800 flex items-center gap-2">
+                        <AlertCircle size={15} className="text-amber-600 shrink-0" />
+                        <span>{ticketAiError}</span>
+                      </div>
+                    )}
+
+                    {aiAnalysisResult && !analyzingTicket && (
+                      <div className="mt-2.5 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1.5">
+                        <div className="flex items-center justify-between font-bold text-emerald-800">
+                          <span className="flex items-center gap-1.5"><Sparkles size={14} className="text-emerald-600" /> Datos extraídos con IA:</span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Verificados</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] pt-1">
+                          {aiAnalysisResult.remito_number && <div><span className="text-gray-500">Remito:</span> <b>{aiAnalysisResult.remito_number}</b></div>}
+                          {aiAnalysisResult.liters != null && <div><span className="text-gray-500">Litros:</span> <b>{aiAnalysisResult.liters} L</b></div>}
+                          {aiAnalysisResult.total_amount != null && <div><span className="text-gray-500">Total:</span> <b>${aiAnalysisResult.total_amount}</b></div>}
+                          {aiAnalysisResult.supplier && <div><span className="text-gray-500">Estación:</span> <b>{aiAnalysisResult.supplier}</b></div>}
+                          {aiAnalysisResult.plate && (
+                            <div className="col-span-2">
+                              <span className="text-gray-500">Patente comprobante:</span> <b>{aiAnalysisResult.plate}</b>
+                              {activeRequest?.plate && aiAnalysisResult.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() !== activeRequest.plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() && (
+                                <span className="text-amber-700 font-bold block text-[10px]">⚠️ Difiere de la patente del vehículo ({activeRequest.plate})</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* N° Remito Input */}
+                  <div>
+                    <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">
+                      N° Remito / Comprobante
+                    </label>
+                    <input 
+                      type="text" 
+                      value={completeForm.remito_number} 
+                      onChange={e => setCompleteForm({ ...completeForm, remito_number: e.target.value })} 
+                      className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-bold text-gray-800" 
+                      placeholder="Ej: 0014-00004686" 
+                    />
+                  </div>
+
+                  {/* Campos Numéricos Reales */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div>
                       <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Litros Reales</label>
@@ -660,33 +890,6 @@ export const FuelRequestPage: React.FC = () => {
                     <div className="col-span-2 md:col-span-1">
                       <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Importe Total</label>
                       <input type="number" step="0.01" value={completeForm.total_amount} onChange={e => { const v = parseFloat(e.target.value)||0; setCompleteForm(f => ({ ...f, total_amount: e.target.value, price_per_liter: f.liters && parseFloat(f.liters)>0 ? String(v / parseFloat(f.liters)) : f.price_per_liter })) }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-3 py-2 text-lg font-black font-mono text-emerald-600" placeholder="0.00" />
-                    </div>
-                  </div>
-
-                  <div>
-                      <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Foto del Ticket</label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer relative overflow-hidden">
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          capture="environment" 
-                          onClick={() => localStorage.setItem('taking_photo_timestamp', Date.now().toString())}
-                          onChange={e => setTicketFile(e.target.files?.[0] || null)} 
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
-                        />
-                      <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
-                        {ticketFile ? (
-                          <>
-                            <Check size={24} className="text-emerald-500" />
-                            <span className="text-sm font-bold text-emerald-600">{ticketFile.name}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Camera size={28} className="text-gray-400" />
-                            <span className="text-sm text-gray-500 font-medium">Sacar foto o seleccionar archivo</span>
-                          </>
-                        )}
-                      </div>
                     </div>
                   </div>
 

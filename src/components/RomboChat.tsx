@@ -104,6 +104,7 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   project_budget: ['📊 Analizando costos...', '🏗️ Revisando presupuestos de obra...', '📐 Chequeando cantidades...'],
   communications: ['💬 Leyendo mensajes de WhatsApp...', '📨 Monitoreando comunicaciones...', '📞 Todo en orden en los chats...'],
   weekly_report: ['📈 Compilando resumen semanal...', '📊 Consolidando partes diarios y gastos...', '📝 Escribiendo reporte...'],
+  fuel: ['⛽ Controlando cargas de combustible...', '🚛 Revisando el nivel del batán...', '🧾 Auditando tickets de carga...'],
 };
 
 function getIdlePhrases(moduleId: ModuleId): string[] {
@@ -348,6 +349,17 @@ export const RomboChat: React.FC = () => {
       ],
       proTip: 'Los vehículos con mantenimiento vencido aparecen en rojo en la lista.',
     },
+    fuel: {
+      where: 'Control de Combustible',
+      capabilities: [
+        'Consultar la **última carga de combustible** y consumos por vehículo',
+        'Auditar **cargas sin autorizar** y verificar tickets cargados',
+        'Revisar el estado del **batán móvil** y sus movimientos',
+        'Calcular el **gasto mensual total** en combustible (gasoil y nafta)',
+      ],
+      proTip: 'Podés pedirme datos de combustible o de cualquier otro módulo de la empresa desde acá.',
+    },
+
     field: {
       where: 'Parte Diario de Obra',
       capabilities: [

@@ -12,6 +12,56 @@ const tools = [
   {
     type: 'function' as const,
     function: {
+      name: 'query_fuel_loads',
+      description: 'Consultar cargas de combustible de vehículos y maquinaria de ECAR. Permite ver la última carga registrada, litros, precio, total en ARS, chofer, vehículo y estación o batán.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por vehículo, patente o chofer' },
+          unauthorized_only: { type: 'boolean', description: 'Solo cargas sin autorizar' },
+          limit: { type: 'number', description: 'Cantidad de cargas (default 10)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_fleet_vehicles',
+      description: 'Consultar la flota de vehículos y maquinaria de ECAR. Muestra odómetro/km actual, estado de mantenimiento, services vencidos o próximos, seguro y VTV.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por código, patente o descripción' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_database_table',
+      description: 'CONSULTA UNIVERSAL A LA BASE DE DATOS DE ECAR: Permite consultar directamente cualquier tabla del ERP (fuel_loads, fuel_vehicles, purchase_requests, purchase_orders, suppliers, project_certificates, bank_accounts, inventory_items, inventory_movements, cheques, obligations, employees, etc.). Usá esta herramienta si necesitás corroborar cualquier información de la empresa.',
+      parameters: {
+        type: 'object',
+        properties: {
+          table_name: { type: 'string', description: 'Nombre de la tabla' },
+          select_columns: { type: 'string', description: 'Columnas a traer (default *)' },
+          filter_column: { type: 'string', description: 'Columna de filtro' },
+          filter_operator: { type: 'string', description: 'eq, ilike, gt, gte, lt, lte, neq' },
+          filter_value: { type: 'string', description: 'Valor de filtro' },
+          order_by: { type: 'string', description: 'Columna para ordenar' },
+          order_descending: { type: 'boolean', description: 'Ordenar descendente' },
+          limit: { type: 'number', description: 'Límite de filas' }
+        },
+        required: ['table_name']
+      }
+    }
+  },
+
+  {
+    type: 'function' as const,
+    function: {
       name: 'query_employees',
       description: 'Buscar empleados activos. Devuelve datos completos: nombre, CUIL, DNI, sexo, estado civil, hijos, estudios, convenio, horas extras, deuda, observaciones.',
       parameters: { type: 'object', properties: { search: { type: 'string' } } }
@@ -394,6 +444,8 @@ Sos el copiloto financiero y operativo de ECAR. Podés:
 - 👷 *Calidad y Adicionales* → orientar sobre protocolos de calidad y seguimiento de adicionales de obra.
 - 👨‍💻 *Usuarios y Sistema* → guiar sobre módulos de actividad, roles y el resto del ecosistema de ECAR.
 - 📈 *Control de Pagos y Reportes Semanales* → ayudar a revisar el flujo de fondos, transferencias pendientes y los KPIs consolidados.
+- ⛽ *Combustible y Flota* → consultar última carga de combustible, consumos por vehículo, services vencidos y estado de vehículos.
+- 🌐 *Acceso Total a ECAR* → tenés acceso a TODA la información de la empresa (combustible, compras, cheques, obras, proveedores, stock, etc.). NUNCA digas que no tenés acceso.
 
 ## FORMATO DE RESPUESTA (MUY IMPORTANTE)
 - Usá formato *WhatsApp nativo*: asteriscos simples para *negrita* (ej: *Cheque cargado*).
@@ -1072,6 +1124,73 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         const totalPendiente = (data || []).filter((a: any) => !a.deducted).reduce((s: number, a: any) => s + (a.amount_ars || 0), 0)
         return JSON.stringify({ empleado: emp.full_name, adelantos: data || [], total_pendiente_ars: totalPendiente })
       }
+
+      case 'query_fuel_loads': {
+        let q = supabase.from('fuel_loads').select(`
+          id, load_number, load_date, day_of_week,
+          vehicle_code, vehicle_description, plate,
+          driver_name, project_name, supplier, station_name, fuel_type,
+          liters, price_per_liter, total_amount, odometer_km,
+          load_source, validation_status, workflow_status, unauthorized_load
+        `)
+        if (args.search) {
+          q = q.or(`vehicle_code.ilike.%${args.search}%,vehicle_description.ilike.%${args.search}%,driver_name.ilike.%${args.search}%,plate.ilike.%${args.search}%`)
+        }
+        if (args.unauthorized_only) q = q.eq('unauthorized_load', true)
+        const { data, error } = await q.order('load_date', { ascending: false }).order('created_at', { ascending: false }).limit(args.limit || 10)
+        if (error) return JSON.stringify({ error: error.message })
+        if (!data?.length) return JSON.stringify({ loads: [], message: 'No hay cargas de combustible registradas con esos filtros.' })
+        
+        const ultima = data[0]
+        return JSON.stringify({
+          ultima_carga: {
+            numero: ultima.load_number,
+            fecha: ultima.load_date,
+            dia: ultima.day_of_week,
+            vehiculo: `${ultima.vehicle_code || ''} ${ultima.vehicle_description || ''}`.trim(),
+            chofer: ultima.driver_name,
+            litros: ultima.liters,
+            total_ars: ultima.total_amount,
+            combustible: ultima.fuel_type,
+            estacion_o_origen: ultima.station_name || ultima.supplier || ultima.load_source,
+            sin_autorizar: ultima.unauthorized_load
+          },
+          total_cargas: data.length,
+          cargas_recientes: data
+        })
+      }
+      case 'query_fleet_vehicles': {
+        let q = supabase.from('fuel_vehicles').select('code, description, vehicle_type, plate, brand, model, year, preferred_fuel, tank_capacity_liters, default_driver, status')
+        if (args.search) {
+          q = q.or(`code.ilike.%${args.search}%,description.ilike.%${args.search}%,plate.ilike.%${args.search}%`)
+        }
+        const { data, error } = await q.order('code')
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ vehicles: data || [], count: (data || []).length })
+      }
+      case 'query_database_table': {
+        const table = String(args.table_name || '').trim()
+        if (!table || !/^[a-zA-Z0-9_]+$/.test(table)) return JSON.stringify({ error: 'Tabla inválida' })
+        let q = supabase.from(table).select(args.select_columns || '*')
+        if (args.filter_column && args.filter_value !== undefined) {
+          const op = args.filter_operator || 'eq'
+          if (op === 'ilike') q = q.ilike(args.filter_column, `%${args.filter_value}%`)
+          else if (op === 'gt') q = q.gt(args.filter_column, args.filter_value)
+          else if (op === 'gte') q = q.gte(args.filter_column, args.filter_value)
+          else if (op === 'lt') q = q.lt(args.filter_column, args.filter_value)
+          else if (op === 'lte') q = q.lte(args.filter_column, args.filter_value)
+          else if (op === 'neq') q = q.neq(args.filter_column, args.filter_value)
+          else q = q.eq(args.filter_column, args.filter_value)
+        }
+        if (args.order_by) {
+          q = q.order(args.order_by, { ascending: args.order_descending === false })
+        }
+        q = q.limit(Math.min(Math.max(Number(args.limit) || 15, 1), 50))
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ table, count: (data || []).length, rows: data || [] })
+      }
+
       default:
         return JSON.stringify({ error: `Herramienta desconocida: ${name}` })
     }
