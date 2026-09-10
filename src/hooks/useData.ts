@@ -1708,7 +1708,11 @@ export function useCreateDeposit() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (deposit: Partial<InventoryDeposit>) => {
-      const { data, error } = await supabase.from('inventory_deposits').insert([deposit]).select().single();
+      const { data, error } = await supabase
+        .from('inventory_deposits')
+        .insert([{ ...deposit, tenant_id: ECAR_TENANT_ID }])
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },
@@ -1920,6 +1924,145 @@ export function useCreateInventoryMovement() {
     },
   });
 }
+
+export interface TransferStockParams {
+  originItem: InventoryItem;
+  quantity: number;
+  targetDeposit: string;
+  targetShelfId?: string | null;
+  targetShelfPosition?: string | null;
+  targetShelfName?: string | null;
+  notes?: string;
+  userName?: string;
+}
+
+export function useTransferInventoryStock() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      originItem,
+      quantity,
+      targetDeposit,
+      targetShelfId,
+      targetShelfPosition,
+      targetShelfName,
+      notes,
+      userName,
+    }: TransferStockParams) => {
+      const q = Math.abs(Number(quantity));
+      if (!q || q <= 0) throw new Error('La cantidad a transferir debe ser mayor a 0');
+
+      // 1. Fetch current origin item stock to ensure freshness
+      const { data: freshOrigin, error: freshErr } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('id', originItem.id)
+        .single();
+      if (freshErr || !freshOrigin) throw new Error('No se pudo encontrar el artículo de origen');
+
+      const originCurrentStock = Number(freshOrigin.current_stock) || 0;
+      if (q > originCurrentStock) {
+        throw new Error(`Stock insuficiente: disponible ${originCurrentStock}, se intentó transferir ${q}`);
+      }
+
+      // 2. Look for destination item in targetDeposit
+      const { data: existingDestItems, error: destSearchErr } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .ilike('name', freshOrigin.name)
+        .eq('deposit', targetDeposit);
+      if (destSearchErr) throw destSearchErr;
+
+      let destItem = existingDestItems?.find(di => (targetShelfId ? di.shelf_id === targetShelfId : true)) || existingDestItems?.[0];
+      let destItemId = destItem?.id;
+
+      if (destItem) {
+        // 2A. Update destination item stock (+q)
+        const destNewStock = (Number(destItem.current_stock) || 0) + q;
+        const updatePayload: any = { current_stock: destNewStock };
+        if (targetShelfId && !destItem.shelf_id) {
+          updatePayload.shelf_id = targetShelfId;
+          if (targetShelfPosition) updatePayload.shelf_position = targetShelfPosition;
+        }
+        const { error: updDestErr } = await supabase
+          .from('inventory_items')
+          .update(updatePayload)
+          .eq('id', destItem.id);
+        if (updDestErr) throw updDestErr;
+      } else {
+        // 2B. Create destination item clone with current_stock = q
+        const newDestPayload = {
+          name: freshOrigin.name,
+          category: freshOrigin.category,
+          unit: freshOrigin.unit,
+          unit_cost: freshOrigin.unit_cost,
+          min_stock: freshOrigin.min_stock || 0,
+          ideal_stock: freshOrigin.ideal_stock || 0,
+          is_tool: freshOrigin.is_tool || false,
+          barcode: freshOrigin.barcode || null,
+          item_code: freshOrigin.item_code || null,
+          measure: freshOrigin.measure || null,
+          rubro: freshOrigin.rubro || null,
+          deposit: targetDeposit,
+          shelf_id: targetShelfId || null,
+          shelf_position: targetShelfPosition || null,
+          location: targetShelfName ? `Estantería ${targetShelfName}` : targetDeposit,
+          current_stock: q,
+          tenant_id: ECAR_TENANT_ID,
+        };
+        const { data: createdDest, error: createDestErr } = await supabase
+          .from('inventory_items')
+          .insert([newDestPayload])
+          .select()
+          .single();
+        if (createDestErr) throw createDestErr;
+        destItemId = createdDest.id;
+      }
+
+      // 3. Deduct stock from origin item
+      const originNewStock = Math.max(0, originCurrentStock - q);
+      const { error: updOriginErr } = await supabase
+        .from('inventory_items')
+        .update({ current_stock: originNewStock })
+        .eq('id', freshOrigin.id);
+      if (updOriginErr) throw updOriginErr;
+
+      // 4. Kardex egress movement for Origin
+      const originNotes = `Transferencia hacia ${targetDeposit}${targetShelfName ? ` (${targetShelfName})` : ''}${notes ? ` - ${notes}` : ''}`;
+      const { error: movOutErr } = await supabase.from('inventory_movements').insert({
+        tenant_id: ECAR_TENANT_ID,
+        item_id: freshOrigin.id,
+        movement_type: 'out',
+        quantity: q,
+        notes: originNotes,
+        created_by: userName || 'Web',
+      });
+      if (movOutErr) console.error('Error creating origin movement:', movOutErr);
+
+      // 5. Kardex ingress movement for Destination
+      if (destItemId) {
+        const destNotes = `Transferencia recibida desde ${freshOrigin.deposit || 'Origen'}${originItem.shelf?.code ? ` (${originItem.shelf.code})` : ''}${notes ? ` - ${notes}` : ''}`;
+        const { error: movInErr } = await supabase.from('inventory_movements').insert({
+          tenant_id: ECAR_TENANT_ID,
+          item_id: destItemId,
+          movement_type: 'in',
+          quantity: q,
+          notes: destNotes,
+          created_by: userName || 'Web',
+        });
+        if (movInErr) console.error('Error creating dest movement:', movInErr);
+      }
+
+      return { destItemId, originNewStock, quantity: q };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
+      qc.invalidateQueries({ queryKey: ['project_inventory_movements'] });
+    },
+  });
+}
+
 
 export function useDeleteInventoryMovement() {
   const qc = useQueryClient();

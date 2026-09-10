@@ -5,12 +5,12 @@ import {
   LayoutGrid, Trash2, Edit3, ShoppingBag,
   CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight,
   TrendingUp, TrendingDown, Filter, Download, FileDown, RefreshCw,
-  Eye, Truck
+  Eye, Truck, Repeat
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   useInventoryItems, useCreateInventoryItem, useInventoryMovements,
-  useCreateInventoryMovement, useDeleteInventoryMovement, useToolAssignments, useCreateToolAssignment,
+  useCreateInventoryMovement, useDeleteInventoryMovement, useTransferInventoryStock, useToolAssignments, useCreateToolAssignment,
   useUpdateToolAssignment, useUpdateInventoryItem, useProjects, useEmployees,
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest, useDeleteInventoryItem, useCreateProject,
@@ -85,18 +85,59 @@ const parseShelfPosition = (shelfPos?: string | null): { level: string; bin: str
 interface ItemMovementsAccordionProps {
   item: InventoryItem;
   projects: any[];
+  deposits?: InventoryDeposit[];
+  shelves?: WarehouseShelf[];
+  onOpenNewDepositModal?: () => void;
 }
 
-const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, projects }) => {
+const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
+  item,
+  projects,
+  deposits = [],
+  shelves = [],
+  onOpenNewDepositModal,
+}) => {
+  const { profile } = useAuth();
   const { data: itemMovements, isLoading } = useInventoryMovements(item.id);
   const createMovement = useCreateInventoryMovement();
   const deleteMovement = useDeleteInventoryMovement();
+  const transferStock = useTransferInventoryStock();
 
-  const [quickType, setQuickType] = useState<'in' | 'out'>('in');
+  const [quickType, setQuickType] = useState<'in' | 'out' | 'transfer'>('in');
   const [quickQty, setQuickQty] = useState('1');
   const [quickNotes, setQuickNotes] = useState('');
   const [quickProjectId, setQuickProjectId] = useState('');
   const [quickAssignedTo, setQuickAssignedTo] = useState('');
+
+  // Transfer specific state
+  const [targetDeposit, setTargetDeposit] = useState<string>('');
+  const [targetShelfId, setTargetShelfId] = useState<string>('');
+  const [targetShelfPos, setTargetShelfPos] = useState<string>('');
+
+  // Combined deposits list: from DB + default fallbacks
+  const allDepositOptions = useMemo(() => {
+    const list: { id: string; name: string; location?: string | null }[] = [...deposits];
+    if (!list.some(d => d.name === 'DEPOSITO RAWSON')) {
+      list.push({ id: 'rawson-default', name: 'DEPOSITO RAWSON', location: 'Rawson' });
+    }
+    if (!list.some(d => d.name === 'ALMACEN CENTRAL')) {
+      list.push({ id: 'central-default', name: 'ALMACEN CENTRAL', location: 'Central' });
+    }
+    return list;
+  }, [deposits]);
+
+  // Auto-suggest a target deposit different from the current one
+  useEffect(() => {
+    if (!targetDeposit) {
+      const currentDep = (item.deposit || 'DEPOSITO RAWSON').trim().toUpperCase();
+      const alternative = allDepositOptions.find(d => d.name.trim().toUpperCase() !== currentDep);
+      if (alternative) {
+        setTargetDeposit(alternative.name);
+      } else if (allDepositOptions.length > 0) {
+        setTargetDeposit(allDepositOptions[0].name);
+      }
+    }
+  }, [allDepositOptions, item.deposit, targetDeposit]);
 
   const handleQuickSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +150,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
     try {
       await createMovement.mutateAsync({
         item_id: item.id,
-        movement_type: quickType,
+        movement_type: quickType === 'transfer' ? 'out' : quickType,
         quantity: q,
         project_id: quickProjectId || null,
         delivered_to_text: quickAssignedTo || null,
@@ -125,6 +166,74 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
     }
   };
 
+  const handleTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = parseFloat(quickQty);
+    if (isNaN(q) || q <= 0) {
+      useModalStore.getState().showAlert('Atención', 'Ingresa una cantidad válida a transferir.');
+      return;
+    }
+
+    const currentStock = Number(item.current_stock) || 0;
+    if (q > currentStock) {
+      useModalStore.getState().showAlert(
+        'Atención',
+        `La cantidad a transferir (${q}) supera el stock disponible (${currentStock} ${item.unit}).`
+      );
+      return;
+    }
+
+    if (!targetDeposit) {
+      useModalStore.getState().showAlert('Atención', 'Selecciona el depósito de destino.');
+      return;
+    }
+
+    const currentDep = (item.deposit || '').trim().toUpperCase();
+    const targetDep = targetDeposit.trim().toUpperCase();
+    const isSameDeposit = currentDep === targetDep;
+    const isSameShelf = (targetShelfId || null) === (item.shelf_id || null);
+
+    if (isSameDeposit && isSameShelf) {
+      useModalStore.getState().showAlert(
+        'Atención',
+        'El destino seleccionado es idéntico a la ubicación actual del artículo (mismo depósito y misma estantería). Selecciona un depósito o estantería diferente.'
+      );
+      return;
+    }
+
+    const targetShelf = shelves.find(s => s.id === targetShelfId);
+    const targetShelfName = targetShelf ? `${targetShelf.code} - ${targetShelf.name}` : undefined;
+
+    try {
+      await transferStock.mutateAsync({
+        originItem: item,
+        quantity: q,
+        targetDeposit: targetDep,
+        targetShelfId: targetShelfId || null,
+        targetShelfPosition: targetShelfPos ? targetShelfPos.toUpperCase().trim() : null,
+        targetShelfName,
+        notes: quickNotes.trim() || undefined,
+        userName: profile?.full_name || 'Web',
+      });
+
+      useModalStore.getState().showAlert(
+        'Transferencia Exitosa',
+        `Se transfirieron ${q} ${item.unit} de "${item.name}" hacia "${targetDep}"${targetShelfName ? ` (${targetShelfName})` : ''}. Se registraron los egresos e ingresos en Kardex correspondientes.`
+      );
+      setQuickQty('1');
+      setQuickNotes('');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo realizar la transferencia.');
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (quickType === 'transfer') {
+      return handleTransferSubmit(e);
+    }
+    return handleQuickSubmit(e);
+  };
+
   return (
     <div className="bg-slate-100/90 border-2 border-slate-300 rounded-2xl shadow-inner p-4 text-slate-800 space-y-4 my-1">
       {/* Header bar */}
@@ -137,12 +246,19 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
             <h4 className="font-bold text-sm text-slate-900">
               Histórico & Movimiento Rápido: <span className="text-ecar-blue font-black">{item.name}</span>
             </h4>
-            <p className="text-xs text-slate-500">Kardex de transacciones y registro inmediato de stock.</p>
+            <p className="text-xs text-slate-500">Kardex de transacciones, registro inmediato y transferencia entre depósitos.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-          <span className="text-slate-500">Stock Actual:</span>
-          <span className="font-mono font-bold text-slate-900 text-sm">{item.current_stock} {item.unit}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium text-ecar-blue shadow-xs">
+            <Boxes size={14} />
+            <span>Depósito Actual:</span>
+            <span className="font-bold">{item.deposit || 'DEPOSITO RAWSON'}</span>
+          </div>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium shadow-xs">
+            <span className="text-slate-500">Stock Actual:</span>
+            <span className="font-mono font-bold text-slate-900 text-sm">{item.current_stock} {item.unit}</span>
+          </div>
         </div>
       </div>
 
@@ -151,103 +267,252 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
         <div className="lg:col-span-1 bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
             <Zap size={14} className="text-amber-500 fill-amber-500" />
-            <span>Registrar Movimiento Rápido</span>
+            <span>Registrar Movimiento / Transferencia</span>
           </div>
 
-          <form onSubmit={handleQuickSubmit} className="space-y-3">
-            {/* Tipo switch */}
-            <div className="grid grid-cols-2 gap-1.5 bg-slate-200/60 p-1 rounded-lg">
+          <form onSubmit={handleFormSubmit} className="space-y-3">
+            {/* Tipo switch: 3 tabs (Ingreso, Egreso, Mover) */}
+            <div className="grid grid-cols-3 gap-1 bg-slate-200/60 p-1 rounded-lg">
               <button
                 type="button"
                 onClick={() => setQuickType('in')}
-                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-all ${
                   quickType === 'in'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <ArrowDownToLine size={14} /> + Ingreso
+                <ArrowDownToLine size={13} /> + Ingreso
               </button>
               <button
                 type="button"
                 onClick={() => setQuickType('out')}
-                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-all ${
                   quickType === 'out'
                     ? 'bg-red-600 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <ArrowUpRight size={14} /> - Egreso
+                <ArrowUpRight size={13} /> - Egreso
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickType('transfer')}
+                className={`py-1.5 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-all ${
+                  quickType === 'transfer'
+                    ? 'bg-ecar-blue text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Repeat size={13} /> ⇄ Mover
               </button>
             </div>
 
-            {/* Cantidad & Obra */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-600 mb-1">Cantidad ({item.unit})</label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0.01"
-                  required
-                  value={quickQty}
-                  onChange={e => setQuickQty(e.target.value)}
-                  className="w-full text-xs font-mono font-bold px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
-                  placeholder="1"
-                />
-              </div>
+            {quickType === 'transfer' ? (
+              <>
+                {/* Origen info banner */}
+                <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5 space-y-1">
+                  <div className="flex items-center justify-between text-slate-700">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-ecar-blue flex items-center gap-1">
+                      <Boxes size={13} /> Origen Actual:
+                    </span>
+                    <span className="font-mono font-bold text-slate-900 text-xs">
+                      Disp: {item.current_stock} {item.unit}
+                    </span>
+                  </div>
+                  <div className="text-slate-700 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="font-semibold">🏢 {item.deposit || 'DEPOSITO RAWSON'}</span>
+                    {item.shelf && (
+                      <span className="bg-white border border-blue-200 px-1.5 py-0.2 rounded text-[10px] text-slate-700 font-medium">
+                        🗄️ {item.shelf.code} - {item.shelf.name}
+                      </span>
+                    )}
+                    {item.shelf_position && (
+                      <span className="font-mono text-[10px] text-slate-500">
+                        ({formatShelfPosition(item.shelf?.code, item.shelf_position)})
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-slate-600 mb-1">Obra / Proyecto</label>
-                <select
-                  value={quickProjectId}
-                  onChange={e => setQuickProjectId(e.target.value)}
-                  className="w-full text-xs px-2 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none bg-white"
+                {/* Cantidad & Botón "Mover Todo" */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-medium text-slate-600">
+                      Cantidad a mover ({item.unit})
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setQuickQty(String(item.current_stock))}
+                      className="text-[10px] text-ecar-blue hover:underline font-bold"
+                    >
+                      Mover todo ({item.current_stock})
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.01"
+                    max={Number(item.current_stock)}
+                    required
+                    value={quickQty}
+                    onChange={e => setQuickQty(e.target.value)}
+                    className="w-full text-xs font-mono font-bold px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                    placeholder="1"
+                  />
+                </div>
+
+                {/* Depósito Destino */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                      <Boxes size={13} className="text-ecar-blue" /> Depósito Destino *
+                    </label>
+                    {onOpenNewDepositModal && (
+                      <button
+                        type="button"
+                        onClick={onOpenNewDepositModal}
+                        className="text-[10px] text-ecar-blue hover:underline font-bold flex items-center gap-0.5"
+                      >
+                        <Plus size={10} /> + Crear Depósito
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    value={targetDeposit}
+                    onChange={e => setTargetDeposit(e.target.value)}
+                    required
+                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none bg-white font-medium"
+                  >
+                    <option value="">Seleccionar depósito destino...</option>
+                    {allDepositOptions.map(d => (
+                      <option key={d.id} value={d.name}>
+                        {d.name} {d.name === (item.deposit || 'DEPOSITO RAWSON') ? '(Mismo depósito - Reubicar estantería)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Estantería Destino y Ubicación (opcional) */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Estantería Destino</label>
+                    <select
+                      value={targetShelfId}
+                      onChange={e => setTargetShelfId(e.target.value)}
+                      className="w-full text-xs px-2 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none bg-white"
+                    >
+                      <option value="">(Sin estantería)</option>
+                      {shelves.map(s => (
+                        <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Posición / Cajón</label>
+                    <input
+                      type="text"
+                      value={targetShelfPos}
+                      onChange={e => setTargetShelfPos(e.target.value)}
+                      className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none font-mono"
+                      placeholder="Ej. 1-1 o N1-C2"
+                    />
+                  </div>
+                </div>
+
+                {/* Nota / Motivo */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 mb-1">Nota / Motivo del Traslado</label>
+                  <input
+                    type="text"
+                    value={quickNotes}
+                    onChange={e => setQuickNotes(e.target.value)}
+                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                    placeholder="Ej. Reubicación entre depósitos, abastecimiento..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={transferStock.isPending}
+                  className="w-full py-2 px-3 text-xs font-bold text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all bg-ecar-blue hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <option value="">(Sin asignar / Pañol)</option>
-                  {projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  <Repeat size={14} className={transferStock.isPending ? 'animate-spin' : ''} />
+                  {transferStock.isPending ? 'Procesando Traslado...' : `Confirmar Transferencia (${quickQty} ${item.unit})`}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Cantidad & Obra */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Cantidad ({item.unit})</label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0.01"
+                      required
+                      value={quickQty}
+                      onChange={e => setQuickQty(e.target.value)}
+                      className="w-full text-xs font-mono font-bold px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                      placeholder="1"
+                    />
+                  </div>
 
-            {/* Asignado a */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-600 mb-1">Entregado a (Empleado/Chofer)</label>
-              <input
-                type="text"
-                value={quickAssignedTo}
-                onChange={e => setQuickAssignedTo(e.target.value)}
-                className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
-                placeholder="Ej. Juan Pérez"
-              />
-            </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">Obra / Proyecto</label>
+                    <select
+                      value={quickProjectId}
+                      onChange={e => setQuickProjectId(e.target.value)}
+                      className="w-full text-xs px-2 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none bg-white"
+                    >
+                      <option value="">(Sin asignar / Pañol)</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-            {/* Nota */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-600 mb-1">Nota / Motivo</label>
-              <input
-                type="text"
-                value={quickNotes}
-                onChange={e => setQuickNotes(e.target.value)}
-                className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
-                placeholder={quickType === 'in' ? 'Ej. Ingreso inicial de stock' : 'Ej. Consumo directo en obra'}
-              />
-            </div>
+                {/* Asignado a */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 mb-1">Entregado a (Empleado/Chofer)</label>
+                  <input
+                    type="text"
+                    value={quickAssignedTo}
+                    onChange={e => setQuickAssignedTo(e.target.value)}
+                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                    placeholder="Ej. Juan Pérez"
+                  />
+                </div>
 
-            <button
-              type="submit"
-              disabled={createMovement.isPending}
-              className={`w-full py-2 px-3 text-xs font-bold text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 ${
-                quickType === 'in'
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-red-600 hover:bg-red-700'
-              }`}
-            >
-              <Zap size={14} />
-              {createMovement.isPending ? 'Procesando...' : `Confirmar ${quickType === 'in' ? 'Ingreso' : 'Egreso'}`}
-            </button>
+                {/* Nota */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-600 mb-1">Nota / Motivo</label>
+                  <input
+                    type="text"
+                    value={quickNotes}
+                    onChange={e => setQuickNotes(e.target.value)}
+                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none"
+                    placeholder={quickType === 'in' ? 'Ej. Ingreso inicial de stock' : 'Ej. Consumo directo en obra'}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={createMovement.isPending}
+                  className={`w-full py-2 px-3 text-xs font-bold text-white rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 ${
+                    quickType === 'in'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  <Zap size={14} />
+                  {createMovement.isPending ? 'Procesando...' : `Confirmar ${quickType === 'in' ? 'Ingreso' : 'Egreso'}`}
+                </button>
+              </>
+            )}
           </form>
         </div>
 
@@ -286,6 +551,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                     const isIngreso = m.movement_type === 'in' || m.movement_type === 'ingreso' || m.movement_type === 'purchase' || m.movement_type === 'return';
                     const isAjuste = m.movement_type === 'adjustment' || m.movement_type === 'ajuste';
                     const isAnnulled = (m.notes || '').includes('[ANULADO]');
+                    const isTransfer = (m.notes || '').toLowerCase().includes('transferencia');
 
                     return (
                       <tr 
@@ -304,6 +570,14 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 border border-slate-300">
                               🚫 MOVIMIENTO ANULADO
                             </span>
+                          ) : isTransfer ? (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isIngreso 
+                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' 
+                                : 'bg-blue-100 text-blue-700 border border-blue-200'
+                            }`}>
+                              <Repeat size={10} /> {isIngreso ? '📥 Transf. Entrada' : '📤 Transf. Salida'}
+                            </span>
                           ) : (
                             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
                               isAjuste ? 'bg-amber-100 text-amber-700 border border-amber-200' :
@@ -319,10 +593,11 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({ item, p
                         }`}>
                           {isIngreso ? `+${m.quantity}` : isAjuste ? m.quantity : `-${m.quantity}`} {item.unit}
                         </td>
-                        <td className={`py-2 px-3 text-slate-700 text-[11px] truncate max-w-[120px] ${isAnnulled ? 'line-through text-slate-400' : ''}`}>
+                        <td className={`py-2 px-3 text-slate-700 text-[11px] truncate max-w-[140px] ${isAnnulled ? 'line-through text-slate-400' : ''}`}>
                           <div className="flex flex-col">
-                            <span>{m.project?.name || '-'}</span>
-                            {m.assigned_to && <span className="text-[9px] text-ecar-blue font-semibold uppercase">👤 {m.assigned_to}</span>}
+                            <span>{m.project?.name || (isTransfer ? 'Traslado Interno' : '-')}</span>
+                            {m.delivered_to_text && <span className="text-[9px] text-ecar-blue font-semibold uppercase">👤 {m.delivered_to_text}</span>}
+                            {m.assigned_to && !m.delivered_to_text && <span className="text-[9px] text-ecar-blue font-semibold uppercase">👤 {m.assigned_to}</span>}
                           </div>
                         </td>
                         <td className={`py-2 px-3 text-slate-500 text-[11px] truncate max-w-[180px] ${isAnnulled ? 'line-through italic text-slate-400' : ''}`} title={m.notes || ''}>
@@ -798,7 +1073,10 @@ export const InventoryModule: React.FC = () => {
 
       // Filter by Deposit / Location
       if (filterDeposit) {
-        if (i.deposit !== filterDeposit && i.deposit_id !== filterDeposit) return false;
+        const selectedDep = (deposits || []).find(d => d.id === filterDeposit || d.name.toUpperCase() === filterDeposit.toUpperCase());
+        const targetName = (selectedDep?.name || filterDeposit).trim().toUpperCase();
+        const itemDep = (i.deposit || '').trim().toUpperCase();
+        if (itemDep !== targetName && i.deposit !== filterDeposit && i.deposit_id !== filterDeposit) return false;
       }
       if (filterShelf) {
         if (i.shelf_id !== filterShelf) return false;
@@ -1339,10 +1617,14 @@ export const InventoryModule: React.FC = () => {
                 >
                   <option value="">TODOS LOS DEPÓSITOS</option>
                   {(deposits || []).map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
+                    <option key={d.id} value={d.name}>{d.name}</option>
                   ))}
-                  <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Legado)</option>
-                  <option value="ALMACEN CENTRAL">ALMACEN CENTRAL (Legado)</option>
+                  {!(deposits || []).some(d => d.name === 'DEPOSITO RAWSON') && (
+                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON</option>
+                  )}
+                  {!(deposits || []).some(d => d.name === 'ALMACEN CENTRAL') && (
+                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                  )}
                 </select>
               </div>
 
@@ -1564,8 +1846,13 @@ export const InventoryModule: React.FC = () => {
 
                           {/* Producto */}
                           <td className="py-2.5 px-3 font-bold text-slate-900 cursor-pointer" onClick={() => setExpandedItemId(isExpanded ? null : item.id)}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <span>{item.name}</span>
+                              {item.deposit && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-ecar-blue border border-blue-200" title={`Depósito: ${item.deposit}`}>
+                                  🏢 {item.deposit}
+                                </span>
+                              )}
                               {item.shelf_position && (
                                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                                   📍 {formatShelfPosition((item.shelf as any)?.code, item.shelf_position)}
@@ -1733,7 +2020,17 @@ export const InventoryModule: React.FC = () => {
                         {isExpanded && (
                           <tr className="bg-slate-100/90 border-b-2 border-slate-300 shadow-inner">
                             <td colSpan={isPanolero ? 11 : 12} className="p-4 bg-slate-100/90">
-                              <ItemMovementsAccordion item={item} projects={projects || []} />
+                              <ItemMovementsAccordion
+                                item={item}
+                                projects={projects || []}
+                                deposits={deposits || []}
+                                shelves={shelves || []}
+                                onOpenNewDepositModal={() => {
+                                  setEditingDeposit(null);
+                                  setDepositForm({ name: '', location: '' });
+                                  setShowDepositModal(true);
+                                }}
+                              />
                             </td>
                           </tr>
                         )}
@@ -2347,40 +2644,64 @@ export const InventoryModule: React.FC = () => {
               <table className="w-full text-left text-sm border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                    <th className="p-4 font-bold uppercase text-xs tracking-wider">Nombre</th>
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider">Nombre del Depósito</th>
                     <th className="p-4 font-bold uppercase text-xs tracking-wider">Ubicación / Detalles</th>
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider text-center">Ítems Asignados</th>
+                    <th className="p-4 font-bold uppercase text-xs tracking-wider text-center">Stock Total</th>
                     <th className="p-4 font-bold uppercase text-xs tracking-wider text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(deposits || []).map(d => (
-                    <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 font-bold text-slate-800">{d.name}</td>
-                      <td className="p-4 text-slate-600">{d.location || '—'}</td>
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingDeposit(d);
-                              setDepositForm({ name: d.name, location: d.location || '' });
-                              setShowDepositModal(true);
-                            }}
-                            className="p-2 text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar"
-                          >
-                            <Edit3 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteDeposit(d.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(deposits || []).map(d => {
+                    const assignedItems = (items || []).filter(i => (i.deposit || '').trim().toUpperCase() === d.name.trim().toUpperCase());
+                    const totalUnits = assignedItems.reduce((acc, curr) => acc + (Number(curr.current_stock) || 0), 0);
+
+                    return (
+                      <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-slate-800">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1.5 rounded-lg bg-blue-50 text-ecar-blue border border-blue-200">
+                              <Boxes size={16} />
+                            </span>
+                            <span>{d.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-600">{d.location || '—'}</td>
+                        <td className="p-4 text-center">
+                          <span className="font-mono font-bold text-xs bg-slate-100 px-2.5 py-1 rounded-md text-slate-700">
+                            {assignedItems.length} artículos
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="font-mono font-bold text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md border border-emerald-200">
+                            {totalUnits.toLocaleString('es-AR')} unidades
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingDeposit(d);
+                                setDepositForm({ name: d.name, location: d.location || '' });
+                                setShowDepositModal(true);
+                              }}
+                              className="p-2 text-ecar-blue hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar depósito"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDeposit(d.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar depósito"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {deposits?.length === 0 && (
                     <tr>
                       <td colSpan={3} className="p-8 text-center text-slate-500 text-sm">
@@ -2696,17 +3017,34 @@ export const InventoryModule: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Depósito</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700">Depósito</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingDeposit(null);
+                        setDepositForm({ name: '', location: '' });
+                        setShowDepositModal(true);
+                      }}
+                      className="text-[11px] text-ecar-blue font-bold hover:underline flex items-center gap-0.5"
+                    >
+                      <Plus size={12} /> + Nuevo Depósito
+                    </button>
+                  </div>
                   <select
                     value={newItem.deposit}
                     onChange={e => setNewItem({ ...newItem, deposit: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white"
                   >
                     {(deposits || []).map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
+                      <option key={d.id} value={d.name}>{d.name}</option>
                     ))}
-                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Legado)</option>
-                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL (Legado)</option>
+                    {!(deposits || []).some(d => d.name === 'DEPOSITO RAWSON') && (
+                      <option value="DEPOSITO RAWSON">DEPOSITO RAWSON</option>
+                    )}
+                    {!(deposits || []).some(d => d.name === 'ALMACEN CENTRAL') && (
+                      <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                    )}
                   </select>
                 </div>
                 <div>
