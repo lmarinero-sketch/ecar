@@ -1820,3 +1820,111 @@ export type QualityChecklist = {
   wbs_element?: { id: string, name: string };
 };
 
+// ========== CONTROL DE OBRA Y RENDIMIENTOS (PLANILLA ROQUE) ==========
+
+export type ObraSector = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  nombre: string;
+  manzana?: string | null;
+  nodos_tramo?: string | null;
+  descripcion?: string | null;
+  activo: boolean;
+  created_at: string;
+};
+
+export type ObraControlTarea = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  sector_id?: string | null;
+  wbs_element_id?: string | null;
+  budget_item_id?: string | null;
+  parte_diario_id?: string | null;
+  
+  codigo_tarea: string;
+  fecha_plan: string;
+  fecha_cierre?: string | null;
+  
+  // Ubicación y Actividad
+  sector_nombre?: string | null;
+  manzana?: string | null;
+  nodos_tramo?: string | null;
+  diametro_mm?: string | null;
+  actividad: string;
+  unidad_medida: string;
+  
+  // Planificación
+  cantidad_plan: number;
+  rendimiento_objetivo_h: number;
+  hora_inicio_plan: string;
+  hora_fin_plan: string;
+  cuadrilla_nombre?: string | null;
+  responsable_id?: string | null;
+  responsable_nombre?: string | null;
+  personal_plan_count: number;
+  equipo_asignado?: string | null;
+  materiales_requeridos?: string | null;
+  epp_requerido?: string | null;
+  
+  // Ejecución Real
+  hora_inicio_real?: string | null;
+  hora_fin_real?: string | null;
+  horas_reales: number;
+  minutos_parada: number;
+  horas_productivas: number;
+  cantidad_real: number;
+  personal_real_count: number;
+  equipo_real?: string | null;
+  
+  // KPIs Calculados
+  hh_plan: number;
+  hh_real: number;
+  cumplimiento_pct: number;
+  rendimiento_real_h: number;
+  hh_por_unidad: number;
+  utilizacion_tiempo_pct: number;
+  indice_productividad: number;
+  desvio_horas: number;
+  
+  // Desvíos y Causa Raíz
+  motivo_desvio?: string | null;
+  observaciones?: string | null;
+  accion_correctiva?: string | null;
+  responsable_accion?: string | null;
+  fecha_compromiso_accion?: string | null;
+  estado_accion?: string | null;
+  
+  estado: 'abierta' | 'cerrada' | 'cancelada';
+  created_at: string;
+  updated_at: string;
+
+  // Relaciones cargadas
+  project?: { id: string; name: string };
+  sector?: ObraSector;
+  wbs_element?: { id: string; name: string };
+  budget_item?: { id: string; description: string; unit: string };
+  paradas?: ObraRegistroParada[];
+};
+
+export type ObraRegistroParada = {
+  id: string;
+  tenant_id: string;
+  tarea_id: string;
+  project_id: string;
+  fecha: string;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  duracion_minutos: number;
+  motivo_parada: string;
+  submotivo?: string | null;
+  impacto_hh: number;
+  costo_estimado_ars: number;
+  accion_inmediata?: string | null;
+  responsable?: string | null;
+  purchase_request_id?: string | null;
+  created_at: string;
+};
+
+

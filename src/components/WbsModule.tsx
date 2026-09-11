@@ -4,10 +4,11 @@ import {
   Check, Trash2, AlertTriangle, Clock, CheckCircle2, Pencil,
   MessageSquare, TrendingUp, Flag, Users, Wrench, ArrowLeftRight,
   ShoppingCart, FileCheck, DollarSign, Truck, Sparkles, Info, Mic, MicOff,
-  Building2, MapPin, Search, ArrowRight, Briefcase, ArrowLeft
+  Building2, MapPin, Search, ArrowRight, Briefcase, ArrowLeft, Zap
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Wbs3dView } from './Wbs3dView';
+import { ObraRendimientosTab } from './ObraRendimientosTab';
 import { useImplementationStore } from '../store/useImplementationStore';
 import {
   useProjects, useCreateProject, useUpdateProject, useDeleteProject,
@@ -28,7 +29,7 @@ import type {
 } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 
-type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d' | 'documentos';
+type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'rendimientos' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d' | 'documentos';
 
 const PHASE_COLORS: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700',
@@ -435,6 +436,7 @@ export const WbsModule: React.FC = () => {
     { id: 'planificacion', label: 'Planificación', emoji: '📋', icon: Target },
     { id: 'programacion', label: 'Programación', emoji: '📅', icon: Calendar },
     { id: 'ejecucion', label: 'Ejecución', emoji: '🔨', icon: BarChart3 },
+    { id: 'rendimientos', label: 'Rendimientos & Tareas', emoji: '⚡', icon: Zap },
     { id: 'avance3d', label: 'Avance 3D', emoji: '✨', icon: Sparkles },
     { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
     { id: 'movimientos', label: 'Movimientos', emoji: '📦', icon: ArrowLeftRight },
@@ -751,6 +753,7 @@ export const WbsModule: React.FC = () => {
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
+          {tab === 'rendimientos' && <ObraRendimientosTab projectId={selectedProjectId!} projectName={selectedProject?.name} />}
           {tab === 'avance3d' && <Wbs3dView wbs={wbs} projectId={selectedProjectId!} />}
           {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
           {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}

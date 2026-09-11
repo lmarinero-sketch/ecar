@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   ClipboardList, Plus, Sun, Cloud, CloudRain, CloudLightning, Snowflake, Wind,
   Check, X, Clock, ChevronDown, ChevronUp, Eye, Camera, Users, Package,
-  Truck, Send, Image as ImageIcon, Trash2, Search,
+  Truck, Send, Image as ImageIcon, Trash2, Search, Zap
 } from 'lucide-react';
 import {
   usePartesDiarios, useCreateParteDiario, useUpdateParteDiario, useProjects,
@@ -16,6 +16,7 @@ import {
 import { supabase } from '../lib/supabase';
 import type { ParteDiario } from '../lib/types';
 import { CarpetaObraButton } from './CarpetaObraButton';
+import { ObraRendimientosTab } from './ObraRendimientosTab';
 
 const CLIMA_ICONS: Record<string, React.ElementType> = { despejado: Sun, nublado: Cloud, lluvia: CloudRain, tormenta: CloudLightning, nieve: Snowflake, ventoso: Wind };
 const CLIMA_LABELS: Record<string, string> = { despejado: 'Despejado', nublado: 'Nublado', lluvia: 'Lluvia', tormenta: 'Tormenta', nieve: 'Nieve', ventoso: 'Ventoso' };
@@ -63,6 +64,8 @@ export const FieldModule: React.FC = () => {
   const updateParte = useUpdateParteDiario();
   const [showForm, setShowForm] = useState(false);
   const [selectedParte, setSelectedParte] = useState<ParteDiario | null>(null);
+  const [fieldView, setFieldView] = useState<'partes' | 'rendimientos'>('partes');
+  const [selectedObraId, setSelectedObraId] = useState<string>('');
 
   const [form, setForm] = useState({
     obra_id: '', fecha: new Date().toISOString().split('T')[0], clima: 'despejado',
@@ -120,15 +123,65 @@ export const FieldModule: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardList size={120} /></div>
-        <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2">
-            <ClipboardList size={24} /> Parte Diario de Obra
-          </h3>
-          <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
-            Doc PR-GO-01 §4.4 — Registro diario de actividades, personal, fotos y solicitudes de materiales
-          </p>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-2xl flex items-center gap-2">
+              <ClipboardList size={24} /> Gestión Operativa de Obra & Campo
+            </h3>
+            <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
+              Doc PR-GO-01 — Registro diario oficial, control de cuadrillas, rendimientos por hora y paradas
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-sm p-1 rounded-xl border border-white/10 self-start md:self-auto">
+            <button
+              onClick={() => setFieldView('partes')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                fieldView === 'partes' ? 'bg-white text-ecar-blue shadow-md' : 'text-gray-200 hover:text-white'
+              }`}
+            >
+              <ClipboardList size={15} /> Partes Diarios
+            </button>
+            <button
+              onClick={() => {
+                setFieldView('rendimientos');
+                if (!selectedObraId && projects.length > 0) {
+                  setSelectedObraId(projects[0].id);
+                }
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                fieldView === 'rendimientos' ? 'bg-white text-ecar-blue shadow-md' : 'text-gray-200 hover:text-white'
+              }`}
+            >
+              <Zap size={15} /> Tareas & Rendimientos
+            </button>
+          </div>
         </div>
       </div>
+
+      {fieldView === 'rendimientos' ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+            <span className="text-xs font-bold text-gray-500 uppercase">Seleccionar Frente de Obra:</span>
+            <select
+              value={selectedObraId}
+              onChange={e => setSelectedObraId(e.target.value)}
+              className="px-3 py-1.5 border border-gray-300 rounded-xl text-xs font-bold text-gray-800 focus:outline-none"
+            >
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          {selectedObraId && (
+            <ObraRendimientosTab
+              projectId={selectedObraId}
+              projectName={projects.find(p => p.id === selectedObraId)?.name}
+            />
+          )}
+        </div>
+      ) : (
+        <>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -306,6 +359,8 @@ export const FieldModule: React.FC = () => {
 
       {/* ═══════ ORDENES DE TRABAJO INTERNA (OTI) ═══════ */}
       
+        </>
+      )}
     </div>
   );
 };

@@ -8,7 +8,7 @@ import {
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
-  Activity, BookOpen, FileText, PieChart, Mail, Building2
+  Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe
 } from 'lucide-react';
 import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -437,6 +437,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <span className="group-hover:text-slate-500 transition-colors">Buscar...</span>
               <kbd className="ml-auto text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200/80 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
             </div>
+
+            {/* Link a Web Pública / Showcase */}
+            <a
+              href="/paginaweb"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100 hover:text-sky-900 shadow-sm"
+              title="Ver Página Web Institucional y Showcase 3D"
+            >
+              <Globe size={13} className="text-sky-600" />
+              <span className="hidden sm:inline">Página Web</span>
+            </a>
 
             {/* Tour toggle */}
             <button

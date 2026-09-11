@@ -24,7 +24,8 @@ import type {
   FleetMaintenanceOrder, FleetTire,
   QualityChecklist,
   PurchaseInvoiceItem, InventoryItemPriceHistory,
-  SupplierPayment
+  SupplierPayment,
+  ObraSector, ObraControlTarea
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -4557,3 +4558,282 @@ export function useUpdateQualityChecklist() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['quality_checklists'] }),
   });
 }
+
+// ========== CONTROL DE OBRA Y RENDIMIENTOS (ROQUE) ==========
+
+export function useObraSectores(projectId?: string) {
+  return useQuery({
+    queryKey: ['obra_sectores', projectId],
+    queryFn: async () => {
+      let q = supabase.from('obra_sectores').select('*').eq('activo', true).order('nombre');
+      if (projectId) q = q.eq('project_id', projectId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ObraSector[];
+    },
+    enabled: !projectId || !!projectId,
+  });
+}
+
+export function useCreateObraSector() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sector: Partial<ObraSector>) => {
+      const { data, error } = await supabase
+        .from('obra_sectores')
+        .insert({ ...sector, tenant_id: ECAR_TENANT_ID })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as ObraSector;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['obra_sectores'] }),
+  });
+}
+
+export function useObraControlTareas(projectId?: string, fecha?: string) {
+  return useQuery({
+    queryKey: ['obra_control_tareas', projectId, fecha],
+    queryFn: async () => {
+      let q = supabase
+        .from('obra_control_tareas')
+        .select(`
+          *,
+          project:projects(id, name),
+          sector:obra_sectores(*),
+          wbs_element:wbs_elements(id, name),
+          budget_item:budget_items(id, description, unit),
+          paradas:obra_registro_paradas(*)
+        `)
+        .order('fecha_plan', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (projectId) q = q.eq('project_id', projectId);
+      if (fecha) q = q.eq('fecha_plan', fecha);
+
+      const { data, error } = await q.limit(100);
+      if (error) throw error;
+      return data as ObraControlTarea[];
+    },
+  });
+}
+
+export function useCreateObraControlTarea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (tarea: Partial<ObraControlTarea>) => {
+      // Auto-generar código si no viene
+      let codigo = tarea.codigo_tarea;
+      if (!codigo) {
+        const rnd = Math.floor(1000 + Math.random() * 9000);
+        codigo = `T-${rnd}`;
+      }
+
+      // Cálculos iniciales de planificación
+      const cantPlan = Number(tarea.cantidad_plan) || 0;
+      const persPlan = Number(tarea.personal_plan_count) || 1;
+      const rendObj = Number(tarea.rendimiento_objetivo_h) || 0;
+      
+      // Estimar horas planificadas basadas en horario
+      let hsPlan = 8;
+      if (tarea.hora_inicio_plan && tarea.hora_fin_plan) {
+        const [h1, m1] = tarea.hora_inicio_plan.split(':').map(Number);
+        const [h2, m2] = tarea.hora_fin_plan.split(':').map(Number);
+        const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff > 0) hsPlan = diff / 60;
+      }
+      const hhPlan = persPlan * hsPlan;
+
+      const payload = {
+        ...tarea,
+        codigo_tarea: codigo,
+        tenant_id: ECAR_TENANT_ID,
+        hh_plan: hhPlan,
+        rendimiento_objetivo_h: rendObj || (hsPlan > 0 ? Number((cantPlan / hsPlan).toFixed(2)) : 0),
+        estado: 'abierta',
+      };
+
+      const { data, error } = await supabase
+        .from('obra_control_tareas')
+        .insert(payload)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as ObraControlTarea;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_control_tareas'] });
+    },
+  });
+}
+
+export function useCerrarObraControlTarea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      hora_inicio_real,
+      hora_fin_real,
+      cantidad_real,
+      personal_real_count,
+      minutos_parada,
+      motivo_desvio,
+      observaciones,
+      accion_correctiva,
+      responsable_accion,
+      fecha_compromiso_accion,
+      paradas = []
+    }: {
+      id: string;
+      hora_inicio_real: string;
+      hora_fin_real: string;
+      cantidad_real: number;
+      personal_real_count: number;
+      minutos_parada: number;
+      motivo_desvio?: string;
+      observaciones?: string;
+      accion_correctiva?: string;
+      responsable_accion?: string;
+      fecha_compromiso_accion?: string;
+      paradas?: Array<{ motivo: string; minutos: number; detalle?: string }>;
+    }) => {
+      // 1. Obtener la tarea para comparar con lo planificado
+      const { data: tareaActual, error: fetchErr } = await supabase
+        .from('obra_control_tareas')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      // 2. Calcular horas trabajadas reales
+      let hsReales = 8;
+      if (hora_inicio_real && hora_fin_real) {
+        const [h1, m1] = hora_inicio_real.split(':').map(Number);
+        const [h2, m2] = hora_fin_real.split(':').map(Number);
+        const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff > 0) hsReales = Number((diff / 60).toFixed(2));
+      }
+
+      const minParada = Number(minutos_parada) || 0;
+      const hsParada = minParada / 60;
+      const hsProductivas = Math.max(0, Number((hsReales - hsParada).toFixed(2)));
+      const cantReal = Number(cantidad_real) || 0;
+      const cantPlan = Number(tareaActual.cantidad_plan) || 1;
+      const persReal = Number(personal_real_count) || Number(tareaActual.personal_plan_count) || 1;
+      const hhReal = Number((persReal * hsReales).toFixed(2));
+
+      // Fórmulas exactas del Excel de Roque
+      const cumplimientoPct = Number(((cantReal / cantPlan) * 100).toFixed(1));
+      const rendRealH = hsProductivas > 0 ? Number((cantReal / hsProductivas).toFixed(2)) : 0;
+      const hhPorUnidad = cantReal > 0 ? Number((hhReal / cantReal).toFixed(3)) : 0;
+      const utilizacionTiempoPct = hsReales > 0 ? Number(((hsProductivas / hsReales) * 100).toFixed(1)) : 100;
+      const rendObjetivo = Number(tareaActual.rendimiento_objetivo_h) || 0;
+      const indiceProductividad = rendObjetivo > 0 ? Number((rendRealH / rendObjetivo).toFixed(2)) : 1;
+      const desvioHoras = Number((hsReales - (tareaActual.hh_plan / (tareaActual.personal_plan_count || 1))).toFixed(2));
+
+      // 3. Actualizar la tarea en BD
+      const { data: updatedTarea, error: updateErr } = await supabase
+        .from('obra_control_tareas')
+        .update({
+          estado: 'cerrada',
+          fecha_cierre: new Date().toISOString().split('T')[0],
+          hora_inicio_real,
+          hora_fin_real,
+          horas_reales: hsReales,
+          minutos_parada: minParada,
+          horas_productivas: hsProductivas,
+          cantidad_real: cantReal,
+          personal_real_count: persReal,
+          hh_real: hhReal,
+          cumplimiento_pct: cumplimientoPct,
+          rendimiento_real_h: rendRealH,
+          hh_por_unidad: hhPorUnidad,
+          utilizacion_tiempo_pct: utilizacionTiempoPct,
+          indice_productividad: indiceProductividad,
+          desvio_horas: desvioHoras,
+          motivo_desvio: motivo_desvio || null,
+          observaciones: observaciones || null,
+          accion_correctiva: accion_correctiva || null,
+          responsable_accion: responsable_accion || null,
+          fecha_compromiso_accion: fecha_compromiso_accion || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      // 4. Si hay paradas desglosadas, insertarlas en obra_registro_paradas
+      if (paradas.length > 0) {
+        const paradasRows = paradas.map(p => ({
+          tenant_id: ECAR_TENANT_ID,
+          tarea_id: id,
+          project_id: tareaActual.project_id,
+          fecha: tareaActual.fecha_plan,
+          duracion_minutos: p.minutos,
+          motivo_parada: p.motivo,
+          submotivo: p.detalle || null,
+          impacto_hh: Number(((p.minutos / 60) * persReal).toFixed(2)),
+        }));
+        await supabase.from('obra_registro_paradas').insert(paradasRows);
+      }
+
+      return updatedTarea as ObraControlTarea;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_control_tareas'] });
+      qc.invalidateQueries({ queryKey: ['partes_diarios'] });
+    },
+  });
+}
+
+export function useConsolidarTareaEnParteDiario() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tareaId, parteId }: { tareaId: string; parteId: string }) => {
+      // 1. Obtener tarea
+      const { data: tarea, error: tErr } = await supabase
+        .from('obra_control_tareas')
+        .select('*')
+        .eq('id', tareaId)
+        .single();
+      if (tErr) throw tErr;
+
+      // 2. Obtener parte diario
+      const { data: parte, error: pErr } = await supabase
+        .from('parte_diario')
+        .select('*')
+        .eq('id', parteId)
+        .single();
+      if (pErr) throw pErr;
+
+      // 3. Anexar al trabajo realizado del parte
+      const textoTarea = `\n- [Tarea ${tarea.codigo_tarea}] ${tarea.actividad} en ${tarea.sector_nombre || 'Sector general'}${tarea.manzana ? ` Mza ${tarea.manzana}` : ''}${tarea.nodos_tramo ? ` Tramo ${tarea.nodos_tramo}` : ''}: Realizado ${tarea.cantidad_real} ${tarea.unidad_medida} (Rendimiento: ${tarea.rendimiento_real_h} ${tarea.unidad_medida}/h, ${tarea.cumplimiento_pct}% cumplimiento).`;
+      
+      const nuevoTrabajo = parte.trabajo_realizado ? `${parte.trabajo_realizado}${textoTarea}` : textoTarea.trim();
+
+      await supabase
+        .from('parte_diario')
+        .update({
+          trabajo_realizado: nuevoTrabajo,
+          // Vincular avance si corresponde
+          avance_porcentual: Math.max(parte.avance_porcentual || 0, Math.min(100, Math.round(tarea.cumplimiento_pct))),
+        })
+        .eq('id', parteId);
+
+      // Vincular tarea con parte
+      await supabase
+        .from('obra_control_tareas')
+        .update({ parte_diario_id: parteId })
+        .eq('id', tareaId);
+
+      return true;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_control_tareas'] });
+      qc.invalidateQueries({ queryKey: ['partes_diarios'] });
+    },
+  });
+}
+
