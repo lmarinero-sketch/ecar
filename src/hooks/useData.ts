@@ -25,7 +25,8 @@ import type {
   QualityChecklist,
   PurchaseInvoiceItem, InventoryItemPriceHistory,
   SupplierPayment,
-  ObraSector, ObraControlTarea
+  ObraSector, ObraControlTarea,
+  ObraActividadCatalogo, ObraCuadrilla, SeguridadInformeSemanal
 } from '../lib/types';
 
 // ========== PROJECTS ==========
@@ -4836,4 +4837,152 @@ export function useConsolidarTareaEnParteDiario() {
     },
   });
 }
+
+// ========== CATÁLOGO ACTIVIDADES ROQUE ==========
+
+export function useObraActividadesCatalogo() {
+  return useQuery({
+    queryKey: ['obra_actividades_catalogo'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('obra_actividades_catalogo')
+        .select('*')
+        .eq('activo', true)
+        .order('codigo', { ascending: true });
+      if (error) throw error;
+      return data as ObraActividadCatalogo[];
+    },
+  });
+}
+
+// ========== CUADRILLAS DE OBRA ==========
+
+export function useObraCuadrillas(projectId?: string) {
+  return useQuery({
+    queryKey: ['obra_cuadrillas', projectId],
+    queryFn: async () => {
+      let q = supabase
+        .from('obra_cuadrillas')
+        .select('*')
+        .eq('activo', true)
+        .order('codigo', { ascending: true });
+
+      if (projectId) {
+        q = q.or(`project_id.is.null,project_id.eq.${projectId}`);
+      }
+
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ObraCuadrilla[];
+    },
+  });
+}
+
+export function useCreateObraCuadrilla() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cuadrilla: Partial<ObraCuadrilla>) => {
+      const { data, error } = await supabase
+        .from('obra_cuadrillas')
+        .insert({
+          ...cuadrilla,
+          tenant_id: ECAR_TENANT_ID,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as ObraCuadrilla;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_cuadrillas'] });
+    },
+  });
+}
+
+// ========== INFORMES SEMANALES DE HIGIENE Y SEGURIDAD ==========
+
+export function useSeguridadInformesSemanales(projectId?: string) {
+  return useQuery({
+    queryKey: ['seguridad_informes_semanales', projectId],
+    queryFn: async () => {
+      let q = supabase
+        .from('seguridad_informes_semanales')
+        .select(`
+          *,
+          project:projects(id, name)
+        `)
+        .order('periodo_desde', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (projectId) {
+        q = q.eq('project_id', projectId);
+      }
+
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as SeguridadInformeSemanal[];
+    },
+  });
+}
+
+export function useCreateSeguridadInformeSemanal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (informe: Partial<SeguridadInformeSemanal>) => {
+      const { data, error } = await supabase
+        .from('seguridad_informes_semanales')
+        .insert({
+          ...informe,
+          tenant_id: ECAR_TENANT_ID,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as SeguridadInformeSemanal;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seguridad_informes_semanales'] });
+    },
+  });
+}
+
+export function useUpdateSeguridadInformeSemanal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<SeguridadInformeSemanal> }) => {
+      const { data, error } = await supabase
+        .from('seguridad_informes_semanales')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as SeguridadInformeSemanal;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seguridad_informes_semanales'] });
+    },
+  });
+}
+
+export function useDeleteSeguridadInformeSemanal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('seguridad_informes_semanales')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seguridad_informes_semanales'] });
+    },
+  });
+}
+
 

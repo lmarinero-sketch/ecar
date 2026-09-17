@@ -2,22 +2,71 @@ import React, { useState, useMemo } from 'react';
 import {
   Zap, Clock, Plus, CheckCircle2, AlertTriangle, FileText,
   HardHat, Calendar, Printer, Check, X, ShoppingCart,
-  MapPin, Gauge
+  MapPin, Gauge, FileSpreadsheet, UploadCloud, Users, BarChart3,
+  Layers, RefreshCw
 } from 'lucide-react';
 import {
   useObraControlTareas, useCreateObraControlTarea, useCerrarObraControlTarea,
   useConsolidarTareaEnParteDiario, useObraSectores, useCreateObraSector,
   useEmployees, usePartesDiarios, useBudgets, useBudgetItems,
-  useFuelVehicles, useCreatePurchaseRequest
+  useFuelVehicles, useCreatePurchaseRequest,
+  useObraActividadesCatalogo, useObraCuadrillas
 } from '../hooks/useData';
 import type { ObraControlTarea } from '../lib/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface ObraRendimientosTabProps {
   projectId: string;
   projectName?: string;
 }
+
+export const ROQUE_43_SECTORES = [
+  { nombre: "SEC001-N25-N30", manzana: "MzaA", pasaje: "Pasaje 3", nodos_tramo: "N25-N30", longitud_ml: 76.0, diametro: "Ø75" },
+  { nombre: "SEC002-N30-N29", manzana: "MzaA", pasaje: "Pasaje 8", nodos_tramo: "N30-N29", longitud_ml: 106.0, diametro: "Ø75" },
+  { nombre: "SEC003-N29-N22", manzana: "MzaA", pasaje: "Pasaje 4", nodos_tramo: "N29-N22", longitud_ml: 92.0, diametro: "Ø75" },
+  { nombre: "SEC004-N22-N24", manzana: "MzaA", pasaje: "Pasaje 2", nodos_tramo: "N22-N24", longitud_ml: 96.0, diametro: "Ø110" },
+  { nombre: "SEC005-N24-N25", manzana: "MzaA", pasaje: "Pasaje 2", nodos_tramo: "N24-N25", longitud_ml: 15.0, diametro: "Ø110" },
+  { nombre: "SEC006-N29-N28", manzana: "MzaB", pasaje: "Pasaje 8", nodos_tramo: "N29-N28", longitud_ml: 100.0, diametro: "Ø75" },
+  { nombre: "SEC007-N28-N21", manzana: "MzaB", pasaje: "Pasaje 5", nodos_tramo: "N28-N21", longitud_ml: 102.0, diametro: "Ø75" },
+  { nombre: "SEC008-N20-N21", manzana: "MzaB", pasaje: "Pasaje 2", nodos_tramo: "N20-N21", longitud_ml: 97.0, diametro: "Ø110" },
+  { nombre: "SEC009-N21-N22", manzana: "MzaB", pasaje: "Pasaje 2", nodos_tramo: "N21-N22", longitud_ml: 2.0, diametro: "Ø110" },
+  { nombre: "SEC010-N28-N27", manzana: "MzaC", pasaje: "Pasaje 8", nodos_tramo: "N28-N27", longitud_ml: 82.0, diametro: "Ø75" },
+  { nombre: "SEC011-N27-N19", manzana: "MzaC", pasaje: "Pasaje 6", nodos_tramo: "N27-N19", longitud_ml: 117.0, diametro: "Ø110" },
+  { nombre: "SEC012-N19-N20", manzana: "MzaC", pasaje: "Pasaje 2", nodos_tramo: "N19-N20", longitud_ml: 77.0, diametro: "Ø110" },
+  { nombre: "SEC013-N27-N26", manzana: "MzaD", pasaje: "Pasaje 8", nodos_tramo: "N27-N26", longitud_ml: 81.0, diametro: "Ø75" },
+  { nombre: "SEC014-N26-N18", manzana: "MzaD", pasaje: "Pasaje 7", nodos_tramo: "N26-N18", longitud_ml: 113.0, diametro: "Ø75" },
+  { nombre: "SEC015-N18-N19", manzana: "MzaD", pasaje: "Pasaje 2", nodos_tramo: "N18-N19", longitud_ml: 88.0, diametro: "Ø110" },
+  { nombre: "SEC016-N13-N23", manzana: "Mza E", pasaje: "Pasaje 3", nodos_tramo: "N13-N23", longitud_ml: 78.0, diametro: "Ø75" },
+  { nombre: "SEC017-N23-N24", manzana: "Mza E", pasaje: "Pasaje 3", nodos_tramo: "N23-N24", longitud_ml: 8.0, diametro: "Ø110" },
+  { nombre: "SEC018-N20-N12", manzana: "Mza E", pasaje: "Pasaje 5", nodos_tramo: "N20-N12", longitud_ml: 98.0, diametro: "Ø75" },
+  { nombre: "SEC019-N12-N13", manzana: "Mza E", pasaje: "Pasaje 9", nodos_tramo: "N12-N13", longitud_ml: 200.0, diametro: "Ø75" },
+  { nombre: "SEC020-N18-N17", manzana: "F", pasaje: "Pasaje 14", nodos_tramo: "N18-N17", longitud_ml: 24.0, diametro: "Ø110" },
+  { nombre: "SEC021-N17-N11", manzana: "F", pasaje: "Pasaje 9", nodos_tramo: "N17-N11", longitud_ml: 92.0, diametro: "Ø75" },
+  { nombre: "SEC022-N11-N12", manzana: "F", pasaje: "Pasaje 9", nodos_tramo: "N11-N12", longitud_ml: 182.0, diametro: "Ø75" },
+  { nombre: "SEC023-N17-N15", manzana: "G", pasaje: "Pasaje 2", nodos_tramo: "N17-N15", longitud_ml: 245.0, diametro: "Ø110" },
+  { nombre: "SEC024-N16-N15", manzana: "G", pasaje: "Pasaje 2", nodos_tramo: "N16-N15", longitud_ml: 7.0, diametro: "Ø75" },
+  { nombre: "SEC025-N15-N10", manzana: "G", pasaje: "Pasaje 2", nodos_tramo: "N15-N10", longitud_ml: 81.0, diametro: "Ø110" },
+  { nombre: "SEC026-N10-N9", manzana: "G", pasaje: "Pasaje 2", nodos_tramo: "N10-N9", longitud_ml: 10.0, diametro: "Ø110" },
+  { nombre: "SEC027-N9-N11", manzana: "G", pasaje: "Pasaje 2", nodos_tramo: "N9-N11", longitud_ml: 210.0, diametro: "Ø75" },
+  { nombre: "SEC028-N16-N14", manzana: "H", pasaje: "", nodos_tramo: "N16-N14", longitud_ml: 136.0, diametro: "Ø75" },
+  { nombre: "SEC029-N14-N8", manzana: "H", pasaje: "", nodos_tramo: "N14-N8", longitud_ml: 110.0, diametro: "Ø75" },
+  { nombre: "SEC030-N8-N10", manzana: "H", pasaje: "", nodos_tramo: "N8-N10", longitud_ml: 140.0, diametro: "Ø75" },
+  { nombre: "SEC031-N7-N11", manzana: "I", pasaje: "", nodos_tramo: "N7-N11", longitud_ml: 80.0, diametro: "Ø75" },
+  { nombre: "SEC032-N9-N6", manzana: "I", pasaje: "", nodos_tramo: "N9-N6", longitud_ml: 91.0, diametro: "Ø110" },
+  { nombre: "SEC033-N6-N5", manzana: "I", pasaje: "", nodos_tramo: "N6-N5", longitud_ml: 10.0, diametro: "Ø110" },
+  { nombre: "SEC034-N5-N7", manzana: "I", pasaje: "", nodos_tramo: "N5-N7", longitud_ml: 188.0, diametro: "Ø75" },
+  { nombre: "SEC035-N8-N4", manzana: "J", pasaje: "", nodos_tramo: "N8-N4", longitud_ml: 118.0, diametro: "Ø75" },
+  { nombre: "SEC036-N4-N6", manzana: "J", pasaje: "", nodos_tramo: "N4-N6", longitud_ml: 167.0, diametro: "Ø75" },
+  { nombre: "SEC037-N3-N7", manzana: "K", pasaje: "", nodos_tramo: "N3-N7", longitud_ml: 64.0, diametro: "Ø75" },
+  { nombre: "SEC038-N5-N2", manzana: "K", pasaje: "", nodos_tramo: "N5-N2", longitud_ml: 55.0, diametro: "Ø110" },
+  { nombre: "SEC039-N2-N3", manzana: "K", pasaje: "", nodos_tramo: "N2-N3", longitud_ml: 190.0, diametro: "Ø75" },
+  { nombre: "SEC040-N4-N1", manzana: "L", pasaje: "", nodos_tramo: "N4-N1", longitud_ml: 82.0, diametro: "Ø75" },
+  { nombre: "SEC041-N1-N2", manzana: "L", pasaje: "", nodos_tramo: "N1-N2", longitud_ml: 165.0, diametro: "Ø75" },
+  { nombre: "SEC042-N2-N32", manzana: "Garita SL", pasaje: "", nodos_tramo: "N2-N32", longitud_ml: 40.0, diametro: "Ø110" },
+  { nombre: "SEC043-N23-N31", manzana: "Garita Interna", pasaje: "", nodos_tramo: "N23-N31", longitud_ml: 84.0, diametro: "Ø110" }
+];
 
 const CAUSAS_PARADA = [
   { id: 'falta_material', label: 'Falta de Material / Insumo', color: 'bg-amber-100 text-amber-800 border-amber-300' },
@@ -31,12 +80,15 @@ const CAUSAS_PARADA = [
 ];
 
 export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projectId, projectName }) => {
+  const [subTab, setSubTab] = useState<'tareas' | 'control_horas' | 'importar'>('tareas');
   const [filterFecha, setFilterFecha] = useState<string>(new Date().toISOString().split('T')[0]);
   const [filterEstado, setFilterEstado] = useState<'todos' | 'abierta' | 'cerrada'>('todos');
 
   // Queries
   const { data: tareas = [], isLoading: loadingTareas } = useObraControlTareas(projectId);
   const { data: sectores = [] } = useObraSectores(projectId);
+  const { data: catalogoActividades = [] } = useObraActividadesCatalogo();
+  const { data: cuadrillas = [] } = useObraCuadrillas(projectId);
   const { data: employees = [] } = useEmployees();
   const { data: vehicles = [] } = useFuelVehicles();
   const { data: partes = [] } = usePartesDiarios(projectId);
@@ -56,6 +108,7 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
   const [showCloseModal, setShowCloseModal] = useState<ObraControlTarea | null>(null);
   const [showSectorModal, setShowSectorModal] = useState(false);
   const [showPedirMaterialModal, setShowPedirMaterialModal] = useState<ObraControlTarea | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Form Nueva Tarea
   const [formTarea, setFormTarea] = useState({
@@ -129,6 +182,130 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
 
     return { total, abiertas, completadas: cerradas.length, cumplimientoPromedio, totalMinutosPerdidos, totalHHReales };
   }, [filteredTareas]);
+
+  // Control de Horas Agrupado por Día (Hoja 'Control Horas' del Excel)
+  const controlHorasDiario = useMemo(() => {
+    const byDate: Record<string, {
+      fecha: string;
+      planificadas: number;
+      terminadas: number;
+      hsPlan: number;
+      hsReal: number;
+      hhPlan: number;
+      hhReal: number;
+      minutosParada: number;
+    }> = {};
+
+    tareas.forEach(t => {
+      const f = t.fecha_plan || 'Sin fecha';
+      if (!byDate[f]) {
+        byDate[f] = { fecha: f, planificadas: 0, terminadas: 0, hsPlan: 0, hsReal: 0, hhPlan: 0, hhReal: 0, minutosParada: 0 };
+      }
+      byDate[f].planificadas += 1;
+      if (t.estado === 'cerrada') byDate[f].terminadas += 1;
+      
+      const hsP = 8;
+      byDate[f].hsPlan += hsP;
+      byDate[f].hsReal += (t.horas_reales || 0);
+      byDate[f].hhPlan += (t.hh_plan || 0);
+      byDate[f].hhReal += (t.hh_real || 0);
+      byDate[f].minutosParada += (t.minutos_parada || 0);
+    });
+
+    return Object.values(byDate).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  }, [tareas]);
+
+  // Selección rápida de Actividad del Catálogo Estándar Roque
+  const handleSelectCatalogoActividad = (codigo: string) => {
+    const act = catalogoActividades.find(a => a.codigo === codigo);
+    if (!act) return;
+    setFormTarea(prev => ({
+      ...prev,
+      actividad: act.actividad,
+      unidad_medida: act.unidad,
+      rendimiento_objetivo_h: String(Number((act.rendimiento_base_dia / 8).toFixed(2))),
+      equipo_asignado: act.equipo_sugerido || prev.equipo_asignado,
+    }));
+  };
+
+  // Selección rápida de Cuadrilla Estándar
+  const handleSelectCuadrilla = (codigo: string) => {
+    const cuad = cuadrillas.find(c => c.codigo === codigo);
+    if (!cuad) return;
+    setFormTarea(prev => ({
+      ...prev,
+      cuadrilla_nombre: `${cuad.codigo} - ${cuad.nombre}`,
+      personal_plan_count: String(cuad.integrantes_nombres?.length || 2),
+      responsable_id: cuad.responsable_id || prev.responsable_id,
+      equipo_asignado: cuad.equipo_principal || prev.equipo_asignado,
+    }));
+  };
+
+  // Importar los 43 Sectores Oficiales de Roque con 1 clic
+  const handleCargarSectoresRoqueDefault = async () => {
+    if (!confirm('¿Cargar los 43 sectores oficiales de Loteo Roque a este proyecto?')) return;
+    setIsImporting(true);
+    try {
+      let cargados = 0;
+      for (const s of ROQUE_43_SECTORES) {
+        const existe = sectores.some(sec => sec.nombre === s.nombre);
+        if (!existe) {
+          await createSector.mutateAsync({
+            project_id: projectId,
+            nombre: s.nombre,
+            manzana: s.manzana,
+            nodos_tramo: s.nodos_tramo,
+            descripcion: `Longitud: ${s.longitud_ml} ml | Diámetro: ${s.diametro}${s.pasaje ? ` | ${s.pasaje}` : ''}`,
+          });
+          cargados++;
+        }
+      }
+      alert(`¡Sectores procesados! Se incorporaron ${cargados} nuevos sectores.`);
+    } catch (e: any) {
+      alert(`Error al importar sectores: ${e.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Parsear archivo Excel (.xlsx) subido por el usuario
+  const handleImportExcelFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      
+      let sectoresCreados = 0;
+      if (wb.SheetNames.includes('Base Sectores')) {
+        const ws = wb.Sheets['Base Sectores'];
+        const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        for (let r = 4; r < data.length; r++) {
+          const row = data[r];
+          if (row && row[0] && String(row[0]).startsWith('SEC')) {
+            const secNombre = String(row[0]);
+            if (!sectores.some(s => s.nombre === secNombre)) {
+              await createSector.mutateAsync({
+                project_id: projectId,
+                nombre: secNombre,
+                manzana: String(row[2] || ''),
+                nodos_tramo: String(row[6] || `${row[4] || ''}-${row[5] || ''}`),
+                descripcion: `Longitud: ${row[7] || 0} ml | Diámetro: ${row[8] || 'Ø75'} | Pasaje: ${row[3] || ''}`,
+              });
+              sectoresCreados++;
+            }
+          }
+        }
+      }
+
+      alert(`Importación completada con éxito. Se importaron ${sectoresCreados} sectores desde el archivo.`);
+    } catch (err: any) {
+      alert(`Error procesando el archivo Excel: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   // Manejar selección de Ítem del Presupuesto (Autocompletar Actividad y Rendimiento)
   const handleSelectBudgetItem = (itemId: string) => {
@@ -368,8 +545,39 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
         </div>
       </div>
 
-      {/* Barra de Filtros y KPIs Rápidos */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+      {/* Selector de Vistas Sub-Tabs */}
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm">
+        <button
+          onClick={() => setSubTab('tareas')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            subTab === 'tareas' ? 'bg-ecar-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <Zap size={15} /> Tareas & Planificación Diaria
+        </button>
+        <button
+          onClick={() => setSubTab('control_horas')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            subTab === 'control_horas' ? 'bg-ecar-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <BarChart3 size={15} /> Control Horas & Efectividad (Roque)
+        </button>
+        <button
+          onClick={() => setSubTab('importar')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            subTab === 'importar' ? 'bg-ecar-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <FileSpreadsheet size={15} /> Importador Excel (.xlsx)
+        </button>
+      </div>
+
+      {/* ─── PESTAÑA: TAREAS & PLANIFICACIÓN DIARIA ─── */}
+      {subTab === 'tareas' && (
+        <>
+          {/* Barra de Filtros y KPIs Rápidos */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-ecar-blue" />
@@ -584,6 +792,158 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
           })}
         </div>
       )}
+        </>
+      )}
+
+      {/* ─── PESTAÑA: CONTROL HORAS & EFECTIVIDAD (HOJA CONTROL HORAS DEL EXCEL) ─── */}
+      {subTab === 'control_horas' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                  <BarChart3 size={18} className="text-ecar-blue" />
+                  Control Diario de Horas, Efectividad y Desvíos (Roque)
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Consolidación diaria de HH planificadas vs reales, cumplimiento de tareas y paradas operativas (PR-GO-01).
+                </p>
+              </div>
+              <div className="text-xs font-mono font-bold bg-blue-50 text-ecar-blue px-3 py-1.5 rounded-xl border border-blue-100">
+                Total Días Registrados: {controlHorasDiario.length}
+              </div>
+            </div>
+
+            {controlHorasDiario.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <Clock size={40} className="mx-auto mb-2 text-gray-300" />
+                <p className="font-medium text-sm">No hay registros de horas en las tareas</p>
+                <p className="text-xs text-gray-400">Las jornadas aparecerán automáticamente al planificar y cerrar tareas.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-gray-600 font-bold uppercase tracking-wider border-b border-gray-200">
+                    <tr>
+                      <th className="py-2.5 px-3">Fecha</th>
+                      <th className="py-2.5 px-3 text-center">Tareas Plan</th>
+                      <th className="py-2.5 px-3 text-center">Tareas Term.</th>
+                      <th className="py-2.5 px-3 text-center">Hs Plan</th>
+                      <th className="py-2.5 px-3 text-center">Hs Real</th>
+                      <th className="py-2.5 px-3 text-center">HH Plan</th>
+                      <th className="py-2.5 px-3 text-center">HH Real</th>
+                      <th className="py-2.5 px-3 text-center">Desvío HH</th>
+                      <th className="py-2.5 px-3 text-center">Cumplimiento</th>
+                      <th className="py-2.5 px-3 text-center">Paradas (min)</th>
+                      <th className="py-2.5 px-3 text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {controlHorasDiario.map(d => {
+                      const desvioHH = Number((d.hhReal - d.hhPlan).toFixed(2));
+                      const pctCumplimiento = d.planificadas > 0 ? Math.round((d.terminadas / d.planificadas) * 100) : 0;
+                      return (
+                        <tr key={d.fecha} className="hover:bg-slate-50/80 transition-all font-mono">
+                          <td className="py-2.5 px-3 font-bold text-gray-800">{d.fecha}</td>
+                          <td className="py-2.5 px-3 text-center font-bold text-gray-700">{d.planificadas}</td>
+                          <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{d.terminadas}</td>
+                          <td className="py-2.5 px-3 text-center">{d.hsPlan}</td>
+                          <td className="py-2.5 px-3 text-center">{d.hsReal.toFixed(1)}</td>
+                          <td className="py-2.5 px-3 text-center">{d.hhPlan.toFixed(1)}</td>
+                          <td className="py-2.5 px-3 text-center font-bold">{d.hhReal.toFixed(1)}</td>
+                          <td className={`py-2.5 px-3 text-center font-bold ${desvioHH <= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {desvioHH > 0 ? `+${desvioHH}` : desvioHH}
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              pctCumplimiento >= 100 ? 'bg-emerald-100 text-emerald-800' : pctCumplimiento >= 50 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {pctCumplimiento}%
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center text-amber-700">{d.minutosParada} min</td>
+                          <td className="py-2.5 px-3 text-right">
+                            <button
+                              onClick={() => {
+                                setFilterFecha(d.fecha);
+                                setSubTab('tareas');
+                              }}
+                              className="text-[11px] font-sans font-bold text-ecar-blue hover:underline"
+                            >
+                              Ver tareas →
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── PESTAÑA: IMPORTADOR EXCEL ROQUE (.XLSX) ─── */}
+      {subTab === 'importar' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: 43 Sectores Oficiales */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-ecar-blue flex-shrink-0">
+                <Layers size={22} />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-gray-900 text-sm">Sectores Oficiales de Roque (43 Sectores)</h4>
+                <p className="text-xs text-gray-400">Pre-cargados desde el archivo de ingeniería y planificación.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1 text-gray-600">
+              <p>• Incluye tramos desde <strong>SEC001-N25-N30</strong> hasta <strong>SEC043-N23-N31</strong>.</p>
+              <p>• Manzanas A a L, Garita SL y Garita Interna con diámetros Ø75 y Ø110 mm.</p>
+              <p className="font-bold text-ecar-blue pt-1">
+                Estado en este proyecto: {sectores.length} sectores actualmente registrados.
+              </p>
+            </div>
+
+            <button
+              onClick={handleCargarSectoresRoqueDefault}
+              disabled={isImporting}
+              className="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2"
+            >
+              {isImporting ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+              Cargar los 43 Sectores Oficiales a la Base de Datos
+            </button>
+          </div>
+
+          {/* Card 2: Subir archivo Excel */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                <FileSpreadsheet size={22} />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-gray-900 text-sm">Subir Libro Excel (.xlsx)</h4>
+                <p className="text-xs text-gray-400">Importá directamente ECAR_Control_Obra_Rendimientos_Roque.xlsx</p>
+              </div>
+            </div>
+
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center space-y-2 hover:border-ecar-blue transition-all">
+              <UploadCloud size={32} className="mx-auto text-gray-400" />
+              <p className="text-xs font-bold text-gray-700">Seleccioná o arrastrá tu planilla Excel</p>
+              <p className="text-[10px] text-gray-400">Lee las hojas "Base Sectores", "Cuadrillas" y "Programacion".</p>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcelFile}
+                disabled={isImporting}
+                className="block mx-auto text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-ecar-blue hover:file:bg-blue-100 cursor-pointer pt-2"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── MODAL: NUEVA TAREA (PLANIFICACIÓN EN 30 SEGUNDOS) ─── */}
       {showNewModal && (
@@ -658,6 +1018,32 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
               </div>
             </div>
 
+            {/* Catálogo Estándar Roque */}
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Zap size={14} className="text-amber-500" /> Catálogo Estándar de Actividades (12 Ítems Roque):
+                </label>
+                <span className="text-[10px] text-gray-400">Autocompleta rendimiento y equipo</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                {catalogoActividades.map(act => (
+                  <button
+                    key={act.codigo}
+                    type="button"
+                    onClick={() => handleSelectCatalogoActividad(act.codigo)}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all ${
+                      formTarea.actividad === act.actividad
+                        ? 'bg-ecar-blue text-white border-ecar-blue shadow-sm'
+                        : 'bg-white text-gray-700 border-gray-200 hover:bg-blue-50'
+                    }`}
+                  >
+                    <strong>{act.codigo}</strong>: {act.actividad} ({act.rendimiento_base_dia} {act.unidad}/d)
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Actividad / Tarea a Ejecutar *</label>
               <input
@@ -708,6 +1094,34 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
                 />
               </div>
             </div>
+
+            {/* Plantillas de Cuadrilla Roque */}
+            {cuadrillas.length > 0 && (
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <Users size={14} className="text-ecar-blue" /> Cuadrillas de Obra (Armado de Equipos):
+                  </span>
+                  <span className="text-[10px] text-gray-400">Capataz y personal habitual</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {cuadrillas.map(c => (
+                    <button
+                      key={c.codigo}
+                      type="button"
+                      onClick={() => handleSelectCuadrilla(c.codigo)}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all ${
+                        formTarea.cuadrilla_nombre?.startsWith(c.codigo)
+                          ? 'bg-ecar-blue text-white border-ecar-blue shadow-sm'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <strong>{c.codigo}</strong>: {c.nombre} ({c.responsable_nombre || 'Resp'})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>

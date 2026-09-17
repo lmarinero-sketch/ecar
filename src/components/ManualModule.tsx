@@ -347,27 +347,45 @@ const MODULES_DATA: ModuleDoc[] = [
   {
     id: 'field',
     code: 'MOD-12',
-    name: 'Parte Diario de Obra',
+    name: 'Parte Diario & Control de Rendimientos (Roque)',
     section: 'Operaciones',
     icon: Smartphone,
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-50',
     borderColor: 'border-yellow-500',
-    purpose: 'Registrar el avance diario de cada obra incluyendo personal presente, equipos utilizados, materiales consumidos, clima e incidentes.',
-    scope: 'Una entrada por día por obra activa. Flujo: Borrador → Enviado (desde obra) → Aprobado/Rechazado (desde oficina).',
-    responsible: 'Jefe de Obra (carga) / Administración (aprobación)',
+    purpose: 'Registrar el avance diario de obra e implementar el Control Operativo de Rendimientos Roque, estandarizando 12 actividades PEAD, 3 cuadrillas y 43 sectores físicos con auditoría de HH, desvíos y paradas.',
+    scope: 'Todas las obras activas de la empresa (aplicación prioritaria en Red de Distribución PEAD Loteo Roque / Valdivieso Group). Flujo diario: Planificación 14:50 -> OTI 07:00 -> Cierre 14:30.',
+    responsible: 'Jefe de Obra / Capataz / Dirección Técnica',
     process: [
-      'El jefe de obra ingresa al sistema desde el celular y crea el parte del día.',
-      'Completa: clima (con detección automática de temperatura), personal presente, equipos en uso, materiales utilizados.',
-      'Describe el trabajo realizado y registra el avance porcentual de las tareas WBS.',
-      'Adjunta fotografías del avance de obra (se suben a Supabase Storage).',
-      'Envía el parte: pasa a estado "Enviado" y queda pendiente de aprobación.',
-      'El administrador en oficina revisa, puede rechazarlo con comentarios o aprobarlo.',
-      'Los datos de personal y equipos se integran con el módulo de RRHH y Combustible.'
+      'Planificación operativa diaria a las 14:50 (30 segundos por cuadrilla): selección de actividad estándar del catálogo Roque (AG-REP a AG-PRU) y asignación de sector físico (SEC001 a SEC043).',
+      'El catálogo autocompleta unidad de medida, rendimiento estándar esperado por hora (m/h o un/h), maquinaria requerida y composición de personal.',
+      'Asignación de cuadrillas formales C-01 (Zanjeo/Tendido), C-02 (Tapada/Compactación) o C-03 (Terminaciones/Pruebas) con su responsable y dotación.',
+      'Emisión e impresión a las 07:00 de la Orden de Trabajo Impresa (OTI) en PDF para entrega en mano al capataz antes de iniciar la jornada.',
+      'Cierre diario a las 14:30: registro de cantidades reales ejecutadas, cálculo automático de rendimiento real (HH reales vs estándar) y porcentaje de desvío.',
+      'Declaración de paradas de obra (rotura de máquina, falta de combustible, interferencias o falta de insumos), registrando minutos perdidos.',
+      'Enlace directo a Logística: ante una parada por falta de material o combustible, se genera la Solicitud de Pedido a Pañol con 1 solo clic desde la misma pantalla.',
+      'Carga fotográfica geolocalizada de avance y firma de conformidad digital.'
     ],
-    records: ['Partes diarios por obra', 'Fotos de avance de obra', 'Registro de personal y equipos', 'Historial de aprobaciones'],
-    kpis: ['Partes aprobados vs. enviados', 'Avance porcentual promedio', 'Fotos registradas por obra', 'Tiempo de aprobación promedio'],
-    features: ['Optimizado para celular', 'Adjunto de fotos múltiples', 'Integración con WBS para avances', 'Workflow de aprobación dos niveles']
+    records: [
+      'Partes diarios aprobados',
+      'Planilla Operativa de Rendimientos Roque',
+      'Órdenes de Trabajo Impresas (OTI en PDF)',
+      'Registro de 43 Sectores Físicos con avance acumulado',
+      'Kardex de Paradas de Obra y Pedidos a Pañol vinculados'
+    ],
+    kpis: [
+      'Rendimiento real vs estándar por actividad (m/h)',
+      'Desvío de HH por sector físico (%)',
+      'Minutos perdidos por paradas no programadas',
+      'Cumplimiento de planificación diaria (OTI Ejecutada vs Planificada)'
+    ],
+    features: [
+      'Catálogo de 12 actividades estándar PEAD (AG-REP a AG-PRU)',
+      'Gestor de Cuadrillas C-01 a C-03 y 43 sectores físicos Roque',
+      'Generador e impresor de OTI matutina en PDF',
+      'Cierre operativo en 30 segundos con auditoría de rendimientos',
+      'Disparo automático de solicitudes a Pañol ante paradas'
+    ]
   },
   {
     id: 'wbs',
@@ -397,27 +415,45 @@ const MODULES_DATA: ModuleDoc[] = [
   {
     id: 'safety',
     code: 'MOD-14',
-    name: 'Seguridad & Incidentes',
+    name: 'Seguridad, Incidentes & Informes Semanales (Entregables)',
     section: 'Operaciones',
     icon: ShieldAlert,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-400',
-    purpose: 'Registrar, investigar y dar seguimiento a incidentes de seguridad laboral y observaciones preventivas con evaluación de riesgos.',
-    scope: 'Todos los incidentes, accidentes, cuasi-accidentes y enfermedades laborales. Observaciones preventivas de riesgo en obra.',
-    responsible: 'Responsable de Higiene y Seguridad / Jefe de Obra',
+    purpose: 'Gestionar la seguridad laboral conforme Decreto 911/96 y Res. SRT 905/15, integrando el Generador Oficial de Informes Semanales Técnicos de HyS listos para entrega a Comitente e Inspección.',
+    scope: 'Todas las obras activas, personal directo y subcontratistas. Relevamiento normativo en zanjas, frentes de excavación, maquinarias, señalización y elementos de protección.',
+    responsible: 'Licenciado en Higiene y Seguridad en el Trabajo / Jefe de Obra',
     process: [
-      'Alta de incidente: fecha, hora, tipo (accidente/incidente/cuasi-accidente/enfermedad laboral), gravedad (leve/moderado/grave/fatal).',
-      'Se documenta: persona afectada, testigos, tratamiento recibido, días perdidos.',
-      'Se realiza análisis de causa raíz y se definen acciones correctivas con responsable y fecha límite.',
-      'Se registra si fue notificado a la ART.',
-      'Para observaciones: se usa la matriz 5×5 de riesgo (severidad × probabilidad).',
-      'El estado del incidente pasa por: Abierto → En Investigación → Cerrado.',
-      'Todas las instancias se pueden documentar con fotos adjuntas.'
+      'Inspección y relevamiento técnico semanal en campo según marco regulatorio Decreto 911/96 y Res. SRT 905/15.',
+      'Verificación de condiciones críticas de zanja: talud adecuado o entibado en profundidades >1.50m, retiro de material acopiado a >0.60m del borde y pasarelas peatonales reglamentarias con doble baranda y rodapié.',
+      'Auditoría de frentes de trabajo: señalización de advertencia ("ZANJA ABIERTA", "MAQUINARIA PESADA"), extintor triclase ABC de 10 kg con marbete vigente y botiquín de primeros auxilios.',
+      'Auto-completado del Informe Semanal: el sistema jala automáticamente tareas ejecutadas, clima y observaciones registradas durante los últimos 7 días.',
+      'Carga de grilla de evidencia fotográfica cuádruple: 4 fotos con epígrafe formal técnico descriptivo del frente.',
+      'Si se detecta faltante de extintor, cartelería o botiquín, el sistema permite crear la Solicitud de Pedido a Compras/Pañol con 1 solo clic.',
+      'Generación y descarga del Informe Semanal Entregable en PDF oficial con firma y matrícula profesional del Lic. de HyS (Mat. 1422) y Dirección de Obra.',
+      'Registro de incidentes con análisis de causa raíz y matriz de riesgo preventiva 5x5.'
     ],
-    records: ['Registro de incidentes OSHA', 'Observaciones preventivas', 'Acciones correctivas con seguimiento', 'Notificaciones a la ART'],
-    kpis: ['Índice de frecuencia de accidentes', 'Días perdidos acumulados', 'Observaciones de alto riesgo abiertas', 'Incidentes notificados a ART'],
-    features: ['Clasificación por gravedad (leve/grave/fatal)', 'Matriz de riesgo 5×5', 'Análisis de causa raíz', 'Integración con fotos de obra']
+    records: [
+      'Informes Semanales de HyS Entregables (PDF oficial)',
+      'Registro de Accidentes e Incidentes (Res. SRT 905/15)',
+      'Matriz de Evaluación de Riesgos 5x5',
+      'Actas de inspección de zanjas y frentes de trabajo',
+      'Requerimientos de EPP y cartelería derivados a Logística'
+    ],
+    kpis: [
+      'Índice de Frecuencia de Accidentes (cero accidentes meta)',
+      'Informes semanales entregados en término a comitente (%)',
+      'Frentes de zanja con 100% de cumplimiento en talud y retiro',
+      'Tiempo promedio de resolución de observaciones de seguridad'
+    ],
+    features: [
+      'Generador de Informes Semanales Entregables (Template Word oficial)',
+      'Auto-completado desde Partes Diarios de la semana',
+      'Grilla de 4 fotografías con epígrafes normativos',
+      '1-clic para solicitud de cartelería y matafuegos a Pañol',
+      'Exportación en PDF formal con firmas y matrículas habilitantes'
+    ]
   },
   {
     id: 'inspections',
@@ -911,10 +947,12 @@ const AI_INTEGRATIONS = [
     capabilities: [
       'Cargar cheques dictando datos en texto',
       'Procesar facturas por foto con OCR',
-      'Registrar gastos operativos',
-      'Consultar saldos y cheques a vencer',
-      'Recibir alertas de vencimientos',
-      'Registrar partes diarios de obra'
+      'Registrar gastos operativos y flujo de caja',
+      'Control de Rendimientos Roque (12 actividades PEAD, cuadrillas C-01 a C-03, 43 sectores)',
+      'Generar y auditar Informes Semanales de HyS (Dec. 911/96 y Res. SRT 905/15)',
+      'Disparar pedidos automáticos a Pañol ante paradas de obra o faltante de EPP/señalización',
+      'Consultar saldos, inventario y cheques a vencer',
+      'Registrar partes diarios de obra con clima y horas trabajadas'
     ]
   },
   {

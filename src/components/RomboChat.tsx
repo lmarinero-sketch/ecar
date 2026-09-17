@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck, Download } from 'lucide-react';
+import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck, Download, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
@@ -64,6 +64,18 @@ const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; 
     { icon: FileText, label: 'Módulos soportados', prompt: '¿Cuáles son los módulos del sistema y qué se puede hacer en cada uno?' },
     { icon: Users, label: 'Cargar/borrar cheques', prompt: '¿Cómo hago para cargar y borrar cheques usando WhatsApp?' },
   ],
+  field: [
+    { icon: ClipboardList, label: 'Rendimientos Roque', prompt: '¿Cuáles son las 12 actividades estándar y sus rendimientos en la obra Roque?' },
+    { icon: Users, label: 'Cuadrillas C-01 a C-03', prompt: '¿Cómo están compuestas las cuadrillas C-01, C-02 y C-03 y qué tareas tienen?' },
+    { icon: HardHat, label: 'Avance 43 Sectores', prompt: '¿Cuál es el avance y estado de los 43 sectores del Loteo Roque?' },
+    { icon: Zap, label: 'Parte y Paradas de hoy', prompt: '¿Cómo viene el parte diario de hoy y qué paradas o desvíos se registraron?' },
+  ],
+  safety: [
+    { icon: FileText, label: 'Informe Semanal HyS', prompt: '¿Cómo está el último informe semanal de higiene y seguridad para entregar?' },
+    { icon: ShieldAlert, label: 'Desvíos Dec. 911/96', prompt: '¿Qué desvíos de seguridad (talud, retiro de material >0.60m, pasarelas) se detectaron en zanjas?' },
+    { icon: HardHat, label: 'Pedir EPP / Carteles', prompt: '¿Qué carteles reglamentarios o elementos de seguridad faltan pedir a Pañol?' },
+    { icon: Zap, label: 'Incidentes y Score', prompt: '¿Cuántos días sin accidentes llevamos y cuál es el índice de frecuencia?' },
+  ],
 };
 
 const DEFAULT_QUICK_ACTIONS = [
@@ -89,8 +101,18 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
   obligations: ['⏰ Revisando vencimientos...', '📱 Chequeando recordatorios...', '🔔 Todo al día con las obligaciones...'],
   rrhh: ['👷 Revisando la nómina...', '📋 Chequeando asistencia...', '🪪 Verificando legajos...'],
   inventory: ['📦 Contando stock...', '🔧 Revisando herramientas...', '📋 Controlando el pañol...'],
-  field: ['🏗️ Revisando partes de obra...', '☀️ Chequeando el clima de hoy...', '📝 Monitoreando avance...'],
-  safety: ['🦺 Cero accidentes = objetivo...', '⚠️ Revisando observaciones...', '🔍 Chequeando seguridad...'],
+  field: [
+    '📐 Auditando rendimientos Roque (AG-REP a AG-PRU)...',
+    '👷 Verificando asignación de cuadrillas C-01 a C-03...',
+    '📋 Controlando avance en los 43 sectores...',
+    '⏱️ Registrando horas hombre y desvíos de producción...'
+  ],
+  safety: [
+    '🦺 Compilando informe semanal de HyS (Dec. 911/96)...',
+    '⚠️ Verificando retiro de material a >0.60m y entibado...',
+    '🔍 Chequeando extintores y botiquines en frente...',
+    '📸 Auditando fotos de evidencia para entrega técnica...'
+  ],
   inspections: ['✅ Revisando inspecciones...', '📋 Mirando el punch list...', '🔍 Verificando calidad...'],
   rfi: ['📨 Chequeando consultas abiertas...', '🔍 Revisando RFIs pendientes...', '💡 Analizando impactos...'],
   guide: ['📖 Leyendo el manual...', '💡 Aprendiendo trucos nuevos...', '❓ ¿Tenés alguna duda de cómo se usa algo?'],
@@ -361,24 +383,28 @@ export const RomboChat: React.FC = () => {
     },
 
     field: {
-      where: 'Parte Diario de Obra',
+      where: 'Parte Diario & Rendimientos (Roque)',
       capabilities: [
-        '**Crear el parte de hoy**: decime la obra y qué se hizo',
-        'Consultar **partes anteriores** por obra o fecha',
-        'Aprobar o rechazar **partes pendientes**',
-        'Ver un **resumen semanal** de avance',
+        'Consultar o planificar **tareas con las 12 actividades estándar Roque** (AG-REP a AG-PRU)',
+        'Asignar y auditar **cuadrillas de obra (C-01 a C-03)** y su dotación',
+        'Monitorear avance en los **43 sectores físicos** de obra',
+        'Verificar **horas hombre (HH) y desvíos de rendimiento** vs estándar',
+        'Registrar **paradas de obra y solicitar materiales faltantes a Pañol**',
+        'Crear o consultar el **parte diario general** y clima de hoy',
       ],
-      proTip: 'Puedo crear el parte dictándome: obra, trabajo realizado, y clima. El resto es opcional.',
+      proTip: 'Planificá tareas a las 14:50 en 30 segundos, emití la OTI a las 07:00 y cerrá a las 14:30 auditando desvíos y paradas.',
     },
     safety: {
-      where: 'Seguridad e Incidentes',
+      where: 'Seguridad, Incidentes & Informes Semanales (Entregables)',
       capabilities: [
-        'Revisar **incidentes abiertos** y su gravedad',
-        'Consultar **observaciones de alto riesgo** (matriz 5×5)',
-        'Ver **KPIs de seguridad**: días sin accidente, días perdidos',
-        'Calcular el **índice de frecuencia** de accidentes',
+        'Generar el **Informe Semanal de HyS entregable** (conforme Dec. 911/96 y Res. SRT 905/15)',
+        'Auto-completar informes desde las **observaciones y partes de la semana**',
+        'Auditar **medidas críticas**: zanja >1.50m, retiro de material >0.60m, pasarelas y cartelería',
+        'Verificar **extintores ABC y botiquines de primeros auxilios** en frentes activos',
+        'Pedir **EPP y cartelería faltante a Compras/Pañol** con 1 clic',
+        'Revisar **incidentes y matriz de riesgo 5x5**',
       ],
-      proTip: 'Cumplimiento Res. SRT 905/2015: registro obligatorio de accidentes.',
+      proTip: 'El informe genera un PDF formal con grilla fotográfica cuádruple y epígrafes técnicos listo para presentar a comitente/OSSE.',
     },
     inspections: {
       where: 'Inspecciones & Calidad',

@@ -1927,4 +1927,96 @@ export type ObraRegistroParada = {
   created_at: string;
 };
 
+// ========== CATÁLOGO ACTIVIDADES Y CUADRILLAS ROQUE ==========
+
+export type ObraActividadCatalogo = {
+  id: string;
+  codigo: string;
+  actividad: string;
+  unidad: string;
+  rendimiento_base_dia: number;
+  equipo_sugerido: string | null;
+  activo: boolean;
+};
+
+export type ObraCuadrilla = {
+  id: string;
+  project_id?: string | null;
+  codigo: string;
+  nombre: string;
+  responsable_id?: string | null;
+  responsable_nombre?: string | null;
+  integrantes_nombres: string[];
+  equipo_principal?: string | null;
+  equipo_apoyo?: string | null;
+  observaciones?: string | null;
+  activo: boolean;
+  created_at: string;
+};
+
+// ========== INFORMES SEMANALES DE HIGIENE Y SEGURIDAD ==========
+
+export type SituacionDetectadaHyS = {
+  id?: string;
+  descripcion: string;
+  categoria?: string;
+  sector?: string;
+  nivel_riesgo?: 'bajo' | 'medio' | 'alto' | 'critico';
+};
+
+export type MedidaCorrectivaHyS = {
+  id?: string;
+  descripcion: string;
+  responsable?: string;
+  fecha_implementacion?: string;
+  estado?: 'implementada' | 'en_curso' | 'pendiente';
+};
+
+export type PendienteSeguimientoHyS = {
+  id?: string;
+  item: string;
+  prioridad?: 'baja' | 'media' | 'alta';
+  observacion?: string;
+};
+
+export type FotoEvidenciaHyS = {
+  id: string;
+  url: string;
+  titulo: string;
+  fecha: string;
+  epigrafe: string;
+  sector?: string;
+};
+
+export type SeguridadInformeSemanal = {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  numero_informe: string;
+  periodo_desde: string;
+  periodo_hasta: string;
+  titulo: string;
+  tipo_informe: string;
+  empresa: string;
+  comitente: string;
+  sintesis_ejecutiva: string;
+  alcance: string;
+  actividades_realizadas: string;
+  situaciones_detectadas: SituacionDetectadaHyS[];
+  medidas_correctivas: MedidaCorrectivaHyS[];
+  pendientes_seguimiento: PendienteSeguimientoHyS[];
+  observacion_general: string;
+  responsable_hys_id?: string | null;
+  responsable_hys_nombre?: string | null;
+  matricula_hys?: string | null;
+  responsable_obra_nombre?: string | null;
+  registro_fotografico: FotoEvidenciaHyS[];
+  estado: 'borrador' | 'emitido' | 'entregado';
+  fecha_emision?: string | null;
+  created_at: string;
+  updated_at: string;
+  project?: { id: string; name: string };
+};
+
+
 

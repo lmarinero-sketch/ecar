@@ -193,7 +193,18 @@ export const GuideModule: React.FC = () => {
       ]
     },
     {
-      category: 'Personal y Obra',
+      category: 'Control de Obra & Rendimientos Roque',
+      icon: Users,
+      color: 'bg-yellow-50 text-yellow-800 border-yellow-200',
+      items: [
+        { text: '¿Cuáles son los rendimientos de zanjeo y tendido de hoy en la obra Roque?', type: 'info' },
+        { text: '¿Cuál es el avance actual en los 43 sectores del Loteo Roque?', type: 'info' },
+        { text: 'Registrar parada de cuadrilla C-01 por falta de combustible en zanjadora', type: 'info' },
+        { text: 'Generar el informe semanal de higiene y seguridad para el comitente', type: 'info' }
+      ]
+    },
+    {
+      category: 'Personal y Asistencia',
       icon: Users,
       color: 'bg-slate-50 text-ecar-blue border-ecar-blueLight',
       items: [
@@ -248,18 +259,18 @@ export const GuideModule: React.FC = () => {
       features: ['Envío automático de notificaciones WhatsApp', 'Integración con cronogramas de AFIP', 'Matriz de vencimientos por empresa', 'Historial de pagos documentado']
     },
     {
-      name: 'Parte Diario & Avances',
+      name: 'Parte Diario & Rendimientos (Roque)',
       color: 'border-l-yellow-500',
       icon: '🏗️',
-      description: 'Reportes de campo directos desde las obras con fotos, clima del día obtenido por geolocalización, operarios y tareas ejecutadas.',
-      features: ['Carga rápida optimizada para celular', 'Detección automática de clima/temp', 'Workflow de aprobación oficina-obra', 'Firma digital de conformidad']
+      description: 'Control Operativo de Rendimientos Roque: 12 actividades estándar PEAD (AG-REP a AG-PRU), cuadrillas C-01 a C-03, 43 sectores físicos, OTI matutina y cierre diario a las 14:30.',
+      features: ['12 actividades estándar con rendimientos m/h', 'Gestión de Cuadrillas y 43 sectores oficiales', 'Emisión matutina de OTI en PDF a las 07:00', 'Cierre en 30 segundos y pedido a Pañol ante paradas']
     },
     {
-      name: 'Seguridad & Calidad',
+      name: 'Seguridad & Informes Semanales (Entregables)',
       color: 'border-l-red-500',
       icon: '🦺',
-      description: 'Matriz de riesgo de incidentes, checklists de control de calidad en obra y punch list de no conformidades con plazos de resolución.',
-      features: ['Matriz 5x5 de evaluación de severidad', 'Fichas de incidentes con causa raíz', 'Auditorías de calidad fotográficas', 'Asignación de plazos y responsables']
+      description: 'Gestión integral de Higiene y Seguridad bajo Decreto 911/96 y Res. SRT 905/15. Generador oficial de Informes Semanales de HyS listos para entrega a comitente/OSSE.',
+      features: ['Informes Semanales listos para entrega en PDF', 'Grilla fotográfica cuádruple con epígrafes técnicos', 'Auditoría de zanjas >1.50m, taludes y retiro >0.60m', 'Botón de 1-clic para reposición de carteles y EPP a Pañol']
     },
     {
       name: 'Pipeline Comercial',
@@ -639,6 +650,29 @@ export const GuideModule: React.FC = () => {
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed pl-6">
               Sí. En el *Tablero de Liquidez* y mediante consultas directas a Rombo (ej: <span className="font-semibold text-slate-800">"¿Cómo viene la caja?"</span>), la IA analiza tus cheques a cobrar vs obligaciones e impuestos acumulados en los próximos 7, 15 y 30 días, advirtiéndote si los saldos de banco proyectados son negativos.
+            </p>
+          </div>
+
+          {/* FAQ 5 - Rendimientos Roque */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿Cómo funciona el ciclo operativo diario de rendimientos Roque?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              El ciclo se basa en la planilla oficial de rendimientos de Roque:
+              <br /><strong>1. A las 14:50 (Planificación):</strong> El capataz asigna en 30 segundos las tareas del día siguiente seleccionando una de las 12 actividades estándar PEAD (AG-REP a AG-PRU) y el sector físico (SEC001 a SEC043).
+              <br /><strong>2. A las 07:00 (Inicio):</strong> Se imprime la Orden de Trabajo Impresa (OTI) en PDF para entrega física a la cuadrilla.
+              <br /><strong>3. A las 14:30 (Cierre):</strong> Se carga el avance ejecutado real, calculando el rendimiento real vs estándar y desvíos de HH. Si hubo paradas por rotura de máquina o falta de material, el sistema permite solicitar el insumo a Pañol con 1 solo clic.
+            </p>
+          </div>
+
+          {/* FAQ 6 - Informes HyS Semanales */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-ecar-blue shrink-0" /> ¿Cómo generar el Informe Semanal de Higiene y Seguridad listo para entrega?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              En el módulo de <em>Seguridad & Incidentes</em>, pestaña <strong>Informes Semanales (Entregables)</strong>, hacé clic en <strong>+ Nuevo Informe Semanal</strong>. El sistema auto-completará los frentes y observaciones de los últimos 7 días. Podés adjuntar las 4 fotografías reglamentarias con epígrafes normativos, verificar el cumplimiento de zanjas (talud &gt; 1.50m, retiro &gt; 0.60m) y hacer clic en <strong>Descargar PDF Oficial</strong> para obtener el documento formal con las firmas del Lic. de HyS (Mat. 1422) y Dirección de Obra.
             </p>
           </div>
 

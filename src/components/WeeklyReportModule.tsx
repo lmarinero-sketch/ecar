@@ -7,7 +7,7 @@ import {
 import {
   usePartesDiarios, useProjects, useFuelVehicles,
   usePurchaseRequests, useNonConformities, useScopeChanges,
-  useOpportunities, useBudgets
+  useOpportunities, useBudgets, useSeguridadInformesSemanales
 } from '../hooks/useData';
 
 const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
@@ -21,6 +21,7 @@ export const WeeklyReportModule: React.FC = () => {
   const { data: scopeChanges = [] } = useScopeChanges();
   const { data: opportunities = [] } = useOpportunities();
   const { data: budgets = [] } = useBudgets();
+  const { data: informesHyS = [] } = useSeguridadInformesSemanales();
 
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -208,6 +209,31 @@ export const WeeklyReportModule: React.FC = () => {
           <div className="p-4 space-y-2">
             <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Nuevos esta semana</span><span className="text-sm font-bold text-gray-800">{weekChanges.length}</span></div>
             <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Pendientes de aprobación</span><span className="text-sm font-bold text-amber-600">{openChanges.length}</span></div>
+          </div>
+        </div>
+
+        {/* Higiene & Seguridad (Informes Semanales) */}
+        <div className="light-card overflow-hidden">
+          <div className="p-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+            <ShieldAlert size={14} className="text-emerald-600" />
+            <h4 className="font-bold text-gray-700 text-sm">Higiene & Seguridad</h4>
+          </div>
+          <div className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Informes totales</span>
+              <span className="text-sm font-bold text-gray-800">{informesHyS.length}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Entregados a Comitente</span>
+              <span className="text-sm font-bold text-emerald-600">
+                {informesHyS.filter(i => i.estado === 'entregado').length}
+              </span>
+            </div>
+            <div className="border-t border-gray-100 pt-1.5 mt-1">
+              <p className="text-[10px] text-gray-500 truncate">
+                {informesHyS.length > 0 ? `Último: ${informesHyS[0].numero_informe}` : 'Sin informes cargados'}
+              </p>
+            </div>
           </div>
         </div>
       </div>

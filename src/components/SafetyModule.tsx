@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search, Upload, Phone, Mail, MessageSquare } from 'lucide-react';
+import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search, Upload, Phone, Mail, MessageSquare, FileText } from 'lucide-react';
 import * as THREE from 'three';
 import { useSeguridadIncidentes, useCreateSeguridadIncidente, useUpdateSeguridadIncidente, useSeguridadObservaciones, useCreateSeguridadObservacion, useProjects, useEmployees } from '../hooks/useData';
 import type { Employee } from '../lib/types';
+import { WeeklySafetyReportsPanel } from './WeeklySafetyReportsPanel';
 
 // 3D Body Map Component
 const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) => void }> = ({ selectedZone, onSelectZone }) => {
@@ -344,7 +345,7 @@ export const SafetyModule: React.FC = () => {
   const createIncidente = useCreateSeguridadIncidente();
   const updateIncidente = useUpdateSeguridadIncidente();
   const createObservacion = useCreateSeguridadObservacion();
-  const [tab, setTab] = useState<'incidentes' | 'observaciones' | 'comunicar'>('incidentes');
+  const [tab, setTab] = useState<'informes' | 'incidentes' | 'observaciones' | 'comunicar'>('informes');
   const [showForm, setShowForm] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string>('');
 
@@ -410,14 +411,28 @@ export const SafetyModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {(['incidentes', 'observaciones', 'comunicar'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${tab === t ? 'bg-white text-red-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            {t === 'incidentes' ? <><AlertTriangle size={16} /> Incidentes ({incidentes.length})</> : t === 'observaciones' ? <><Eye size={16} /> Observaciones ({observaciones.length})</> : <><MessageSquare size={16} /> Comunicar Siniestro</>}
+        {(['informes', 'incidentes', 'observaciones', 'comunicar'] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => { setTab(t); setShowForm(false); }}
+            className={`flex-1 py-2.5 rounded-md text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              tab === t ? 'bg-white text-ecar-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t === 'informes' ? (
+              <><FileText size={16} /> Informes Semanales (Entregables)</>
+            ) : t === 'incidentes' ? (
+              <><AlertTriangle size={16} /> Incidentes ({incidentes.length})</>
+            ) : t === 'observaciones' ? (
+              <><Eye size={16} /> Observaciones ({observaciones.length})</>
+            ) : (
+              <><MessageSquare size={16} /> Comunicar Siniestro</>
+            )}
           </button>
         ))}
       </div>
 
-      {tab !== 'comunicar' && (
+      {tab !== 'comunicar' && tab !== 'informes' && (
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'incidentes' ? 'Registrar Incidente' : 'Nueva Observación'}</>}
         </button>
@@ -478,6 +493,11 @@ export const SafetyModule: React.FC = () => {
             {createObservacion.isPending ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={16} />} Registrar Observación
           </button>
         </div>
+      )}
+
+      {/* Informes Semanales de HyS (Entregables) */}
+      {tab === 'informes' && (
+        <WeeklySafetyReportsPanel />
       )}
 
       {/* Incidentes List */}

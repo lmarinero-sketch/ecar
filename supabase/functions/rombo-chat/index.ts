@@ -25,8 +25,8 @@ Tenés acceso absoluto, irrestricto y en tiempo real a ABSOLUTAMENTE TODA la inf
 - Compras & Facturación (facturas con OCR, Libro IVA compras/ventas, retenciones, discriminación por empresa ECAR SAS y Carlos Adolfo Regalado).
 - Alertas & Obligaciones (vencimientos fiscales AFIP, ART, seguros, alquileres, recordatorios automáticos de WhatsApp).
 - RRHH & Legajos (nómina de personal activo, legajo digital, asistencia con QR, ausencias, licencias, adelantos, indumentaria, talles y EPP).
-- Obras & Proyectos (partes diarios de obra, clima, horas trabajadas, certificaciones de obra e ICC, presupuestos WBS, adicionales de obra).
-- Seguridad & Calidad (incidentes laborales, observaciones de riesgo 5x5, inspecciones de obra, punch list, no conformidades, protocolos).
+- Obras & Proyectos (partes diarios de obra, control operativo de rendimientos Roque con 12 actividades estándar PEAD AG-REP a AG-PRU, cuadrillas C-01 a C-03, 43 sectores físicos, OTI matutina de 07:00, cierre diario a las 14:30 con desvíos y paradas que generan pedidos a Pañol, certificaciones de obra e ICC, presupuestos WBS, adicionales de obra).
+- Seguridad & Calidad (informes semanales de Higiene y Seguridad listos para entrega bajo Decreto 911/96 y Res. SRT 905/15 con 4 fotos de evidencia formal, incidentes laborales, observaciones de riesgo 5x5, pedidos automáticos de EPP y cartelería de zanja a Compras/Pañol, inspecciones de obra, punch list, no conformidades, protocolos).
 - Comunicaciones (registro completo de mensajes y conversaciones de WhatsApp).
 
 ## INDEPENDENCIA ABSOLUTA DEL MÓDULO VISUAL
@@ -39,7 +39,7 @@ Tenés acceso absoluto, irrestricto y en tiempo real a ABSOLUTAMENTE TODA la inf
 ## REGLAS CRÍTICAS
 1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Usá las herramientas para consultar los datos actuales de la base de datos y respondé con números y hechos concretos.
 2. Si te preguntan por "la última carga", "el último cheque", "el último movimiento", etc., consultá la herramienta correspondiente y presentá los datos detallados: fecha, vehículo/proveedor/responsable, litros/monto, estado y observaciones.
-3. Si ninguna herramienta especializada cubre exactamente lo que pide el usuario, usá la herramienta "query_database_table" para consultar directamente cualquier tabla del ERP (ej: fuel_loads, fuel_vehicles, purchase_requests, purchase_orders, etc.).
+3. Si ninguna herramienta especializada cubre exactamente lo que pide el usuario, usá la herramienta "query_database_table" para consultar directamente cualquier tabla del ERP (ej: fuel_loads, fuel_vehicles, purchase_requests, purchase_orders, obra_actividades_catalogo, obra_cuadrillas, obra_sectores, obra_tareas_planificadas, seguridad_informes_semanales, etc.).
 4. Valores monetarios en formato ARS: $ 1.234,56. Fechas en formato argentino: DD/MM/AAAA.
 5. Sé conciso, preciso, proactivo y útil. Respondé con tono argentino profesional y cercano.
 6. Cuando ejecutes acciones (crear cheque, marcar pagado, etc.), confirmá qué hiciste mostrando los datos.
@@ -131,20 +131,37 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Tabla Comparativa de Saldos: Muestra en cada pedido lo solicitado vs enviado vs recibido, con saldos faltantes derivados a Compras.
 - Ayudalo a: gestionar la trazabilidad de pedidos, guiar la declaración de despacho con descuento de stock, descargar PDFs oficiales ECAR y analizar faltantes.`,
   
-  field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario de Obra
-- Registro diario de actividades en obra: tareas realizadas, personal, clima (con ícono), temperatura, hs trabajadas, entregas, incidentes.
-- Workflow: borrador → enviado → aprobado/rechazado.
-- Ayudalo a: crear un parte, consultar partes anteriores, aprobar partes pendientes, ver resumen semanal de avance.
-- Sugerí: "¿Querés que cree el parte de hoy?" o "Puedo mostrarte el resumen semanal de avance".
-- Si pide crear uno, necesitás: obra_name, trabajo_realizado, clima. El resto es opcional.`,
+  field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario & Control de Rendimientos (Roque)
+- Registro diario de actividades en obra y Planilla Operativa de Rendimientos Roque.
+- Actividades Estándar PEAD (12 actividades oficiales):
+  1. AG-REP: Replanteo y nivelación (100 m/h)
+  2. AG-EXC: Excavación zanja c/equipo (15 m/h, retroexcavadora)
+  3. AG-PER: Perfilado y fondo zanja manual (25 m/h, cuadrilla manual)
+  4. AG-CAM: Cama de arena esp=0.10m (30 m/h)
+  5. AG-TUB: Tendido tubería PEAD D=75mm (20 m/h)
+  6. AG-UNI: Uniones por electrofusión (4 un/h)
+  7. AG-VAL: Instalación válvulas esclusas (1 un/h)
+  8. AG-TAP: Tapada c/zarandeo h=0.30m (25 m/h)
+  9. AG-CON: Relleno y compactación mecánica (20 m/h, vibroapisonador)
+  10. AG-EMP: Empalme a red existente (0.5 un/h)
+  11. AG-LIM: Limpieza y retiro sobrante (50 m/h, camión volcador)
+  12. AG-PRU: Prueba hidráulica y desinfección (150 m/h)
+- Cuadrillas Oficiales: C-01 (Zanjeo y Tendido), C-02 (Tapada y Compactación), C-03 (Terminaciones y Pruebas).
+- 43 Sectores Físicos oficiales de Loteo Roque (SEC001 a SEC043).
+- Ciclo Operativo Diario: Planificación a las 14:50 (30 seg por cuadrilla), Impresión OTI a las 07:00 para capataz, Cierre Diario a las 14:30 auditando avance real, desvíos y paradas (rotura máquina, falta combustible, clima, falta material). Si hay parada por falta de material/combustible, el sistema permite generar la Solicitud de Pedido a Pañol con 1 clic.
+- Ayudalo a: planificar tareas del día, consultar rendimientos estándar vs reales, auditar horas hombre (HH), revisar paradas de máquina y generar pedidos automáticos a Pañol.`,
   
-  safety: `## CONTEXTO ACTUAL: El usuario está en Seguridad e Incidentes
-- Este módulo registra: accidentes, incidentes, cuasi-accidentes, enfermedades laborales.
-- Cada incidente tiene: tipo, gravedad (leve/moderado/grave/fatal), persona afectada, tratamiento, causa raíz, acciones correctivas.
-- También tiene Observaciones de seguridad con matriz de riesgo 5×5 (severidad × probabilidad = score).
-- KPIs clave: días sin accidente, incidentes abiertos, observaciones alto riesgo, días perdidos.
-- Cumplimiento: Res. SRT 905/2015 (registro obligatorio de accidentes/incidentes).
-- Sugerí: "¿Querés que revise los incidentes abiertos?" o "Puedo calcular el índice de frecuencia de accidentes".`,
+  safety: `## CONTEXTO ACTUAL: El usuario está en Seguridad, Incidentes & Informes Semanales (Entregables)
+- Gestión integral de Higiene y Seguridad conforme Decreto 911/96 y Res. SRT 905/2015.
+- Submódulo "Informes Semanales (Entregables)":
+  * Permite compilar y redactar informes técnicos semanales listos para comitente (Valdivieso Group / OSSE).
+  * Auto-completado inteligente: jala tareas y observaciones de la semana automáticamente.
+  * Relevamiento técnico normativo: talud/entibado en zanjas >1.50m, retiro de material acopiado a >0.60m del borde, pasarelas peatonales con baranda doble y rodapié, cartelería de advertencia reglamentaria ("ZANJA ABIERTA", "HOMBRES TRABAJANDO", "MAQUINARIA PESADA"), extintor triclase ABC de 10 kg con marbete al día y botiquín de primeros auxilios en frente.
+  * Grilla de Evidencia Fotográfica cuádruple: 4 fotos con epígrafe formal normativo para el comitente.
+  * Botón directo de compra/pañol: si falta cartelería, extintor o botiquín, genera la solicitud de pedido inmediata en el módulo de Logística.
+  * Exportación oficial en PDF con firmas profesionales (Lic. HyS Mat. 1422 y Jefe de Obra).
+- KPIs clave: días sin accidente, incidentes abiertos, observaciones alto riesgo, días perdidos, informes semanales entregados.
+- Ayudalo a: revisar desvíos en zanjas, verificar cumplimiento de EPP y cartelería, auditar o generar el informe semanal de HyS y solicitar materiales de seguridad a Pañol.`,
 
   inspections: `## CONTEXTO ACTUAL: El usuario está en Inspecciones & Calidad
 - Gestiona inspecciones de obra: estructura, eléctrica, sanitaria, gas, contra incendio, terminaciones, general.
@@ -706,6 +723,45 @@ const tools = [
           limit: { type: 'number', description: 'Cantidad máxima de filas (default 20, max 100)' }
         },
         required: ['table_name']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_roque_catalogo',
+      description: 'Consultar el catálogo oficial de las 12 actividades estándar PEAD de Roque (AG-REP a AG-PRU). Devuelve código, descripción, unidad, rendimiento estándar (m/h o un/h), maquinaria requerida y dotación de cuadrilla.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Buscar por código (ej: AG-EXC) o descripción (opcional)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_roque_tareas',
+      description: 'Consultar tareas planificadas y rendimientos diarios de obra Roque. Filtra por fecha (YYYY-MM-DD), cuadrilla (C-01, C-02, C-03), sector o actividad. Muestra cantidad planificada vs ejecutada, horas trabajadas, rendimiento real, desvíos y paradas registradas.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fecha: { type: 'string', description: 'Fecha en formato YYYY-MM-DD (opcional)' },
+          cuadrilla_codigo: { type: 'string', description: 'Código de cuadrilla C-01, C-02 o C-03 (opcional)' },
+          sector_codigo: { type: 'string', description: 'Código de sector, ej: SEC001 (opcional)' },
+          limit: { type: 'number', description: 'Cantidad máxima de tareas (default 20)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_safety_informes',
+      description: 'Consultar informes semanales de Higiene y Seguridad entregables (conforme Decreto 911/96 y Res. SRT 905/15). Muestra semana, obra/proyecto, profesional a cargo, situaciones detectadas en zanjas/frentes, medidas correctivas y estado de cumplimiento.',
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', description: 'Cantidad de informes a consultar (default 10)' }
+        }
       }
     }
   },
@@ -1466,6 +1522,41 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         const { data, error } = await q
         if (error) return JSON.stringify({ error: error.message })
         return JSON.stringify({ table, count: (data || []).length, rows: data || [] })
+      }
+
+      // ─── CONTROL DE RENDIMIENTOS ROQUE & SEGURIDAD ENTREGABLES ───
+      case 'query_roque_catalogo': {
+        let q = sb.from('obra_actividades_catalogo').select('*').order('codigo')
+        if (args.search) {
+          q = q.or(`codigo.ilike.%${args.search}%,descripcion.ilike.%${args.search}%`)
+        }
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ actividades: data || [], total: (data || []).length })
+      }
+
+      case 'query_roque_tareas': {
+        let q = sb.from('obra_tareas_planificadas').select(`
+          id, fecha, cuadrilla_codigo, sector_codigo, actividad_codigo,
+          descripcion, unidad, cantidad_planificada, cantidad_ejecutada,
+          rendimiento_estandar_h, horas_asignadas, horas_reales,
+          rendimiento_real_h, estado, minutos_parada, motivo_parada, observaciones
+        `)
+        if (args.fecha) q = q.eq('fecha', args.fecha)
+        if (args.cuadrilla_codigo) q = q.eq('cuadrilla_codigo', args.cuadrilla_codigo)
+        if (args.sector_codigo) q = q.ilike('sector_codigo', `%${args.sector_codigo}%`)
+        const { data, error } = await q.order('fecha', { ascending: false }).limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ tareas: data || [], total: (data || []).length })
+      }
+
+      case 'query_safety_informes': {
+        const { data, error } = await sb.from('seguridad_informes_semanales')
+          .select('id, semana_numero, anio, fecha_desde, fecha_hasta, estado, profesional_nombre, profesional_matricula, situaciones_detectadas, medidas_correctivas, pendientes_seguimiento, fotos_evidencia, cumplimiento_porcentaje, created_at')
+          .order('fecha_desde', { ascending: false })
+          .limit(args.limit || 10)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ informes_semanales: data || [], total: (data || []).length })
       }
 
       default:
