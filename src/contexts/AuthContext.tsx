@@ -50,10 +50,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        // If refresh token is invalid or expired, gracefully clear stale session
+        supabase.auth.signOut().catch(() => {});
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      const s = data?.session ?? null;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) fetchProfile(s.user.id);
+      setLoading(false);
+    }).catch(() => {
       setLoading(false);
     });
 
@@ -103,16 +114,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasModule = (moduleId: ModuleId): boolean => {
     if (!profile) return false;
     if (isAdmin) return true; // Admin has access to everything
-    return (profile.allowed_modules as string[]).includes(moduleId);
+    const allowed = (profile.allowed_modules as string[]) || [];
+    if (moduleId === 'quality' || moduleId === 'inspections') {
+      return allowed.includes('quality') || allowed.includes('inspections');
+    }
+    return allowed.includes(moduleId);
   };
 
   const hasPermission = (moduleId: ModuleId, level: PermissionLevel): boolean => {
     if (!profile) return false;
     if (isAdmin) return true; // Admin has full permissions on everything
     // First check if user has the module at all
-    if (!(profile.allowed_modules as string[]).includes(moduleId)) return false;
+    const allowed = (profile.allowed_modules as string[]) || [];
+    const isQuality = moduleId === 'quality' || moduleId === 'inspections';
+    const hasMod = isQuality
+      ? allowed.includes('quality') || allowed.includes('inspections')
+      : allowed.includes(moduleId);
+    if (!hasMod) return false;
     // Find granular permission for this module
-    const perm = permissions.find(p => p.module_id === moduleId);
+    const perm = permissions.find(p => p.module_id === moduleId || (isQuality && (p.module_id === 'quality' || p.module_id === 'inspections')));
     if (!perm) return level === 'read'; // Default: read-only if module is allowed
     switch (level) {
       case 'read': return perm.can_read;

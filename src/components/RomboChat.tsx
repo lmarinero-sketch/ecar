@@ -64,11 +64,17 @@ const MODULE_QUICK_ACTIONS: Partial<Record<ModuleId, { icon: React.ElementType; 
     { icon: FileText, label: 'Módulos soportados', prompt: '¿Cuáles son los módulos del sistema y qué se puede hacer en cada uno?' },
     { icon: Users, label: 'Cargar/borrar cheques', prompt: '¿Cómo hago para cargar y borrar cheques usando WhatsApp?' },
   ],
+  wbs: [
+    { icon: Building2, label: 'Finalizar / Estado Obra', prompt: '¿Cómo marco una obra como finalizada o pausada en el sistema?' },
+    { icon: Zap, label: 'Desvíos y Acciones', prompt: '¿Qué desvíos de plazo o costos se registraron en esta obra?' },
+    { icon: HardHat, label: 'Rendimientos de Cuadrillas', prompt: '¿Cómo rinden las cuadrillas de la obra y cuáles son los objetivos?' },
+    { icon: Truck, label: 'Movimientos de Obra', prompt: '¿Qué materiales y equipos se movieron a esta obra?' },
+  ],
   field: [
+    { icon: Zap, label: 'Precargar Tareas de Hoy', prompt: '¿Cómo precargo en el Parte Diario las tareas planificadas para no escribir de nuevo?' },
+    { icon: Users, label: 'Copiar Cuadrilla Anterior', prompt: '¿Cómo copio la cuadrilla del último parte sin cargar operario por operario?' },
+    { icon: Truck, label: 'Multi-equipo y Edición', prompt: '¿Cómo asigno múltiples equipos a una tarea o corrijo un error de tipeo?' },
     { icon: ClipboardList, label: 'Rendimientos Roque', prompt: '¿Cuáles son las 12 actividades estándar y sus rendimientos en la obra Roque?' },
-    { icon: Users, label: 'Cuadrillas C-01 a C-03', prompt: '¿Cómo están compuestas las cuadrillas C-01, C-02 y C-03 y qué tareas tienen?' },
-    { icon: HardHat, label: 'Avance 43 Sectores', prompt: '¿Cuál es el avance y estado de los 43 sectores del Loteo Roque?' },
-    { icon: Zap, label: 'Parte y Paradas de hoy', prompt: '¿Cómo viene el parte diario de hoy y qué paradas o desvíos se registraron?' },
   ],
   safety: [
     { icon: FileText, label: 'Informe Semanal HyS', prompt: '¿Cómo está el último informe semanal de higiene y seguridad para entregar?' },
@@ -114,6 +120,7 @@ const MODULE_IDLE_PHRASES: Partial<Record<ModuleId, string[]>> = {
     '📸 Auditando fotos de evidencia para entrega técnica...'
   ],
   inspections: ['✅ Revisando inspecciones...', '📋 Mirando el punch list...', '🔍 Verificando calidad...'],
+  quality: ['✅ Revisando checklists de calidad...', '📋 Mirando el punch list...', '🔍 Auditando protocolos técnicos...'],
   rfi: ['📨 Chequeando consultas abiertas...', '🔍 Revisando RFIs pendientes...', '💡 Analizando impactos...'],
   guide: ['📖 Leyendo el manual...', '💡 Aprendiendo trucos nuevos...', '❓ ¿Tenés alguna duda de cómo se usa algo?'],
   logistics: ['📦 Controlando acopios...', '🚛 Revisando la logística...', '📊 KPIs de stock actualizados'],
@@ -324,13 +331,15 @@ export const RomboChat: React.FC = () => {
       ],
     },
     wbs: {
-      where: 'Planificación WBS',
+      where: 'Planificación WBS (Gerencia de Obras)',
       capabilities: [
-        'Consultar **avance de obra** por proyecto',
-        'Comparar **presupuesto vs costo real**',
-        'Identificar **desvíos** en la planificación',
-        'Ver la **estructura de desglose** (WBS) de cada obra',
+        'Cambiar el **estado de la obra** en 1 clic (🟢 Activa, 🟡 Pausada o 🏁 Finalizada)',
+        'Consultar **avance de obra y estructura WBS** por proyecto',
+        'Analizar **desvíos y acciones correctivas** en la pestaña Desvíos & Acciones',
+        'Gestionar **rendimientos y emitir OTI matutina** de cuadrillas',
+        'Trazar **movimientos de materiales y equipos** en obra',
       ],
+      proTip: 'Para finalizar o pausar una obra, seleccioná el proyecto y usá el desplegable de estado en la cabecera.',
     },
     certifications: {
       where: 'Certificaciones / ICC',
@@ -385,14 +394,14 @@ export const RomboChat: React.FC = () => {
     field: {
       where: 'Parte Diario & Rendimientos (Roque)',
       capabilities: [
-        'Consultar o planificar **tareas con las 12 actividades estándar Roque** (AG-REP a AG-PRU)',
-        'Asignar y auditar **cuadrillas de obra (C-01 a C-03)** y su dotación',
-        'Monitorear avance en los **43 sectores físicos** de obra',
-        'Verificar **horas hombre (HH) y desvíos de rendimiento** vs estándar',
-        'Registrar **paradas de obra y solicitar materiales faltantes a Pañol**',
-        'Crear o consultar el **parte diario general** y clima de hoy',
+        '**Precargar tareas de hoy** en 1 clic para no escribir de nuevo lo planificado en el parte diario',
+        '**Copiar la cuadrilla del último parte** para cargar los operarios y sus 8hs de inmediato',
+        'Asignar **múltiples maquinarias y equipos** mediante etiquetas interactivas',
+        '**Editar o corregir tareas** en caso de error de tipeo o desvío de medición',
+        'Monitorear las **12 actividades estándar Roque** (AG-REP a AG-PRU) y sus 43 sectores',
+        'Registrar **paradas de obra y emitir pedidos urgentes a compras** con 1 clic',
       ],
-      proTip: 'Planificá tareas a las 14:50 en 30 segundos, emití la OTI a las 07:00 y cerrá a las 14:30 auditando desvíos y paradas.',
+      proTip: 'Usá "⚡ Precargar Tareas de Hoy" al crear el parte y "⚡ Copiar Cuadrilla Anterior" en la pestaña Personal para ahorrar el 90% del tiempo de carga.',
     },
     safety: {
       where: 'Seguridad, Incidentes & Informes Semanales (Entregables)',
@@ -407,11 +416,20 @@ export const RomboChat: React.FC = () => {
       proTip: 'El informe genera un PDF formal con grilla fotográfica cuádruple y epígrafes técnicos listo para presentar a comitente/OSSE.',
     },
     inspections: {
-      where: 'Inspecciones & Calidad',
+      where: 'Calidad e Inspecciones',
       capabilities: [
         'Consultar **inspecciones pendientes** o rechazadas',
         'Revisar items del **punch list** sin resolver',
         'Verificar **correcciones** de no conformidades',
+        'Generar un **reporte de calidad** por obra',
+      ],
+    },
+    quality: {
+      where: 'Calidad e Inspecciones',
+      capabilities: [
+        'Consultar **checklists de calidad** e inspecciones técnicas',
+        'Revisar items del **punch list** sin resolver',
+        'Verificar **score y aprobación** de cierre de etapas',
         'Generar un **reporte de calidad** por obra',
       ],
     },
@@ -517,14 +535,6 @@ export const RomboChat: React.FC = () => {
         'Registrar un nuevo **adicional o cambio de alcance**',
         'Ver el **impacto en costos y plazo**',
         'Hacer seguimiento de la **aprobación** de adicionales',
-      ],
-    },
-    quality: {
-      where: 'Calidad (Checklists)',
-      capabilities: [
-        'Completar **protocolos de calidad**',
-        'Verificar el cumplimiento de **estándares**',
-        'Generar **No Conformidades** a partir de desvíos',
       ],
     },
     worker_payments: {

@@ -676,6 +676,51 @@ export const GuideModule: React.FC = () => {
             </p>
           </div>
 
+          {/* FAQ 7 - Cómo poner obra finalizada */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-emerald-600 shrink-0" /> ¿Cómo marcar una obra como Finalizada o Pausada?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              Ingresá a <strong>Planificación WBS</strong> y hacé clic en la obra que deseás gestionar. En la parte superior de la pantalla, al lado del nombre de la obra, verás un desplegable interactivo con el estado actual:
+              <br />• <strong>🟢 Obra Activa</strong>: Obra en ejecución regular.
+              <br />• <strong>🟡 Obra Pausada</strong>: En espera de permisos, materiales o veda climática.
+              <br />• <strong>🏁 Obra Finalizada</strong>: Obra concluida. Al seleccionarla, se actualiza en toda la plataforma y se excluye de las alertas de carga diaria. También podés configurar el estado al editar la obra con el botón ✏️.
+            </p>
+          </div>
+
+          {/* FAQ 8 - Precargar Tareas en Parte Diario */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-blue-600 shrink-0" /> ¿Cómo evitar cargar dos veces lo mismo en el Parte Diario?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              Al abrir el formulario de <strong>Nuevo Parte Diario</strong> y elegir la obra y fecha correspondiente, si ya tenías tareas planificadas o medidas en esa jornada aparecerá un recuadro azul con el botón <strong>⚡ Precargar Tareas de Hoy</strong>. Al presionarlo, el sistema copia automáticamente al campo <em>Trabajo Realizado</em> todas las actividades, sectores y rendimientos, y si hubo paradas las traslada a <em>Incidentes</em>, sin que tengas que reescribir nada a mano.
+            </p>
+          </div>
+
+          {/* FAQ 9 - Copiar Cuadrilla del Último Parte */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-emerald-600 shrink-0" /> ¿Cómo cargar la cuadrilla completa de operarios en un solo clic?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              En el <strong>Parte Diario</strong>, dentro de la pestaña <strong>Personal</strong>, vas a encontrar el botón verde <strong>⚡ Copiar Cuadrilla Anterior</strong>. Al hacer clic, el sistema detecta qué operarios trabajaron en el último parte de esa obra y los incorpora a todos en bloque con sus 8 horas estándar asignadas. También podés utilizar los botones rápidos de <em>Cuadrillas Habituales</em> (C-01, C-02, C-03) para sumar al capataz o responsables de inmediato.
+            </p>
+          </div>
+
+          {/* FAQ 10 - Multi-equipo y Edición de Tareas */}
+          <div className="light-card p-5 space-y-2">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <HelpCircle size={15} className="text-indigo-600 shrink-0" /> ¿Cómo asignar varios equipos a una tarea o corregir errores de tipeo?
+            </h4>
+            <p className="text-xs text-slate-600 leading-relaxed pl-6">
+              En la pestaña <strong>Rendimientos & Tareas</strong>:
+              <br />• <strong>Múltiples equipos:</strong> En el campo de maquinaria podés hacer clic en varios vehículos de la flota (retroexcavadora, camión, etc.) y se añadirán como etiquetas azules. Podés quitar cualquiera con el botón '×'.
+              <br />• <strong>Editar tareas:</strong> Si te equivocaste en una descripción, en la cuadrilla asignada o en las cantidades, cada tarjeta de tarea cuenta con el botón <strong>✏️ Editar Tarea</strong> que abre una ventana para rectificar cualquier dato tanto en tareas abiertas como en tareas ya cerradas.
+            </p>
+          </div>
+
           {/* Contact Support */}
           <div className="bg-slate-50 rounded-xl p-5 border border-dashed border-gray-300 text-center space-y-3">
             <h4 className="font-bold text-slate-800 text-sm">¿Necesitás soporte técnico adicional?</h4>

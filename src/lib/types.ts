@@ -1709,7 +1709,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   certifications: 'Certificaciones',
   field: 'Parte Diario de Obra',
   safety: 'Seguridad & Incidentes',
-  inspections: 'Inspecciones & Calidad',
+  inspections: 'Calidad e Inspecciones',
   rfi: 'Consultas de Obra',
   expenses: 'Gastos Operativos',
   documents: 'Documentos & Correo',
@@ -1735,7 +1735,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   worker_payments: 'Pagos a Trabajadores',
   scope_changes: 'Adicionales y Alcance',
   
-  quality: 'Inspecciones de Calidad',
+  quality: 'Calidad e Inspecciones',
 };
 
 

@@ -114,10 +114,16 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Datos: receptor, CUIT, montos netos, IVA, retenciones.
 - Ayudalo a: consultar facturas emitidas, estados de CAE, totales facturados.`,
   
-  wbs: `## CONTEXTO ACTUAL: El usuario está en Planificación WBS
-- Estructura de desglose de trabajo (Work Breakdown Structure) por proyecto.
-- Muestra: presupuesto, costo comprometido, devengado, avance %, hitos.
-- Ayudalo a: consultar avance de obra, comparar presupuesto vs real, identificar desvíos.`,
+  wbs: `## CONTEXTO ACTUAL: El usuario está en Planificación WBS (Gerencia de Obras)
+- Gestión integral de la obra, cronograma y ejecución.
+- Estado de Obra: En la cabecera del proyecto seleccionado, el usuario cuenta con un selector directo de estado: 🟢 Activa, 🟡 Pausada o 🏁 Finalizada. Al cambiarlo a 'Finalizada', la obra se archiva automáticamente del circuito diario.
+- Sub-pestañas clave:
+  * Planificación y Programación (Gantt con dependencias).
+  * Rendimientos & Tareas: Asignación matutina de tareas con multi-selección de equipos y maquinarias, generación de OTI en PDF, y cierre a las 14:30. Cuenta con botones para Editar (✏️) y Eliminar (🗑️) tareas ante cualquier error de tipeo o desvío.
+  * Desvíos & Acciones (antes 'Retro'): Registro de desvíos técnicos o de plazo y planes de contingencia.
+  * Movimientos de Materiales y Equipos: Trazabilidad de insumos y flota en el frente.
+- Ayudalo a: cambiar el estado de una obra a finalizada, editar o corregir tareas de cuadrillas, registrar desvíos y analizar cumplimiento de plazos.`,
+
   fuel: `## CONTEXTO ACTUAL: El usuario está en Control de Combustible
 - Gestiona cargas de combustible (nafta/diesel) para vehículos de la flota.
 - Workflow 2 pasos desburocratizado: 1) Operario pide carga -> 2) Gerencia autoriza. Si no autoriza a tiempo, el operario puede cargar igual registrando litros reales y adjuntando foto del ticket en el mismo link, pero queda marcado como "Sin Autorizar" para auditoría.
@@ -128,11 +134,16 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Circuito Tripartito de Trazabilidad: 1. Solicitado (Obra) ➔ 2. Enviado (Pañol Central) ➔ 3. Recibido (Obra).
 - Descuento Automático e Integración con Pañol: Al declarar el despacho, se descuenta el stock en tiempo real y se genera el movimiento en el Kardex.
 - Documentos PDF Oficiales ECAR: Solicitud de Pedido de Obra, Remito de Despacho Pañol y Acta de Recepción y Conformidad Tripartita.
-- Tabla Comparativa de Saldos: Muestra en cada pedido lo solicitado vs enviado vs recibido, con saldos faltantes derivados a Compras.
+- Tabla Comparativa de Saldos: Muestra en chaque pedido lo solicitado vs enviado vs recibido, con saldos faltantes derivados a Compras.
 - Ayudalo a: gestionar la trazabilidad de pedidos, guiar la declaración de despacho con descuento de stock, descargar PDFs oficiales ECAR y analizar faltantes.`,
   
   field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario & Control de Rendimientos (Roque)
 - Registro diario de actividades en obra y Planilla Operativa de Rendimientos Roque.
+- Facilidades operativas para el Capataz y Jefe de Obra:
+  * ⚡ Precarga de Tareas de Hoy: Al crear un parte diario, con 1 clic en "Precargar Tareas de Hoy" se vuelcan automáticamente todas las actividades y paradas registradas en el día sin tener que escribir todo de nuevo a mano.
+  * ⚡ Copiar Cuadrilla del Último Parte: En la pestaña "Personal", el botón verde "Copiar Cuadrilla Anterior" copia toda la dotación de operarios de la jornada previa con sus 8hs en un solo clic, evitando la carga individual. También cuenta con botones rápidos para agregar las Cuadrillas Habituales C-01, C-02 y C-03.
+  * Multi-selección de Equipos: Permite seleccionar múltiples maquinarias y vehículos para cada tarea con etiquetas interactivas y remoción rápida con '×'.
+  * Edición y Corrección: Cada tarea planificada o medida cuenta con un botón de edición (✏️) para rectificar cualquier error de tipeo o medición.
 - Actividades Estándar PEAD (12 actividades oficiales):
   1. AG-REP: Replanteo y nivelación (100 m/h)
   2. AG-EXC: Excavación zanja c/equipo (15 m/h, retroexcavadora)
@@ -149,7 +160,7 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Cuadrillas Oficiales: C-01 (Zanjeo y Tendido), C-02 (Tapada y Compactación), C-03 (Terminaciones y Pruebas).
 - 43 Sectores Físicos oficiales de Loteo Roque (SEC001 a SEC043).
 - Ciclo Operativo Diario: Planificación a las 14:50 (30 seg por cuadrilla), Impresión OTI a las 07:00 para capataz, Cierre Diario a las 14:30 auditando avance real, desvíos y paradas (rotura máquina, falta combustible, clima, falta material). Si hay parada por falta de material/combustible, el sistema permite generar la Solicitud de Pedido a Pañol con 1 clic.
-- Ayudalo a: planificar tareas del día, consultar rendimientos estándar vs reales, auditar horas hombre (HH), revisar paradas de máquina y generar pedidos automáticos a Pañol.`,
+- Ayudalo a: precargar tareas de hoy en el parte, copiar la cuadrilla anterior, asignar múltiples equipos, corregir o editar tareas, y auditar rendimientos y paradas.`,
   
   safety: `## CONTEXTO ACTUAL: El usuario está en Seguridad, Incidentes & Informes Semanales (Entregables)
 - Gestión integral de Higiene y Seguridad conforme Decreto 911/96 y Res. SRT 905/2015.

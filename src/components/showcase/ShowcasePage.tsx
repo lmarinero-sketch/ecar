@@ -1,355 +1,570 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Cpu,
-  Layers,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
-  Activity,
   Globe,
   Phone,
   Mail,
-  ChevronDown
+  ChevronDown,
+  Maximize2,
+  FileCheck2,
+  ArrowUpRight
 } from 'lucide-react';
-import { Building3DViewer } from './Building3DViewer';
 
-interface ProjectShowcase {
+interface SlideData {
+  number: string;
+  category: string;
+  headline: string;
+  subheadline: string;
+  description: string;
+  image: string;
+  metrics: { label: string; value: string }[];
+  tags: string[];
+}
+
+const FLOW_SLIDES: SlideData[] = [
+  {
+    number: '01',
+    category: 'INFRAESTRUCTURA HIDRÁULICA',
+    headline: 'Conducción hídrica de gran porte.',
+    subheadline: 'Agua potable y acueductos troncales hasta DN 1600mm.',
+    description: 'Tendido continuo de cañerías en Polietileno de Alta Densidad (PEAD PE-100) y Fundición Dúctil. Termofusión automatizada con control estricto de temperatura, presión y enfriamiento, garantizando estanqueidad absoluta bajo presiones de hasta 25 bar.',
+    image: '/assets/showcase/ecar_redes_agua.jpg',
+    metrics: [
+      { label: 'Diámetro Máximo', value: 'DN 1600 mm' },
+      { label: 'Presión Nominal', value: 'PN 25 Bar' },
+      { label: 'Norma Aplicada', value: 'OSSE / IRAM' },
+    ],
+    tags: ['Termofusión CNC', 'Acueductos Troncales', 'Cero Fugas']
+  },
+  {
+    number: '02',
+    category: 'TRANSPORTE DE GAS NATURAL',
+    headline: 'Energía crítica bajo tierra.',
+    subheadline: 'Gasoductos de acero API 5L con radiografiado al 100%.',
+    description: 'Tendido de gasoductos de alta presión en acero al carbono con revestimiento anticorrosivo tricapa de polietileno (3LPE). Soldadores calificados bajo norma API 1104, protección catódica por corriente impresa y cumplimiento estricto de normas ENARGAS NAG-100.',
+    image: '/assets/showcase/ecar_gasoductos.jpg',
+    metrics: [
+      { label: 'Presión de Trabajo', value: 'Hasta 80 Bar' },
+      { label: 'Control de Soldadura', value: '100% Rayos X' },
+      { label: 'Marco Técnico', value: 'ENARGAS NAG-100' },
+    ],
+    tags: ['Acero API 5L', 'Alta Presión 80 Bar', 'Protección Catódica']
+  },
+  {
+    number: '03',
+    category: 'REDES DE POTENCIA SUBTERRÁNEA',
+    headline: 'Energía de alta tensión protegida.',
+    subheadline: 'Tendido subterráneo blindado en 13.2 kV, 33 kV y 132 kV.',
+    description: 'Canalización eléctrica subterránea con conductores XLPE de gran sección. Interconexión para parques solares fotovoltaicos, subestaciones transformadoras (SET) y bancos de ductos hormigonados con fibra óptica integrada para telecontrol SCADA.',
+    image: '/assets/showcase/ecar_electricidad.jpg',
+    metrics: [
+      { label: 'Nivel de Tensión', value: '132 / 33 / 13.2 kV' },
+      { label: 'Conductor', value: 'XLPE 630 mm² Cu' },
+      { label: 'Ensayos de Rigidez', value: 'VLF / Hi-Pot' },
+    ],
+    tags: ['Alta Tensión 132 kV', 'Bancos de Ductos', 'Fibra SCADA']
+  }
+];
+
+interface UtilityProject {
   id: string;
   title: string;
-  category: 'Edificación & Torres' | 'Infraestructura & Puentes' | 'Saneamiento & Plantas';
+  category: string;
   tagline: string;
   description: string;
   metrics: { label: string; value: string }[];
   image: string;
   badge: string;
-  features: string[];
+  norm: string;
 }
 
-const PROJECTS_DATA: ProjectShowcase[] = [
+const PROJECTS_DATA: UtilityProject[] = [
   {
-    id: 'torres-skyline',
-    title: 'Torre Mirador del Parque',
-    category: 'Edificación & Torres',
-    tagline: 'Arquitectura vertical de alta gama con certificación bioclimática.',
-    description: 'Complejo residencial y corporativo de 24 niveles con núcleo central antisísmico de hormigón armado H-30, envolvente térmica de doble vidriado hermético (DVH) y amenities de nivel internacional con vista panorámica 360°.',
+    id: 'acueducto-gran-san-juan',
+    title: 'Acueducto Troncal Gran San Juan & Impulsión',
+    category: 'Agua & Saneamiento',
+    tagline: 'Conducción hídrica de alta presión en PEAD DN 1000mm para 320.000 habitantes.',
+    description: 'Instalación de acueducto troncal de polietileno de alta densidad (PEAD PE-100) y fundición dúctil con soldadura por termofusión continua controlada por datalogger computarizado. Incluye cámaras de válvulas de mariposa, ventosas trifuncionales y estación de bombeo presurizada.',
     metrics: [
-      { label: 'Superficie Total', value: '28.500 m²' },
-      { label: 'Altura Máxima', value: '86 Metros' },
-      { label: 'Plazo de Entrega', value: '22 Meses' },
-      { label: 'Eficiencia Energética', value: 'Clase A+' },
+      { label: 'Longitud', value: '38.5 km' },
+      { label: 'Diámetro', value: 'DN 1000 mm' },
+      { label: 'Presión', value: '25 Bar' },
+      { label: 'Población', value: '320.000 hab' },
     ],
-    image: '/assets/showcase/building_skyline.jpg',
-    badge: 'Edificación en Altura',
-    features: ['Estructura sismorresistente calculada en CIRSOC 103', 'BIM Revit Level 300 con detección de interferencias', 'Control de cuadrillas con trazabilidad en tiempo real'],
+    image: '/assets/showcase/ecar_redes_agua.jpg',
+    badge: 'Obra Hidráulica Crítica',
+    norm: 'Norma OSSE / IRAM 13485'
   },
   {
-    id: 'distribuidor-vial',
-    title: 'Viaducto & Distribuidor Vial San Juan',
-    category: 'Infraestructura & Puentes',
-    tagline: 'Ingeniería vial estratégica para la conexión interurbana.',
-    description: 'Puente atirantado de hormigón pretensado con luces libres de 140 metros sobre cauce hídrico, calzadas divididas de 4 carriles, iluminación inteligente solar LED y sistema de monitoreo estructural con sensores de deformación activa.',
+    id: 'gasoducto-regional-cuyo',
+    title: 'Gasoducto Troncal de Alta Presión & Ramal Industrial',
+    category: 'Gasoductos',
+    tagline: 'Transporte de gas natural en acero API 5L Gr. B con revestimiento 3LPE.',
+    description: 'Tendido de gasoducto de alta presión de 12" de diámetro en acero al carbono con cordones de soldadura calificados bajo API 1104 y radiografiado completo (100% RX). Incluye estación de regulación y medición (ERM) y sistema de protección catódica.',
     metrics: [
-      { label: 'Longitud de Traza', value: '4.200 ml' },
-      { label: 'Hormigón Estructural', value: '18.400 m³' },
-      { label: 'Capacidad de Tránsito', value: '45.000 veh/día' },
-      { label: 'Seguridad Operativa', value: 'Zero Incidentes' },
+      { label: 'Extensión', value: '42.0 km' },
+      { label: 'Diámetro', value: '12 Pulgadas' },
+      { label: 'Presión', value: '75 Bar' },
+      { label: 'Control', value: '100% Rayos X' },
     ],
-    image: '/assets/showcase/bridge_infrastructure.jpg',
-    badge: 'Mega Infraestructura',
-    features: ['Vigas postensadas premoldeadas en obrador propio', 'Fundaciones profundas mediante pilotes de 1.80m de diámetro', 'Gestión logística y control de flota pesada conectada'],
+    image: '/assets/showcase/ecar_gasoductos.jpg',
+    badge: 'Gasoducto de Alta Presión',
+    norm: 'ENARGAS NAG-100 / API 1104'
   },
   {
-    id: 'planta-acueducto',
-    title: 'Planta Potabilizadora & Acueducto Gran San Juan',
-    category: 'Saneamiento & Plantas',
-    tagline: 'Garantía hídrica y saneamiento para más de 300.000 habitantes.',
-    description: 'Instalación de acueducto troncal de fundición dúctil DN 1200mm con válvulas de mariposa de comando electrohidráulico, cámaras de desagüe y cisterna de reserva de hormigón armado de 15.000 m³ con sistema de filtrado automatizado.',
+    id: 'red-electrica-parque-solar',
+    title: 'Interconexión Subterránea Parque Solar & SET 132/33kV',
+    category: 'Electricidad & Energía',
+    tagline: 'Línea de alta y media tensión subterránea blindada en XLPE 630mm².',
+    description: 'Ingeniería y tendido de terna subterránea de 132 kV y 33 kV en zanja protegida con ladrillos cubre-cables, malla de advertencia y banco de ductos hormigonados en cruces viales. Integración de tritubo con fibra óptica para telecontrol SCADA.',
     metrics: [
-      { label: 'Caudal de Diseño', value: '2.5 m³/s' },
-      { label: 'Tendido de Cañería', value: '38.5 km' },
-      { label: 'Población Beneficiada', value: '320.000 hab' },
-      { label: 'Cumplimiento OSSE', value: '100% Norma' },
+      { label: 'Tensión', value: '132 / 33 kV' },
+      { label: 'Longitud', value: '18.4 km' },
+      { label: 'Potencia', value: '120 MVA' },
+      { label: 'Conductor', value: 'XLPE 630 mm²' },
     ],
-    image: '/assets/showcase/hydraulic_plant.jpg',
-    badge: 'Obras Hidráulicas',
-    features: ['Soldaduras y uniones con ensayo de tintas penetrantes y radiografía', 'Excavación masiva con zanjeadoras de alto rendimiento', 'Control de avance físico y partes de obra digitalizados'],
+    image: '/assets/showcase/ecar_electricidad.jpg',
+    badge: 'Energía & Redes de Potencia',
+    norm: 'EPRE / IRAM 2178'
   },
+  {
+    id: 'cruce-subfluvial-hdd',
+    title: 'Cruce Subterráneo con Perforación Horizontal (HDD)',
+    category: 'Tecnología Trenchless',
+    tagline: 'Instalación sin zanja bajo cauces de río y vías de ferrocarril.',
+    description: 'Perforación dirigida teleguiada de 480 metros continuos para cañería de PEAD y acero sin rotura de calzadas ni interrupción del tránsito vehicular o ferroviario.',
+    metrics: [
+      { label: 'Longitud', value: '480 Metros' },
+      { label: 'Profundidad', value: '-18.5 m' },
+      { label: 'Diámetro', value: 'DN 800 mm' },
+      { label: 'Corte Tránsito', value: '0 Horas' },
+    ],
+    image: '/assets/showcase/ecar_hero_subterraneo.jpg',
+    badge: 'Tecnología Sin Zanja',
+    norm: 'ASTM F1962'
+  }
 ];
 
 export const ShowcasePage: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
-  const [activeProject, setActiveProject] = useState<ProjectShowcase>(PROJECTS_DATA[0]);
-  const [viewerMode, setViewerMode] = useState<'wireframe' | 'solid' | 'hybrid'>('hybrid');
+  // Sticky scroll progress state
+  const stickyContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [activeProject, setActiveProject] = useState<UtilityProject | null>(null);
 
-  const categories = ['Todos', 'Edificación & Torres', 'Infraestructura & Puentes', 'Saneamiento & Plantas'];
+  useEffect(() => {
+    const onScroll = () => {
+      if (!stickyContainerRef.current) return;
+      const rect = stickyContainerRef.current.getBoundingClientRect();
+      const totalScrollable = stickyContainerRef.current.offsetHeight - window.innerHeight;
+      if (totalScrollable <= 0) return;
 
-  const filteredProjects = selectedCategory === 'Todos'
-    ? PROJECTS_DATA
-    : PROJECTS_DATA.filter((p) => p.category === selectedCategory);
+      const currentScroll = -rect.top;
+      const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Calculate which slide is active based on exact scroll progress
+  const activeSlideIndex = Math.min(2, Math.floor(scrollProgress * 3));
+  const activeSlide = FLOW_SLIDES[activeSlideIndex];
+
+  // Manual jump by clicking indicator
+  const scrollToSlide = (index: number) => {
+    if (!stickyContainerRef.current) return;
+    const containerTop = stickyContainerRef.current.offsetTop;
+    const totalScrollable = stickyContainerRef.current.offsetHeight - window.innerHeight;
+    const targetScroll = containerTop + (index / 3) * totalScrollable + 50;
+    window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-sky-500/30 selection:text-sky-200">
-      {/* ─── NAV SUPERIOR ULTRA CLEAN ─── */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 transition-all">
+      {/* ─── HEADER MINIMALISTA ESTILO JOBY AVIATION ─── */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/70 backdrop-blur-2xl border-b border-slate-800/60 transition-all">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black tracking-tighter text-white">
+          <div className="flex items-center gap-3">
+            <a href="/" className="flex items-center gap-2 group">
+              <span className="text-2xl font-black tracking-tighter text-white group-hover:text-sky-400 transition-colors">
                 ECAR<span className="text-sky-500">.</span>
               </span>
-              <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase px-2 py-0.5 rounded border border-slate-800">
-                Engineering & Construction
+              <span className="hidden sm:inline-block text-[10px] font-mono tracking-widest text-slate-400 uppercase px-2 py-0.5 rounded border border-slate-800">
+                Agua • Gas • Electricidad
               </span>
-            </div>
+            </a>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-300">
-            <a href="#experiencia" className="hover:text-white transition-colors">Experiencia</a>
-            <a href="#ingenieria" className="hover:text-white transition-colors">Ingeniería 3D</a>
-            <a href="#obras" className="hover:text-white transition-colors">Proyectos</a>
-            <a href="#metricas" className="hover:text-white transition-colors">Métricas</a>
-            <a href="#contacto" className="hover:text-white transition-colors">Contacto</a>
+          <nav className="hidden md:flex items-center gap-8 text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+            <button onClick={() => scrollToSlide(0)} className="hover:text-white transition-colors">
+              01 / Agua
+            </button>
+            <button onClick={() => scrollToSlide(1)} className="hover:text-white transition-colors">
+              02 / Gasoductos
+            </button>
+            <button onClick={() => scrollToSlide(2)} className="hover:text-white transition-colors">
+              03 / Electricidad
+            </button>
+            <a href="#obras" className="hover:text-white transition-colors">
+              Obras
+            </a>
+            <a href="#contacto" className="hover:text-white transition-colors">
+              Contacto
+            </a>
           </nav>
 
           <div className="flex items-center gap-3">
             <a
               href="/"
-              className="px-4 py-2 text-xs font-bold font-mono text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-xl transition-all"
+              className="px-4 py-2 text-xs font-mono font-bold text-slate-300 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-full transition-all"
             >
               Portal ERP
             </a>
+
+            {/* Joby Two-State Button */}
             <a
               href="#contacto"
-              className="px-4 py-2 text-xs font-bold text-slate-950 bg-white hover:bg-sky-400 rounded-xl shadow-lg transition-all"
+              className="relative overflow-hidden group px-6 py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs shadow-lg hover:bg-sky-400 transition-all flex items-center justify-center"
             >
-              Iniciar Proyecto
+              <span className="transition-transform duration-300 group-hover:-translate-y-8 block">
+                Licitaciones
+              </span>
+              <span className="absolute transition-transform duration-300 translate-y-8 group-hover:translate-y-0 block font-black">
+                Contacto
+              </span>
             </a>
           </div>
         </div>
       </header>
 
-      {/* ─── HERO SECTION CINEMATOGRÁFICO (Estilo Joby Aviation) ─── */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Imagen de Fondo con Overlay y Gradientes */}
+      {/* ─── HERO SECTION CINEMÁTICO ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Imagen de fondo con atmósfera subterránea */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/assets/showcase/building_skyline.jpg"
-            alt="ECAR Skyline"
-            className="w-full h-full object-cover object-center scale-105 animate-pulse duration-[10000ms]"
+            src="/assets/showcase/ecar_hero_subterraneo.jpg"
+            alt="ECAR Infraestructura Subterránea"
+            className="w-full h-full object-cover object-center scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-transparent to-slate-950/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/40 to-slate-950/90" />
         </div>
 
-        {/* Contenido Hero */}
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-8 py-20">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-700 backdrop-blur-md text-xs font-mono text-sky-400">
-            <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
-            <span>Ingeniería Civil & Edificación de Vanguardia</span>
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-8 pt-20">
+          {/* Announcement Tag */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 backdrop-blur-md text-xs font-mono text-sky-400 shadow-2xl">
+            <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+            <span>Infraestructura Esencial • Agua, Gas y Redes Eléctricas</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-            Construyendo el futuro del skyline argentino.
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.03]">
+            Bajo la tierra.<br />
+            <span className="bg-gradient-to-r from-sky-400 via-white to-amber-300 bg-clip-text text-transparent">
+              Conectamos el país.
+            </span>
           </h1>
 
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
-            Fusionamos ingeniería estructural de alta precisión, modelado BIM en tiempo real y una gestión operativa digitalizada que redefine la calidad en la construcción.
+          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-300 font-light leading-relaxed">
+            Especialistas en cañerías de agua de gran porte, gasoductos troncales de alta presión y tendidos de alta tensión. Infraestructura subterránea diseñada para perdurar más de un siglo.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <a
-              href="#ingenieria"
-              className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm rounded-2xl shadow-xl hover:shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <button
+              onClick={() => scrollToSlide(0)}
+              className="px-8 py-4 bg-white hover:bg-sky-400 text-slate-950 font-bold text-sm rounded-full shadow-2xl transition-all flex items-center justify-center gap-2"
             >
-              <Cpu size={18} /> Explorar Ingeniería 3D
-            </a>
-            <a
-              href="#obras"
-              className="w-full sm:w-auto px-8 py-4 bg-slate-900/80 hover:bg-slate-800 text-white font-bold text-sm rounded-2xl border border-slate-700 backdrop-blur-md transition-all flex items-center justify-center gap-2"
-            >
-              Ver Portafolio de Obras <ArrowRight size={16} />
-            </a>
+              <span>Comenzar el Recorrido</span>
+              <ArrowRight size={16} />
+            </button>
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 border-t border-slate-800/80 text-left">
+          {/* Quick Stats Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-16 border-t border-slate-800/80 text-left">
             <div>
-              <p className="text-3xl font-black font-mono text-white tracking-tight">+150.000</p>
-              <p className="text-xs text-slate-400 font-medium">Metros Cuadrados Construidos</p>
+              <p className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight">+580 km</p>
+              <p className="text-xs text-slate-400 font-light mt-1">Acueductos & Redes PEAD</p>
             </div>
             <div>
-              <p className="text-3xl font-black font-mono text-sky-400 tracking-tight">100%</p>
-              <p className="text-xs text-slate-400 font-medium">Trazabilidad Digital BIM</p>
+              <p className="text-3xl sm:text-4xl font-black font-mono text-amber-400 tracking-tight">+310 km</p>
+              <p className="text-xs text-slate-400 font-light mt-1">Gasoductos de Alta Presión</p>
             </div>
             <div>
-              <p className="text-3xl font-black font-mono text-white tracking-tight">0</p>
-              <p className="text-xs text-slate-400 font-medium">Índice de Accidentes Graves</p>
+              <p className="text-3xl sm:text-4xl font-black font-mono text-red-400 tracking-tight">+420 MVA</p>
+              <p className="text-xs text-slate-400 font-light mt-1">Redes Subterráneas Eléctricas</p>
             </div>
             <div>
-              <p className="text-3xl font-black font-mono text-amber-400 tracking-tight">+35</p>
-              <p className="text-xs text-slate-400 font-medium">Grandes Obras Entregadas</p>
+              <p className="text-3xl sm:text-4xl font-black font-mono text-sky-400 tracking-tight">100%</p>
+              <p className="text-xs text-slate-400 font-light mt-1">Ensayos No Destructivos (RX/VLF)</p>
             </div>
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-slate-500 animate-bounce">
-          <ChevronDown size={24} />
+        {/* Indicador de scroll animado */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-slate-500">
+          <span className="text-[10px] font-mono tracking-widest uppercase text-slate-400">Desliza hacia abajo</span>
+          <ChevronDown size={20} className="animate-bounce text-sky-400" />
         </div>
       </section>
 
-      {/* ─── SECCIÓN: INGENIERÍA DIGITAL & GEMELO DIGITAL 3D ─── */}
-      <section id="ingenieria" className="py-24 px-6 max-w-7xl mx-auto space-y-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-800 pb-8">
-          <div className="space-y-2 max-w-2xl">
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-400">
-              Omniflash Engineering • BIM 3D
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-              Ingeniería Interactiva en Tiempo Real.
-            </h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Cada proyecto de ECAR cuenta con un modelo 3D vivo coordinado con cómputos métricos, cronogramas de avance y cuadrillas de campo.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
-            {(['hybrid', 'solid', 'wireframe'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewerMode(mode)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold capitalize transition-all ${
-                  viewerMode === mode ? 'bg-sky-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {mode === 'hybrid' ? 'Híbrido BIM' : mode === 'solid' ? 'Sólido' : 'Estructura Alambre'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Visor 3D Interactivo */}
-        <Building3DViewer renderMode={viewerMode} />
-
-        {/* Pilares de Ingeniería */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-4 hover:border-slate-700 transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center border border-sky-500/20">
-              <Layers size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-white">Modelado BIM LOD 350</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Coordinación multidisciplinaria integral (Estructuras, Instalaciones Sanitarias, Termomecánica y Eléctrica) para eliminar el 100% de las colisiones antes de verter hormigón.
-            </p>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-4 hover:border-slate-700 transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-              <ShieldCheck size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-white">Control Operativo & Calidad</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Sistema propio de medición de rendimientos por cuadrilla (PR-GO-01), seguimiento de horas productivas y resolución inmediata de desvíos en campo.
-            </p>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 space-y-4 hover:border-slate-700 transition-all">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
-              <Activity size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-white">Gestión de Cadena de Suministro</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Integración total entre compras de materiales, despacho desde pañol y certificación quincenal, evitando paradas operativas y garantizando plazos de entrega.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SECCIÓN: PORTAFOLIO DE GRANDES OBRAS ─── */}
-      <section id="obras" className="py-24 bg-slate-900/30 border-y border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 space-y-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-400">
-                Portafolio de Proyectos
-              </span>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-                Obras que marcan un estándar.
-              </h2>
-            </div>
-
-            {/* Categorías Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-white text-slate-950 shadow-md font-bold'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+      {/* ─── SCROLL-DRIVEN STICKY STORYTELLING (ESTILO EXACTO JOBY AVIATION) ─── */}
+      {/* Este contenedor de 350vh mantiene la pantalla fija (sticky) mientras el usuario hace scroll, y las imágenes fluyen y cambian según el avance de la rueda/touch */}
+      <section ref={stickyContainerRef} className="relative h-[350vh] bg-slate-950">
+        <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center">
+          {/* Imágenes de Fondo Dinámicas con Cross-Fade y Zoom Ken Burns según el Scroll */}
+          <div className="absolute inset-0 z-0">
+            {FLOW_SLIDES.map((slide, idx) => {
+              const isActive = activeSlideIndex === idx;
+              return (
+                <div
+                  key={slide.number}
+                  className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                    isActive ? 'opacity-100 scale-105 pointer-events-auto' : 'opacity-0 scale-100 pointer-events-none'
                   }`}
                 >
-                  {cat}
-                </button>
-              ))}
+                  <img
+                    src={slide.image}
+                    alt={slide.headline}
+                    className="w-full h-full object-cover object-center"
+                  />
+                  {/* Gradientes cinemáticos oscuros Joby Aviation */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent" />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Contenido Narrativo que Fluye con el Scroll */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-7 space-y-6">
+              {/* Barra de Progreso de Scroll Pinned */}
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  {[0, 1, 2].map((idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => scrollToSlide(idx)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        activeSlideIndex === idx ? 'w-12 bg-sky-400' : 'w-4 bg-slate-700 hover:bg-slate-500'
+                      }`}
+                      title={`Ir a ${FLOW_SLIDES[idx].category}`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                  Deslizando: {Math.round(scrollProgress * 100)}%
+                </span>
+              </div>
+
+              {/* Número Gigante y Categoría */}
+              <div className="flex items-baseline gap-4">
+                <span className="text-6xl sm:text-8xl font-black font-mono tracking-tighter text-sky-400/90 transition-all duration-500">
+                  {activeSlide.number}
+                </span>
+                <div className="space-y-1">
+                  <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-400 block">
+                    {activeSlide.category}
+                  </span>
+                  <p className="text-sm font-light text-slate-400">
+                    {activeSlide.subheadline}
+                  </p>
+                </div>
+              </div>
+
+              {/* Título de la Especialidad */}
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight transition-all duration-500">
+                {activeSlide.headline}
+              </h2>
+
+              <p className="text-base sm:text-lg text-slate-300 font-light leading-relaxed max-w-2xl">
+                {activeSlide.description}
+              </p>
+
+              {/* Métricas Técnicas */}
+              <div className="grid grid-cols-3 gap-4 pt-2 border-t border-slate-800/80">
+                {activeSlide.metrics.map((m, i) => (
+                  <div key={i}>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase block">{m.label}</span>
+                    <span className="text-base sm:text-lg font-bold font-mono text-white mt-0.5 block">{m.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tags de Normas y Tecnologías */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {activeSlide.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-slate-900/90 text-sky-300 border border-slate-700/80 backdrop-blur-md"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Inset flotante lateral con datos de control */}
+            <div className="hidden lg:block lg:col-span-5 space-y-4">
+              <div className="bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl border border-slate-800/90 shadow-2xl space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+                    Control de Calidad ECAR
+                  </span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+
+                <div className="space-y-3 text-xs text-slate-300 font-light leading-relaxed">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                    <p>Ensayos no destructivos certificados y trazabilidad satelital en cada junta.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                    <p>Cuadrillas operativas propias con equipamiento pesado especializado.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                    <p>Cumplimiento estricto de pliegos y curvas de inversión certificadas.</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800">
+                  <a
+                    href="#obras"
+                    className="w-full py-3 bg-white hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>Ver Obras Ejecutadas</span>
+                    <ArrowUpRight size={14} />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Grilla de Proyectos */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {filteredProjects.map((p) => (
+          {/* Indicador de scroll flotante en la base */}
+          <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-xs font-mono text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+              <span>Desplaza hacia abajo para alternar especialidades (01 → 02 → 03)</span>
+            </div>
+            <span className="text-slate-500">ECAR Engineering & Infrastructure</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECCIÓN: TECNOLOGÍA TRENCHLESS (PERFORACIÓN HORIZONTAL DIRIGIDA) ─── */}
+      <section className="py-32 max-w-7xl mx-auto px-6 border-t border-slate-800/80">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-7 space-y-6">
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
+              Innovación • Perforación Horizontal Dirigida (HDD)
+            </span>
+
+            <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
+              Cruces subterráneos sin abrir zanjas en superficie.
+            </h2>
+
+            <p className="text-base text-slate-300 font-light leading-relaxed">
+              Mediante tunelería teledirigida instalamos cañerías de agua, gasoductos y líneas eléctricas por debajo de autopistas, vías ferroviarias, ríos y zonas urbanas densas sin cortar el tránsito ni romper pavimentos.
+            </p>
+
+            <div className="grid grid-cols-3 gap-6 pt-4 border-t border-slate-800">
+              <div>
+                <span className="text-3xl sm:text-4xl font-black font-mono text-white">0%</span>
+                <span className="text-xs text-slate-400 font-light mt-1 block">Corte de Tránsito</span>
+              </div>
+              <div>
+                <span className="text-3xl sm:text-4xl font-black font-mono text-emerald-400">-70%</span>
+                <span className="text-xs text-slate-400 font-light mt-1 block">Tiempo de Ejecución</span>
+              </div>
+              <div>
+                <span className="text-3xl sm:text-4xl font-black font-mono text-sky-400">100%</span>
+                <span className="text-xs text-slate-400 font-light mt-1 block">Preservación Ambiental</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 relative h-96 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl group">
+            <img
+              src="/assets/showcase/ecar_hero_subterraneo.jpg"
+              alt="Tunelería subterránea ECAR"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-md p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300">
+              Tirada continua teledirigida hasta 800m
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECCIÓN: PORTAFOLIO DE OBRAS DE REFERENCIA ─── */}
+      <section id="obras" className="py-24 bg-slate-900/20 border-t border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-6 space-y-12">
+          <div className="space-y-2">
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-400">
+              Portafolio de Obras
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+              Infraestructura construida y en servicio.
+            </h2>
+          </div>
+
+          {/* Grilla de Obras */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PROJECTS_DATA.map((p) => (
               <div
                 key={p.id}
                 className="group bg-slate-900/80 border border-slate-800 hover:border-sky-500/50 rounded-3xl overflow-hidden shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  {/* Imagen de Proyecto */}
-                  <div className="relative h-64 overflow-hidden">
+                  <div className="relative h-56 overflow-hidden">
                     <img
                       src={p.image}
                       alt={p.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-sky-400 border border-sky-400/30">
+                    <div className="absolute top-3 left-3">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-slate-950/80 backdrop-blur-md text-sky-400 border border-sky-400/30">
                         {p.badge}
                       </span>
                     </div>
                   </div>
 
-                  {/* Contenido */}
-                  <div className="p-6 space-y-4">
+                  <div className="p-5 space-y-3">
                     <div>
-                      <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider">{p.category}</span>
-                      <h3 className="text-2xl font-extrabold text-white group-hover:text-sky-400 transition-colors">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{p.norm}</span>
+                      <h3 className="text-lg font-extrabold text-white group-hover:text-sky-400 transition-colors mt-0.5">
                         {p.title}
                       </h3>
                     </div>
 
-                    <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
-                      {p.description}
+                    <p className="text-xs text-slate-400 font-light line-clamp-2 leading-relaxed">
+                      {p.tagline}
                     </p>
 
-                    {/* Métricas del Proyecto */}
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
                       {p.metrics.slice(0, 2).map((m, idx) => (
-                        <div key={idx} className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                          <span className="text-[10px] text-slate-500 block font-mono uppercase">{m.label}</span>
-                          <span className="text-sm font-bold font-mono text-white">{m.value}</span>
+                        <div key={idx} className="bg-slate-950/60 p-2 rounded-xl border border-slate-800/80">
+                          <span className="text-[9px] text-slate-500 block font-mono uppercase">{m.label}</span>
+                          <span className="text-xs font-bold font-mono text-white">{m.value}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 pt-0">
+                <div className="p-5 pt-0">
                   <button
                     onClick={() => setActiveProject(p)}
-                    className="w-full py-3 bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-slate-800 hover:bg-sky-400 hover:text-slate-950 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5"
                   >
-                    <span>Ver Ficha Técnica Completa</span>
-                    <ArrowRight size={14} />
+                    <span>Ficha Técnica</span>
+                    <Maximize2 size={13} />
                   </button>
                 </div>
               </div>
@@ -360,7 +575,7 @@ export const ShowcasePage: React.FC = () => {
 
       {/* ─── MODAL DETALLE DE FICHA TÉCNICA ─── */}
       {activeProject && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl space-y-6 p-6 md:p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start">
               <div>
@@ -370,11 +585,11 @@ export const ShowcasePage: React.FC = () => {
                 <h3 className="text-2xl md:text-3xl font-extrabold text-white mt-2">
                   {activeProject.title}
                 </h3>
-                <p className="text-xs text-slate-400 font-mono mt-1">{activeProject.category}</p>
+                <p className="text-xs text-slate-400 font-mono mt-1">{activeProject.norm}</p>
               </div>
               <button
-                onClick={() => setActiveProject(null as any)}
-                className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-xl"
+                onClick={() => setActiveProject(null)}
+                className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-xl text-lg font-bold"
               >
                 ✕
               </button>
@@ -383,51 +598,75 @@ export const ShowcasePage: React.FC = () => {
             <img
               src={activeProject.image}
               alt={activeProject.title}
-              className="w-full h-64 md:h-80 object-cover rounded-2xl border border-slate-800"
+              className="w-full h-64 md:h-72 object-cover rounded-2xl border border-slate-800"
             />
 
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-300 font-light leading-relaxed">
               {activeProject.description}
             </p>
 
-            {/* Métricas Completas */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {activeProject.metrics.map((m, idx) => (
                 <div key={idx} className="bg-slate-950 p-3 rounded-xl border border-slate-800">
                   <span className="text-[10px] text-slate-500 block font-mono uppercase">{m.label}</span>
-                  <span className="text-base font-black font-mono text-sky-400">{m.value}</span>
+                  <span className="text-sm font-black font-mono text-sky-400">{m.value}</span>
                 </div>
               ))}
             </div>
 
-            {/* Características Destacadas */}
-            <div className="space-y-2 border-t border-slate-800 pt-4">
-              <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider">
-                Especificaciones & Normas de Calidad
-              </h4>
-              <div className="space-y-1.5">
-                {activeProject.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
-                    <CheckCircle2 size={15} className="text-sky-400 shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="pt-2 flex justify-end">
               <button
-                onClick={() => setActiveProject(null as any)}
+                onClick={() => setActiveProject(null)}
                 className="px-6 py-2.5 bg-white text-slate-950 hover:bg-sky-400 font-bold text-xs rounded-xl transition-all"
               >
-                Cerrar Detalle
+                Cerrar
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── FOOTER & CONTACTO INSTITUCIONAL ─── */}
+      {/* ─── BANNER DE CIERRE INSTITUCIONAL ─── */}
+      <section className="py-24 border-t border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900 text-center px-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-400">
+            Conectividad Vital para las Próximas Generaciones
+          </span>
+
+          <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
+            Agua, gas y energía.<br />
+            Construidos con precisión absoluta.
+          </h2>
+
+          <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto font-light leading-relaxed">
+            Nuestra flota de maquinaria pesada, soldadores homologados y certificaciones internacionales garantizan el cumplimiento de plazos y normas en obras públicas y privadas.
+          </p>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="#contacto"
+              className="relative overflow-hidden group px-8 py-4 bg-sky-500 text-slate-950 font-bold text-sm rounded-full shadow-2xl hover:bg-sky-400 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="transition-transform duration-300 group-hover:-translate-y-8 block">
+                Contactar Mesa de Licitaciones
+              </span>
+              <span className="absolute transition-transform duration-300 translate-y-8 group-hover:translate-y-0 block font-black">
+                Enviar Consulta Técnica
+              </span>
+              <ArrowRight size={16} className="ml-1" />
+            </a>
+
+            <a
+              href="/"
+              className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-full border border-slate-700 transition-all"
+            >
+              Acceso a Portal ERP Interno
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FOOTER INSTITUCIONAL ─── */}
       <footer id="contacto" className="py-20 border-t border-slate-800 bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-xs">
           <div className="space-y-4 md:col-span-2">
@@ -436,31 +675,32 @@ export const ShowcasePage: React.FC = () => {
                 ECAR<span className="text-sky-500">.</span>
               </span>
             </div>
-            <p className="text-slate-400 max-w-sm leading-relaxed">
-              Empresa Constructora de Obras Civiles, Infraestructura y Edificación Urbana. Operando con los más altos estándares de calidad, seguridad y cumplimiento de plazos en Argentina.
+            <p className="text-slate-400 max-w-sm leading-relaxed font-light">
+              Empresa Constructora especializada en Redes de Conducción Hídrica, Gasoductos Troncales y Tendidos Eléctricos Subterráneos. Líderes en ejecución de infraestructura civil en la Región de Cuyo y toda Argentina.
             </p>
-            <div className="flex items-center gap-4 text-slate-400">
-              <span className="flex items-center gap-1.5"><ShieldCheck size={16} className="text-sky-400" /> Certificación ISO 9001</span>
-              <span className="flex items-center gap-1.5"><Globe size={16} className="text-sky-400" /> San Juan • Mendoza • Cuyo</span>
+            <div className="flex flex-wrap items-center gap-4 text-slate-400 pt-2">
+              <span className="flex items-center gap-1.5"><ShieldCheck size={16} className="text-sky-400" /> ISO 9001 / ISO 14001 / ISO 45001</span>
+              <span className="flex items-center gap-1.5"><FileCheck2 size={16} className="text-amber-400" /> ENARGAS • OSSE • EPRE</span>
             </div>
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-bold text-white font-mono uppercase tracking-wider text-xs">Divisiones</h4>
-            <ul className="space-y-2 text-slate-400">
-              <li>Edificación en Altura & Residencial</li>
-              <li>Obras de Infraestructura Vial</li>
-              <li>Saneamiento & Plantas de Agua</li>
-              <li>Ingeniería Estructural & BIM</li>
+            <h4 className="font-bold text-white font-mono uppercase tracking-wider text-xs">Especialidades</h4>
+            <ul className="space-y-2 text-slate-400 font-light">
+              <li>Acueductos & Redes PEAD / Dúctil</li>
+              <li>Gasoductos de Acero (NAG-100)</li>
+              <li>Tendido Subterráneo 132/33/13.2 kV</li>
+              <li>Perforación Dirigida (Trenchless HDD)</li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-bold text-white font-mono uppercase tracking-wider text-xs">Mesa de Entrada</h4>
-            <p className="text-slate-400">Consultas técnicas e inversores corporativos:</p>
-            <div className="space-y-1.5 text-slate-300 font-mono">
-              <p className="flex items-center gap-2"><Mail size={14} className="text-sky-400" /> contacto@ecarconstructora.com.ar</p>
+            <h4 className="font-bold text-white font-mono uppercase tracking-wider text-xs">Mesa Técnica & Licitaciones</h4>
+            <p className="text-slate-400 font-light">Consultas sobre pliegos, cómputos y proyectos:</p>
+            <div className="space-y-2 text-slate-300 font-mono pt-1">
+              <p className="flex items-center gap-2"><Mail size={14} className="text-sky-400" /> licitaciones@ecarconstructora.com.ar</p>
               <p className="flex items-center gap-2"><Phone size={14} className="text-sky-400" /> +54 (264) 421-8800</p>
+              <p className="flex items-center gap-2"><Globe size={14} className="text-sky-400" /> San Juan • Mendoza • Buenos Aires</p>
             </div>
           </div>
         </div>
@@ -468,7 +708,7 @@ export const ShowcasePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
           <p>© 2026 ECAR Constructora S.A. Todos los derechos reservados.</p>
           <div className="flex items-center gap-6">
-            <a href="/" className="hover:text-white transition-colors">Sistema Interno</a>
+            <a href="/" className="hover:text-white transition-colors">Sistema Interno ERP</a>
             <a href="/tracking" className="hover:text-white transition-colors">Telemetría de Flota</a>
             <a href="/presentacion-mesa-tecnica" className="hover:text-white transition-colors">Mesa Técnica</a>
           </div>

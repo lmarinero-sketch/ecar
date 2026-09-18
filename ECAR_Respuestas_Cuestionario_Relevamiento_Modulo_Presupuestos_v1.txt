@@ -1,0 +1,176 @@
+ECAR | RESPUESTAS AL CUESTIONARIO DE RELEVAMIENTO
+Módulo Proyectos y Presupuestos (PR-GPP-01)
+Respuesta institucional para Lucas / Grow Labs
+Situación actual de ECAR, criterios de implementación y prioridades funcionales para el ERP
+Empresa
+ECAR Construcciones / ECAR Constructora
+Destinatario
+Lucas / Grow Labs
+Entrevistado
+Ing. Gustavo Regalado - Gerencia General
+Proyecto
+ERP ECAR - Módulo Proyectos y Presupuestos v1.0
+Tipo de documento
+Respuesta operativa para ingeniería de requerimientos
+Fecha
+Junio 2026
+Estado
+Borrador institucional para validación
+Criterio normativo
+Compatible con criterios de gestión de calidad tipo ISO 9001. No implica certificación formal.
+Documento interno de respuesta para ordenar el relevamiento funcional del módulo. La respuesta describe la realidad actual de ECAR y propone el criterio deseado de implementación, evitando sobredimensionar el sistema y priorizando trazabilidad, control operativo y mejora continua.
+1. Control documental
+Documento
+Respuestas al cuestionario de relevamiento operativo - Módulo Proyectos y Presupuestos
+Código sugerido
+ECAR-REQ-GPP-001
+Versión
+v1.0
+Empresa
+ECAR Construcciones / ECAR Constructora
+Elaborado para
+Lucas / Grow Labs
+Elaborado por
+Gerencia General ECAR
+Área vinculada
+Gerencia de Proyectos y Presupuestos
+Uso previsto
+Definición funcional inicial del módulo de software
+Criterio
+Enfoque a procesos, trazabilidad, información documentada y mejora continua compatible con ISO 9001
+Próxima revisión
+Al validar alcance funcional con Grow Labs y responsables de área
+2. Criterio general de respuesta
+Las respuestas se elaboran con un criterio realista: hoy ECAR cuenta con experiencia operativa, capacidad de resolución y conocimiento técnico, pero parte de la información todavía se gestiona mediante WhatsApp, archivos Excel, carpetas dispersas, correos y memoria del equipo. El objetivo del sistema no debe ser reemplazar el criterio de las personas, sino ordenar la información crítica, obligar a registrar los pasos mínimos y permitir que una oportunidad pueda seguirse desde su ingreso hasta el cierre económico de la obra.
+El módulo de Proyectos y Presupuestos debe nacer como una herramienta simple, escalable y aplicable. La prioridad inicial no es cargar burocracia, sino evitar pérdidas de trazabilidad, presupuestos con información incompleta, versiones confundidas, adicionales sin respaldo y decisiones que no quedan registradas.
+3. Resumen ejecutivo para Lucas
+Estado actual
+Proceso funcional pero no completamente sistematizado. La información suele ingresar por canales informales y se ordena luego en archivos de trabajo.
+Riesgo principal
+Pérdida de trazabilidad entre oportunidad, documentación técnica, cómputo, cotizaciones, versión enviada, adjudicación, adicionales y cierre económico.
+Criterio de diseño
+Alta de oportunidad obligatoria, checklist documental, APU estructurado, consultas interdepartamentales registradas, versionado de propuestas y módulo de adicionales/cierre económico.
+Implementación recomendada
+Por etapas: primero trazabilidad y versiones; luego base de insumos/APU; después automatizaciones con Compras, Logística, Obras y Administración.
+Condición clave
+El sistema debe permitir trabajar rápido, pero no permitir que lo importante quede sin registrar.
+4. Respuestas por eje del cuestionario
+4.1. Registro de la oportunidad o necesidad inicial
+Pregunta de relevamiento
+¿Cómo ingresan y se centralizan hoy las solicitudes de presupuestos? ¿Existe alguna base de datos inicial o el proceso comienza directo en el archivo de cómputo del analista?
+Respuesta de ECAR - situación actual
+Hoy las solicitudes ingresan por distintos canales: WhatsApp, llamadas, correos, contactos directos de clientes, pedidos de Gerencia General, consultas de obras en curso, licitaciones o necesidades internas. En la práctica, muchas oportunidades comienzan primero como una conversación o un pedido informal y luego se transforman en una carpeta, archivo Excel, documento de presupuesto o intercambio técnico. No existe todavía una base única y obligatoria donde toda oportunidad quede dada de alta antes de empezar a presupuestar.
+Riesgo operativo detectado
+El riesgo actual es que una oportunidad quede dispersa entre mensajes, correos, archivos personales o memoria del equipo. También puede ocurrir que no quede claro quién recibió el pedido, qué plazo comercial tiene, qué datos faltan, qué versión se está trabajando o por qué se descartó una oportunidad.
+Criterio solicitado para el sistema
+Se recomienda implementar un formulario de Alta de Oportunidad como primer paso del módulo. Debe generar un código correlativo, clasificar el tipo de oportunidad y asignar responsable, fecha de ingreso, cliente, obra, prioridad, plazo comercial y estado. El sistema debería permitir estados simples: ingresada, en relevamiento, documentación incompleta, en cómputo, en revisión, enviada, adjudicada, descartada o pendiente de decisión.
+Prioridad funcional
+Prioridad alta. Este es el punto de partida del módulo y debe implementarse desde la primera versión.
+4.2. Relevamiento técnico en terreno y análisis documental
+Pregunta de relevamiento
+¿Cuál es el protocolo actual para asentar y comunicar que un plano o pliego enviado por el cliente tiene inconsistencias? ¿Dónde se guardan y cómo se comparten las fotos y croquis de las visitas de obra?
+Respuesta de ECAR - situación actual
+Actualmente las inconsistencias se comunican de manera práctica, principalmente por WhatsApp, llamadas, correos o comentarios internos. Las fotos, croquis y observaciones de relevamiento suelen quedar en celulares, grupos de WhatsApp, carpetas de obra o archivos compartidos, pero no siempre quedan vinculadas formalmente al presupuesto. No existe todavía un checklist documental único y obligatorio que indique qué documentación está completa, incompleta, observada o pendiente de respuesta del cliente.
+Riesgo operativo detectado
+El principal riesgo es presupuestar con documentación parcial, planos no actualizados, pliegos incompletos, interferencias no registradas o fotos que luego no se encuentran. Esto puede afectar alcance, costos, plazos, adicionales y defensa técnica ante el cliente o inspección.
+Criterio solicitado para el sistema
+El sistema debería incluir un panel de control documental por oportunidad/presupuesto. Cada documento debe tener estado: recibido, pendiente, observado, no aplica, aprobado o reemplazado. Las fotos y croquis deben cargarse dentro de la misma oportunidad, con fecha, responsable y breve descripción. Si falta documentación crítica, el sistema debe permitir avanzar sólo dejando supuestos y advertencias visibles.
+Prioridad funcional
+Prioridad alta. El checklist documental evita que el presupuesto nazca débil desde el origen.
+4.3. Desarrollo del cómputo métrico y análisis de precios unitarios (APU)
+Pregunta de relevamiento
+¿Qué herramientas utilizan hoy para armar el árbol de tareas y el APU? ¿Cuentan con una base de datos única de insumos y rendimientos históricos o cada analista edita planillas Excel independientes?
+Respuesta de ECAR - situación actual
+Hoy el trabajo se apoya principalmente en planillas Excel, experiencia técnica, presupuestos anteriores, consultas a proveedores y criterio del analista. Existen referencias históricas y conocimiento acumulado, pero no está consolidado como una base única de insumos, rendimientos, cuadrillas, equipos y precios actualizados. En muchos casos, cada presupuesto se arma sobre archivos independientes, copias de trabajos anteriores o estructuras adaptadas a la necesidad del momento.
+Riesgo operativo detectado
+El riesgo es duplicar criterios, usar precios desactualizados, no identificar variaciones de rendimiento, perder consistencia entre presupuestos o no poder recalcular rápidamente el impacto de un aumento de materiales críticos.
+Criterio solicitado para el sistema
+El sistema debería avanzar hacia un maestro centralizado de insumos, mano de obra, cuadrillas, equipos, subcontratos, gastos indirectos y márgenes. El APU debe permitir armar partidas reutilizables, actualizar precios, registrar fecha y fuente del valor, y comparar costo presupuestado contra costo real al cierre. También debe permitir exportar a Excel o PDF porque la empresa seguirá necesitando flexibilidad para presentar propuestas.
+Prioridad funcional
+Prioridad media-alta. Conviene implementarlo por etapas para no frenar el uso inicial del sistema.
+4.4. Consultas de disponibilidad y cotización interdepartamental
+Pregunta de relevamiento
+¿Cómo se gestiona hoy la comunicación interna con las áreas de Compras y Logística durante el armado de la propuesta? ¿Queda algún registro auditable de estas consultas o son resoluciones verbales?
+Respuesta de ECAR - situación actual
+Hoy la comunicación con Compras, Logística y Obras se resuelve principalmente por consultas directas, WhatsApp, llamadas o conversaciones internas. Cuando se requiere un precio crítico, disponibilidad de equipo, herramienta o material, se consulta al área correspondiente, pero el registro auditable no siempre queda asociado al presupuesto. La información existe, pero puede quedar dispersa entre personas, chats, archivos o decisiones verbales.
+Riesgo operativo detectado
+El riesgo es que el presupuesto tome como válido un precio, plazo, disponibilidad o recurso que luego no pueda comprobarse. También puede ocurrir que una respuesta se pierda, que Compras no sepa qué precio fue usado, que Logística no recuerde qué disponibilidad informó o que Obras no haya validado la metodología constructiva.
+Criterio solicitado para el sistema
+El sistema debería permitir generar solicitudes internas vinculadas al presupuesto: Solicitud de Cotización a Compras, Validación de Stock a Logística, Validación de Maquinaria/Equipo, Consulta Técnica a Obras y Consulta Financiera a Administración. Cada solicitud debe tener responsable, fecha, plazo de respuesta, estado, adjuntos, respuesta registrada y trazabilidad.
+Prioridad funcional
+Prioridad media-alta. Es clave para que el presupuesto no dependa sólo de conversaciones.
+4.5. Emisión, control de versiones y archivo de la propuesta formal
+Pregunta de relevamiento
+Cuando un cliente solicita rebajas, cambios técnicos o refinanciaciones, ¿cómo se archivan y diferencian las versiones previas de la oferta final? ¿Cómo se transfiere la información técnica ganadora al Director de Obra?
+Respuesta de ECAR - situación actual
+Hoy las versiones suelen diferenciarse mediante nombres de archivo, fechas, copias, correos enviados o mensajes. En muchos casos se identifica la versión final por la última propuesta enviada o aprobada, pero no existe todavía un mecanismo obligatorio de congelamiento, versionado formal y registro de motivos de cambio. La transferencia a Obras se realiza mediante conversaciones, envío de archivos, planos, cómputos o reuniones, pero falta una carpeta de inicio estandarizada y controlada.
+Riesgo operativo detectado
+El riesgo es ejecutar con una versión desactualizada, confundir alcances, perder exclusiones, olvidar condiciones comerciales modificadas, no registrar una rebaja o no comunicar a Obras los supuestos críticos del presupuesto adjudicado.
+Criterio solicitado para el sistema
+El sistema debe congelar automáticamente el presupuesto al marcarlo como Enviado al Cliente. Toda modificación posterior debe generar una nueva versión con motivo de cambio: rebaja, cambio técnico, refinanciación, cambio de alcance, ajuste de precios o corrección interna. Cuando el presupuesto sea adjudicado, debe generarse una Carpeta de Inicio para Obras con alcance, cómputo, supuestos, exclusiones, recursos críticos, documentación técnica, plazos y versión aprobada.
+Prioridad funcional
+Prioridad alta. El control de versiones protege a ECAR de confusiones costosas.
+4.6. Registro histórico de adicionales, desvíos y lecciones aprendidas
+Pregunta de relevamiento
+Actualmente, cuando surgen adicionales solicitados por la inspección o desvíos económicos fuertes frente al presupuesto original, ¿existe algún registro formal o es información que queda en la memoria operativa del equipo?
+Respuesta de ECAR - situación actual
+Actualmente parte de la información queda registrada en mensajes, planillas, presupuestos complementarios, correos o conversaciones con obra/cliente, pero no existe un módulo único donde cada adicional, cambio de alcance, interferencia o desvío económico quede vinculado al presupuesto original. En la práctica, mucha información depende de la memoria operativa del equipo y de la capacidad de cada responsable para ordenar sus archivos.
+Riesgo operativo detectado
+El riesgo es ejecutar adicionales sin respaldo suficiente, no cuantificar a tiempo los cambios, perder recupero económico, no identificar la causa de un desvío o repetir errores de cómputo, rendimiento, compra o planificación en futuras obras.
+Criterio solicitado para el sistema
+El sistema debe incorporar un módulo de Órdenes de Cambio y Adicionales asociado al presupuesto/contrato original. Cada adicional debe indicar origen, causa, impacto técnico, impacto económico, impacto en plazo, estado de aprobación, documentación respaldatoria y relación con el alcance inicial. También debe incluir un módulo de Cierre Económico que compare APU presupuestado contra compras reales, costos administrativos, equipos, mano de obra, subcontratos y margen final.
+Prioridad funcional
+Prioridad alta para una segunda etapa. Es fundamental para proteger margen y aprender de cada obra.
+5. Requerimientos funcionales mínimos sugeridos
+Funcionalidad
+Descripción mínima
+Prioridad
+Alta de oportunidad
+Código único, cliente, tipo, responsable, plazo, estado y prioridad.
+Alta
+Checklist documental
+Control de planos, pliegos, fotos, croquis, supuestos y observaciones.
+Alta
+Versionado de propuestas
+Congelar enviados, crear nuevas versiones y registrar motivos de cambio.
+Alta
+Carpeta de inicio de obra
+Transferir a Obras la versión aprobada, alcance, cómputo, supuestos y recursos críticos.
+Alta
+Consultas internas
+Tareas a Compras, Logística, Obras y Administración con respuesta auditable.
+Media-alta
+Maestro de insumos/APU
+Base de materiales, mano de obra, equipos, rendimientos, precios y fuentes.
+Media-alta
+Órdenes de cambio/adicionales
+Registro vinculado al presupuesto original con impacto técnico, económico y de plazo.
+Alta - etapa 2
+Cierre económico
+Comparación presupuesto vs real: compras, mano de obra, equipos, subcontratos y margen.
+Alta - etapa 2
+Lecciones aprendidas
+Registro de causas de desvío y mejoras para futuros presupuestos.
+Media
+6. Implementación recomendada por etapas
+Etapa
+Alcance
+Resultado esperado
+Etapa 1 - Trazabilidad básica
+Alta de oportunidades, checklist documental, estados del presupuesto, adjuntos, versionado y carpeta de inicio.
+Lograr que ninguna oportunidad importante quede sin código, responsable, documentación y versión controlada.
+Etapa 2 - Integración operativa
+Solicitudes internas a Compras, Logística, Obras y Administración; registro de respuestas y validaciones.
+Evitar consultas verbales no auditables y conectar presupuesto con recursos reales.
+Etapa 3 - APU y maestro de datos
+Maestro de insumos, mano de obra, equipos, precios, rendimientos y partidas reutilizables.
+Mejorar precisión, velocidad y consistencia de presupuestos.
+Etapa 4 - Adicionales y cierre económico
+Órdenes de cambio, adicionales, desvíos, presupuesto vs costo real y lecciones aprendidas.
+Proteger margen, defender adicionales y aprender de cada obra.
+7. Respuesta institucional sugerida para enviar a Lucas
+Lucas, te comparto una respuesta ordenada del estado actual de ECAR respecto del módulo de Proyectos y Presupuestos. En términos generales, hoy el proceso funciona por experiencia, criterio técnico y archivos de trabajo, pero todavía no tiene una trazabilidad única desde la oportunidad hasta el cierre económico. Por eso vemos muy útil que el sistema se diseñe como un puente entre la oportunidad comercial, el presupuesto, las consultas internas, la versión enviada, la entrega a Obras, los adicionales y el cierre real.
+La prioridad inicial debería estar en registrar oportunidades, controlar documentación, ordenar versiones y generar una carpeta de inicio para Obras. Luego conviene avanzar con la base centralizada de insumos/APU, las consultas internas a Compras, Logística y Obras, y finalmente el módulo de adicionales y cierre económico. El sistema debe ayudarnos a trabajar con más orden, pero sin volver lento el proceso. La idea es que ECAR pueda saber qué se pidió, qué se presupuestó, qué versión se envió, qué cambió, quién aprobó y qué resultado dejó la obra.
+8. Cierre institucional
+El módulo de Proyectos y Presupuestos debe ser el primer punto de trazabilidad de una obra. Si el presupuesto nace sin código, sin documentación ordenada, sin versión controlada o sin supuestos claros, el desorden se traslada después a Compras, Logística, Obras, Administración y Gerencia General.
+El criterio de ECAR es avanzar hacia un sistema simple, gradual y exigible: pocas cargas obligatorias, pero muy bien elegidas. Lo importante debe quedar registrado. La urgencia puede atenderse, pero no debe borrar la evidencia.

@@ -19,12 +19,7 @@ export default defineConfig({
         icons: [
           {
             src: '/logoECAR.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/logoECAR.png',
-            sizes: '512x512',
+            sizes: 'any',
             type: 'image/png',
           }
         ]

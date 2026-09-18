@@ -4792,6 +4792,64 @@ export function useCerrarObraControlTarea() {
   });
 }
 
+export function useUpdateObraControlTarea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ObraControlTarea> }) => {
+      const toUpdate: any = { ...updates, updated_at: new Date().toISOString() };
+      
+      if (toUpdate.cantidad_plan !== undefined || toUpdate.personal_plan_count !== undefined) {
+        const persPlan = Number(toUpdate.personal_plan_count) || 1;
+        let hsPlan = 8;
+        if (toUpdate.hora_inicio_plan && toUpdate.hora_fin_plan) {
+          const [h1, m1] = toUpdate.hora_inicio_plan.split(':').map(Number);
+          const [h2, m2] = toUpdate.hora_fin_plan.split(':').map(Number);
+          const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+          if (diff > 0) hsPlan = diff / 60;
+        }
+        toUpdate.hh_plan = persPlan * hsPlan;
+      }
+
+      if (toUpdate.cantidad_real !== undefined && toUpdate.cantidad_plan !== undefined) {
+        const cReal = Number(toUpdate.cantidad_real) || 0;
+        const cPlan = Number(toUpdate.cantidad_plan) || 1;
+        toUpdate.cumplimiento_pct = Number(((cReal / cPlan) * 100).toFixed(1));
+      }
+
+      const { data, error } = await supabase
+        .from('obra_control_tareas')
+        .update(toUpdate)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as ObraControlTarea;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_control_tareas'] });
+      qc.invalidateQueries({ queryKey: ['partes_diarios'] });
+    },
+  });
+}
+
+export function useDeleteObraControlTarea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('obra_control_tareas')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['obra_control_tareas'] });
+      qc.invalidateQueries({ queryKey: ['partes_diarios'] });
+    },
+  });
+}
+
 export function useConsolidarTareaEnParteDiario() {
   const qc = useQueryClient();
   return useMutation({

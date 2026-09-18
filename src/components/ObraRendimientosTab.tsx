@@ -3,10 +3,11 @@ import {
   Zap, Clock, Plus, CheckCircle2, AlertTriangle, FileText,
   HardHat, Calendar, Printer, Check, X, ShoppingCart,
   MapPin, Gauge, FileSpreadsheet, UploadCloud, Users, BarChart3,
-  Layers, RefreshCw
+  Layers, RefreshCw, Edit3, Trash2
 } from 'lucide-react';
 import {
-  useObraControlTareas, useCreateObraControlTarea, useCerrarObraControlTarea,
+  useObraControlTareas, useCreateObraControlTarea, useUpdateObraControlTarea,
+  useDeleteObraControlTarea, useCerrarObraControlTarea,
   useConsolidarTareaEnParteDiario, useObraSectores, useCreateObraSector,
   useEmployees, usePartesDiarios, useBudgets, useBudgetItems,
   useFuelVehicles, useCreatePurchaseRequest,
@@ -98,6 +99,8 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
 
   // Mutations
   const createTarea = useCreateObraControlTarea();
+  const updateTarea = useUpdateObraControlTarea();
+  const deleteTarea = useDeleteObraControlTarea();
   const cerrarTarea = useCerrarObraControlTarea();
   const consolidarEnParte = useConsolidarTareaEnParteDiario();
   const createSector = useCreateObraSector();
@@ -105,10 +108,42 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
 
   // Modales
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState<ObraControlTarea | null>(null);
   const [showCloseModal, setShowCloseModal] = useState<ObraControlTarea | null>(null);
   const [showSectorModal, setShowSectorModal] = useState(false);
   const [showPedirMaterialModal, setShowPedirMaterialModal] = useState<ObraControlTarea | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Form Editar Tarea
+  const [formEdit, setFormEdit] = useState<any>({
+    id: '',
+    sector_id: '',
+    sector_nombre: '',
+    manzana: '',
+    nodos_tramo: '',
+    diametro_mm: '',
+    actividad: '',
+    unidad_medida: 'm',
+    cantidad_plan: '',
+    rendimiento_objetivo_h: '',
+    hora_inicio_plan: '07:30',
+    hora_fin_plan: '15:30',
+    cuadrilla_nombre: '',
+    responsable_id: '',
+    personal_plan_count: '2',
+    equipo_asignado: '',
+    materiales_requeridos: '',
+    epp_requerido: '',
+    wbs_element_id: '',
+    budget_item_id: '',
+    cantidad_real: '',
+    personal_real_count: '',
+    minutos_parada: '',
+    motivo_desvio: '',
+    observaciones: '',
+    accion_correctiva: '',
+    responsable_accion: '',
+  });
 
   // Form Nueva Tarea
   const [formTarea, setFormTarea] = useState({
@@ -406,6 +441,107 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
     });
 
     setShowCloseModal(null);
+  };
+
+  // Toggle selección de equipos en Nueva Tarea
+  const toggleEquipoForm = (codeWithDesc: string) => {
+    setFormTarea(prev => {
+      const list = prev.equipo_asignado ? prev.equipo_asignado.split(', ').map(s => s.trim()).filter(Boolean) : [];
+      const next = list.includes(codeWithDesc) ? list.filter(x => x !== codeWithDesc) : [...list, codeWithDesc];
+      return { ...prev, equipo_asignado: next.join(', ') };
+    });
+  };
+
+  // Toggle selección de equipos en Edición de Tarea
+  const toggleEquipoEdit = (codeWithDesc: string) => {
+    setFormEdit((prev: any) => {
+      const list = prev.equipo_asignado ? prev.equipo_asignado.split(', ').map((s: string) => s.trim()).filter(Boolean) : [];
+      const next = list.includes(codeWithDesc) ? list.filter((x: string) => x !== codeWithDesc) : [...list, codeWithDesc];
+      return { ...prev, equipo_asignado: next.join(', ') };
+    });
+  };
+
+  // Abrir Modal de Edición de Tarea
+  const handleOpenEditModal = (t: ObraControlTarea) => {
+    setShowEditModal(t);
+    setFormEdit({
+      id: t.id,
+      sector_id: t.sector_id || '',
+      sector_nombre: t.sector_nombre || '',
+      manzana: t.manzana || '',
+      nodos_tramo: t.nodos_tramo || '',
+      diametro_mm: t.diametro_mm || '',
+      actividad: t.actividad || '',
+      unidad_medida: t.unidad_medida || 'm',
+      cantidad_plan: String(t.cantidad_plan || ''),
+      rendimiento_objetivo_h: String(t.rendimiento_objetivo_h || ''),
+      hora_inicio_plan: t.hora_inicio_plan || '07:30',
+      hora_fin_plan: t.hora_fin_plan || '15:30',
+      cuadrilla_nombre: t.cuadrilla_nombre || '',
+      responsable_id: t.responsable_id || '',
+      personal_plan_count: String(t.personal_plan_count || '2'),
+      equipo_asignado: t.equipo_asignado || '',
+      materiales_requeridos: t.materiales_requeridos || '',
+      epp_requerido: t.epp_requerido || '',
+      wbs_element_id: t.wbs_element_id || '',
+      budget_item_id: t.budget_item_id || '',
+      cantidad_real: String(t.cantidad_real ?? ''),
+      personal_real_count: String(t.personal_real_count ?? t.personal_plan_count ?? '2'),
+      minutos_parada: String(t.minutos_parada ?? '0'),
+      motivo_desvio: t.motivo_desvio || '',
+      observaciones: t.observaciones || '',
+      accion_correctiva: t.accion_correctiva || '',
+      responsable_accion: t.responsable_accion || '',
+    });
+  };
+
+  // Guardar Cambios de Edición
+  const handleSaveEdit = async () => {
+    if (!showEditModal || !formEdit.actividad) return;
+    const sec = sectores.find(s => s.id === formEdit.sector_id);
+    const emp = employees.find(e => e.id === formEdit.responsable_id);
+
+    const payload: Partial<ObraControlTarea> = {
+      sector_id: formEdit.sector_id || null,
+      sector_nombre: sec ? sec.nombre : (formEdit.sector_nombre || showEditModal.sector_nombre),
+      manzana: formEdit.manzana || sec?.manzana || null,
+      nodos_tramo: formEdit.nodos_tramo || sec?.nodos_tramo || null,
+      diametro_mm: formEdit.diametro_mm || null,
+      actividad: formEdit.actividad,
+      unidad_medida: formEdit.unidad_medida || 'm',
+      cantidad_plan: parseFloat(formEdit.cantidad_plan) || showEditModal.cantidad_plan,
+      rendimiento_objetivo_h: parseFloat(formEdit.rendimiento_objetivo_h) || 0,
+      hora_inicio_plan: formEdit.hora_inicio_plan,
+      hora_fin_plan: formEdit.hora_fin_plan,
+      cuadrilla_nombre: formEdit.cuadrilla_nombre || (emp ? `Cuadrilla ${emp.full_name}` : showEditModal.cuadrilla_nombre),
+      responsable_id: formEdit.responsable_id || null,
+      responsable_nombre: emp?.full_name || showEditModal.responsable_nombre,
+      personal_plan_count: parseInt(formEdit.personal_plan_count) || showEditModal.personal_plan_count,
+      equipo_asignado: formEdit.equipo_asignado || null,
+      materiales_requeridos: formEdit.materiales_requeridos || null,
+      epp_requerido: formEdit.epp_requerido || null,
+      wbs_element_id: formEdit.wbs_element_id || null,
+      budget_item_id: formEdit.budget_item_id || null,
+    };
+
+    if (showEditModal.estado === 'cerrada') {
+      payload.cantidad_real = parseFloat(formEdit.cantidad_real) || 0;
+      payload.personal_real_count = parseInt(formEdit.personal_real_count) || payload.personal_plan_count;
+      payload.minutos_parada = parseInt(formEdit.minutos_parada) || 0;
+      payload.motivo_desvio = formEdit.motivo_desvio || null;
+      payload.observaciones = formEdit.observaciones || null;
+      payload.accion_correctiva = formEdit.accion_correctiva || null;
+      payload.responsable_accion = formEdit.responsable_accion || null;
+    }
+
+    await updateTarea.mutateAsync({ id: showEditModal.id, updates: payload });
+    setShowEditModal(null);
+  };
+
+  // Eliminar Tarea
+  const handleDeleteTarea = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta tarea? Esta acción recalculará las métricas de la jornada.')) return;
+    await deleteTarea.mutateAsync(id);
   };
 
   // Generar PDF de Orden de Tarea Diaria (estilo Sheet 11_Orden_Tarea)
@@ -735,6 +871,22 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
                       title="Imprimir / Descargar Orden de Cuadrilla (PDF)"
                     >
                       <Printer size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenEditModal(t)}
+                      className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border border-slate-200"
+                      title="Editar Tarea / Planificación"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteTarea(t.id)}
+                      className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-slate-200"
+                      title="Eliminar Tarea"
+                    >
+                      <Trash2 size={16} />
                     </button>
 
                     {isAbierta ? (
@@ -1153,19 +1305,43 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Equipo / Maquinaria Asignada</label>
-                <select
-                  value={formTarea.equipo_asignado}
-                  onChange={e => setFormTarea({ ...formTarea, equipo_asignado: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none"
-                >
-                  <option value="">Sin equipo / Trabajo manual</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={`${v.code} - ${v.description}`}>
-                      {v.code} — {v.description}
-                    </option>
-                  ))}
-                </select>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Equipos / Maquinarias Asignadas (Multi-selección)</label>
+                <div className="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-slate-50 border rounded-xl mb-1.5 items-center">
+                  {formTarea.equipo_asignado ? (
+                    formTarea.equipo_asignado.split(', ').filter(Boolean).map((eq, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-ecar-blue text-white text-[11px] font-medium shadow-xs">
+                        🚜 {eq}
+                        <button
+                          type="button"
+                          onClick={() => toggleEquipoForm(eq)}
+                          className="hover:text-red-200 text-white font-bold ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-gray-400 italic">Sin equipos asignados (trabajo manual)</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 border rounded-lg bg-white">
+                  {vehicles.map(v => {
+                    const val = `${v.code} - ${v.description}`;
+                    const isSelected = formTarea.equipo_asignado?.includes(val);
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => toggleEquipoForm(val)}
+                        className={`px-2 py-0.5 text-[10px] rounded border transition-all ${
+                          isSelected ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-slate-50 text-gray-600 border-gray-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {isSelected ? '✓ ' : '+ '} {v.code} ({v.description})
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -1460,6 +1636,314 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
               >
                 {createPurchaseRequest.isPending ? 'Enviando a Compras...' : 'Emitir Pedido Urgente a Compras'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: EDITAR TAREA / CORRECCIÓN DE DATOS ─── */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+              <div>
+                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">
+                  Edición & Corrección de Tarea
+                </span>
+                <h3 className="font-extrabold text-lg text-gray-900">
+                  {showEditModal.codigo_tarea}: {showEditModal.actividad}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowEditModal(null)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100 text-xs text-blue-800">
+                💡 <strong>Corrección de Registro:</strong> Podés modificar datos erróneos de escritura, equipos asignados, cuadrilla, o cantidades planificadas/reales.
+              </div>
+
+              {/* Actividad */}
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Actividad / Tarea *</label>
+                <input
+                  type="text"
+                  value={formEdit.actividad}
+                  onChange={e => setFormEdit({ ...formEdit, actividad: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Ubicación / Sector */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Sector</label>
+                  <select
+                    value={formEdit.sector_id}
+                    onChange={e => {
+                      const sec = sectores.find(s => s.id === e.target.value);
+                      setFormEdit({
+                        ...formEdit,
+                        sector_id: e.target.value,
+                        sector_nombre: sec ? sec.nombre : formEdit.sector_nombre,
+                        manzana: sec?.manzana || formEdit.manzana,
+                        nodos_tramo: sec?.nodos_tramo || formEdit.nodos_tramo,
+                      });
+                    }}
+                    className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none"
+                  >
+                    <option value="">(Sin sector vinculado)</option>
+                    {sectores.map(s => (
+                      <option key={s.id} value={s.id}>{s.nombre} {s.manzana ? `(${s.manzana})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Manzana / Zona</label>
+                  <input
+                    type="text"
+                    value={formEdit.manzana}
+                    onChange={e => setFormEdit({ ...formEdit, manzana: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Nodos / Tramo / Calle</label>
+                  <input
+                    type="text"
+                    value={formEdit.nodos_tramo}
+                    onChange={e => setFormEdit({ ...formEdit, nodos_tramo: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Cantidades y Rendimiento */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Cantidad Planificada</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formEdit.cantidad_plan}
+                    onChange={e => setFormEdit({ ...formEdit, cantidad_plan: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-bold font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Unidad de Medida</label>
+                  <select
+                    value={formEdit.unidad_medida}
+                    onChange={e => setFormEdit({ ...formEdit, unidad_medida: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-bold"
+                  >
+                    <option value="m">Metros (m)</option>
+                    <option value="un">Unidades (un)</option>
+                    <option value="m3">m³</option>
+                    <option value="m2">m²</option>
+                    <option value="kg">kg</option>
+                    <option value="gl">Global</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Rendimiento Obj (un/h)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formEdit.rendimiento_objetivo_h}
+                    onChange={e => setFormEdit({ ...formEdit, rendimiento_objetivo_h: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Personal y Responsable */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Responsable / Capataz</label>
+                  <select
+                    value={formEdit.responsable_id}
+                    onChange={e => setFormEdit({ ...formEdit, responsable_id: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs"
+                  >
+                    <option value="">Seleccionar operario / capataz...</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.full_name} {emp.legajo ? `(Leg. ${emp.legajo})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Operarios Planificados</label>
+                  <input
+                    type="number"
+                    value={formEdit.personal_plan_count}
+                    onChange={e => setFormEdit({ ...formEdit, personal_plan_count: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Equipos Asignados Multi-Selección */}
+              <div>
+                <label className="text-xs font-bold text-gray-500 block mb-1">Equipos / Maquinarias Asignadas (Multi-selección)</label>
+                <div className="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-slate-50 border rounded-xl mb-1.5 items-center">
+                  {formEdit.equipo_asignado ? (
+                    formEdit.equipo_asignado.split(', ').filter(Boolean).map((eq: string, idx: number) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-ecar-blue text-white text-[11px] font-medium shadow-xs">
+                        🚜 {eq}
+                        <button
+                          type="button"
+                          onClick={() => toggleEquipoEdit(eq)}
+                          className="hover:text-red-200 text-white font-bold ml-1"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-gray-400 italic">Sin equipos asignados</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto p-1 border rounded-lg bg-white">
+                  {vehicles.map(v => {
+                    const val = `${v.code} - ${v.description}`;
+                    const isSelected = formEdit.equipo_asignado?.includes(val);
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => toggleEquipoEdit(val)}
+                        className={`px-2 py-0.5 text-[10px] rounded border transition-all ${
+                          isSelected ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-slate-50 text-gray-600 border-gray-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {isSelected ? '✓ ' : '+ '} {v.code} ({v.description})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Horario Planificado */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Hora Inicio Plan</label>
+                  <input
+                    type="time"
+                    value={formEdit.hora_inicio_plan}
+                    onChange={e => setFormEdit({ ...formEdit, hora_inicio_plan: e.target.value })}
+                    className="w-full px-2 py-1.5 border rounded-xl text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Hora Fin Plan</label>
+                  <input
+                    type="time"
+                    value={formEdit.hora_fin_plan}
+                    onChange={e => setFormEdit({ ...formEdit, hora_fin_plan: e.target.value })}
+                    className="w-full px-2 py-1.5 border rounded-xl text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Si la tarea ya estaba cerrada, permitir corregir medición */}
+              {showEditModal.estado === 'cerrada' && (
+                <div className="pt-3 border-t border-slate-200 space-y-3 bg-slate-50 p-3 rounded-xl">
+                  <h4 className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 size={14} /> Corrección de Medición Real & Desvíos
+                  </h4>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 block mb-1">Cantidad Real Lograda</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={formEdit.cantidad_real}
+                        onChange={e => setFormEdit({ ...formEdit, cantidad_real: e.target.value })}
+                        className="w-full px-2.5 py-1.5 border rounded-xl text-xs font-bold font-mono bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 block mb-1">Personal Real</label>
+                      <input
+                        type="number"
+                        value={formEdit.personal_real_count}
+                        onChange={e => setFormEdit({ ...formEdit, personal_real_count: e.target.value })}
+                        className="w-full px-2.5 py-1.5 border rounded-xl text-xs font-mono bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-red-600 block mb-1">Minutos Parada</label>
+                      <input
+                        type="number"
+                        value={formEdit.minutos_parada}
+                        onChange={e => setFormEdit({ ...formEdit, minutos_parada: e.target.value })}
+                        className="w-full px-2.5 py-1.5 border rounded-xl text-xs font-mono text-red-600 font-bold bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 block mb-1">Motivo Desvío / Parada</label>
+                      <input
+                        type="text"
+                        value={formEdit.motivo_desvio}
+                        onChange={e => setFormEdit({ ...formEdit, motivo_desvio: e.target.value })}
+                        className="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white"
+                        placeholder="Ej: Faltante material, rotura de caño..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 block mb-1">Acción Correctiva</label>
+                      <input
+                        type="text"
+                        value={formEdit.accion_correctiva}
+                        onChange={e => setFormEdit({ ...formEdit, accion_correctiva: e.target.value })}
+                        className="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white"
+                        placeholder="Ej: Refuerzo de cuadrilla..."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 block mb-1">Observaciones</label>
+                    <textarea
+                      value={formEdit.observaciones}
+                      onChange={e => setFormEdit({ ...formEdit, observaciones: e.target.value })}
+                      rows={2}
+                      className="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white"
+                      placeholder="Comentarios adicionales..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(null)}
+                  className="px-4 py-2 border rounded-xl text-xs font-medium hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={updateTarea.isPending}
+                  className="btn-primary px-5 py-2 text-xs font-bold shadow-md flex items-center gap-1.5"
+                >
+                  {updateTarea.isPending ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

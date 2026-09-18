@@ -1,0 +1,990 @@
+GROWLABS
+REVISIÓN FUNCIONALDE GERENCIA DE LOGÍSTICA
+ECAR - Diagnóstico, arquitectura propuesta y lineamientos funcionales para la siguiente etapa de desarrollo
+Objetivo del documento
+Consolidar la revisión del módulo Gerencia de Logística, ordenar las decisiones funcionales que deben aprobarse y mostrar una propuesta visual coherente para Inicio, Pedidos, Entregas, Inventario y Flota.
+CLIENTE  ECAR
+DESTINATARIOS  Ezequiel
+PREPARADO POR  GROWLABS - Consultoría funcional, procesos y producto
+FECHA  14 de septiembre de 2026
+ESTADO  Documento de revisión para definición funcional previa a implementación
+Documento de trabajo · GROWLABS
+1. Resumen ejecutivo
+Qué debe acordarse antes de continuar desarrollando
+La base visual de Gerencia de Logística es reutilizable y, en términos generales, consistente con un ERP empresarial. El problema principal no es estético: el módulo combina criterios funcionales incompatibles entre pantallas y, en algunos casos, confunde necesidad, inventario, despacho, recepción y compra como si fueran el mismo proceso.
+Decisión recomendada
+Conservar la identidad visual actual, pero no ampliar automatizaciones ni cerrar el MVP hasta unificar el circuito Pedido → evaluación por ítem → reserva/abastecimiento → despacho → recepción → cierre. Los puntos P0 deben quedar definidos antes de seguir construyendo funciones dependientes.
+Evaluación consolidada
+Dimensión
+Evaluación
+Comentario
+Diseño visual
+Muy bueno
+Conservar la estética y los componentes base.
+Arquitectura de módulos
+Buena base
+Inicio, Pedidos, Entregas, Flota e Inventario son una estructura válida.
+Lógica de proceso
+A corregir
+Hay circuitos paralelos y estados mezclados.
+Trazabilidad
+Incompleta
+Faltan vínculos claros entre reserva, movimiento, despacho y recepción.
+Redacción UX
+A corregir
+Hay términos confusos, técnicos o inconsistentes.
+Indicadores
+Requieren validación
+Se observaron métricas y alertas que pueden inducir decisiones incorrectas.
+Ocho decisiones funcionales que deben aprobarse
+#
+Decisión
+1
+“Introducción Logística” pasa a Inicio.
+2
+Un Pedido representa una necesidad operativa; no una compra ni un retiro automático de inventario.
+3
+Se puede solicitar un artículo aunque todavía no exista en el catálogo.
+4
+La resolución se realiza por ítem: cobertura total, parcial o sin stock.
+5
+Reservar reduce disponible, pero no stock físico. La salida del depósito sí reduce físico.
+6
+Pedido y Despacho/Entrega son objetos distintos y tienen estados distintos.
+7
+Los faltantes pasan a Compras sin doble carga y conservando pedido/ítem de origen.
+8
+Un pedido solo queda atendido cuando sus cantidades fueron aceptadas o su saldo fue cancelado con motivo.
+2. Objetivo, alcance y criterio de revisión
+Qué se revisó y qué no debe interpretarse como certificado
+El análisis se concentró exclusivamente en Gerencia de Logística y sus pantallas de Inicio/Introducción, Pedidos, Entregas, Inventario y Flota.
+Base utilizada
+• Mockup funcional propuesto por Ezequiel para el circuito Obra → Logística → Inventario/Pañol → Compras.
+• Capturas actuales de Inicio, Pedidos, Entregas y navegación lateral.
+• Relevamiento de interfaz realizado, que identificó 65 hallazgos funcionales, de contenido y UX/UI.
+• Criterios de proceso definidos durante la revisión GROWLABS: pedido como necesidad, resolución por ítem, reserva, abastecimiento, despacho y recepción diferenciados.
+Límite de esta revisión
+No se certifica backend, permisos, PDFs ni integraciones no ejecutadas. El relevamiento funcional identificó inconsistencias visibles y reglas a definir; Lucas deberá mapear cada pieza al repositorio durante la etapa de implementación.
+Prioridades
+Prioridad
+Criterio
+Uso
+P0
+Bloqueante
+Debe resolverse antes de continuar desarrollo dependiente.
+P1
+Necesario para MVP
+Debe estar resuelto antes de validar el circuito integral.
+P2
+Mejora importante
+Mejora comprensión, eficiencia y consistencia.
+P3
+Evolución
+Puede programarse luego del MVP.
+3. Arquitectura recomendada
+Una sola navegación y responsabilidades claras por módulo
+La estructura lateral puede mantenerse simple. El problema actual aparece cuando Entregas vuelve a contener Dashboard, Pedidos y Procesos, o cuando Inventario genera circuitos que luego se comportan como Pedidos. Cada módulo debe tener una responsabilidad principal y enlazarse con los demás sin duplicar la operación.
+Módulo
+Responsabilidad
+Límite funcional
+Inicio
+Prioridades, alertas, indicadores y “Requieren mi atención”.
+No reemplaza a los módulos operativos.
+Pedidos
+Registrar y resolver necesidades de obra por ítem.
+No es Compras ni Entregas.
+Entregas
+Preparar, despachar, trasladar y confirmar recepción.
+No vuelve a evaluar el pedido completo.
+Flota
+Disponibilidad, documentación, mantenimiento, combustible y asignación.
+Apoya entregas; no forma parte de los estados del pedido.
+Inventario
+Catálogo, existencias, reservas, movimientos, herramientas y ubicaciones.
+No crea pedidos como efecto secundario de despachar.
+Menú lateral recomendado
+GER. LOGÍSTICA → Inicio · Pedidos · Entregas · Flota · Inventario. Las cabeceras internas pueden usar nombres más descriptivos (“Pedidos de obra”, “Despachos y entregas”, “Inventario y pañol”, “Flota y maquinaria”) sin duplicar navegación.
+4. Proceso funcional objetivo
+La columna vertebral del módulo
+Figura 1. Flujo funcional de referencia: la necesidad se registra una sola vez y se resuelve por ítem.
+La lógica objetivo debe preservar el pedido original y separar cada evento posterior. Un despacho no crea una necesidad; una compra no reemplaza al pedido; una recepción no vuelve a descontar el stock del origen.
+Objetos que no deben confundirse
+Objeto
+Qué representa
+Regla
+Pedido
+Necesidad operativa de una obra o destino.
+Crearlo no compra ni descuenta stock.
+Ítem de pedido
+Descripción, cantidad, unidad, especificación y fecha necesaria.
+Puede existir antes de estar identificado en catálogo.
+Reserva
+Compromiso de stock apto para un ítem.
+Reduce disponible; no físico.
+Solicitud de abastecimiento
+Cantidad faltante enviada a Compras.
+No es una orden de compra.
+Despacho
+Cantidades concretas que salen de un origen.
+Puede atender parcialmente uno o varios pedidos.
+Recepción
+Verificación de lo que llegó.
+Registra diferencias; no descuenta nuevamente el origen.
+Movimiento
+Cambio auditado de existencia/ubicación.
+Debe quedar vinculado al evento que lo causó.
+5. Inicio de Logística
+De introducción estática a panel operativo
+SITUACIÓN ACTUAL
+Figura 2. Pantalla actual de entrada a Gerencia de Logística.
+La pantalla actual explica el alcance de la gerencia y ofrece accesos a submódulos, pero mezcla guía, operación, promesas de integración y un circuito que no coincide completamente con el comportamiento observado en otras pantallas.
+Cambios prioritarios
+• Renombrar “Introducción Logística” como Inicio.
+• Mover aquí el dashboard general que hoy aparece dentro de Entregas.
+• Reemplazar explicaciones largas por una cola accionable de prioridades.
+• Mostrar alertas consistentes: pedidos sin evaluar, esperando Compras, entregas pendientes, stock crítico, herramientas vencidas y flota a revisar.
+• Mantener la guía y preguntas frecuentes como contenido secundario/desplegable.
+PROPUESTA GROWLABS
+Figura 3. Mockup propuesto: Inicio orientado a “qué necesita mi atención hoy”.
+6. Pedidos de obra
+Registrar necesidades y resolverlas por ítem
+SITUACIÓN ACTUAL
+Figura 4. Cabecera e indicadores actuales de Pedidos.
+El módulo actual presenta una buena base visual, pero el formulario y los estados todavía parten de una lógica condicionada por Inventario. El pedido debe existir aunque el artículo no esté creado y debe expresar para qué fecha y dónde se necesita.
+Correcciones P0/P1
+Código
+Problema
+Cambio
+Prioridad
+PED-01
+Pedido ≠ compra.
+Cambiar cabecera, lenguaje y estados para tratarlo como necesidad operativa.
+P0
+PED-02
+Solo permite artículos de Inventario.
+Permitir “Artículo no registrado” con descripción, unidad, cantidad y especificación.
+P0
+PED-03
+Resolución binaria stock/sin stock.
+Resolver por ítem: total, parcial o sin stock.
+P0
+PED-04
+Faltan datos operativos.
+Agregar fecha necesaria, destino/receptor, actividad/sector y prioridad justificada.
+P1
+PED-05
+Estados mezclan pedido y abastecimiento.
+Separar estado del pedido, cobertura por ítem y estado de entrega.
+P1
+PROPUESTA GROWLABS
+Figura 5. Bandeja propuesta de Pedidos: filtros operativos, próxima acción y estados claros.
+7. Nuevo pedido y procesamiento
+Una necesidad se registra primero; Logística decide después cómo resolverla
+Figura 6. Formulario actual de Nuevo Pedido.
+Campo
+Criterio propuesto
+Obra / destino
+Obligatorio
+Creado por
+Automático
+Fecha solicitud
+Automática
+Fecha necesaria en obra
+Obligatoria
+Prioridad
+Normal / Urgente
+Motivo de urgencia
+Obligatorio si Urgente
+Sector / actividad / ubicación
+Recomendado
+Ítems
+Catálogo o no registrado
+Observaciones
+Opcional
+Procesamiento por ítem
+La pantalla de procesamiento debe mostrar simultáneamente lo solicitado y la disponibilidad real. El sistema puede calcular/sugerir, pero Logística valida qué cantidad reservar, preparar, abastecer o asignar.
+Figura 7. Mockup propuesto: resolución por artículo con stock físico, reservado, disponible, preparación y faltante.
+Regla crítica
+Derivar a Compras debe actuar únicamente sobre el saldo faltante de cada ítem. La cantidad pendiente no es automáticamente la cantidad a comprar: puede estar reservada, en tránsito o ya cubierta por otra gestión activa.
+8. Despachos y entregas
+Separar el movimiento físico de la gestión del pedido
+SITUACIÓN ACTUAL
+Figura 8. Entrada actual a Entregas: hoy funciona como segundo dashboard general de Logística.
+El hallazgo más crítico es la inconsistencia entre fuentes visibles: Pedidos/Inventario muestran despachos en tránsito mientras Entregas puede mostrar cero registros. Debe existir una sola fuente lógica de despachos y un vínculo explícito con Pedido, Remito y Recepción.
+Reglas de negocio
+• Pedido y Despacho/Entrega tienen identificadores y estados distintos.
+• Una entrega se origina preferentemente desde cantidades listas/reservadas de uno o más ítems.
+• Confirmar salida del depósito reduce stock físico y consume la reserva correspondiente.
+• En tránsito ya no pertenece al físico del origen.
+• La recepción registra recibido, aceptado, rechazado y motivo. No vuelve a descontar el origen.
+PROPUESTA GROWLABS
+Figura 9. Mockup propuesto: bandeja operativa de Despachos y Entregas.
+9. Inventario y pañol
+Disponibilidad, reservas y movimientos auditables
+El módulo ya contiene conceptos valiosos - Stock Real, Reservado y Disponible - pero debe unificar su semántica por depósito y asociar cada reserva con el pedido/ítem que la originó. El Kardex también necesita separar persona responsable de canal de registro.
+Modelo de stock propuesto
+Fórmula base
+Disponible = Físico − Reservado activo. Si existen cantidades bloqueadas, dañadas o en inspección: Disponible = Físico − Reservado − No disponible por condición.
+Evento
+Físico origen
+Reserva
+Disponible
+Crear pedido
+Sin cambio
+Sin cambio
+Sin cambio
+Reservar
+Sin cambio
+Aumenta
+Disminuye
+Preparar
+Sin cambio
+Se mantiene
+Sin cambio
+Confirmar salida
+Disminuye
+Disminuye
+No cambia por esa reserva
+Liberar reserva
+Sin cambio
+Disminuye
+Aumenta
+Recibir en obra
+Sin segundo egreso
+Sin cambio
+Sin cambio en origen
+Hallazgos relevantes
+• Nueva Reserva debe pedir depósito, pedido/ítem, obra, cantidad, responsable y vigencia.
+• Kardex no debe mostrar “web” como responsable; separar Responsable de Canal de registro.
+• Revisar duplicados, códigos, variantes y datos de prueba del catálogo antes de automatizar sugerencias.
+• Herramientas retornables deben tratarse como activos/préstamos; no como consumibles agregados.
+• Reposición de depósito y faltante de pedido son motivos diferentes de abastecimiento.
+Figura 10. Mockup propuesto: existencias por artículo y depósito con físico, reservado y disponible.
+10. Flota y maquinaria
+Separar disponibilidad, operación, documentación y mantenimiento
+El relevamiento encontró indicadores que requieren definición o validación: mantenimientos vencidos presentados como “Hoy/Próximos”, métricas de rendimiento sin base suficiente, inconsistencias de fecha y un saldo de combustible superior a la capacidad mostrada. La recomendación es priorizar reglas simples y trazables antes de ampliar analítica.
+Correcciones principales
+Código
+Situación
+Cambio
+Prioridad
+FLT-01
+Estado operativo ≠ disponibilidad ≠ documentación.
+Mostrar dimensiones separadas y una condición “Requiere revisión”.
+P1
+FLT-02
+Mantenimientos vencidos aparecen como próximos/hoy.
+Separar Vencidos / Hoy / Próximos 15 días con fecha local consistente.
+P1
+FLT-03
+Parte diario inicia “Todo OK”.
+Iniciar “Sin revisar” y calcular condición al completar controles.
+P1
+FLT-04
+KPIs con datos insuficientes o magnitud incorrecta.
+Mostrar período, unidad correcta y “Datos insuficientes” cuando corresponda.
+P1
+FLT-05
+Combustible y batán con alcance ambiguo.
+Saldo/capacidad por batán y período único en tabla/indicadores.
+P1
+Figura 11. Mockup propuesto: Flota con disponibilidad y alertas accionables.
+11. Comunicaciones entre gerencias
+Qué información debe viajar, cuándo y con qué respuesta
+La coordinación debe quedar vinculada al pedido/ítem y no depender de notas aisladas, memoria o WhatsApp. WhatsApp/Rombo puede ser un canal de captura o notificación, pero el estado oficial y la evidencia deben quedar en el sistema.
+Emisor → receptor
+Evento
+Información mínima
+Respuesta esperada
+Obra → Logística
+Necesidad enviada
+Pedido/ítem, obra, cantidad, unidad, fecha necesaria, prioridad, solicitante
+Número y responsable de evaluación
+Logística → Obra
+Aclaración / compromiso
+Pregunta, cobertura, saldo, alternativa y fecha comprometida
+Respuesta / aceptación cuando corresponda
+Logística → Compras
+Faltante
+Pedido/ítem, especificación, cantidad, fecha necesaria, destino
+Acuse y responsable de gestión
+Compras → Logística
+Abastecimiento
+Cantidad prevista, proveedor/estado, fecha estimada, modalidad
+Actualizar compromiso visible
+Logística → Obra
+Despacho
+Nº despacho/remito, cantidades, origen, horario, transporte
+Recepción pendiente
+Obra → Logística
+Diferencia
+Recibido/aceptado/rechazado y motivo
+Responsable y próxima acción
+Regla de comunicación
+Cada alerta debe indicar objeto, causa, responsable, fecha y acción siguiente. Un estado sin próxima acción no ayuda a operar.
+12. Procesos existentes y procesos faltantes
+Qué debe considerarse MVP y qué puede quedar para evolución
+Proceso
+Situación
+Acción
+Etapa
+Registro de necesidad
+Existe parcialmente
+Completar datos y artículos no registrados
+MVP
+Validación Logística
+Incompleta
+Pantalla por ítem con responsable
+MVP
+Reserva
+Existe sin contexto suficiente
+Vincular a pedido/ítem/obra/vigencia
+MVP
+Abastecimiento a Compras
+Parcial / ambiguo
+Saldo por ítem sin doble carga
+MVP
+Recepción de compras
+No claramente representada
+Cantidad recibida, diferencias, remito, responsable
+MVP
+Preparación de despacho
+Incompleta
+Separar de salida física
+MVP
+Despacho / tránsito
+Existe con inconsistencias
+Fuente única en Entregas
+MVP
+Recepción en obra
+Existe parcialmente
+Aceptado/rechazado por línea
+MVP
+Herramientas / préstamos
+Existe
+Normalizar retornables/QR
+Etapa 2
+Transferencias entre obras/depósitos
+No consolidado
+Movimiento con origen/destino y motivo
+Etapa 2
+Combustible / mantenimiento
+Existe
+Corregir reglas, métricas y alertas
+Etapa 2
+Predicción / IA
+No requerido para MVP
+Agregar luego de estabilizar datos
+Evolución
+13. Estados y reglas de cierre
+No usar una sola cadena para Pedido, Abastecimiento y Entrega
+Dimensión
+Estados propuestos
+Pedido / gestión
+Borrador → Enviado → En evaluación → En atención → Atendido. Cancelado con motivo.
+Cobertura del ítem
+Sin evaluar / Pendiente de identificación / Cobertura total / Parcial / Sin cobertura.
+Abastecimiento
+No requerido / Pendiente / Enviado a Compras / En gestión / Fecha prevista / Recibido / Con diferencias / Cancelado.
+Despacho
+Borrador → Programado → En preparación → Despachado → Recibido conforme / Con diferencias.
+Reserva
+Activa / Consumida parcialmente / Consumida / Liberada / Vencida.
+Regla de cierre
+“Atendido” requiere cantidad aceptada suficiente en todos los ítems vigentes o saldo cancelado explícitamente con motivo. Derivar a Compras, cotizar o despachar no alcanza.
+14. Redacción, botones y jerarquía UX
+Textos concretos para un sistema más claro
+Actual
+Recomendado
+Motivo
+Introducción Logística
+Inicio
+Es la pantalla operativa principal.
+Pedidos de Compra
+Pedidos de obra
+El pedido nace como necesidad, no como compra.
+Trazabilidad Tripartita
+Seguimiento por artículo
+Lenguaje más claro y escalable.
+Derivar a Compras
+Solicitar abastecimiento a Compras
+Explica que no genera una OC.
+Recepcionar en Obra
+Registrar recepción en obra
+Acción concreta y comprensible.
+Visualizar Flujo 3D
+Ver historial del pedido
+Prioriza trazabilidad real.
+Crear Pedido
+Enviar pedido a Logística
+Aclara el destino del requerimiento.
+Confirmar Despacho Múltiple
+Confirmar salida del depósito
+Vincula la acción con el movimiento real.
+Stock Real
+Stock físico
+Describe existencia física por ubicación.
+Kardex General
+Movimientos de inventario
+“Kardex” puede quedar en ayuda.
+Completado (taller)
+Registrar mantenimiento realizado
+Expresa el evento que se registra.
+Rastreo Satelital en Vivo
+Seguimiento de vehículos
+No promete telemetría cuando no hay señal.
+Principio de botones
+Las acciones disponibles deben depender del estado. Por ejemplo, “Registrar recepción” solo aparece para un despacho confirmado; “Solicitar abastecimiento” solo para un saldo faltante; “Eliminar” se reemplaza por “Cancelar/Anular con motivo” cuando ya existe trazabilidad.
+15. Matriz de prioridades para desarrollo
+Qué debe resolverse primero
+Prioridad
+Decisión / trabajo
+Módulo
+Resultado
+P0
+Unificar momento de egreso físico
+Stock / Entregas
+Reserva no descuenta físico; salida sí.
+P0
+Pedido como necesidad + artículo no registrado
+Pedidos
+No bloquear la necesidad por catálogo.
+P0
+Resolución por ítem total/parcial/sin stock
+Pedidos
+Evitar derivación total y doble carga.
+P0
+Fuente única de despachos
+Entregas
+Resolver discrepancia entre Pedidos/Inventario/Entregas.
+P0
+Reserva vinculada a pedido/ítem/obra
+Inventario
+Trazabilidad de compromiso de stock.
+P0
+Definir ida/vuelta con Compras
+Integración
+Faltante no equivale a compra resuelta.
+P1
+Recepción con cantidades y diferencias
+Entregas
+Mantener saldo pendiente cuando corresponda.
+P1
+Estados separados
+Transversal
+Pedido, abastecimiento, reserva y entrega.
+P1
+Responsable real en movimientos
+Inventario
+Separar persona de canal “web”.
+P1
+Corregir alertas/fechas/KPIs de Flota
+Flota
+Evitar decisiones basadas en indicadores ambiguos.
+P2
+Unificar navegación y copy
+UX
+Inicio, títulos, filtros y botones.
+P2
+Tablas configurables y filtros avanzados
+UX
+Escalar a mayor volumen de datos.
+16. Diez ideas innovadoras para la evolución
+Innovación útil una vez estabilizado el proceso
+#
+Idea
+Ubicación
+Valor
+Dificultad
+Etapa
+1
+Centro de atención inteligente
+Inicio
+Prioriza automáticamente pendientes por impacto, fecha y dependencia.
+Media
+Etapa 2
+2
+Predicción de faltantes
+Inventario / Pedidos
+Proyecta consumo y alerta antes de llegar al mínimo.
+Alta
+Evolución
+3
+Consolidación de despachos
+Entregas
+Sugiere agrupar entregas por obra/zona/fecha para reducir viajes.
+Media
+Etapa 2
+4
+Planificación de rutas
+Entregas / Flota
+Ordena paradas y ventanas de entrega según prioridades.
+Alta
+Evolución
+5
+QR para herramientas
+Inventario
+Préstamo/devolución rápida y trazabilidad por unidad.
+Media
+Etapa 2
+6
+Mantenimiento preventivo inteligente
+Flota
+Alertas por km/horas, historial y criticidad del equipo.
+Media
+Etapa 2
+7
+Detector de duplicados de catálogo
+Inventario
+Sugiere coincidencias por descripción, medida y código antes del alta.
+Media
+Etapa 2
+8
+Rombo como asistente transaccional
+Transversal
+Captura pedidos/consultas desde WhatsApp y los convierte en registros estructurados.
+Alta
+Evolución
+9
+Índice de urgencias por obra
+Inicio / Pedidos
+Mide urgentes sobre total y revela problemas de planificación.
+Baja
+Etapa 2
+10
+Cierre logístico de obra
+Inventario / Obras
+Checklist de herramientas, sobrantes, devoluciones y activos antes de cerrar una obra.
+Media
+Etapa 2
+Criterio GROWLABS
+No agregar IA por moda. Las funciones inteligentes deben apoyarse en datos consistentes y procesos cerrados; por eso ninguna de estas diez ideas debe desplazar los P0/P1.
+17. Roadmap recomendado
+Implementar por dependencias, no por pantallas aisladas
+Etapa
+Alcance
+Criterio de salida
+Etapa 1 — Definiciones y P0
+Pedido/ítem/reserva/abastecimiento/despacho/recepción; egreso físico; fuente única de Entregas.
+Bloquear desarrollo dependiente hasta aprobar reglas.
+Etapa 2 — MVP operativo
+Formulario de pedido, procesamiento por ítem, reserva, ida/vuelta con Compras, recepción, estados y auditoría.
+Probar con un caso real de Obra Roque.
+Etapa 3 — Control y consistencia
+Inventario, herramientas, Flota, indicadores, filtros, alertas, copy y permisos.
+Validación con usuarios de Obra y Logística.
+Etapa 4 — Automatización e inteligencia
+QR, predicción, consolidación de despachos, rutas, Rombo y analítica.
+Solo con datos y procesos estabilizados.
+Responsabilidad sugerida
+Responsable
+Rol en la siguiente etapa
+Gustavo / GROWLABS
+Validar proceso real, prioridades de negocio y criterios de cierre.
+Ezequiel
+Validar operación cotidiana de Logística, campos, excepciones y estados.
+Lucas
+Mapear componentes al código, estimar impacto, implementar por etapas y asegurar consistencia de datos.
+Usuarios de Obra
+Probar solicitud, fechas, prioridades y recepción con casos reales.
+18. Casos de aceptación mínimos
+Cómo verificar que el flujo quedó bien resuelto
+Caso
+Resultado esperado
+Artículo no registrado
+La obra envía el pedido; Logística lo identifica después sin perder el texto original.
+Stock total
+Reserva y salida afectan solo cantidades elegidas; cierre por recepción conforme.
+Stock parcial 10/6/4
+Reserva 6, abastece 4 y mantiene saldo visible; no compra 10.
+Stock cero
+Pedido válido sin reserva ficticia; faltante trazable.
+Dos usuarios reservan a la vez
+Solo confirma lo que sigue disponible; el otro recibe actualización.
+Dos despachos de un pedido
+Identidad/estado/recepción propios; agregación correcta en el pedido.
+Recepción con diferencia
+Preserva enviado vs recibido; rechazo mantiene saldo a resolver.
+Cancelación antes de salida
+Libera reserva pendiente y registra motivo; no borra histórico.
+Entrega directa proveedor
+Vinculada al pedido sin entrada/salida ficticia de pañol central.
+Actor de Kardex
+Persona y canal separados; documento y saldo reproducibles.
+Parte diario sin revisar
+No puede aparecer “Todo OK” antes de completar controles.
+Flota sin lecturas
+Indicadores muestran “Datos insuficientes” en lugar de métricas falsas.
+19. Conclusiones y próximos pasos
+Qué debe salir de la reunión con Lucas y Ezequiel
+Gerencia de Logística tiene una base visual valiosa y suficiente para evolucionar sin un rediseño total. La prioridad es transformar esa base en un sistema coherente de decisiones y eventos, evitando que cada pantalla represente una versión distinta del proceso.
+Objetivo de la próxima reunión
+Aprobar las ocho decisiones funcionales, cerrar los P0 y acordar el flujo de prueba con un caso real. Después de esa aprobación, Lucas puede estimar e implementar Etapa 1 y Etapa 2 con un requerimiento mucho más estable.
+Próximos pasos propuestos
+• Revisar este documento con Ezequiel y validar excepciones reales de operación.
+• Lucas mapea cada hallazgo P0/P1 a componentes y datos del repositorio.
+• Cerrar el comportamiento del ejemplo stock parcial 10/6/4.
+• Definir permisos: quién solicita, valida, reserva, abastece, despacha, recibe, corrige y anula.
+• Implementar Etapa 1 y probar de punta a punta con Loteo Roque.
+• Recién después incorporar mejoras P2 e ideas innovadoras.
+A. Anexo técnico — Registro consolidado de 65 hallazgos
+Matriz de auditoría para trazabilidad de implementación
+Este anexo conserva los hallazgos del relevamiento funcional. En caso de conflicto, las decisiones aprobadas en el cuerpo principal del informe prevalecen sobre una observación aislada.
+Código
+Pantalla
+Situación actual
+Cambio recomendado / motivo
+Prioridad
+N01
+Menú de Logística
+“Introducción Logística”, “Pedidos”, “Entregas”, “Flota”, “Inventario”; las cabeceras cambian de vocabulario y alcance.
+Mantener cinco entradas: Inicio, Pedidos, Entregas, Flota e Inventario. Usar “Gerencia de Logística” como grupo y los mismos nombres en cabeceras y accesos. Estabilizar el mapa mental y evitar que cada nombre parezca otra pantalla.
+P2
+N02
+Entregas / navegación
+Entrar en Entregas abre un Dashboard de toda la gerencia, con Pedidos y Procesos dentro.
+Mover el panel general a Inicio; Entregas debe abrir directamente su listado. Mantener una sola bandeja operativa de Pedidos. La sección no corresponde con la tarea elegida y obliga a otro clic.
+P1
+N03
+Navegación entre pantallas
+La URL observada permanece en `/`; algunas transiciones conservan posiciones de desplazamiento poco útiles. No se comprobó el historial.
+Definir navegación identificable por sección y detalle; restaurar filtros al volver al listado y abrir tareas nuevas desde su cabecera. Validar recarga y Atrás/Adelante. Facilitar volver a un pedido, compartir su referencia y conservar contexto.
+P2
+N04
+Introducción
+La visión general mezcla stock, “trazabilidad tripartita”, PDFs, GPS, WhatsApp y QR en un párrafo extenso; presenta todo como activo.
+Cabecera breve, tareas prioritarias y guía desplegable. Publicar como disponible solo lo validado; identificar integraciones pendientes. La descripción no debe funcionar como promesa de capacidades no comprobadas.
+P1
+N05
+Introducción / Procesos
+Se indica descuento al despachar en Introducción y al recibir en el diagrama.
+Regla única: reservar no reduce físico; confirmar salida reduce físico de origen una sola vez; recibir resuelve tránsito y destino. Actualizar todos los textos. Evitar doble descuento o saldos que permanezcan en origen después de salir. La doble escritura no fue probada.
+P0
+N06
+Introducción / circuito
+La derivación de faltantes se describe después del despacho; se intercala Flota como quinto paso del pedido.
+Colocar evaluación de cada ítem y faltantes antes de planificar despachos. Presentar Flota como apoyo transversal. Con stock cero también debe existir un camino completo y comprensible.
+P1
+N07
+Referencia visual aplicada a Logística
+Pedidos usa una cabecera promocional extensa; Entregas vuelve a explicar toda la gerencia; Inventario/Flota usan subtítulos documentales.
+Reutilizar de la referencia de Obras una jerarquía coherente: título, propósito breve, indicadores, filtros y acción principal. Reservar grandes introducciones para Inicio. Coherencia visual sin copiar la estructura comercial de otra tarea.
+P2
+N08
+Interfaz en ancho disponible
+Rombo ocupa parte del área inferior y puede cubrir información; el modal de pedido quedó parcialmente fuera del área útil, bajo la cabecera fija.
+Mantener asistente fuera de botones/tablas; permitir minimizarlo. Modales con título, cierre y pie accesibles, desplazamiento propio y altura máxima. Evitar obstáculos para completar o cancelar formularios.
+P1
+N09
+Accesibilidad de Logística
+Hay botones de icono sin nombre accesible, incluidos cierres y controles de Flota. Las tarjetas de Introducción aparecen como texto genérico en el árbol accesible.
+Etiquetas concretas: “Abrir menú”, “Cerrar formulario”, “Editar vehículo”, “Ver Pedidos”. Verificar teclado, foco y semántica de enlace/botón. Los iconos no bastan para operar con teclado o lector de pantalla.
+P2
+P01
+Pedidos / Nuevo Pedido
+Cabecera “Pedidos de Compra”, pestaña “Cotizaciones de Presupuestos” y botón “🛒 Crear Pedido”.
+Cabecera Pedidos de obra; quitar cotizaciones de esta bandeja logística; botón Enviar pedido a Logística. El objeto solicitado es una necesidad operativa, no una compra.
+P0
+P02
+Nuevo Pedido
+“Solo se pueden solicitar ítems registrados en el inventario”; búsqueda exclusivamente en catálogo y unidad bloqueada.
+Permitir “Artículo del catálogo” o “Artículo no registrado”. Para el segundo: descripción, especificación, unidad y cantidad; vinculación posterior por Logística. La falta de alta no debe impedir informar una necesidad real.
+P0
+P03
+Pedidos / resolución
+Trazabilidad visible limitada a solicitado, enviado y recibido. El diagrama plantea Hay stock/Sin stock.
+Incorporar por ítem cobertura total, parcial o sin stock, disponibilidad por depósito, cantidad reservada, cantidad a abastecer y saldo pendiente. Un mismo pedido puede necesitar distintas soluciones simultáneas.
+P0
+P04
+Pedidos / origen
+Hay registros con nota “Despacho generado manualmente desde Inventario” tratados como pedidos.
+Conservar documentos independientes y enlazados. Si se admite una salida excepcional, identificarla como “Despacho sin pedido previo”, con motivo y posterior regularización explícita. Un movimiento físico no debe fabricar silenciosamente una necesidad original.
+P0
+P05
+Nuevo Pedido
+Obra, urgencia, solicitante y notas; no aparece fecha necesaria ni destino detallado. La guía afirma que se carga fecha límite.
+Agregar Fecha necesaria en obra, lugar de entrega y contacto receptor; urgencia con justificación cuando corresponda. Sin fecha ni destino Logística no puede priorizar o comprometer entrega.
+P1
+P06
+Estados de Pedidos
+Selector mezcla Pendiente, Aprobado, Consolidado, Pedido, Recibido, Rechazado, Cotizado y Devuelto. Los cinco registros enviados tienen estado “Pedido”.
+Separar estado de atención del pedido, abastecimiento por ítem y estado de cada entrega. Usar un catálogo común en filtros, tarjetas y guía. “Pedido” no explica qué falta; “Cotizado” pertenece al abastecimiento y no equivale a atender la necesidad.
+P1
+P07
+Acciones de pedido
+“Derivar a Compras” aparece incluso en el pedido de un borcego solicitado 1/enviado 1. No se ejecutó la acción.
+Mostrarla solo para saldos a abastecer. Abrir revisión de cantidades, unidad, motivo y destino; confirmar una sola derivación identificada. Evitar compras duplicadas o innecesarias. No se afirma que el servidor hoy las permita.
+P1
+P08
+Listado de Pedidos
+Tarjetas largas, muchos botones equivalentes y todo el detalle de cada ítem expandido. El número del pedido no destaca; aparece en recepción.
+Resumen por pedido: número, obra, fecha necesaria, prioridad, responsable y siguiente acción. Detalle expandible; documentos y flujo como acciones secundarias. Poder comparar y decidir sin recorrer todas las líneas.
+P2
+P09
+Filtros e indicadores
+Solo se ve filtro de estado; Pendientes 0, Urgentes 0, Total 5 no expresan las recepciones pendientes.
+Buscar por número, obra y artículo; filtrar obra, prioridad, fecha necesaria, responsable y cobertura. Mostrar “Por evaluar”, “Con faltantes” y “Pendientes de recepción” con definiciones. Los contadores deben orientar el trabajo que resta.
+P1
+P10
+Identificación de ítems
+TEE ELECTRO y ABRAZADERA PVC aparecen repetidos sin medida ni código en el pedido, aunque Inventario distingue variantes.
+Mostrar descripción + medida/talle + código cuando exista + unidad en pedido, despacho y recepción. Mantener la descripción original. Evitar preparar o recibir una variante equivocada.
+P1
+P11
+Recepción en obra
+Cantidad recibida precompletada con la enviada; receptor editable y observación general. CTA une confirmación y PDF; no se ve resolución por línea de daños o diferencias.
+Registrar recepción por despacho e ítem: cantidad recibida, aceptada, rechazada, motivo y evidencia; revisar antes de confirmar. Separar registro exitoso de descarga de acta. Un valor sugerido no debe convertirse en conformidad implícita; diferencias no deben cerrar el saldo.
+P1
+P12
+Pedido ya despachado
+Se mantiene “Eliminar Pedido” en los cinco registros enviados. No se probó borrado.
+Desactivar borrado de documentos con movimientos; ofrecer anulación o corrección con motivo e historial, según la etapa. Preservar vínculo entre necesidad, stock y comprobantes.
+P1
+E01
+Entregas / listado
+“No hay entregas registradas” y 0 pendientes, frente a cinco despachos en tránsito en Pedidos y Reservas.
+Unificar el registro de despachos y sus estados. Todo despacho confirmado debe aparecer en Entregas con vínculo al pedido o a su excepción. Investigar diferencia de fuentes/filtros. Hoy la pantalla destinada al seguimiento omite traslados visibles en otras vistas.
+P0
+E02
+Entregas / vacío
+“Programá una nueva entrega a obra usando el botón superior”, pero no hay botón de creación visible en esa vista.
+Incorporar Programar despacho donde corresponda y CTA en vacío; si falta una reserva, enlazar a Pedidos con explicación. La instrucción conduce a una acción inexistente.
+P1
+E03
+Entregas / identidad documental
+La sección habla de pedido, envío, remito y entrega sin una separación consistente.
+Usar Despacho DES-…, Pedido PED-… y Remito REM-… como referencias distintas; recepción asociada a despacho. Un pedido admite varias entregas. Despachar una parte no equivale a resolver el pedido completo.
+P1
+E04
+Entregas / Pedidos de Obra
+Bandeja secundaria con “Abrir Gestor Completo…” y “Todo el material solicitado ha sido procesado” aunque está en tránsito.
+Sustituirla por enlace a la bandeja única. Si se conserva resumen: “No hay pedidos por evaluar. Hay 5 despachos pendientes de recepción” según datos reales. “Procesado” puede interpretarse como entregado o cerrado.
+P1
+E05
+Despacho desde Inventario
+Formulario con obra, “Entregado a (retira)”, nota y artículos; no se ve pedido, programación, depósito de origen explícito, chofer ni vehículo.
+Llevarlo al circuito de Entregas: pedido/ítem, origen, destino, cantidades, fecha prevista y modalidad. Para transporte: chofer/vehículo o transportista; para retiro: persona que retira. Diferenciar preparación, retiro directo y transporte sin fingir que ya se entregó.
+P1
+E06
+Estados y filtros
+Opciones “En Tránsito / En Camino”, “Pendientes”, “Entregados en Obra”, “Cancelados”. No distinguen preparación, programación o diferencias.
+Estados: Borrador, Programado, En preparación, Despachado, Recibido conforme, Recibido con diferencias, Cancelado antes de salida. Añadir obra, fecha, origen, pedido y responsable. Hacer visible la próxima acción y las entregas problemáticas.
+P1
+E07
+Dashboard / alertas
+Mantenimientos de julio y principios de septiembre figuran como “Próximos 15 días”; Flota los muestra vencidos.
+Separar Vencidos, Hoy y Próximos 15 días con la misma fecha local y acceso al detalle. Los vencidos no son compromisos futuros.
+P1
+E08
+Dashboard / stock
+Stock crítico 280 frente a Stock Bajo 279 en Inventario; bajo mínimo incluye ejemplos 1/1, sin explicar comparación.
+Unificar definición, momento de actualización y universo filtrado. Si el umbral incluye igualdad: “En mínimo o por debajo”. Mostrar disponible y mínimo con etiquetas. Evitar interpretar dos contadores como la misma medida cuando no coinciden.
+P1
+I01
+Stock
+Ya existen Stock Real, Reservado y Disponible. Falta una explicación uniforme del alcance por depósito y de exclusiones por condición física.
+Conservar las tres columnas y llamarlas Físico, Reservado, Disponible. Mostrar fórmula, depósito y unidad; excluir bloqueados/no aptos si existen. La mejora es completar la semántica, no volver a crear columnas que ya existen.
+P1
+I02
+Nueva Reserva
+Solo material y cantidad; no se solicitan pedido, obra ni vigencia.
+Reserva por ítem de pedido, depósito, obra, cantidad, responsable y vencimiento; mostrar liberación, consumo y motivo de cambio. No puede saberse a quién está comprometido el stock ni liberarlo correctamente.
+P0
+I03
+Stock Reservado
+“Todo el stock físico registrado está 100% disponible” y debajo cinco despachos en camino.
+Vacío: “No hay reservas activas. Consultá la disponibilidad por artículo y depósito”. Tránsito como categoría separada o enlace a Entregas. Ausencia de reservas no certifica aptitud ni disponibilidad universal; el tránsito no es reserva en origen.
+P2
+I04
+Movimientos
+Kardex muestra “web” en Responsable Pañol, incluso para egresos con persona identificada en Pedidos.
+Separar Responsable de Canal de registro. Identidad vinculada a usuario; para históricos desconocidos indicar “Responsable no identificado”. “web” no responde quién hizo el movimiento. No completar históricos con identidades supuestas.
+P1
+I05
+Movimientos
+“Auditoría completa”, 50 registros, tabla sin filtros visibles de período/tipo/obra y referencias poco específicas.
+Filtros, búsqueda por artículo/código/documento, saldo anterior/posterior y origen/destino. Aclarar si se muestran últimos 50 y permitir consultar el historial. La auditoría necesita reconstruir un movimiento y su saldo, no solo enumerar eventos.
+P1
+I06
+Historial de Precios
+BASTIDOR MODULO: precio anterior $0, nuevo $50.000, diferencia $0 y variación 0,00%.
+Si $0 era precio válido: diferencia +$50.000 y porcentaje “No calculable: base cero”. Si faltaba precio: anterior “Sin registro”, diferencia y porcentaje “No aplica”. 0% representa falsamente ausencia de cambio.
+P1
+I07
+Catálogo / identificación
+Se repite ECAR-JH4V720R para REGULADOR GAS ENV con mínimos diferentes; ECAR-ANU248V2 identifica tubos de 100 m y 200 m. Hay códigos ausentes y un artículo “test”.
+Definir identidad de artículo/variante y existencias por ubicación. Validar unicidad donde corresponda, revisar duplicados con responsable y retirar datos de prueba mediante procedimiento autorizado. Riesgo de seleccionar, reservar o despachar el registro equivocado. No fusionar automáticamente por nombre.
+P1
+I08
+Clasificación
+LIJADORA ORBITAL es Consumible; algunos rotomartillos son Material; arnés y mordazas aparecen en Herramientas Eléctricas.
+Separar rubro, familia y condición de retornable; revisar clasificación. Renombrar la pestaña a “Herramientas” o filtrar realmente las eléctricas. La clasificación debe gobernar consumo/préstamo sin depender de un título incorrecto.
+P1
+I09
+Estanterías / alta
+Se sigue diciendo A–E y “almacén pequeño de 50 m²”, pero existen F, ROQUE, ABUELO y otras ubicaciones. “Observación de Ubicación Antigua” queda en el formulario normal.
+“Ubicaciones de depósito”; plano por depósito real; jerarquía Depósito → Estantería → Nivel → Casillero. Mover el dato heredado a información adicional. El esquema fijo contradice la estructura cargada y mezcla depósitos con estantes.
+P2
+I10
+Stock / despacho
+El catálogo ofrece un despacho independiente que luego aparece como pedido.
+Conservar consulta y movimientos de stock en Inventario; usar Preparar despacho con vínculo a necesidad/reserva y continuar en Entregas. Evitar circuitos paralelos y documentos creados por efecto secundario.
+P1
+I11
+Herramientas
+Botón “Asignar / Préstamo” visible en artículos con stock 0; préstamo activo “Sin obra” desde 27/8 bajo “Préstamos Diarios Activos”.
+Validar disponible y estado apto antes de asignar; pedir destino y devolución prevista; alertar vencidos. Usar “Préstamos activos”. Evitar nuevas asignaciones de recursos no disponibles y recuperar herramientas a tiempo. Backend no probado.
+P1
+I12
+Herramientas / trazabilidad individual
+Se anuncia “código único/serie”, pero hay filas con 90, 125 o 160 unidades bajo un solo código y estado Operativa.
+Distinguir artículo agregado de activo serializado; condición y préstamo por unidad cuando sea retornable individual. Un estado único no describe decenas de unidades con destinos diferentes.
+P1
+I13
+EPP
+La vista incluye materiales y herramientas entre tipos EPP; calzado aparece con talle M; “Observaciones / Firma” mezcla conceptos y muestra guiones.
+Clasificar EPP/ropa aparte; talles válidos según producto; artículo real y variante, receptor, cantidad y constancia diferenciada. Confirmar impacto en stock y evitar doble egreso. Mejorar identificación y evidencia de entrega. No se auditó normativa ni RRHH.
+P1
+I14
+Stock / reposición
+Hay “Solicitar Reposición” y muchas alertas, pero no se verificó revisión de cantidades, solicitudes previas o retorno de Compras.
+Antes de enviar, mostrar cantidad propuesta y cobertura ya solicitada; deduplicar por artículo/destino y mantener estado de abastecimiento. Separar reposición del depósito de faltante de un pedido de obra. Evitar compras repetidas y conservar el motivo real de abastecimiento.
+P1
+I15
+Stock / visualización
+505 artículos y tabla de 13 columnas; filtros extensos antes de acciones. Hubo demoras de inspección, sin diagnóstico técnico de rendimiento.
+Tabla con columnas configurables, identificación y disponibilidad prioritarias, paginación o carga progresiva; filtros principales y avanzados. Verificar rendimiento con volumen real. Mejorar consulta en pantallas estrechas; no atribuir las demoras a una causa no medida.
+P2
+I16
+Alta / valores
+Nuevo Ítem mezcla identidad, ubicación, stock inicial y costo; código “único” opcional. Valor total convive con muchos costos $0.
+Separar alta de artículo de saldo inicial auditado; aclarar código obligatorio/generado según identidad. Distinguir costo desconocido de cero y mostrar cobertura de valorización. Un total parcial no debe parecer valorización completa; un alta no debe perder origen del saldo.
+P1
+F01
+Vehículos
+Unidades con VTV o mantenimiento vencidos permanecen verdes “En servicio”; panel indica 17 activas.
+Separar estado operativo, disponibilidad y documentación. Mostrar condición Requiere revisión y definir restricciones de asignación según política operativa. Un único verde no resume condiciones distintas. No se probó asignación ni se emite conclusión legal.
+P1
+F02
+Mantenimiento
+“2 HOY” incluye vencimientos 23/7 y 7/9; el panel logístico muestra esas fechas un día antes.
+Contar hoy y vencidos por separado; usar fecha local de calendario de forma consistente. Evitar urgencia y programación incorrectas por etiquetas o conversión de fechas.
+P1
+F03
+Parte Diario
+“Todo OK”, todos los controles OK y estado Operativo antes de inspeccionar.
+Iniciar Sin revisar; exigir resultado explícito por control con No aplica cuando proceda. Calcular condición solo al terminar. El valor por defecto no debe certificar una inspección.
+P1
+F04
+Parte Diario / mantenimiento
+Historial de partes total 0, pero mantenimiento contiene reportes “[REPORTE QR]” anteriores.
+Validar que partes web/QR compartan historial y filtros; vincular cada incidencia con su reporte original. Hoy no se puede reconstruir desde esta vista el origen mostrado en mantenimiento.
+P1
+F05
+Tipo de equipo / lectura
+El alta permite Kilómetros u Horas, pero listados y KPIs muestran km/km por litro también en maquinaria y batanes.
+Respetar medición configurada; equipos por horas con h y L/h; depósitos de combustible con litros, entradas y salidas, sin rendimiento vial. Las métricas deben corresponder al recurso. La configuración guardada no fue inspeccionada.
+P1
+F06
+KPIs
+649,8; 975,3 y 1.274,7 km/L; algunos vehículos sin km muestran costos/km muy altos; disponibilidad 100% general.
+Definir período y recorridos del período; no dividir por odómetro acumulado o valores sustitutos. Mostrar “Datos insuficientes” cuando falten lecturas válidas. Auditar fórmulas. Valores visibles no son una base confiable para decisiones; no se afirma cuál es la fórmula actual.
+P1
+F07
+Choferes
+Tabla vacía, seguridad 100/100, cumplimiento 92% y eficiencia 0,0 km/L.
+Sin muestra: “Sin datos suficientes”. Mostrar período, cantidad de choferes/reportes y definición de cada indicador. Evitar métricas aparentemente reales sin población visible que las sustente.
+P1
+F08
+Combustible / batán
+Saldo 202,94 L contra capacidad 200 L (100%); no se aclara si agrupa batanes.
+Saldo/capacidad por batán y combustible; si es agregado, sumar capacidades y explicitarlo. Alertar excedentes y revisar movimientos/ajustes. La representación oculta una inconsistencia o mezcla alcances distintos.
+P1
+F09
+Combustible / filtros
+Cabecera indica septiembre y 17 cargas; tabla indica 49 cargas históricas con otros filtros.
+Un único período aplicado a tabla e indicadores, o dos ámbitos claramente rotulados y separados. El usuario puede creer que los importes corresponden a las filas que está viendo.
+P1
+F10
+Nueva Carga
+Fecha 2026-09-14 y día “Domingo”, que no corresponden entre sí; día, mes y año se muestran como campos redundantes.
+Derivar día/mes/año de la misma fecha local; una sola fecha editable. Evidencia de incoherencia de calendario; revisar conversiones de zona horaria.
+P1
+F11
+Formularios de Flota
+Chofer habitual y responsable son texto libre; nueva carga sugiere el correo del usuario como chofer.
+Separar Registrado por de Chofer/operador; selector de persona y alternativa externa identificada. Área/destino vinculados a una ubicación. El usuario que carga no necesariamente condujo y los nombres libres fragmentan el historial.
+P1
+F12
+Taller
+Alertas tienen botón “Completado”; órdenes vacías con estados pendiente/en taller/terminado; falta claridad de cierre.
+Botón Registrar mantenimiento realizado; solicitar tarea, fecha, lectura, responsable y evidencia de cierre. Estados: Pendiente, En taller, Finalizada, Cancelada. Una acción debe expresar qué hace y registrar por qué la unidad puede volver a operar. Cierre no ejecutado.
+P1
+F13
+Mapa
+“Rastreo Satelital en Vivo” y “0 vehículos en tránsito” junto a “No hay vehículos transmitiendo”.
+“Seguimiento de vehículos”; diferenciar sin señal, sin dispositivo, detenido y en movimiento; mostrar última actualización. Ausencia de telemetría no demuestra ausencia de vehículos en traslado.
+P1
+F14
+Navegación / vacíos
+Parte Diario no presenta “Volver a Flota” en su listado, a diferencia de otras vistas. Neumáticos y taller tienen espacios vacíos poco explicativos.
+Retorno uniforme, breadcrumb y vacíos con instrucción concreta y acción disponible. Evitar navegación lateral innecesaria y pantallas que parezcan incompletas.
+P2
+F15
+Combustible / registros
+Se repiten identificadores visibles como CARGA-0046 en fechas/cantidades diferentes; estados se modifican con selector en la fila.
+Identificador estable por registro, referencias externas separadas; validar unicidad y registrar responsable/motivo de cambios de estado. Mejorar conciliación y auditoría. No se cambió ningún estado.
+P1
+C01
+Obra ↔ Logística
+Hay solicitante, notas, envío y recepción; no se ve conversación contextual con consulta, respuesta, compromiso o acuse.
+Historial por pedido/ítem: solicitud, aclaración, respuesta, resolución, fecha comprometida, cambio y recepción. Definir responsables y pendientes de respuesta. La coordinación no debe depender de notas aisladas o mensajes externos sin vínculo.
+P1
+C02
+Logística ↔ Compras
+Introducción promete derivación automática; Pedidos ofrece botón manual. No se verificó retorno de disponibilidad/fecha desde Compras.
+Definir quién confirma derivación, qué cantidad solicita y cómo vuelve la respuesta. Mostrar Enviado, Recibido por Compras, En gestión, Fecha prevista, Recibido y Diferencia. Derivar un faltante no resuelve la necesidad ni autoriza automáticamente una compra.
+P0
+C03
+Alertas / estados
+“Pendiente”, “Procesado”, “En tránsito” y “Recibido” se usan en objetos distintos; alertas no siempre explican siguiente acción.
+Cada alerta debe indicar objeto, causa, responsable, fecha y CTA. Separar prioridad del pedido de cobertura y estado de transporte. Que un estado sirva para decidir, no solo para colorear.
+P1
+C04
+Textos generales
+Mezcla de &amp;, vs, fuel, Core, KPIs, Safety Score, Kardex, service y abreviaturas; plurales como “1 registros”, “2 unidad”.
+Vocabulario en español y mayúsculas de frase; abreviaturas solo con ayuda. Corregir pluralización y unidades. Reemplazos en sección 4. Reducir ruido y ambigüedad sin perder precisión.
+P2
+C05
+Catálogo / textos de datos
+Errores visibles: “CIERRA CIRCULAR”, “MORDASA”, “CERRRADURA”, “RUEDSA”, “TUBP”; variantes técnicas inconsistentes.
+Corregir nombres mediante revisión de catálogo, conservando códigos e historial. No alterar nombres de personas ni especificaciones sin validación del responsable. Mejorar búsquedas y evitar confundir corrección editorial con cambio del artículo.
+P2
+B. Anexo — Glosario funcional
+Definiciones para mantener consistencia de producto
+Término
+Definición
+Necesidad
+Lo que una obra requiere para ejecutar una actividad.
+Pedido
+Registro estructurado de una o más necesidades.
+Cobertura
+Cómo Logística resuelve un ítem: total, parcial o sin stock.
+Reserva
+Compromiso de una cantidad física que todavía permanece en origen.
+Abastecimiento
+Gestión del faltante; puede implicar Compras, transferencia u otra fuente.
+Preparación
+Selección/control de cantidades antes de la salida.
+Despacho
+Evento/documento de salida física desde un origen.
+En tránsito
+Cantidad que ya salió del origen y aún no fue recibida en destino.
+Recepción
+Registro de lo que llegó y su conformidad/diferencia.
+Atendido
+Pedido con cantidades aceptadas suficientes o saldo cancelado justificadamente.
+Disponible
+Cantidad apta para nuevas asignaciones luego de reservas y bloqueos aplicables.
+Uso obligatorio
+Los mismos términos deben repetirse en menú, pantallas, estados, documentos y ayudas. Cambiar el vocabulario sin cambiar la lógica genera más confusión que valor.

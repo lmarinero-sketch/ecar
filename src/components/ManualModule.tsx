@@ -353,15 +353,18 @@ const MODULES_DATA: ModuleDoc[] = [
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-50',
     borderColor: 'border-yellow-500',
-    purpose: 'Registrar el avance diario de obra e implementar el Control Operativo de Rendimientos Roque, estandarizando 12 actividades PEAD, 3 cuadrillas y 43 sectores físicos con auditoría de HH, desvíos y paradas.',
+    purpose: 'Registrar el avance diario de obra e implementar el Control Operativo de Rendimientos Roque, estandarizando 12 actividades PEAD, 3 cuadrillas y 43 sectores físicos con auditoría de HH, desvíos, paradas, precarga de tareas y clonación de nómina diaria.',
     scope: 'Todas las obras activas de la empresa (aplicación prioritaria en Red de Distribución PEAD Loteo Roque / Valdivieso Group). Flujo diario: Planificación 14:50 -> OTI 07:00 -> Cierre 14:30.',
     responsible: 'Jefe de Obra / Capataz / Dirección Técnica',
     process: [
       'Planificación operativa diaria a las 14:50 (30 segundos por cuadrilla): selección de actividad estándar del catálogo Roque (AG-REP a AG-PRU) y asignación de sector físico (SEC001 a SEC043).',
       'El catálogo autocompleta unidad de medida, rendimiento estándar esperado por hora (m/h o un/h), maquinaria requerida y composición de personal.',
-      'Asignación de cuadrillas formales C-01 (Zanjeo/Tendido), C-02 (Tapada/Compactación) o C-03 (Terminaciones/Pruebas) con su responsable y dotación.',
+      'Asignación multi-equipo: permite vincular una o varias maquinarias/vehículos de la flota mediante etiquetas interactivas con remoción rápida.',
+      'Edición y corrección: cualquier tarea planificada o cerrada puede ser editada (✏️) para subsanar errores de tipeo o ajustes en las mediciones reales logradas.',
       'Emisión e impresión a las 07:00 de la Orden de Trabajo Impresa (OTI) en PDF para entrega en mano al capataz antes de iniciar la jornada.',
       'Cierre diario a las 14:30: registro de cantidades reales ejecutadas, cálculo automático de rendimiento real (HH reales vs estándar) y porcentaje de desvío.',
+      '⚡ Precarga en Parte Diario: al redactar el Parte Diario oficial, el botón "Precargar Tareas de Hoy" jala en 1 clic todas las tareas del día e incidentes sin necesidad de volver a escribirlos.',
+      '⚡ Copiar Cuadrilla del Último Parte: en la pestaña Personal del parte, el botón "Copiar Cuadrilla Anterior" replica la dotación completa de operarios del día previo con sus 8hs en un solo clic.',
       'Declaración de paradas de obra (rotura de máquina, falta de combustible, interferencias o falta de insumos), registrando minutos perdidos.',
       'Enlace directo a Logística: ante una parada por falta de material o combustible, se genera la Solicitud de Pedido a Pañol con 1 solo clic desde la misma pantalla.',
       'Carga fotográfica geolocalizada de avance y firma de conformidad digital.'
@@ -382,6 +385,9 @@ const MODULES_DATA: ModuleDoc[] = [
     features: [
       'Catálogo de 12 actividades estándar PEAD (AG-REP a AG-PRU)',
       'Gestor de Cuadrillas C-01 a C-03 y 43 sectores físicos Roque',
+      '⚡ Botón de Precarga de Tareas en Parte Diario',
+      '⚡ Botón Copiar Cuadrilla del Último Parte (1 clic)',
+      'Asignación multi-equipo y edición correctiva de tareas',
       'Generador e impresor de OTI matutina en PDF',
       'Cierre operativo en 30 segundos con auditoría de rendimientos',
       'Disparo automático de solicitudes a Pañol ante paradas'
@@ -390,27 +396,28 @@ const MODULES_DATA: ModuleDoc[] = [
   {
     id: 'wbs',
     code: 'MOD-13',
-    name: 'Planificación WBS & Gantt',
+    name: 'Planificación WBS & Gestión de Obras',
     section: 'Operaciones',
     icon: Target,
     color: 'text-ecar-blue',
     bgColor: 'bg-slate-50',
     borderColor: 'border-ecar-blue',
-    purpose: 'Planificar, programar y controlar el avance de obras mediante estructura de desglose del trabajo (WBS) con visualización en Gantt.',
-    scope: 'Todo proyecto activo de la empresa. Estructura jerárquica de tareas con dependencias, asignaciones y fechas.',
+    purpose: 'Planificar, programar y controlar el avance de obras mediante estructura de desglose del trabajo (WBS), control de estado de obra (Activa, Pausada, Finalizada), análisis de desvíos y visualización en Gantt.',
+    scope: 'Todo proyecto activo de la empresa. Estructura jerárquica de tareas con dependencias, asignaciones, fechas y trazabilidad de insumos.',
     responsible: 'Gerente de Proyectos / Jefe de Obra',
     process: [
+      'Control de Estado de Obra: en la cabecera de la obra, el responsable puede alternar en tiempo real entre 🟢 Activa, 🟡 Pausada o 🏁 Finalizada.',
       'Se crea la estructura WBS del proyecto con niveles jerárquicos (Fase → Actividad → Tarea).',
       'Cada elemento WBS tiene: nombre, descripción, fechas inicio/fin, duración, dependencia, responsable, prioridad y color.',
-      'El Gantt interactivo muestra las barras de tiempo con dependencias.',
+      'El Gantt interactivo muestra las barras de tiempo con dependencias sincronizadas.',
       'El módulo 3D (Wbs3dView) permite visualizar la jerarquía en un grafo tridimensional.',
-      'El avance se actualiza desde los Partes Diarios de Obra.',
-      'La retroalimentación (desviaciones, lecciones, mejoras) se registra por elemento WBS.',
-      'Las fases del proyecto son: Planificación → Programación → Ejecución → Completado.'
+      'Pestaña "Desvíos & Acciones": registro centralizado de retroalimentación, desvíos de plazo o costo y planes de mitigación.',
+      'Pestaña "Movimientos de Materiales y Equipos": trazabilidad de insumos transferidos al frente de obra.',
+      'El avance se actualiza desde los Partes Diarios de Obra y Rendimientos.'
     ],
-    records: ['Estructura WBS del proyecto', 'Cronograma Gantt', 'Retroalimentación de proyecto', 'Registro de avances por tarea'],
+    records: ['Estructura WBS del proyecto', 'Cronograma Gantt', 'Historial de Desvíos & Acciones', 'Registro de avances por tarea'],
     kpis: ['Avance físico vs. planificado', 'Tareas críticas en riesgo', 'Desviaciones registradas', 'Índice de cumplimiento de fechas'],
-    features: ['Gantt interactivo con dependencias', 'Visualización 3D de la jerarquía', 'Fases de proyecto controladas', 'Integración con Parte Diario']
+    features: ['Selector de Estado de Obra (Activa/Pausada/Finalizada)', 'Gantt interactivo con dependencias', 'Visualización 3D de la jerarquía', 'Pestaña Desvíos & Acciones', 'Integración con Parte Diario']
   },
   {
     id: 'safety',

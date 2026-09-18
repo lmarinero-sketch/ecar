@@ -1,0 +1,402 @@
+00
+CONTROL Y PROPÓSITO DEL DOCUMENTO
+Marco de uso, alcance y tratamiento de la información.
+Campo
+Definición
+Documento
+Documento maestro de reuniones y definiciones
+Código
+ECAR-DOC-REC-001
+Versión
+3.0 - Consolidación posterior a reuniones
+Fecha
+27 de julio de 2026
+Elaboración
+Grow Labs
+Uso
+Interno, funcional y de gestión del proyecto
+Carácter
+Documento de trabajo sujeto a validación de responsables
+CRITERIO DE CONSOLIDACIÓN
+El contenido se ordenó por módulos y circuitos. Se eliminaron repeticiones, muletillas y desvíos propios de la conversación, conservando la intención funcional, las decisiones y los puntos pendientes. No se presentan frases como citas literales salvo que hayan quedado formalmente definidas.
+01
+SÍNTESIS EJECUTIVA
+Qué surge de las reuniones y cuál es la lógica central del producto.
+Las reuniones muestran que ECAR debe evolucionar desde un conjunto amplio de módulos hacia un sistema operativo realmente conectado. El problema principal no es la falta de funciones, sino la necesidad de ordenar estados, responsables, evidencias y comunicación entre áreas para que cada registro genere una consecuencia automática en el resto del sistema.
+37
+módulos funcionales
+6
+funciones serverless
+5
+áreas núcleo
+8–9
+puestos base
+DEFINICIÓN CENTRAL
+ECAR debe reflejar cómo trabaja la empresa en la práctica: una necesidad nace en obra, se valida, se abastece, se entrega, se consume, impacta en costos, se certifica y finalmente aparece en los tableros gerenciales.
+Figura 1. Circuito integrado propuesto para la operación de ECAR.
+02
+MODELO CONCEPTUAL: PROYECTO, OBRA Y EJECUCIÓN
+Separar lo comercial, lo planificado y lo realmente ejecutado.
+Uno de los puntos más importantes discutidos fue evitar que “proyecto” y “obra” se utilicen como sinónimos. El sistema necesita distinguir el negocio presupuestado y aprobado de la unidad operativa que se ejecuta en campo.
+Concepto
+Definición funcional
+Resultado en el sistema
+Proyecto
+Unidad comercial y contractual. Contiene cliente, alcance, presupuesto, versiones, fechas y condiciones.
+Permite evaluar viabilidad, margen, oportunidad y aprobación.
+Obra
+Unidad operativa que nace cuando el proyecto se adjudica o se autoriza su ejecución.
+Habilita responsables, centros de costo, partes diarios, inventario, flota y certificaciones.
+Planificación
+Definición de WBS, actividades, recursos, hitos y secuencia prevista.
+Establece línea base de alcance, plazo y costo.
+Programación
+Asignación concreta de actividades, personas, equipos y fechas para un período.
+Convierte la planificación en agenda ejecutable.
+Ejecución
+Registro de lo efectivamente realizado, consumido, utilizado y observado.
+Alimenta avance, costos reales, desvíos y certificaciones.
+CRITERIO ACORDADO
+El presupuesto no debe actualizarse automáticamente por cada movimiento operativo. Los cambios reales deben quedar registrados como adicionales, cambios de alcance, desvíos o revisiones aprobadas, manteniendo siempre la línea base original.
+Cada obra debe tener un identificador único y vínculos con cliente, contrato, presupuesto base, responsables y centros de costo.
+Las actividades de obra deben poder planificarse, programarse y luego cerrarse con evidencia de ejecución.
+Las órdenes de trabajo deben distinguir actividades internas, mantenimiento de flota y tareas de obra.
+El avance físico y el avance económico deben poder compararse sin mezclarse.
+03
+LOGÍSTICA, ACOPIOS Y ENTREGAS
+Mover materiales con trazabilidad desde el origen hasta el destino.
+La logística fue planteada como un circuito transversal. No alcanza con registrar que “algo salió”: se debe saber quién solicitó, quién autorizó, desde qué depósito salió, qué vehículo lo transportó, quién entregó, quién recibió y qué evidencia quedó asociada.
+Etapa
+Datos mínimos
+Evidencia / estado
+Solicitud
+Obra, solicitante, materiales, cantidad, unidad, urgencia y fecha requerida.
+Pendiente de revisión.
+Preparación
+Depósito de origen, stock reservado, responsable de preparación y bultos.
+Preparado / parcial.
+Despacho
+Vehículo, chofer, horario, remito interno y destino.
+En tránsito.
+Recepción
+Receptor, checklist, cantidades recibidas, faltantes, daños y observaciones.
+Recibido conforme / con diferencias.
+Cierre
+Firma, fotos, ubicación final y actualización de stock.
+Cerrado y auditado.
+Las entregas deben poder ser totales o parciales.
+El sistema debe generar remitos internos y permitir firma en pantalla.
+Cuando exista diferencia, debe abrirse una incidencia y no cerrarse automáticamente el pedido.
+Los acopios deben vincularse a obra, proveedor, ubicación física, cantidad disponible y consumo acumulado.
+La vista móvil debe mostrar acciones simples: preparar, despachar, recibir, observar y firmar.
+NECESIDAD DE UX
+En campo no deben mostrarse formularios extensos ni menús administrativos. El usuario necesita una pantalla por tarea, con botones grandes, información precargada y la menor cantidad posible de escritura manual.
+04
+INVENTARIO Y PAÑOL
+Stock operativo, herramientas, ubicaciones y movimientos auditables.
+El inventario debe operar como fuente única para materiales, insumos, repuestos y herramientas. Todo movimiento debe impactar stock y quedar vinculado con un motivo operativo.
+Movimiento
+Origen habitual
+Destino / impacto
+Entrada
+Compra, devolución, transferencia recibida o ajuste positivo.
+Incrementa stock y registra costo/lote cuando corresponda.
+Salida
+Entrega a obra, empleado, vehículo o consumo.
+Disminuye stock y asigna responsabilidad.
+Transferencia
+Depósito o pañol de origen.
+Reserva, despacho y recepción en otro depósito.
+Ajuste
+Conteo físico o regularización autorizada.
+Modifica stock con motivo y aprobación.
+Devolución
+Obra, empleado o vehículo.
+Reingreso con estado: utilizable, reparación o baja.
+Cada ítem debe contar con QR o código de barras único cuando la trazabilidad individual lo requiera.
+Las herramientas deben vincularse con empleado, obra, fecha de entrega, estado y fecha de devolución.
+El mapeo de estanterías debe facilitar la ubicación y no convertirse en una carga adicional de mantenimiento.
+Las alertas por stock mínimo deben generar una acción concreta: sugerencia o pedido de reposición.
+La recepción de compras debe actualizar el inventario sólo después de validar cantidades y diferencias.
+Figura 2. Circuito sugerido entre obra, compras, recepción e inventario.
+05
+FLOTA, TALLER Y NEUMÁTICOS
+Disponibilidad, mantenimiento y costo de utilización por vehículo.
+La flota debe tener una ficha viva. Los reportes diarios realizados desde el celular alimentan alertas, órdenes de trabajo y decisiones sobre disponibilidad. El objetivo es pasar de reparar por urgencia a anticipar mantenimiento y controlar costo por kilómetro.
+Componente
+Registro clave
+Indicadores
+Vehículo / equipo
+Patente o identificación, tipo, obra asignada, estado, km/horas, documentación y capacidad.
+Disponibilidad, uso, costo por km/hora.
+Check-in diario
+Km, nivel de combustible, novedades, daños, fotos y aptitud para operar.
+Unidades sin reporte, incidentes recurrentes.
+Orden de taller
+Falla, prioridad, repuestos, mano de obra, tiempos, costo y responsable.
+Tiempo fuera de servicio, costo por OT.
+Neumáticos
+Número de serie, posición, fecha, km, recapado, rotación y baja.
+Duración por posición, costo por km, fallas prematuras.
+Documentación
+Seguro, RTO, habilitaciones y vencimientos.
+Vencimientos próximos y unidades bloqueadas.
+Figura 3. Relación entre control diario, taller, combustible y costos.
+06
+COMBUSTIBLE
+Autorización, carga, stock del batán y reconciliación.
+El combustible debe administrarse como un recurso controlado. La conversación puso foco en que la carga no sea un registro aislado: debe existir una autorización o un motivo, un vehículo o equipo identificado, un operador y una obra o centro de costo.
+Registrar origen de la carga: batán propio o surtidor externo.
+Capturar litros, km u horas, operador, fecha, comprobante y obra.
+Calcular consumo L/100 km o L/hora según el tipo de equipo.
+Controlar entradas y salidas del batán con stock teórico y stock físico.
+Realizar reconciliación mensual entre combustible comprado, distribuido y existencia.
+Detectar consumos anómalos y exigir justificación antes del cierre.
+PENDIENTE FUNCIONAL
+Definir el nivel de autorización: por carga individual, por cupo diario/semanal, por obra o por responsable. También debe definirse qué sucede ante pérdida de conectividad en campo.
+07
+COMPRAS Y ABASTECIMIENTO
+De la necesidad al proveedor, sin perder prioridad ni trazabilidad.
+El circuito de compras debe recibir necesidades desde obra, pañol, mantenimiento y administración. Los pedidos se consolidan para evitar duplicaciones y luego se transforman en órdenes de compra con aprobación y seguimiento.
+Estado
+Responsable principal
+Regla de transición
+Pendiente
+Solicitante / jefe de obra
+Debe tener ítems, cantidades, destino, urgencia y justificación.
+Aprobado
+Administración / autorizador
+Confirma necesidad y habilita consolidación.
+Consolidado
+Compras
+Agrupa pedidos compatibles y define proveedores a cotizar.
+Ordenado
+Compras / gerencia
+Existe orden emitida, proveedor y fecha comprometida.
+Recibido
+Depósito / receptor
+Se valida remito, cantidades, checklist y diferencias.
+Cerrado
+Sistema / administración
+Inventario actualizado, documentación asociada y saldo del pedido resuelto.
+Permitir comparación de cotizaciones y conservar historial de selección.
+No duplicar pedidos de un mismo ítem para la misma obra sin alertar al usuario.
+Vincular cada recepción con orden, remito y factura cuando esté disponible.
+Permitir pedidos urgentes, pero exigir motivo y visibilidad gerencial.
+Mostrar tiempos de aprobación, compra y entrega como KPI del proceso.
+08
+PARTE DIARIO Y OPERACIÓN DE OBRA
+Una captura diaria que conecte avance, recursos, incidentes y necesidades.
+El parte diario debe ser el registro operativo central de cada obra. No debe limitarse a una narración: tiene que estructurar personal, equipos, materiales, clima, actividades, avance, incidentes, restricciones y necesidades para el día siguiente.
+Bloque
+Contenido mínimo
+Integración automática
+Datos generales
+Obra, fecha, responsable, turno, clima y ubicación.
+Valida que exista una sola entrada principal por día/turno.
+Producción
+Actividades, cantidades ejecutadas, unidad y porcentaje de avance.
+Actualiza avance WBS y desvíos.
+Recursos
+Personal, equipos, horas, combustible y materiales consumidos.
+Impacta costos y utilización.
+Novedades
+Incidentes, demoras, restricciones, fotos y observaciones.
+Genera alertas, RFI, seguridad o tarea.
+Necesidades
+Materiales, vehículos, decisiones o permisos requeridos.
+Crea solicitudes vinculadas sin recarga manual.
+REGLA DE DISEÑO
+El parte diario debe permitir guardar borrador, trabajar sin conexión temporal y sincronizar luego. La aprobación administrativa no debe impedir que la obra continúe cargando el día siguiente.
+09
+PRESUPUESTOS, COSTOS, ADICIONALES Y CERTIFICACIONES
+Conservar la línea base y controlar el resultado real.
+El sistema debe diferenciar presupuesto contractual, costos previstos, costos comprometidos y costos reales. Los cambios de alcance y adicionales deben seguir un circuito formal para no deformar la rentabilidad original.
+Capa económica
+Qué representa
+Fuente principal
+Presupuesto base
+Valor aprobado con APU, indirectos, beneficio, financieros e impuestos.
+Proyecto / versión contractual.
+Costo previsto
+Recursos requeridos según planificación.
+WBS y biblioteca de precios.
+Costo comprometido
+Órdenes de compra, subcontratos y obligaciones asumidas.
+Compras y contratos.
+Costo real
+Materiales consumidos, mano de obra, equipos, combustible y gastos.
+Partes, inventario, flota y finanzas.
+Certificación
+Avance valorizado habilitado para facturar o cobrar.
+Medición de obra y condiciones contractuales.
+Adicional / cambio
+Trabajo no incluido o modificación aprobada.
+Solicitud, impacto, aprobación y nueva versión.
+Comparar presupuesto versus real por obra, rubro, actividad y período.
+Mantener versiones y fecha de actualización de la biblioteca de precios.
+Registrar RFIs con impacto estimado en costo y cronograma.
+Evitar que un adicional se convierta en costo real sin aprobación o trazabilidad.
+Vincular certificaciones con avance físico validado y documentación de respaldo.
+10
+COMUNICACIONES Y NOTIFICACIONES
+Mensajes que producen acciones, no ruido.
+Las comunicaciones internas deben estar asociadas a objetos del sistema: pedido, obra, vehículo, RFI, orden de trabajo, vencimiento o documento. El usuario debe poder llegar desde la notificación directamente a la acción pendiente.
+Evento
+Destinatario
+Acción esperada
+Pedido urgente creado
+Aprobador / compras
+Revisar y aprobar o rechazar.
+Recepción con diferencias
+Compras / solicitante
+Resolver faltante, daño o cantidad.
+Stock bajo mínimo
+Compras / pañol
+Validar reposición o ajustar mínimo.
+Vehículo con novedad crítica
+Taller / logística
+Bloquear, inspeccionar o generar OT.
+Consumo anómalo
+Logística / administración
+Revisar carga y solicitar justificación.
+RFI próxima a vencer
+Responsable de respuesta
+Responder o reasignar.
+Certificación pendiente
+Gerencia / administración
+Validar avance y documentación.
+CRITERIO DE PRIORIZACIÓN
+Las notificaciones deben clasificarse por criticidad, permitir confirmación de lectura y evitar avisos repetidos cuando ya existe una tarea abierta.
+11
+ROLES, PERMISOS Y AUDITORÍA
+Acceso granular según tarea, obra y centro de costo.
+El modelo inicial contempla Administrador y Operario, pero las reuniones muestran la necesidad de permisos más granulares. No todos los usuarios que cargan información deben verla completa ni aprobarla.
+Capacidad
+Carga
+Lectura
+Aprobación
+Configuración
+Operación de campo
+Sí, módulos asignados
+Sólo su obra o tarea
+No
+No
+Jefatura de obra
+Sí
+Obras asignadas
+Partes / pedidos según política
+No
+Compras / logística
+Sí
+Circuitos vinculados
+Recepciones / consolidaciones
+Parcial
+Administración / finanzas
+Sí
+Costos y documentos habilitados
+Pagos, compras o cierres
+Parcial
+Gerencia
+Opcional
+Vista consolidada
+Decisiones y excepciones
+No
+Administrador IT
+No necesariamente
+Auditoría técnica
+No funcional
+Sí
+Filtrar acceso por módulo, acción, obra, depósito y centro de costo.
+Registrar altas, bajas, cambios de permisos y accesos relevantes.
+Conservar quién creó, modificó, aprobó, anuló o reabrió cada registro.
+Los anulados no deben desaparecer: deben conservar estado, motivo y usuario.
+12
+DASHBOARDS, REPORTES Y KPIS
+Convertir la operación diaria en información de conducción.
+Los tableros deben responder decisiones concretas. El objetivo no es mostrar muchas tarjetas, sino permitir que cada responsable detecte desvíos, tareas pendientes y riesgos sin recorrer todos los módulos.
+Perfil
+Preguntas que debe responder el tablero
+Dirección
+¿Qué obras están desviadas? ¿Cuál es la liquidez? ¿Qué margen se proyecta? ¿Qué riesgos exigen decisión?
+Gerencia de proyectos
+¿Qué actividades están atrasadas? ¿Qué RFIs o adicionales impactan plazo y costo?
+Compras
+¿Qué pedidos están vencidos? ¿Qué proveedores incumplen? ¿Qué compras urgentes se repiten?
+Logística
+¿Qué entregas están pendientes? ¿Qué vehículos están indisponibles? ¿Qué consumos son anómalos?
+Pañol
+¿Qué ítems están bajo mínimo? ¿Qué herramientas no fueron devueltas? ¿Qué movimientos requieren ajuste?
+Administración
+¿Qué costos no tienen imputación? ¿Qué certificaciones, pagos u obligaciones están pendientes?
+REPORTE DIARIO SUGERIDO
+Resumen automático por obra: avance cargado, personal y equipos utilizados, materiales consumidos, novedades críticas, pedidos abiertos, entregas pendientes y decisiones requeridas.
+13
+UX/UI Y OPERACIÓN MÓVIL
+Reducir pasos, escritura y ambigüedad en cada tarea.
+Diseñar por tarea y no por tabla de base de datos.
+Mostrar primero pendientes, alertas y acciones frecuentes.
+Usar estados visibles con nombres consistentes en todos los módulos.
+Precargar obra, usuario, fecha y ubicación siempre que sea posible.
+Permitir fotos, firma y escaneo QR desde el mismo flujo.
+Evitar formularios con campos que el sistema puede calcular o inferir.
+Diferenciar claramente “guardar borrador”, “enviar”, “aprobar”, “rechazar” y “cerrar”.
+Mantener una versión móvil rápida para campo y una versión de escritorio más analítica.
+PRINCIPIO DE EXPERIENCIA
+Cada pantalla debe dejar claro qué ocurrió antes, qué debe hacer el usuario ahora y qué sucederá después de confirmar.
+14
+ARQUITECTURA Y CRITERIOS TÉCNICOS
+Una base única, segura y preparada para integraciones.
+Capa
+Definición actual
+Criterio de evolución
+Frontend
+React 18 + Vite + TypeScript, formato PWA.
+Componentes reutilizables, experiencia móvil y soporte offline selectivo.
+Datos
+Supabase / PostgreSQL.
+Modelo relacional consistente, tenant_id, auditoría y catálogos únicos.
+Backend
+Edge Functions en Deno / TypeScript.
+Lógica sensible, automatizaciones, OCR, notificaciones e integraciones.
+IA
+GPT-4o y Gemini AI.
+Asistencia y extracción con validación humana; no reemplazar aprobaciones críticas.
+Seguridad
+RLS, JWT, TLS 1.3 y buckets privados.
+Permisos por rol, módulo, acción, obra y centro de costo.
+Canales
+Web, móvil y WhatsApp.
+WhatsApp para consulta y acciones acotadas, con confirmación y auditoría.
+No duplicar entidades maestras entre módulos: obras, usuarios, proveedores, vehículos, ítems y centros de costo deben ser únicos.
+Las automatizaciones deben ser idempotentes para evitar movimientos duplicados.
+Los procesos que afecten stock, costos o aprobaciones deben ejecutarse mediante transacciones seguras.
+Las acciones desde WhatsApp deben confirmar el objeto, la empresa y la intención antes de guardar cambios.
+Las integraciones deben usar API y eventos, evitando dependencias rígidas entre pantallas.
+15
+ACUERDOS CONSOLIDADOS Y PUNTOS ABIERTOS
+Qué puede pasar a diseño y qué requiere validación adicional.
+Tipo
+Definición
+Acuerdo
+Priorizar Logística e Inventario y cerrar el flujo Obra → Pedido → Compra → Recepción → Stock.
+Acuerdo
+Incorporar recepción con checklist, firma, fotos y tratamiento de diferencias.
+Acuerdo
+Usar QR/código de barras en inventario, herramientas, flota y accesos donde aporte velocidad real.
+Acuerdo
+Construir permisos más granulares que los perfiles Admin/Operario.
+Acuerdo
+Hacer que el Parte Diario genere solicitudes, alertas y actualización de avance.
+Pendiente
+Definir matriz formal de aprobaciones por monto, urgencia, obra y tipo de registro.
+Pendiente
+Definir comportamiento offline y conflictos de sincronización.
+Pendiente
+Definir firma requerida: simple en pantalla, firma electrónica o firma digital según documento.
+Pendiente
+Confirmar estructura definitiva de órdenes de trabajo: obra, taller y tareas internas.
+Pendiente
+Validar KPIs y reportes por cada rol antes de construir tableros finales.
+PRÓXIMO HITO
+Transformar estos acuerdos en historias de usuario y criterios de aceptación, priorizando un circuito operativo completo antes de ampliar la cantidad de módulos.

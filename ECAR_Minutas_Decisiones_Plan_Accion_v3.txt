@@ -1,0 +1,391 @@
+00
+CONTROL Y PROPÓSITO DEL DOCUMENTO
+Marco de uso, alcance y tratamiento de la información.
+Campo
+Definición
+Documento
+Minutas, decisiones y plan de acción
+Código
+ECAR-MIN-PLAN-001
+Versión
+3.0 - Consolidación posterior a reuniones
+Fecha
+27 de julio de 2026
+Elaboración
+Grow Labs
+Uso
+Interno, funcional y de gestión del proyecto
+Carácter
+Documento de trabajo sujeto a validación de responsables
+CRITERIO DE CONSOLIDACIÓN
+El contenido se ordenó por módulos y circuitos. Se eliminaron repeticiones, muletillas y desvíos propios de la conversación, conservando la intención funcional, las decisiones y los puntos pendientes. No se presentan frases como citas literales salvo que hayan quedado formalmente definidas.
+01
+RESUMEN EJECUTIVO
+Estado del proyecto y criterio de priorización.
+El proyecto cuenta con una cobertura funcional amplia, pero necesita concentrar el desarrollo en circuitos completos y verificables. La prioridad recomendada es cerrar primero los procesos que conectan obra, logística, compras e inventario; luego integrar flota y combustible; y finalmente consolidar costos, certificaciones y tableros gerenciales.
+P0
+circuitos críticos
+90 días
+hoja de ruta base
+3
+niveles de prioridad
+1
+base de datos integrada
+RESULTADO ESPERADO
+Al finalizar el primer ciclo, una necesidad cargada desde obra debe poder aprobarse, abastecerse, entregarse, recibirse, impactar stock y costos, y quedar visible en un tablero sin duplicar carga manual.
+02
+MINUTA CONSOLIDADA DE TEMAS TRATADOS
+Registro temático de las reuniones.
+Tema
+Síntesis tratada
+Modelo de negocio operativo
+Diferencia entre proyecto y obra; relación entre presupuesto, planificación, programación, ejecución y certificación.
+Logística y entregas
+Solicitud, preparación, remito interno, vehículo, receptor, checklist, firma, fotos y diferencias.
+Inventario y pañol
+QR, ubicaciones, movimientos, transferencias, asignaciones de herramientas y stock mínimo.
+Flota y taller
+Check-in diario, kilometraje, novedades, mantenimiento preventivo/correctivo, OT y neumáticos.
+Combustible
+Autorización, cargas, operador, obra, consumo, stock de batán y reconciliación.
+Compras
+Pedidos, aprobación, consolidación, cotización, orden, recepción y vínculo con inventario.
+Parte diario
+Avance, recursos, clima, incidentes, restricciones y solicitudes automáticas.
+Costos y certificaciones
+Presupuesto base, costo previsto/comprometido/real, adicionales y avance valorizado.
+Comunicaciones
+Notificaciones vinculadas a tareas y documentos, vencimientos, estados y confirmación.
+Seguridad y permisos
+Roles granulares, acceso por obra/módulo, auditoría y trazabilidad.
+UX/UI
+Pantallas móviles, menos escritura, acciones directas, estados consistentes y operación offline.
+Arquitectura
+React/Vite/TypeScript, Supabase/PostgreSQL, Edge Functions, IA y WhatsApp con control.
+03
+DECISIONES FUNCIONALES CONSOLIDADAS
+Criterios que pueden pasar a diseño o desarrollo.
+ID
+Decisión
+Estado
+D-01
+Separar Proyecto y Obra como entidades relacionadas, no equivalentes.
+Aprobado para diseño
+D-02
+Usar estados comunes y auditables en pedidos, compras, entregas y recepciones.
+Aprobado para diseño
+D-03
+Incorporar recepción con checklist, firma, fotos y registro de diferencias.
+Prioridad alta
+D-04
+Hacer que los movimientos de inventario sean consecuencia de documentos operativos.
+Prioridad alta
+D-05
+Vincular Parte Diario con avance, recursos, incidentes y solicitudes.
+Prioridad alta
+D-06
+Implementar check-in móvil para flota y generación de OT.
+Prioridad media-alta
+D-07
+Controlar combustible por vehículo/equipo, operador y obra.
+Prioridad media-alta
+D-08
+Ampliar RBAC a permisos por módulo, acción, obra y centro de costo.
+Transversal
+D-09
+Diseñar tableros por decisión y rol, no por acumulación de indicadores.
+Posterior al dato confiable
+D-10
+Usar IA para asistencia y extracción, manteniendo validación humana en acciones críticas.
+Criterio técnico
+04
+PENDIENTES DE DEFINICIÓN
+Preguntas que bloquean especificaciones finales.
+ID
+Tema
+Pregunta
+Responsable funcional
+P-01
+Matriz de aprobaciones
+¿Quién aprueba según tipo, monto, urgencia y obra?
+Dirección / Administración
+P-02
+Firma y validez
+¿Qué documentos requieren firma simple, electrónica o digital?
+Dirección / Legal
+P-03
+Operación offline
+¿Qué módulos deben funcionar sin conexión y cómo se resuelven conflictos?
+Producto / Desarrollo
+P-04
+Órdenes de trabajo
+¿Habrá una OT común o tipos separados para obra, taller y tareas internas?
+Operaciones / Logística
+P-05
+Autorización de combustible
+¿Se controla por carga, cupo, obra o responsable?
+Logística / Administración
+P-06
+Catálogos maestros
+Unidades, ítems, depósitos, estados, motivos y centros de costo definitivos.
+Administración / Operaciones
+P-07
+Indicadores
+KPIs mínimos por rol y fuente oficial de cada dato.
+Gerencias
+P-08
+Notificaciones
+Canal, criticidad, frecuencia, escalamiento y confirmación de lectura.
+Producto / Usuarios clave
+05
+BACKLOG PRIORIZADO
+Historias de usuario ordenadas por valor y dependencia.
+Prioridad
+ID
+Historia
+Criterio mínimo de aceptación
+P0
+US-01
+Como jefe de obra, quiero crear una solicitud de materiales vinculada a una obra para iniciar el abastecimiento.
+Pedido con ítems, cantidades, urgencia, fecha requerida y estado Pendiente.
+P0
+US-02
+Como aprobador, quiero aprobar o rechazar solicitudes con motivo para mantener trazabilidad.
+Registro de usuario, fecha, decisión y comentario; notificación al solicitante.
+P0
+US-03
+Como compras, quiero consolidar pedidos aprobados en una orden de compra.
+No duplicar ítems; conservar vínculo con solicitudes y obra.
+P0
+US-04
+Como receptor, quiero validar una entrega con checklist, firma y fotos.
+Permite recepción parcial, diferencias e incidencia.
+P0
+US-05
+Como pañolero, quiero que una recepción validada genere entradas de inventario.
+Movimiento auditable, costo, lote/serie y depósito.
+P0
+US-06
+Como operario, quiero retirar/devolver herramientas con QR.
+Asignación a persona/obra y estado del elemento.
+P0
+US-07
+Como jefe de obra, quiero cargar un parte diario móvil.
+Avance, personal, equipos, materiales, clima, incidentes y solicitudes.
+P1
+US-08
+Como chofer, quiero realizar check-in diario del vehículo desde el celular.
+Km, novedades, fotos, estado y alerta crítica.
+P1
+US-09
+Como taller, quiero generar una OT desde una novedad.
+Prioridad, tareas, repuestos, tiempos, costo y cierre.
+P1
+US-10
+Como logística, quiero registrar cargas de combustible y calcular consumo.
+Litros, km/horas, operador, origen, obra y L/100 km.
+P1
+US-11
+Como usuario, quiero recibir notificaciones accionables.
+Abre el registro exacto, evita duplicados y permite marcar resuelto.
+P1
+US-12
+Como administrador, quiero configurar permisos por módulo y obra.
+Matriz granular y auditoría de cambios.
+P2
+US-13
+Como gerencia, quiero visualizar desvíos de avance, costo y abastecimiento.
+Datos consolidados y filtros por obra/período.
+P2
+US-14
+Como administración, quiero vincular costos reales con presupuesto y certificaciones.
+Comparación base, comprometido, real y certificado.
+P2
+US-15
+Como usuario, quiero operar acciones simples por WhatsApp.
+Confirmación explícita, permisos y log de auditoría.
+06
+ROADMAP DE 90 DÍAS
+Secuencia propuesta para reducir riesgo y entregar valor temprano.
+Figura 1. Hoja de ruta sugerida en tres ciclos de implementación.
+Período
+Objetivo
+Alcance
+Entregable
+0-30 días
+Base operativa
+Modelo Proyecto/Obra; catálogos; permisos; UX móvil; solicitudes; compras; recepción; inventario.
+Circuito de abastecimiento completo en ambiente de prueba.
+31-60 días
+Integración de campo
+Parte Diario; entregas; check-in de flota; taller; combustible; notificaciones.
+Operación diaria conectada y trazable.
+61-90 días
+Control económico
+Costos reales; adicionales; certificaciones; reportes y tableros por rol.
+Primer cierre gerencial por obra con desvíos y pendientes.
+07
+PLAN DE TRABAJO POR FRENTE
+Responsabilidades funcionales sin asignar nombres individuales.
+Frente
+Responsabilidad
+Salida esperada
+Producto / PM
+Definir alcance, priorizar backlog, resolver dependencias y validar criterios de aceptación.
+Backlog vigente, decisiones registradas y demos aprobadas.
+Operaciones / Obras
+Validar Proyecto/Obra, parte diario, planificación, avance, RFI y entregas.
+Flujos realistas y datos mínimos confirmados.
+Logística / Pañol
+Validar inventario, acopios, despachos, recepción, flota, taller y combustible.
+Estados, checklists y excepciones definidos.
+Compras / Administración
+Validar aprobaciones, cotizaciones, órdenes, costos y documentos.
+Matriz de autorización y vínculo documental.
+Dirección / Gerencias
+Definir políticas, prioridades, excepciones y KPIs.
+Decisiones institucionales y tableros esperados.
+Desarrollo
+Diseñar modelo de datos, APIs, componentes, seguridad, automatizaciones y pruebas.
+Incrementos funcionales desplegados y auditables.
+Usuarios clave / QA
+Probar casos reales, errores, operación móvil y escenarios de excepción.
+Actas de prueba, incidencias y conformidad por módulo.
+08
+CRITERIOS DE ACEPTACIÓN TRANSVERSALES
+Condiciones mínimas para considerar un flujo terminado.
+Dimensión
+Criterio
+Trazabilidad
+Todo registro conserva creador, fecha, cambios, aprobaciones, anulaciones y relación con documentos origen/destino.
+Consistencia
+Los estados y nombres de acciones son iguales en todos los módulos conectados.
+Stock y costos
+Ninguna acción duplica movimientos; los impactos son transaccionales y reversibles mediante ajuste auditado.
+Permisos
+El usuario sólo ve y ejecuta acciones habilitadas por rol, módulo, obra y centro de costo.
+Móvil
+Las tareas de campo se completan con pocos pasos, botones claros y carga de fotos/QR/firma.
+Excepciones
+Recepciones parciales, diferencias, rechazos, falta de conexión y anulaciones tienen tratamiento explícito.
+Notificaciones
+Cada aviso tiene criticidad, responsable, acción, vínculo directo y condición de cierre.
+Reportes
+El dato del tablero puede rastrearse hasta los registros operativos que lo originaron.
+Seguridad
+RLS, JWT, aislamiento por tenant y archivos privados deben probarse antes de producción.
+Validación
+Cada módulo se prueba con casos reales y acta de conformidad del usuario clave.
+09
+RIESGOS Y MITIGACIONES
+Factores que pueden demorar o degradar el resultado.
+Riesgo
+Manifestación
+Mitigación
+Alcance excesivo
+Intentar finalizar muchos módulos a la vez.
+Trabajar por circuito completo y limitar WIP.
+Reglas no definidas
+Construir sin matriz de aprobaciones o catálogos cerrados.
+Sesiones breves de decisión y registro formal.
+Datos duplicados
+Crear proveedores, obras, ítems o vehículos en múltiples módulos.
+Entidades maestras únicas y validaciones.
+UX compleja
+Replicar formularios administrativos en móviles.
+Pruebas con usuarios de campo y reducción de campos.
+Automatización prematura
+Enviar notificaciones o movimientos sin condiciones confiables.
+Primero trazabilidad manual correcta; luego automatizar.
+Permisos débiles
+Acceso excesivo o bloqueos operativos.
+Matriz granular, pruebas por rol y auditoría.
+Tableros sin fuente
+KPIs no reconciliables con la operación.
+Definir fórmula, fuente y responsable de cada indicador.
+Conectividad
+Pérdida de datos en obra.
+Borrador local, cola de sincronización y resolución de conflictos.
+Adopción
+Usuarios continúan usando WhatsApp o papel fuera del sistema.
+Flujos más rápidos que el método anterior, capacitación y seguimiento.
+10
+MATRIZ DE TAREAS INMEDIATAS
+Próximas acciones para convertir definiciones en ejecución.
+#
+Tarea
+Responsable funcional
+Prioridad
+Estado
+1
+Validar separación Proyecto/Obra y ciclo de estados.
+Producto + Operaciones
+Alta
+Pendiente
+2
+Cerrar catálogos de unidades, urgencias, depósitos, motivos y tipos de movimiento.
+Administración + Logística
+Alta
+Pendiente
+3
+Definir matriz de aprobación para pedidos, compras, combustible y ajustes.
+Dirección + Administración
+Alta
+Pendiente
+4
+Prototipar flujo móvil de solicitud, recepción y parte diario.
+Producto + Desarrollo
+Alta
+Pendiente
+5
+Diseñar modelo único de inventario, herramientas y transferencias.
+Desarrollo + Pañol
+Alta
+Pendiente
+6
+Definir tipos de OT y relación con flota/obra.
+Operaciones + Logística
+Media
+Pendiente
+7
+Definir política de autorización de combustible.
+Logística + Administración
+Media
+Pendiente
+8
+Construir matriz inicial de roles y permisos.
+Producto + Administración IT
+Alta
+Pendiente
+9
+Definir eventos y criticidad de notificaciones.
+Producto + usuarios clave
+Media
+Pendiente
+10
+Seleccionar KPIs de la primera versión gerencial.
+Dirección + Gerencias
+Media
+Pendiente
+11
+Preparar casos de prueba reales para el circuito P0.
+QA + usuarios clave
+Alta
+Pendiente
+12
+Programar demo de circuito completo y acta de validación.
+PM / Product Manager
+Alta
+Pendiente
+11
+AGENDA PROPUESTA PARA LA PRÓXIMA REUNIÓN
+Decisiones que conviene cerrar en una sesión ejecutiva.
+Aprobar el modelo Proyecto → Obra → Planificación → Ejecución → Certificación.
+Confirmar el flujo y los estados de pedidos, compras, entregas y recepción.
+Definir la matriz de aprobaciones y excepciones.
+Validar los datos mínimos del Parte Diario y su relación con solicitudes.
+Definir la política de autorización y control de combustible.
+Confirmar el alcance del primer sprint y los usuarios que validarán la demo.
+Acordar criterios de cierre y fecha de revisión del circuito P0.
+CIERRE RECOMENDADO
+No sumar nuevos módulos hasta que el circuito P0 pueda ejecutarse de punta a punta con usuarios, permisos, evidencias, excepciones y auditoría.

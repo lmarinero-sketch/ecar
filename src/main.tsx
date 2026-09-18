@@ -28,6 +28,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/tracking" element={<App />} />
         <Route path="/fuel-request" element={<App />} />
         <Route path="/solicitud-combustible" element={<App />} />
+        <Route path="/paginaweb" element={<App />} />
+        <Route path="/showcase" element={<App />} />
+        <Route path="/web" element={<App />} />
+        <Route path="*" element={<App />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

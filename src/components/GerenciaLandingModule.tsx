@@ -103,41 +103,48 @@ const GERENCIA_DATA: Record<GerenciaKey, GerenciaConfig> = {
 
   obra: {
     title: 'Gerencia de Obras & Ejecución Técnica',
-    subtitle: 'Planificamos, coordinamos y supervisamos la construcción en campo garantizando calidad, seguridad y plazo.',
-    gerenciaLabel: 'Gerencia de Obra',
+    subtitle: 'Planificamos, coordinamos y supervisamos la construcción en campo garantizando productividad, rendimientos, seguridad laboral y calidad certificada.',
+    gerenciaLabel: 'Gerencia de Obras',
     emoji: '🏗️',
-    gradient: 'from-amber-950 via-amber-900 to-amber-800',
+    gradient: 'from-slate-900 via-amber-950 to-amber-900',
     bgBadge: 'bg-amber-500/20',
     textBadge: 'text-amber-300',
     borderBadge: 'border-amber-400/30',
     icon: Building2,
-    overview: 'La Gerencia de Obra abarca el frente directo de producción. Administra la estructura desglosada del trabajo (WBS), la carga de Partes Diarios de personal y equipos, el control de adicionales de obra, los protocolos de Calidad, Inspecciones, Seguridad & Higiene y la gestión de No Conformidades.',
+    overview: 'La Gerencia de Obras es el núcleo operativo de ECAR. Conduce la ejecución de infraestructura urbana, redes de gas, saneamiento, agua potable, tendidos subterráneos y obras viales. Integra en un circuito continuo el control de estado de obra (Activa, Pausada, Finalizada), la estructura WBS y cronograma Gantt, el reporte diario de campo con precarga inteligente de tareas y clonación de cuadrilla diaria, el control de rendimientos reales (método Roque), el cumplimiento de Seguridad & Higiene (Decreto 911/96 con emisión de informes semanales formales), el aseguramiento de la Calidad (protocolos técnicos, checklists con score % y Punch List), y la gestión de RFI y adicionales de obra para una certificación fluida con el comitente.',
     flowSteps: [
-      { step: '1', title: 'Planificación WBS', desc: 'Estructuración del proyecto en fases, tareas, fechas e hitos de avance.', role: 'Jefe de Obra', icon: Target, color: 'bg-amber-100 text-amber-800' },
-      { step: '2', title: 'Parte Diario de Campo', desc: 'Registro diario de personal presente, clima, tareas ejecutadas y avance.', role: 'Capataz / Oficina Técnica', icon: Clock, color: 'bg-blue-100 text-blue-700' },
-      { step: '3', title: 'Calidad & Inspecciones', desc: 'Apertura y firma de protocolos técnicos de hormigón, soldadura, etc.', role: 'Inspector / Calidad', icon: CheckSquare, color: 'bg-emerald-100 text-emerald-700' },
-      { step: '4', title: 'Adicionales & RFI', desc: 'Gestión de modificaciones de proyecto (Scope Changes) y consultas técnicas.', role: 'Oficina Técnica', icon: AlertTriangle, color: 'bg-orange-100 text-orange-700' },
-      { step: '5', title: 'Seguridad & Incidentes', desc: 'Relevamiento de condiciones de trabajo, EPP y registro de observaciones.', role: 'Prevencionista HyS', icon: ShieldAlert, color: 'bg-red-100 text-red-700' },
+      { step: '1', title: 'Planificación WBS & Cronograma', desc: 'Estructuración analítica del proyecto en fases, tareas, fechas límite e hitos críticos de avance físico.', role: 'Jefe de Obra / Of. Técnica', icon: Target, color: 'bg-amber-100 text-amber-800' },
+      { step: '2', title: 'Parte Diario & Rendimientos', desc: 'Carga de cuadrillas, clima, fotos de avance, maquinaria y metros lineales reales ejecutados (Rendimientos Roque).', role: 'Capataz / Jefe de Frente', icon: Clock, color: 'bg-blue-100 text-blue-700' },
+      { step: '3', title: 'Seguridad & Higiene en Frente', desc: 'Auditoría Dec. 911/96, retiro de material a >0.60m en zanja, control de EPP y reporte semanal con grilla fotográfica.', role: 'Prevencionista HyS / Inspector', icon: ShieldAlert, color: 'bg-red-100 text-red-700' },
+      { step: '4', title: 'Calidad, Ensayos & Punch List', desc: 'Protocolos de prueba (PEAD, hormigón), checklists de liberación con score % y resolución de observaciones de campo.', role: 'Responsable de Calidad', icon: CheckSquare, color: 'bg-emerald-100 text-emerald-700' },
+      { step: '5', title: 'Adicionales, RFI & Certificación', desc: 'Aclaración de dudas técnicas (RFI), valorización de adicionales de obra y emisión de medición mensual para cobro.', role: 'Oficina Técnica / Dirección', icon: Layers, color: 'bg-purple-100 text-purple-700' },
     ],
     tools: [
-      { id: 'wbs', title: 'Planificación WBS & Cronograma', desc: 'Diagrama de Gantt, estructura de tareas y avance físico del proyecto.', icon: Target, gradient: 'from-amber-600 to-orange-600' },
-      { id: 'field', title: 'Parte Diario de Campo', desc: 'Carga diaria de cuadrillas, tareas, novedad de equipos y clima.', icon: Clock, gradient: 'from-orange-600 to-red-600' },
-      { id: 'scope_changes', title: 'Adicionales & Cambios de Alcance', desc: 'Registro de trabajos adicionales no contemplados y su valorización.', icon: Layers, gradient: 'from-blue-600 to-indigo-600' },
-      { id: 'safety', title: 'Seguridad & Higiene', desc: 'Reportes de incidentes, observaciones de campo y entrega de EPP.', icon: ShieldAlert, gradient: 'from-red-600 to-rose-700' },
-      { id: 'quality', title: 'Calidad e Inspecciones', desc: 'Protocolos de ensayo, checklists de liberación y liberaciones parciales.', icon: CheckSquare, gradient: 'from-emerald-600 to-teal-600' },
-      { id: 'rfi', title: 'Consultas de Obra (RFI)', desc: 'Aclaraciones técnicas enviadas al comitente o proyectista.', icon: BookOpen, gradient: 'from-purple-600 to-indigo-600' },
-      { id: 'nonconformities', title: 'No Conformidades', desc: 'Registro de desvíos, plan de acción correctiva y cierre documentado.', icon: AlertTriangle, gradient: 'from-rose-600 to-pink-600' },
-      { id: 'documents', title: 'Documentación de Obra', desc: 'Gestor documental de planos as-built, memorias y pliegos.', icon: FileText, gradient: 'from-slate-700 to-slate-900' },
+      { id: 'wbs', title: 'Planificación WBS & Cronograma', desc: 'Diagrama de Gantt interactivo, desglose de tareas, fechas e hitos de avance físico ponderado %.', icon: Target, gradient: 'from-amber-600 to-orange-600' },
+      { id: 'field', title: 'Parte Diario & Rendimientos', desc: 'Carga diaria de cuadrillas, clima, fotos georreferenciadas y planilla de Rendimientos Reales (Roque).', icon: Clock, gradient: 'from-blue-600 to-cyan-600' },
+      { id: 'scope_changes', title: 'Adicionales & Cambios de Alcance', desc: 'Registro de trabajos adicionales no previstos, cómputos métricos, valorización y solicitud de adenda.', icon: Layers, gradient: 'from-purple-600 to-indigo-600' },
+      { id: 'safety', title: 'Seguridad & Higiene (Dec. 911/96)', desc: 'Auditoría en zanjas, entrega de EPP, incidentes e informes semanales oficiales listos para presentar.', icon: ShieldAlert, gradient: 'from-red-600 to-rose-700' },
+      { id: 'quality', title: 'Calidad e Inspecciones', desc: 'Checklists de cierre de etapa con score %, inspecciones por especialidad y seguimiento de Punch List.', icon: CheckSquare, gradient: 'from-emerald-600 to-teal-600' },
+      { id: 'rfi', title: 'Consultas de Obra (RFI)', desc: 'Canal formal con el proyectista y comitente, midiendo impacto en costos ($) y días de atraso.', icon: BookOpen, gradient: 'from-indigo-600 to-blue-700' },
+      { id: 'nonconformities', title: 'No Conformidades (CNC)', desc: 'Registro formal de desvíos graves, plan de acción correctiva, costo de no calidad y cierre auditado.', icon: AlertTriangle, gradient: 'from-rose-600 to-pink-600' },
+      { id: 'documents', title: 'Documentación & Planos', desc: 'Repositorio central de planos as-built, pliegos técnicos, actas de inicio/recepción y libros de obra.', icon: FileText, gradient: 'from-slate-700 to-slate-900' },
     ],
     deliverables: [
-      { area: 'A Adm. y Finanzas', icon: Landmark, color: 'bg-emerald-50 border-emerald-200 text-emerald-900', items: ['Medición mensual aprobada para emitir Certificado', 'Parte diario con horas de personal para sueldos', 'Documentación de adicionales para cobro extra'] },
-      { area: 'A Gerencia de Presupuestos', icon: HardHat, color: 'bg-blue-50 border-blue-200 text-blue-900', items: ['Rendimientos reales en campo vs supuestos teóricos', 'Lecciones aprendidas de cómputos y costos', 'Desvíos de plazos y análisis de causas'] },
-      { area: 'A Gerencia de Logística', icon: Warehouse, color: 'bg-sky-50 border-sky-200 text-sky-900', items: ['Requerimientos anticipados de materiales y equipos', 'Plan de retiro de sobrantes de obra', 'Reporte de estado de herramientas al finalizar'] },
+      { area: 'A Adm., Finanzas & Certificaciones', icon: Landmark, color: 'bg-emerald-50 border-emerald-200 text-emerald-900', items: ['Medición mensual de avance aprobada para emitir Certificado y factura', 'Horas efectivas de personal propio y subcontratos para liquidar quincenas (RRHH)', 'Expedientes de adicionales valorizados (Scope Changes) para facturación extraordinaria'] },
+      { area: 'A Gerencia de Presupuestos (GPP)', icon: HardHat, color: 'bg-blue-50 border-blue-200 text-blue-900', items: ['Rendimientos reales de campo (m/día zanja, PEAD, hormigón) para calibrar futuras licitaciones', 'Consumo real de horas de maquinaria pesada e insumos vs supuestos teóricos', 'Registro de interferencias subterráneas no previstas y lecciones aprendidas'] },
+      { area: 'A Gerencia de Compras & Logística', icon: Warehouse, color: 'bg-sky-50 border-sky-200 text-sky-900', items: ['Requerimientos anticipados de materiales críticos según avance del WBS', 'Conformidad y firmas de remitos de entrega de materiales en frente de obra', 'Reporte de novedades, estado de herramientas y aviso de desmovilización de equipos'] },
     ],
     faq: [
-      { question: '¿Cómo se registra un trabajo adicional no previsto?', answer: 'Ingresá al módulo "Adicionales", cargá el cómputo, motivo y documentación de respaldo para enviar a aprobación de la comitente.' },
-      { question: '¿Quién debe completar el Parte Diario?', answer: 'El Capataz o el Jefe de Obra debe cargarlo al finalizar cada jornada desde la app celular o computadora.' },
-      { question: '¿Cómo se cierra una No Conformidad?', answer: 'Se define la acción correctiva, se adjunta foto de la reparación en campo y el responsable de Calidad aprueba el cierre.' },
+      { question: '¿Cómo marco una obra como finalizada o cambio su estado?', answer: 'En Planificación WBS, seleccioná la obra en el portfolio. En la barra superior verás el selector interactivo de Estado: 🟢 Obra Activa, 🟡 Obra Pausada o 🏁 Obra Finalizada. Al cambiarlo a Finalizada, el sistema la archiva de la operativa diaria automáticamente.' },
+      { question: '¿Cómo agilizo la carga del Parte Diario para no repetir lo mismo cada día?', answer: 'Tenés dos aceleradores: 1) El botón "⚡ Precargar Tareas de Hoy" en el formulario del parte vuelca en 1 clic todas las tareas e incidentes del día sin que tengas que tipear; 2) En la pestaña "Personal", el botón verde "⚡ Copiar Cuadrilla Anterior" replica la nómina de operarios del día previo con sus 8 hs estándar en un solo clic.' },
+      { question: '¿Quién debe completar el Parte Diario y en qué momento?', answer: 'El Capataz o el Jefe de Obra debe cargarlo al finalizar cada jornada desde su celular o computadora. Es indispensable cargar el personal presente (base para liquidación de quincenas), las novedades de maquinaria, el clima, fotos de avance y los metros producidos en la pestaña de Rendimientos (Roque).' },
+      { question: '¿Cómo funciona el control de Rendimientos de Obra (método Roque)?', answer: 'En la pestaña "Rendimientos de Obra" del Parte Diario se registran los metros lineales de zanjeo, tendido de cañería PEAD, tapada y electrofusión por tramo o progresiva. El sistema calcula los metros por operario, compara lo producido con la meta programada y alerta tempranamente sobre desvíos o cuellos de botella.' },
+      { question: '¿Cómo asignar múltiples maquinarias o corregir errores en tareas?', answer: 'En Rendimientos & Tareas, podés seleccionar varios vehículos o equipos de la flota que se muestran como badges. Además, cada tarea cuenta con un botón ✏️ para editar cualquier texto, cuadrilla o cantidad planificada/real sin tener que rehacerla.' },
+      { question: '¿Cómo está estructurado el nuevo módulo unificado de Calidad e Inspecciones?', answer: 'Unifica tres herramientas clave: 1) Checklists de Etapa (auditorías técnicas por tarea WBS con score % de cumplimiento), 2) Inspecciones de Campo por especialidad (Estructura, Eléctrica, PEAD, Gas, etc.), y 3) Punch List para gestionar y verificar la reparación de observaciones antes de liberar cada frente.' },
+      { question: '¿Cómo se elaboran y presentan los Informes Semanales de Higiene y Seguridad?', answer: 'Desde el módulo de Seguridad se accede al panel de informes semanales (Dec. 911/96 y Res. SRT 905/15). Se registran las charlas operativas, control de EPP, retiro de material a >0.60m del borde de zanja y se adjunta la grilla fotográfica cuádruple con epígrafes técnicos, generando un PDF formal con firmas para OSSE, comitentes o ART.' },
+      { question: '¿Cómo se tramita un trabajo adicional no previsto (Scope Change)?', answer: 'Ingresá al módulo "Adicionales", cargá la descripción técnica, cómputo métrico de materiales y mano de obra, y documentación de respaldo (fotos, croquis). Una vez valorizado, se remite a la comitente para firma de orden de servicio o adenda contractual antes de ejecutar tareas que impliquen mayor costo.' },
+      { question: '¿Qué diferencia hay entre una Consulta RFI y una No Conformidad (NC)?', answer: 'Una RFI (Request for Information) es una aclaración preventiva ante interferencias, dudas de planos o especificaciones con impacto en plazo/costo. Una No Conformidad (NC) se abre ante una falla técnica real detectada que requiere acción correctiva documentada y cuantificación del Costo de la No Calidad (CNC).' },
+      { question: '¿Cómo se coordina el abastecimiento entre Obra, Pañol y Compras?', answer: 'Obra solicita insumos desde Pedidos o el Parte Diario. Logística verifica stock en Pañol Central: si hay disponibilidad, despacha con remito; si no hay stock, Compras cotiza y emite la Orden de Compra (OC). Obra confirma la recepción final en el sistema completando la trazabilidad tripartita.' },
     ]
   },
 
@@ -289,7 +296,7 @@ export const GerenciaLandingModule: React.FC<{ gerenciaKey: GerenciaKey }> = ({ 
           <Rocket className="text-ecar-blue" size={20} /> Herramientas y Submódulos Activos
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {config.tools.map((tool) => (
             <div
               key={tool.id}

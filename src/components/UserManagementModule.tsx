@@ -26,7 +26,7 @@ type ModulePerms = Record<string, { read: boolean; write: boolean; delete: boole
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const ASSIGNABLE_MODULES = (ALL_MODULES as readonly string[]).filter(
-  m => !['user_management', 'guide', 'manual', 'implementation'].includes(m)
+  m => !['user_management', 'guide', 'manual', 'implementation', 'inspections'].includes(m)
 );
 
 function buildDefaultPerms(modules: string[], level: 'read' | 'full' | 'none' = 'read'): ModulePerms {

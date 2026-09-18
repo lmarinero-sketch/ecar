@@ -11,7 +11,7 @@ import {
   useParteSolicitudes, useCreateParteSolicitud, useUpdateParteSolicitud,
   usePartePersonal, useCreatePartePersonal, useDeletePartePersonal,
   useParteEquipos, useCreateParteEquipo, useDeleteParteEquipo,
-  usePurchaseOrders
+  usePurchaseOrders, useObraControlTareas, useObraCuadrillas
 } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import type { ParteDiario } from '../lib/types';
@@ -73,6 +73,12 @@ export const FieldModule: React.FC = () => {
     horas_trabajadas: '8', notas: '', firmado_por: '', avance_porcentual: '0',
   });
   const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
+
+  const { data: tareasObra = [] } = useObraControlTareas(form.obra_id || undefined);
+  const tareasDeHoy = useMemo(() => {
+    if (!form.obra_id || !form.fecha) return [];
+    return tareasObra.filter(t => t.fecha_plan === form.fecha);
+  }, [tareasObra, form.obra_id, form.fecha]);
   const [fotoTipoForm, setFotoTipoForm] = useState<'avance' | 'entrega' | 'incidente' | 'otro'>('avance');
   const createParteFoto = useCreateParteFoto();
 
@@ -243,6 +249,43 @@ export const FieldModule: React.FC = () => {
             <div><label className="text-xs font-bold text-gray-500 uppercase">Temp Máx (°C)</label><input type="number" value={form.temperatura_max} onChange={e => setForm({...form, temperatura_max: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="28" /></div>
             <div><label className="text-xs font-bold text-gray-500 uppercase">Hs Trabajadas</label><input type="number" value={form.horas_trabajadas} onChange={e => setForm({...form, horas_trabajadas: e.target.value})} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" /></div>
           </div>
+          {/* Precarga de Tareas desde Control y Rendimientos */}
+          {form.obra_id && (
+            <div className={`rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${tareasDeHoy.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
+              <div>
+                <span className={`text-xs font-extrabold flex items-center gap-1.5 ${tareasDeHoy.length > 0 ? 'text-blue-900' : 'text-slate-700'}`}>
+                  <Zap size={14} className={tareasDeHoy.length > 0 ? 'text-ecar-blue' : 'text-slate-400'} />
+                  {tareasDeHoy.length > 0 
+                    ? `${tareasDeHoy.length} Tarea(s) Planificadas / Medidas hoy en esta obra` 
+                    : 'Sincronización con Planificación de Obras'}
+                </span>
+                <span className={`text-[11px] block mt-0.5 ${tareasDeHoy.length > 0 ? 'text-blue-700' : 'text-slate-500'}`}>
+                  {tareasDeHoy.length > 0 
+                    ? 'Podés autocompletar el trabajo realizado e incidentes sin tener que volver a escribirlo a mano.' 
+                    : '💡 Podés planificar las tareas del día en Ger. Obras > Rendimientos para autocompletar el trabajo en 1 clic.'}
+                </span>
+              </div>
+              {tareasDeHoy.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const resumen = tareasDeHoy.map(t => `- [${t.codigo_tarea}] ${t.actividad}: ${t.estado === 'cerrada' ? `${t.cantidad_real} ${t.unidad_medida} medidos (${t.cumplimiento_pct}% rend.)` : `${t.cantidad_plan} ${t.unidad_medida} planificados`} — Cuadrilla: ${t.cuadrilla_nombre || 'General'}`).join('\n');
+                    const paradas = tareasDeHoy.filter(t => t.minutos_parada > 0 || t.motivo_desvio).map(t => `- Parada en ${t.codigo_tarea}: ${t.motivo_desvio || 'Desvío'} (${t.minutos_parada}m). ${t.observaciones || ''}`).join('\n');
+                    
+                    setForm(prev => ({
+                      ...prev,
+                      trabajo_realizado: prev.trabajo_realizado ? `${prev.trabajo_realizado}\n${resumen}` : resumen,
+                      incidentes: paradas ? (prev.incidentes ? `${prev.incidentes}\n${paradas}` : paradas) : prev.incidentes,
+                    }));
+                  }}
+                  className="px-3.5 py-2 bg-ecar-blue hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <Zap size={13} /> Precargar Tareas de Hoy
+                </button>
+              )}
+            </div>
+          )}
+
           <div><label className="text-xs font-bold text-gray-500 uppercase">Trabajo Realizado *</label><textarea value={form.trabajo_realizado} onChange={e => setForm({...form, trabajo_realizado: e.target.value})} rows={3} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Descripción detallada de las tareas realizadas..." /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label className="text-xs font-bold text-gray-500 uppercase">Entregas / Recepciones</label><textarea value={form.entregas} onChange={e => setForm({...form, entregas: e.target.value})} rows={2} className="w-full px-3 py-3 border border-gray-300 rounded-xl text-sm" placeholder="Materiales recibidos, entregas..." /></div>
@@ -429,7 +472,7 @@ const ParteDetailView: React.FC<{
       {/* Tab Content */}
       {tab === 'actividad' && <ActividadTab parte={parte} />}
       {tab === 'fotos' && <FotosTab parteId={parte.id} isBorrador={parte.estado === 'borrador'} />}
-      {tab === 'personal' && <PersonalTab parteId={parte.id} isBorrador={parte.estado === 'borrador'} />}
+      {tab === 'personal' && <PersonalTab parteId={parte.id} isBorrador={parte.estado === 'borrador'} obraId={parte.obra_id || undefined} />}
       {tab === 'materiales' && <MaterialesTab parteId={parte.id} isBorrador={parte.estado === 'borrador'} />}
       {tab === 'equipos' && <EquiposTab parteId={parte.id} isBorrador={parte.estado === 'borrador'} />}
     </div>
@@ -536,15 +579,24 @@ const FotosTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId,
 };
 
 /* ── Personal Tab ── */
-const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parteId, isBorrador }) => {
+const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean; obraId?: string }> = ({ parteId, isBorrador, obraId }) => {
   const { data: personal = [] } = usePartePersonal(parteId);
   const { data: employees = [] } = useEmployees();
+  const { data: allPartes = [] } = usePartesDiarios();
+  const { data: cuadrillas = [] } = useObraCuadrillas(obraId);
   const createPersonal = useCreatePartePersonal();
   const deletePersonal = useDeletePartePersonal();
   const [selEmp, setSelEmp] = useState('');
   const [horas, setHoras] = useState('8');
   const [tarea, setTarea] = useState('');
   const [search, setSearch] = useState('');
+  const [isCopying, setIsCopying] = useState(false);
+
+  const previousParte = useMemo(() => {
+    return allPartes
+      .filter(p => p.id !== parteId && (!obraId || p.obra_id === obraId))
+      .sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+  }, [allPartes, parteId, obraId]);
 
   const addedIds = personal.map(p => p.employee_id);
   const available = employees.filter(e => !addedIds.includes(e.id) && (e.employment_status === 'active') && (!search || e.full_name.toLowerCase().includes(search.toLowerCase())));
@@ -555,11 +607,100 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
     setSelEmp(''); setHoras('8'); setTarea('');
   };
 
+  const handleCopyPreviousCrew = async () => {
+    if (!previousParte) return;
+    setIsCopying(true);
+    try {
+      const { data: prevPersonal, error } = await supabase
+        .from('parte_personal')
+        .select('*')
+        .eq('parte_id', previousParte.id);
+
+      if (error) throw error;
+      if (!prevPersonal || prevPersonal.length === 0) {
+        alert('El parte anterior seleccionado no tenía operarios registrados.');
+        return;
+      }
+
+      let count = 0;
+      for (const p of prevPersonal) {
+        if (!addedIds.includes(p.employee_id)) {
+          await createPersonal.mutateAsync({
+            parte_id: parteId,
+            employee_id: p.employee_id,
+            horas_trabajadas: p.horas_trabajadas || 8,
+            tarea: p.tarea || null,
+          });
+          count++;
+        }
+      }
+      alert(`¡Éxito! Se copiaron ${count} operario(s) del parte anterior (${previousParte.fecha}).`);
+    } catch (err: any) {
+      alert(`Error al copiar cuadrilla: ${err.message}`);
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {isBorrador && (
         <div className="light-card p-4 space-y-3">
-          <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Users size={16} className="text-ecar-blue" /> Agregar Personal</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2"><Users size={16} className="text-ecar-blue" /> Agregar Personal</h4>
+          </div>
+
+          {/* Botón Copiar Cuadrilla del Último Parte */}
+          {previousParte && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                  <Zap size={14} className="text-emerald-600" /> Cuadrilla del Último Parte ({previousParte.fecha})
+                </span>
+                <span className="text-[11px] text-emerald-700">
+                  ¿Es la misma cuadrilla? Copiala en un solo clic sin cargar operario por operario.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyPreviousCrew}
+                disabled={isCopying}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1 shrink-0"
+              >
+                <Zap size={13} /> {isCopying ? 'Copiando...' : 'Copiar Cuadrilla Anterior'}
+              </button>
+            </div>
+          )}
+
+          {/* Plantillas de Cuadrilla Habituales */}
+          {cuadrillas.length > 0 && (
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+              <span className="text-[11px] font-bold text-gray-600 block">⚡ Cuadrillas Habituales (Armado Rápido):</span>
+              <div className="flex flex-wrap gap-1.5">
+                {cuadrillas.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={async () => {
+                      if (c.responsable_id && !addedIds.includes(c.responsable_id)) {
+                        await createPersonal.mutateAsync({
+                          parte_id: parteId,
+                          employee_id: c.responsable_id,
+                          horas_trabajadas: 8,
+                          tarea: `Capataz Cuadrilla ${c.codigo}`,
+                        });
+                      }
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg border bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-700 transition-all flex items-center gap-1"
+                    title={`Agregar capataz (${c.responsable_nombre || 'Resp'}) a este parte`}
+                  >
+                    👷 {c.codigo} ({c.nombre})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar empleado..." className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm" />
@@ -573,7 +714,7 @@ const PersonalTab: React.FC<{ parteId: string; isBorrador: boolean }> = ({ parte
             <div><label className="text-xs font-bold text-gray-500">Tarea</label><input value={tarea} onChange={e => setTarea(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" placeholder="Opcional" /></div>
           </div>
           <button onClick={handleAdd} disabled={!selEmp || createPersonal.isPending} className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 disabled:opacity-50">
-            <Plus size={16} /> Agregar
+            <Plus size={16} /> Agregar Operario
           </button>
         </div>
       )}

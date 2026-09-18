@@ -98,6 +98,7 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   implementation: 'text-amber-500 bg-amber-50', user_management: 'text-slate-500 bg-slate-50', user_activity: 'text-blue-500 bg-blue-50',
   communications: 'text-sky-500 bg-sky-50',
   weekly_report: 'text-ecar-blue bg-slate-50',
+  quality: 'bg-ecar-blue',
 };
 
 /* ─── Sidebar sections ─── */
@@ -144,7 +145,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     ],
   },
   {
-    label: 'Ger. Obra', emoji: '🏗️',
+    label: 'Ger. Obras', emoji: '🏗️',
     items: [
       { id: 'obra_intro', requires: true },
       { id: 'wbs', requires: true },
@@ -153,7 +154,6 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'scope_changes', requires: true },
       { id: 'safety', requires: true },
       { id: 'quality', requires: true },
-      { id: 'inspections', requires: true },
       { id: 'rfi', requires: true },
       { id: 'nonconformities', requires: true },
       { id: 'documents', requires: true },

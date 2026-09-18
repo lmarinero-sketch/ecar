@@ -78,7 +78,7 @@ export const WbsModule: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [editTask, setEditTask] = useState<WbsElement | null>(null);
-  const [form, setForm] = useState({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' });
+  const [form, setForm] = useState({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '', status: 'active' as 'active' | 'completed' | 'suspended' });
   const createWbs = useCreateWbsElement();
   const updateWbs = useUpdateWbsElement();
   const deleteWbs = useDeleteWbsElement();
@@ -356,20 +356,22 @@ export const WbsModule: React.FC = () => {
       }
     }
     setShowForm(false);
-    setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' });
+    setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '', status: 'active' });
   };
 
-  const handleEditProject = () => {
-    if (!selectedProject) return;
+  const handleEditProject = (projToEdit?: any) => {
+    const proj = projToEdit || selectedProject;
+    if (!proj) return;
     setForm({
-      id: selectedProject.id,
-      name: selectedProject.name,
-      client_name: selectedProject.client_name || '',
-      client_cuit: selectedProject.client_cuit || '',
-      location: selectedProject.location || '',
-      budget_ars: selectedProject.budget_ars || 0,
-      start_date: selectedProject.start_date || '',
-      opportunity_id: ''
+      id: proj.id,
+      name: proj.name,
+      client_name: proj.client_name || '',
+      client_cuit: proj.client_cuit || '',
+      location: proj.location || '',
+      budget_ars: proj.budget_ars || 0,
+      start_date: proj.start_date || '',
+      opportunity_id: '',
+      status: proj.status || 'active'
     });
     setShowForm(true);
   };
@@ -439,10 +441,10 @@ export const WbsModule: React.FC = () => {
     { id: 'rendimientos', label: 'Rendimientos & Tareas', emoji: '⚡', icon: Zap },
     { id: 'avance3d', label: 'Avance 3D', emoji: '✨', icon: Sparkles },
     { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
-    { id: 'movimientos', label: 'Movimientos', emoji: '📦', icon: ArrowLeftRight },
+    { id: 'movimientos', label: 'Movimientos de Materiales y Equipos', emoji: '📦', icon: ArrowLeftRight },
     { id: 'pedidos', label: 'Pedidos', emoji: '🛒', icon: ShoppingCart },
     { id: 'certificados', label: 'Certificados', emoji: '📄', icon: FileCheck },
-    { id: 'retroalimentacion', label: 'Retro', emoji: '🔄', icon: RefreshCw },
+    { id: 'retroalimentacion', label: 'Desvíos & Acciones', emoji: '🔄', icon: RefreshCw },
   ];
 
   if (isLoading) return <div className="text-center py-12 text-gray-400">Cargando planificación...</div>;
@@ -524,7 +526,7 @@ export const WbsModule: React.FC = () => {
             </div>
 
             <button
-              onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' }); setShowForm(true); }}
+              onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '', status: 'active' }); setShowForm(true); }}
               className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg transition-all shrink-0"
             >
               <Plus size={18} /> Nueva Obra
@@ -682,12 +684,30 @@ export const WbsModule: React.FC = () => {
                 </div>
 
                 <div className="pt-1">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                    {selectedProject?.name}
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                      Obra Activa
-                    </span>
-                  </h2>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      {selectedProject?.name}
+                    </h2>
+                    {/* Selector interactivo de estado de obra */}
+                    <div className="inline-flex items-center gap-1.5 bg-black/40 border border-white/20 rounded-xl px-2.5 py-1 text-xs shadow-sm">
+                      <span className="text-gray-300 font-medium">Estado:</span>
+                      <select
+                        value={selectedProject?.status || 'active'}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value as 'active' | 'completed' | 'suspended';
+                          if (selectedProject) {
+                            await updateProject.mutateAsync({ id: selectedProject.id, updates: { status: newStatus } });
+                          }
+                        }}
+                        className="bg-transparent text-white font-extrabold text-xs focus:outline-none cursor-pointer"
+                        title="Cambiar estado de la obra (Activa, Pausada, Finalizada)"
+                      >
+                        <option value="active" className="text-gray-900">🟢 Obra Activa</option>
+                        <option value="suspended" className="text-gray-900">🟡 Obra Pausada</option>
+                        <option value="completed" className="text-gray-900">🏁 Obra Finalizada</option>
+                      </select>
+                    </div>
+                  </div>
                   <p className="text-xs md:text-sm text-gray-300 mt-1 flex flex-wrap items-center gap-4">
                     <span>🏢 Cliente: <strong className="text-white">{selectedProject?.client_name || 'Sin cliente'}</strong></span>
                     {selectedProject?.location && <span>📍 Ubicación: <strong className="text-white">{selectedProject.location}</strong></span>}
@@ -704,7 +724,7 @@ export const WbsModule: React.FC = () => {
                   <Trash2 size={18} />
                 </button>
                 <button
-                  onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '' }); setShowForm(true); }}
+                  onClick={() => { setForm({ id: '', name: '', client_name: '', client_cuit: '', location: '', budget_ars: 0, start_date: '', opportunity_id: '', status: 'active' }); setShowForm(true); }}
                   className="btn-primary text-xs font-bold py-2.5 px-4 shadow-md"
                 >
                   <Plus size={16} /> Nueva Obra
@@ -801,7 +821,34 @@ export const WbsModule: React.FC = () => {
               </div>
             )}
 
-            <input placeholder="Nombre de la obra *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2.5 border rounded-xl text-sm" />
+            <input placeholder="Nombre de la obra *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2.5 border rounded-xl text-sm font-bold" />
+            
+            {/* Selector de Estado de Obra */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1.5">Estado de la Obra</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'active', label: '🟢 Activa', sub: 'En ejecución' },
+                  { id: 'suspended', label: '🟡 Pausada', sub: 'En espera' },
+                  { id: 'completed', label: '🏁 Finalizada', sub: 'Obra terminada' },
+                ].map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, status: s.id as any })}
+                    className={`py-2 px-2.5 rounded-xl border text-xs font-bold text-center transition-all ${
+                      form.status === s.id
+                        ? 'border-ecar-blue bg-blue-50/80 text-ecar-blue ring-2 ring-ecar-blue/20'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div>{s.label}</div>
+                    <div className="text-[10px] text-gray-400 font-normal">{s.sub}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input placeholder="Cliente" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input placeholder="CUIT Cliente" value={form.client_cuit} onChange={e => setForm({ ...form, client_cuit: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm" />
@@ -809,8 +856,8 @@ export const WbsModule: React.FC = () => {
               <input type="number" placeholder="Presupuesto ARS" value={form.budget_ars || ''} onChange={e => setForm({ ...form, budget_ars: parseFloat(e.target.value) || 0 })} className="px-3 py-2.5 border rounded-xl text-sm" />
               <input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="px-3 py-2.5 border rounded-xl text-sm col-span-2" />
             </div>
-            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="btn-primary w-full">
-              {createProject.isPending || updateProject.isPending ? 'Guardando...' : (form.id ? '✅ Guardar Cambios' : '✅ Crear Obra')}
+            <button onClick={handleSaveProject} disabled={!form.name || createProject.isPending || updateProject.isPending} className="btn-primary w-full py-2.5">
+              {createProject.isPending || updateProject.isPending ? 'Guardando...' : (form.id ? '✅ Guardar Cambios de Obra' : '✅ Crear Obra')}
             </button>
           </div>
         </div>
