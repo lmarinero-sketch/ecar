@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
+import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
 
 // ── Constants ──
 const DEFAULT_CHECKLIST: VehicleChecklistItem[] = [
@@ -142,7 +143,8 @@ const ReportForm: React.FC<{
   const kmInvalid = kmValue !== null && selectedVehicle?.tracking_type !== 'hours' && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
   const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && selectedVehicle?.current_hours != null && kmValue < selectedVehicle.current_hours;
   const isInvalid = kmInvalid || hoursInvalid;
-  const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0)
+  const maintenanceAlert = selectedVehicle ? checkVehicleMaintenance(selectedVehicle, kmValue) : null;
+  const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0 || maintenanceAlert?.isOverdue)
       ? 'con_observaciones'
       : 'operativo';
 
@@ -253,6 +255,28 @@ const ReportForm: React.FC<{
             <p className="text-[10px] text-green-600 mt-1">
               ✓ +{(parseFloat(odometerKm) - (selectedVehicle?.tracking_type === 'hours' ? (selectedVehicle.current_hours || 0) : (selectedVehicle?.current_km || 0))).toLocaleString()} {selectedVehicle?.tracking_type === 'hours' ? 'hs' : 'km'} desde último registro
             </p>
+          )}
+
+          {/* Real-time maintenance status alert */}
+          {maintenanceAlert && maintenanceAlert.level === 'overdue' && (
+            <div className="mt-2 p-2.5 bg-red-50 border border-red-300 rounded-lg text-left flex items-start gap-2">
+              <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-red-800">¡Service Vencido!</p>
+                <p className="text-[11px] text-red-700 font-medium">{maintenanceAlert.summary}</p>
+                <p className="text-[10px] text-red-600">{maintenanceAlert.detail}</p>
+              </div>
+            </div>
+          )}
+
+          {maintenanceAlert && maintenanceAlert.level === 'soon' && (
+            <div className="mt-2 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-left flex items-start gap-2">
+              <Wrench size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-amber-800">Mantenimiento Próximo</p>
+                <p className="text-[11px] text-amber-700 font-medium">{maintenanceAlert.summary} ({maintenanceAlert.detail})</p>
+              </div>
+            </div>
           )}
         </div>
         <div>

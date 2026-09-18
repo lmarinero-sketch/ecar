@@ -3,10 +3,11 @@ import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import {
   ClipboardCheck, CheckCircle2, Loader2, AlertTriangle,
   CircleCheck, CircleX, ChevronDown, ChevronUp, WifiOff,
-  Camera, Sparkles, Check
+  Camera, Sparkles, Check, Clock
 } from 'lucide-react';
 import type { FuelVehicle, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { useOfflineStore } from '../store/useOfflineStore';
+import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
 
 // ... (skipping some constants) ...
 
@@ -261,7 +262,8 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const kmInvalid = kmValue !== null && vehicle?.tracking_type !== 'hours' && vehicle?.current_km != null && kmValue < vehicle.current_km;
   const hoursInvalid = kmValue !== null && vehicle?.tracking_type === 'hours' && vehicle?.current_hours != null && kmValue < vehicle.current_hours;
   const isInvalid = kmInvalid || hoursInvalid;
-  const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0)
+  const maintenanceAlert = vehicle ? checkVehicleMaintenance(vehicle, kmValue) : null;
+  const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0 || maintenanceAlert?.isOverdue)
     ? 'con_observaciones'
     : 'operativo';
 
@@ -359,8 +361,39 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
       if (hasDamage && damageDescription) {
         vehicleUpdates.next_maintenance_date = today;
         vehicleUpdates.maintenance_notes = `[REPORTE QR] ${damageDescription.substring(0, 200)}`;
+      } else if (maintenanceAlert?.isOverdue) {
+        vehicleUpdates.maintenance_notes = `[SERVICE VENCIDO] ${maintenanceAlert.summary} (Lectura: ${odometerKm} ${vehicle?.tracking_type === 'hours' ? 'hs' : 'km'})`;
       }
       await supabase.from('fuel_vehicles').update(vehicleUpdates).eq('id', vehicleId);
+
+      // 3. Generar Orden de Trabajo automática en Taller si está vencido y no hay una pendiente
+      if (maintenanceAlert?.isOverdue) {
+        try {
+          const { data: existingOrders } = await supabase
+            .from('fleet_maintenance_orders')
+            .select('id')
+            .eq('vehicle_id', vehicleId)
+            .eq('status', 'pendiente')
+            .limit(1);
+
+          if (!existingOrders || existingOrders.length === 0) {
+            await supabase.from('fleet_maintenance_orders').insert({
+              tenant_id: ECAR_TENANT_ID,
+              vehicle_id: vehicleId,
+              title: `Service Preventivo Vencido (${maintenanceAlert.primaryReason === 'hours' ? 'Horas' : 'Km'})`,
+              description: `Alerta automática por reporte QR de ${driverName.trim()}. ${maintenanceAlert.summary}. Lectura cargada: ${odometerKm} ${vehicle?.tracking_type === 'hours' ? 'hs' : 'km'}.`,
+              status: 'pendiente',
+              cost_materials: 0,
+              cost_labor: 0,
+              total_cost: 0,
+              odometer_at_entry: kmValue ? Math.round(kmValue) : null,
+              created_by: `Check-in QR (${driverName.trim()})`,
+            });
+          }
+        } catch (otErr) {
+          console.warn('No se pudo registrar la orden de trabajo automática:', otErr);
+        }
+      }
 
       setStatus('success');
     } catch (err: any) {
@@ -430,7 +463,7 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
               <p className="text-gray-500 text-sm">
                 {vehicle?.code} — {vehicle?.description}
               </p>
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2 text-left">
                 <p className="text-sm text-gray-600"><strong>Chofer:</strong> {driverName}</p>
                 <p className="text-sm text-gray-600"><strong>Estado:</strong> {
                   computedCondition === 'operativo' ? '🟢 Operativo' :
@@ -438,6 +471,16 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                 }</p>
                 {hasDamage && (
                   <p className="text-sm text-red-600 font-medium">⚠️ Daño reportado — Se generó ticket de mantenimiento</p>
+                )}
+                {maintenanceAlert?.isOverdue && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-medium">
+                    ⚠️ <strong>Service Vencido:</strong> {maintenanceAlert.summary}. Se generó aviso automático para el taller.
+                  </div>
+                )}
+                {maintenanceAlert?.isSoon && !maintenanceAlert?.isOverdue && (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 font-medium">
+                    ℹ️ <strong>Mantenimiento Próximo:</strong> {maintenanceAlert.summary}.
+                  </div>
                 )}
               </div>
               <p className="text-xs text-gray-400">Podés cerrar esta página</p>
@@ -535,10 +578,13 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                 )}
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Km Odómetro</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                  {vehicle.tracking_type === 'hours' ? 'Horómetro (Horas de motor) *' : 'Odómetro (Kilómetros) *'}
+                </label>
                 <input
                   type="number"
-                  inputMode="numeric"
+                  step={vehicle.tracking_type === 'hours' ? "0.1" : "1"}
+                  inputMode="decimal"
                   value={odometerKm}
                   onChange={e => setOdometerKm(e.target.value)}
                   min={vehicle.tracking_type === 'hours' ? (vehicle.current_hours || 0) : (vehicle.current_km || 0)}
@@ -563,6 +609,38 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                   <p className="text-[11px] text-green-600 mt-1 px-1">
                     ✓ +{(parseFloat(odometerKm) - (vehicle.tracking_type === 'hours' ? (vehicle.current_hours || 0) : (vehicle.current_km || 0))).toLocaleString()} {vehicle.tracking_type === 'hours' ? 'hs' : 'km'} desde último registro
                   </p>
+                )}
+
+                {/* Real-time maintenance alert banner */}
+                {maintenanceAlert && maintenanceAlert.level === 'overdue' && (
+                  <div className="mt-2.5 p-3.5 bg-red-50 border-2 border-red-400 rounded-xl text-left flex items-start gap-3 shadow-sm animate-fade-in">
+                    <AlertTriangle size={20} className="text-red-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-red-800 uppercase tracking-wide flex items-center gap-1.5">
+                        <span>¡Atención: Service Vencido!</span>
+                      </p>
+                      <p className="text-xs text-red-700 font-semibold">
+                        {maintenanceAlert.summary}
+                      </p>
+                      <p className="text-[11px] text-red-600 leading-snug">
+                        {maintenanceAlert.detail}. Al enviar el reporte se notificará automáticamente al equipo de taller y mantenimiento.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {maintenanceAlert && maintenanceAlert.level === 'soon' && (
+                  <div className="mt-2.5 p-3 bg-amber-50 border border-amber-300 rounded-xl text-left flex items-start gap-2.5 shadow-sm animate-fade-in">
+                    <Clock size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-amber-800 flex items-center gap-1">
+                        <span>Aviso Preventivo: Service Próximo</span>
+                      </p>
+                      <p className="text-xs text-amber-700 font-medium">
+                        {maintenanceAlert.summary} ({maintenanceAlert.detail})
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

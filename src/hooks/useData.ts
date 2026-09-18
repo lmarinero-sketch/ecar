@@ -3709,6 +3709,9 @@ export function useCreateVehicleDailyReport() {
         if (report.odometer_km) {
           vehicleUpdates.current_km = report.odometer_km;
         }
+        if (report.hourmeter) {
+          vehicleUpdates.current_hours = report.hourmeter;
+        }
         // 3. If damage â†’ set maintenance
         if (report.has_damage && report.damage_description) {
           const today = new Date().toISOString().slice(0, 10);

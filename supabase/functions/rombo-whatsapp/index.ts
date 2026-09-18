@@ -1261,6 +1261,52 @@ serve(async (req) => {
       });
     }
 
+    // ── Verificar si el bot está silenciado / desconectado ──
+    const { data: botStatusSetting } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'rombo_bot_status')
+      .maybeSingle();
+
+    if (botStatusSetting?.value === 'silenced') {
+      console.log(`[ROMBO SILENCIADO] Mensaje recibido de ${phone}: "${body}". No se genera respuesta.`);
+
+      // Guardar mensaje entrante del usuario en la base para no perder la conversación
+      try {
+        const { data: currentConv } = await supabase
+          .from('whatsapp_conversations')
+          .select('messages')
+          .eq('phone', phone)
+          .maybeSingle();
+
+        let msgs: any[] = [];
+        if (currentConv?.messages) {
+          try {
+            msgs = typeof currentConv.messages === 'string' ? JSON.parse(currentConv.messages) : currentConv.messages;
+          } catch (_) {}
+        }
+        msgs.push({ role: 'user', content: body || '[Archivo adjunto]', timestamp: new Date().toISOString() });
+        const trimmed = msgs.slice(-20);
+
+        await supabase.from('whatsapp_conversations').upsert({
+          phone,
+          messages: JSON.stringify(trimmed),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'phone' });
+      } catch (saveErr: any) {
+        console.warn('Error archivando mensaje en modo silencio:', saveErr.message);
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        status: 'silenced', 
+        message: 'Bot silenciado temporalmente.' 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     let bodyText = body;
     let visionMediaObject: any = null;
     const openaiKey = Deno.env.get("OPENAI_API_KEY") || "";

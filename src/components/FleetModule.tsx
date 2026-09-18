@@ -7,9 +7,10 @@ import { useImplementationStore } from '../store/useImplementationStore';
 import { FuelModule } from './FuelModule';
 import { VehicleDailyReportModule } from './VehicleDailyReportModule';
 import { VehicleExpandedData } from './VehicleExpandedData';
-import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle } from '../hooks/useData';
+import { useFuelVehicles, useUpdateFuelVehicle, useCreateFuelVehicle, useDeleteFuelVehicle, useCreateFleetMaintenanceOrder } from '../hooks/useData';
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle } from '../lib/types';
+import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
 import { FleetTrackingMap } from './tracking/FleetTrackingMap';
 // const FleetTrackingMap = React.lazy(() => import('./tracking/FleetTrackingMap').then(m => ({ default: m.FleetTrackingMap })));
 
@@ -65,20 +66,13 @@ const isDueOrOverdue = (dateStr: string | null) => {
   return dateStr <= today();
 };
 
-const isDueSoon = (dateStr: string | null, days = 7) => {
-  if (!dateStr) return false;
-  const d = new Date(dateStr);
-  const t = new Date();
-  t.setDate(t.getDate() + days);
-  return d <= t && d >= new Date();
-};
-
 export const FleetModule: React.FC = () => {
   const [view, setView] = useState<FleetView>('overview');
   const { data: vehicles = [], isLoading } = useFuelVehicles();
   const createVehicle = useCreateFuelVehicle();
   const updateVehicle = useUpdateFuelVehicle();
   const deleteVehicle = useDeleteFuelVehicle();
+  const createOrder = useCreateFleetMaintenanceOrder();
 
   useEffect(() => {
     useImplementationStore.getState().completeItem('e56');
@@ -111,17 +105,26 @@ export const FleetModule: React.FC = () => {
   };
 
   const maintenanceDue = useMemo(() =>
-    vehicles.filter(v => isDueOrOverdue(v.next_maintenance_date)),
+    vehicles.filter(v => checkVehicleMaintenance(v).isOverdue),
     [vehicles]
   );
   const maintenanceSoon = useMemo(() =>
-    vehicles.filter(v => !isDueOrOverdue(v.next_maintenance_date) && isDueSoon(v.next_maintenance_date, 7)),
+    vehicles.filter(v => checkVehicleMaintenance(v).isSoon),
     [vehicles]
   );
   const vtvDue = useMemo(() => vehicles.filter(v => isDueOrOverdue(v.vtv_expiry)), [vehicles]);
   const insuranceDue = useMemo(() => vehicles.filter(v => isDueOrOverdue(v.insurance_expiry)), [vehicles]);
   const allMaintenance = useMemo(() =>
-    vehicles.filter(v => v.next_maintenance_date).sort((a, b) => (a.next_maintenance_date || '').localeCompare(b.next_maintenance_date || '')),
+    vehicles.filter(v => v.next_maintenance_date || v.next_maintenance_km != null || v.next_maintenance_hours != null)
+      .sort((a, b) => {
+        const checkA = checkVehicleMaintenance(a);
+        const checkB = checkVehicleMaintenance(b);
+        if (checkA.isOverdue && !checkB.isOverdue) return -1;
+        if (!checkA.isOverdue && checkB.isOverdue) return 1;
+        if (checkA.isSoon && !checkB.isSoon) return -1;
+        if (!checkA.isSoon && checkB.isSoon) return 1;
+        return (a.code || '').localeCompare(b.code || '');
+      }),
     [vehicles]
   );
 
@@ -186,8 +189,32 @@ export const FleetModule: React.FC = () => {
       last_maintenance_date: today(),
       next_maintenance_date: null,
       next_maintenance_km: null,
+      next_maintenance_hours: null,
       maintenance_notes: null,
+      vehicle_condition: 'operativo',
     });
+    useModalStore.getState().showAlert('Mantenimiento Completado', `Se registró el service preventivo para ${v.code} y la unidad quedó en estado operativo.`);
+  };
+
+  const handleGenerateWorkOrder = async (v: FuelVehicle) => {
+    const check = checkVehicleMaintenance(v);
+    try {
+      await createOrder.mutateAsync({
+        vehicle_id: v.id,
+        title: `Service Preventivo (${v.tracking_type === 'hours' ? 'Horas' : 'Km'}) - ${v.code}`,
+        description: `Generado desde Flota. ${check.summary} (${check.detail}). Lectura actual: ${v.tracking_type === 'hours' ? (v.current_hours || 0) + ' hs' : (v.current_km || 0) + ' km'}.`,
+        status: 'pendiente',
+        cost_materials: 0,
+        cost_labor: 0,
+        total_cost: 0,
+        odometer_at_entry: v.tracking_type === 'hours' ? Math.round(v.current_hours || 0) : (v.current_km || null),
+        created_by: 'Panel Flota',
+      });
+      useModalStore.getState().showAlert('Orden de Trabajo Creada', `Se generó la orden de trabajo para ${v.code}. Podés verla en la pestaña "Taller Mecánico".`);
+      setMaintenanceTab('workshop');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo crear la OT');
+    }
   };
 
   if (view === 'daily_report') {
@@ -280,77 +307,175 @@ export const FleetModule: React.FC = () => {
 
         {maintenanceTab === 'schedule' && (
           <div className="space-y-4">
-            {/* Alerts */}
+            {/* Alerts Vencidos */}
             {maintenanceDue.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
-                <p className="text-sm font-bold text-red-700 flex items-center gap-2"><AlertTriangle size={16} /> Mantenimiento vencido o para hoy</p>
-                {maintenanceDue.map(v => (
-                  <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-100">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
-                      <div>
-                        <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
-                        <p className="text-xs text-red-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+                <p className="text-sm font-bold text-red-700 flex items-center gap-2">
+                  <AlertTriangle size={16} /> Mantenimiento vencido o por kilometraje/horas excedidas ({maintenanceDue.length})
+                </p>
+                {maintenanceDue.map(v => {
+                  const check = checkVehicleMaintenance(v);
+                  return (
+                    <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-100 flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
+                          <p className="text-xs text-red-600 font-medium">
+                            ⚠️ {check.summary} · {check.detail}
+                          </p>
+                          {v.maintenance_notes && (
+                            <p className="text-[11px] text-gray-500 italic mt-0.5">{v.maintenance_notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleGenerateWorkOrder(v)}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-1 shadow-sm"
+                        >
+                          <Wrench size={13} /> Generar OT Taller
+                        </button>
+                        <button
+                          onClick={() => completeMaintenance(v)}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition-all flex items-center gap-1 shadow-sm"
+                        >
+                          <CheckCircle2 size={13} /> Completado
+                        </button>
                       </div>
                     </div>
-                    <button onClick={() => completeMaintenance(v)} className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-600 transition-all flex items-center gap-1">
-                      <CheckCircle2 size={14} /> Completado
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
+            {/* Alerts Próximos */}
             {maintenanceSoon.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 space-y-2">
-                <p className="text-sm font-bold text-yellow-700 flex items-center gap-2"><Clock size={16} /> Próximos 7 días</p>
-                {maintenanceSoon.map(v => (
-                  <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-yellow-100">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
-                      <div>
-                        <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
-                        <p className="text-xs text-yellow-600 font-mono">{v.next_maintenance_date} {v.maintenance_notes ? `· ${v.maintenance_notes}` : ''}</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                <p className="text-sm font-bold text-amber-800 flex items-center gap-2">
+                  <Clock size={16} /> Próximos a vencer (a menos de 500 km, 50 hs o 7 días) ({maintenanceSoon.length})
+                </p>
+                {maintenanceSoon.map(v => {
+                  const check = checkVehicleMaintenance(v);
+                  return (
+                    <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-100 flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                        <div>
+                          <p className="font-bold text-sm text-gray-800">{v.code} — {v.description}</p>
+                          <p className="text-xs text-amber-700 font-medium">
+                            🕒 {check.summary} · {check.detail}
+                          </p>
+                          {v.maintenance_notes && (
+                            <p className="text-[11px] text-gray-500 italic mt-0.5">{v.maintenance_notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleGenerateWorkOrder(v)}
+                          className="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition-all flex items-center gap-1 shadow-sm"
+                        >
+                          <Wrench size={13} /> Programar OT
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             {/* Full list */}
             <div className="light-card overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-800">Calendario de Mantenimiento</h3></div>
+              <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <h3 className="font-bold text-gray-800">Calendario de Mantenimiento Preventivo</h3>
+                <span className="text-xs text-gray-500">{allMaintenance.length} vehículos programados</span>
+              </div>
               {allMaintenance.length === 0 ? (
-                <div className="text-center py-12 text-gray-400"><Wrench size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay mantenimientos programados</p><p className="text-sm">Editá un vehículo para agendar su próximo service</p></div>
+                <div className="text-center py-12 text-gray-400">
+                  <Wrench size={40} className="mx-auto mb-2 opacity-30" />
+                  <p className="font-medium">No hay mantenimientos programados</p>
+                  <p className="text-sm">Editá un vehículo para agendar su próximo service por km, horas o fecha</p>
+                </div>
               ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr><th>Vehículo</th><th>Fecha</th><th>Km</th><th>Notas</th><th>Estado</th></tr>
-                  </thead>
-                  <tbody>
-                    {allMaintenance.map(v => {
-                      const overdue = isDueOrOverdue(v.next_maintenance_date);
-                      const soon = isDueSoon(v.next_maintenance_date, 7);
-                      return (
-                        <tr key={v.id} className={overdue ? 'bg-red-50/50' : soon ? 'bg-yellow-50/50' : ''}>
-                          <td className="font-medium">{VEHICLE_ICON[v.vehicle_type] || '🚐'} {v.code} — {v.description}</td>
-                          <td className="font-mono text-xs">{v.next_maintenance_date}</td>
-                          <td className="font-mono text-xs">{v.next_maintenance_km ? `${v.next_maintenance_km.toLocaleString()} km` : '—'}</td>
-                      <td className="text-xs text-gray-500">{v.maintenance_notes || '—'}</td>
-                      <td>
-                        {overdue ? <span className="badge badge-danger">Vencido</span>
-                          : soon ? <span className="badge badge-warning">Próximo</span>
-                          : <span className="badge badge-success">Programado</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Vehículo</th>
+                        <th>Control</th>
+                        <th>Próximo Service</th>
+                        <th>Lectura Actual</th>
+                        <th>Margen</th>
+                        <th>Notas</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allMaintenance.map(v => {
+                        const check = checkVehicleMaintenance(v);
+                        const isHours = v.tracking_type === 'hours';
+                        const currentReading = isHours ? (v.current_hours ?? 0) : (v.current_km ?? 0);
+                        const targetReading = isHours ? v.next_maintenance_hours : v.next_maintenance_km;
+
+                        return (
+                          <tr key={v.id} className={check.isOverdue ? 'bg-red-50/50' : check.isSoon ? 'bg-amber-50/40' : ''}>
+                            <td className="font-medium">
+                              <span className="mr-1">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                              {v.code} — <span className="text-gray-600 font-normal">{v.description}</span>
+                            </td>
+                            <td className="text-xs">
+                              <span className="badge badge-neutral">
+                                {isHours ? 'Horómetro (hs)' : 'Odómetro (km)'}
+                              </span>
+                            </td>
+                            <td className="font-mono text-xs font-semibold">
+                              {targetReading ? (isHours ? `${targetReading.toLocaleString()} hs` : `${targetReading.toLocaleString()} km`) : (v.next_maintenance_date || '—')}
+                            </td>
+                            <td className="font-mono text-xs text-gray-700">
+                              {currentReading ? (isHours ? `${currentReading.toLocaleString()} hs` : `${currentReading.toLocaleString()} km`) : '0'}
+                            </td>
+                            <td className="text-xs font-medium">
+                              <span className={check.isOverdue ? 'text-red-700 font-bold' : check.isSoon ? 'text-amber-700 font-bold' : 'text-emerald-700'}>
+                                {check.detail}
+                              </span>
+                            </td>
+                            <td className="text-xs text-gray-500 max-w-[200px] truncate" title={v.maintenance_notes || ''}>
+                              {v.maintenance_notes || '—'}
+                            </td>
+                            <td>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${check.badgeClass}`}>
+                                {check.isOverdue ? 'Vencido' : check.isSoon ? 'Próximo' : 'En término'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleGenerateWorkOrder(v)}
+                                  title="Generar Orden de Trabajo en Taller"
+                                  className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                >
+                                  <Wrench size={14} />
+                                </button>
+                                <button
+                                  onClick={() => completeMaintenance(v)}
+                                  title="Marcar Mantenimiento Completado"
+                                  className="p-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                                >
+                                  <CheckCircle2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -445,8 +570,9 @@ export const FleetModule: React.FC = () => {
           {vehicles.length === 0 ? (
             <div className="text-center py-12 text-gray-400"><Truck size={40} className="mx-auto mb-2 opacity-30" /><p className="font-medium">No hay vehículos</p></div>
           ) : vehicles.map(v => {
-            const overdue = isDueOrOverdue(v.next_maintenance_date);
-            const soon = isDueSoon(v.next_maintenance_date, 7);
+            const maintCheck = checkVehicleMaintenance(v);
+            const overdue = maintCheck.isOverdue;
+            const soon = maintCheck.isSoon;
             const vtvOverdue = isDueOrOverdue(v.vtv_expiry);
             const insuranceOverdue = isDueOrOverdue(v.insurance_expiry);
             const isEditing = editId === v.id;
@@ -473,8 +599,16 @@ export const FleetModule: React.FC = () => {
                       <span className="font-bold text-sm text-gray-800">{v.code}</span>
                       <span className="text-sm text-gray-600">{v.description}</span>
                       {v.plate && <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.plate}</span>}
-                      {overdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><AlertTriangle size={10} /> Service vencido</span>}
-                      {!overdue && soon && <span className="badge badge-warning text-[10px]">Service próximo</span>}
+                      {overdue && (
+                        <span className="badge badge-danger text-[10px] flex items-center gap-1">
+                          <AlertTriangle size={10} /> Service vencido ({maintCheck.primaryReason === 'hours' ? 'Horas' : maintCheck.primaryReason === 'km' ? 'Km' : 'Fecha'})
+                        </span>
+                      )}
+                      {!overdue && soon && (
+                        <span className="badge badge-warning text-[10px]">
+                          Service próximo ({maintCheck.detail})
+                        </span>
+                      )}
                       {vtvOverdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><FileText size={10} /> VTV Vencida</span>}
                       {insuranceOverdue && <span className="badge badge-danger text-[10px] flex items-center gap-1"><Shield size={10} /> Seguro Vencido</span>}
                       <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-0.5 rounded-full shadow-xs">
@@ -510,7 +644,11 @@ export const FleetModule: React.FC = () => {
                           ? (v.current_hours ? `${v.current_hours.toLocaleString()} hs` : 'Sin hs')
                           : (v.current_km ? `${v.current_km.toLocaleString()} km` : 'Sin km')}
                       </span>
-                      {v.next_maintenance_date && <span className="flex items-center gap-1"><Wrench size={10} /> Próx: {v.next_maintenance_date}</span>}
+                      {maintCheck.summary && (
+                        <span className={`flex items-center gap-1 font-medium ${overdue ? 'text-red-600 font-bold' : soon ? 'text-amber-600 font-bold' : 'text-gray-500'}`}>
+                          <Wrench size={10} /> Próx: {maintCheck.summary}
+                        </span>
+                      )}
                       {v.insurance_expiry && <span className="flex items-center gap-1"><Shield size={10} /> Seguro: {v.insurance_expiry}</span>}
                       {v.vtv_expiry && <span className="flex items-center gap-1"><FileText size={10} /> VTV: {v.vtv_expiry}</span>}
                     </div>

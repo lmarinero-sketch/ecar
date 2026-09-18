@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { MessageSquare, Search, Phone, Clock, User, Bot, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useWhatsappConversations } from '../hooks/useData';
+import { MessageSquare, Search, Phone, Clock, User, Bot, ArrowLeft, RefreshCw, VolumeX, Volume2 } from 'lucide-react';
+import { useWhatsappConversations, useSystemSetting, useUpsertSystemSetting } from '../hooks/useData';
+import { useModalStore } from '../store/useModalStore';
 
 const formatPhone = (phone: string) => {
   const clean = phone.replace(/\D/g, '');
@@ -59,9 +60,31 @@ const countUserMessages = (messages: { role: string }[]) =>
 
 export const CommunicationsModule: React.FC = () => {
   const { data: conversations = [], isLoading, refetch } = useWhatsappConversations();
+  const { data: botStatusSetting } = useSystemSetting('rombo_bot_status');
+  const upsertSetting = useUpsertSystemSetting();
+  const isSilenced = botStatusSetting?.value === 'silenced';
+
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleToggleBot = async (newStatus: 'active' | 'silenced') => {
+    try {
+      await upsertSetting.mutateAsync({
+        key: 'rombo_bot_status',
+        value: newStatus,
+        description: 'Estado del bot de WhatsApp Rombo: active / silenced',
+      });
+      useModalStore.getState().showAlert(
+        newStatus === 'silenced' ? 'Bot Silenciado' : 'Bot Conectado',
+        newStatus === 'silenced'
+          ? 'El bot de WhatsApp Rombo ha sido desconectado/silenciado temporalmente. No responderá mensajes automáticos hasta que vuelva a conectarse. Toda la configuración, prompts e historiales permanecen intactos.'
+          : 'El bot de WhatsApp Rombo ha sido reconectado exitosamente. Responderá normalmente a las consultas de WhatsApp.'
+      );
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo cambiar el estado del bot.');
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!search) return conversations;
@@ -96,11 +119,52 @@ export const CommunicationsModule: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#075e54] to-[#128c7e] rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#075e54] to-[#128c7e] rounded-xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="absolute top-0 right-0 p-6 opacity-10"><MessageSquare size={120} /></div>
         <div className="relative z-10">
           <h3 className="font-bold text-2xl flex items-center gap-2"><MessageSquare size={24} /> Comunicaciones</h3>
           <p className="text-green-100 text-sm mt-1">CRM de WhatsApp — Registro completo de conversaciones con Rombo</p>
+        </div>
+
+        {/* Bot Status & Control Switch */}
+        <div className="relative z-10 flex items-center gap-3">
+          {isSilenced ? (
+            <div className="flex items-center gap-3 bg-red-950/60 border border-red-400/60 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
+                <div className="text-left">
+                  <p className="text-xs font-bold text-red-200 uppercase tracking-wide">Bot Silenciado / Desconectado</p>
+                  <p className="text-[10px] text-red-300">Configuración preservada al 100%</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleToggleBot('active')}
+                disabled={upsertSetting.isPending}
+                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer ml-2"
+                title="Volver a conectar el bot de WhatsApp"
+              >
+                <Volume2 size={14} /> Reconectar Bot
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 bg-emerald-950/50 border border-emerald-400/50 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="text-left">
+                  <p className="text-xs font-bold text-emerald-200 uppercase tracking-wide">Bot Activo y Conectado</p>
+                  <p className="text-[10px] text-emerald-300">Responde consultas de WhatsApp</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleToggleBot('silenced')}
+                disabled={upsertSetting.isPending}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-lg text-xs font-bold transition-all shadow flex items-center gap-1.5 cursor-pointer ml-2"
+                title="Desconectar temporalmente el bot"
+              >
+                <VolumeX size={14} /> Silenciar Bot
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
