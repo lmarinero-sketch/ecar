@@ -675,7 +675,7 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
               onClick={() => setShowNewModal(true)}
               className="btn-primary text-xs font-bold py-2.5 px-4 shadow-md flex items-center gap-1.5"
             >
-              <Plus size={16} /> Planificar Tarea
+              <Plus size={16} /> Asignar Tarea a Cuadrilla
             </button>
           </div>
         </div>
@@ -712,6 +712,21 @@ export const ObraRendimientosTab: React.FC<ObraRendimientosTabProps> = ({ projec
       {/* ─── PESTAÑA: TAREAS & PLANIFICACIÓN DIARIA ─── */}
       {subTab === 'tareas' && (
         <>
+          {/* Banner Explicativo Pedagógico */}
+          <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-950 shadow-2xs">
+            <div className="space-y-0.5">
+              <span className="font-extrabold flex items-center gap-1.5 text-xs text-amber-900">
+                <Zap size={15} className="text-amber-600" />
+                Control Operativo Diario de Cuadrillas en Terreno (PR-GO-01)
+              </span>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                A diferencia de la <strong>Planificación WBS (macro)</strong>, acá se programa el trabajo de <strong>hoy o mañana</strong> (a las 14:50), se emite la OTI matutina en PDF (07:00) y se miden metros/hora y paradas al cierre (14:30).
+              </p>
+            </div>
+            <div className="text-[11px] bg-white border border-amber-200 rounded-xl px-3 py-2 text-gray-600 shrink-0">
+              📌 Las tareas medidas acá se autocompletan en el <strong>Parte Diario</strong> con 1 solo clic.
+            </div>
+          </div>
           {/* Barra de Filtros y KPIs Rápidos */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">

@@ -434,11 +434,13 @@ export const WbsModule: React.FC = () => {
     return { total, completadas, enEjecucion, avgProgress, totalBudget };
   }, [wbs]);
 
-  const tabs: { id: MainTab; label: string; emoji: string; icon: React.ElementType }[] = [
-    { id: 'planificacion', label: 'Planificación', emoji: '📋', icon: Target },
-    { id: 'programacion', label: 'Programación', emoji: '📅', icon: Calendar },
-    { id: 'ejecucion', label: 'Ejecución', emoji: '🔨', icon: BarChart3 },
-    { id: 'rendimientos', label: 'Rendimientos & Tareas', emoji: '⚡', icon: Zap },
+  const [showFlowGuide, setShowFlowGuide] = useState(false);
+
+  const tabs: { id: MainTab; label: string; tag?: string; emoji: string; icon: React.ElementType }[] = [
+    { id: 'planificacion', label: 'Planificación (WBS)', tag: 'Macro', emoji: '📋', icon: Target },
+    { id: 'programacion', label: 'Programación', tag: 'Gantt', emoji: '📅', icon: Calendar },
+    { id: 'ejecucion', label: 'Ejecución', tag: 'Fases', emoji: '🔨', icon: BarChart3 },
+    { id: 'rendimientos', label: 'Rendimientos & Tareas', tag: 'Diario', emoji: '⚡', icon: Zap },
     { id: 'avance3d', label: 'Avance 3D', emoji: '✨', icon: Sparkles },
     { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
     { id: 'movimientos', label: 'Movimientos de Materiales y Equipos', emoji: '📦', icon: ArrowLeftRight },
@@ -751,13 +753,78 @@ export const WbsModule: React.FC = () => {
             ))}
           </div>
 
+          {/* Botón de Guía Pedagógica del Flujo */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={() => setShowFlowGuide(!showFlowGuide)}
+              className="text-xs font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all cursor-pointer shadow-sm"
+            >
+              <Info size={14} />
+              {showFlowGuide ? 'Ocultar Guía de Flujo' : '💡 ¿Cómo se conectan Planificación, Programación y Rendimientos? (Guía Rápida)'}
+            </button>
+            <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+              Obra: <strong>{selectedProject?.name}</strong>
+            </span>
+          </div>
+
+          {/* Tarjeta Desplegable de Guía de Flujo */}
+          {showFlowGuide && (
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 border border-slate-700 shadow-xl space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🗺️</span>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-white">Guía de Flujo Técnico: ¿Qué va en cada pestaña y cómo no confundirse?</h4>
+                    <p className="text-[11px] text-slate-300">Diferencia entre el nivel macro (Dirección/Jefatura) y el nivel diario operativo (Capataces/Cuadrillas).</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowFlowGuide(false)} className="text-slate-400 hover:text-white p-1"><X size={16} /></button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 space-y-2">
+                  <div className="flex items-center gap-2 text-blue-400 font-extrabold">
+                    <span>1. Nivel Macro (Contrato)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <strong>📋 Planificación (WBS) & 📅 Programación:</strong><br />
+                    Definís los grandes paquetes de trabajo de toda la obra (semanas o meses de duración) y sus fechas en el Gantt (ej: <em>Tendido de 1.500m de red PEAD</em>).
+                  </p>
+                  <span className="inline-block text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-mono font-bold">Uso: Semanal / Mensual</span>
+                </div>
+
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-400 font-extrabold">
+                    <span>2. Nivel Terreno (Diario)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <strong>⚡ Rendimientos & Tareas:</strong><br />
+                    El día a día del capataz: a las 14:50 planificás el tramo de mañana (ej: <em>Sector 04, 50m</em>), imprimís la OTI matutina a las 07:00 y cerrás a las 14:30 midiendo metros y paradas.
+                  </p>
+                  <span className="inline-block text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono font-bold">Uso: Diario (Jornada)</span>
+                </div>
+
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-emerald-500/30 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-extrabold">
+                    <span>3. Registro Legal (Parte)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <strong>📝 Parte Diario de Obra:</strong><br />
+                    El capataz aprieta <em>"Precargar Tareas de Hoy"</em> y vuelca las tareas de rendimientos al parte oficial con fotos, clima y firma.
+                  </p>
+                  <span className="inline-block text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">Uso: Fin de Jornada</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Submodule Tabs */}
           <div className="flex gap-1.5 bg-slate-200/80 rounded-2xl p-1.5 overflow-x-auto shadow-inner">
             {tabs.map(t => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex-1 min-w-[100px] py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 ${
+                className={`flex-1 min-w-[105px] py-2.5 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 relative ${
                   tab === t.id
                     ? 'bg-white text-ecar-blue shadow-md scale-[1.02]'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
@@ -765,6 +832,17 @@ export const WbsModule: React.FC = () => {
               >
                 <span className="text-sm">{t.emoji}</span>
                 <span>{t.label}</span>
+                {t.tag && (
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase ml-0.5 ${
+                    t.tag === 'Diario'
+                      ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                      : t.tag === 'Macro'
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  }`}>
+                    {t.tag}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -1173,8 +1251,26 @@ export const WbsModule: React.FC = () => {
 /* ═══════════════════════ PLANIFICACIÓN TAB ═══════════════════════ */
 const PlanificacionTab: React.FC<{ wbs: WbsElement[]; employees: any[]; onNew: () => void; onEdit: (el: WbsElement) => void; onDelete: (id: string) => void }> = ({ wbs, onNew, onEdit, onDelete }) => (
   <div className="space-y-4">
-    <div className="flex justify-end">
-      <button onClick={onNew} className="btn-primary"><Plus size={16} /> Nueva Tarea</button>
+    {/* Banner Explicativo Pedagógico */}
+    <div className="bg-blue-50/80 border border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs shadow-sm">
+      <div className="space-y-1">
+        <span className="font-extrabold text-blue-950 flex items-center gap-1.5 text-sm">
+          <Target size={17} className="text-ecar-blue" />
+          Estructura WBS del Proyecto — Nivel Macro (Contrato & Plazos)
+        </span>
+        <p className="text-blue-800 leading-relaxed text-[11px] max-w-2xl">
+          Acá definís los <strong>grandes paquetes de trabajo</strong> y entregables de toda la obra (semanas o meses de duración, ej: <em>Tendido de 1.500m PEAD</em>, <em>Cámaras de Hidrantes</em>).
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 shrink-0">
+        <div className="text-[11px] bg-white border border-blue-200 rounded-xl px-3 py-2 text-gray-600 shadow-2xs">
+          💡 Para asignar la <strong>jornada diaria</strong> del capataz y medir metros/hora:<br />
+          Andá a la pestaña <strong className="text-amber-800">⚡ Rendimientos & Tareas</strong>.
+        </div>
+        <button onClick={onNew} className="btn-primary text-xs font-bold py-2.5 px-4 shadow-md flex items-center gap-1.5 shrink-0">
+          <Plus size={15} /> Nuevo Paquete WBS
+        </button>
+      </div>
     </div>
     {wbs.length > 0 ? (
       <div className="light-card overflow-hidden">
@@ -1269,7 +1365,16 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any; onUpdateProgress?: (
   }
 
   return (
-    <div className="light-card overflow-hidden">
+    <div className="space-y-4">
+      {/* Banner Explicativo Pedagógico */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-2.5 text-xs text-slate-700">
+        <Calendar size={16} className="text-ecar-blue shrink-0" />
+        <span>
+          <strong>📅 Programación Gantt (Tiempos & Calendario):</strong> Cronograma temporal de los paquetes WBS. Muestra cuándo arranca y finaliza cada entrega a lo largo de las semanas y sus dependencias.
+        </span>
+      </div>
+
+      <div className="light-card overflow-hidden">
       <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
         <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar size={16} className="text-ecar-blue" /> Diagrama de Gantt</h3>
         <span className="text-xs text-gray-400 font-mono">{tasksWithDates.length} tareas programadas</span>
@@ -1352,6 +1457,7 @@ const GanttTab: React.FC<{ wbs: WbsElement[]; project: any; onUpdateProgress?: (
         <div className="flex items-center gap-1 ml-3"><div className="w-3 h-0.5 bg-red-500" /><span className="text-[10px] text-gray-500">Hoy</span></div>
       </div>
     </div>
+    </div>
   );
 };
 
@@ -1363,6 +1469,14 @@ const EjecucionTab: React.FC<{ wbs: WbsElement[]; onUpdateProgress: (id: string,
 
   return (
     <div className="space-y-4">
+      {/* Banner Explicativo Pedagógico */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-2.5 text-xs text-slate-700">
+        <BarChart3 size={16} className="text-emerald-600 shrink-0" />
+        <span>
+          <strong>🔨 Ejecución & Fases (Avance Acumulado):</strong> Tablero macro de control de avance físico general de los paquetes WBS del contrato.
+        </span>
+      </div>
+
       {/* SPI & KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className={`light-card p-4 ${atrasadas.length > 0 ? 'border-red-200 bg-red-50/50' : 'border-gray-200'}`}>
