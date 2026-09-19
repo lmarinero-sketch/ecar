@@ -1911,9 +1911,15 @@ export function useCreateInventoryMovement() {
       }
 
       // 2. Insert movement record into Kardex
+      let author = mov.created_by;
+      if (!author) {
+        const { data: authData } = await supabase.auth.getUser();
+        author = authData?.user?.user_metadata?.full_name || authData?.user?.email || 'Pañol Central';
+      }
+
       const { data, error } = await supabase
         .from('inventory_movements')
-        .insert({ ...mov, tenant_id: ECAR_TENANT_ID })
+        .insert({ ...mov, created_by: author, tenant_id: ECAR_TENANT_ID })
         .select()
         .single();
       if (error) throw error;
@@ -2029,6 +2035,12 @@ export function useTransferInventoryStock() {
         .eq('id', freshOrigin.id);
       if (updOriginErr) throw updOriginErr;
 
+      let finalUserName = userName;
+      if (!finalUserName || finalUserName === 'Web') {
+        const { data: authData } = await supabase.auth.getUser();
+        finalUserName = authData?.user?.user_metadata?.full_name || authData?.user?.email || 'Pañol Central';
+      }
+
       // 4. Kardex egress movement for Origin
       const originNotes = `Transferencia hacia ${targetDeposit}${targetShelfName ? ` (${targetShelfName})` : ''}${notes ? ` - ${notes}` : ''}`;
       const { error: movOutErr } = await supabase.from('inventory_movements').insert({
@@ -2037,7 +2049,7 @@ export function useTransferInventoryStock() {
         movement_type: 'out',
         quantity: q,
         notes: originNotes,
-        created_by: userName || 'Web',
+        created_by: finalUserName,
       });
       if (movOutErr) console.error('Error creating origin movement:', movOutErr);
 
@@ -2050,7 +2062,7 @@ export function useTransferInventoryStock() {
           movement_type: 'in',
           quantity: q,
           notes: destNotes,
-          created_by: userName || 'Web',
+          created_by: finalUserName,
         });
         if (movInErr) console.error('Error creating dest movement:', movInErr);
       }

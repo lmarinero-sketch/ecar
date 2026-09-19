@@ -213,7 +213,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
         targetShelfPosition: targetShelfPos ? targetShelfPos.toUpperCase().trim() : null,
         targetShelfName,
         notes: quickNotes.trim() || undefined,
-        userName: profile?.full_name || 'Web',
+        userName: profile?.full_name || 'Pañol Central',
       });
 
       useModalStore.getState().showAlert(
@@ -604,7 +604,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
                           {m.notes || '-'}
                         </td>
                         <td className="py-2 px-3 text-slate-400 text-[10px]">
-                          {m.created_by || 'Web'}
+                          {m.created_by || 'Pañol Central'}
                         </td>
                         <td className="py-2 px-3 text-center">
                           {isAnnulled ? (
@@ -921,7 +921,14 @@ export const InventoryModule: React.FC = () => {
 
   // Reserve Stock State
   const [showReserveModal, setShowReserveModal] = useState(false);
-  const [reserveForm, setReserveForm] = useState({ itemId: '', quantity: '' });
+  const [reserveForm, setReserveForm] = useState({
+    itemId: '',
+    quantity: '',
+    projectId: '',
+    requestId: '',
+    notes: '',
+    validUntil: ''
+  });
 
   // Dispatch Cart State
   const [showDispatchCart, setShowDispatchCart] = useState(false);
@@ -1303,8 +1310,9 @@ export const InventoryModule: React.FC = () => {
     const item = (items || []).find(i => i.id === reserveForm.itemId);
     if (!item) return;
 
-    if (qty > (item.current_stock || 0) - (item.reserved_stock || 0)) {
-      const confirm = await useModalStore.getState().showConfirm('Stock Insuficiente', 'La cantidad a reservar supera el stock disponible. ¿Deseas continuar?');
+    const available = (item.current_stock || 0) - (item.reserved_stock || 0);
+    if (qty > available) {
+      const confirm = await useModalStore.getState().showConfirm('Stock Insuficiente', `La cantidad a reservar (${qty} ${item.unit}) supera el stock disponible (${available} ${item.unit}). ¿Deseas continuar forzando la reserva?`);
       if (!confirm) return;
     }
 
@@ -1313,9 +1321,23 @@ export const InventoryModule: React.FC = () => {
         id: item.id,
         reserved_stock: (item.reserved_stock || 0) + qty
       } as any);
-      useModalStore.getState().showAlert('Éxito', 'Stock reservado correctamente.');
+
+      // Optional: record reserve note in Kardex as audit reference
+      if (reserveForm.projectId || reserveForm.notes) {
+        const proj = (projects || []).find(p => p.id === reserveForm.projectId);
+        await createMovement.mutateAsync({
+          item_id: item.id,
+          movement_type: 'adjustment',
+          quantity: item.current_stock, // keeps stock unchanged
+          project_id: reserveForm.projectId || null,
+          notes: `[RESERVA] ${qty} ${item.unit} reservados para ${proj?.name || 'Obra'}${reserveForm.validUntil ? ` (Vigencia: ${reserveForm.validUntil})` : ''}. ${reserveForm.notes || ''}`.trim(),
+          created_by: profile?.full_name || profile?.email || 'Pañol Central'
+        });
+      }
+
+      useModalStore.getState().showAlert('Reserva Exitosa', `Se reservaron ${qty} ${item.unit} de "${item.name}". El stock físico permanece intacto mientras el stock disponible disminuyó.`);
       setShowReserveModal(false);
-      setReserveForm({ itemId: '', quantity: '' });
+      setReserveForm({ itemId: '', quantity: '', projectId: '', requestId: '', notes: '', validUntil: '' });
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message || 'Error al reservar stock.');
     }
@@ -3787,16 +3809,73 @@ export const InventoryModule: React.FC = () => {
                 </select>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Cantidad a Reservar *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    min="0.01"
+                    value={reserveForm.quantity}
+                    onChange={e => setReserveForm({ ...reserveForm, quantity: e.target.value })}
+                    placeholder="Ej. 5"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Obra / Proyecto Destino *</label>
+                  <select
+                    required
+                    value={reserveForm.projectId}
+                    onChange={e => setReserveForm({ ...reserveForm, projectId: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
+                  >
+                    <option value="">— Seleccionar Obra —</option>
+                    {(projects || []).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Vigencia Reserva (Fecha Límite)</label>
+                  <input
+                    type="date"
+                    value={reserveForm.validUntil}
+                    onChange={e => setReserveForm({ ...reserveForm, validUntil: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Pedido de Obra Relacionado</label>
+                  <select
+                    value={reserveForm.requestId}
+                    onChange={e => setReserveForm({ ...reserveForm, requestId: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  >
+                    <option value="">Sin pedido asociado (Reserva directa)</option>
+                    {(purchaseRequests || [])
+                      .filter(r => !reserveForm.projectId || r.project_id === reserveForm.projectId)
+                      .slice(0, 15)
+                      .map(r => (
+                        <option key={r.id} value={r.id}>
+                          PED-{r.id.slice(0, 6)} - {r.project?.name || 'Obra'} ({r.requested_by || 'Usuario'})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Cantidad a Reservar</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Motivo / Justificación de la Reserva</label>
                 <input
-                  type="number"
-                  step="any"
-                  required
-                  min="0.01"
-                  value={reserveForm.quantity}
-                  onChange={e => setReserveForm({ ...reserveForm, quantity: e.target.value })}
-                  placeholder="Ej. 5"
+                  type="text"
+                  value={reserveForm.notes}
+                  onChange={e => setReserveForm({ ...reserveForm, notes: e.target.value })}
+                  placeholder="Ej. Etapa de hormigonado programada para el lunes..."
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </div>

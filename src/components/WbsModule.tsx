@@ -9,6 +9,10 @@ import {
 import { supabase } from '../lib/supabase';
 import { Wbs3dView } from './Wbs3dView';
 import { ObraRendimientosTab } from './ObraRendimientosTab';
+import { ResumenObraTab } from './obra/ResumenObraTab';
+import { PendientesObraTab } from './obra/PendientesObraTab';
+import { HitosPlazosTab } from './obra/HitosPlazosTab';
+import { FieldModule } from './FieldModule';
 import { useImplementationStore } from '../store/useImplementationStore';
 import {
   useProjects, useCreateProject, useUpdateProject, useDeleteProject,
@@ -29,7 +33,22 @@ import type {
 } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 
-type MainTab = 'planificacion' | 'programacion' | 'ejecucion' | 'rendimientos' | 'recursos' | 'movimientos' | 'pedidos' | 'certificados' | 'retroalimentacion' | 'avance3d' | 'documentos';
+export type MainTab =
+  | 'resumen'
+  | 'planificacion'
+  | 'programacion'
+  | 'ejecucion'
+  | 'parte_diario'
+  | 'rendimientos'
+  | 'pendientes'
+  | 'hitos'
+  | 'avance3d'
+  | 'recursos'
+  | 'movimientos'
+  | 'pedidos'
+  | 'certificados'
+  | 'retroalimentacion'
+  | 'documentos';
 
 const PHASE_COLORS: Record<string, string> = {
   planificacion: 'bg-blue-100 text-blue-700',
@@ -45,7 +64,7 @@ const GANTT_BAR_COLORS: Record<string, string> = {
   planificacion: '#3b82f6', programacion: '#f59e0b', ejecucion: '#22c55e', completado: '#9ca3af',
 };
 
-export const WbsModule: React.FC = () => {
+export const WbsModule: React.FC<{ initialProjectId?: string | null; initialTab?: MainTab }> = ({ initialProjectId, initialTab }) => {
   const { data: projects = [], isLoading } = useProjects();
   const { data: opportunities = [] } = useOpportunities();
 
@@ -56,7 +75,9 @@ export const WbsModule: React.FC = () => {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const updateOpportunity = useUpdateOpportunity();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
+    return initialProjectId || localStorage.getItem('ecar_active_project_id') || null;
+  });
   const [projectSearch, setProjectSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'suspended'>('all');
   const selectedProject = projects.find(p => p.id === selectedProjectId);
@@ -74,7 +95,7 @@ export const WbsModule: React.FC = () => {
   }, [projects, projectSearch, statusFilter]);
   const { data: wbs = [] } = useWbsElements(selectedProjectId || undefined);
   const { data: employees = [] } = useEmployees();
-  const [tab, setTab] = useState<MainTab>('planificacion');
+  const [tab, setTab] = useState<MainTab>(initialTab || 'resumen');
   const [showForm, setShowForm] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [editTask, setEditTask] = useState<WbsElement | null>(null);
@@ -437,13 +458,17 @@ export const WbsModule: React.FC = () => {
   const [showFlowGuide, setShowFlowGuide] = useState(false);
 
   const tabs: { id: MainTab; label: string; tag?: string; emoji: string; icon: React.ElementType }[] = [
+    { id: 'resumen', label: 'Resumen (20s)', tag: 'KPIs', emoji: '⚡', icon: Zap },
     { id: 'planificacion', label: 'Planificación (WBS)', tag: 'Macro', emoji: '📋', icon: Target },
     { id: 'programacion', label: 'Programación', tag: 'Gantt', emoji: '📅', icon: Calendar },
     { id: 'ejecucion', label: 'Ejecución', tag: 'Fases', emoji: '🔨', icon: BarChart3 },
-    { id: 'rendimientos', label: 'Rendimientos & Tareas', tag: 'Diario', emoji: '⚡', icon: Zap },
+    { id: 'parte_diario', label: 'Parte Diario', tag: 'Diario', emoji: '📱', icon: Clock },
+    { id: 'rendimientos', label: 'Rendimientos Roque', tag: 'Campo', emoji: '⚡', icon: Zap },
+    { id: 'pendientes', label: 'Pendientes', tag: 'Ágil', emoji: '✅', icon: CheckCircle2 },
+    { id: 'hitos', label: 'Hitos y Plazos', tag: 'Alertas', emoji: '🚩', icon: Flag },
     { id: 'avance3d', label: 'Avance 3D', emoji: '✨', icon: Sparkles },
     { id: 'recursos', label: 'Recursos', emoji: '👥', icon: Users },
-    { id: 'movimientos', label: 'Movimientos de Materiales y Equipos', emoji: '📦', icon: ArrowLeftRight },
+    { id: 'movimientos', label: 'Movimientos', emoji: '📦', icon: ArrowLeftRight },
     { id: 'pedidos', label: 'Pedidos', emoji: '🛒', icon: ShoppingCart },
     { id: 'certificados', label: 'Certificados', emoji: '📄', icon: FileCheck },
     { id: 'retroalimentacion', label: 'Desvíos & Acciones', emoji: '🔄', icon: RefreshCw },
@@ -848,10 +873,14 @@ export const WbsModule: React.FC = () => {
           </div>
 
           {/* Submodule Tab Content */}
+          {tab === 'resumen' && <ResumenObraTab project={selectedProject!} wbs={wbs} onNavigateTab={t => setTab(t as any)} />}
           {tab === 'planificacion' && <PlanificacionTab wbs={wbs} employees={employees} onNew={() => { resetTaskForm(); setEditTask(null); setShowNewTask(true); }} onEdit={openEditTask} onDelete={id => deleteWbs.mutate(id)} />}
           {tab === 'programacion' && <GanttTab wbs={wbs} project={selectedProject!} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} />}
           {tab === 'ejecucion' && <EjecucionTab wbs={wbs} onUpdateProgress={(id, pct) => updateWbs.mutate({ id, progress_pct: pct })} onUpdatePhase={(id, phase) => updateWbs.mutate({ id, phase: phase as any })} />}
+          {tab === 'parte_diario' && <FieldModule selectedProjectId={selectedProjectId!} />}
           {tab === 'rendimientos' && <ObraRendimientosTab projectId={selectedProjectId!} projectName={selectedProject?.name} />}
+          {tab === 'pendientes' && <PendientesObraTab projectId={selectedProjectId!} />}
+          {tab === 'hitos' && <HitosPlazosTab projectId={selectedProjectId!} />}
           {tab === 'avance3d' && <Wbs3dView wbs={wbs} projectId={selectedProjectId!} />}
           {tab === 'recursos' && <RecursosTab projectId={selectedProjectId} />}
           {tab === 'movimientos' && <MovimientosTab projectId={selectedProjectId} />}

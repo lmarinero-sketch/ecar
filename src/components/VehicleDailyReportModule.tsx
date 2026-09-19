@@ -339,6 +339,19 @@ const ReportForm: React.FC<{
         </button>
 
         {showChecklist && (
+          <div className="p-3 bg-slate-50 border-b border-gray-200 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-medium">Revisá cada punto del checklist con atención antes de confirmar el reporte.</span>
+            <button
+              type="button"
+              onClick={() => setChecklist(prev => prev.map(c => ({ ...c, estado: 'ok' })))}
+              className="text-xs font-bold text-ecar-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <CircleCheck size={14} /> Marcar Todos OK
+            </button>
+          </div>
+        )}
+
+        {showChecklist && (
           <div className="divide-y divide-gray-100">
             {checklist.map((item, idx) => (
               <div key={idx} className={`p-3 flex items-start gap-3 ${item.estado === 'falla' ? 'bg-red-50/50' : 'hover:bg-gray-50'} transition-colors`}>

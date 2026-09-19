@@ -846,6 +846,10 @@ export type PurchaseRequest = {
   urgency_reason?: string | null;
   status: 'pending' | 'approved' | 'consolidated' | 'ordered' | 'received' | 'rejected' | 'quoted' | 'returned';
   notes: string | null;
+  needed_date?: string | null;
+  delivery_location?: string | null;
+  receptor_contact?: string | null;
+  cancellation_reason?: string | null;
   approved_by: string | null;
   approved_at: string | null;
   dispatched_at?: string | null;
@@ -870,6 +874,16 @@ export type PurchaseRequestItem = {
   estimated_unit_cost: number;
   inventory_item_id: string | null;
   budget_item_id: string | null;
+  item_type?: 'catalogo' | 'no_registrado';
+  specification?: string | null;
+  coverage_status?: 'sin_evaluar' | 'total' | 'parcial' | 'sin_stock';
+  reserved_quantity?: number;
+  purchased_quantity?: number;
+  dispatched_quantity?: number;
+  delivered_quantity?: number;
+  received_quantity?: number;
+  rejected_quantity?: number;
+  rejection_reason?: string | null;
   created_at: string;
 };
 
@@ -1686,6 +1700,14 @@ export const ALL_MODULES = [
   'finanzas_intro',
   'rrhh_intro',
   'payment_orders',
+
+  // ─── Gerencia de Obras: 6 Grupos Oficiales ───
+  'obra_panel',
+  'obra_gestion',
+  'obra_recursos',
+  'obra_calidad',
+  'obra_economia',
+  'obra_documentacion',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1697,14 +1719,14 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   wbs: 'Planificación de Obra',
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',
-  purchase_requests: 'Pedidos de Compra',
+  purchase_requests: 'Pedidos de Obra',
   purchase_orders: 'Órdenes de Compra / OT',
   payment_orders: 'Órdenes de Pago',
   finances: 'Gerencia de Administración y Finanzas',
   obligations: 'Alertas & Obligaciones',
   rrhh: 'Gerencia de RRHH',
   inventory: 'Inventario & Pañol',
-  logistics: 'Entregas',
+  logistics: 'Despachos y Entregas',
   fleet: 'Flota y Maquinaria',
   certifications: 'Certificaciones',
   field: 'Parte Diario de Obra',
@@ -1717,7 +1739,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   opportunities: 'Pipeline Oportunidades',
   budget_landing: 'Introducción GPP',
   compras_intro: 'Introducción Compras',
-  logistics_intro: 'Introducción Logística',
+  logistics_intro: 'Inicio (Logística)',
   obra_intro: 'Introducción Ger. Obra',
   finanzas_intro: 'Introducción Finanzas',
   rrhh_intro: 'Introducción RRHH',
@@ -1733,9 +1755,16 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   weekly_report: 'Reporte Semanal GG',
   payments: 'Control de Pagos',
   worker_payments: 'Pagos a Trabajadores',
-  scope_changes: 'Adicionales y Alcance',
-  
+  scope_changes: 'Adicionales de Obra',
   quality: 'Calidad e Inspecciones',
+
+  // 6 Grupos Gerencia de Obras
+  obra_panel: '1. Panel de Obras',
+  obra_gestion: '2. Gestión de Obra',
+  obra_recursos: '3. Recursos y Abastecimiento',
+  obra_calidad: '4. Calidad, Seguridad y Mejora',
+  obra_economia: '5. Gestión Económica',
+  obra_documentacion: '6. Documentación y Comunicación',
 };
 
 
@@ -1747,12 +1776,22 @@ export type LogisticsDelivery = {
   id: string;
   tenant_id: string;
   project_id: string | null;
+  purchase_request_id?: string | null;
+  dispatch_number?: string | null;
+  remito_number?: string | null;
   delivery_date: string;
+  origin_deposit_id?: string | null;
+  origin_deposit_name?: string | null;
   status: 'pendiente' | 'pendiente_autorizacion' | 'aprobado' | 'rechazado' | 'en_transito' | 'entregado' | 'cancelado';
   vehicle_id: string | null;
   driver_name: string | null;
   destination: string | null;
   notes: string | null;
+  departure_confirmed_at?: string | null;
+  departure_confirmed_by?: string | null;
+  received_at?: string | null;
+  received_by?: string | null;
+  reception_condition?: 'conforme' | 'con_diferencias' | null;
   created_by: string | null;
   created_at: string;
   // Joined
@@ -1765,10 +1804,14 @@ export type LogisticsDeliveryItem = {
   id: string;
   delivery_id: string;
   item_id: string | null;
+  purchase_request_item_id?: string | null;
   description: string;
   quantity: number;
   unit: string | null;
   delivered_quantity: number;
+  accepted_quantity?: number;
+  rejected_quantity?: number;
+  rejection_reason?: string | null;
   status: 'pendiente' | 'parcial' | 'entregado';
   created_at: string;
   // Joined
@@ -2018,5 +2061,115 @@ export type SeguridadInformeSemanal = {
   project?: { id: string; name: string };
 };
 
+// ─── GERENCIA DE OBRAS: ENTIDADES OFICIALES (PROPUESTA FUNCIONAL) ───
 
+export type ProjectMilestone = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  nombre: string;
+  descripcion?: string | null;
+  tipo: 'contractual' | 'interno' | 'terceros';
+  fecha_objetivo_original: string;
+  fecha_pronosticada: string;
+  responsable?: string | null;
+  estado: 'al_dia' | 'en_riesgo' | 'vencido' | 'cumplido';
+  avance_requerido_pct: number;
+  avance_real_pct: number;
+  causa_desvio?: string | null;
+  plan_recuperacion?: string | null;
+  fecha_cumplimiento?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
 
+export type ProjectPendingTask = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  descripcion: string;
+  sector: string;
+  responsable?: string | null;
+  prioridad: 'baja' | 'media' | 'alta' | 'urgente';
+  fecha_objetivo: string;
+  origen: 'recorrida' | 'inspeccion' | 'parte_diario' | 'reunion' | 'cliente';
+  estado: 'pendiente' | 'en_proceso' | 'resuelto' | 'escalado_nc' | 'convertido_tarea';
+  foto_url?: string | null;
+  resolucion_notas?: string | null;
+  wbs_element_id?: string | null;
+  non_conformity_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type TechnicalBlueprint = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  codigo_plano: string;
+  titulo: string;
+  disciplina: 'arquitectura' | 'estructura' | 'sanitaria' | 'gas' | 'electrica' | 'vial' | 'seguridad' | 'otro';
+  sector?: string | null;
+  es_vigente: boolean;
+  revision_actual: string; // ej: "Rev. B", "Rev. 0", "Conforme a Obra"
+  fecha_aprobacion?: string | null;
+  aprobado_por?: string | null;
+  archivo_url: string;
+  archivo_nombre?: string;
+  tamano_bytes?: number;
+  historial_revisiones?: Array<{
+    revision: string;
+    fecha: string;
+    autor: string;
+    archivo_url: string;
+    notas?: string;
+  }>;
+  created_at?: string;
+};
+
+export type MeetingCommitment = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  titulo_reunion: string;
+  fecha: string;
+  tipo_reunion: 'obra_interna' | 'comitente' | 'subcontratista' | 'seguridad_calidad';
+  participantes: string[];
+  temas_tratados: string;
+  compromisos: Array<{
+    id: string;
+    descripcion: string;
+    responsable: string;
+    fecha_limite: string;
+    estado: 'pendiente' | 'en_curso' | 'cumplido';
+  }>;
+  documento_adjunto_url?: string | null;
+  created_at?: string;
+};
+
+export type ProjectWorkReport = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  numero_informe: string;
+  tipo: 'semanal' | 'quincenal' | 'mensual' | 'avance_fotografico' | 'incidencia_desvio';
+  alcance: 'interno' | 'cliente';
+  periodo_desde: string;
+  periodo_hasta: string;
+  titulo: string;
+  resumen_ejecutivo: string;
+  hitos_destacados?: string[];
+  produccion_resumen?: string;
+  desvios_alertas?: string;
+  proximas_actividades?: string;
+  fotos_seleccionadas: Array<{
+    url: string;
+    titulo: string;
+    fecha: string;
+    epigrafe?: string;
+  }>;
+  emitido_por: string;
+  estado: 'borrador' | 'emitido';
+  pdf_url?: string | null;
+  created_at?: string;
+};

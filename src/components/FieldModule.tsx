@@ -57,7 +57,7 @@ const EntregasProgramadas: React.FC<{ projectId: string }> = ({ projectId }) => 
   );
 };
 
-export const FieldModule: React.FC = () => {
+export const FieldModule: React.FC<{ selectedProjectId?: string }> = ({ selectedProjectId }) => {
   const { data: partes = [], isLoading } = usePartesDiarios();
   const { data: projects = [] } = useProjects();
   const createParte = useCreateParteDiario();
@@ -65,10 +65,10 @@ export const FieldModule: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedParte, setSelectedParte] = useState<ParteDiario | null>(null);
   const [fieldView, setFieldView] = useState<'partes' | 'rendimientos'>('partes');
-  const [selectedObraId, setSelectedObraId] = useState<string>('');
+  const [selectedObraId, setSelectedObraId] = useState<string>(selectedProjectId || '');
 
   const [form, setForm] = useState({
-    obra_id: '', fecha: new Date().toISOString().split('T')[0], clima: 'despejado',
+    obra_id: selectedProjectId || '', fecha: new Date().toISOString().split('T')[0], clima: 'despejado',
     temperatura_min: '', temperatura_max: '', trabajo_realizado: '', entregas: '', incidentes: '',
     horas_trabajadas: '8', notas: '', firmado_por: '', avance_porcentual: '0',
   });

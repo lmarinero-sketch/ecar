@@ -8,7 +8,7 @@ import {
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
-  Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe
+  Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe, ShieldCheck
 } from 'lucide-react';
 import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -42,23 +42,29 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   implementation: Rocket, user_management: Users, user_activity: Activity,
   communications: Mail,
   weekly_report: PieChart,
-  scope_changes: Target,
-  
   quality: ClipboardCheck,
+  scope_changes: AlertCircle,
+  // 6 Grupos Gerencia de Obras
+  obra_panel: Building2,
+  obra_gestion: Target,
+  obra_recursos: Package,
+  obra_calidad: ShieldCheck,
+  obra_economia: DollarSign,
+  obra_documentacion: FolderOpen,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
 const SHORT_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard', liquidity: 'Liquidez', monthly_report: 'Mensual',
   wbs: 'Planificación', invoicing: 'ARCA', purchases: 'Compras',
-  purchase_requests: 'Pedidos', purchase_orders: 'OC / OT',
+  purchase_requests: 'Pedidos de Obra', purchase_orders: 'OC / OT',
   finances: 'Finanzas', obligations: 'Alertas',
-  rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Entregas',
+  rrhh: 'RRHH', inventory: 'Inventario', logistics: 'Despachos & Entregas',
   fleet: 'Flota', certifications: 'Certificaciones', field: 'Parte Diario',
   safety: 'Seguridad', inspections: 'Calidad', rfi: 'Consultas',
   expenses: 'Gastos', documents: 'Documentos', project_budget: 'Presupuestos',
   opportunities: 'Pipeline', fuel: 'Combustible', budget_landing: 'Introducción GPP',
-  compras_intro: 'Introducción Compras', logistics_intro: 'Introducción Logística',
+  compras_intro: 'Introducción Compras', logistics_intro: 'Inicio Logística',
   obra_intro: 'Introducción Obra', finanzas_intro: 'Introducción Finanzas', rrhh_intro: 'Introducción RRHH',
   payments: 'Pagos',
   payment_orders: 'Órdenes Pago',
@@ -69,9 +75,15 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   implementation: 'Implementación', user_management: 'Usuarios', user_activity: 'Actividad',
   communications: 'Comunicaciones',
   weekly_report: 'Reporte GG',
-  scope_changes: 'Adicionales',
-  
   quality: 'Calidad',
+  scope_changes: 'Adicionales',
+  // 6 Grupos Gerencia de Obras
+  obra_panel: 'Panel Obras',
+  obra_gestion: 'Gestión Obra',
+  obra_recursos: 'Recursos & Abast.',
+  obra_calidad: 'Calidad & HyS',
+  obra_economia: 'Gestión Económica',
+  obra_documentacion: 'Documentación',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -99,6 +111,12 @@ const MODULE_ACCENT: Partial<Record<ModuleId, string>> = {
   communications: 'text-sky-500 bg-sky-50',
   weekly_report: 'text-ecar-blue bg-slate-50',
   quality: 'bg-ecar-blue',
+  obra_panel: 'bg-amber-600',
+  obra_gestion: 'bg-amber-500',
+  obra_recursos: 'bg-sky-600',
+  obra_calidad: 'bg-rose-600',
+  obra_economia: 'bg-emerald-600',
+  obra_documentacion: 'bg-indigo-600',
 };
 
 /* ─── Sidebar sections ─── */
@@ -147,16 +165,12 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     label: 'Ger. Obras', emoji: '🏗️',
     items: [
-      { id: 'obra_intro', requires: true },
-      { id: 'wbs', requires: true },
-      { id: 'field', requires: true },
-      
-      { id: 'scope_changes', requires: true },
-      { id: 'safety', requires: true },
-      { id: 'quality', requires: true },
-      { id: 'rfi', requires: true },
-      { id: 'nonconformities', requires: true },
-      { id: 'documents', requires: true },
+      { id: 'obra_panel', requires: true },
+      { id: 'obra_gestion', requires: true },
+      { id: 'obra_recursos', requires: true },
+      { id: 'obra_calidad', requires: true },
+      { id: 'obra_economia', requires: true },
+      { id: 'obra_documentacion', requires: true },
     ],
   },
   {

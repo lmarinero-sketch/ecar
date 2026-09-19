@@ -1,165 +1,64 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Warehouse, Truck, Repeat, Wrench, Plus, ChevronDown, ChevronUp, Package, Clock,
-  ShieldAlert, AlertTriangle, ArrowRight, X, Save, Calendar, MapPin,
-  CheckCircle2, PackageCheck, FileText, TrendingUp, Search, ShoppingCart
+  Truck, Plus, Package, ShieldAlert,
+  PackageCheck, FileText, Search, Wrench,
+  Warehouse, TrendingUp, ShoppingCart
 } from 'lucide-react';
 import {
-  useAllFuelVehicles, useInventoryItems, useToolAssignments, useProjects,
+  useAllFuelVehicles, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
-  useCreateLogisticsMaintenanceLog,
-  usePurchaseRequests, useUpdatePurchaseRequest, useEmployees, useUpdateFuelVehicle
+  useEmployees
 } from '../hooks/useData';
-import { useAuth } from '../contexts/AuthContext';
-import { useAppStore } from '../store/useStore';
-import { createPortal } from 'react-dom';
 import { exportDispatchPdf } from '../lib/orderPdfExport';
-import type { FuelVehicle, LogisticsDelivery, LogisticsMaintenanceLog } from '../lib/types';
+import type { FuelVehicle, LogisticsDelivery } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
-import { IosToggleSwitch } from './FleetModule';
 
-type Tab = 'dashboard' | 'obra_requests' | 'deliveries' | 'diagrams';
-
-const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
-const today = () => new Date().toISOString().slice(0, 10);
+type Tab = 'deliveries' | 'diagrams';
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   pendiente: { label: 'Pendiente', cls: 'badge-warning' },
-  pendiente_autorizacion: { label: 'Pendiente Aut.', cls: 'bg-orange-100 text-orange-800' },
-  aprobado: { label: 'Aprobado', cls: 'bg-purple-100 text-purple-800' },
+  pendiente_autorizacion: { label: 'En Preparación', cls: 'bg-orange-100 text-orange-800' },
+  aprobado: { label: 'Programado', cls: 'bg-purple-100 text-purple-800' },
   en_transito: { label: 'En Tránsito', cls: 'badge-info' },
-  entregado: { label: 'Entregado', cls: 'badge-success' },
+  entregado: { label: 'Entregado en Obra', cls: 'badge-success' },
   cancelado: { label: 'Cancelado', cls: 'badge-neutral' },
   rechazado: { label: 'Rechazado', cls: 'bg-red-100 text-red-800' },
 };
 
-const MAINT_TYPE_LABEL: Record<string, string> = {
-  service: 'Service', vtv: 'VTV', seguro: 'Seguro', reparacion: 'Reparación',
-  neumaticos: 'Neumáticos', otro: 'Otro',
-};
-
-const VEHICLE_ICON: Record<string, string> = {
-  camion: '🚛', camioneta: '🛻', auto: '🚗', maquinaria: '🏗️', moto: '🏍️', otro: '🚐',
-};
-
 export const LogisticsModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [showIntro, setShowIntro] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('deliveries');
 
   // Data from existing tables
   const { data: allVehicles = [] } = useAllFuelVehicles();
-  const { data: inventoryItems = [] } = useInventoryItems();
-  const { data: toolAssignments = [] } = useToolAssignments();
   const { data: projects = [] } = useProjects();
   const { data: employees = [] } = useEmployees();
 
   // Logistics-own tables
   const { data: deliveries = [], isLoading: loadingDeliveries } = useLogisticsDeliveries();
-  const { data: purchaseRequests = [] } = usePurchaseRequests();
-  const updatePurchaseRequest = useUpdatePurchaseRequest();
-
-  // Todos los pedidos que vienen desde las obras
-  const obraRequests = purchaseRequests;
-
-  // KPIs computed from real data
-  const kpis = useMemo(() => {
-    const criticalStock = (inventoryItems || []).filter(i => i.current_stock <= i.min_stock).length;
-    const overdueTools = (toolAssignments || []).filter(t => t.status === 'assigned' && !t.returned_date).length;
-    const activeVehicles = allVehicles.filter(v => v.status === 'active');
-    const nextMaint = activeVehicles.filter(v => {
-      if (!v.next_maintenance_date) return false;
-      const d = new Date(v.next_maintenance_date);
-      const limit = new Date();
-      limit.setDate(limit.getDate() + 15);
-      return d <= limit;
-    }).length;
-    const pendingDeliveries = deliveries.filter(d => d.status === 'pendiente' || d.status === 'en_transito').length;
-    return { criticalStock, overdueTools, nextMaint, activeVehicles: activeVehicles.length, totalVehicles: allVehicles.length, pendingDeliveries };
-  }, [inventoryItems, toolAssignments, allVehicles, deliveries]);
 
   const tabs: { id: Tab; icon: React.ElementType; label: string }[] = [
-    { id: 'dashboard', icon: ShieldAlert, label: 'Dashboard' },
-    { id: 'obra_requests', icon: Package, label: 'Pedidos de Obra' },
-    { id: 'deliveries', icon: Repeat, label: 'Logística y Entregas' },
-    { id: 'diagrams', icon: FileText, label: 'Procesos y Diagramas' },
+    { id: 'deliveries', icon: Truck, label: 'Despachos y Entregas' },
+    { id: 'diagrams', icon: FileText, label: 'Diagramas de Proceso' },
   ];
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 max-w-7xl mx-auto pb-16">
       {/* Header */}
-      <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-6 opacity-10"><Warehouse size={120} /></div>
-        <div className="relative z-10">
-          <h3 className="font-bold text-2xl flex items-center gap-2">
-            <Warehouse size={24} /> Gerencia de Logística
-          </h3>
-          <p className="text-ecar-blueLight text-sm mt-1 max-w-2xl">
-            Aseguramos que cada obra cuente con los recursos físicos necesarios en tiempo y forma.
-            Administramos inventarios, pañol, herramientas y la flota para evitar interrupciones operativas.
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-ecar-blueDark rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+          <Truck size={160} />
+        </div>
+        <div className="relative z-10 space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-sky-300 border border-white/20">
+            <span>🚚</span> Gerencia de Logística · Despachos Físicos
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+            Despachos y Entregas a Obra
+          </h1>
+          <p className="text-gray-300 text-xs md:text-sm max-w-2xl leading-relaxed">
+            Gestión de traslados físicos desde Pañol Central a frentes de trabajo. Emisión de remitos oficiales REM-xxxx, asignación de chofer/vehículo y confirmación de recepción en destino.
           </p>
         </div>
-      </div>
-
-      {/* Intro Accordion */}
-      <div className="light-card overflow-hidden transition-all duration-300">
-        <button
-          onClick={() => setShowIntro(!showIntro)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-ecar-blueLight flex items-center justify-center text-ecar-blue shrink-0">
-              <PackageCheck size={20} />
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-800 text-sm">¿Cómo funciona Logística en ECAR?</h4>
-              <p className="text-xs text-gray-500 mt-0.5">Stock crítico, Trazabilidad, Mantenimiento preventivo y Entregas a obra.</p>
-            </div>
-          </div>
-          <div className="text-gray-400">
-            {showIntro ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </div>
-        </button>
-        {showIntro && (
-          <div className="p-4 md:p-6 border-t border-gray-100 bg-white">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-2">
-                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Package size={16} /> 1. Depósito & Stock</h5>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Logística debe conocer exactamente qué tenemos, dónde está y su estado.
-                  Definimos <span className="font-semibold text-gray-800">Alertas de Reposición</span> antes de que el material se agote.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Repeat size={16} /> 2. Despachos</h5>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Cada salida tiene un responsable y una fecha de devolución.
-                  La trazabilidad previene pérdidas económicas.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><Truck size={16} /> 3. Flota & Combustible</h5>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Mantenimiento preventivo, control de rendimiento y sistema de cargas de combustible de 2 pasos desburocratizado (con auditoría "Sin Autorizar").
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h5 className="font-bold text-ecar-blue text-sm flex items-center gap-2"><MapPin size={16} /> 4. Entregas a Obra</h5>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Programamos qué materiales y herramientas van a cada obra, con qué vehículo y quién es el responsable.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-              <span className="text-xs text-gray-500">¿Querés ver el flujo paso a paso con los diagramas interactivos de Pedidos, Compras y Flota?</span>
-              <button
-                onClick={() => setActiveTab('diagrams')}
-                className="px-4 py-2 bg-ecar-blue text-white text-xs font-bold rounded-lg hover:bg-ecar-blueDark transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <FileText size={14} /> Abrir Diagramas de Procesos completos
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
@@ -168,7 +67,9 @@ export const LogisticsModule: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-xs md:text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`pb-3 text-xs md:text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === tab.id ? 'border-ecar-blue text-ecar-blue' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
           >
             <tab.icon size={16} /> {tab.label}
           </button>
@@ -176,21 +77,9 @@ export const LogisticsModule: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="light-card min-h-[400px]">
-        {activeTab === 'dashboard' && (
-          <DashboardTab kpis={kpis} deliveries={deliveries} allVehicles={allVehicles} inventoryItems={inventoryItems} />
-        )}
-        {activeTab === 'obra_requests' && (
-          <ObraRequestsTab
-            requests={obraRequests}
-            updateRequest={updatePurchaseRequest}
-            employees={employees}
-            allVehicles={allVehicles}
-            onGoToDeliveries={() => setActiveTab('deliveries')}
-          />
-        )}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {activeTab === 'deliveries' && (
-          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} inventoryItems={inventoryItems} employees={employees} />
+          <DeliveriesTab deliveries={deliveries} loading={loadingDeliveries} projects={projects} allVehicles={allVehicles} employees={employees} />
         )}
         {activeTab === 'diagrams' && (
           <ProcessDiagramsTab />
@@ -200,504 +89,136 @@ export const LogisticsModule: React.FC = () => {
   );
 };
 
-/* ═══════════════════════ OBRA REQUESTS TAB ═══════════════════════ */
-
-const ObraRequestsTab: React.FC<{
-  requests: any[];
-  updateRequest: any;
-  employees: any[];
-  allVehicles: any[];
-  onGoToDeliveries: () => void;
-}> = ({ requests, updateRequest, employees, allVehicles, onGoToDeliveries }) => {
-  const { setActiveModule } = useAppStore();
-  const { profile } = useAuth();
-  const createDelivery = useCreateLogisticsDelivery();
-  const pending = requests.filter(r => r.status === 'pending');
-  const processed = requests.filter(r => r.status !== 'pending');
-
-  const [dispatchModalReq, setDispatchModalReq] = useState<any | null>(null);
-  const [dispatchItemsState, setDispatchItemsState] = useState<Record<string, { quantity_sent: number; notes: string }>>({});
-  const [dispatchedBy, setDispatchedBy] = useState('');
-  const [dispatchDriverName, setDispatchDriverName] = useState('');
-  const [dispatchVehicleId, setDispatchVehicleId] = useState('');
-  const [dispatchDate, setDispatchDate] = useState(today());
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleDeriveToPurchases = async (reqId: string) => {
-    if (await useModalStore.getState().showConfirm('Derivar a Compras', '¿Derivar este pedido a Compras de forma definitiva?')) {
-      await updateRequest.mutateAsync({ id: reqId, request_type: 'purchase', status: 'pending' });
-    }
-  };
-
-  const openDispatchModal = (req: any) => {
-    const initial: Record<string, { quantity_sent: number; notes: string }> = {};
-    (req.items || []).forEach((it: any) => {
-      initial[it.id] = {
-        quantity_sent: it.quantity_sent !== undefined && it.quantity_sent !== null ? it.quantity_sent : it.quantity,
-        notes: it.dispatch_notes || ''
-      };
-    });
-    setDispatchItemsState(initial);
-    setDispatchedBy(profile?.full_name || 'Pañol Central');
-    setDispatchDriverName('');
-    setDispatchVehicleId('');
-    setDispatchDate(today());
-    setDispatchModalReq(req);
-  };
-
-  const handleConfirmDispatch = async () => {
-    if (!dispatchModalReq) return;
-    setIsSubmitting(true);
-    try {
-      // 1. Update purchase request status to 'ordered'
-      await updateRequest.mutateAsync({
-        id: dispatchModalReq.id,
-        status: 'ordered',
-        dispatched_by: dispatchedBy,
-        dispatched_at: new Date().toISOString()
-      });
-
-      // 2. Auto-create logistics delivery
-      const itemsSent = (dispatchModalReq.items || []).map((it: any) => ({
-        description: it.description,
-        quantity: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
-        unit: it.unit || 'un'
-      })).filter((i: any) => i.quantity > 0);
-
-      await createDelivery.mutateAsync({
-        project_id: dispatchModalReq.project_id || null,
-        vehicle_id: dispatchVehicleId || null,
-        driver_name: dispatchDriverName || null,
-        delivery_date: dispatchDate || today(),
-        status: 'en_transito',
-        notes: `Despacho de Pedido PED-${dispatchModalReq.id.slice(0, 8).toUpperCase()}`,
-        items: itemsSent
-      } as any);
-
-      // 3. Export PDF
-      const updatedReq = {
-        ...dispatchModalReq,
-        dispatched_by: dispatchedBy,
-        dispatched_at: new Date().toISOString(),
-        status: 'ordered',
-        items: (dispatchModalReq.items || []).map((it: any) => ({
-          ...it,
-          quantity_sent: dispatchItemsState[it.id]?.quantity_sent ?? it.quantity,
-          dispatch_notes: dispatchItemsState[it.id]?.notes
-        }))
-      };
-      await exportDispatchPdf(updatedReq as any);
-
-      setDispatchModalReq(null);
-      onGoToDeliveries();
-    } catch (err: any) {
-      alert(`Error al declarar despacho: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="font-bold text-gray-800 flex items-center gap-2 text-base md:text-lg">
-            <Package size={20} className="text-ecar-blue" /> Pedidos Recibidos desde Obra
-          </h3>
-          <p className="text-xs md:text-sm text-gray-500 mt-1">
-            Logística evalúa los pedidos de Obra. Si hay stock en Pañol, lo resuelve enviándolo. Si no hay stock, lo deriva a Compras.
-          </p>
-        </div>
-        <button
-          onClick={() => setActiveModule('purchase_requests')}
-          className="px-4 py-2 bg-slate-900 hover:bg-ecar-blue text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-colors shrink-0 shadow-sm"
-        >
-          <span>Abrir Gestor Completo de Pedidos →</span>
-        </button>
-      </div>
-
-      {pending.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-          <PackageCheck size={48} className="mx-auto mb-3 text-emerald-400 opacity-50" />
-          <p className="font-bold text-gray-700">No hay pedidos pendientes</p>
-          <p className="text-sm text-gray-500">Todo el material solicitado ha sido procesado.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {pending.map(r => (
-            <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start">
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                  Obra: <span className="text-ecar-blue font-semibold">{r.project?.name || 'S/D'}</span>
-                </p>
-                <div className="space-y-2 mt-3">
-                  {r.items?.map((it: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2 text-sm font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-ecar-blue block" />
-                      {it.quantity} {it.unit} - {it.description}
-                    </div>
-                  ))}
-                </div>
-                {r.notes && <p className="text-xs text-gray-500 mt-3 italic text-orange-600 bg-orange-50 p-2 rounded">Nota: {r.notes}</p>}
-                {r.urgency === 'urgent' && <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-bold mt-2"><AlertTriangle size={12} /> Urgente</span>}
-              </div>
-              <div className="flex flex-col gap-2 min-w-[220px] w-full md:w-auto">
-                <button onClick={() => openDispatchModal(r)} className="px-3.5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
-                  <Truck size={16} /> Declarar Despacho / Pañol
-                </button>
-                <button onClick={() => handleDeriveToPurchases(r.id)} className="bg-white border-2 border-amber-600 text-amber-700 hover:bg-amber-600 hover:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-                  <ShoppingCart size={16} /> Derivar a Compras
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {processed.length > 0 && (
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h4 className="font-bold text-gray-700 text-sm mb-4">Pedidos Procesados Recientemente</h4>
-          <div className="space-y-3">
-            {processed.slice(0, 10).map(r => (
-              <div key={r.id} className="text-xs bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between opacity-70">
-                <span className="font-bold">{r.project?.name}</span>
-                <span className="truncate flex-1 px-4">{r.items?.map((i:any) => i.description).join(', ')}</span>
-                <span className="font-mono text-gray-400">{r.created_at.split('T')[0]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Dispatch Modal inside Logistics */}
-      {dispatchModalReq && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto border border-slate-100 relative">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-              <div>
-                <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">Declaración de Despacho desde Pañol</span>
-                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mt-0.5">
-                  <Truck size={20} className="text-sky-600" /> Pedido PED-{dispatchModalReq.id.slice(0, 8).toUpperCase()}
-                </h3>
-              </div>
-              <button onClick={() => setDispatchModalReq(null)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Pañolero Despachante</label>
-                  <input
-                    type="text"
-                    value={dispatchedBy}
-                    onChange={e => setDispatchedBy(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
-                    placeholder="Nombre de pañolero"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Chofer / Responsable</label>
-                  <select
-                    value={dispatchDriverName}
-                    onChange={e => setDispatchDriverName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
-                  >
-                    <option value="">— Seleccionar chofer —</option>
-                    {employees.filter(e => e.status === 'active').map(e => (
-                      <option key={e.id} value={e.full_name}>{e.full_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Vehículo Asignado</label>
-                  <select
-                    value={dispatchVehicleId}
-                    onChange={e => setDispatchVehicleId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 outline-none"
-                  >
-                    <option value="">— Seleccionar vehículo —</option>
-                    {allVehicles.filter(v => v.status === 'active').map(v => (
-                      <option key={v.id} value={v.id}>{v.code} - {v.description} {v.plate ? `(${v.plate})` : ''}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-2">Conformación de Materiales Despachados</label>
-                <div className="space-y-3">
-                  {(dispatchModalReq.items || []).map((it: any) => {
-                    const current = dispatchItemsState[it.id] || { quantity_sent: it.quantity, notes: '' };
-                    const isPartial = current.quantity_sent < it.quantity;
-
-                    return (
-                      <div key={it.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="font-bold text-gray-800 text-sm">{it.description}</span>
-                          <span className="text-xs text-gray-500">Solicitado: <strong className="text-gray-800">{it.quantity} {it.unit}</strong></span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                          <div>
-                            <label className="text-[11px] font-bold text-sky-700 block mb-1">Cantidad a Enviar ({it.unit})</label>
-                            <input
-                              type="number"
-                              step="any"
-                              value={current.quantity_sent}
-                              onChange={e => setDispatchItemsState({
-                                ...dispatchItemsState,
-                                [it.id]: { ...current, quantity_sent: parseFloat(e.target.value) || 0 }
-                              })}
-                              className="w-full px-3 py-1.5 border border-sky-300 rounded-lg text-sm font-mono font-bold bg-white focus:ring-2 focus:ring-sky-500/30"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[11px] font-bold text-gray-500 block mb-1">Observación de Despacho (Opcional)</label>
-                            <input
-                              type="text"
-                              value={current.notes}
-                              onChange={e => setDispatchItemsState({
-                                ...dispatchItemsState,
-                                [it.id]: { ...current, notes: e.target.value }
-                              })}
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white"
-                              placeholder="Ej: Stock parcial en pañol..."
-                            />
-                          </div>
-                        </div>
-
-                        {isPartial && (
-                          <p className="text-[11px] text-amber-700 font-bold bg-amber-50 p-2 rounded-lg border border-amber-200 flex items-center gap-1.5">
-                            <AlertTriangle size={13} /> Faltan {it.quantity - current.quantity_sent} {it.unit} por cubrir. El saldo faltante quedará registrado.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setDispatchModalReq(null)}
-                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleConfirmDispatch}
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Confirmando...' : '📄 Confirmar Despacho & Generar Remito PDF'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
-
-/* ═══════════════════════ DASHBOARD TAB ═══════════════════════ */
-
-const DashboardTab: React.FC<{
-  kpis: { criticalStock: number; overdueTools: number; nextMaint: number; activeVehicles: number; totalVehicles: number; pendingDeliveries: number };
-  deliveries: LogisticsDelivery[];
-  allVehicles: FuelVehicle[];
-  inventoryItems: any[];
-}> = ({ kpis, deliveries, allVehicles, inventoryItems }) => {
-  const upcomingDeliveries = deliveries.filter(d => d.status === 'pendiente' || d.status === 'en_transito').slice(0, 5);
-  const criticalItems = (inventoryItems || []).filter((i: any) => i.current_stock <= i.min_stock).slice(0, 5);
-  const vehiclesNeedingMaint = allVehicles.filter(v => {
-    if (!v.next_maintenance_date) return false;
-    const d = new Date(v.next_maintenance_date);
-    const limit = new Date();
-    limit.setDate(limit.getDate() + 15);
-    return d <= limit;
-  }).slice(0, 5);
-
-  return (
-    <div className="p-4 md:p-6 space-y-6">
-      <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-        <TrendingUp className="text-ecar-blue" /> Panel de Control Logístico
-      </h3>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KpiCard title="Stock Crítico" subtitle="Bajo mínimo" value={kpis.criticalStock}
-          gradient="from-red-50 to-red-100" border="border-red-200" text="text-red-700" valueText="text-red-800" subtitleText="text-red-600"
-          icon={<AlertTriangle size={18} />} />
-        <KpiCard title="Herramientas" subtitle="Sin devolver" value={kpis.overdueTools}
-          gradient="from-amber-50 to-amber-100" border="border-amber-200" text="text-amber-700" valueText="text-amber-800" subtitleText="text-amber-600"
-          icon={<Clock size={18} />} />
-        <KpiCard title="Mantenimiento" subtitle="Próximos 15 días" value={kpis.nextMaint}
-          gradient="from-blue-50 to-blue-100" border="border-blue-200" text="text-blue-700" valueText="text-blue-800" subtitleText="text-blue-600"
-          icon={<Wrench size={18} />} />
-        <KpiCard title="Flota Activa" subtitle={`de ${kpis.totalVehicles} total`} value={kpis.activeVehicles}
-          gradient="from-emerald-50 to-emerald-100" border="border-emerald-200" text="text-emerald-700" valueText="text-emerald-800" subtitleText="text-emerald-600"
-          icon={<Truck size={18} />} />
-        <KpiCard title="Entregas" subtitle="Pendientes" value={kpis.pendingDeliveries}
-          gradient="from-slate-50 to-ecar-blueLight" border="border-ecar-blueLight" text="text-ecar-blue" valueText="text-ecar-blueDark" subtitleText="text-ecar-blue"
-          icon={<Package size={18} />} />
-      </div>
-
-      {/* Bottom sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Próximas entregas */}
-        <div className="space-y-3">
-          <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2"><Repeat size={14} /> Próximas Entregas</h4>
-          {upcomingDeliveries.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-400 text-sm">Sin entregas pendientes</div>
-          ) : (
-            <div className="space-y-2">
-              {upcomingDeliveries.map(d => (
-                <div key={d.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{(d.project as any)?.name || d.destination || 'Sin destino'}</p>
-                    <p className="text-xs text-gray-500">{new Date(d.delivery_date).toLocaleDateString('es-AR')} · {d.driver_name || 'Sin chofer'}</p>
-                  </div>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_BADGE[d.status]?.cls}`}>{STATUS_BADGE[d.status]?.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Stock crítico */}
-        <div className="space-y-3">
-          <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2"><AlertTriangle size={14} className="text-red-500" /> Stock Crítico</h4>
-          {criticalItems.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-400 text-sm">Todo el stock por encima del mínimo 👍</div>
-          ) : (
-            <div className="space-y-2">
-              {criticalItems.map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 border border-red-100">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.location || 'Pañol'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-red-700">{item.current_stock} / {item.min_stock}</p>
-                    <p className="text-xs text-red-500">{item.unit}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Mantenimientos próximos */}
-        <div className="space-y-3">
-          <h4 className="font-bold text-gray-700 text-sm flex items-center gap-2"><Wrench size={14} className="text-blue-500" /> Mantenimientos Próximos</h4>
-          {vehiclesNeedingMaint.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-400 text-sm">Sin mantenimientos próximos</div>
-          ) : (
-            <div className="space-y-2">
-              {vehiclesNeedingMaint.map(v => (
-                <div key={v.id} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
-                  <div className="flex items-center gap-2">
-                    <span>{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{v.code} - {v.description}</p>
-                      <p className="text-xs text-gray-500">{v.plate || 'Sin patente'}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-blue-700">{v.next_maintenance_date ? new Date(v.next_maintenance_date).toLocaleDateString('es-AR') : '-'}</p>
-                    {v.next_maintenance_km && <p className="text-xs text-blue-500">{v.next_maintenance_km.toLocaleString()} km</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const KpiCard: React.FC<{ title: string; subtitle: string; value: number; gradient: string; border: string; text: string; valueText: string; subtitleText: string; icon: React.ReactNode }> = (
-  { title, subtitle, value, gradient, border, text, valueText, subtitleText, icon }
-) => (
-  <div className={`bg-gradient-to-br ${gradient} border ${border} rounded-xl p-4`}>
-    <h4 className={`${text} text-xs font-bold flex items-center gap-1.5`}>{icon} {title}</h4>
-    <p className={`text-3xl font-black ${valueText} mt-2`}>{value}</p>
-    <p className={`text-xs ${subtitleText} mt-1`}>{subtitle}</p>
-  </div>
-);
-
 /* ═══════════════════════ DELIVERIES TAB ═══════════════════════ */
 
-const DeliveriesTab: React.FC<{
+export const DeliveriesTab: React.FC<{
   deliveries: LogisticsDelivery[];
   loading: boolean;
   projects: any[];
   allVehicles: FuelVehicle[];
-  inventoryItems: any[];
   employees: any[];
-}> = ({ deliveries, loading }) => {
+  filterProjectId?: string;
+}> = ({ deliveries, loading, projects, allVehicles, employees, filterProjectId }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const updateDelivery = useUpdateLogisticsDelivery();
+  const createDelivery = useCreateLogisticsDelivery();
 
   const [receivingDelivery, setReceivingDelivery] = useState<any>(null);
-  const [checklistValues, setChecklistValues] = useState<Record<string, number>>({});
+  const [checklistValues, setChecklistValues] = useState<Record<string, { received: number; accepted: number; rejected: number; reason: string }>>({});
+
+  // New Dispatch Modal State
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newForm, setNewForm] = useState({
+    project_id: filterProjectId || '',
+    destination: '',
+    delivery_date: new Date().toISOString().slice(0, 10),
+    driver_name: '',
+    vehicle_id: '',
+    notes: '',
+  });
+  const [dispatchItems, setDispatchItems] = useState<Array<{ description: string; quantity: number; unit: string }>>([
+    { description: '', quantity: 1, unit: 'un' },
+  ]);
 
   const filtered = useMemo(() => {
     let list = deliveries;
+    if (filterProjectId) list = list.filter(d => d.project_id === filterProjectId);
     if (filterStatus !== 'all') list = list.filter(d => d.status === filterStatus);
     if (search) {
       const s = search.toLowerCase();
       list = list.filter(d =>
         (d.destination || '').toLowerCase().includes(s) ||
         (d.driver_name || '').toLowerCase().includes(s) ||
-        ((d.project as any)?.name || '').toLowerCase().includes(s)
+        ((d.project as any)?.name || '').toLowerCase().includes(s) ||
+        (d.dispatch_number || '').toLowerCase().includes(s) ||
+        (d.remito_number || '').toLowerCase().includes(s)
       );
     }
     return list;
-  }, [deliveries, filterStatus, search]);
+  }, [deliveries, filterProjectId, filterStatus, search]);
 
-  const changeStatus = async (id: string, status: string, reason?: string) => {
-    await updateDelivery.mutateAsync({ id, status, rejection_reason: reason || null } as any);
+  const handleConfirmDeparture = async (d: LogisticsDelivery) => {
+    const dispatchNo = d.dispatch_number || `DES-${d.id.slice(0, 6).toUpperCase()}`;
+    const remitoNo = d.remito_number || `REM-${d.id.slice(0, 6).toUpperCase()}`;
+    await updateDelivery.mutateAsync({
+      id: d.id,
+      status: 'en_transito',
+      dispatch_number: dispatchNo,
+      remito_number: remitoNo,
+      departure_confirmed_at: new Date().toISOString(),
+    } as any);
+    useModalStore.getState().showAlert('Salida Confirmada', `Despacho ${dispatchNo} confirmado. Remito ${remitoNo} en tránsito a obra.`);
   };
 
   const handleReceiveDelivery = async () => {
     if (!receivingDelivery || updateDelivery.isPending) return;
-    
-    let isPartial = false;
-    let missingNotes = [];
+
+    let hasDifferences = false;
+    const diffNotes: string[] = [];
 
     for (const dItem of receivingDelivery.items || []) {
-      const receivedQty = checklistValues[dItem.id] || 0;
-      if (receivedQty < dItem.quantity) {
-        isPartial = true;
-        missingNotes.push(`Faltaron ${dItem.quantity - receivedQty} de ${dItem.description}`);
-      }
-
-      if (dItem.item_id && receivedQty > 0) {
-        // NOTE: We do NOT deduct stock here. 
-        // Stock is already deducted centrally when the Pañolero dispatches the request (useDispatchPurchaseRequest).
-        // Deducting stock again here causes duplicate stock deductions.
+      const vals = checklistValues[dItem.id] || { received: dItem.quantity, accepted: dItem.quantity, rejected: 0, reason: '' };
+      if (vals.rejected > 0 || vals.accepted < dItem.quantity) {
+        hasDifferences = true;
+        diffNotes.push(`${dItem.description}: Aceptados ${vals.accepted}/${dItem.quantity}${vals.rejected > 0 ? ` (Rechazados: ${vals.rejected} - ${vals.reason || 'S/M'})` : ''}`);
       }
     }
-    
-    const notes = isPartial ? `Recepción parcial. ${missingNotes.join(', ')}` : '';
-    await updateDelivery.mutateAsync({ id: receivingDelivery.id, status: 'entregado', notes: receivingDelivery.notes ? receivingDelivery.notes + '. ' + notes : notes } as any);
+
+    const noteAddition = hasDifferences ? ` [Recepción con diferencias: ${diffNotes.join('; ')}]` : ' [Recepción conforme 100%]';
+    await updateDelivery.mutateAsync({
+      id: receivingDelivery.id,
+      status: 'entregado',
+      notes: (receivingDelivery.notes || '') + noteAddition,
+    } as any);
+
     setReceivingDelivery(null);
     setChecklistValues({});
+    useModalStore.getState().showAlert('Recepción Confirmada', hasDifferences ? 'Recepción registrada con diferencias asentadas en el acta.' : 'Recepción registrada conforme.');
+  };
+
+  const handleCreateDispatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validItems = dispatchItems.filter(i => i.description.trim() && i.quantity > 0);
+    if (!validItems.length) {
+      alert('Debés agregar al menos un ítem al despacho.');
+      return;
+    }
+
+    const rnd = Math.random().toString(36).substring(2, 7).toUpperCase();
+    await createDelivery.mutateAsync({
+      project_id: newForm.project_id || null,
+      destination: newForm.destination || null,
+      delivery_date: newForm.delivery_date,
+      driver_name: newForm.driver_name || null,
+      vehicle_id: newForm.vehicle_id || null,
+      notes: newForm.notes || null,
+      dispatch_number: `DES-${rnd}`,
+      remito_number: `REM-${rnd}`,
+      status: 'pendiente',
+      items: validItems,
+    } as any);
+
+    setShowNewModal(false);
+    setNewForm({
+      project_id: '',
+      destination: '',
+      delivery_date: new Date().toISOString().slice(0, 10),
+      driver_name: '',
+      vehicle_id: '',
+      notes: '',
+    });
+    setDispatchItems([{ description: '', quantity: 1, unit: 'un' }]);
   };
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Repeat className="text-ecar-blue" /> Trazabilidad de Entregas y Envíos</h3>
-          <p className="text-xs text-gray-500 mt-0.5">Control de despachos en camino, choferes asignados y entregas confirmadas en obra.</p>
+          <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+            <Truck className="text-ecar-blue" /> Despachos y Entregas a Obra
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">Control de salidas físicas, choferes, remitos oficiales y confirmación de recepción en destino.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
@@ -705,29 +226,36 @@ const DeliveriesTab: React.FC<{
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar obra, chofer..."
-              className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm w-48 outline-none focus:ring-2 focus:ring-ecar-blue/20"
+              placeholder="Buscar remito, obra, chofer..."
+              className="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm w-56 outline-none focus:ring-2 focus:ring-ecar-blue/20"
             />
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 rounded-xl text-sm px-3 py-2 outline-none font-medium">
             <option value="all">Todos los estados</option>
             <option value="en_transito">🚚 En Tránsito / En Camino</option>
-            <option value="pendiente">🔵 Pendientes</option>
+            <option value="pendiente">🔵 Pendientes / En Preparación</option>
             <option value="entregado">✅ Entregados en Obra</option>
             <option value="cancelado">❌ Cancelados</option>
           </select>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="btn-primary bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus size={15} /> Programar Despacho
+          </button>
         </div>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
+        <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
       ) : filtered.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="data-table">
+          <table className="data-table text-xs">
             <thead>
               <tr>
-                <th>Fecha</th>
+                <th>Código / Remito</th>
+                <th>Fecha Salida</th>
                 <th>Obra / Destino</th>
                 <th>Vehículo</th>
                 <th>Chofer</th>
@@ -737,258 +265,65 @@ const DeliveriesTab: React.FC<{
               </tr>
             </thead>
             <tbody>
-              {filtered.map(d => (
-                <tr key={d.id}>
-                  <td className="text-gray-500 text-xs">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
-                  <td className="font-medium text-gray-800">{(d.project as any)?.name || d.destination || '-'}</td>
-                  <td className="text-gray-600 text-xs">{(d.vehicle as any)?.code ? `${(d.vehicle as any).code} ${(d.vehicle as any).plate ? `(${(d.vehicle as any).plate})` : ''}` : '-'}</td>
-                  <td className="text-gray-700">{d.driver_name || '-'}</td>
-                  <td className="text-center font-bold text-gray-700">{(d.items || []).length}</td>
-                  <td>
-                    <span className={`badge ${STATUS_BADGE[d.status]?.cls}`}>
-                      {STATUS_BADGE[d.status]?.label}
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      {(d.status === 'pendiente' || d.status === 'pendiente_autorizacion') && (
-                        <>
-                          <button onClick={() => changeStatus(d.id, 'aprobado')} className="text-purple-600 hover:bg-purple-50 p-1 rounded" title="Autorizar Entrega">
-                            <CheckCircle2 size={16} />
-                          </button>
-                          <button onClick={() => {
-                            const reason = prompt('Motivo del rechazo:');
-                            if (reason !== null && reason.trim() !== '') {
-                              changeStatus(d.id, 'rechazado', reason);
-                            } else if (reason === '') {
-                              alert('Debes ingresar un motivo para rechazar.');
-                            }
-                          }} className="text-red-600 hover:bg-red-50 p-1 rounded" title="Rechazar Entrega">
-                            <X size={16} />
-                          </button>
-                        </>
-                      )}
-                      {d.status === 'aprobado' && (
-                        <button onClick={() => changeStatus(d.id, 'en_transito')} className="text-blue-600 hover:bg-blue-50 p-1 rounded" title="Despachar a obra">
-                          <ArrowRight size={16} />
-                        </button>
-                      )}
-                      {d.status === 'en_transito' && (
-                        <>
-                          <button onClick={() => {
-                            // En un entorno real se usaría window.location o un store setter para cambiar el módulo.
-                            // Por ahora simulamos un link global a "tracking" si existe.
-                            window.location.hash = '#tracking';
-                          }} className="text-blue-400 hover:bg-blue-50 p-1 rounded" title="Ver Mapa en Vivo">
-                            <MapPin size={16} />
-                          </button>
-                          <button onClick={() => {
-                            const initialChecklist: Record<string, number> = {};
-                            d.items?.forEach((i: any) => initialChecklist[i.id] = i.quantity);
-                            setChecklistValues(initialChecklist);
-                            setReceivingDelivery(d);
-                          }} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded" title="Recepción en obra">
-                            <PackageCheck size={16} />
-                          </button>
-                        </>
-                      )}
-                      {(d.status === 'pendiente' || d.status === 'pendiente_autorizacion' || d.status === 'aprobado' || d.status === 'en_transito' || d.status === 'rechazado') && (
-                        <button onClick={() => changeStatus(d.id, 'cancelado')} className="text-gray-400 hover:bg-gray-50 p-1 rounded" title="Cancelar definitivamente">
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <Repeat size={48} className="mx-auto mb-3 opacity-20" />
-          <p>No hay entregas registradas.</p>
-          <p className="text-xs mt-1">Programá una nueva entrega a obra usando el botón superior.</p>
-        </div>
-      )}
+              {filtered.map(d => {
+                const remitoCode = d.remito_number || `REM-${d.id.slice(0, 6).toUpperCase()}`;
+                const dispatchCode = d.dispatch_number || `DES-${d.id.slice(0, 6).toUpperCase()}`;
 
-      {/* Modal de Checklist de Recepción */}
-      {receivingDelivery && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex justify-between items-center">
-              <h2 className="font-bold text-lg flex items-center gap-2"><PackageCheck size={20} /> Checklist de Recepción en Obra</h2>
-              <button onClick={() => setReceivingDelivery(null)} className="hover:bg-white/20 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
-            </div>
-            
-            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="bg-emerald-50 text-emerald-800 p-3 rounded-lg text-sm mb-4">
-                Por favor, confirmá la recepción de los siguientes materiales/herramientas en <strong>{(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}</strong>. Al confirmar, se descontarán del stock.
-              </div>
-              
-              <div className="space-y-2">
-                {(receivingDelivery.items || []).map((it: any) => (
-                  <div key={it.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="flex-1">
-                      <div className="font-bold text-gray-800">{it.description}</div>
-                      <div className="text-sm text-gray-500">Esperado: {it.quantity} {it.unit}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-600">Recibido:</span>
-                      <input 
-                        type="number" 
-                        min="0"
-                        max={it.quantity}
-                        className="w-20 border rounded-lg px-2 py-1 text-center"
-                        value={checklistValues[it.id] !== undefined ? checklistValues[it.id] : it.quantity}
-                        onChange={(e) => setChecklistValues({...checklistValues, [it.id]: Number(e.target.value)})}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-              <button onClick={() => setReceivingDelivery(null)} className="btn-secondary px-5 py-2">Cancelar</button>
-              <button 
-                onClick={handleReceiveDelivery} 
-                disabled={updateDelivery.isPending || (receivingDelivery.items || []).some((it: any) => !checklistValues[it.id])} 
-                className="btn-primary bg-emerald-600 hover:bg-emerald-700 border-none px-5 py-2 flex items-center gap-2 disabled:opacity-50"
-              >
-                <CheckCircle2 size={18} /> Confirmar Recepción Completa
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ═══════════════════════ FLEET TAB ═══════════════════════ */
-
-export const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> = ({ vehicles, loading }) => {
-  const updateVehicle = useUpdateFuelVehicle();
-  const [search, setSearch] = useState('');
-  const [filterCondition, setFilterCondition] = useState<string>('all');
-
-  const filtered = useMemo(() => {
-    let list = vehicles;
-    if (filterCondition !== 'all') list = list.filter(v => v.vehicle_condition === filterCondition);
-    if (search) {
-      const s = search.toLowerCase();
-      list = list.filter(v =>
-        v.code.toLowerCase().includes(s) ||
-        v.description.toLowerCase().includes(s) ||
-        (v.plate || '').toLowerCase().includes(s)
-      );
-    }
-    return list;
-  }, [vehicles, filterCondition, search]);
-
-  const summary = useMemo(() => ({
-    total: vehicles.length,
-    active: vehicles.filter(v => v.status === 'active').length,
-    maintenance: vehicles.filter(v => v.status === 'maintenance').length,
-    inactive: vehicles.filter(v => v.status === 'inactive').length,
-    operativo: vehicles.filter(v => v.vehicle_condition === 'operativo').length,
-    con_obs: vehicles.filter(v => v.vehicle_condition === 'con_observaciones').length,
-    fuera: vehicles.filter(v => v.vehicle_condition === 'fuera_de_servicio').length,
-  }), [vehicles]);
-
-  return (
-    <div className="p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Truck className="text-ecar-blue" /> Flota y Maquinaria</h3>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="pl-8 pr-3 py-2 border rounded-lg text-sm w-40" />
-          </div>
-          <select value={filterCondition} onChange={e => setFilterCondition(e.target.value)} className="border rounded-lg text-sm px-3 py-2">
-            <option value="all">Todos</option>
-            <option value="operativo">Operativos</option>
-            <option value="con_observaciones">Con Observaciones</option>
-            <option value="fuera_de_servicio">Fuera de Servicio</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
-        <div className="bg-gray-50 rounded-lg p-3 text-center border"><p className="text-2xl font-black text-gray-800">{summary.total}</p><p className="text-xs text-gray-500">Total</p></div>
-        <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100"><p className="text-2xl font-black text-emerald-700">{summary.active}</p><p className="text-xs text-emerald-600">Activos</p></div>
-        <div className="bg-amber-50 rounded-lg p-3 text-center border border-amber-100"><p className="text-2xl font-black text-amber-700">{summary.maintenance}</p><p className="text-xs text-amber-600">Mantenimiento</p></div>
-        <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100"><p className="text-2xl font-black text-green-700">{summary.operativo}</p><p className="text-xs text-green-600">Operativos</p></div>
-        <div className="bg-yellow-50 rounded-lg p-3 text-center border border-yellow-100"><p className="text-2xl font-black text-yellow-700">{summary.con_obs}</p><p className="text-xs text-yellow-600">c/ Obs.</p></div>
-        <div className="bg-red-50 rounded-lg p-3 text-center border border-red-100"><p className="text-2xl font-black text-red-700">{summary.fuera}</p><p className="text-xs text-red-600">Fuera Serv.</p></div>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
-      ) : filtered.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Vehículo</th>
-                <th>Patente</th>
-                <th className="text-center">Km Actual</th>
-                <th>Próx. Mant.</th>
-                <th>VTV</th>
-                <th>Seguro</th>
-                <th>Condición</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(v => {
-                const vtvExpired = v.vtv_expiry && v.vtv_expiry <= today();
-                const insExpired = v.insurance_expiry && v.insurance_expiry <= today();
-                const maintSoon = v.next_maintenance_date && v.next_maintenance_date <= today();
                 return (
-                  <tr key={v.id}>
-                    <td className="font-mono text-xs text-gray-500 flex items-center gap-2">
-                      <span>{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span> {v.code}
-                    </td>
-                    <td className="font-medium text-gray-800">{v.description} {v.brand ? <span className="text-gray-400 font-normal ml-1">({v.brand})</span> : null}</td>
-                    <td className="text-gray-600">{v.plate || '-'}</td>
-                    <td className="text-center font-bold">{v.current_km?.toLocaleString() || '-'}</td>
-                    <td className={`text-xs ${maintSoon ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
-                      {v.next_maintenance_date ? new Date(v.next_maintenance_date).toLocaleDateString('es-AR') : '-'}
-                    </td>
-                    <td className={`text-xs ${vtvExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
-                      {v.vtv_expiry ? new Date(v.vtv_expiry).toLocaleDateString('es-AR') : '-'}
-                      {vtvExpired && <span className="ml-1">⚠️</span>}
-                    </td>
-                    <td className={`text-xs ${insExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
-                      {v.insurance_expiry ? new Date(v.insurance_expiry).toLocaleDateString('es-AR') : '-'}
-                      {insExpired && <span className="ml-1">⚠️</span>}
-                    </td>
+                  <tr key={d.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-0.5 rounded-full shadow-xs">
-                        <IosToggleSwitch
-                          size="sm"
-                          checked={v.vehicle_condition === 'fuera_de_servicio'}
-                          onChange={async (isFuera) => {
-                            const newCondition = isFuera ? 'fuera_de_servicio' : 'operativo';
-                            try {
-                              await updateVehicle.mutateAsync({ id: v.id, vehicle_condition: newCondition });
-                              useModalStore.getState().showAlert(
-                                'Estado de Vehículo Actualizado',
-                                isFuera 
-                                  ? `🔴 El vehículo ${v.code} fue marcado como FUERA DE SERVICIO.`
-                                  : `🟢 El vehículo ${v.code} está de nuevo OPERATIVO (En servicio).`
-                              );
-                            } catch (err: any) {
-                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo cambiar el estado.');
-                            }
-                          }}
-                        />
-                        <span className={`text-[10px] font-extrabold ${v.vehicle_condition === 'fuera_de_servicio' ? 'text-red-600' : 'text-emerald-700'}`}>
-                          {v.vehicle_condition === 'fuera_de_servicio' ? 'Fuera Serv.' : 'Operativo'}
-                        </span>
+                      <div className="font-mono font-bold text-gray-800">{remitoCode}</div>
+                      <span className="text-[10px] text-gray-400 font-mono">{dispatchCode}</span>
+                    </td>
+                    <td className="text-gray-500 font-medium">{new Date(d.delivery_date).toLocaleDateString('es-AR')}</td>
+                    <td className="font-bold text-gray-800">{(d.project as any)?.name || d.destination || 'Obra'}</td>
+                    <td className="text-gray-600">{(d.vehicle as any)?.code ? `${(d.vehicle as any).code}` : 'Flete ext.'}</td>
+                    <td className="text-gray-700">{d.driver_name || 'Sin asignar'}</td>
+                    <td className="text-center font-bold text-gray-700">{(d.items || []).length}</td>
+                    <td>
+                      <span className={`badge ${STATUS_BADGE[d.status]?.cls}`}>
+                        {STATUS_BADGE[d.status]?.label}
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {/* Confirmar salida */}
+                        {(d.status === 'pendiente' || d.status === 'pendiente_autorizacion' || d.status === 'aprobado') && (
+                          <button
+                            onClick={() => handleConfirmDeparture(d)}
+                            className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+                            title="Confirmar salida física del depósito (descuenta inventario y emite remito)"
+                          >
+                            <Truck size={13} /> Confirmar Salida
+                          </button>
+                        )}
+
+                        {/* Recepcionar en obra */}
+                        {d.status === 'en_transito' && (
+                          <button
+                            onClick={() => {
+                              const initialChecklist: Record<string, { received: number; accepted: number; rejected: number; reason: string }> = {};
+                              d.items?.forEach((i: any) => {
+                                initialChecklist[i.id] = { received: i.quantity, accepted: i.quantity, rejected: 0, reason: '' };
+                              });
+                              setChecklistValues(initialChecklist);
+                              setReceivingDelivery(d);
+                            }}
+                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+                            title="Registrar recepción en obra"
+                          >
+                            <PackageCheck size={13} /> Recepcionar
+                          </button>
+                        )}
+
+                        {/* PDF Remito */}
+                        <button
+                          onClick={() => exportDispatchPdf(d as any)}
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all"
+                          title="Descargar Remito PDF"
+                        >
+                          <FileText size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -998,208 +333,269 @@ export const FleetTab: React.FC<{ vehicles: FuelVehicle[]; loading: boolean }> =
           </table>
         </div>
       ) : (
-        <div className="text-center py-20 text-gray-400">
-          <Truck size={48} className="mx-auto mb-3 opacity-20" />
-          <p>No hay vehículos registrados.</p>
+        <div className="text-center py-20 text-gray-400 space-y-3">
+          <Truck size={48} className="mx-auto opacity-20 text-ecar-blue" />
+          <p className="font-bold text-gray-700 text-sm">No hay entregas registradas</p>
+          <p className="text-xs text-gray-500">Programá una nueva entrega a obra usando el botón superior.</p>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="btn-primary bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+          >
+            <Plus size={15} /> Programar Despacho
+          </button>
         </div>
       )}
-    </div>
-  );
-};
 
+      {/* Modal Programar Despacho */}
+      {showNewModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-base text-gray-900 flex items-center gap-2">
+                <Truck size={18} className="text-ecar-blue" /> Programar Nuevo Despacho a Obra
+              </h3>
+              <button onClick={() => setShowNewModal(false)} className="text-gray-400 hover:text-gray-600 text-xl font-bold">✕</button>
+            </div>
 
+            <form onSubmit={handleCreateDispatch} className="space-y-3">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Obra / Destino *</label>
+                <select
+                  required
+                  value={newForm.project_id}
+                  onChange={e => setNewForm({ ...newForm, project_id: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl"
+                >
+                  <option value="">Seleccioná una obra...</option>
+                  {(projects || []).map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
 
-/* ═══════════════════════ MAINTENANCE TAB ═══════════════════════ */
-
-export const MaintenanceTab: React.FC<{
-  logs: LogisticsMaintenanceLog[];
-  loading: boolean;
-  allVehicles: FuelVehicle[];
-}> = ({ logs, loading, allVehicles }) => {
-  const [showForm, setShowForm] = useState(false);
-  const createLog = useCreateLogisticsMaintenanceLog();
-  const { profile } = useAuth();
-
-  const [form, setForm] = useState({
-    vehicle_id: '', type: 'service' as LogisticsMaintenanceLog['type'], date: today(),
-    km_hours: '', cost: '', provider: '', description: '', next_due_date: '', next_due_km: '',
-  });
-
-  const handleSubmit = async () => {
-    if (!form.vehicle_id || !form.date) return;
-    await createLog.mutateAsync({
-      vehicle_id: form.vehicle_id,
-      type: form.type,
-      date: form.date,
-      km_hours: form.km_hours ? Number(form.km_hours) : null,
-      cost: form.cost ? Number(form.cost) : 0,
-      provider: form.provider || null,
-      description: form.description || null,
-      next_due_date: form.next_due_date || null,
-      next_due_km: form.next_due_km ? Number(form.next_due_km) : null,
-      created_by: profile?.full_name || null,
-    });
-    setForm({ vehicle_id: '', type: 'service', date: today(), km_hours: '', cost: '', provider: '', description: '', next_due_date: '', next_due_km: '' });
-    setShowForm(false);
-  };
-
-  // Upcoming events from vehicles
-  const upcoming = useMemo(() => {
-    const events: { type: string; vehicle: FuelVehicle; date: string; label: string }[] = [];
-    allVehicles.forEach(v => {
-      if (v.next_maintenance_date) events.push({ type: 'service', vehicle: v, date: v.next_maintenance_date, label: 'Service' });
-      if (v.vtv_expiry) events.push({ type: 'vtv', vehicle: v, date: v.vtv_expiry, label: 'VTV' });
-      if (v.insurance_expiry) events.push({ type: 'seguro', vehicle: v, date: v.insurance_expiry, label: 'Seguro' });
-    });
-    events.sort((a, b) => a.date.localeCompare(b.date));
-    return events.filter(e => {
-      const d = new Date(e.date);
-      const limit = new Date();
-      limit.setDate(limit.getDate() + 60);
-      return d <= limit;
-    });
-  }, [allVehicles]);
-
-  return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2"><Wrench className="text-ecar-blue" /> Mantenimiento</h3>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary text-sm flex items-center gap-2 px-4 py-2">
-          <Plus size={16} /> Registrar Mantenimiento
-        </button>
-      </div>
-
-      {/* Calendar: upcoming */}
-      {upcoming.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <h4 className="font-bold text-blue-800 text-sm flex items-center gap-2 mb-3"><Calendar size={16} /> Próximos Vencimientos (60 días)</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {upcoming.slice(0, 9).map((e, idx) => {
-              const isOverdue = e.date <= today();
-              return (
-                <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-white border-blue-100'}`}>
-                  <div className="flex items-center gap-2">
-                    <span>{VEHICLE_ICON[e.vehicle.vehicle_type] || '🚐'}</span>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{e.vehicle.code}</p>
-                      <p className={`text-xs font-bold ${isOverdue ? 'text-red-600' : 'text-blue-600'}`}>{e.label}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-xs font-bold ${isOverdue ? 'text-red-700' : 'text-gray-700'}`}>{new Date(e.date).toLocaleDateString('es-AR')}</p>
-                    {isOverdue && <p className="text-xs text-red-500">VENCIDO</p>}
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Fecha Prevista *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newForm.delivery_date}
+                    onChange={e => setNewForm({ ...newForm, delivery_date: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
                 </div>
-              );
-            })}
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Chofer / Responsable</label>
+                  <select
+                    value={newForm.driver_name}
+                    onChange={e => setNewForm({ ...newForm, driver_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl"
+                  >
+                    <option value="">— Sin chofer asignado —</option>
+                    {employees.map((emp: any) => (
+                      <option key={emp.id} value={`${emp.first_name} ${emp.last_name}`}>
+                        {emp.first_name} {emp.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Vehículo de Flota</label>
+                <select
+                  value={newForm.vehicle_id}
+                  onChange={e => setNewForm({ ...newForm, vehicle_id: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-xl"
+                >
+                  <option value="">— Flete externo / Retiro personal —</option>
+                  {allVehicles.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.code} - {v.description} ({v.plate || 'S/P'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Items a transportar */}
+              <div className="space-y-2 border-t pt-3">
+                <label className="font-bold text-gray-800 block">Artículos a Despachar</label>
+                {dispatchItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      required
+                      value={item.description}
+                      onChange={e => {
+                        const updated = [...dispatchItems];
+                        updated[idx].description = e.target.value;
+                        setDispatchItems(updated);
+                      }}
+                      className="flex-1 px-3 py-1.5 border rounded-lg"
+                      placeholder="Descripción del material..."
+                    />
+                    <input
+                      type="number"
+                      required
+                      value={item.quantity}
+                      onChange={e => {
+                        const updated = [...dispatchItems];
+                        updated[idx].quantity = Number(e.target.value);
+                        setDispatchItems(updated);
+                      }}
+                      className="w-16 px-2 py-1.5 border rounded-lg text-center font-mono"
+                    />
+                    <input
+                      value={item.unit}
+                      onChange={e => {
+                        const updated = [...dispatchItems];
+                        updated[idx].unit = e.target.value;
+                        setDispatchItems(updated);
+                      }}
+                      className="w-16 px-2 py-1.5 border rounded-lg text-center"
+                    />
+                    {dispatchItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setDispatchItems(dispatchItems.filter((_, i) => i !== idx))}
+                        className="text-red-500 font-bold"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setDispatchItems([...dispatchItems, { description: '', quantity: 1, unit: 'un' }])}
+                  className="text-ecar-blue font-bold hover:underline text-xs"
+                >
+                  + Agregar otro artículo
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNewModal(false)}
+                  className="px-4 py-2 border rounded-xl font-bold text-gray-600 hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createDelivery.isPending}
+                  className="btn-primary bg-ecar-blue hover:bg-ecar-blueDark text-white px-4 py-2 rounded-xl font-bold shadow-sm"
+                >
+                  {createDelivery.isPending ? 'Guardando...' : 'Programar Despacho'}
+                </button>
+              </div>
+            </form>
           </div>
-          {upcoming.length > 9 && <p className="text-xs text-blue-600 mt-2">...y {upcoming.length - 9} más</p>}
         </div>
       )}
 
-      {/* New Maintenance Form */}
-      {showForm && (
-        <div className="bg-slate-50 border border-ecar-blueLight rounded-xl p-4 md:p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h4 className="font-bold text-ecar-blueDark text-sm">Registrar Service / Mantenimiento</h4>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Vehículo / Máquina *</label>
-              <select value={form.vehicle_id} onChange={e => setForm({ ...form, vehicle_id: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="">— Seleccionar —</option>
-                {allVehicles.map(v => (
-                  <option key={v.id} value={v.id}>{v.code} - {v.description} {v.plate ? `(${v.plate})` : ''}</option>
-                ))}
-              </select>
+      {/* Modal de Checklist de Recepción */}
+      {receivingDelivery && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden text-xs">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex justify-between items-center">
+              <h2 className="font-bold text-base flex items-center gap-2">
+                <PackageCheck size={18} /> Recepción de Materiales en Obra
+              </h2>
+              <button onClick={() => setReceivingDelivery(null)} className="hover:bg-white/20 p-1.5 rounded-lg transition-colors font-bold">✕</button>
             </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Tipo</label>
-              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as any })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                {Object.entries(MAINT_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
+
+            <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="bg-emerald-50 text-emerald-900 p-3 rounded-xl border border-emerald-100 leading-relaxed">
+                Confirmación de recepción en <strong>{(receivingDelivery.project as any)?.name || receivingDelivery.destination || 'Obra'}</strong>.
+                <br /><span className="text-[11px] text-emerald-700 italic">Nota: La recepción registra lo llegado a obra. No vuelve a descontar el stock de Pañol Central.</span>
+              </div>
+
+              <div className="space-y-3">
+                {(receivingDelivery.items || []).map((it: any) => {
+                  const state = checklistValues[it.id] || { received: it.quantity, accepted: it.quantity, rejected: 0, reason: '' };
+
+                  return (
+                    <div key={it.id} className="p-3 border rounded-xl bg-slate-50 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-gray-800 text-sm">{it.description}</span>
+                        <span className="text-gray-500 font-mono">Enviado: {it.quantity} {it.unit}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Cant. Aceptada Conforme</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={it.quantity}
+                            value={state.accepted}
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setChecklistValues(prev => ({
+                                ...prev,
+                                [it.id]: { ...state, accepted: val, rejected: Math.max(0, it.quantity - val) }
+                              }));
+                            }}
+                            className="w-full px-2 py-1.5 border rounded-lg bg-white font-mono text-center font-bold text-emerald-800"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Cant. Rechazada / Faltante</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={state.rejected}
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setChecklistValues(prev => ({
+                                ...prev,
+                                [it.id]: { ...state, rejected: val, accepted: Math.max(0, it.quantity - val) }
+                              }));
+                            }}
+                            className="w-full px-2 py-1.5 border rounded-lg bg-white font-mono text-center font-bold text-red-800"
+                          />
+                        </div>
+                      </div>
+                      {state.rejected > 0 && (
+                        <div>
+                          <input
+                            value={state.reason}
+                            onChange={e => {
+                              setChecklistValues(prev => ({
+                                ...prev,
+                                [it.id]: { ...state, reason: e.target.value }
+                              }));
+                            }}
+                            placeholder="Motivo del rechazo / daño de material..."
+                            className="w-full px-2 py-1 border border-red-300 rounded-lg bg-red-50 text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Fecha *</label>
-              <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button onClick={() => setReceivingDelivery(null)} className="px-4 py-2 border rounded-xl font-bold text-gray-600 hover:bg-slate-100">
+                Cancelar
+              </button>
+              <button
+                onClick={handleReceiveDelivery}
+                disabled={updateDelivery.isPending}
+                className="btn-primary bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-bold shadow-sm"
+              >
+                {updateDelivery.isPending ? 'Confirmando...' : 'Confirmar Recepción en Obra'}
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Km / Horas al momento</label>
-              <input type="number" value={form.km_hours} onChange={e => setForm({ ...form, km_hours: e.target.value })} placeholder="Ej: 45000" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Costo ($)</label>
-              <input type="number" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} placeholder="0" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Proveedor / Taller</label>
-              <input value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })} placeholder="Nombre del taller" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs font-bold text-gray-600 block mb-1">Descripción del trabajo</label>
-              <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Detalle de lo realizado" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-gray-600 block mb-1">Próximo vencimiento</label>
-              <input type="date" value={form.next_due_date} onChange={e => setForm({ ...form, next_due_date: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <button onClick={handleSubmit} disabled={createLog.isPending} className="btn-primary px-6 py-2 text-sm flex items-center gap-2 disabled:opacity-50">
-              <Save size={16} /> {createLog.isPending ? 'Guardando...' : 'Registrar'}
-            </button>
           </div>
         </div>
       )}
-
-      {/* Maintenance History */}
-      <div>
-        <h4 className="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2"><FileText size={14} /> Historial de Mantenimientos</h4>
-        {loading ? (
-          <div className="flex justify-center p-10"><div className="w-8 h-8 border-4 border-ecar-blueLight border-t-ecar-blue rounded-full animate-spin"></div></div>
-        ) : logs.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Vehículo</th>
-                  <th>Tipo</th>
-                  <th>Descripción</th>
-                  <th>Proveedor</th>
-                  <th className="text-right">Costo</th>
-                  <th>Km/Hrs</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map(l => (
-                  <tr key={l.id}>
-                    <td className="text-gray-500 text-xs">{new Date(l.date).toLocaleDateString('es-AR')}</td>
-                    <td className="font-medium text-gray-800">{(l.vehicle as any)?.code || '-'} {(l.vehicle as any)?.plate ? <span className="text-gray-400">({(l.vehicle as any).plate})</span> : ''}</td>
-                    <td>
-                      <span className="badge badge-neutral">{MAINT_TYPE_LABEL[l.type] || l.type}</span>
-                    </td>
-                    <td className="text-gray-600 text-xs max-w-xs truncate">{l.description || '-'}</td>
-                    <td className="text-gray-600 text-xs">{l.provider || '-'}</td>
-                    <td className="text-right font-bold text-gray-700">{l.cost ? fmt(l.cost) : '-'}</td>
-                    <td className="text-gray-500 text-xs">{l.km_hours?.toLocaleString() || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 text-center text-gray-400">
-            <Wrench size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No hay registros de mantenimiento.</p>
-            <p className="text-xs mt-1">Registrá un service o reparación con el botón superior.</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
+
 
 /* ═══════════════════════ PROCESS DIAGRAMS TAB ═══════════════════════ */
 

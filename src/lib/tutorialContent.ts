@@ -623,4 +623,77 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'Los pagos realizados con "Cheque Propio" se registran automáticamente en el módulo de Finanzas y Cheques.',
     ],
   },
+  obra_panel: {
+    title: '1. Panel de Obras',
+    description: 'Consola ejecutiva multiobra para seguimiento de proyectos, desvíos de plazos, hitos y alertas consolidadas.',
+    steps: [
+      'Consultá el estado de la cartera: obras en ejecución, suspendidas y finalizadas.',
+      'Revisá el centro de alertas con hitos en riesgo, pedidos críticos e incidencias.',
+      'Hacé clic en "Ingresar a Gestión de Obra" para profundizar en el frente de trabajo.',
+    ],
+    tips: [
+      'Podés crear nuevas obras directamente con el botón "+ Nueva Obra".',
+    ],
+  },
+  obra_gestion: {
+    title: '2. Gestión de Obra',
+    description: 'Núcleo operativo del proyecto: Resumen 20s, Planificación WBS, Programación, Ejecución, Parte Diario, Rendimientos Roque, Pendientes e Hitos.',
+    steps: [
+      'Revisá el diagnóstico de la obra en el Resumen 20s.',
+      'Estructurá tareas en Planificación y programá actividades en el Gantt.',
+      'Consolidá el trabajo de campo con el Parte Diario y la planilla de Rendimientos Roque.',
+      'Capturá pendientes de recorrida y controlá las alertas de Hitos y Plazos.',
+    ],
+    tips: [
+      'Usá "⚡ Precargar Tareas de Hoy" en el Parte Diario para no tipear lo mismo cada día.',
+    ],
+  },
+  obra_recursos: {
+    title: '3. Recursos y Abastecimiento',
+    description: 'Gestión coordinada de pedidos tripartitos, movimientos de materiales y asignación de personal y flota sin duplicar maestros.',
+    steps: [
+      'Gestioná solicitudes de insumos y confirmá despachos y recepciones.',
+      'Consultá los movimientos de materiales entre Pañol y frentes de obra.',
+      'Verificá el personal de RRHH y la flota asignada a cada proyecto.',
+    ],
+    tips: [
+      'Cada recepción en obra emite un Acta PDF con conformidad y firma.',
+    ],
+  },
+  obra_calidad: {
+    title: '4. Calidad, Seguridad y Mejora',
+    description: 'Aseguramiento de calidad, auditorías de Higiene & Seguridad (Dec. 911/96), No Conformidades y lecciones aprendidas.',
+    steps: [
+      'Ejecutá checklists técnicos y protocolos con score % de cumplimiento.',
+      'Audita frentes de trabajo y emití informes semanales de seguridad en PDF.',
+      'Registrá No Conformidades (CNC) y documentá lecciones aprendidas.',
+    ],
+    tips: [
+      'Podés escalar un pendiente de recorrida directamente a No Conformidad formal.',
+    ],
+  },
+  obra_economia: {
+    title: '5. Gestión Económica',
+    description: 'Control económico de obra: certificaciones en 3 niveles, adicionales y cambios de alcance valorizados, y proyección de cierre.',
+    steps: [
+      'Diferenciá cantidades ejecutadas, medidas y formalmente certificadas.',
+      'Cargá expedientes de adicionales de obra con cómputo métrico y fotos de respaldo.',
+      'Monitoreá el saldo pendiente de cobro y el contrato ajustado total.',
+    ],
+    tips: [
+      'Un adicional aprobado se vincula con la certificación de la comitente.',
+    ],
+  },
+  obra_documentacion: {
+    title: '6. Documentación y Comunicación',
+    description: 'Planos con control de versión vigente, consultas técnicas (RFI), minutas de reunión e informes ejecutivos de obra en PDF.',
+    steps: [
+      'Accedé al repositorio de planos asegurando siempre la revisión activa vigente.',
+      'Canalizá dudas técnicas con proyectistas mediante RFI.',
+      'Emití informes periódicos en PDF para presentar al cliente comitente.',
+    ],
+    tips: [
+      'El generador de informes de obra vuelca automáticamente fotos y avances del parte diario.',
+    ],
+  },
 };

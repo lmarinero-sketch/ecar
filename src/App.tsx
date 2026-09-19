@@ -53,8 +53,18 @@ import { WeeklyReportModule } from './components/WeeklyReportModule';
 import { ActivityTracker } from './components/ActivityTracker';
 import { useOfflineSync } from './hooks/useOfflineSync';
 import { ScopeChangesModule } from './components/ScopeChangesModule';
-
 import { QualityModule } from './components/QualityModule';
+
+// Gerencia de Obras - 6 Grupos Oficiales
+import { PanelObrasModule } from './components/obra/PanelObrasModule';
+import { GestionObraModule } from './components/obra/GestionObraModule';
+import { RecursosAbastecimientoModule } from './components/obra/RecursosAbastecimientoModule';
+import { CalidadSeguridadMejoraModule } from './components/obra/CalidadSeguridadMejoraModule';
+import { GestionEconomicaModule } from './components/obra/GestionEconomicaModule';
+import { DocumentacionComunicacionModule } from './components/obra/DocumentacionComunicacionModule';
+
+// Gerencia de Logística - Centro de Control Operativo
+import { LogisticsHomeModule } from './components/logistics/LogisticsHomeModule';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -165,7 +175,7 @@ function AppContent() {
       case 'opportunities': return <OpportunitiesModule />;
       case 'budget_landing': return <BudgetLandingModule />;
       case 'compras_intro': return <GerenciaLandingModule gerenciaKey="compras" />;
-      case 'logistics_intro': return <GerenciaLandingModule gerenciaKey="logistics" />;
+      case 'logistics_intro': return <LogisticsHomeModule />;
       case 'obra_intro': return <GerenciaLandingModule gerenciaKey="obra" />;
       case 'finanzas_intro': return <GerenciaLandingModule gerenciaKey="finanzas" />;
       case 'rrhh_intro': return <GerenciaLandingModule gerenciaKey="rrhh" />;
@@ -183,8 +193,16 @@ function AppContent() {
       case 'communications': return <CommunicationsModule />;
       case 'weekly_report': return <WeeklyReportModule />;
       case 'scope_changes': return <ScopeChangesModule />;
-      
       case 'quality': return <QualityModule />;
+
+      // Gerencia de Obras - 6 Grupos Oficiales
+      case 'obra_panel': return <PanelObrasModule />;
+      case 'obra_gestion': return <GestionObraModule />;
+      case 'obra_recursos': return <RecursosAbastecimientoModule />;
+      case 'obra_calidad': return <CalidadSeguridadMejoraModule />;
+      case 'obra_economia': return <GestionEconomicaModule />;
+      case 'obra_documentacion': return <DocumentacionComunicacionModule />;
+
       default: return <BiDashboard />;
     }
   };
