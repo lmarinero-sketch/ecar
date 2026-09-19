@@ -11,6 +11,7 @@ import {
   useProjects, useEmployees, useSeguridadObservaciones,
   useObraControlTareas, useCreatePurchaseRequest
 } from '../hooks/useData';
+import { PPEDeliveriesPanel } from './PPEDeliveriesPanel';
 import type {
   SeguridadInformeSemanal, SituacionDetectadaHyS,
   MedidaCorrectivaHyS, PendienteSeguimientoHyS, FotoEvidenciaHyS
@@ -87,6 +88,7 @@ const DEFAULT_FOTOS: FotoEvidenciaHyS[] = [
 export const WeeklySafetyReportsPanel: React.FC<WeeklySafetyReportsPanelProps> = ({ selectedProjectId }) => {
   const [filterProject, setFilterProject] = useState<string>(selectedProjectId || '');
   const [filterEstado, setFilterEstado] = useState<string>('todos');
+  const [activeTab, setActiveTab] = useState<'informes' | 'entregas_personal'>('informes');
 
   // Queries
   const { data: informes = [], isLoading } = useSeguridadInformesSemanales(filterProject || undefined);
@@ -523,6 +525,16 @@ export const WeeklySafetyReportsPanel: React.FC<WeeklySafetyReportsPanelProps> =
 
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setActiveTab(activeTab === 'entregas_personal' ? 'informes' : 'entregas_personal')}
+              className={`px-3.5 py-2.5 rounded-xl font-bold text-xs border flex items-center gap-1.5 transition-all shadow-sm ${
+                activeTab === 'entregas_personal'
+                  ? 'bg-emerald-500 text-white border-emerald-400'
+                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border-emerald-400/30'
+              }`}
+            >
+              <ShieldCheck size={14} /> {activeTab === 'entregas_personal' ? '📋 Ver Informes Semanales' : '🦺 Material & EPP al Personal'}
+            </button>
+            <button
               onClick={() => setShowPedidoModal(true)}
               className="px-3.5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-bold text-xs border border-amber-400/30 flex items-center gap-1.5 transition-all shadow-sm"
             >
@@ -538,6 +550,34 @@ export const WeeklySafetyReportsPanel: React.FC<WeeklySafetyReportsPanelProps> =
         </div>
       </div>
 
+      {/* Selector de Pestañas: Informes Semanales vs Material Entregado al Personal */}
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+        <button
+          onClick={() => setActiveTab('informes')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+            activeTab === 'informes'
+              ? 'bg-ecar-blue text-white shadow-md'
+              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+          }`}
+        >
+          <FileText size={15} /> Informes Semanales (Entregables) ({filteredInformes.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('entregas_personal')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+            activeTab === 'entregas_personal'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-200'
+          }`}
+        >
+          <ShieldCheck size={15} /> 🦺 Material & EPP Entregado al Personal
+        </button>
+      </div>
+
+      {activeTab === 'entregas_personal' ? (
+        <PPEDeliveriesPanel />
+      ) : (
+        <>
       {/* Barra de Filtros */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
@@ -685,6 +725,8 @@ export const WeeklySafetyReportsPanel: React.FC<WeeklySafetyReportsPanelProps> =
             );
           })}
         </div>
+      )}
+        </>
       )}
 
       {/* ─── MODAL EDITOR DE INFORME SEMANAL ─── */}

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldAlert, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search, Upload, Phone, Mail, MessageSquare, FileText } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Plus, X, Check, AlertTriangle, Eye, Activity, Flame, HardHat, Zap, Mountain, Car, ArrowDown, Search, Upload, Phone, Mail, MessageSquare, FileText } from 'lucide-react';
 import * as THREE from 'three';
 import { useSeguridadIncidentes, useCreateSeguridadIncidente, useUpdateSeguridadIncidente, useSeguridadObservaciones, useCreateSeguridadObservacion, useProjects, useEmployees } from '../hooks/useData';
 import type { Employee } from '../lib/types';
 import { WeeklySafetyReportsPanel } from './WeeklySafetyReportsPanel';
+import { PPEDeliveriesPanel } from './PPEDeliveriesPanel';
 
 // 3D Body Map Component
 const Body3dMap: React.FC<{ selectedZone: string; onSelectZone: (zone: string) => void }> = ({ selectedZone, onSelectZone }) => {
@@ -345,7 +346,7 @@ export const SafetyModule: React.FC = () => {
   const createIncidente = useCreateSeguridadIncidente();
   const updateIncidente = useUpdateSeguridadIncidente();
   const createObservacion = useCreateSeguridadObservacion();
-  const [tab, setTab] = useState<'informes' | 'incidentes' | 'observaciones' | 'comunicar'>('informes');
+  const [tab, setTab] = useState<'informes' | 'epp' | 'incidentes' | 'observaciones' | 'comunicar'>('informes');
   const [showForm, setShowForm] = useState(false);
   const [selectedZone, setSelectedZone] = useState<string>('');
 
@@ -411,7 +412,7 @@ export const SafetyModule: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-        {(['informes', 'incidentes', 'observaciones', 'comunicar'] as const).map(t => (
+        {(['informes', 'epp', 'incidentes', 'observaciones', 'comunicar'] as const).map(t => (
           <button
             key={t}
             onClick={() => { setTab(t); setShowForm(false); }}
@@ -420,7 +421,9 @@ export const SafetyModule: React.FC = () => {
             }`}
           >
             {t === 'informes' ? (
-              <><FileText size={16} /> Informes Semanales (Entregables)</>
+              <><FileText size={16} /> Informes Semanales</>
+            ) : t === 'epp' ? (
+              <><ShieldCheck size={16} /> Material & EPP al Personal</>
             ) : t === 'incidentes' ? (
               <><AlertTriangle size={16} /> Incidentes ({incidentes.length})</>
             ) : t === 'observaciones' ? (
@@ -432,7 +435,7 @@ export const SafetyModule: React.FC = () => {
         ))}
       </div>
 
-      {tab !== 'comunicar' && tab !== 'informes' && (
+      {tab !== 'comunicar' && tab !== 'informes' && tab !== 'epp' && (
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? <><X size={16} /> Cancelar</> : <><Plus size={16} /> {tab === 'incidentes' ? 'Registrar Incidente' : 'Nueva Observación'}</>}
         </button>
@@ -498,6 +501,11 @@ export const SafetyModule: React.FC = () => {
       {/* Informes Semanales de HyS (Entregables) */}
       {tab === 'informes' && (
         <WeeklySafetyReportsPanel />
+      )}
+
+      {/* Material & EPP Entregado al Personal */}
+      {tab === 'epp' && (
+        <PPEDeliveriesPanel />
       )}
 
       {/* Incidentes List */}
