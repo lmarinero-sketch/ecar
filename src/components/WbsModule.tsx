@@ -32,6 +32,7 @@ import type {
   WbsElement, ProjectFeedback, Employee, ProjectCertificate, BankAccount
 } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
+import { useAppStore } from '../store/useStore';
 
 export type MainTab =
   | 'resumen'
@@ -75,9 +76,13 @@ export const WbsModule: React.FC<{ initialProjectId?: string | null; initialTab?
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const updateOpportunity = useUpdateOpportunity();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
-    return initialProjectId || localStorage.getItem('ecar_active_project_id') || null;
-  });
+  const { activeProjectId: selectedProjectId, setActiveProjectId: setSelectedProjectId } = useAppStore();
+  
+  useEffect(() => {
+    if (initialProjectId && initialProjectId !== selectedProjectId) {
+      setSelectedProjectId(initialProjectId);
+    }
+  }, [initialProjectId]);
   const [projectSearch, setProjectSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'suspended'>('all');
   const selectedProject = projects.find(p => p.id === selectedProjectId);

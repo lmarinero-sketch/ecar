@@ -12,7 +12,7 @@ import { useModalStore } from '../../store/useModalStore';
 export const PanelObrasModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
-  const { setActiveModule } = useAppStore();
+  const { setActiveModule, setActiveProjectId } = useAppStore();
   const { data: allWbs = [] } = useWbsElements();
   const { data: allMilestones = [] } = useProjectMilestones();
   const { data: purchaseRequests = [] } = usePurchaseRequests();
@@ -53,8 +53,7 @@ export const PanelObrasModule: React.FC = () => {
   }, [projects, searchTerm, statusFilter]);
 
   const handleOpenProject = (projectId: string) => {
-    // Store selected project in localStorage so GestionObraModule picks it up
-    localStorage.setItem('ecar_active_project_id', projectId);
+    setActiveProjectId(projectId);
     setActiveModule('obra_gestion');
   };
 

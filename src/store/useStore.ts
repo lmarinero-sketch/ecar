@@ -11,6 +11,8 @@ type AppState = {
   setTutorialMode: (on: boolean) => void;
   seenFuelRequests: string[];
   markFuelRequestsSeen: (ids: string[]) => void;
+  activeProjectId: string | null;
+  setActiveProjectId: (id: string | null) => void;
 };
 
 export const useAppStore = create<AppState>()(
@@ -26,10 +28,16 @@ export const useAppStore = create<AppState>()(
       markFuelRequestsSeen: (ids) => set((state) => ({ 
         seenFuelRequests: Array.from(new Set([...state.seenFuelRequests, ...ids])) 
       })),
+      activeProjectId: null,
+      setActiveProjectId: (id) => set({ activeProjectId: id }),
     }),
     {
       name: 'ecar-nav',
-      partialize: (state) => ({ activeModule: state.activeModule, seenFuelRequests: state.seenFuelRequests }),
+      partialize: (state) => ({ 
+        activeModule: state.activeModule, 
+        seenFuelRequests: state.seenFuelRequests,
+        activeProjectId: state.activeProjectId 
+      }),
     }
   )
 );

@@ -11,9 +11,8 @@ import { useProjectFeedback, useProjects } from '../../hooks/useData';
 export const CalidadSeguridadMejoraModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'calidad' | 'seguridad' | 'no_conformidades' | 'desvios_lecciones'>('calidad');
   const { data: projects = [] } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => {
-    return localStorage.getItem('ecar_active_project_id') || (projects[0]?.id || '');
-  });
+  const { activeProjectId, setActiveProjectId: setSelectedProjectId } = useAppStore();
+  const selectedProjectId = activeProjectId || (projects[0]?.id || '');
 
   const { data: feedbacks = [] } = useProjectFeedback(selectedProjectId || undefined);
   const desvios = feedbacks.filter(f => f.tipo === 'desviacion' || f.tipo === 'riesgo');
@@ -94,7 +93,6 @@ export const CalidadSeguridadMejoraModule: React.FC = () => {
               value={selectedProjectId}
               onChange={(e) => {
                 setSelectedProjectId(e.target.value);
-                localStorage.setItem('ecar_active_project_id', e.target.value);
               }}
               className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-500"
             >

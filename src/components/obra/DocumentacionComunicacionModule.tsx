@@ -16,9 +16,8 @@ import type { TechnicalBlueprint, MeetingCommitment } from '../../lib/types';
 export const DocumentacionComunicacionModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'planos' | 'rfi' | 'informes' | 'minutas'>('planos');
   const { data: projects = [] } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => {
-    return localStorage.getItem('ecar_active_project_id') || (projects[0]?.id || '');
-  });
+  const { activeProjectId, setActiveProjectId: setSelectedProjectId } = useAppStore();
+  const selectedProjectId = activeProjectId || (projects[0]?.id || '');
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
@@ -183,7 +182,6 @@ export const DocumentacionComunicacionModule: React.FC = () => {
             value={selectedProjectId}
             onChange={e => {
               setSelectedProjectId(e.target.value);
-              localStorage.setItem('ecar_active_project_id', e.target.value);
             }}
             className="font-bold text-gray-800 bg-transparent focus:outline-none cursor-pointer"
           >

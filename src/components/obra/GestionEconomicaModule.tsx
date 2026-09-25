@@ -10,9 +10,8 @@ import { useProjects, useProjectCertificates, useScopeChanges } from '../../hook
 export const GestionEconomicaModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'certificaciones' | 'adicionales' | 'resumen_proyeccion'>('certificaciones');
   const { data: projects = [] } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => {
-    return localStorage.getItem('ecar_active_project_id') || (projects[0]?.id || '');
-  });
+  const { activeProjectId, setActiveProjectId: setSelectedProjectId } = useAppStore();
+  const selectedProjectId = activeProjectId || (projects[0]?.id || '');
 
   const { data: certificates = [] } = useProjectCertificates(selectedProjectId || undefined);
   const { data: scopeChanges = [] } = useScopeChanges(selectedProjectId || undefined);
@@ -131,7 +130,6 @@ export const GestionEconomicaModule: React.FC = () => {
               value={selectedProjectId}
               onChange={(e) => {
                 setSelectedProjectId(e.target.value);
-                localStorage.setItem('ecar_active_project_id', e.target.value);
               }}
               className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >

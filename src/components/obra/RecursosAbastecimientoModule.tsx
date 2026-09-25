@@ -17,9 +17,8 @@ export const RecursosAbastecimientoModule: React.FC = () => {
   const { data: allVehicles = [] } = useAllFuelVehicles();
   const { data: employees = [] } = useEmployees();
 
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(() => {
-    return localStorage.getItem('ecar_active_project_id') || (projects[0]?.id || '');
-  });
+  const { activeProjectId, setActiveProjectId: setSelectedProjectId } = useAppStore();
+  const selectedProjectId = activeProjectId || (projects[0]?.id || '');
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -97,7 +96,6 @@ export const RecursosAbastecimientoModule: React.FC = () => {
             value={selectedProjectId}
             onChange={e => {
               setSelectedProjectId(e.target.value);
-              localStorage.setItem('ecar_active_project_id', e.target.value);
             }}
             className="font-bold text-gray-800 bg-transparent focus:outline-none cursor-pointer"
           >
