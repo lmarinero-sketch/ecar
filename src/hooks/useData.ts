@@ -1862,13 +1862,13 @@ export function useDeleteAllInventory() {
   });
 }
 
-export function useInventoryMovements(itemId?: string) {
+export function useInventoryMovements(itemId?: string, limitCount = 500) {
   return useQuery({
-    queryKey: ['inventory_movements', itemId],
+    queryKey: ['inventory_movements', itemId, limitCount],
     queryFn: async () => {
-      let q = supabase.from('inventory_movements').select('*, item:inventory_items(id, name), project:projects(id, name)').order('created_at', { ascending: false });
+      let q = supabase.from('inventory_movements').select('*, item:inventory_items(id, name, unit), project:projects(id, name)').order('created_at', { ascending: false });
       if (itemId) q = q.eq('item_id', itemId);
-      const { data, error } = await q.limit(50);
+      const { data, error } = await q.limit(limitCount);
       if (error) throw error;
       return data as InventoryMovement[];
     },

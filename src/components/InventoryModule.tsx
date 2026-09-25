@@ -5,7 +5,7 @@ import {
   LayoutGrid, Trash2, Edit3, ShoppingBag,
   CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight,
   TrendingUp, TrendingDown, Filter, Download, FileDown, RefreshCw,
-  Eye, Truck, Repeat
+  Eye, Truck, Repeat, FileSpreadsheet, Building2
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
@@ -856,11 +856,80 @@ export const InventoryModule: React.FC = () => {
 
   const [expandedMovements, setExpandedMovements] = useState<Record<string, boolean>>({});
 
-  const groupedMovements = useMemo(() => {
+  // Filtros del Kardex de Movimientos
+  const [movementFilterProject, setMovementFilterProject] = useState<string>('');
+  const [movementFilterType, setMovementFilterType] = useState<string>('');
+  const [movementSearch, setMovementSearch] = useState<string>('');
+
+  const availableProjectsForFilter = useMemo(() => {
+    const list: { id: string; name: string }[] = [];
+    const seen = new Set<string>();
+
+    (projects || []).forEach(p => {
+      if (p.id && !seen.has(p.id)) {
+        seen.add(p.id);
+        list.push({ id: p.id, name: p.name });
+      }
+    });
+
+    (movements || []).forEach(m => {
+      const p = m.project as any;
+      if (p?.id && !seen.has(p.id)) {
+        seen.add(p.id);
+        list.push({ id: p.id, name: p.name || 'Obra sin nombre' });
+      } else if (m.project_id && !seen.has(m.project_id)) {
+        seen.add(m.project_id);
+        list.push({ id: m.project_id, name: p?.name || `Obra (${m.project_id.slice(0, 6)})` });
+      }
+    });
+
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [projects, movements]);
+
+  const filteredMovements = useMemo(() => {
     if (!movements) return [];
+    return movements.filter(m => {
+      // Filtro por Obra de Destino
+      if (movementFilterProject) {
+        if (movementFilterProject === 'none') {
+          if (m.project_id || (m.project as any)?.id || (m.project as any)?.name) {
+            return false;
+          }
+        } else {
+          const mProjectId = m.project_id || (m.project as any)?.id;
+          const mProjectName = (m.project as any)?.name;
+          if (mProjectId !== movementFilterProject && mProjectName !== movementFilterProject) {
+            return false;
+          }
+        }
+      }
+
+      // Filtro por Tipo de Operación
+      if (movementFilterType && m.movement_type !== movementFilterType) {
+        return false;
+      }
+
+      // Búsqueda por texto (Ítem, Usuario, Observación u Obra)
+      if (movementSearch.trim()) {
+        const q = movementSearch.toLowerCase().trim();
+        const itemName = ((m.item as any)?.name || '').toLowerCase();
+        const createdBy = (m.created_by || '').toLowerCase();
+        const notes = (m.notes || '').toLowerCase();
+        const projName = ((m.project as any)?.name || '').toLowerCase();
+        if (!itemName.includes(q) && !createdBy.includes(q) && !notes.includes(q) && !projName.includes(q)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [movements, movementFilterProject, movementFilterType, movementSearch]);
+
+  const groupedMovements = useMemo(() => {
+    if (!filteredMovements) return [];
     const groups = new Map<string, any>();
     
-    movements.forEach(m => {
+    filteredMovements.forEach(m => {
       // Group by exact minute, project, user, type and notes
       const timeKey = new Date(m.created_at).toISOString().slice(0, 16);
       const groupKey = `${timeKey}_${m.project_id || 'none'}_${m.created_by || 'none'}_${m.movement_type}_${m.notes || 'none'}`;
@@ -881,9 +950,73 @@ export const InventoryModule: React.FC = () => {
     });
     
     return Array.from(groups.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [movements]);
+  }, [filteredMovements]);
 
   const toggleGroup = (id: string) => setExpandedMovements(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const exportMovementsExcel = () => {
+    if (!filteredMovements || filteredMovements.length === 0) return;
+
+    const data = filteredMovements.map(m => {
+      const dateFormatted = new Date(m.created_at).toLocaleString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const typeLabel = 
+        m.movement_type === 'in' ? 'Ingreso Stock' :
+        m.movement_type === 'out' ? 'Egreso / Despacho a Obra' :
+        m.movement_type === 'return' ? 'Devolución' : 'Ajuste de Stock';
+
+      const projectName = (m.project as any)?.name || (projects?.find(p => p.id === m.project_id)?.name) || 'Sin Obra Asignada';
+      const itemName = (m.item as any)?.name || '—';
+      const unit = (m.item as any)?.unit || 'un';
+
+      return {
+        'Fecha y Hora': dateFormatted,
+        'Tipo Operación': typeLabel,
+        'Obra Destino': projectName,
+        'Ítem / Material': itemName,
+        'Cantidad': Number(m.quantity) || 0,
+        'Unidad': unit,
+        'Responsable Pañol': m.created_by || 'Pañol Central',
+        'Detalle / Referencia': m.notes || 'Sin observaciones'
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Ajuste de ancho de columnas para visualización clara en Excel
+    ws['!cols'] = [
+      { wch: 18 }, // Fecha y Hora
+      { wch: 26 }, // Tipo Operación
+      { wch: 30 }, // Obra Destino
+      { wch: 35 }, // Ítem / Material
+      { wch: 12 }, // Cantidad
+      { wch: 10 }, // Unidad
+      { wch: 25 }, // Responsable Pañol
+      { wch: 40 }  // Detalle / Referencia
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kardex_Movimientos");
+
+    let filenameSuffix = 'Todas_Las_Obras';
+    if (movementFilterProject) {
+      if (movementFilterProject === 'none') {
+        filenameSuffix = 'Sin_Obra';
+      } else {
+        const found = availableProjectsForFilter.find(p => p.id === movementFilterProject);
+        filenameSuffix = (found?.name || 'Obra').replace(/[^a-zA-Z0-9_-]/g, '_');
+      }
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Kardex_Movimientos_${filenameSuffix}_${todayStr}.xlsx`);
+  };
 
   const [movForm, setMovForm] = useState({ movement_type: 'out' as 'in' | 'out' | 'return' | 'adjustment', quantity: '', notes: '', project_id: '' });
   const [assignForm, setAssignForm] = useState({ employee_id: '', project_id: '', notes: '' });
@@ -2532,10 +2665,95 @@ export const InventoryModule: React.FC = () => {
                 Auditoría completa de entradas, salidas por despacho a obras y ajustes de stock.
               </p>
             </div>
-            <span className="text-xs font-mono font-bold bg-white/10 px-3 py-1 rounded-lg text-sky-300">
-              {(movements || []).length} registros
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold bg-white/10 px-3 py-1 rounded-lg text-sky-300">
+                {filteredMovements.length} {filteredMovements.length !== (movements || []).length ? `de ${(movements || []).length}` : ''} registros
+              </span>
+            </div>
           </div>
+
+          {/* Barra de Filtros y Exportación */}
+          <div className="p-4 bg-slate-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Filtro Mandatorio: Obra de Destino */}
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-300 shadow-xs">
+                <Building2 size={16} className="text-ecar-blue shrink-0" />
+                <label className="text-xs font-bold text-gray-700 whitespace-nowrap">Obra Destino:</label>
+                <select
+                  value={movementFilterProject}
+                  onChange={(e) => setMovementFilterProject(e.target.value)}
+                  className="text-xs font-semibold text-gray-800 bg-transparent border-none focus:outline-none cursor-pointer max-w-[220px] truncate"
+                >
+                  <option value="">🏢 Todas las Obras</option>
+                  <option value="none">— Sin Obra Asignada —</option>
+                  {availableProjectsForFilter.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro: Tipo de Operación */}
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-300 shadow-xs">
+                <label className="text-xs font-bold text-gray-700 whitespace-nowrap">Tipo:</label>
+                <select
+                  value={movementFilterType}
+                  onChange={(e) => setMovementFilterType(e.target.value)}
+                  className="text-xs font-semibold text-gray-800 bg-transparent border-none focus:outline-none cursor-pointer"
+                >
+                  <option value="">Todos los tipos</option>
+                  <option value="out">🔴 Egreso / Despacho</option>
+                  <option value="in">🟢 Ingreso Stock</option>
+                  <option value="return">🔵 Devolución</option>
+                  <option value="adjustment">⚙️ Ajuste</option>
+                </select>
+              </div>
+
+              {/* Filtro: Búsqueda por texto libre */}
+              <div className="relative">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar ítem, pañolero, detalle..."
+                  value={movementSearch}
+                  onChange={(e) => setMovementSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-ecar-blue w-52 shadow-xs text-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              {/* Botón limpiar filtros */}
+              {(movementFilterProject || movementFilterType || movementSearch) && (
+                <button
+                  onClick={() => {
+                    setMovementFilterProject('');
+                    setMovementFilterType('');
+                    setMovementSearch('');
+                  }}
+                  className="text-xs text-gray-500 hover:text-red-600 font-semibold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 hover:bg-red-50 border border-transparent hover:border-red-200"
+                  title="Restablecer todos los filtros"
+                >
+                  <X size={14} /> Limpiar filtros
+                </button>
+              )}
+            </div>
+
+            {/* Botón Mandatorio: Exportar a Excel */}
+            <button
+              onClick={exportMovementsExcel}
+              disabled={filteredMovements.length === 0}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                filteredMovements.length > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95 cursor-pointer'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+              title="Descargar auditoría de movimientos en formato Excel (.xlsx)"
+            >
+              <FileSpreadsheet size={16} />
+              <span>Exportar Excel ({filteredMovements.length})</span>
+            </button>
+          </div>
+
           {(groupedMovements || []).length > 0 ? (
             <div className="overflow-x-auto">
               <table className="data-table w-full">
@@ -2637,7 +2855,26 @@ export const InventoryModule: React.FC = () => {
               </table>
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-400"><ArrowDownToLine size={48} className="mx-auto mb-3 opacity-30" /><p>Sin movimientos aún</p></div>
+            <div className="text-center py-12 text-gray-400">
+              <ArrowDownToLine size={48} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">
+                {(movementFilterProject || movementFilterType || movementSearch)
+                  ? 'No se encontraron movimientos para los filtros seleccionados'
+                  : 'Sin movimientos aún'}
+              </p>
+              {(movementFilterProject || movementFilterType || movementSearch) && (
+                <button
+                  onClick={() => {
+                    setMovementFilterProject('');
+                    setMovementFilterType('');
+                    setMovementSearch('');
+                  }}
+                  className="mt-3 text-xs text-ecar-blue hover:underline font-bold"
+                >
+                  Restablecer filtros
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
