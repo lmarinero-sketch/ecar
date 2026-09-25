@@ -15,6 +15,7 @@ import {
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest, useDeleteInventoryItem, useCreateProject,
   useInventoryDeposits, useCreateDeposit, useUpdateDeposit, useDeleteDeposit,
+  useInventoryCategories, useCreateInventoryCategory, useDeleteInventoryCategory,
   usePurchaseRequests,
   useAllPriceHistories
 } from '../hooks/useData';
@@ -22,7 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { exportDispatchPdf, exportManualDispatchPdf } from '../lib/orderPdfExport';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
-import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
+import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit, InventoryCategory } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';
@@ -820,6 +821,8 @@ export const InventoryModule: React.FC = () => {
   const createDeposit = useCreateDeposit();
   const updateDeposit = useUpdateDeposit();
   const deleteDeposit = useDeleteDeposit();
+  const { data: dbCategories = [] } = useInventoryCategories();
+  const createCategory = useCreateInventoryCategory();
 
   const [tab, setTab] = useState<Tab>('stock');
   const [search, setSearch] = useState('');
@@ -832,11 +835,71 @@ export const InventoryModule: React.FC = () => {
   const [showBarcode, setShowBarcode] = useState<InventoryItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+
+  // Categorías de inventario dinámicas
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ name: '', icon: '📦', is_tool: false });
+
+  const categoriesList = useMemo(() => {
+    const defaultCats = [
+      { id: 'cat-mat', name: 'Material', slug: 'material', icon: '📦', is_tool: false },
+      { id: 'cat-tool', name: 'Herramienta', slug: 'herramienta', icon: '🔧', is_tool: true },
+      { id: 'cat-cons', name: 'Consumible', slug: 'consumible', icon: '🔩', is_tool: false },
+    ];
+    if (!dbCategories || dbCategories.length === 0) return defaultCats;
+
+    const map = new Map<string, { id?: string; name: string; slug: string; icon: string; is_tool: boolean }>();
+    defaultCats.forEach(c => map.set(c.slug.toLowerCase(), c));
+    dbCategories.forEach(c => {
+      const slugKey = (c.slug || c.name).toLowerCase();
+      map.set(slugKey, {
+        id: c.id,
+        name: c.name,
+        slug: c.slug || c.name.toLowerCase().trim().replace(/\s+/g, '-'),
+        icon: c.icon || '📦',
+        is_tool: !!c.is_tool
+      });
+    });
+    return Array.from(map.values());
+  }, [dbCategories]);
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) return;
+
+    try {
+      const cleanName = categoryForm.name.trim();
+      const slug = cleanName.toLowerCase().replace(/\s+/g, '-');
+      const icon = categoryForm.icon || '📦';
+      const isTool = categoryForm.is_tool;
+
+      await createCategory.mutateAsync({
+        name: cleanName,
+        slug,
+        icon,
+        is_tool: isTool
+      });
+
+      // Seleccionar automáticamente la nueva categoría en el formulario
+      setNewItem(prev => ({
+        ...prev,
+        category: slug,
+        is_tool: isTool || prev.is_tool
+      }));
+
+      setShowCategoryModal(false);
+      setCategoryForm({ name: '', icon: '📦', is_tool: false });
+      useModalStore.getState().showAlert('Éxito', `Categoría "${cleanName}" creada correctamente.`);
+    } catch (err: any) {
+      console.error('Error al crear categoría:', err);
+      useModalStore.getState().showAlert('Error al Crear Categoría', err?.message || 'No se pudo crear la categoría.');
+    }
+  };
   
   // Item Form state with Location/Bin coding [Letra]-[Estante]-[Bin]
   const [newItem, setNewItem] = useState({
     name: '',
-    category: 'material' as 'material' | 'herramienta' | 'consumible',
+    category: 'material' as any,
     unit: 'unidad',
     current_stock: '',
     min_stock: '',
@@ -3242,15 +3305,44 @@ export const InventoryModule: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-gray-500">Categoría</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700">Categoría</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCategoryForm({ name: '', icon: '📦', is_tool: false });
+                        setShowCategoryModal(true);
+                      }}
+                      className="text-[11px] text-ecar-blue font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Plus size={12} /> + Nueva Categoría
+                    </button>
+                  </div>
                   <select
                     value={newItem.category}
-                    onChange={e => setNewItem({ ...newItem, category: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white"
+                    onChange={e => {
+                      if (e.target.value === 'NEW_CATEGORY') {
+                        setCategoryForm({ name: '', icon: '📦', is_tool: false });
+                        setShowCategoryModal(true);
+                        return;
+                      }
+                      const selectedCat = categoriesList.find(c => c.slug === e.target.value || c.name === e.target.value);
+                      setNewItem({
+                        ...newItem,
+                        category: e.target.value,
+                        is_tool: selectedCat?.is_tool ?? newItem.is_tool
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ecar-blue/30"
                   >
-                    <option value="material">📦 Material</option>
-                    <option value="herramienta">🔧 Herramienta</option>
-                    <option value="consumible">🔩 Consumible</option>
+                    {categoriesList.map(cat => (
+                      <option key={cat.id || cat.slug} value={cat.slug}>
+                        {cat.icon} {cat.name}
+                      </option>
+                    ))}
+                    <option value="NEW_CATEGORY" className="font-bold text-ecar-blue bg-blue-50">
+                      ➕ Agregar nueva categoría...
+                    </option>
                   </select>
                 </div>
                 <div>
@@ -3411,6 +3503,100 @@ export const InventoryModule: React.FC = () => {
               >
                 {(createItem.isPending || updateItem.isPending) ? 'Guardando...' : editingItem ? '✅ Guardar Cambios' : '✅ Crear Ítem'}
               </button>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal Nueva Categoría */}
+      {showCategoryModal && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <span>🏷️</span> Nueva Categoría de Inventario
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateCategory} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nombre de la Categoría *
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={categoryForm.name}
+                  onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  placeholder="Ej: Seguridad y EPP, Repuestos, Pintura..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Ícono Representativo
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['📦', '🔧', '🔩', '⚡', '🦺', '🛡️', '⚙️', '🎨', '🪵', '🧪', '🏢', '🏷️', '🔌', '📐', '🧱'].map(emoji => (
+                    <button
+                      type="button"
+                      key={emoji}
+                      onClick={() => setCategoryForm({ ...categoryForm, icon: emoji })}
+                      className={`text-xl w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                        categoryForm.icon === emoji
+                          ? 'bg-blue-100 border-2 border-ecar-blue scale-110 shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <label className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100/70 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.is_tool}
+                    onChange={e => setCategoryForm({ ...categoryForm, is_tool: e.target.checked })}
+                    className="mt-0.5 rounded text-ecar-blue focus:ring-ecar-blue h-4 w-4 cursor-pointer"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-800 block">¿Es tipo Herramienta / Equipo?</span>
+                    <span className="text-slate-500">
+                      Habilita seguimiento de asignaciones a operarios y control de devoluciones/roturas en pañol.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  className="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-50 transition-colors shadow-2xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createCategory.isPending}
+                  className="flex-1 py-2.5 bg-ecar-blue hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>{createCategory.isPending ? 'Guardando...' : 'Crear Categoría'}</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>,

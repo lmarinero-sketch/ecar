@@ -7,7 +7,7 @@ import type {
   WbsElement, DocumentRequest, Profile, ProjectFeedback,
   NotificationContact, NotificationReminder, NotificationLog,
   BankAccount, CashMovement, MonthlySnapshot, ProjectCertificate, SystemSetting, PaymentRecord,
-  InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf, InventoryDeposit,
+  InventoryItem, InventoryMovement, ToolAssignment, WarehouseShelf, InventoryDeposit, InventoryCategory,
   PurchaseRequest, PurchaseRequestItem,
   ParteDiario, ParteDiarioFoto, ParteDiarioSolicitud, ParteDiarioPersonal, ParteDiarioEquipo,
   SeguridadIncidente, SeguridadObservacion,
@@ -1742,6 +1742,63 @@ export function useDeleteDeposit() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
+  });
+}
+
+// ========== INVENTORY CATEGORIES ==========
+
+export function useInventoryCategories() {
+  return useQuery({
+    queryKey: ['inventory_categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('inventory_categories').select('*').order('name');
+      if (error) throw error;
+      return data as InventoryCategory[];
+    },
+  });
+}
+
+export function useCreateInventoryCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cat: Partial<InventoryCategory>) => {
+      const { data, error } = await supabase
+        .from('inventory_categories')
+        .insert([{
+          ...cat,
+          tenant_id: ECAR_TENANT_ID,
+          slug: cat.slug || cat.name?.toLowerCase().trim().replace(/\s+/g, '-'),
+          icon: cat.icon || '📦'
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data as InventoryCategory;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_categories'] }),
+  });
+}
+
+export function useUpdateInventoryCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<InventoryCategory> & { id: string }) => {
+      const { data, error } = await supabase.from('inventory_categories').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data as InventoryCategory;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_categories'] }),
+  });
+}
+
+export function useDeleteInventoryCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('inventory_categories').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_categories'] }),
   });
 }
 

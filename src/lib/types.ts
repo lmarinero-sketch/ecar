@@ -749,6 +749,16 @@ export type WarehouseShelf = {
   created_at: string;
 };
 
+export type InventoryCategory = {
+  id: string;
+  tenant_id?: string;
+  name: string;
+  slug?: string | null;
+  icon?: string | null;
+  is_tool?: boolean;
+  created_at?: string;
+};
+
 export type InventoryItem = {
   id: string;
   tenant_id: string;
