@@ -8,7 +8,8 @@ import {
   Calendar, ShoppingBag, ShieldAlert, ClipboardCheck, MessageSquareText, Wallet,
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
-  Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe, ShieldCheck
+  Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe, ShieldCheck,
+  Moon, Sun
 } from 'lucide-react';
 import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -211,7 +212,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
 /*                          LAYOUT                             */
 /* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode, seenFuelRequests } = useAppStore();
+  const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode, seenFuelRequests, darkMode, toggleDarkMode } = useAppStore();
   const { profile, signOut, changePassword, hasModule, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
@@ -251,7 +252,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   };
 
   return (
-    <div className="flex h-screen bg-surface-secondary flex-col md:flex-row overflow-hidden">
+    <div className="flex h-screen bg-surface-secondary dark:bg-[#0b1329] flex-col md:flex-row overflow-hidden">
 
       {/* ─── Mobile hamburger ─── */}
       <button
@@ -265,14 +266,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <aside className={`
         fixed md:relative inset-y-0 left-0 z-40
         ${expanded ? 'w-[240px]' : 'w-[68px]'}
-        bg-white border-r border-slate-200/80 flex flex-col shrink-0 overflow-hidden
+        bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col shrink-0 overflow-hidden
         transition-all duration-300 ease-smooth
         transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         shadow-[1px_0_0_0_rgba(0,0,0,0.02)]
       `}>
 
         {/* ── Logo area ── */}
-        <div className={`h-[56px] flex items-center ${expanded ? 'px-4 justify-between' : 'justify-center'} border-b border-slate-100 shrink-0`}>
+        <div className={`h-[56px] flex items-center ${expanded ? 'px-4 justify-between' : 'justify-center'} border-b border-slate-100 dark:border-slate-800 shrink-0`}>
           {expanded ? (
             <>
               <div className="flex items-center gap-2.5 group">
@@ -280,8 +281,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <img src="/logoECAR.png" alt="ECAR" className="w-full h-full object-contain rounded-full" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-900 font-bold text-sm tracking-tight leading-none">ECAR</span>
-                  <span className="text-slate-400 text-[9px] font-medium tracking-wider uppercase">ERP Sistema</span>
+                  <span className="text-slate-900 dark:text-white font-bold text-sm tracking-tight leading-none">ECAR</span>
+                  <span className="text-slate-400 dark:text-slate-500 text-[9px] font-medium tracking-wider uppercase">ERP Sistema</span>
                 </div>
               </div>
               <button
@@ -361,12 +362,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
 
         {/* ── Footer ── */}
-        <div className={`border-t border-slate-100 ${expanded ? 'p-3' : 'p-2'}`}>
+        <div className={`border-t border-slate-100 dark:border-slate-800 ${expanded ? 'p-3' : 'p-2'}`}>
           {/* Expand toggle (collapsed) */}
           {!expanded && (
             <button
               onClick={() => setExpanded(true)}
-              className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all mb-2"
+              className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all mb-2"
               title="Expandir"
             >
               <PanelLeftOpen size={16} />
@@ -376,16 +377,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {/* User info */}
           <div 
             onClick={() => setShowProfileModal(true)}
-            className={`flex items-center ${expanded ? 'gap-2.5 px-1.5' : 'justify-center'} mb-2 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors`}
+            className={`flex items-center ${expanded ? 'gap-2.5 px-1.5' : 'justify-center'} mb-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 p-2 rounded-lg transition-colors`}
             title="Mi Perfil"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ecar-blue/10 to-ecar-blue/20 flex items-center justify-center text-ecar-blue text-[11px] font-bold shrink-0 ring-1 ring-ecar-blue/10">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-ecar-blue/10 to-ecar-blue/20 flex items-center justify-center text-ecar-blue dark:text-sky-300 text-[11px] font-bold shrink-0 ring-1 ring-ecar-blue/10 dark:ring-sky-500/20">
               {profile?.full_name?.charAt(0) || '?'}
             </div>
             {expanded && (
               <div className="flex-1 min-w-0">
-                <p className="text-slate-800 text-xs font-semibold truncate">{profile?.full_name}</p>
-                <p className="text-slate-400 text-[10px] flex items-center gap-1 font-medium">
+                <p className="text-slate-800 dark:text-slate-100 text-xs font-semibold truncate">{profile?.full_name}</p>
+                <p className="text-slate-400 dark:text-slate-500 text-[10px] flex items-center gap-1 font-medium">
                   {isAdmin && <Shield size={9} className="text-amber-500" />}
                   {isAdmin ? 'Admin' : 'Colaborador'}
                 </p>
@@ -393,10 +394,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           </div>
 
+          {/* Dark Mode toggle (Sidebar) */}
+          <button
+            id="sidebar-toggle-dark"
+            onClick={toggleDarkMode}
+            className={`flex items-center ${expanded ? 'gap-2 px-2.5 w-full' : 'justify-center w-full'} py-2 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs font-medium mb-0.5`}
+            title={darkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          >
+            {darkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+            {expanded && <span>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>}
+          </button>
+
           {/* Change Password */}
           <button
             onClick={() => { setShowPasswordModal(true); setNewPassword(''); setConfirmPassword(''); setPasswordMsg(null); }}
-            className={`flex items-center ${expanded ? 'gap-2 px-2.5 w-full' : 'justify-center w-full'} py-2 rounded-lg text-slate-400 hover:text-ecar-blue hover:bg-blue-50 transition-all text-xs font-medium mb-0.5`}
+            className={`flex items-center ${expanded ? 'gap-2 px-2.5 w-full' : 'justify-center w-full'} py-2 rounded-lg text-slate-400 hover:text-ecar-blue dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all text-xs font-medium mb-0.5`}
             title="Cambiar contraseña"
           >
             <KeyRound size={15} />
@@ -432,13 +444,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* ─── Main Content ─── */}
       <main className="flex-1 relative overflow-y-auto z-10 w-full">
         {/* Sticky Header */}
-        <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-6 py-2.5 flex justify-between items-center z-20">
+        <header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 md:px-6 py-2.5 flex justify-between items-center z-20">
           <div className="flex items-center gap-2 ml-10 md:ml-0">
             {/* Module breadcrumb */}
             <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-slate-400 font-medium hidden sm:inline">ECAR</span>
-              <ChevronRight size={12} className="text-slate-300 hidden sm:block" />
-              <h2 className="font-semibold text-slate-900 tracking-tight">
+              <span className="text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">ECAR</span>
+              <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 hidden sm:block" />
+              <h2 className="font-semibold text-slate-900 dark:text-white tracking-tight">
                 {MODULE_LABELS[activeModule]}
               </h2>
             </div>
@@ -446,11 +458,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="flex items-center gap-2.5">
             {/* Search bar */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg text-xs text-slate-400 border border-slate-200/60 hover:border-slate-300 hover:bg-white transition-all cursor-pointer min-w-[180px] group">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-xs text-slate-400 border border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer min-w-[180px] group">
               <Search size={13} className="text-slate-400 group-hover:text-slate-500 transition-colors" />
               <span className="group-hover:text-slate-500 transition-colors">Buscar...</span>
-              <kbd className="ml-auto text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200/80 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
+              <kbd className="ml-auto text-[10px] font-mono bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-slate-600 text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.04)]">⌘K</kbd>
             </div>
+
+            {/* Dark mode toggle (Header) */}
+            <button
+              id="btn-header-dark-mode"
+              onClick={toggleDarkMode}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all shadow-sm ${
+                darkMode
+                  ? 'bg-amber-400/15 text-amber-300 border-amber-400/30 hover:bg-amber-400/25'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+              }`}
+              title={darkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+            >
+              {darkMode ? <Sun size={13} className="text-amber-400" /> : <Moon size={13} className="text-slate-600" />}
+              <span className="hidden sm:inline">{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>
+            </button>
 
             {/* Link a Web Pública / Showcase */}
             <a
@@ -627,8 +654,8 @@ const SidebarItem: React.FC<{
           : 'justify-center py-2.5 rounded-lg mx-auto'
         }
         ${isActive
-          ? 'bg-ecar-blueLight text-ecar-blue shadow-[0_1px_3px_rgba(17,92,156,0.06)]'
-          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          ? 'bg-ecar-blueLight dark:bg-ecar-blue/40 text-ecar-blue dark:text-sky-300 shadow-[0_1px_3px_rgba(17,92,156,0.06)]'
+          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60'
         }
       `}
       title={expanded ? undefined : SHORT_LABELS[id]}
@@ -642,15 +669,15 @@ const SidebarItem: React.FC<{
         size={expanded ? 16 : 18}
         className={`shrink-0 transition-all duration-200 ${
           isActive
-            ? 'text-ecar-blue'
-            : 'text-slate-400 group-hover:text-slate-600'
+            ? 'text-ecar-blue dark:text-sky-300'
+            : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-200'
         }`}
         strokeWidth={isActive ? 2.2 : 1.8}
       />
 
       {expanded ? (
         <span className={`text-[13px] font-medium truncate transition-colors duration-200 whitespace-nowrap ${
-          isActive ? 'text-ecar-blue font-semibold' : ''
+          isActive ? 'text-ecar-blue dark:text-sky-300 font-semibold' : ''
         }`}>
           {SHORT_LABELS[id]}
         </span>

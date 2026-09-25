@@ -201,3 +201,275 @@
     transform: none;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   SISTEMA DE MODO OSCURO (ECAR / SANATORIO ARGENTINO)
+   Asegura contraste clínico impecable y previene letras oscuras sobre fondo oscuro
+   ══════════════════════════════════════════════════════════════════ */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b1320;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(210, 32, 39, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(210, 32, 39, 0.06) 0px, transparent 50%);
+  color: #f1f5f9;
+}
+
+/* Selección de texto en modo oscuro */
+html.dark ::selection {
+  background-color: rgba(56, 189, 248, 0.25);
+  color: #ffffff;
+}
+
+/* ─── Superficies Principales ─── */
+html.dark .bg-surface-secondary {
+  background-color: #0b1320 !important;
+}
+
+html.dark .bg-white {
+  background-color: #152238 !important;
+  color: #f8fafc;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50 {
+  background-color: #0f1828 !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+  background-color: #1a2942 !important;
+}
+
+html.dark .bg-slate-200,
+html.dark .bg-gray-200 {
+  background-color: #243654 !important;
+}
+
+/* ─── Bordes Claros adaptados a Modo Oscuro ─── */
+html.dark .border-gray-100,
+html.dark .border-slate-100,
+html.dark .border-gray-200,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-200\/60,
+html.dark .border-gray-300,
+html.dark .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ─── GARANTÍA CRÍTICA DE LEGIBILIDAD: LETRAS OSCURAS A CLARAS ─── */
+/* Si un contenedor es oscuro, el texto oscuro se aclara para que nunca haya letras negras sobre fondo negro */
+html.dark .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-neutral-900,
+html.dark .text-zinc-900 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-800,
+html.dark .text-gray-800,
+html.dark .text-neutral-800,
+html.dark .text-zinc-800 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-gray-700,
+html.dark .text-neutral-700,
+html.dark .text-zinc-700 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-gray-600,
+html.dark .text-neutral-600,
+html.dark .text-zinc-600 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Letras negras explícitas: pasan a blanco EXCEPTO sobre fondos brillantes (amarillo, ámbar, verde flúor) */
+html.dark .text-black:not(.keep-black):not(.pdf-page *):not([class*="bg-amber-"]):not([class*="bg-yellow-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not(.bg-\[\#00FF88\]) {
+  color: #f8fafc !important;
+}
+
+/* Excepciones donde el texto oscuro es intencional sobre fondos brillantes/vivos */
+html.dark [class*="bg-amber-"] .text-slate-950,
+html.dark [class*="bg-amber-"] .text-black,
+html.dark [class*="bg-yellow-"] .text-slate-950,
+html.dark [class*="bg-yellow-"] .text-black,
+html.dark [class*="bg-emerald-400"] .text-black,
+html.dark [class*="bg-green-400"] .text-black,
+html.dark .bg-\[\#00FF88\],
+html.dark .bg-\[\#00FF88\] * {
+  color: #020617 !important;
+}
+
+/* Botones ámbar con texto negro se mantienen con fondo ámbar legible */
+html.dark .btn-primary.bg-amber-500,
+html.dark .bg-amber-500 {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+}
+html.dark .btn-primary.bg-amber-500:hover,
+html.dark .bg-amber-500:hover {
+  background-color: #d97706 !important;
+}
+
+/* ─── Form Inputs & Controles ─── */
+/* Evita que un input con fondo oscuro tenga texto negro al escribir */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.keep-light),
+html.dark textarea:not(.keep-light),
+html.dark select:not(.keep-light) {
+  background-color: #101c30 !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html.dark select:not(.keep-light) option {
+  background-color: #152238 !important;
+  color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* ─── Tablas Clínicas ─── */
+html.dark .data-table {
+  color: #cbd5e1;
+}
+
+html.dark .data-table th,
+html.dark table thead th {
+  background-color: #0d1624 !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .data-table td,
+html.dark table tbody td {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  color: #e2e8f0;
+}
+
+html.dark .data-table tr:hover td,
+html.dark table tbody tr:hover td {
+  background-color: rgba(30, 58, 95, 0.35) !important;
+}
+
+/* ─── Cards y Componentes Especiales ─── */
+html.dark .light-card,
+html.dark .light-card-flat,
+html.dark .kpi-card,
+html.dark .clinical-module-header {
+  background-color: #152238 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+  color: #f1f5f9;
+}
+
+html.dark .clinical-module-header {
+  border-left-color: #38bdf8 !important;
+}
+
+html.dark .btn-secondary {
+  background-color: #1b2a44 !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html.dark .btn-secondary:hover {
+  background-color: #243756 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+html.dark .btn-ghost {
+  color: #cbd5e1 !important;
+}
+html.dark .btn-ghost:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* ─── Pastillas y Badges Suaves en Modo Oscuro ─── */
+html.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+  color: #6ee7b7 !important;
+}
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
+  color: #34d399 !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.14) !important;
+  color: #93c5fd !important;
+}
+html.dark .text-blue-700,
+html.dark .text-blue-800 {
+  color: #60a5fa !important;
+}
+
+html.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.14) !important;
+  color: #fcd34d !important;
+}
+html.dark .text-amber-700,
+html.dark .text-amber-800 {
+  color: #fbbf24 !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.14) !important;
+  color: #fca5a5 !important;
+}
+html.dark .text-red-700,
+html.dark .text-red-800 {
+  color: #f87171 !important;
+}
+
+html.dark .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.14) !important;
+  color: #7dd3fc !important;
+}
+
+html.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.14) !important;
+  color: #d8b4fe !important;
+}
+
+/* ─── Modales y Dropdowns ─── */
+html.dark .bg-black\/50,
+html.dark .bg-black\/60 {
+  background-color: rgba(3, 7, 18, 0.75) !important;
+}
+
+/* ─── Exclusión Estricta de Páginas de Impresión y PDF ─── */
+/* Para que nunca se modifiquen los reportes y contratos oficiales */
+html.dark .pdf-page,
+html.dark .pdf-page *,
+html.dark .print-paper,
+html.dark .print-paper * {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+

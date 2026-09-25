@@ -15,7 +15,7 @@ import {
   useWarehouseShelves, useCreateWarehouseShelf, useUpdateWarehouseShelf, useDeleteWarehouseShelf,
   useCreatePurchaseRequest, useDeleteInventoryItem, useCreateProject,
   useInventoryDeposits, useCreateDeposit, useUpdateDeposit, useDeleteDeposit,
-  useInventoryCategories, useCreateInventoryCategory, useDeleteInventoryCategory,
+  useInventoryCategories, useCreateInventoryCategory,
   usePurchaseRequests,
   useAllPriceHistories
 } from '../hooks/useData';
@@ -23,7 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { exportDispatchPdf, exportManualDispatchPdf } from '../lib/orderPdfExport';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
-import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit, InventoryCategory } from '../lib/types';
+import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
 import { BarcodeLabel } from './BarcodeLabel';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { WebGLWarehouseGrid } from './WebGLWarehouseGrid';

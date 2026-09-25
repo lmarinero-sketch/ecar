@@ -7,6 +7,7 @@ import { QualityModule } from '../QualityModule';
 import { SafetyModule } from '../SafetyModule';
 import { NonConformitiesModule } from '../NonConformitiesModule';
 import { useProjectFeedback, useProjects } from '../../hooks/useData';
+import { useAppStore } from '../../store/useStore';
 
 export const CalidadSeguridadMejoraModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'calidad' | 'seguridad' | 'no_conformidades' | 'desvios_lecciones'>('calidad');

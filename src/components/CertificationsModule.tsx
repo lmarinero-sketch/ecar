@@ -46,7 +46,7 @@ export const CertificationsModule: React.FC = () => {
           <input 
             type="number"
             autoFocus
-            className="w-full min-w-[80px] px-1 py-0.5 text-black rounded border-2 border-ecar-blue bg-white"
+            className="w-full min-w-[80px] px-1 py-0.5 text-slate-900 dark:text-white rounded border-2 border-ecar-blue bg-white dark:bg-slate-800"
             value={inlineEdit.val}
             onChange={e => setInlineEdit({ ...inlineEdit, val: e.target.value })}
             onBlur={async () => {
@@ -329,7 +329,7 @@ export const CertificationsModule: React.FC = () => {
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">ANTICIPO ({proj.advance_pct || 30}%)</th>
                           <th className="border border-gray-300 p-2 bg-gray-50 text-center font-bold text-gray-600 text-xs w-[140px]">REDETERMINACION ANTICIPO</th>
                           {certs.map(c => (
-                            <th key={c.id} className="border border-gray-300 p-2 bg-ecar-blue text-black text-center text-xs">
+                            <th key={c.id} className="border border-gray-300 p-2 bg-ecar-blue text-white text-center text-xs font-semibold">
                               CERT REDETER.<br/>{c.period_description || '-'}
                             </th>
                           ))}

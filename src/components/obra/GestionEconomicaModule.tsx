@@ -6,6 +6,7 @@ import {
 import { ScopeChangesModule } from '../ScopeChangesModule';
 import { CertificationsModule } from '../CertificationsModule';
 import { useProjects, useProjectCertificates, useScopeChanges } from '../../hooks/useData';
+import { useAppStore } from '../../store/useStore';
 
 export const GestionEconomicaModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'certificaciones' | 'adicionales' | 'resumen_proyeccion'>('certificaciones');
