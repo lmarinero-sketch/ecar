@@ -17,7 +17,8 @@ import {
   useInventoryDeposits, useCreateDeposit, useUpdateDeposit, useDeleteDeposit,
   useInventoryCategories, useCreateInventoryCategory,
   usePurchaseRequests,
-  useAllPriceHistories
+  useAllPriceHistories,
+  useCreateLogisticsDelivery
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { exportDispatchPdf, exportManualDispatchPdf } from '../lib/orderPdfExport';
@@ -816,6 +817,7 @@ export const InventoryModule: React.FC = () => {
   const updateShelf = useUpdateWarehouseShelf();
   const deleteShelf = useDeleteWarehouseShelf();
   const createPurchaseReq = useCreatePurchaseRequest();
+  const createLogisticsDelivery = useCreateLogisticsDelivery();
   const deleteItem = useDeleteInventoryItem();
   const createProject = useCreateProject();
   const createDeposit = useCreateDeposit();
@@ -1608,6 +1610,29 @@ export const InventoryModule: React.FC = () => {
         } as any);
       } catch (reqErr) {
         console.error('Error creando el registro de despacho en camino:', reqErr);
+      }
+
+      // Also create a "Logistics Delivery" so it immediately appears in "Despachos y Entregas a Obra"
+      try {
+        const rnd = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const projName = (projects || []).find(p => p.id === dispatchProject)?.name || 'Obra';
+        await createLogisticsDelivery.mutateAsync({
+          project_id: dispatchProject || null,
+          destination: projName,
+          delivery_date: new Date().toISOString().slice(0, 10),
+          driver_name: dispatchEmployee || 'Chofer Pañol',
+          notes: dispatchNotes || 'Despacho generado manualmente desde Inventario',
+          dispatch_number: `DES-${rnd}`,
+          remito_number: `REM-${rnd}`,
+          status: 'en_transito',
+          items: dispatchCartItems.map(i => ({
+            description: i.item.name,
+            quantity: parseFloat(i.qty),
+            unit: i.item.unit
+          }))
+        } as any);
+      } catch (delErr) {
+        console.error('Error creando el registro en logistics_deliveries:', delErr);
       }
 
       useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente y se descargó el remito.`);
