@@ -7,6 +7,8 @@ import {
 import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
+import { reliableLastHours } from '../lib/hourmeter';
+import { HourmeterInput } from './HourmeterInput';
 
 // ── Constants ──
 const DEFAULT_CHECKLIST: VehicleChecklistItem[] = [
@@ -138,10 +140,16 @@ const ReportForm: React.FC<{
     }
   }, [selectedVehicle]);
 
+  // Al cambiar de vehículo se limpia la lectura (evita arrastrar km a un horómetro)
+  React.useEffect(() => {
+    setOdometerKm('');
+  }, [vehicleId]);
+
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
   const kmValue = odometerKm ? parseFloat(odometerKm) : null;
   const kmInvalid = kmValue !== null && selectedVehicle?.tracking_type !== 'hours' && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
-  const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && selectedVehicle?.current_hours != null && kmValue < selectedVehicle.current_hours;
+  const lastReliableHours = reliableLastHours(selectedVehicle?.current_hours);
+  const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && lastReliableHours !== null && kmValue < lastReliableHours;
   const isInvalid = kmInvalid || hoursInvalid;
   const maintenanceAlert = selectedVehicle ? checkVehicleMaintenance(selectedVehicle, kmValue) : null;
   const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0 || maintenanceAlert?.isOverdue)
@@ -231,15 +239,21 @@ const ReportForm: React.FC<{
         </div>
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{selectedVehicle?.tracking_type === 'hours' ? 'Hs Horómetro' : 'Km Odómetro'}</label>
+          {selectedVehicle?.tracking_type === 'hours' ? (
+            <HourmeterInput
+              id="daily-report-hourmeter"
+              value={odometerKm}
+              onChange={setOdometerKm}
+              lastHours={selectedVehicle.current_hours}
+            />
+          ) : (<>
           <input
             type="number"
-            step={selectedVehicle?.tracking_type === 'hours' ? "0.1" : "1"}
+            step="1"
             value={odometerKm}
             onChange={e => setOdometerKm(e.target.value)}
-            min={selectedVehicle?.tracking_type === 'hours' ? (selectedVehicle.current_hours || 0) : (selectedVehicle?.current_km || 0)}
-            placeholder={selectedVehicle?.tracking_type === 'hours'
-              ? (selectedVehicle.current_hours ? `Mínimo: ${selectedVehicle.current_hours.toLocaleString()} hs` : '0')
-              : (selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0')}
+            min={selectedVehicle?.current_km || 0}
+            placeholder={selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0'}
             className={`w-full px-3 py-2.5 rounded-xl text-sm font-mono focus:ring-2 border ${
               isInvalid
                 ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-200 focus:border-red-400'
@@ -248,14 +262,15 @@ const ReportForm: React.FC<{
           />
           {isInvalid && (
             <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1 font-medium">
-              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle?.tracking_type === 'hours' ? selectedVehicle.current_hours?.toLocaleString() + ' hs' : selectedVehicle?.current_km?.toLocaleString() + ' km'} (último registro)
+              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle?.current_km?.toLocaleString() + ' km'} (último registro)
             </p>
           )}
           {!isInvalid && odometerKm && (
             <p className="text-[10px] text-green-600 mt-1">
-              ✓ +{(parseFloat(odometerKm) - (selectedVehicle?.tracking_type === 'hours' ? (selectedVehicle.current_hours || 0) : (selectedVehicle?.current_km || 0))).toLocaleString()} {selectedVehicle?.tracking_type === 'hours' ? 'hs' : 'km'} desde último registro
+              ✓ +{(parseFloat(odometerKm) - (selectedVehicle?.current_km || 0)).toLocaleString()} km desde último registro
             </p>
           )}
+          </>)}
 
           {/* Real-time maintenance status alert */}
           {maintenanceAlert && maintenanceAlert.level === 'overdue' && (

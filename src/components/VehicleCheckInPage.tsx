@@ -8,6 +8,8 @@ import {
 import type { FuelVehicle, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { useOfflineStore } from '../store/useOfflineStore';
 import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
+import { reliableLastHours } from '../lib/hourmeter';
+import { HourmeterInput } from './HourmeterInput';
 
 // ... (skipping some constants) ...
 
@@ -260,7 +262,8 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
   const kmValue = odometerKm ? parseFloat(odometerKm) : null;
   const kmInvalid = kmValue !== null && vehicle?.tracking_type !== 'hours' && vehicle?.current_km != null && kmValue < vehicle.current_km;
-  const hoursInvalid = kmValue !== null && vehicle?.tracking_type === 'hours' && vehicle?.current_hours != null && kmValue < vehicle.current_hours;
+  const lastReliableHours = reliableLastHours(vehicle?.current_hours);
+  const hoursInvalid = kmValue !== null && vehicle?.tracking_type === 'hours' && lastReliableHours !== null && kmValue < lastReliableHours;
   const isInvalid = kmInvalid || hoursInvalid;
   const maintenanceAlert = vehicle ? checkVehicleMaintenance(vehicle, kmValue) : null;
   const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0 || maintenanceAlert?.isOverdue)
@@ -581,16 +584,23 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">
                   {vehicle.tracking_type === 'hours' ? 'Horómetro (Horas de motor) *' : 'Odómetro (Kilómetros) *'}
                 </label>
+                {vehicle.tracking_type === 'hours' ? (
+                  <HourmeterInput
+                    id="checkin-hourmeter"
+                    size="lg"
+                    value={odometerKm}
+                    onChange={setOdometerKm}
+                    lastHours={vehicle.current_hours}
+                  />
+                ) : (<>
                 <input
                   type="number"
-                  step={vehicle.tracking_type === 'hours' ? "0.1" : "1"}
+                  step="1"
                   inputMode="decimal"
                   value={odometerKm}
                   onChange={e => setOdometerKm(e.target.value)}
-                  min={vehicle.tracking_type === 'hours' ? (vehicle.current_hours || 0) : (vehicle.current_km || 0)}
-                  placeholder={vehicle.tracking_type === 'hours' 
-                    ? (vehicle.current_hours ? `Mínimo: ${vehicle.current_hours.toLocaleString()} hs` : 'Hs actuales (horómetro)')
-                    : (vehicle.current_km ? `Mínimo: ${vehicle.current_km.toLocaleString()} km` : 'Km actuales')}
+                  min={vehicle.current_km || 0}
+                  placeholder={vehicle.current_km ? `Mínimo: ${vehicle.current_km.toLocaleString()} km` : 'Km actuales'}
                   className={`w-full px-4 py-3 border rounded-xl text-sm font-mono ${
                     kmInvalid
                       ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-300 focus:border-red-400'
@@ -601,15 +611,16 @@ export const VehicleCheckInPage: React.FC<{ vehicleId: string }> = ({ vehicleId 
                   <div className="flex items-center gap-1.5 mt-1.5 px-1">
                     <AlertTriangle size={12} className="text-red-500 shrink-0" />
                     <p className="text-xs text-red-600 font-medium">
-                      No puede ser menor a {vehicle.tracking_type === 'hours' ? vehicle.current_hours?.toLocaleString() + ' hs' : vehicle.current_km?.toLocaleString() + ' km'} (último registro)
+                      No puede ser menor a {vehicle.current_km?.toLocaleString() + ' km'} (último registro)
                     </p>
                   </div>
                 )}
                 {!isInvalid && odometerKm && (
                   <p className="text-[11px] text-green-600 mt-1 px-1">
-                    ✓ +{(parseFloat(odometerKm) - (vehicle.tracking_type === 'hours' ? (vehicle.current_hours || 0) : (vehicle.current_km || 0))).toLocaleString()} {vehicle.tracking_type === 'hours' ? 'hs' : 'km'} desde último registro
+                    ✓ +{(parseFloat(odometerKm) - (vehicle.current_km || 0)).toLocaleString()} km desde último registro
                   </p>
                 )}
+                </>)}
 
                 {/* Real-time maintenance alert banner */}
                 {maintenanceAlert && maintenanceAlert.level === 'overdue' && (

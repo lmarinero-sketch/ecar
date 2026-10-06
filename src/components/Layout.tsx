@@ -132,7 +132,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'guide' },
       { id: 'manual' },
       { id: 'implementation' },
-      { id: 'weekly_report' },
+      { id: 'weekly_report', requires: true },
     ],
   },
   {
@@ -157,7 +157,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
     label: 'Ger. Logística', emoji: '📦',
     items: [
       { id: 'logistics_intro', requires: true },
-      { id: 'purchase_requests' },
+      { id: 'purchase_requests', requires: true },
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
       { id: 'inventory', requires: true },
