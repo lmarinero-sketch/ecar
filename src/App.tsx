@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
@@ -11,8 +10,6 @@ import { useAppStore } from './store/useStore';
 import { MesaTecnicaPresentation } from './components/MesaTecnicaPresentation';
 import { FuelRequestPage } from './components/FuelRequestPage';
 import { ShowcasePage } from './components/showcase/ShowcasePage';
-import { ShieldAlert } from 'lucide-react';
-import type { ModuleId } from './lib/types';
 
 // Module imports
 import { BiDashboard } from './components/BiDashboard';
@@ -108,24 +105,11 @@ function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'manual_atte
 }
 
 function AppContent() {
-  const { user, loading, profile, hasModule, isAdmin } = useAuth();
-  const { activeModule, setActiveModule } = useAppStore();
+  const { user, loading } = useAuth();
+  const { activeModule } = useAppStore();
   
   // Activate background sync for offline daily reports
   useOfflineSync();
-
-  // Guard against unauthorized module access for non-admin users
-  useEffect(() => {
-    if (!loading && user && profile && !isAdmin) {
-      if (!hasModule(activeModule)) {
-        const allowed = (profile.allowed_modules || []) as ModuleId[];
-        const fallback = allowed.find(m => hasModule(m)) || allowed[0] || 'logistics_intro';
-        if (fallback && fallback !== activeModule) {
-          setActiveModule(fallback as ModuleId);
-        }
-      }
-    }
-  }, [loading, user, profile, isAdmin, activeModule, hasModule, setActiveModule]);
 
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
@@ -165,31 +149,6 @@ function AppContent() {
   if (!user) return <LoginPage />;
 
   const renderModule = () => {
-    // Security check: non-admins cannot render unauthorized modules
-    if (!isAdmin && profile && !hasModule(activeModule)) {
-      return (
-        <div className="min-h-[60vh] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
-            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-100">
-              <ShieldAlert size={28} />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Módulo Restringido</h2>
-            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-              No tenés permisos para visualizar esta sección financiera o administrativa. Tu usuario está configurado con permisos específicos para el área operativa.
-            </p>
-            {profile.allowed_modules && profile.allowed_modules.length > 0 && (
-              <button
-                onClick={() => setActiveModule((profile.allowed_modules[0] as ModuleId) || 'logistics_intro')}
-                className="w-full py-2.5 px-4 bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-semibold rounded-xl transition-all shadow-sm"
-              >
-                Volver a mi panel de trabajo
-              </button>
-            )}
-          </div>
-        </div>
-      );
-    }
-
     switch (activeModule) {
       case 'bi': return <BiDashboard />;
       case 'liquidity': return <LiquidityDashboard />;
@@ -244,15 +203,7 @@ function AppContent() {
       case 'obra_economia': return <GestionEconomicaModule />;
       case 'obra_documentacion': return <DocumentacionComunicacionModule />;
 
-      default: {
-        if (!isAdmin && profile?.allowed_modules?.[0]) {
-          const first = profile.allowed_modules[0] as ModuleId;
-          if (first === 'logistics_intro') return <LogisticsHomeModule />;
-          if (first === 'logistics') return <LogisticsModule />;
-          if (first === 'inventory') return <InventoryModule />;
-        }
-        return <BiDashboard />;
-      }
+      default: return <BiDashboard />;
     }
   };
 
