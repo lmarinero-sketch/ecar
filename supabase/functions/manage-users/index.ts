@@ -127,7 +127,7 @@ Deno.serve(async (req: Request) => {
 
     // ── UPDATE USER ROLE / MODULES / PERMISSIONS ──
     if (action === "update") {
-      const { profileId, role, allowedModules, fullName, permissions } = body;
+      const { profileId, role, allowedModules, fullName, permissions, hiddenModules } = body;
 
       if (!profileId) {
         return new Response(JSON.stringify({ error: "profileId requerido" }), {
@@ -140,6 +140,15 @@ Deno.serve(async (req: Request) => {
       if (role) updates.role = role;
       if (allowedModules) updates.allowed_modules = allowedModules;
       if (fullName) updates.full_name = fullName;
+      // Lista negra de módulos (aplica también a admins)
+      if (Array.isArray(hiddenModules)) {
+        // Un admin no puede ocultarse módulos a sí mismo (evita auto-bloqueo)
+        const { data: target } = await supabaseAdmin
+          .from("profiles").select("auth_user_id").eq("id", profileId).single();
+        if (target?.auth_user_id !== caller.id) {
+          updates.hidden_modules = hiddenModules.filter((m: unknown) => typeof m === "string");
+        }
+      }
 
       const { error } = await supabaseAdmin
         .from("profiles")

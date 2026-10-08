@@ -1430,7 +1430,24 @@ export const InventoryModule: React.FC = () => {
       };
 
       if (editingItem) {
-        await updateItem.mutateAsync({ id: editingItem.id, ...payload });
+        const oldStock = Number(editingItem.current_stock) || 0;
+        const newStock = payload.current_stock;
+        const stockDiff = newStock - oldStock;
+
+        // If stock changed directly in the edit form, record an audit movement
+        if (Math.abs(stockDiff) > 0.0001) {
+          await createMovement.mutateAsync({
+            item_id: editingItem.id,
+            movement_type: stockDiff >= 0 ? 'in' : 'out',
+            quantity: Math.abs(stockDiff),
+            notes: `Ajuste manual de stock por edición de ficha (${oldStock} -> ${newStock})`,
+            created_by: profile?.full_name || profile?.email || 'Pañol Central'
+          });
+        }
+
+        // Exclude current_stock from updateItem if createMovement already updated it
+        const { current_stock, ...restPayload } = payload;
+        await updateItem.mutateAsync({ id: editingItem.id, ...restPayload });
         useModalStore.getState().showAlert('Éxito', 'Ítem actualizado correctamente.');
       } else {
         const created: any = await createItem.mutateAsync({ ...payload, current_stock: 0 });
@@ -3951,22 +3968,19 @@ export const InventoryModule: React.FC = () => {
                 useModalStore.getState().showAlert('Error', 'Ingrese una cantidad válida.');
                 return;
               }
-              const oldStock = showQuickAdjustment.current_stock;
+              const oldStock = Number(showQuickAdjustment.current_stock) || 0;
               const diff = val - oldStock;
 
               try {
-                await updateItem.mutateAsync({
-                  id: showQuickAdjustment.id,
-                  current_stock: val
-                });
-
-                await createMovement.mutateAsync({
-                  item_id: showQuickAdjustment.id,
-                  movement_type: diff >= 0 ? 'in' : 'out',
-                  quantity: Math.abs(diff),
-                  notes: `Ajuste manual de stock (${oldStock} -> ${val}). ${quickAdjNotes || ''}`.trim(),
-                  created_by: profile?.full_name || 'Pañol Central'
-                });
+                if (Math.abs(diff) > 0.0001) {
+                  await createMovement.mutateAsync({
+                    item_id: showQuickAdjustment.id,
+                    movement_type: diff >= 0 ? 'in' : 'out',
+                    quantity: Math.abs(diff),
+                    notes: `Ajuste manual de stock (${oldStock} -> ${val}). ${quickAdjNotes || ''}`.trim(),
+                    created_by: profile?.full_name || 'Pañol Central'
+                  });
+                }
 
                 useModalStore.getState().showAlert('Éxito', `Stock de "${showQuickAdjustment.name}" actualizado a ${val} ${showQuickAdjustment.unit}.`);
                 setShowQuickAdjustment(null);

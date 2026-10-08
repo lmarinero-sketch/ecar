@@ -16,6 +16,8 @@ type AuthState = {
   hasModule: (moduleId: ModuleId) => boolean;
   hasPermission: (moduleId: ModuleId, level: PermissionLevel) => boolean;
   isAdmin: boolean;
+  /** true si el módulo fue ocultado al usuario por un admin (aplica también a admins). */
+  isModuleHidden: (moduleId: ModuleId) => boolean;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -111,9 +113,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = profile?.role === 'admin';
 
+  // Lista negra: se evalúa ANTES del atajo de admin para que también los afecte.
+  const isModuleHidden = (moduleId: ModuleId): boolean => {
+    const hidden = (profile?.hidden_modules as string[] | null | undefined) || [];
+    if (hidden.length === 0) return false;
+    if (moduleId === 'quality' || moduleId === 'inspections') {
+      return hidden.includes('quality') || hidden.includes('inspections');
+    }
+    return hidden.includes(moduleId);
+  };
+
   const hasModule = (moduleId: ModuleId): boolean => {
     if (!profile) return false;
-    if (isAdmin) return true; // Admin has access to everything
+    if (isModuleHidden(moduleId)) return false;
+    if (isAdmin) return true; // Admin has access to everything (salvo ocultos)
     const allowed = (profile.allowed_modules as string[]) || [];
     if (moduleId === 'quality' || moduleId === 'inspections') {
       return allowed.includes('quality') || allowed.includes('inspections');
@@ -123,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (moduleId: ModuleId, level: PermissionLevel): boolean => {
     if (!profile) return false;
-    if (isAdmin) return true; // Admin has full permissions on everything
+    if (isModuleHidden(moduleId)) return false;
+    if (isAdmin) return true; // Admin has full permissions on everything (salvo ocultos)
     // First check if user has the module at all
     const allowed = (profile.allowed_modules as string[]) || [];
     const isQuality = moduleId === 'quality' || moduleId === 'inspections';
@@ -143,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, permissions, loading, signIn, signUp, signOut, changePassword, hasModule, hasPermission, isAdmin }}>
+    <AuthContext.Provider value={{ user, session, profile, permissions, loading, signIn, signUp, signOut, changePassword, hasModule, hasPermission, isAdmin, isModuleHidden }}>
       {children}
     </AuthContext.Provider>
   );

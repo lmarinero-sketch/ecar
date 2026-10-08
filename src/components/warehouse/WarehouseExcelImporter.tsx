@@ -179,7 +179,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
 
       const existingItemMap = new Map((dbItems || []).map(i => [i.name.trim().toLowerCase(), i]));
       const itemsToInsertMap = new Map<string, any>();
-      const itemsToUpdate: { id: string; current_stock: number; shelf_id: string | null; shelf_position: string | null }[] = [];
+      const itemsToUpdate: { id: string; current_stock: number; old_stock: number; shelf_id: string | null; shelf_position: string | null }[] = [];
 
       for (let i = 0; i < parsedData.length; i++) {
         const row = parsedData[i];
@@ -233,6 +233,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
           itemsToUpdate.push({
             id: existingDbItem.id,
             current_stock: qty,
+            old_stock: Number(existingDbItem.current_stock) || 0,
             shelf_id: shelfId,
             shelf_position: shelfPos
           });
@@ -260,7 +261,10 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
 
       const itemsToInsert = Array.from(itemsToInsertMap.values());
 
-      // Update existing items
+      const { data: authData } = await supabase.auth.getUser();
+      const author = authData?.user?.user_metadata?.full_name || authData?.user?.email || 'Importador Excel';
+
+      // Update existing items and record Kardex movements if stock changed
       for (const itemUpd of itemsToUpdate) {
         await supabase
           .from('inventory_items')
@@ -270,19 +274,51 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
             shelf_position: itemUpd.shelf_position
           })
           .eq('id', itemUpd.id);
+
+        const diff = itemUpd.current_stock - itemUpd.old_stock;
+        if (Math.abs(diff) > 0.0001) {
+          await supabase.from('inventory_movements').insert({
+            tenant_id: ECAR_TENANT_ID,
+            item_id: itemUpd.id,
+            movement_type: diff >= 0 ? 'in' : 'out',
+            quantity: Math.abs(diff),
+            notes: `Ajuste de stock por importación Excel (${itemUpd.old_stock} -> ${itemUpd.current_stock})`,
+            created_by: author
+          });
+        }
       }
 
-      // Insert new items in batches of 100
+      // Insert new items in batches of 100 with initial Kardex movements
       const BATCH_SIZE = 100;
       let insertedCount = 0;
 
       for (let b = 0; b < itemsToInsert.length; b += BATCH_SIZE) {
         const batch = itemsToInsert.slice(b, b + BATCH_SIZE);
-        const { error: batchErr } = await supabase.from('inventory_items').insert(batch);
+        const { data: insertedBatch, error: batchErr } = await supabase
+          .from('inventory_items')
+          .insert(batch)
+          .select('id, current_stock');
         
         if (batchErr) {
           console.error("Error inserting batch:", batchErr);
           throw batchErr;
+        }
+
+        if (insertedBatch && insertedBatch.length > 0) {
+          const movsToInsert = insertedBatch
+            .filter((it: any) => Number(it.current_stock) > 0)
+            .map((it: any) => ({
+              tenant_id: ECAR_TENANT_ID,
+              item_id: it.id,
+              movement_type: 'in',
+              quantity: Number(it.current_stock),
+              notes: 'Ingreso inicial por importación Excel',
+              created_by: author
+            }));
+
+          if (movsToInsert.length > 0) {
+            await supabase.from('inventory_movements').insert(movsToInsert);
+          }
         }
 
         insertedCount += batch.length;
@@ -291,6 +327,7 @@ export const WarehouseExcelImporter: React.FC<Props> = ({ existingShelves, onCom
 
       // Invalidate query caches so UI updates immediately
       qc.invalidateQueries({ queryKey: ['inventory_items'] });
+      qc.invalidateQueries({ queryKey: ['inventory_movements'] });
       qc.invalidateQueries({ queryKey: ['warehouse_shelves'] });
 
       useModalStore.getState().showAlert(

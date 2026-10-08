@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ClipboardCheck, ArrowLeft, Plus, AlertTriangle, CheckCircle2,
   Truck, Wrench, QrCode, Calendar, Eye,
-  CircleCheck, CircleX, ChevronDown, ChevronUp, Download
+  CircleCheck, CircleX, ChevronDown, ChevronUp, Download,
+  Camera, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
@@ -496,15 +497,42 @@ const ReportForm: React.FC<{
 };
 
 // ── Detail View ──
+const getPhotoLabel = (url: string, idx: number): string => {
+  const lower = url.toLowerCase();
+  if (lower.includes('frente')) return 'Frente';
+  if (lower.includes('lateral_izquierdo') || lower.includes('izq')) return 'Lateral Izquierdo';
+  if (lower.includes('lateral_derecho') || lower.includes('der')) return 'Lateral Derecho';
+  if (lower.includes('trasera') || lower.includes('atras')) return 'Parte Trasera';
+  return `Foto ${idx + 1}`;
+};
+
 const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onClose: () => void }> = ({ report, projects, onClose }) => {
   const updateReport = useUpdateVehicleDailyReport();
   const [editingProject, setEditingProject] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(report.project_id || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
 
   const condition = CONDITION_BADGE[report.vehicle_condition_after] || CONDITION_BADGE.operativo;
   const faultsCount = (report.checklist || []).filter(c => c.estado === 'falla').length;
   const fuelInfo = FUEL_LEVELS.find(f => f.value === report.fuel_level);
+  const photos = report.damage_photos || [];
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (activePhotoIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActivePhotoIndex(null);
+      if (e.key === 'ArrowRight' && photos.length > 0) {
+        setActivePhotoIndex(prev => (prev === null ? 0 : (prev + 1) % photos.length));
+      }
+      if (e.key === 'ArrowLeft' && photos.length > 0) {
+        setActivePhotoIndex(prev => (prev === null ? 0 : (prev - 1 + photos.length) % photos.length));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activePhotoIndex, photos.length]);
 
   const handleSaveProject = async () => {
     setIsSaving(true);
@@ -636,6 +664,60 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
           </div>
         )}
 
+        {/* Fotos de Inspección / Daños */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <Camera size={14} className="text-ecar-blue" />
+              Fotos de Inspección QR / Estado
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                photos.length > 0
+                  ? 'bg-blue-100 text-ecar-blueDark'
+                  : 'bg-gray-100 text-gray-500'
+              }`}>
+                {photos.length > 0
+                  ? `${photos.length} foto${photos.length > 1 ? 's' : ''}`
+                  : 'Sin fotos'}
+              </span>
+            </h4>
+          </div>
+
+          {photos.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {photos.map((url, idx) => {
+                const label = getPhotoLabel(url, idx);
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setActivePhotoIndex(idx)}
+                    className="group relative cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-gray-900 shadow-sm hover:shadow-md transition-all aspect-video flex items-center justify-center"
+                  >
+                    <img
+                      src={url}
+                      alt={label}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-95 group-hover:opacity-100"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <span className="absolute bottom-2 left-2 right-2 text-[11px] font-bold text-white drop-shadow truncate flex items-center gap-1">
+                      <Camera size={12} className="shrink-0 text-blue-300" />
+                      {label}
+                    </span>
+                    <div className="absolute top-2 right-2 bg-black/60 text-white rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-medium backdrop-blur-sm">
+                      <Eye size={12} />
+                      <span>Ampliar</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-4 text-center text-xs text-gray-400">
+              No se adjuntaron fotos en este reporte de inspección.
+            </div>
+          )}
+        </div>
+
         {/* Observations */}
         {report.observations && (
           <div className="bg-gray-50 rounded-lg p-3">
@@ -644,6 +726,107 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
           </div>
         )}
       </div>
+
+      {/* Lightbox Modal */}
+      {activePhotoIndex !== null && photos[activePhotoIndex] && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 animate-in fade-in duration-200"
+          onClick={() => setActivePhotoIndex(null)}
+        >
+          {/* Lightbox Topbar */}
+          <div
+            className="flex items-center justify-between text-white max-w-5xl mx-auto w-full py-2 z-10"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <Camera size={18} className="text-blue-400" />
+              <span className="font-bold text-sm sm:text-base">
+                {getPhotoLabel(photos[activePhotoIndex], activePhotoIndex)}
+              </span>
+              <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded-full">
+                {activePhotoIndex + 1} de {photos.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href={photos[activePhotoIndex]}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
+              >
+                <Download size={14} />
+                <span>Original</span>
+              </a>
+              <button
+                onClick={() => setActivePhotoIndex(null)}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title="Cerrar (Esc)"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Center Image + Nav */}
+          <div
+            className="relative flex-1 flex items-center justify-center max-w-5xl mx-auto w-full my-2"
+            onClick={e => e.stopPropagation()}
+          >
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIndex((activePhotoIndex - 1 + photos.length) % photos.length);
+                }}
+                className="absolute left-2 sm:left-4 z-20 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all hover:scale-110 shadow-lg border border-white/10"
+                title="Anterior (Flecha izquierda)"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            )}
+
+            <img
+              src={photos[activePhotoIndex]}
+              alt={getPhotoLabel(photos[activePhotoIndex], activePhotoIndex)}
+              className="max-h-[75vh] max-w-[90vw] object-contain rounded-xl shadow-2xl select-none"
+            />
+
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIndex((activePhotoIndex + 1) % photos.length);
+                }}
+                className="absolute right-2 sm:right-4 z-20 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all hover:scale-110 shadow-lg border border-white/10"
+                title="Siguiente (Flecha derecha)"
+              >
+                <ChevronRight size={24} />
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Thumbnails Strip */}
+          {photos.length > 1 && (
+            <div
+              className="flex items-center justify-center gap-2 py-2 max-w-5xl mx-auto overflow-x-auto w-full z-10"
+              onClick={e => e.stopPropagation()}
+            >
+              {photos.map((url, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActivePhotoIndex(i)}
+                  className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
+                    i === activePhotoIndex ? 'border-blue-400 scale-105 shadow-md shadow-blue-500/20' : 'border-transparent opacity-50 hover:opacity-100'
+                  }`}
+                >
+                  <img src={url} alt={`Miniatura ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -825,6 +1008,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                   <th >Km</th>
                   <th >Combustible</th>
                   <th >Checklist</th>
+                  <th >Fotos</th>
                   <th >Daño</th>
                   <th >Estado</th>
                   <th ></th>
@@ -855,6 +1039,20 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faults > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                           {faults > 0 ? `${faults} fallas` : 'OK'}
                         </span>
+                      </td>
+                      <td >
+                        {r.damage_photos && r.damage_photos.length > 0 ? (
+                          <button
+                            onClick={() => { setSelectedReport(r); setView('detail'); }}
+                            title="Ver fotos adjuntas"
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-ecar-blue border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all"
+                          >
+                            <Camera size={11} />
+                            {r.damage_photos.length} {r.damage_photos.length === 1 ? 'foto' : 'fotos'}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-gray-300">—</span>
+                        )}
                       </td>
                       <td >
                         {r.has_damage ? (

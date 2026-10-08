@@ -213,7 +213,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
 /* ════════════════════════════════════════════════════════════ */
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeModule, setActiveModule, sidebarOpen, setSidebarOpen, tutorialMode, setTutorialMode, seenFuelRequests, darkMode, toggleDarkMode } = useAppStore();
-  const { profile, signOut, changePassword, hasModule, isAdmin } = useAuth();
+  const { profile, signOut, changePassword, hasModule, isAdmin, isModuleHidden } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [contentKey, setContentKey] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -250,6 +250,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     setActiveModule(id);
     setSidebarOpen(false);
   };
+
+  // Si el módulo activo fue ocultado por un admin (p. ej. quedó guardado en caché
+  // o se navegó desde un acceso directo), redirigir al primer módulo visible.
+  const activeHidden = !!profile && isModuleHidden(activeModule);
+  useEffect(() => {
+    if (!activeHidden) return;
+    for (const section of SIDEBAR_SECTIONS) {
+      const first = section.items.find(i =>
+        !isModuleHidden(i.id) &&
+        ((i.id === 'user_management' || i.id === 'user_activity') ? isAdmin : (!i.requires || hasModule(i.id)))
+      );
+      if (first) { setActiveModule(first.id); return; }
+    }
+  }, [activeHidden]);
 
   return (
     <div className="flex h-screen bg-surface-secondary dark:bg-[#0b1329] flex-col md:flex-row overflow-hidden">
@@ -312,6 +326,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {SIDEBAR_SECTIONS.map((section, si) => {
             const visibleItems = (section.items || []).filter(
               item => {
+                // Módulos ocultados por un admin (aplica también a admins)
+                if (isModuleHidden(item.id)) return false;
                 // user_management and user_activity are admin-only
                 if (item.id === 'user_management' || item.id === 'user_activity') return isAdmin;
                 return !item.requires || hasModule(item.id);
@@ -525,7 +541,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
         {/* Content with entrance animation */}
         <div key={contentKey} className="p-4 md:p-6 w-full h-full animate-fade-in flex flex-col">
-          {children}
+          {activeHidden ? null : children}
         </div>
       </main>
 

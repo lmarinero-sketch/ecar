@@ -6,6 +6,8 @@ export type Profile = {
   email: string;
   role: 'admin' | 'colaborador' | 'panolero';
   allowed_modules: string[];
+  /** Módulos ocultos (lista negra). Aplica también a admins. */
+  hidden_modules?: string[] | null;
   avatar_url: string | null;
   dni?: string | null;
   signature_data?: string | null;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users, UserPlus, Shield, Edit, Trash2, X, Save, Search,
   CheckCircle2, AlertCircle, Mail, KeyRound, ChevronDown, ChevronUp,
-  Eye, Pencil, Trash, Check, BookOpen, Package
+  Eye, EyeOff, Pencil, Trash, Check, BookOpen, Package
 } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,7 @@ type UserProfile = {
   email: string;
   role: 'admin' | 'colaborador' | 'panolero';
   allowed_modules: string[];
+  hidden_modules?: string[] | null;
   created_at: string;
 };
 
@@ -64,6 +65,7 @@ export const UserManagementModule: React.FC = () => {
   const [editPerms, setEditPerms] = useState<ModulePerms>({});
   const [editName, setEditName] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [editHidden, setEditHidden] = useState<string[]>([]);
 
   // Expanded module panels
   const [expandedModules, setExpandedModules] = useState<string | null>(null);
@@ -185,6 +187,9 @@ export const UserManagementModule: React.FC = () => {
           }
         : editPerms;
 
+    const target = users.find(u => u.id === profileId);
+    const isSelfTarget = target?.auth_user_id === user?.id;
+
     const result = await callManageUsers({
       action: 'update',
       profileId,
@@ -192,6 +197,8 @@ export const UserManagementModule: React.FC = () => {
       fullName: editName,
       allowedModules: activeModules,
       permissions,
+      // Un admin no puede ocultarse módulos a sí mismo
+      ...(isSelfTarget ? {} : { hiddenModules: editHidden }),
     });
     if (!result.error) {
       fetchUsers();
@@ -219,6 +226,7 @@ export const UserManagementModule: React.FC = () => {
     setEditingUser(profile.id);
     setEditRole(profile.role);
     setEditName(profile.full_name);
+    setEditHidden(profile.hidden_modules || []);
     // Build perms from stored permissions
     const storedPerms = userPermissions[profile.id] || [];
     const perms: ModulePerms = {};
@@ -703,6 +711,12 @@ export const UserManagementModule: React.FC = () => {
                         onSetAll={(level) => setEditPerms(buildDefaultPerms(ASSIGNABLE_MODULES as unknown as string[], level))}
                       />
                     )}
+                    <HiddenModulesGrid
+                      hidden={editHidden}
+                      onChange={setEditHidden}
+                      disabled={isSelf}
+                      isAdminRole={editRole === 'admin'}
+                    />
                   </div>
                 )}
 
@@ -711,7 +725,20 @@ export const UserManagementModule: React.FC = () => {
                   <div className="px-4 md:px-5 pb-4 md:pb-5 border-t border-gray-100 bg-gray-50/50 pt-3">
                     <h6 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Módulos y Permisos</h6>
                     {profile.role === 'admin' ? (
-                      <p className="text-xs text-amber-600 font-bold">🛡️ Acceso total a todos los módulos (Admin)</p>
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-amber-600 font-bold">
+                          🛡️ Acceso total (Admin){(profile.hidden_modules?.length || 0) > 0 ? ` salvo ${profile.hidden_modules!.length} módulo(s) oculto(s)` : ''}
+                        </p>
+                        {(profile.hidden_modules?.length || 0) > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {profile.hidden_modules!.map(m => (
+                              <span key={m} className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-700 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">
+                                <EyeOff size={10} /> {MODULE_LABELS[m as ModuleId] || m}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="space-y-1">
                         {(profile.allowed_modules && Array.isArray(profile.allowed_modules) ? profile.allowed_modules : []).length === 0 ? (
@@ -858,6 +885,100 @@ const PermissionsGrid: React.FC<{
           })}
         </div>
       </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════ */
+/*  HIDDEN MODULES GRID (lista negra, aplica también a admins)     */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Permite a un admin ocultar módulos del sidebar a cualquier usuario,
+ * incluso a otros administradores, sin quitarles el rol.
+ */
+const HiddenModulesGrid: React.FC<{
+  hidden: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+  isAdminRole?: boolean;
+}> = ({ hidden, onChange, disabled, isAdminRole }) => {
+  const toggle = (id: string) => {
+    if (disabled) return;
+    onChange(hidden.includes(id) ? hidden.filter(h => h !== id) : [...hidden, id]);
+  };
+  const setSection = (ids: string[], hide: boolean) => {
+    if (disabled) return;
+    const rest = hidden.filter(h => !ids.includes(h));
+    onChange(hide ? [...rest, ...ids] : rest);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <label className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+            <EyeOff size={13} className="text-red-500" /> Módulos ocultos
+            {hidden.length > 0 && (
+              <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-full">{hidden.length}</span>
+            )}
+          </label>
+          <p className="text-[11px] text-gray-400 mt-0.5">
+            {isAdminRole
+              ? 'El usuario conserva el rol Admin, pero no verá los módulos marcados como ocultos.'
+              : 'Se ocultan aunque el usuario tenga permiso sobre ellos.'}
+          </p>
+        </div>
+        {!disabled && hidden.length > 0 && (
+          <button type="button" onClick={() => onChange([])}
+            className="text-[10px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-md transition-all">
+            Mostrar todos
+          </button>
+        )}
+      </div>
+
+      {disabled ? (
+        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          No podés ocultarte módulos a vos mismo. Pedile a otro administrador que lo haga.
+        </p>
+      ) : (
+        <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+          {SIDEBAR_SECTIONS.map((section, idx) => {
+            const ids = section.items.map(i => i.id as string);
+            const allHidden = ids.every(id => hidden.includes(id));
+            return (
+              <div key={idx}>
+                <div className="flex items-center justify-between bg-gray-200/50 px-3 py-1.5">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
+                    {section.label ? `${section.emoji} ${section.label}` : '🌐 Generales'}
+                  </span>
+                  <button type="button" onClick={() => setSection(ids, !allHidden)}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${allHidden ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-red-600 bg-red-50 hover:bg-red-100'}`}>
+                    {allHidden ? 'Mostrar sección' : 'Ocultar sección'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 p-2.5">
+                  {section.items.map(item => {
+                    const isHidden = hidden.includes(item.id);
+                    return (
+                      <button key={item.id} type="button" onClick={() => toggle(item.id)}
+                        title={isHidden ? 'Oculto — click para mostrar' : 'Visible — click para ocultar'}
+                        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border shadow-sm transition-all ${
+                          isHidden
+                            ? 'bg-red-50 border-red-200 text-red-700 line-through decoration-red-300'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-ecar-blue/40'
+                        }`}>
+                        {isHidden ? <EyeOff size={11} /> : <Eye size={11} className="text-emerald-500" />}
+                        {MODULE_LABELS[item.id as ModuleId] || item.id}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

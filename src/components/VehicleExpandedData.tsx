@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Fuel, QrCode } from 'lucide-react';
+import { Fuel, QrCode, Camera } from 'lucide-react';
 import type { VehicleDailyReport, FuelLoad } from '../lib/types';
 
 export const VehicleExpandedData: React.FC<{ vehicleId: string }> = ({ vehicleId }) => {
@@ -48,9 +48,16 @@ export const VehicleExpandedData: React.FC<{ vehicleId: string }> = ({ vehicleId
               <li key={qr.id} className="text-xs flex items-center justify-between border-b border-gray-50 pb-1">
                 <span className="font-mono text-gray-500">{qr.report_date}</span>
                 <span className="font-medium">{qr.driver_name}</span>
-                <span className={`px-1.5 py-0.5 rounded font-bold ${qr.vehicle_condition_after === 'operativo' ? 'bg-green-100 text-green-700' : qr.vehicle_condition_after === 'con_observaciones' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                  {qr.vehicle_condition_after}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {qr.damage_photos && qr.damage_photos.length > 0 && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-ecar-blue text-[10px] font-bold border border-blue-200">
+                      <Camera size={10} /> {qr.damage_photos.length}
+                    </span>
+                  )}
+                  <span className={`px-1.5 py-0.5 rounded font-bold ${qr.vehicle_condition_after === 'operativo' ? 'bg-green-100 text-green-700' : qr.vehicle_condition_after === 'con_observaciones' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                    {qr.vehicle_condition_after}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
