@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Calendar, MapPin, Send, CheckCircle2, Clock, Filter, FileText
+  Calendar, MapPin, Send, CheckCircle2, Clock, Filter, FileText,
+  Truck, Wrench, Users, Package, Plus, X
 } from 'lucide-react';
 import {
   useObraTramos,
@@ -8,7 +9,7 @@ import {
   useObraOrdenesTrabajo,
   useCreateObraOrdenTrabajo
 } from '../../../hooks/useNuevoModuloObra';
-import { useEmployees } from '../../../hooks/useData';
+import { useEmployees, useFuelVehicles } from '../../../hooks/useData';
 import type { ObraTramoItem } from '../../../lib/types';
 import { ModalPortal } from '../../common/ModalPortal';
 
@@ -26,10 +27,49 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
   const { data: tramoItems = [] } = useObraTramoItems(projectId, selectedTramoId || undefined);
   const { data: odts = [] } = useObraOrdenesTrabajo(projectId);
   const { data: employees = [] } = useEmployees();
+  const { data: fuelVehicles = [] } = useFuelVehicles();
   const createOdt = useCreateObraOrdenTrabajo();
 
   const [activeSubTab, setActiveSubTab] = useState<'para_programar' | 'odts'>('para_programar');
   const [selectedTramoItem, setSelectedTramoItem] = useState<ObraTramoItem | null>(null);
+
+  // Estados de Checklist de Recursos Operativos
+  const [resourceTab, setResourceTab] = useState<'maquinaria' | 'personal' | 'herramientas' | 'materiales'>('maquinaria');
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
+  const [selectedPersonnel, setSelectedPersonnel] = useState<string[]>([]);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [customToolInput, setCustomToolInput] = useState('');
+
+  // Catálogo base de herramientas y equipos de obra
+  const HERRAMIENTAS_CATALOGO = useMemo(() => [
+    'Vibroapisonador (Sapito)',
+    'Placa compactadora vibratoria',
+    'Termofusora PEAD / Espejo',
+    'Cortadora de asfalto / hormigón',
+    'Nivel óptico / Láser topográfico',
+    'Grupo electrógeno portátil',
+    'Bomba sumergible / achique de zanja',
+    'Martillo demoledor neumático',
+    'Conos y vallas de seguridad vial',
+    'Cinta métrica 50m y jalones',
+    'Kit de balizas luminosas nocturnas',
+    'Herramientas manuales (palas, picos, carretillas)'
+  ], []);
+
+  // Lista combinada de maquinarias y vehículos disponibles
+  const availableVehicles = useMemo(() => {
+    const defaultList = [
+      'Retropala HMK 102B (HMK-01)',
+      'Camión Volcador Mercedes Benz 1720',
+      'Camioneta Toyota Hilux 4x4 (Logística)',
+      'Minicargadora Bobcat S175',
+      'Termofusora PEAD Automatizada',
+      'Camión Cisterna de Agua 10.000L'
+    ];
+    if (fuelVehicles.length === 0) return defaultList;
+    const fromDb = fuelVehicles.map(v => `${v.description || v.model || v.vehicle_type} (${v.plate || v.code})`);
+    return Array.from(new Set([...defaultList, ...fromDb]));
+  }, [fuelVehicles]);
 
   // Formulario ODT
   const [odtForm, setOdtForm] = useState({
@@ -58,23 +98,66 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     const rendimiento = Number(ti.item?.rendimiento_base_dia) || 70;
     const metaSugerida = Math.min(saldo, rendimiento);
 
+    // Inicializar checklist predeterminado
+    setSelectedVehicles(['Retropala HMK 102B (HMK-01)']);
+    setSelectedPersonnel(employees.slice(0, 3).map(e => e.full_name));
+    setSelectedTools(['Conos y vallas de seguridad vial', 'Nivel óptico / Láser topográfico']);
+    setCustomToolInput('');
+    setResourceTab('maquinaria');
+
     setOdtForm({
       fecha: new Date().toISOString().split('T')[0],
       meta_cantidad: metaSugerida,
       cuadrilla_nombre: 'Cuadrilla 1 - B. Guevara',
       responsable_id: employees[0]?.id || '',
       equipo_asignado: 'Retropala HMK',
-      materiales_requeridos: '',
+      materiales_requeridos: 'Cañería, arena de asiento y cinta de señalización',
       inicio_plan: '07:30',
       fin_plan: '16:00',
       instrucciones_calidad: 'Cumplir cota de proyecto y señalización de seguridad.'
     });
   };
 
+  const toggleVehicle = (v: string) => {
+    setSelectedVehicles(prev =>
+      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
+    );
+  };
+
+  const togglePersonnel = (name: string) => {
+    setSelectedPersonnel(prev =>
+      prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name]
+    );
+  };
+
+  const toggleTool = (tool: string) => {
+    setSelectedTools(prev =>
+      prev.includes(tool) ? prev.filter(x => x !== tool) : [...prev, tool]
+    );
+  };
+
+  const handleAddCustomTool = () => {
+    if (!customToolInput.trim()) return;
+    if (!selectedTools.includes(customToolInput.trim())) {
+      setSelectedTools(prev => [...prev, customToolInput.trim()]);
+    }
+    setCustomToolInput('');
+  };
+
   const handleEmitirOdt = async () => {
     if (!selectedTramoItem) return;
     const nextNum = `ODT-${String(odts.length + 1).padStart(3, '0')}`;
     const respEmp = employees.find(e => e.id === odtForm.responsable_id);
+
+    // Consolidar resumen de equipos y herramientas seleccionadas
+    const maquinasStr = selectedVehicles.length > 0 ? selectedVehicles.join(', ') : 'Ninguna';
+    const herramStr = selectedTools.length > 0 ? selectedTools.join(', ') : '';
+    const equiposConsolidados = herramStr ? `${maquinasStr} | Herramientas: ${herramStr}` : maquinasStr;
+
+    // Consolidar cuadrilla con personal asignado
+    const cuadrillaConsolidada = selectedPersonnel.length > 0
+      ? `${odtForm.cuadrilla_nombre} (${selectedPersonnel.length} operarios: ${selectedPersonnel.join(', ')})`
+      : odtForm.cuadrilla_nombre;
 
     await createOdt.mutateAsync({
       project_id: projectId,
@@ -85,10 +168,10 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       item_id: selectedTramoItem.item_id,
       meta_cantidad: Number(odtForm.meta_cantidad),
       unidad: selectedTramoItem.item?.unidad || 'ml',
-      cuadrilla_nombre: odtForm.cuadrilla_nombre,
+      cuadrilla_nombre: cuadrillaConsolidada,
       responsable_id: odtForm.responsable_id || null,
       responsable_nombre: respEmp?.full_name || 'B. Guevara',
-      equipo_asignado: odtForm.equipo_asignado,
+      equipo_asignado: equiposConsolidados,
       materiales_requeridos: odtForm.materiales_requeridos || null,
       inicio_plan: odtForm.inicio_plan,
       fin_plan: odtForm.fin_plan,
@@ -288,112 +371,406 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
         </div>
       )}
 
-      {/* Modal Programar y Emitir ODT */}
+      {/* Modal Programar y Emitir ODT con Checklist de Recursos */}
       <ModalPortal
         isOpen={Boolean(selectedTramoItem)}
         onClose={() => setSelectedTramoItem(null)}
-        maxWidth="max-w-lg"
+        maxWidth="max-w-2xl"
       >
-        {selectedTramoItem && (
-          <div className="p-6 space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <span className="text-xs font-bold text-amber-600 uppercase tracking-wider block">Emisión de Orden de Trabajo</span>
-              <h3 className="font-bold text-lg text-slate-900 mt-0.5">
-                {selectedTramoItem.item?.descripcion}
-              </h3>
-              <p className="text-xs text-slate-500 font-mono">
-                Tramo: {selectedTramoItem.tramo?.codigo} ({selectedTramoItem.tramo?.calle_pasaje})
-              </p>
-            </div>
+        {selectedTramoItem && (() => {
+          const saldoTramo = Math.max(0, Number(selectedTramoItem.cantidad_prevista || 0) - Number(selectedTramoItem.cantidad_ejecutada || 0));
+          const rendimientoSugerido = Number(selectedTramoItem.item?.rendimiento_base_dia || 70);
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Fecha Programada</label>
-                <input
-                  type="date"
-                  value={odtForm.fecha}
-                  onChange={e => setOdtForm({ ...odtForm, fecha: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
+          return (
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
+              {/* Encabezado */}
+              <div className="border-b border-slate-100 pb-3 flex justify-between items-start">
+                <div>
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider block">
+                    Emisión & Despacho de Orden de Trabajo
+                  </span>
+                  <h3 className="font-bold text-lg text-slate-900 mt-0.5">
+                    {selectedTramoItem.item?.descripcion}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">
+                    Tramo: {selectedTramoItem.tramo?.codigo} ({selectedTramoItem.tramo?.calle_pasaje || 'Sin calle'}) | Longitud: {selectedTramoItem.tramo?.longitud_m || 0}m
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo Pendiente</span>
+                  <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-mono font-bold">
+                    {saldoTramo} {selectedTramoItem.item?.unidad}
+                  </span>
+                </div>
               </div>
 
+              {/* Parámetros Operativos Principales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs">
+                <div>
+                  <label className="font-semibold text-slate-600 block mb-1">Fecha Programada</label>
+                  <input
+                    type="date"
+                    value={odtForm.fecha}
+                    onChange={e => setOdtForm({ ...odtForm, fecha: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="font-semibold text-slate-600">
+                      Meta Física ({selectedTramoItem.item?.unidad})
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Máx: {saldoTramo} {selectedTramoItem.item?.unidad}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={saldoTramo}
+                    value={odtForm.meta_cantidad || ''}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setOdtForm({ ...odtForm, meta_cantidad: Math.min(saldoTramo, Math.max(0, val)) });
+                    }}
+                    className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold text-amber-700 bg-white"
+                  />
+                  {/* Botones de selección rápida */}
+                  <div className="flex gap-1.5 mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: Math.min(saldoTramo, rendimientoSugerido) })}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100/70 text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer"
+                    >
+                      Rendimiento Diario ({Math.min(saldoTramo, rendimientoSugerido)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoTramo })}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer"
+                    >
+                      Saldo Total ({saldoTramo})
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-600 block mb-1">Responsable Técnico de Ejecución</label>
+                  <select
+                    value={odtForm.responsable_id}
+                    onChange={e => setOdtForm({ ...odtForm, responsable_id: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
+                  >
+                    <option value="">-- Seleccionar Responsable --</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-600 block mb-1">Horario Planificado</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={odtForm.inicio_plan}
+                      onChange={e => setOdtForm({ ...odtForm, inicio_plan: e.target.value })}
+                      className="w-1/2 px-2.5 py-2 border rounded-xl text-xs bg-white text-center"
+                    />
+                    <span className="text-slate-400">a</span>
+                    <input
+                      type="time"
+                      value={odtForm.fin_plan}
+                      onChange={e => setOdtForm({ ...odtForm, fin_plan: e.target.value })}
+                      className="w-1/2 px-2.5 py-2 border rounded-xl text-xs bg-white text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN DE CHECKLIST DE RECURSOS OPERATIVOS */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+                {/* Pestañas de Recursos */}
+                <div className="flex border-b border-slate-200 bg-slate-50 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setResourceTab('maquinaria')}
+                    className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                      resourceTab === 'maquinaria'
+                        ? 'border-amber-600 text-amber-700 bg-white shadow-xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Truck size={14} />
+                    <span>Maquinaria & Flota</span>
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-mono">
+                      {selectedVehicles.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setResourceTab('personal')}
+                    className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                      resourceTab === 'personal'
+                        ? 'border-amber-600 text-amber-700 bg-white shadow-xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Users size={14} />
+                    <span>Personal ({selectedPersonnel.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setResourceTab('herramientas')}
+                    className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                      resourceTab === 'herramientas'
+                        ? 'border-amber-600 text-amber-700 bg-white shadow-xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Wrench size={14} />
+                    <span>Herramientas ({selectedTools.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setResourceTab('materiales')}
+                    className={`flex-1 py-2.5 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                      resourceTab === 'materiales'
+                        ? 'border-amber-600 text-amber-700 bg-white shadow-xs'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Package size={14} />
+                    <span>Materiales</span>
+                  </button>
+                </div>
+
+                {/* Contenido según pestaña de recursos activa */}
+                <div className="p-4">
+                  {/* Pestaña 1: Maquinarias y Movilidades */}
+                  {resourceTab === 'maquinaria' && (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-600">Marque las maquinarias y vehículos asignados a esta jornada:</span>
+                        <span className="text-slate-400 text-[11px]">{selectedVehicles.length} seleccionadas</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                        {availableVehicles.map(veh => {
+                          const isSelected = selectedVehicles.includes(veh);
+                          return (
+                            <label
+                              key={veh}
+                              onClick={() => toggleVehicle(veh)}
+                              className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-amber-50/80 border-amber-400 text-amber-900 shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
+                                isSelected ? 'bg-amber-600 text-white' : 'border border-slate-300'
+                              }`}>
+                                {isSelected ? <CheckCircle2 size={12} /> : null}
+                              </div>
+                              <Truck size={14} className={isSelected ? 'text-amber-600 shrink-0' : 'text-slate-400 shrink-0'} />
+                              <span className="truncate">{veh}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pestaña 2: Personal y Operarios */}
+                  {resourceTab === 'personal' && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3 text-xs mb-2">
+                        <div>
+                          <label className="font-semibold text-slate-600 block mb-1">Nombre Cuadrilla Base</label>
+                          <select
+                            value={odtForm.cuadrilla_nombre}
+                            onChange={e => setOdtForm({ ...odtForm, cuadrilla_nombre: e.target.value })}
+                            className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white"
+                          >
+                            <option value="Cuadrilla 1 - B. Guevara">Cuadrilla 1 - B. Guevara</option>
+                            <option value="Cuadrilla 2 - Zanjas y Tapadas">Cuadrilla 2 - Zanjas y Tapadas</option>
+                            <option value="Cuadrilla 3 - Fusión y Pruebas">Cuadrilla 3 - Fusión y Pruebas</option>
+                          </select>
+                        </div>
+                        <div className="flex items-end justify-end">
+                          <span className="text-[11px] text-slate-500 font-semibold">
+                            Operarios asignados: <strong className="text-amber-700">{selectedPersonnel.length}</strong>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                        {employees.map(emp => {
+                          const isSelected = selectedPersonnel.includes(emp.full_name);
+                          return (
+                            <label
+                              key={emp.id}
+                              onClick={() => togglePersonnel(emp.full_name)}
+                              className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-blue-50/80 border-blue-400 text-blue-900 shadow-2xs'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
+                                isSelected ? 'bg-blue-600 text-white' : 'border border-slate-300'
+                              }`}>
+                                {isSelected ? <CheckCircle2 size={12} /> : null}
+                              </div>
+                              <Users size={14} className={isSelected ? 'text-blue-600 shrink-0' : 'text-slate-400 shrink-0'} />
+                              <div className="truncate">
+                                <span className="block truncate">{emp.full_name}</span>
+                                <span className="text-[10px] text-slate-400 block">{emp.category?.name || 'Operario de cuadrilla'}</span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pestaña 3: Herramientas y Pañol */}
+                  {resourceTab === 'herramientas' && (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-600">Checklist de herramientas y equipos menores:</span>
+                        <span className="text-slate-400 text-[11px]">{selectedTools.length} seleccionadas</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                        {HERRAMIENTAS_CATALOGO.map(tool => {
+                          const isSelected = selectedTools.includes(tool);
+                          return (
+                            <label
+                              key={tool}
+                              onClick={() => toggleTool(tool)}
+                              className={`flex items-center gap-2 p-1.5 px-2.5 rounded-lg border text-xs cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${
+                                isSelected ? 'bg-emerald-600 text-white' : 'border border-slate-300'
+                              }`}>
+                                {isSelected ? <CheckCircle2 size={11} /> : null}
+                              </div>
+                              <span className="truncate">{tool}</span>
+                            </label>
+                          );
+                        })}
+
+                        {/* Herramientas personalizadas adicionales */}
+                        {selectedTools.filter(t => !HERRAMIENTAS_CATALOGO.includes(t)).map(tool => (
+                          <div
+                            key={tool}
+                            className="flex items-center justify-between gap-1 p-1.5 px-2.5 rounded-lg border bg-purple-50 border-purple-300 text-purple-900 text-xs font-semibold"
+                          >
+                            <span className="truncate">⭐ {tool}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleTool(tool)}
+                              className="text-purple-600 hover:text-purple-800"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Agregar herramienta libre */}
+                      <div className="flex gap-2 pt-2 border-t border-slate-100">
+                        <input
+                          value={customToolInput}
+                          onChange={e => setCustomToolInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomTool(); } }}
+                          placeholder="Otra herramienta o equipo específico..."
+                          className="flex-1 px-3 py-1.5 border rounded-xl text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCustomTool}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus size={12} /> Agregar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pestaña 4: Materiales e Insumos */}
+                  {resourceTab === 'materiales' && (
+                    <div className="space-y-2 text-xs">
+                      <label className="font-semibold text-slate-600 block">
+                        Materiales, Caños e Insumos Críticos a Despachar para esta Jornada
+                      </label>
+                      <textarea
+                        value={odtForm.materiales_requeridos}
+                        onChange={e => setOdtForm({ ...odtForm, materiales_requeridos: e.target.value })}
+                        rows={3}
+                        placeholder="Ej: 70m caño PEAD 75mm clase 10, 3 m3 arena de asiento, 1 rollo cinta de advertencia OSSE..."
+                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Instrucciones de Calidad / Seguridad */}
               <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">
-                  Meta Física a Cumplir ({selectedTramoItem.item?.unidad})
+                <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  Instrucciones Operativas de Calidad / Seguridad
                 </label>
-                <input
-                  type="number"
-                  value={odtForm.meta_cantidad || ''}
-                  onChange={e => setOdtForm({ ...odtForm, meta_cantidad: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold text-amber-700"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Cuadrilla Asignada</label>
-                <select
-                  value={odtForm.cuadrilla_nombre}
-                  onChange={e => setOdtForm({ ...odtForm, cuadrilla_nombre: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
-                >
-                  <option value="Cuadrilla 1 - B. Guevara">Cuadrilla 1 - B. Guevara</option>
-                  <option value="Cuadrilla 2 - Zanjas y Tapadas">Cuadrilla 2 - Zanjas y Tapadas</option>
-                  <option value="Cuadrilla 3 - Fusión y Pruebas">Cuadrilla 3 - Fusión y Pruebas</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Responsable Técnico</label>
-                <select
-                  value={odtForm.responsable_id}
-                  onChange={e => setOdtForm({ ...odtForm, responsable_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
-                >
-                  <option value="">-- Seleccionar --</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.full_name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-span-2">
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Maquinaria / Equipo Principal</label>
-                <input
-                  value={odtForm.equipo_asignado}
-                  onChange={e => setOdtForm({ ...odtForm, equipo_asignado: e.target.value })}
-                  placeholder="Retropala HMK / Termofusora PEAD"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Instrucciones de Calidad / Seguridad</label>
                 <textarea
                   value={odtForm.instrucciones_calidad}
                   onChange={e => setOdtForm({ ...odtForm, instrucciones_calidad: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                  className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                onClick={() => setSelectedTramoItem(null)}
-                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleEmitirOdt}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <Send size={14} />
-                Confirmar y Emitir ODT
-              </button>
+              {/* Resumen & Botones de Acción */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-slate-100">
+                <div className="flex flex-wrap gap-2 text-[11px] text-slate-500 font-medium">
+                  <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-semibold border border-amber-200/60">
+                    🚜 {selectedVehicles.length} Maquinarias
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-800 font-semibold border border-blue-200/60">
+                    👷 {selectedPersonnel.length} Operarios
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200/60">
+                    🛠️ {selectedTools.length} Herramientas
+                  </span>
+                </div>
+
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => setSelectedTramoItem(null)}
+                    className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleEmitirOdt}
+                    className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer"
+                  >
+                    <Send size={14} />
+                    Confirmar y Emitir ODT
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </ModalPortal>
     </div>
   );
