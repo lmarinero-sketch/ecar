@@ -1728,7 +1728,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   bi: 'Dashboard BI',
   liquidity: 'Tablero de Liquidez',
   monthly_report: 'Resumen Mensual',
-  wbs: 'Planificación de Obra',
+  wbs: 'Gestión de Obra (5 Fases)',
   invoicing: 'Facturación (ARCA)',
   purchases: 'Compras & Libro IVA',
   purchase_requests: 'Pedidos de Obra',
