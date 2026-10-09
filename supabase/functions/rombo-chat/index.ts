@@ -25,9 +25,41 @@ Tenés acceso absoluto, irrestricto y en tiempo real a ABSOLUTAMENTE TODA la inf
 - Compras & Facturación (facturas con OCR, Libro IVA compras/ventas, retenciones, discriminación por empresa ECAR SAS y Carlos Adolfo Regalado).
 - Alertas & Obligaciones (vencimientos fiscales AFIP, ART, seguros, alquileres, recordatorios automáticos de WhatsApp).
 - RRHH & Legajos (nómina de personal activo, legajo digital, asistencia con QR, ausencias, licencias, adelantos, indumentaria, talles y EPP).
-- Obras & Proyectos (partes diarios de obra, control operativo de rendimientos Roque con 12 actividades estándar PEAD AG-REP a AG-PRU, cuadrillas C-01 a C-03, 43 sectores físicos, OTI matutina de 07:00, cierre diario a las 14:30 con desvíos y paradas que generan pedidos a Pañol, certificaciones de obra e ICC, presupuestos WBS, adicionales de obra).
+- Obras & Proyectos — Estándar de Ingeniería en 5 Fases:
+  * Fase 1 (Planificación): Presupuesto Aprobado con WBS jerárquico cerrado (Rubros ➔ Subrubros ➔ Ítems contractuales con P.U. e incidencias matemáticas exactas), Red espacial topológica de Tramos con Nodos de inicio/fin, diámetros y servicios, y Matriz Física Tramo-Ítem con cómputos métricos congelados y saldos.
+  * Fase 2 (Programación): Filtro inteligente por Nodo, Bandeja "Para Programar" con saldo > 0 (cantidad_prevista - cantidad_ejecutada), asignación de cuadrillas y emisión formal de ODTs numeradas. Bloqueo estricto: Prohibido crear tareas o ítems acá.
+  * Fase 3 (Ejecución): Modo terreno/tablet para capataces. Cero porcentajes subjetivos: carga métrica real (ml, un, m³), personal presente y registro de paradas de obra con causa raíz obligatoria (rotura, falta de material en pañol, clima, etc.).
+  * Fase 4 (Control): Hitos binarios 0% o 100% de inspección y calidad (actas, OSSE, laboratorio) con bloqueo topológico en caso de no aprobación, semáforo base 3/3 (Plazo, Costo, Calidad) y emisión de Certificados de Obra contractuales automáticos e inmutables con acumulados y retenciones.
+  * Fase 5 (Retroalimentación): Rendimientos reales medidos en terreno vs cotizados, análisis de tiempos muertos y banco de lecciones aprendidas para futuros presupuestos.
+  * Obra Insignia Lote Roque: 50 tramos topológicos (N1 a N43), 7 rubros, 12 subrubros, 18 ítems contractuales, $114.600.550,96 contractuales s/IVA, 500 combinaciones tramo-ítem con saldos calculados y 4 hitos regulatorios (HI-01 a HI-04).
 - Seguridad & Calidad (informes semanales de Higiene y Seguridad listos para entrega bajo Decreto 911/96 y Res. SRT 905/15 con 4 fotos de evidencia formal, incidentes laborales, observaciones de riesgo 5x5, pedidos automáticos de EPP y cartelería de zanja a Compras/Pañol, inspecciones de obra, punch list, no conformidades, protocolos).
 - Comunicaciones (registro completo de mensajes y conversaciones de WhatsApp).
+
+## GUÍA PASO A PASO: CÓMO USAR EL NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES)
+Si cualquier usuario, ingeniero, jefe de obra o capataz te pregunta cómo usar el módulo de obra o cuál es el flujo de trabajo, enseñale con claridad pedagógica este paso a paso:
+1. **Paso 1 - Planificación (Fase 1):**
+   - El punto de partida OBLIGATORIO es el Presupuesto Aprobado y la Topología del proyecto.
+   - En la pestaña WBS se visualiza el árbol jerárquico Rubro ➔ Subrubro ➔ Ítem. Cada ítem tiene su unidad (ml, m³, un), precio unitario e incidencia porcentual matemática.
+   - En la pestaña Tramos se auditan los tramos topológicos con sus nodos (ej: N1 - N2), longitudes en metros, diámetros en mm y conexiones de servicios.
+   - En la Matriz Física se asignan los cómputos métricos previstos por tramo e ítem. Los cómputos quedan congelados y calculan automáticamente el saldo para programar.
+2. **Paso 2 - Programación (Fase 2):**
+   - El ingeniero o jefe de obra selecciona el Nodo/Tramo donde se abrirá frente de trabajo.
+   - El sistema activa la bandeja "Para Programar", que muestra SOLO los ítems con Saldo > 0.
+   - Selecciona la cuadrilla asignada, responsable técnico, fechas y meta de cantidad.
+   - Hace clic en "Emitir Orden de Trabajo" para generar la ODT formal.
+   - 🔒 REGLA DE ORO: En Programación está terminantemente prohibido crear tareas o ítems nuevos; todo nace en el presupuesto planificado.
+3. **Paso 3 - Ejecución (Fase 3):**
+   - Diseñado para capataces en el frente de obra (modo tablet/celular con botones grandes).
+   - No se usan porcentajes subjetivos ("vamos un 60%"): se cargan METROS REALES ejecutados (ej: 45 ml de zanjeo o 3 un de válvulas).
+   - Se marca el personal presente que trabajó y maquinarias utilizadas.
+   - Si hubo paradas o tiempos muertos, se registran los minutos y la CAUSA RAÍZ obligatoria (rotura máquina, falta de material en pañol, lluvia, interferencia de suelo).
+4. **Paso 4 - Control (Fase 4):**
+   - Hitos Binarios (0% o 100%): Si una prueba hidráulica o inspección de ente (OSSE) está pendiente, vale 0% y BLOQUEA el tramo impidiendo tapar la zanja. Al aprobarse, pasa a 100% y se registra el acta.
+   - Semáforo Base 3/3: Evalúa el desempeño integral del frente.
+   - Certificados de Obra: Con 1 clic se emite el certificado contractual que congela cantidades anteriores, presentes y acumuladas, calcula el importe contractual, deduce el fondo de reparo y anticipo, y entrega el neto a cobrar exacto e inmutable.
+5. **Paso 5 - Retroalimentación (Fase 5):**
+   - Permite auditar el desvío entre rendimientos presupuestados vs rendimientos reales de cuadrillas.
+   - Permite registrar Lecciones Aprendidas (problema, causa raíz y acción adoptada) para que los presupuestos futuros coticen con datos reales de campo.
 
 ## INDEPENDENCIA ABSOLUTA DEL MÓDULO VISUAL
 - El módulo donde se encuentra el usuario (marcado como "📍") SOLO indica en qué pantalla del navegador web está parado en este instante.
@@ -114,15 +146,18 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Datos: receptor, CUIT, montos netos, IVA, retenciones.
 - Ayudalo a: consultar facturas emitidas, estados de CAE, totales facturados.`,
   
-  wbs: `## CONTEXTO ACTUAL: El usuario está en Planificación WBS (Gerencia de Obras)
-- Gestión integral de la obra, cronograma y ejecución.
-- Estado de Obra: En la cabecera del proyecto seleccionado, el usuario cuenta con un selector directo de estado: 🟢 Activa, 🟡 Pausada o 🏁 Finalizada. Al cambiarlo a 'Finalizada', la obra se archiva automáticamente del circuito diario.
-- Sub-pestañas clave:
-  * Planificación y Programación (Gantt con dependencias).
-  * Rendimientos & Tareas: Asignación matutina de tareas con multi-selección de equipos y maquinarias, generación de OTI en PDF, y cierre a las 14:30. Cuenta con botones para Editar (✏️) y Eliminar (🗑️) tareas ante cualquier error de tipeo o desvío.
-  * Desvíos & Acciones (antes 'Retro'): Registro de desvíos técnicos o de plazo y planes de contingencia.
-  * Movimientos de Materiales y Equipos: Trazabilidad de insumos y flota en el frente.
-- Ayudalo a: cambiar el estado de una obra a finalizada, editar o corregir tareas de cuadrillas, registrar desvíos y analizar cumplimiento de plazos.`,
+  wbs: `## CONTEXTO ACTUAL: El usuario está en Gestión de Obra (Estándar de Ingeniería en 5 Fases)
+- Este es el núcleo operativo de la obra que reemplazó al antiguo módulo. Opera bajo el estándar de 5 fases estrictas:
+  1. 📐 Planificación: Presupuesto contractual, WBS jerárquico (Rubro ➔ Subrubro ➔ Ítem), Tramos espaciales (Nodos) y Matriz Física con cómputos congelados.
+  2. 📋 Programación: Filtro inteligente por Nodo, bandeja "Para Programar" con saldo pendiente > 0, asignación de cuadrillas y emisión formal de ODTs. 🔒 Bloqueo: Prohibido crear tareas o ítems en esta vista.
+  3. 🚜 Ejecución: Modo terreno/tablet para capataces. Cero porcentajes subjetivos: carga de producción métrica real (ml, un, m³), cuadrilla presente y paradas de obra con causa raíz obligatoria (rotura máquina, falta material en pañol, clima, etc.).
+  4. 🚦 Control: Hitos binarios 0% o 100% (inspecciones, OSSE, laboratorio) que bloquean o liberan tramos, Semáforo Base 3/3 y emisión automática del Certificado de Obra contractual inmutable con descuentos de fondo de reparo y anticipo.
+  5. 🔄 Retroalimentación: Comparación analítica de rendimientos reales vs cotizados y banco de lecciones aprendidas.
+- Ayudalo a:
+  * Explicarle paso a paso cómo operar cada fase según su rol (Ingeniero, Supervisor o Capataz).
+  * Consultar datos del WBS, saldos para programar, ODTs emitidas, hitos pendientes y certificados con tus herramientas (query_obra_wbs, query_obra_tramos, query_obra_matriz_fisica, query_obra_odts, query_obra_hitos, query_obra_certificados, query_obra_lecciones).
+  * Explicar por qué no se pueden crear tareas en programación ("el dato nace en planificación").
+- Sugerí: "¿Querés que te explique el flujo de trabajo de las 5 fases paso a paso?" o "¿Querés consultar el saldo pendiente para programar en algún tramo de Roque?" o "¿Revisamos los hitos binarios pendientes de inspección?".`,
 
   fuel: `## CONTEXTO ACTUAL: El usuario está en Control de Combustible
 - Gestiona cargas de combustible (nafta/diesel) para vehículos de la flota.
@@ -137,30 +172,12 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Tabla Comparativa de Saldos: Muestra en chaque pedido lo solicitado vs enviado vs recibido, con saldos faltantes derivados a Compras.
 - Ayudalo a: gestionar la trazabilidad de pedidos, guiar la declaración de despacho con descuento de stock, descargar PDFs oficiales ECAR y analizar faltantes.`,
   
-  field: `## CONTEXTO ACTUAL: El usuario está en Parte Diario & Control de Rendimientos (Roque)
-- Registro diario de actividades en obra y Planilla Operativa de Rendimientos Roque.
-- Facilidades operativas para el Capataz y Jefe de Obra:
-  * ⚡ Precarga de Tareas de Hoy: Al crear un parte diario, con 1 clic en "Precargar Tareas de Hoy" se vuelcan automáticamente todas las actividades y paradas registradas en el día sin tener que escribir todo de nuevo a mano.
-  * ⚡ Copiar Cuadrilla del Último Parte: En la pestaña "Personal", el botón verde "Copiar Cuadrilla Anterior" copia toda la dotación de operarios de la jornada previa con sus 8hs en un solo clic, evitando la carga individual. También cuenta con botones rápidos para agregar las Cuadrillas Habituales C-01, C-02 y C-03.
-  * Multi-selección de Equipos: Permite seleccionar múltiples maquinarias y vehículos para cada tarea con etiquetas interactivas y remoción rápida con '×'.
-  * Edición y Corrección: Cada tarea planificada o medida cuenta con un botón de edición (✏️) para rectificar cualquier error de tipeo o medición.
-- Actividades Estándar PEAD (12 actividades oficiales):
-  1. AG-REP: Replanteo y nivelación (100 m/h)
-  2. AG-EXC: Excavación zanja c/equipo (15 m/h, retroexcavadora)
-  3. AG-PER: Perfilado y fondo zanja manual (25 m/h, cuadrilla manual)
-  4. AG-CAM: Cama de arena esp=0.10m (30 m/h)
-  5. AG-TUB: Tendido tubería PEAD D=75mm (20 m/h)
-  6. AG-UNI: Uniones por electrofusión (4 un/h)
-  7. AG-VAL: Instalación válvulas esclusas (1 un/h)
-  8. AG-TAP: Tapada c/zarandeo h=0.30m (25 m/h)
-  9. AG-CON: Relleno y compactación mecánica (20 m/h, vibroapisonador)
-  10. AG-EMP: Empalme a red existente (0.5 un/h)
-  11. AG-LIM: Limpieza y retiro sobrante (50 m/h, camión volcador)
-  12. AG-PRU: Prueba hidráulica y desinfección (150 m/h)
-- Cuadrillas Oficiales: C-01 (Zanjeo y Tendido), C-02 (Tapada y Compactación), C-03 (Terminaciones y Pruebas).
-- 43 Sectores Físicos oficiales de Loteo Roque (SEC001 a SEC043).
-- Ciclo Operativo Diario: Planificación a las 14:50 (30 seg por cuadrilla), Impresión OTI a las 07:00 para capataz, Cierre Diario a las 14:30 auditando avance real, desvíos y paradas (rotura máquina, falta combustible, clima, falta material). Si hay parada por falta de material/combustible, el sistema permite generar la Solicitud de Pedido a Pañol con 1 clic.
-- Ayudalo a: precargar tareas de hoy en el parte, copiar la cuadrilla anterior, asignar múltiples equipos, corregir o editar tareas, y auditar rendimientos y paradas.`,
+  field: `## CONTEXTO ACTUAL: El usuario está en Fase 3 — Ejecución en Terreno (Gestión de Obra)
+- Diseñado para capataces y encargados de obra en el frente de trabajo (modo tablet/celular).
+- CERO porcentajes subjetivos: El capataz carga producción métrica real (metros lineales ml, m³, unidades).
+- Cuadrilla presente: Se verifica qué operarios trabajaron y qué maquinarias se usaron.
+- Tiempos muertos y paradas de obra: Registro obligatorio de minutos parados y CAUSA RAÍZ (rotura de equipo, falta de material en pañol, interferencia de suelo, lluvia).
+- Ayudalo a: entender cómo registrar el avance diario real, auditar tiempos muertos y verificar cumplimiento de las ODTs.`,
   
   safety: `## CONTEXTO ACTUAL: El usuario está en Seguridad, Incidentes & Informes Semanales (Entregables)
 - Gestión integral de Higiene y Seguridad conforme Decreto 911/96 y Res. SRT 905/2015.
@@ -268,8 +285,8 @@ const MODULE_CONTEXT: Record<string, string> = {
 - Sugerí: "Puedo ayudarte revisando el stock actual o el estado de la flota."`,
 
   obra_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Obra
-- Pantalla informativa sobre el frente de producción.
-- Sugerí: "Podés navegar a WBS o Partes Diarios para cargar el avance."`,
+- Muestra el marco general del nuevo estándar de ingeniería en 5 fases: Planificación, Programación, Ejecución, Control y Retroalimentación.
+- Sugerí: "Ingresá a Gestión de Obra para ver las 5 fases o preguntame cómo es el paso a paso."`,
 
   finanzas_intro: `## CONTEXTO ACTUAL: El usuario está en la Introducción a Finanzas
 - Pantalla informativa sobre tesorería, pagos y certificaciones.
@@ -772,6 +789,118 @@ const tools = [
         type: 'object',
         properties: {
           limit: { type: 'number', description: 'Cantidad de informes a consultar (default 10)' }
+        }
+      }
+    }
+  },
+  // ─── NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES) ───
+  {
+    type: 'function', function: {
+      name: 'query_obra_wbs',
+      description: 'Consultar el WBS contractual y jerárquico de la obra (Rubros, Subrubros e Ítems). Devuelve cantidades contractuales, unidades (ml, m3, un), precios unitarios en ARS, importes totales e incidencias porcentuales matemáticas cerradas.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          search_item: { type: 'string', description: 'Buscar por código o descripción de ítem (opcional)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_tramos',
+      description: 'Consultar la red espacial topológica de tramos de la obra (Fase 1 Planificación). Devuelve código de tramo, nodos inicio y fin, longitud en metros, diámetro en mm, tipo de red, calle/pasaje y cantidad de servicios domiciliarios e hidrantes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          nodo: { type: 'string', description: 'Filtrar por nodo de inicio o fin (ej: N1, N5)' },
+          diametro_mm: { type: 'number', description: 'Filtrar por diámetro en mm (ej: 75, 90, 110)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_matriz_fisica',
+      description: 'Consultar la matriz física tramo-ítem y la bandeja "Para Programar" (Fase 1 y 2). Devuelve para cada tramo e ítem la cantidad prevista, ejecutada, saldo pendiente para programar (saldo = cantidad_prevista - cantidad_ejecutada), prioridad y estado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          tramo_codigo: { type: 'string', description: 'Código del tramo (ej: T-01, N1 - N2)' },
+          item_codigo: { type: 'string', description: 'Código del ítem (ej: 1.1, 2.1)' },
+          para_programar_only: { type: 'boolean', description: 'Si es true, solo trae ítems con saldo pendiente > 0 para programar' },
+          limit: { type: 'number', description: 'Cantidad máxima de filas (default 25)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_odts',
+      description: 'Consultar las Órdenes de Trabajo (ODT) formales emitidas en la Fase 2 (Programación). Muestra número de ODT, tramo, ítem, meta de producción métrica, cuadrilla asignada, responsable técnico, fechas planificadas y estado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          numero_odt: { type: 'string', description: 'Número de ODT (ej: ODT-0001)' },
+          estado: { type: 'string', description: 'borrador / emitida / en_ejecucion / cumplida / anulada' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_partes_terreno',
+      description: 'Consultar los partes diarios de producción métrica cargados en terreno por capataces (Fase 3 Ejecución). Muestra fecha, ODT, metros reales ejecutados, dotación de personal presente, horas trabajadas y paradas de obra con su causa raíz obligatoria.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          fecha: { type: 'string', description: 'Fecha YYYY-MM-DD' },
+          solo_con_paradas: { type: 'boolean', description: 'Si es true, solo muestra jornadas con paradas o tiempos muertos' },
+          limit: { type: 'number', description: 'Límite de registros (default 20)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_hitos',
+      description: 'Consultar los hitos binarios de control (0% o 100%) y actas de inspección (Fase 4 Control). Muestra código de hito, nombre, ente regulador (ej: OSSE), estado binario (0% pendiente o 100% aprobado), acta de inspección y si bloquea el tramo.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          estado_binario: { type: 'number', description: '0 para pendientes, 100 para aprobados' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_certificados',
+      description: 'Consultar los Certificados de Obra contractuales e inmutables (Fase 4 Control). Muestra número de certificado, período, base contractual, acumulado anterior, presente, acumulado total, saldo monetario, retención de fondo de reparo y neto a cobrar en ARS.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          numero_certificado: { type: 'number', description: 'Número de certificado' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'query_obra_lecciones',
+      description: 'Consultar el banco de lecciones aprendidas y desvíos de rendimiento (Fase 5 Retroalimentación). Muestra categoría, problema detectado, causa raíz, acción adoptada, rendimiento cotizado vs real y recomendación para futuros presupuestos.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          categoria: { type: 'string', description: 'rendimiento / calidad / seguridad / interferencia_suelo / maquinaria / proveedor' }
         }
       }
     }
@@ -1568,6 +1697,303 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
           .limit(args.limit || 10)
         if (error) return JSON.stringify({ error: error.message })
         return JSON.stringify({ informes_semanales: data || [], total: (data || []).length })
+      }
+
+      // ─── NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES) ───
+      case 'query_obra_wbs': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id, name').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        if (!projId) {
+          const { data: anyProj } = await sb.from('projects').select('id, name').limit(1).single()
+          projId = anyProj?.id
+        }
+
+        let q = sb.from('obra_rubros').select(`
+          id, codigo, nombre, incidencia_pct, monto_total_ars,
+          subrubros:obra_subrubros(
+            id, codigo, nombre, incidencia_rubro_pct, incidencia_obra_pct, monto_total_ars,
+            items:obra_items(
+              id, codigo_item, descripcion, unidad, cantidad_contractual,
+              precio_unitario_ars, importe_contractual_ars, incidencia_obra_pct
+            )
+          )
+        `).eq('project_id', projId).order('orden')
+
+        const { data: rubros, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        
+        let allItems: any[] = []
+        let totalContractual = 0
+        ;(rubros || []).forEach((r: any) => {
+          totalContractual += Number(r.monto_total_ars) || 0
+          ;(r.subrubros || []).forEach((sr: any) => {
+            ;(sr.items || []).forEach((it: any) => {
+              allItems.push({
+                rubro: `${r.codigo} - ${r.nombre}`,
+                subrubro: `${sr.codigo} - ${sr.nombre}`,
+                codigo: it.codigo_item,
+                descripcion: it.descripcion,
+                unidad: it.unidad,
+                cantidad: it.cantidad_contractual,
+                precio_unitario_ars: it.precio_unitario_ars,
+                importe_ars: it.importe_contractual_ars,
+                incidencia_obra_pct: it.incidencia_obra_pct
+              })
+            })
+          })
+        })
+
+        if (args.search_item) {
+          const s = args.search_item.toLowerCase()
+          allItems = allItems.filter((i: any) => i.codigo.toLowerCase().includes(s) || i.descripcion.toLowerCase().includes(s))
+        }
+
+        return JSON.stringify({
+          obra_id: projId,
+          total_contractual_ars: totalContractual,
+          rubros_count: (rubros || []).length,
+          items_count: allItems.length,
+          rubros_resumen: (rubros || []).map((r: any) => ({
+            codigo: r.codigo,
+            nombre: r.nombre,
+            incidencia_pct: r.incidencia_pct,
+            monto_ars: r.monto_total_ars,
+            subrubros_count: (r.subrubros || []).length
+          })),
+          items_muestra: allItems.slice(0, 15)
+        })
+      }
+
+      case 'query_obra_tramos': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_tramos').select('id, codigo, nodo_inicio, nodo_fin, longitud_m, diametro_mm, tipo_red, calle_pasaje, servicios_count, hidrantes_count, ancho_zanja_m, profundidad_media_m').eq('project_id', projId).order('orden')
+        if (args.nodo) {
+          q = q.or(`nodo_inicio.ilike.%${args.nodo}%,nodo_fin.ilike.%${args.nodo}%`)
+        }
+        if (args.diametro_mm) {
+          q = q.eq('diametro_mm', args.diametro_mm)
+        }
+
+        const { data: tramos, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+
+        const totalMetros = (tramos || []).reduce((acc: number, t: any) => acc + (Number(t.longitud_m) || 0), 0)
+        const totalServicios = (tramos || []).reduce((acc: number, t: any) => acc + (Number(t.servicios_count) || 0), 0)
+
+        return JSON.stringify({
+          tramos_totales: (tramos || []).length,
+          longitud_total_m: Math.round(totalMetros * 100) / 100,
+          total_servicios_domiciliarios: totalServicios,
+          tramos: (tramos || []).slice(0, 20).map((t: any) => ({
+            codigo: t.codigo,
+            tramo: `${t.nodo_inicio} - ${t.nodo_fin}`,
+            longitud_m: t.longitud_m,
+            diametro_mm: t.diametro_mm,
+            calle: t.calle_pasaje || 'Sin asignar',
+            servicios: t.servicios_count,
+            hidrantes: t.hidrantes_count
+          }))
+        })
+      }
+
+      case 'query_obra_matriz_fisica': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_tramo_items').select(`
+          id, cantidad_prevista, cantidad_ejecutada, saldo, progreso_pct, estado, prioridad,
+          tramo:obra_tramos!inner(id, codigo, nodo_inicio, nodo_fin, longitud_m, diametro_mm),
+          item:obra_items!inner(id, codigo_item, descripcion, unidad, precio_unitario_ars)
+        `).eq('project_id', projId)
+
+        if (args.tramo_codigo) {
+          q = q.ilike('tramo.codigo', `%${args.tramo_codigo}%`)
+        }
+        if (args.item_codigo) {
+          q = q.ilike('item.codigo_item', `%${args.item_codigo}%`)
+        }
+        if (args.para_programar_only) {
+          q = q.gt('saldo', 0)
+        }
+
+        const { data, error } = await q.limit(args.limit || 25)
+        if (error) return JSON.stringify({ error: error.message })
+
+        return JSON.stringify({
+          total_items_consultados: (data || []).length,
+          items: (data || []).map((d: any) => ({
+            id: d.id,
+            tramo: `${d.tramo?.nodo_inicio} - ${d.tramo?.nodo_fin} (${d.tramo?.codigo})`,
+            item_codigo: d.item?.codigo_item,
+            descripcion: d.item?.descripcion,
+            unidad: d.item?.unidad,
+            cantidad_prevista: d.cantidad_prevista,
+            cantidad_ejecutada: d.cantidad_ejecutada,
+            saldo_para_programar: d.saldo,
+            progreso_pct: d.progreso_pct,
+            estado: d.estado,
+            prioridad: d.prioridad
+          }))
+        })
+      }
+
+      case 'query_obra_odts': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_ordenes_trabajo').select(`
+          id, numero_odt, fecha, meta_cantidad, unidad, cuadrilla_nombre, responsable_nombre,
+          inicio_plan, fin_plan, estado, instrucciones_calidad,
+          tramo:obra_tramos(codigo, nodo_inicio, nodo_fin),
+          item:obra_items(codigo_item, descripcion)
+        `).eq('project_id', projId).order('created_at', { ascending: false })
+
+        if (args.numero_odt) q = q.ilike('numero_odt', `%${args.numero_odt}%`)
+        if (args.estado) q = q.eq('estado', args.estado)
+
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ odts_totales: (data || []).length, ordenes_trabajo: data || [] })
+      }
+
+      case 'query_obra_partes_terreno': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_parte_diario_items').select(`
+          id, fecha, cantidad_real, unidad, cumplimiento_pct, horas_trabajadas,
+          personal_real_count, personal_nombres, equipo_usado, minutos_parada, motivo_parada, novedades_interferencias, estado,
+          odt:obra_ordenes_trabajo(numero_odt),
+          tramo_item:obra_tramo_items(tramo:obra_tramos(codigo, nodo_inicio, nodo_fin), item:obra_items(codigo_item, descripcion))
+        `).eq('project_id', projId).order('fecha', { ascending: false })
+
+        if (args.fecha) q = q.eq('fecha', args.fecha)
+        if (args.solo_con_paradas) q = q.gt('minutos_parada', 0)
+
+        const { data, error } = await q.limit(args.limit || 20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ partes_terreno_count: (data || []).length, partes: data || [] })
+      }
+
+      case 'query_obra_hitos': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_hitos').select(`
+          id, codigo_hito, nombre, descripcion, tipo, ente_regulador, estado_binario,
+          fecha_inspeccion, acta_numero, inspector_nombre, observaciones,
+          tramo:obra_tramos(codigo, nodo_inicio, nodo_fin),
+          bloquea_item:obra_items(codigo_item, descripcion)
+        `).eq('project_id', projId).order('codigo_hito')
+
+        if (args.estado_binario !== undefined) q = q.eq('estado_binario', args.estado_binario)
+
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+
+        const aprobados = (data || []).filter((h: any) => h.estado_binario === 100)
+        const pendientes = (data || []).filter((h: any) => h.estado_binario === 0)
+
+        return JSON.stringify({
+          total_hitos: (data || []).length,
+          aprobados_100_pct: aprobados.length,
+          pendientes_0_pct: pendientes.length,
+          hitos: data || []
+        })
+      }
+
+      case 'query_obra_certificados': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_certificados').select(`
+          id, numero_certificado, periodo_desde, periodo_hasta, fecha_emision,
+          base_contractual_ars, anterior_sin_iva, presente_sin_iva, acumulado_sin_iva, saldo_sin_iva,
+          avance_acumulado_pct, iva_presente, total_con_iva, fondo_reparo_retencion,
+          amortizacion_anticipo, neto_a_cobrar, estado, observaciones,
+          lineas:obra_certificado_lineas(codigo_item, descripcion, unidad, cantidad_contractual, precio_unitario_ars, importe_contractual_ars, cantidad_acumulada, importe_acumulado, avance_acumulado_pct)
+        `).eq('project_id', projId).order('numero_certificado', { ascending: false })
+
+        if (args.numero_certificado) q = q.eq('numero_certificado', args.numero_certificado)
+
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ certificados_totales: (data || []).length, certificados: data || [] })
+      }
+
+      case 'query_obra_lecciones': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let q = sb.from('obra_lecciones_aprendidas').select(`
+          id, categoria, titulo, descripcion_problema, causa_raiz, accion_adoptada,
+          rendimiento_cotizado, rendimiento_real_obtenido, impacto_costo_ars, recomendacion_futura, autor, created_at,
+          item:obra_items(codigo_item, descripcion)
+        `).eq('project_id', projId).order('created_at', { ascending: false })
+
+        if (args.categoria) q = q.eq('categoria', args.categoria)
+
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ lecciones_count: (data || []).length, lecciones: data || [] })
       }
 
       default:

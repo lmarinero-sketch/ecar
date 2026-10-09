@@ -381,6 +381,90 @@ const tools = [
       parameters: { type: 'object', properties: { employee_name: { type: 'string' }, pending_only: { type: 'boolean' } }, required: ['employee_name'] }
     }
   },
+  // ─── NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES) ───
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_wbs',
+      description: 'Consultar el WBS contractual y jerárquico de una obra (Rubros, Subrubros, Ítems, P.U. e incidencias).',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          search_item: { type: 'string', description: 'Buscar por código o descripción de ítem (opcional)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_tramos',
+      description: 'Consultar la red topológica de tramos y nodos de la obra (Fase 1 Planificación). Muestra nodos, longitud en m, diámetros y servicios.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          nodo: { type: 'string', description: 'Filtrar por nodo de inicio o fin (ej: N1, N5)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_matriz_fisica',
+      description: 'Consultar la bandeja Para Programar y saldos pendientes de tramo-ítems (Fase 1 y 2). Devuelve cantidad prevista, ejecutada y saldo para programar.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          para_programar_only: { type: 'boolean', description: 'Si es true, solo trae ítems con saldo pendiente > 0' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_odts',
+      description: 'Consultar las Órdenes de Trabajo (ODT) formales emitidas en la Fase 2 (Programación). Muestra número de ODT, tramo, ítem, cuadrilla y estado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          estado: { type: 'string' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_hitos',
+      description: 'Consultar los hitos binarios (0% o 100%) y actas de inspección regulatoria (Fase 4 Control). Muestra si están pendientes o aprobados y si bloquean tramos.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          estado_binario: { type: 'number', description: '0 para pendientes, 100 para aprobados' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_obra_certificados',
+      description: 'Consultar Certificados de Obra contractuales e inmutables (Fase 4 Control). Muestra número de certificado, período, base contractual, acumulado y neto a cobrar.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' }
+        }
+      }
+    }
+  },
 ];
 
 // Helper to get Argentina date/time
@@ -445,7 +529,17 @@ Sos el copiloto financiero y operativo de ECAR. Podés:
 - 👨‍💻 *Usuarios y Sistema* → guiar sobre módulos de actividad, roles y el resto del ecosistema de ECAR.
 - 📈 *Control de Pagos y Reportes Semanales* → ayudar a revisar el flujo de fondos, transferencias pendientes y los KPIs consolidados.
 - ⛽ *Combustible y Flota* → consultar última carga de combustible, consumos por vehículo, services vencidos y estado de vehículos.
+- 🏗️ *Gestión de Obra (5 Fases)* → consultar WBS contractual, red de tramos/nodos, bandeja "Para Programar" con saldo > 0, ODTs, hitos binarios 0/100, partes de terreno y certificados contractuales.
 - 🌐 *Acceso Total a ECAR* → tenés acceso a TODA la información de la empresa (combustible, compras, cheques, obras, proveedores, stock, etc.). NUNCA digas que no tenés acceso.
+
+## NUEVO NÚCLEO DE GESTIÓN DE OBRA (5 FASES) — GUÍA PASO A PASO
+Si cualquier usuario te pregunta por WhatsApp cómo usar el módulo de obra o cuál es el procedimiento:
+1. *Fase 1: Planificación* → El proyecto nace del Presupuesto Aprobado y la topología espacial. Se audita el WBS (Rubros ➔ Subrubros ➔ Ítems con P.U. e incidencias) y los Tramos (Nodos, metros, diámetros). En la Matriz Física se asignan los cómputos que quedan congelados.
+2. *Fase 2: Programación* → La oficina técnica o jefe de obra filtra por Nodo y revisa la bandeja *Para Programar* (solo ítems con saldo > 0). Asigna cuadrilla, responsable y emite la ODT formal. 🔒 *Regla de oro*: Prohibido crear tareas o ítems acá; el dato nace en planificación.
+3. *Fase 3: Ejecución* → Capataz en frente de obra en modo tablet/celular. Cero porcentajes: carga producción métrica real (ml, m³, un), dotación de personal y paradas de obra indicando la causa raíz obligatoria.
+4. *Fase 4: Control* → Hitos binarios *0% o 100%*. Si una inspección o prueba hidráulica no está aprobada al 100%, el tramo queda bloqueado. Al liquidar, se emite el Certificado de Obra contractual automático e inmutable con retenciones.
+5. *Fase 5: Retroalimentación* → Comparación de rendimientos reales vs teóricos y registro de lecciones aprendidas.
+*Obra Insignia Lote Roque*: 50 tramos topológicos, 7 rubros, 12 subrubros, 18 ítems ($114.6M contractuales) y 4 hitos regulatorios.
 
 ## FORMATO DE RESPUESTA (MUY IMPORTANTE)
 - Usá formato *WhatsApp nativo*: asteriscos simples para *negrita* (ej: *Cheque cargado*).
@@ -1189,6 +1283,115 @@ async function executeTool(supabase: any, name: string, args: Record<string, any
         const { data, error } = await q
         if (error) return JSON.stringify({ error: error.message })
         return JSON.stringify({ table, count: (data || []).length, rows: data || [] })
+      }
+
+      // ─── NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES) ───
+      case 'query_obra_wbs': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id, name').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        const { data: rubros, error } = await supabase.from('obra_rubros').select(`
+          codigo, nombre, monto_total_ars, incidencia_pct,
+          subrubros:obra_subrubros(
+            codigo, nombre,
+            items:obra_items(codigo_item, descripcion, unidad, cantidad_contractual, precio_unitario_ars, importe_contractual_ars, incidencia_obra_pct)
+          )
+        `).eq('project_id', projId).order('orden')
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ rubros_count: (rubros || []).length, rubros: rubros || [] })
+      }
+
+      case 'query_obra_tramos': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        let q = supabase.from('obra_tramos').select('codigo, nodo_inicio, nodo_fin, longitud_m, diametro_mm, servicios_count, calle_pasaje').eq('project_id', projId).order('orden')
+        if (args.nodo) q = q.or(`nodo_inicio.ilike.%${args.nodo}%,nodo_fin.ilike.%${args.nodo}%`)
+        const { data, error } = await q.limit(20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ total_tramos: (data || []).length, tramos: data || [] })
+      }
+
+      case 'query_obra_matriz_fisica': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        let q = supabase.from('obra_tramo_items').select(`
+          id, cantidad_prevista, cantidad_ejecutada, saldo, progreso_pct, estado,
+          tramo:obra_tramos!inner(codigo, nodo_inicio, nodo_fin),
+          item:obra_items!inner(codigo_item, descripcion, unidad)
+        `).eq('project_id', projId)
+        if (args.para_programar_only) q = q.gt('saldo', 0)
+        const { data, error } = await q.limit(20)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ items_count: (data || []).length, items: data || [] })
+      }
+
+      case 'query_obra_odts': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        let q = supabase.from('obra_ordenes_trabajo').select('numero_odt, fecha, meta_cantidad, unidad, cuadrilla_nombre, responsable_nombre, estado').eq('project_id', projId).order('created_at', { ascending: false })
+        if (args.estado) q = q.eq('estado', args.estado)
+        const { data, error } = await q.limit(10)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ odts_count: (data || []).length, odts: data || [] })
+      }
+
+      case 'query_obra_hitos': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        let q = supabase.from('obra_hitos').select('codigo_hito, nombre, tipo, ente_regulador, estado_binario, fecha_inspeccion, acta_numero, inspector_nombre').eq('project_id', projId)
+        if (args.estado_binario !== undefined) q = q.eq('estado_binario', args.estado_binario)
+        const { data, error } = await q
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ hitos_count: (data || []).length, hitos: data || [] })
+      }
+
+      case 'query_obra_certificados': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await supabase.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await supabase.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        const { data, error } = await supabase.from('obra_certificados').select('numero_certificado, periodo_desde, periodo_hasta, base_contractual_ars, acumulado_sin_iva, saldo_sin_iva, neto_a_cobrar, estado').eq('project_id', projId).order('numero_certificado', { ascending: false })
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ certificados: data || [] })
       }
 
       default:
