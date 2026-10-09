@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Wrench, Plus, CheckCircle2, Clock } from 'lucide-react';
 import { useFleetMaintenanceOrders, useCreateFleetMaintenanceOrder, useUpdateFleetMaintenanceOrder, useFuelVehicles } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 import type { FleetMaintenanceOrder } from '../lib/types';
 
 export const WorkshopPanel: React.FC = () => {
+  const { canViewCosts } = useAuth();
   const { data: orders = [], isLoading } = useFleetMaintenanceOrders();
   const { data: vehicles = [] } = useFuelVehicles();
   const createOrder = useCreateFleetMaintenanceOrder();
@@ -60,14 +62,18 @@ export const WorkshopPanel: React.FC = () => {
               <label className="block text-xs font-bold text-gray-500 mb-1">Fecha Inicio</label>
               <input type="date" className="input-field" value={formData.start_date || ''} onChange={e => setFormData({ ...formData, start_date: e.target.value })} />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">Costo Materiales</label>
-              <input type="number" className="input-field" value={formData.cost_materials || 0} onChange={e => setFormData({ ...formData, cost_materials: parseFloat(e.target.value) })} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">Costo Mano de Obra</label>
-              <input type="number" className="input-field" value={formData.cost_labor || 0} onChange={e => setFormData({ ...formData, cost_labor: parseFloat(e.target.value) })} />
-            </div>
+            {canViewCosts && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Costo Materiales</label>
+                  <input type="number" className="input-field" value={formData.cost_materials || 0} onChange={e => setFormData({ ...formData, cost_materials: parseFloat(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Costo Mano de Obra</label>
+                  <input type="number" className="input-field" value={formData.cost_labor || 0} onChange={e => setFormData({ ...formData, cost_labor: parseFloat(e.target.value) })} />
+                </div>
+              </>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Cancelar</button>
@@ -98,7 +104,7 @@ export const WorkshopPanel: React.FC = () => {
                 {order.mechanic_assigned && <p className="text-xs text-gray-500 mt-1">Mecánico: {order.mechanic_assigned}</p>}
                 <div className="mt-3 pt-2 border-t flex justify-between items-center text-[10px] text-gray-400">
                   <span className="flex items-center gap-1"><Clock size={12} /> {new Date(order.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}</span>
-                  <span className="font-mono text-gray-600">${order.total_cost?.toLocaleString()}</span>
+                  {canViewCosts && <span className="font-mono text-gray-600">${order.total_cost?.toLocaleString()}</span>}
                 </div>
               </div>
             ))}

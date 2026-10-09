@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { Truck, DollarSign, Activity, Wrench, AlertCircle } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useLogisticsMaintenanceLog } from '../hooks/useData';
+import { useAuth } from '../contexts/AuthContext';
 
 export const VehiclesRegistryModule: React.FC = () => {
+  const { canViewCosts } = useAuth();
   const { data: vehicles = [], isLoading: isLoadingV } = useFuelVehicles();
   const { data: fuelLoads = [], isLoading: isLoadingF } = useFuelLoads();
   const { data: maintenanceLogs = [], isLoading: isLoadingM } = useLogisticsMaintenanceLog();
@@ -57,10 +59,17 @@ export const VehiclesRegistryModule: React.FC = () => {
 
       {/* KPIs Generales de Flota */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><DollarSign size={16} className="text-red-500" /> Costo Operativo Prom.</div>
-          <p className="text-2xl font-black text-red-600 font-mono relative z-10">$ {avgCostPerKm.toLocaleString(undefined, { maximumFractionDigits: 2 })} / Km</p>
-        </div>
+        {canViewCosts ? (
+          <div className="kpi-card">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><DollarSign size={16} className="text-red-500" /> Costo Operativo Prom.</div>
+            <p className="text-2xl font-black text-red-600 font-mono relative z-10">$ {avgCostPerKm.toLocaleString(undefined, { maximumFractionDigits: 2 })} / Km</p>
+          </div>
+        ) : (
+          <div className="kpi-card">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-blue-500" /> Unidades en Flota</div>
+            <p className="text-2xl font-black text-blue-600 font-mono relative z-10">{vehicles.length} Vehículos</p>
+          </div>
+        )}
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-emerald-500" /> Tasa de Disponibilidad</div>
           <p className="text-2xl font-black text-emerald-600 font-mono relative z-10">{avgAvailability.toFixed(1)} %</p>
@@ -81,7 +90,7 @@ export const VehiclesRegistryModule: React.FC = () => {
             <thead>
               <tr>
                 <th >Vehículo</th>
-                <th className="text-right">Costo / Km</th>
+                {canViewCosts && <th className="text-right">Costo / Km</th>}
                 <th className="text-right">Eficiencia (Km/L)</th>
                 <th className="text-center">Disponibilidad</th>
                 <th className="text-center">Estado</th>
@@ -110,9 +119,11 @@ export const VehiclesRegistryModule: React.FC = () => {
                       <div className="font-bold text-gray-800">{v.code} - {v.plate}</div>
                       <div className="text-xs text-gray-500">{v.description}</div>
                     </td>
-                    <td className="text-right font-mono text-gray-700">
-                      $ {costoKm.toLocaleString()}
-                    </td>
+                    {canViewCosts && (
+                      <td className="text-right font-mono text-gray-700">
+                        $ {costoKm.toLocaleString()}
+                      </td>
+                    )}
                     <td className="text-right font-mono text-gray-700">
                       {eficiencia} Km/L
                     </td>

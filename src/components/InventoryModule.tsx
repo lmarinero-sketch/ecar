@@ -798,8 +798,9 @@ const ReturnToolModal: React.FC<{
 };
 
 export const InventoryModule: React.FC = () => {
-  const { isAdmin, profile } = useAuth();
-  const isPanolero = profile?.role === 'panolero';
+  const { isAdmin, profile, canViewCosts } = useAuth();
+  const showPrices = canViewCosts;
+  const isPanolero = profile?.role === 'panolero' || !showPrices;
   const { data: items, isLoading } = useInventoryItems();
   const { data: movements } = useInventoryMovements();
   const { data: assignments } = useToolAssignments();
@@ -1343,7 +1344,7 @@ export const InventoryModule: React.FC = () => {
       'Stock Disponible': (item.current_stock || 0) - (item.reserved_stock || 0),
       'Stock Mínimo': item.min_stock || 0,
       'Stock Ideal': item.ideal_stock || 0,
-      'Último Costo ($)': item.unit_cost || 0,
+      ...(showPrices ? { 'Último Costo ($)': item.unit_cost || 0 } : {}),
       'Ubicación / Estante': item.shelf_position || item.location || '-',
       'Unidad': item.unit || 'unidad'
     }));
@@ -1814,7 +1815,7 @@ export const InventoryModule: React.FC = () => {
           ['stock', '📊 Stock'],
           ['movements', '📋 Movimientos'],
           ['reserved', '🔒 Stock Reservado'],
-          ['price_history', '📈 Historial de Precios'],
+          ...(showPrices ? [['price_history', '📈 Historial de Precios'] as [Tab, string]] : []),
           ['deposits', '🏢 Depósitos'],
           ['shelves', '🗄️ Estanterías Almacén (A-E)'],
           ['tools', '⚡ Herramientas Eléctricas'],
@@ -2178,13 +2179,15 @@ export const InventoryModule: React.FC = () => {
                           <td className="py-2.5 px-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {/* Historial de Precios Button */}
-                              <button
-                                onClick={() => setSelectedHistoryItem(item)}
-                                className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors"
-                                title="Ver Historial de Precios y Variaciones ($ y %)"
-                              >
-                                <TrendingUp size={15} />
-                              </button>
+                              {showPrices && (
+                                <button
+                                  onClick={() => setSelectedHistoryItem(item)}
+                                  className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors"
+                                  title="Ver Historial de Precios y Variaciones ($ y %)"
+                                >
+                                  <TrendingUp size={15} />
+                                </button>
+                              )}
 
                               {/* Kardex Movements Toggle */}
                               <button
@@ -2471,7 +2474,7 @@ export const InventoryModule: React.FC = () => {
       )}
 
       {/* Tab: Historial Global de Precios y Modificaciones */}
-      {tab === 'price_history' && (
+      {tab === 'price_history' && showPrices && (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
             <div className="flex flex-wrap justify-between items-center gap-3 mb-4 pb-3 border-b border-slate-100">
@@ -3526,16 +3529,18 @@ export const InventoryModule: React.FC = () => {
                     placeholder="0"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label>
-                  <input
-                    type="number"
-                    value={newItem.unit_cost}
-                    onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
-                    placeholder="0"
-                  />
-                </div>
+                {showPrices && (
+                  <div>
+                    <label className="text-xs font-bold text-gray-500">Costo Unit. ($)</label>
+                    <input
+                      type="number"
+                      value={newItem.unit_cost}
+                      onChange={e => setNewItem({ ...newItem, unit_cost: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono"
+                      placeholder="0"
+                    />
+                  </div>
+                )}
               </div>
 
               <button

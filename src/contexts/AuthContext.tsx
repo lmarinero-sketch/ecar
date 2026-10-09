@@ -18,6 +18,8 @@ type AuthState = {
   isAdmin: boolean;
   /** true si el módulo fue ocultado al usuario por un admin (aplica también a admins). */
   isModuleHidden: (moduleId: ModuleId) => boolean;
+  /** true si el usuario tiene permiso para ver precios de compra, costos unitarios y datos financieros */
+  canViewCosts: boolean;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -156,8 +158,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Determina si el usuario tiene permiso para ver precios de compra, costos unitarios y datos financieros
+  const canViewCosts = profile?.role !== 'panolero' && !isModuleHidden('purchases') && !isModuleHidden('finances');
+
   return (
-    <AuthContext.Provider value={{ user, session, profile, permissions, loading, signIn, signUp, signOut, changePassword, hasModule, hasPermission, isAdmin, isModuleHidden }}>
+    <AuthContext.Provider value={{ user, session, profile, permissions, loading, signIn, signUp, signOut, changePassword, hasModule, hasPermission, isAdmin, isModuleHidden, canViewCosts }}>
       {children}
     </AuthContext.Provider>
   );
