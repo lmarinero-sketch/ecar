@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
@@ -105,11 +106,18 @@ function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'manual_atte
 }
 
 function AppContent() {
-  const { user, loading } = useAuth();
-  const { activeModule } = useAppStore();
+  const { user, loading, isModuleHidden } = useAuth();
+  const { activeModule, setActiveModule } = useAppStore();
   
   // Activate background sync for offline daily reports
   useOfflineSync();
+
+  // Guard against navigating to hidden modules
+  useEffect(() => {
+    if (user && isModuleHidden(activeModule)) {
+      setActiveModule('bi');
+    }
+  }, [user, activeModule, isModuleHidden, setActiveModule]);
 
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
@@ -149,6 +157,9 @@ function AppContent() {
   if (!user) return <LoginPage />;
 
   const renderModule = () => {
+    if (isModuleHidden(activeModule)) {
+      return <BiDashboard />;
+    }
     switch (activeModule) {
       case 'bi': return <BiDashboard />;
       case 'liquidity': return <LiquidityDashboard />;
