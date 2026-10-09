@@ -12,10 +12,12 @@ async function run() {
   try {
     await client.connect();
     
-    const sql = fs.readFileSync('supabase/migrations/20260822000000_add_iva_rate_to_purchase_items.sql', 'utf8');
+    const sql = fs.readFileSync('supabase/migrations/20261008223000_add_saldo_generated_column.sql', 'utf8');
     
     await client.query(sql);
-    console.log('Migration for purchase_invoice_items iva_rate applied successfully.');
+    console.log('Migration for saldo column applied successfully.');
+    await client.query(`NOTIFY pgrst, 'reload schema';`);
+    console.log('Schema reloaded successfully.');
 
   } catch (err) {
     console.error('Error:', err);

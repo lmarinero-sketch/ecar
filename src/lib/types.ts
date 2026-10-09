@@ -2185,3 +2185,241 @@ export type ProjectWorkReport = {
   pdf_url?: string | null;
   created_at?: string;
 };
+
+// ==============================================================================
+// NUEVO NÚCLEO DE GESTIÓN DE OBRA (ESTÁNDAR DE INGENIERÍA 5 FASES)
+// ==============================================================================
+
+export type ObraTramo = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  codigo: string;
+  nodo_inicio: string;
+  nodo_fin: string;
+  longitud_m: number;
+  calle_pasaje?: string | null;
+  diametro_mm: number;
+  tipo_red: string;
+  servicios_count: number;
+  hidrantes_count: number;
+  ancho_zanja_m: number;
+  profundidad_media_m: number;
+  observaciones?: string | null;
+  orden: number;
+  activo: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ObraRubro = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
+  orden: number;
+  incidencia_pct: number;
+  monto_total_ars: number;
+  created_at?: string;
+  subrubros?: ObraSubrubro[];
+};
+
+export type ObraSubrubro = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  rubro_id: string;
+  codigo: string;
+  nombre: string;
+  orden: number;
+  incidencia_rubro_pct: number;
+  incidencia_obra_pct: number;
+  monto_total_ars: number;
+  created_at?: string;
+  items?: ObraItem[];
+};
+
+export type ObraItem = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  subrubro_id: string;
+  codigo_item: string;
+  descripcion: string;
+  unidad: 'ml' | 'm3' | 'un' | 'gl' | 'm2' | string;
+  cantidad_contractual: number;
+  precio_unitario_ars: number;
+  importe_contractual_ars: number;
+  incidencia_subrubro_pct: number;
+  incidencia_obra_pct: number;
+  rendimiento_base_dia: number;
+  criterio_medicion?: string | null;
+  orden: number;
+  created_at?: string;
+};
+
+export type ObraTramoItem = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  tramo_id: string;
+  item_id: string;
+  cantidad_prevista: number;
+  cantidad_ejecutada: number;
+  saldo?: number;
+  progreso_pct: number;
+  estado: 'no_iniciada' | 'para_programar' | 'programada' | 'en_ejecucion' | 'terminada' | 'bloqueada';
+  restriccion_observacion?: string | null;
+  prioridad: 'baja' | 'media' | 'alta' | 'critica';
+  responsable?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  tramo?: ObraTramo;
+  item?: ObraItem;
+};
+
+export type ObraOrdenTrabajo = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  numero_odt: string;
+  fecha: string;
+  tramo_item_id: string;
+  tramo_id: string;
+  item_id: string;
+  meta_cantidad: number;
+  unidad: string;
+  cuadrilla_id?: string | null;
+  cuadrilla_nombre?: string | null;
+  responsable_id?: string | null;
+  responsable_nombre?: string | null;
+  equipo_asignado?: string | null;
+  materiales_requeridos?: string | null;
+  inicio_plan: string;
+  fin_plan: string;
+  instrucciones_calidad?: string | null;
+  estado: 'borrador' | 'emitida' | 'en_ejecucion' | 'cumplida' | 'parcial' | 'anulada';
+  created_at?: string;
+  updated_at?: string;
+  tramo?: ObraTramo;
+  item?: ObraItem;
+};
+
+export type ObraParteDiarioItem = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  odt_id?: string | null;
+  tramo_item_id: string;
+  fecha: string;
+  cantidad_real: number;
+  unidad: string;
+  cumplimiento_pct: number;
+  hora_inicio_real?: string | null;
+  hora_fin_real?: string | null;
+  horas_trabajadas: number;
+  personal_real_count: number;
+  personal_nombres: string[];
+  equipo_usado?: string | null;
+  horometro_inicio?: number | null;
+  horometro_fin?: number | null;
+  minutos_parada: number;
+  motivo_parada?: string | null;
+  novedades_interferencias?: string | null;
+  incidente_calidad?: string | null;
+  fotos_urls: string[];
+  responsable_carga?: string | null;
+  estado: 'cargado' | 'aprobado' | 'rechazado';
+  created_at?: string;
+  odt?: ObraOrdenTrabajo;
+  tramo_item?: ObraTramoItem;
+};
+
+export type ObraHito = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  tramo_id?: string | null;
+  codigo_hito: string;
+  nombre: string;
+  descripcion?: string | null;
+  tipo: 'inspeccion' | 'laboratorio' | 'prueba_hidraulica' | 'aprobacion_ente' | 'recepcion';
+  ente_regulador?: string | null;
+  estado_binario: 0 | 100;
+  fecha_inspeccion?: string | null;
+  acta_numero?: string | null;
+  acta_url?: string | null;
+  inspector_nombre?: string | null;
+  bloquea_item_id?: string | null;
+  observaciones?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  tramo?: ObraTramo;
+};
+
+export type ObraCertificado = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  numero_certificado: number;
+  periodo_desde: string;
+  periodo_hasta: string;
+  fecha_emision: string;
+  base_contractual_ars: number;
+  anterior_sin_iva: number;
+  presente_sin_iva: number;
+  acumulado_sin_iva: number;
+  saldo_sin_iva: number;
+  avance_acumulado_pct: number;
+  iva_presente: number;
+  total_con_iva: number;
+  fondo_reparo_retencion: number;
+  amortizacion_anticipo: number;
+  neto_a_cobrar: number;
+  estado: 'borrador' | 'aprobado' | 'cerrado' | 'anulado';
+  observaciones?: string | null;
+  created_at?: string;
+  lineas?: ObraCertificadoLinea[];
+};
+
+export type ObraCertificadoLinea = {
+  id: string;
+  certificado_id: string;
+  item_id: string;
+  codigo_item: string;
+  descripcion: string;
+  unidad: string;
+  cantidad_contractual: number;
+  precio_unitario_ars: number;
+  importe_contractual_ars: number;
+  cantidad_anterior: number;
+  cantidad_presente: number;
+  cantidad_acumulada: number;
+  importe_anterior: number;
+  importe_presente: number;
+  importe_acumulado: number;
+  saldo_importe: number;
+  avance_acumulado_pct: number;
+  created_at?: string;
+};
+
+export type ObraLeccionAprendida = {
+  id: string;
+  tenant_id?: string;
+  project_id: string;
+  item_id?: string | null;
+  categoria: 'rendimiento' | 'calidad' | 'seguridad' | 'interferencia_suelo' | 'proveedor' | 'maquinaria';
+  titulo: string;
+  descripcion_problema: string;
+  causa_raiz?: string | null;
+  accion_adoptada: string;
+  rendimiento_cotizado?: number | null;
+  rendimiento_real_obtenido?: number | null;
+  impacto_costo_ars: number;
+  recomendacion_futura: string;
+  autor?: string | null;
+  created_at?: string;
+};
+
