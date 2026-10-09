@@ -220,7 +220,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           }`}
         >
           <FolderTree size={16} />
-          Estructura Jerárquica WBS (Rubros $\rightarrow$ Subrubros $\rightarrow$ Ítems)
+          Estructura Jerárquica WBS (Rubros → Subrubros → Ítems)
         </button>
 
         <button
@@ -244,7 +244,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           }`}
         >
           <Layers size={16} />
-          Matriz Cómputos Tramo $\times$ Ítem ({tramoItems.length})
+          Matriz Cómputos Tramo × Ítem ({tramoItems.length})
         </button>
       </div>
 
@@ -457,7 +457,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
       {activeTab === 'matriz' && (
         <div className="space-y-4">
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h4 className="font-bold text-slate-800 text-sm">Matriz de Estado Actual (Tramo $\times$ Ítem)</h4>
+            <h4 className="font-bold text-slate-800 text-sm">Matriz de Estado Actual (Tramo × Ítem)</h4>
             <p className="text-xs text-slate-500">Cómputo inicial previsto y saldo disponible por cada actividad en cada tramo.</p>
           </div>
 
