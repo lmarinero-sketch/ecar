@@ -9,6 +9,7 @@ import {
   useObraItems, useCreateObraItem,
   useObraTramoItems
 } from '../../../hooks/useNuevoModuloObra';
+import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase1PlanificacionProps {
   projectId: string;
@@ -515,227 +516,235 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
       )}
 
       {/* Modal Nuevo Rubro */}
-      {showNewRubroModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Rubro</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Código (ej. R-01)</label>
-                <input
-                  value={rubroForm.codigo}
-                  onChange={e => setRubroForm({ ...rubroForm, codigo: e.target.value })}
-                  placeholder="R-01"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Rubro</label>
-                <input
-                  value={rubroForm.nombre}
-                  onChange={e => setRubroForm({ ...rubroForm, nombre: e.target.value })}
-                  placeholder="01 Trabajos Preliminares"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción (opcional)</label>
-                <textarea
-                  value={rubroForm.descripcion}
-                  onChange={e => setRubroForm({ ...rubroForm, descripcion: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
+      <ModalPortal
+        isOpen={showNewRubroModal}
+        onClose={() => setShowNewRubroModal(false)}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Rubro</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código (ej. R-01)</label>
+              <input
+                value={rubroForm.codigo}
+                onChange={e => setRubroForm({ ...rubroForm, codigo: e.target.value })}
+                placeholder="R-01"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setShowNewRubroModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold">Cancelar</button>
-              <button onClick={handleSaveRubro} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">Guardar Rubro</button>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Rubro</label>
+              <input
+                value={rubroForm.nombre}
+                onChange={e => setRubroForm({ ...rubroForm, nombre: e.target.value })}
+                placeholder="01 Trabajos Preliminares"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción (opcional)</label>
+              <textarea
+                value={rubroForm.descripcion}
+                onChange={e => setRubroForm({ ...rubroForm, descripcion: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => setShowNewRubroModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveRubro} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Rubro</button>
+          </div>
         </div>
-      )}
+      </ModalPortal>
 
       {/* Modal Nuevo Subrubro */}
-      {showNewSubrubroModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Subrubro</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Código (ej. SR-01.1)</label>
-                <input
-                  value={subrubroForm.codigo}
-                  onChange={e => setSubrubroForm({ ...subrubroForm, codigo: e.target.value })}
-                  placeholder="SR-01.1"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Subrubro</label>
-                <input
-                  value={subrubroForm.nombre}
-                  onChange={e => setSubrubroForm({ ...subrubroForm, nombre: e.target.value })}
-                  placeholder="Zanjeo Troncal"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
+      <ModalPortal
+        isOpen={showNewSubrubroModal}
+        onClose={() => setShowNewSubrubroModal(false)}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Subrubro</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código (ej. SR-01.1)</label>
+              <input
+                value={subrubroForm.codigo}
+                onChange={e => setSubrubroForm({ ...subrubroForm, codigo: e.target.value })}
+                placeholder="SR-01.1"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setShowNewSubrubroModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold">Cancelar</button>
-              <button onClick={handleSaveSubrubro} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">Guardar Subrubro</button>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Subrubro</label>
+              <input
+                value={subrubroForm.nombre}
+                onChange={e => setSubrubroForm({ ...subrubroForm, nombre: e.target.value })}
+                placeholder="Zanjeo Troncal"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => setShowNewSubrubroModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveSubrubro} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Subrubro</button>
+          </div>
         </div>
-      )}
+      </ModalPortal>
 
       {/* Modal Nuevo Ítem */}
-      {showNewItemModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Ítem Medible</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Código Ítem (ej. 2 o AG-03)</label>
-                <input
-                  value={itemForm.codigo_item}
-                  onChange={e => setItemForm({ ...itemForm, codigo_item: e.target.value })}
-                  placeholder="AG-03"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Unidad Física</label>
-                <select
-                  value={itemForm.unidad}
-                  onChange={e => setItemForm({ ...itemForm, unidad: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
-                >
-                  <option value="ml">ml (metros lineales)</option>
-                  <option value="m3">m³ (metros cúbicos)</option>
-                  <option value="un">un (unidades)</option>
-                  <option value="gl">gl (global)</option>
-                  <option value="m2">m² (metros cuadrados)</option>
-                </select>
-              </div>
-              <div className="col-span-2">
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción Contractual</label>
-                <input
-                  value={itemForm.descripcion}
-                  onChange={e => setItemForm({ ...itemForm, descripcion: e.target.value })}
-                  placeholder="Excavación de Zanja Principal"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Cantidad Contractual Total</label>
-                <input
-                  type="number"
-                  value={itemForm.cantidad_contractual || ''}
-                  onChange={e => setItemForm({ ...itemForm, cantidad_contractual: Number(e.target.value) })}
-                  placeholder="4200"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Precio Unitario s/IVA ($)</label>
-                <input
-                  type="number"
-                  value={itemForm.precio_unitario_ars || ''}
-                  onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: Number(e.target.value) })}
-                  placeholder="3683.59"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Rendimiento Base/Día</label>
-                <input
-                  type="number"
-                  value={itemForm.rendimiento_base_dia || ''}
-                  onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: Number(e.target.value) })}
-                  placeholder="70"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
+      <ModalPortal
+        isOpen={showNewItemModal}
+        onClose={() => setShowNewItemModal(false)}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Ítem Medible</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código Ítem (ej. 2 o AG-03)</label>
+              <input
+                value={itemForm.codigo_item}
+                onChange={e => setItemForm({ ...itemForm, codigo_item: e.target.value })}
+                placeholder="AG-03"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setShowNewItemModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold">Cancelar</button>
-              <button onClick={handleSaveItem} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">Guardar Ítem</button>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Unidad Física</label>
+              <select
+                value={itemForm.unidad}
+                onChange={e => setItemForm({ ...itemForm, unidad: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
+              >
+                <option value="ml">ml (metros lineales)</option>
+                <option value="m3">m³ (metros cúbicos)</option>
+                <option value="un">un (unidades)</option>
+                <option value="gl">gl (global)</option>
+                <option value="m2">m² (metros cuadrados)</option>
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción Contractual</label>
+              <input
+                value={itemForm.descripcion}
+                onChange={e => setItemForm({ ...itemForm, descripcion: e.target.value })}
+                placeholder="Excavación de Zanja Principal"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Cantidad Contractual Total</label>
+              <input
+                type="number"
+                value={itemForm.cantidad_contractual || ''}
+                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: Number(e.target.value) })}
+                placeholder="4200"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Precio Unitario s/IVA ($)</label>
+              <input
+                type="number"
+                value={itemForm.precio_unitario_ars || ''}
+                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: Number(e.target.value) })}
+                placeholder="3683.59"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Rendimiento Base/Día</label>
+              <input
+                type="number"
+                value={itemForm.rendimiento_base_dia || ''}
+                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: Number(e.target.value) })}
+                placeholder="70"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => setShowNewItemModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveItem} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Ítem</button>
+          </div>
         </div>
-      )}
+      </ModalPortal>
 
       {/* Modal Nuevo Tramo */}
-      {showNewTramoModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Tramo Topológico</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Código Tramo (ej. N1 - N2)</label>
-                <input
-                  value={tramoForm.codigo}
-                  onChange={e => setTramoForm({ ...tramoForm, codigo: e.target.value })}
-                  placeholder="N1 - N2"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Longitud (m)</label>
-                <input
-                  type="number"
-                  value={tramoForm.longitud_m || ''}
-                  onChange={e => setTramoForm({ ...tramoForm, longitud_m: Number(e.target.value) })}
-                  placeholder="165"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Inicio</label>
-                <input
-                  value={tramoForm.nodo_inicio}
-                  onChange={e => setTramoForm({ ...tramoForm, nodo_inicio: e.target.value })}
-                  placeholder="N1"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Fin</label>
-                <input
-                  value={tramoForm.nodo_fin}
-                  onChange={e => setTramoForm({ ...tramoForm, nodo_fin: e.target.value })}
-                  placeholder="N2"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Calle / Pasaje</label>
-                <input
-                  value={tramoForm.calle_pasaje}
-                  onChange={e => setTramoForm({ ...tramoForm, calle_pasaje: e.target.value })}
-                  placeholder="Pasaje N°13"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 block mb-1">Diámetro (mm)</label>
-                <input
-                  type="number"
-                  value={tramoForm.diametro_mm || ''}
-                  onChange={e => setTramoForm({ ...tramoForm, diametro_mm: Number(e.target.value) })}
-                  placeholder="75"
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
+      <ModalPortal
+        isOpen={showNewTramoModal}
+        onClose={() => setShowNewTramoModal(false)}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Tramo Topológico</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código Tramo (ej. N1 - N2)</label>
+              <input
+                value={tramoForm.codigo}
+                onChange={e => setTramoForm({ ...tramoForm, codigo: e.target.value })}
+                placeholder="N1 - N2"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setShowNewTramoModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold">Cancelar</button>
-              <button onClick={handleSaveTramo} className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">Guardar Tramo</button>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Longitud (m)</label>
+              <input
+                type="number"
+                value={tramoForm.longitud_m || ''}
+                onChange={e => setTramoForm({ ...tramoForm, longitud_m: Number(e.target.value) })}
+                placeholder="165"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Inicio</label>
+              <input
+                value={tramoForm.nodo_inicio}
+                onChange={e => setTramoForm({ ...tramoForm, nodo_inicio: e.target.value })}
+                placeholder="N1"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Fin</label>
+              <input
+                value={tramoForm.nodo_fin}
+                onChange={e => setTramoForm({ ...tramoForm, nodo_fin: e.target.value })}
+                placeholder="N2"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Calle / Pasaje</label>
+              <input
+                value={tramoForm.calle_pasaje}
+                onChange={e => setTramoForm({ ...tramoForm, calle_pasaje: e.target.value })}
+                placeholder="Pasaje N°13"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Diámetro (mm)</label>
+              <input
+                type="number"
+                value={tramoForm.diametro_mm || ''}
+                onChange={e => setTramoForm({ ...tramoForm, diametro_mm: Number(e.target.value) })}
+                placeholder="75"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => setShowNewTramoModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveTramo} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Tramo</button>
+          </div>
         </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

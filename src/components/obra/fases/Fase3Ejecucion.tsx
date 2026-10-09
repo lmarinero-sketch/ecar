@@ -9,6 +9,7 @@ import {
   useCreateObraParteDiarioItem
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraOrdenTrabajo } from '../../../lib/types';
+import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase3EjecucionProps {
   projectId: string;
@@ -327,9 +328,13 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
       )}
 
       {/* Modal / Panel de Carga de Producción en Terreno */}
-      {activeOdt && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <ModalPortal
+        isOpen={Boolean(activeOdt)}
+        onClose={() => setActiveOdt(null)}
+        maxWidth="max-w-lg"
+      >
+        {activeOdt && (
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
             <div className="border-b border-slate-100 pb-3 flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider block">Parte Diario — Terreno</span>
@@ -474,15 +479,15 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
               </button>
               <button
                 onClick={handleGuardarParte}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg active:scale-95"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer"
               >
                 <Check size={16} />
                 Finalizar y Transmitir ODT
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalPortal>
     </div>
   );
 };

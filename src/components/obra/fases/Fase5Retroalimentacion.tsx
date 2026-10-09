@@ -10,6 +10,7 @@ import {
   useCreateObraLeccionAprendida
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraLeccionAprendida } from '../../../lib/types';
+import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase5RetroalimentacionProps {
   projectId: string;
@@ -294,10 +295,13 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
       </div>
 
       {/* Modal Nueva Lección Aprendida */}
-      {showNewModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-900">Registrar Lección Aprendida</h3>
+      <ModalPortal
+        isOpen={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
+          <h3 className="font-bold text-lg text-slate-900">Registrar Lección Aprendida</h3>
 
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2">
@@ -363,20 +367,19 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
             <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
               <button
                 onClick={() => setShowNewModal(false)}
-                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600"
+                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveLeccion}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md"
+                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer"
               >
                 Guardar Lección
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

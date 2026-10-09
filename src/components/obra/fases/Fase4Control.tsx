@@ -9,6 +9,7 @@ import {
   useObraCertificados, useCreateObraCertificado
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraHito, ObraCertificado } from '../../../lib/types';
+import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase4ControlProps {
   projectId: string;
@@ -482,9 +483,13 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
       )}
 
       {/* Modal Resolver Hito Binario */}
-      {selectedHito && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <ModalPortal
+        isOpen={Boolean(selectedHito)}
+        onClose={() => setSelectedHito(null)}
+        maxWidth="max-w-md"
+      >
+        {selectedHito && (
+          <div className="p-6 space-y-4">
             <h3 className="font-bold text-lg text-slate-900">
               Protocolo de Liberación Técnica: {selectedHito.codigo_hito}
             </h3>
@@ -522,106 +527,111 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
             <div className="pt-2 border-t border-slate-100 flex gap-2">
               <button
                 onClick={() => setSelectedHito(null)}
-                className="px-3 py-2 border rounded-xl text-xs font-semibold text-slate-600 flex-1"
+                className="px-3 py-2 border rounded-xl text-xs font-semibold text-slate-600 flex-1 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleResolverHito(0)}
-                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1"
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
               >
                 <XCircle size={14} /> Rechazar (0%)
               </button>
               <button
                 onClick={() => handleResolverHito(100)}
-                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md"
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md cursor-pointer"
               >
                 <CheckCircle2 size={14} /> Aprobar (100%)
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalPortal>
 
       {/* Modal Nuevo Hito */}
-      {showNewHitoModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-lg text-slate-900">Crear Nuevo Hito de Control</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="font-semibold text-slate-600 block mb-1">Código Hito (ej. HI-01)</label>
-                <input
-                  value={newHito.codigo_hito}
-                  onChange={e => setNewHito({ ...newHito, codigo_hito: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="font-semibold text-slate-600 block mb-1">Nombre del Hito</label>
-                <input
-                  value={newHito.nombre}
-                  onChange={e => setNewHito({ ...newHito, nombre: e.target.value })}
-                  placeholder="Inspección de fondo de zanja y laboratorio"
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="font-semibold text-slate-600 block mb-1">Ente / Responsable</label>
-                <input
-                  value={newHito.ente_regulador}
-                  onChange={e => setNewHito({ ...newHito, ente_regulador: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="font-semibold text-slate-600 block mb-1">Tramo Asociado</label>
-                <select
-                  value={newHito.tramo_id}
-                  onChange={e => setNewHito({ ...newHito, tramo_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
-                >
-                  <option value="">-- General para toda la obra --</option>
-                  {tramos.map(t => (
-                    <option key={t.id} value={t.id}>{t.codigo} ({t.calle_pasaje})</option>
-                  ))}
-                </select>
-              </div>
+      <ModalPortal
+        isOpen={showNewHitoModal}
+        onClose={() => setShowNewHitoModal(false)}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-900">Crear Nuevo Hito de Control</h3>
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="font-semibold text-slate-600 block mb-1">Código Hito (ej. HI-01)</label>
+              <input
+                value={newHito.codigo_hito}
+                onChange={e => setNewHito({ ...newHito, codigo_hito: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
             </div>
-
-            <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
-              <button
-                onClick={() => setShowNewHitoModal(false)}
-                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600"
+            <div>
+              <label className="font-semibold text-slate-600 block mb-1">Nombre del Hito</label>
+              <input
+                value={newHito.nombre}
+                onChange={e => setNewHito({ ...newHito, nombre: e.target.value })}
+                placeholder="Inspección de fondo de zanja y laboratorio"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-600 block mb-1">Ente / Responsable</label>
+              <input
+                value={newHito.ente_regulador}
+                onChange={e => setNewHito({ ...newHito, ente_regulador: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="font-semibold text-slate-600 block mb-1">Tramo Asociado</label>
+              <select
+                value={newHito.tramo_id}
+                onChange={e => setNewHito({ ...newHito, tramo_id: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
               >
-                Cancelar
-              </button>
-              <button
-                onClick={async () => {
-                  await createHito.mutateAsync({
-                    project_id: projectId,
-                    codigo_hito: newHito.codigo_hito,
-                    nombre: newHito.nombre,
-                    tipo: newHito.tipo,
-                    ente_regulador: newHito.ente_regulador,
-                    tramo_id: newHito.tramo_id || null,
-                    estado_binario: 0
-                  });
-                  setShowNewHitoModal(false);
-                }}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold"
-              >
-                Guardar Hito
-              </button>
+                <option value="">-- General para toda la obra --</option>
+                {tramos.map(t => (
+                  <option key={t.id} value={t.id}>{t.codigo} ({t.calle_pasaje})</option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              onClick={() => setShowNewHitoModal(false)}
+              className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={async () => {
+                await createHito.mutateAsync({
+                  project_id: projectId,
+                  codigo_hito: newHito.codigo_hito,
+                  nombre: newHito.nombre,
+                  tipo: newHito.tipo,
+                  ente_regulador: newHito.ente_regulador,
+                  tramo_id: newHito.tramo_id || null,
+                  estado_binario: 0
+                });
+                setShowNewHitoModal(false);
+              }}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+            >
+              Guardar Hito
+            </button>
+          </div>
         </div>
-      )}
+      </ModalPortal>
 
       {/* Modal Generar Certificado Periódico */}
-      {showNuevoCertModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <ModalPortal
+        isOpen={showNuevoCertModal}
+        onClose={() => setShowNuevoCertModal(false)}
+        maxWidth="max-w-4xl"
+      >
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
             <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
               <div>
                 <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block">Liquidación Contractual Oficial</span>
@@ -723,20 +733,23 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
               </button>
               <button
                 onClick={handleEmitirCertificado}
-                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg cursor-pointer"
               >
                 <Lock size={14} />
                 Aprobar y Emitir Certificado (Inmutable)
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </ModalPortal>
 
       {/* Modal Ver Detalle de Certificado Emitido */}
-      {selectedCertificadoView && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <ModalPortal
+        isOpen={Boolean(selectedCertificadoView)}
+        onClose={() => setSelectedCertificadoView(null)}
+        maxWidth="max-w-4xl"
+      >
+        {selectedCertificadoView && (
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
             <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-xl text-slate-900">
@@ -785,8 +798,8 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
               </table>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalPortal>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import {
 } from '../../../hooks/useNuevoModuloObra';
 import { useEmployees } from '../../../hooks/useData';
 import type { ObraTramoItem } from '../../../lib/types';
+import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase2ProgramacionProps {
   projectId: string;
@@ -288,9 +289,13 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       )}
 
       {/* Modal Programar y Emitir ODT */}
-      {selectedTramoItem && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+      <ModalPortal
+        isOpen={Boolean(selectedTramoItem)}
+        onClose={() => setSelectedTramoItem(null)}
+        maxWidth="max-w-lg"
+      >
+        {selectedTramoItem && (
+          <div className="p-6 space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <span className="text-xs font-bold text-amber-600 uppercase tracking-wider block">Emisión de Orden de Trabajo</span>
               <h3 className="font-bold text-lg text-slate-900 mt-0.5">
@@ -375,21 +380,21 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => setSelectedTramoItem(null)}
-                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleEmitirOdt}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md"
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
               >
                 <Send size={14} />
                 Confirmar y Emitir ODT
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </ModalPortal>
     </div>
   );
 };
