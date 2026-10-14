@@ -38,7 +38,7 @@ export function checkVehicleMaintenance(
   vehicle: FuelVehicle,
   readingOverride?: number | null
 ): MaintenanceCheckResult {
-  const isHours = vehicle.tracking_type === 'hours';
+  const isHours = vehicle.tracking_type === 'hours' || vehicle.vehicle_type === 'maquinaria';
   const unit = isHours ? 'hs' : 'km';
 
   // Determinar valores actuales y objetivos
@@ -48,10 +48,10 @@ export function checkVehicleMaintenance(
 
   const currentHours = (isHours && readingOverride !== undefined && readingOverride !== null)
     ? readingOverride
-    : (vehicle.current_hours ?? null);
+    : (vehicle.current_hours ?? (!isHours ? null : vehicle.current_km) ?? null);
 
-  const targetKm = vehicle.next_maintenance_km ?? null;
-  const targetHours = vehicle.next_maintenance_hours ?? null;
+  const targetKm = !isHours ? (vehicle.next_maintenance_km ?? null) : null;
+  const targetHours = isHours ? (vehicle.next_maintenance_hours ?? vehicle.next_maintenance_km ?? null) : null;
   const targetDate = vehicle.next_maintenance_date ?? null;
 
   let kmDiff: number | null = null;

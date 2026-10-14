@@ -703,7 +703,10 @@ export const FleetModule: React.FC = () => {
                       </div>
                       <div>
                         <label className="text-xs font-bold text-gray-500">Tipo</label>
-                        <select value={editForm.vehicle_type ?? ''} onChange={e => setEditForm({ ...editForm, vehicle_type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm">
+                        <select value={editForm.vehicle_type ?? ''} onChange={e => {
+                          const vt = e.target.value;
+                          setEditForm({ ...editForm, vehicle_type: vt, tracking_type: vt === 'maquinaria' ? 'hours' : editForm.tracking_type });
+                        }} className="w-full px-3 py-2 border rounded-lg text-sm">
                           <option value="camion">Camión</option><option value="camioneta">Camioneta</option><option value="auto">Auto</option><option value="maquinaria">Maquinaria</option><option value="moto">Moto</option><option value="otro">Otro</option>
                         </select>
                       </div>
@@ -810,7 +813,10 @@ export const FleetModule: React.FC = () => {
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><label className="text-xs font-bold text-gray-500">Código *</label><input value={newForm.code} onChange={e => setNewForm({ ...newForm, code: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-mono" placeholder="C-002" required /></div>
-                <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={newForm.vehicle_type} onChange={e => setNewForm({ ...newForm, vehicle_type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="camion">Camión</option><option value="camioneta">Camioneta</option><option value="auto">Auto</option><option value="maquinaria">Maquinaria</option><option value="moto">Moto</option><option value="otro">Otro</option></select></div>
+                <div><label className="text-xs font-bold text-gray-500">Tipo</label><select value={newForm.vehicle_type} onChange={e => {
+                  const vt = e.target.value;
+                  setNewForm({ ...newForm, vehicle_type: vt, tracking_type: vt === 'maquinaria' ? 'hours' : newForm.tracking_type });
+                }} className="w-full px-3 py-2 border rounded-lg text-sm"><option value="camion">Camión</option><option value="camioneta">Camioneta</option><option value="auto">Auto</option><option value="maquinaria">Maquinaria</option><option value="moto">Moto</option><option value="otro">Otro</option></select></div>
                 <div>
                   <label className="text-xs font-bold text-gray-500">Medición Uso</label>
                   <select value={newForm.tracking_type} onChange={e => setNewForm({ ...newForm, tracking_type: e.target.value as 'km'|'hours' })} className="w-full px-3 py-2 border rounded-lg text-sm">

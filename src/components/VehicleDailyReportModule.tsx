@@ -8,7 +8,7 @@ import {
 import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
-import { reliableLastHours } from '../lib/hourmeter';
+import { reliableLastHours, formatHourmeter, isVehicleHoursTracking, sanitizeOdometerInput, parseReadingValue } from '../lib/hourmeter';
 import { HourmeterInput } from './HourmeterInput';
 
 // ── Constants ──
@@ -147,12 +147,17 @@ const ReportForm: React.FC<{
   }, [vehicleId]);
 
   const faultsCount = checklist.filter(c => c.estado === 'falla').length;
-  const kmValue = odometerKm ? parseFloat(odometerKm) : null;
-  const kmInvalid = kmValue !== null && selectedVehicle?.tracking_type !== 'hours' && selectedVehicle?.current_km != null && kmValue < selectedVehicle.current_km;
-  const lastReliableHours = reliableLastHours(selectedVehicle?.current_hours);
-  const hoursInvalid = kmValue !== null && selectedVehicle?.tracking_type === 'hours' && lastReliableHours !== null && kmValue < lastReliableHours;
-  const isInvalid = kmInvalid || hoursInvalid;
-  const maintenanceAlert = selectedVehicle ? checkVehicleMaintenance(selectedVehicle, kmValue) : null;
+  const isHours = isVehicleHoursTracking(selectedVehicle);
+  const readingValue = parseReadingValue(odometerKm, isHours);
+  const readingMissing = readingValue === null || readingValue <= 0;
+
+  const lastReliableKm = (!isHours && selectedVehicle?.current_km != null && selectedVehicle.current_km < 1000000) ? selectedVehicle.current_km : null;
+  const lastReliableHs = reliableLastHours(selectedVehicle?.current_hours);
+
+  const kmInvalid = !isHours && readingValue !== null && lastReliableKm !== null && readingValue < lastReliableKm;
+  const hoursInvalid = isHours && readingValue !== null && lastReliableHs !== null && readingValue < lastReliableHs;
+  const isInvalid = readingMissing || kmInvalid || hoursInvalid;
+  const maintenanceAlert = selectedVehicle ? checkVehicleMaintenance(selectedVehicle, readingValue) : null;
   const computedCondition: VehicleCondition = (hasDamage || faultsCount > 0 || maintenanceAlert?.isOverdue)
       ? 'con_observaciones'
       : 'operativo';
@@ -167,15 +172,15 @@ const ReportForm: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicleId || !driverName.trim() || isInvalid) return;
+    if (!vehicleId || !driverName.trim() || isInvalid || readingValue === null) return;
 
     await createReport.mutateAsync({
       vehicle_id: vehicleId,
       report_date: today(),
       driver_name: driverName.trim(),
       project_id: projectId || null,
-      odometer_km: selectedVehicle?.tracking_type === 'hours' ? null : (odometerKm ? parseInt(odometerKm) : null),
-      hourmeter: selectedVehicle?.tracking_type === 'hours' ? (odometerKm ? parseFloat(odometerKm) : null) : null,
+      odometer_km: isHours ? null : Math.round(readingValue),
+      hourmeter: isHours ? readingValue : null,
       fuel_level: fuelLevel,
       checklist,
       has_damage: hasDamage,
@@ -239,36 +244,40 @@ const ReportForm: React.FC<{
           </select>
         </div>
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{selectedVehicle?.tracking_type === 'hours' ? 'Hs Horómetro' : 'Km Odómetro'}</label>
-          {selectedVehicle?.tracking_type === 'hours' ? (
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{isHours ? 'Hs Horómetro *' : 'Km Odómetro *'}</label>
+          {isHours ? (
             <HourmeterInput
               id="daily-report-hourmeter"
               value={odometerKm}
-              onChange={setOdometerKm}
-              lastHours={selectedVehicle.current_hours}
+              onChange={val => setOdometerKm(sanitizeOdometerInput(val, true))}
+              lastHours={selectedVehicle?.current_hours}
             />
           ) : (<>
           <input
-            type="number"
-            step="1"
+            type="text"
+            inputMode="numeric"
             value={odometerKm}
-            onChange={e => setOdometerKm(e.target.value)}
-            min={selectedVehicle?.current_km || 0}
-            placeholder={selectedVehicle?.current_km ? `Mínimo: ${selectedVehicle.current_km.toLocaleString()} km` : '0'}
+            onChange={e => setOdometerKm(sanitizeOdometerInput(e.target.value, false))}
+            placeholder={lastReliableKm ? `Mínimo: ${lastReliableKm.toLocaleString()} km` : '0'}
             className={`w-full px-3 py-2.5 rounded-xl text-sm font-mono focus:ring-2 border ${
-              isInvalid
+              kmInvalid || (readingMissing && odometerKm)
                 ? 'border-red-400 bg-red-50 text-red-700 focus:ring-red-200 focus:border-red-400'
                 : 'border-gray-300 focus:ring-ecar-blue/30 focus:border-ecar-blue'
             }`}
           />
-          {isInvalid && (
+          {kmInvalid && (
             <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1 font-medium">
-              <AlertTriangle size={10} /> No puede ser menor a {selectedVehicle?.current_km?.toLocaleString() + ' km'} (último registro)
+              <AlertTriangle size={10} /> No puede ser menor a {lastReliableKm?.toLocaleString() + ' km'} (último registro)
             </p>
           )}
-          {!isInvalid && odometerKm && (
+          {readingMissing && odometerKm && (
+            <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1 font-medium">
+              <AlertTriangle size={10} /> Ingrese un valor numérico válido mayor a 0
+            </p>
+          )}
+          {!isInvalid && readingValue !== null && lastReliableKm !== null && (
             <p className="text-[10px] text-green-600 mt-1">
-              ✓ +{(parseFloat(odometerKm) - (selectedVehicle?.current_km || 0)).toLocaleString()} km desde último registro
+              ✓ +{(readingValue - lastReliableKm).toLocaleString()} km desde último registro
             </p>
           )}
           </>)}
@@ -621,7 +630,7 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-[10px] font-bold text-gray-500 uppercase">Medición</p>
             <p className="text-sm font-bold font-mono text-gray-800">
-              {report.hourmeter ? `${report.hourmeter.toLocaleString()} hs` : (report.odometer_km ? `${report.odometer_km.toLocaleString()} km` : '—')}
+              {report.hourmeter != null ? `${formatHourmeter(report.hourmeter)} hs` : (report.odometer_km != null ? `${report.odometer_km.toLocaleString()} km` : '—')}
             </p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
@@ -1033,7 +1042,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                       </td>
                       <td className="text-xs">{r.driver_name}</td>
                       <td className="text-xs">{r.project?.name || '—'}</td>
-                      <td className="font-mono text-xs">{r.hourmeter ? `${r.hourmeter.toLocaleString()} hs` : (r.odometer_km ? `${r.odometer_km.toLocaleString()} km` : '—')}</td>
+                      <td className="font-mono text-xs">{r.hourmeter != null ? `${formatHourmeter(r.hourmeter)} hs` : (r.odometer_km != null ? `${r.odometer_km.toLocaleString()} km` : '—')}</td>
                       <td className="text-xs">{fl?.icon} {fl?.label}</td>
                       <td >
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faults > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>

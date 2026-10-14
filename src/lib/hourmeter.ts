@@ -77,3 +77,33 @@ export function toVisorDigits(value: string): { int: string; dec: string } {
     dec: (d || '0').slice(0, 1),
   };
 }
+
+/**
+ * Determina si una unidad debe medir Horómetro (maquinaria vial o tracking_type = 'hours').
+ */
+export function isVehicleHoursTracking(v?: { tracking_type?: string | null; vehicle_type?: string | null } | null): boolean {
+  if (!v) return false;
+  return v.tracking_type === 'hours' || v.vehicle_type === 'maquinaria';
+}
+
+/**
+ * Sanitiza la entrada del usuario:
+ * - Horómetro: normaliza formato 0000.0
+ * - Odómetro Km: solo dígitos enteros, sin puntos, comas ni trampas
+ */
+export function sanitizeOdometerInput(raw: string, isHours: boolean): string {
+  if (!raw) return '';
+  if (isHours) {
+    return normalizeHourmeterInput(raw);
+  }
+  return raw.replace(/[^0-9]/g, '');
+}
+
+/**
+ * Parsea el valor a número válido (> 0) o null si es inválido o trampa (ej. "0000.").
+ */
+export function parseReadingValue(value: string, isHours: boolean): number | null {
+  if (!value || value === '.' || value.trim() === '') return null;
+  const num = isHours ? parseFloat(value) : parseInt(value, 10);
+  return Number.isFinite(num) && num > 0 ? num : null;
+}
