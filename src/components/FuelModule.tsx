@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft, HardHat, Zap, Clock } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects } from '../hooks/useData';
+import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects, useVehicleDailyReports } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
-import type { FuelVehicle, FuelLoad } from '../lib/types';
+import type { FuelVehicle, FuelLoad, VehicleDailyReport } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
 import { generateFuelValePdf } from '../lib/generateFuelValePdf';
 import { FuelTicketScannerModal } from './FuelTicketScannerModal';
+import { isVehicleHoursTracking, formatHourmeter } from '../lib/hourmeter';
 import * as XLSX from 'xlsx';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -46,6 +47,7 @@ export const FuelModule: React.FC = () => {
   const { data: loads = [] } = useFuelLoads();
   const { data: batanMovements = [] } = useFuelBatanMovements();
   const { data: projects = [] } = useProjects();
+  const { data: dailyReports = [] } = useVehicleDailyReports();
   const createLoad = useCreateFuelLoad();
   const updateLoad = useUpdateFuelLoad();
   const createBatan = useCreateFuelBatanMovement();
@@ -331,7 +333,7 @@ export const FuelModule: React.FC = () => {
           {/* Content */}
           {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} createBatan={createBatan} />}
           {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} />}
-          {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} />}
+          {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} dailyReports={dailyReports} />}
           {tab === 'batan' && <BatanTab movements={enrichedBatanMovements} vehicles={vehicles} createBatan={createBatan} currentStock={currentBatanStock} />}
           {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
         </div>
@@ -2555,21 +2557,95 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
 };
 
 /* ── Fleet Dashboard & Analytics Tab ── */
-const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }> = ({ loads, vehicles }) => {
+const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; dailyReports?: VehicleDailyReport[] }> = ({ loads, vehicles, dailyReports = [] }) => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [metricView, setMetricView] = useState<'amount' | 'liters'>('amount');
   
   const completedLoads = useMemo(() => loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status), [loads]);
 
-  // Global KPIs
+  // Precio de referencia de reposición de combustible Batán (promedio ponderado compras BT-* o $2.470/L)
+  const batanReferencePrice = useMemo(() => {
+    const batanPurchases = loads.filter(l => l.vehicle_code?.startsWith('BT-') && (l.total_amount || 0) > 0 && (l.liters || 0) > 0);
+    if (batanPurchases.length === 0) return 2470;
+    const totL = batanPurchases.reduce((s, p) => s + (p.liters || 0), 0);
+    const totA = batanPurchases.reduce((s, p) => s + (p.total_amount || 0), 0);
+    return totL > 0 ? totA / totL : 2470;
+  }, [loads]);
+
+  const getLoadCost = useCallback((l: FuelLoad) => {
+    if (l.total_amount && l.total_amount > 0) return l.total_amount;
+    // Si la carga vino desde Batán Interno o con $0, valorizar al costo real del Batán
+    if (l.load_source === 'batan' || !l.total_amount || l.total_amount === 0) {
+      const p = (l.price_per_liter && l.price_per_liter > 0) ? l.price_per_liter : batanReferencePrice;
+      return (l.liters || 0) * p;
+    }
+    return 0;
+  }, [batanReferencePrice]);
+
+  // Global KPIs filtrados
   const filteredLoads = useMemo(() => {
     if (!selectedVehicle) return completedLoads;
     return completedLoads.filter(l => l.vehicle_code === selectedVehicle || l.vehicle_id === selectedVehicle);
   }, [completedLoads, selectedVehicle]);
 
   const totalLitersAll = useMemo(() => filteredLoads.reduce((s, l) => s + (l.liters || 0), 0), [filteredLoads]);
-  const totalAmountAll = useMemo(() => filteredLoads.reduce((s, l) => s + (l.total_amount || 0), 0), [filteredLoads]);
+  const totalAmountAll = useMemo(() => filteredLoads.reduce((s, l) => s + getLoadCost(l), 0), [filteredLoads, getLoadCost]);
   const avgPricePerLiter = totalLitersAll > 0 ? totalAmountAll / totalLitersAll : 0;
+
+  // Analítica especializada de Maquinaria Pesada para Presupuestación de Obras
+  const machineryStats = useMemo(() => {
+    const machines = vehicles.filter(v => isVehicleHoursTracking(v));
+
+    return machines.map(m => {
+      const mLoads = completedLoads.filter(l => l.vehicle_code === m.code || l.vehicle_id === m.id);
+      const mReports = dailyReports.filter(r => r.vehicle_id === m.id);
+
+      const liters = mLoads.reduce((s, l) => s + (l.liters || 0), 0);
+      const directAmount = mLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
+      const totalCost = mLoads.reduce((s, l) => s + getLoadCost(l), 0);
+
+      const hsList = mReports
+        .map(r => r.hourmeter != null ? r.hourmeter : r.odometer_km)
+        .filter(h => h != null && h > 0);
+
+      const minH = hsList.length > 0 ? Math.min(...hsList) : (m.current_hours || 0);
+      const maxH = hsList.length > 0 ? Math.max(...hsList) : (m.current_hours || 0);
+      const deltaH = maxH > minH ? (maxH - minH) : 0;
+
+      const l_per_h = deltaH > 0 ? (liters / deltaH) : null;
+      const cost_per_h = deltaH > 0 ? (totalCost / deltaH) : (l_per_h ? l_per_h * batanReferencePrice : null);
+
+      return {
+        vehicle: m,
+        code: m.code,
+        desc: m.description,
+        brand: m.brand,
+        model: m.model,
+        currentHours: m.current_hours || maxH || 0,
+        loadsCount: mLoads.length,
+        liters,
+        directAmount,
+        totalCost,
+        reportsCount: mReports.length,
+        minHours: minH,
+        maxHours: maxH,
+        deltaHours: deltaH,
+        l_per_h,
+        cost_per_h
+      };
+    }).sort((a, b) => (b.liters || 0) - (a.liters || 0));
+  }, [vehicles, completedLoads, dailyReports, getLoadCost, batanReferencePrice]);
+
+  // Detección de vehículo seleccionado
+  const selectedVehicleObj = useMemo(() => {
+    if (!selectedVehicle) return null;
+    return vehicles.find(v => v.code === selectedVehicle || v.id === selectedVehicle) || null;
+  }, [vehicles, selectedVehicle]);
+
+  const isSelectedMachine = selectedVehicleObj ? isVehicleHoursTracking(selectedVehicleObj) : false;
+  const selectedMachineStat = isSelectedMachine
+    ? machineryStats.find(ms => ms.code === selectedVehicleObj?.code || ms.vehicle.id === selectedVehicleObj?.id)
+    : null;
 
   // Monthly aggregated data for Line Chart & Bar Chart
   const monthlyAggregated = useMemo(() => {
@@ -2579,36 +2655,47 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
       const monthKey = `${l.month || 'Mes'} ${l.year || ''}`.trim();
       const existing = map.get(monthKey) || { name: monthKey, liters: 0, amount: 0, count: 0 };
       existing.liters += (l.liters || 0);
-      existing.amount += (l.total_amount || 0);
+      existing.amount += getLoadCost(l);
       existing.count += 1;
       map.set(monthKey, existing);
     });
 
     return Array.from(map.values()).reverse();
-  }, [filteredLoads]);
+  }, [filteredLoads, getLoadCost]);
 
   // Ranking by Vehicle
   const vehicleStats = useMemo(() => {
-    const map = new Map<string, { code: string; desc: string; plate: string; liters: number; amount: number; loadsCount: number }>();
+    const map = new Map<string, { code: string; desc: string; plate: string; isMachine: boolean; liters: number; amount: number; loadsCount: number; l_per_h?: number | null; cost_per_h?: number | null }>();
 
     completedLoads.forEach(l => {
       const key = l.vehicle_code || 'SIN_CODIGO';
+      const vObj = vehicles.find(v => v.code === key);
+      const isMachine = isVehicleHoursTracking(vObj);
+      const mStat = isMachine ? machineryStats.find(ms => ms.code === key) : null;
+
       const existing = map.get(key) || {
         code: key,
-        desc: l.vehicle_description || 'Vehículo General',
-        plate: l.plate || '—',
+        desc: l.vehicle_description || vObj?.description || 'Vehículo General',
+        plate: l.plate || vObj?.plate || '—',
+        isMachine,
         liters: 0,
         amount: 0,
-        loadsCount: 0
+        loadsCount: 0,
+        l_per_h: mStat?.l_per_h || null,
+        cost_per_h: mStat?.cost_per_h || null
       };
       existing.liters += (l.liters || 0);
-      existing.amount += (l.total_amount || 0);
+      existing.amount += getLoadCost(l);
       existing.loadsCount += 1;
+      if (mStat) {
+        existing.l_per_h = mStat.l_per_h;
+        existing.cost_per_h = mStat.cost_per_h;
+      }
       map.set(key, existing);
     });
 
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
-  }, [completedLoads]);
+  }, [completedLoads, vehicles, machineryStats, getLoadCost]);
 
   // Ranking by Driver/User
   const driverStats = useMemo(() => {
@@ -2618,13 +2705,37 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
       const name = l.driver_name || l.requested_by || 'Operario No Especificado';
       const existing = map.get(name) || { name, liters: 0, amount: 0, loadsCount: 0 };
       existing.liters += (l.liters || 0);
-      existing.amount += (l.total_amount || 0);
+      existing.amount += getLoadCost(l);
       existing.loadsCount += 1;
       map.set(name, existing);
     });
 
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
-  }, [completedLoads]);
+  }, [completedLoads, getLoadCost]);
+
+  const handleExportMachinery = () => {
+    const data = machineryStats.map(m => ({
+      'Código': m.code,
+      'Descripción': m.desc,
+      'Marca': m.brand || '—',
+      'Modelo': m.model || '—',
+      'Horas Iniciales': m.minHours || 0,
+      'Horas Actuales': m.currentHours || 0,
+      'Horas Trabajadas': m.deltaHours || 0,
+      'Litros Consumidos': Number(m.liters.toFixed(1)),
+      'Consumo Horario (L/h)': m.l_per_h ? Number(m.l_per_h.toFixed(2)) : 'S/D',
+      'Precio Gasoil Reposición ($/L)': Math.round(batanReferencePrice),
+      'Costo por Hora de Motor ($/h)': m.cost_per_h ? Math.round(m.cost_per_h) : 'S/D',
+      'Costo Total Combustible ($)': Math.round(m.totalCost),
+      'Cargas Registradas': m.loadsCount,
+      'Partes Diarios': m.reportsCount
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Consumo_Maquinaria_Obra');
+    XLSX.writeFile(wb, `Consumos_Maquinaria_ECAR_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
 
   return (
     <div className="space-y-6">
@@ -2634,59 +2745,199 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
           <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
             <PieChart size={20} className="text-sky-600" /> Analítica y Métricas de Combustible
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">Control de litros consumidos, presupuesto invertido y costo por unidad</p>
+          <p className="text-xs text-gray-500 mt-0.5">Control de litros consumidos, costo horario y rendimientos para presupuestación</p>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select 
             value={selectedVehicle} 
             onChange={e => setSelectedVehicle(e.target.value)} 
-            className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white focus:ring-2 focus:ring-sky-500/20 w-full md:w-64"
+            className="px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium bg-white focus:ring-2 focus:ring-sky-500/20 w-full md:w-72"
           >
             <option value="">Toda la Flota (Global)</option>
-            {vehicles.map(v => (
-              <option key={v.id} value={v.code}>{v.code} — {v.description}</option>
-            ))}
+            <optgroup label="🏗️ Maquinaria Pesada">
+              {vehicles.filter(v => isVehicleHoursTracking(v)).map(v => (
+                <option key={v.id} value={v.code}>{v.code} — {v.description}</option>
+              ))}
+            </optgroup>
+            <optgroup label="🚐 Vehículos de Calle / Logística">
+              {vehicles.filter(v => !isVehicleHoursTracking(v)).map(v => (
+                <option key={v.id} value={v.code}>{v.code} — {v.description} {v.plate ? `(${v.plate})` : ''}</option>
+              ))}
+            </optgroup>
           </select>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-sky-200 shadow-sm border-l-4 border-l-sky-500">
-          <div className="flex items-center justify-between text-xs font-bold text-sky-700 uppercase mb-2">
-            <span>Combustible Consumido</span>
-            <Fuel size={18} className="text-sky-500" />
+      {/* KPI Cards: Dinámicos si es Maquinaria o Vehículo de Calle */}
+      {isSelectedMachine && selectedMachineStat ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in">
+          <div className="bg-white p-5 rounded-xl border border-sky-200 shadow-sm border-l-4 border-l-sky-500">
+            <div className="flex items-center justify-between text-xs font-bold text-sky-700 uppercase mb-2">
+              <span>Combustible Consumido</span>
+              <Fuel size={18} className="text-sky-500" />
+            </div>
+            <p className="text-2xl font-black text-sky-900 font-mono">{fmt(selectedMachineStat.liters)} <span className="text-sm font-normal text-sky-700">L</span></p>
+            <p className="text-[11px] text-gray-400 mt-1">{selectedMachineStat.loadsCount} cargas registradas</p>
           </div>
-          <p className="text-2xl font-black text-sky-900 font-mono">{fmt(totalLitersAll)} <span className="text-sm font-normal text-sky-700">L</span></p>
-          <p className="text-[11px] text-gray-400 mt-1">{filteredLoads.length} cargas registradas</p>
+
+          <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-sm border-l-4 border-l-indigo-500">
+            <div className="flex items-center justify-between text-xs font-bold text-indigo-700 uppercase mb-2">
+              <span>Horas Operadas</span>
+              <Clock size={18} className="text-indigo-500" />
+            </div>
+            <p className="text-2xl font-black text-indigo-900 font-mono">
+              {selectedMachineStat.deltaHours > 0 ? `${selectedMachineStat.deltaHours.toLocaleString()} hs` : '1 hs mín.'}
+            </p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Última lectura: {formatHourmeter(selectedMachineStat.currentHours)} hs
+            </p>
+          </div>
+
+          <div className="bg-amber-50 p-5 rounded-xl border-2 border-amber-400 shadow-sm border-l-4 border-l-amber-600">
+            <div className="flex items-center justify-between text-xs font-bold text-amber-900 uppercase mb-2">
+              <span className="flex items-center gap-1.5"><Zap size={14} className="text-amber-600 fill-amber-500" /> Consumo Horario</span>
+              <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">Para APU</span>
+            </div>
+            <p className="text-2xl font-black text-amber-900 font-mono">
+              {selectedMachineStat.l_per_h ? `${selectedMachineStat.l_per_h.toFixed(2)}` : 'Calculando...'} <span className="text-sm font-bold text-amber-700">L/hs</span>
+            </p>
+            <p className="text-[11px] text-amber-800 font-medium mt-1">Consumo real calibrado en obra</p>
+          </div>
+
+          <div className="bg-emerald-50 p-5 rounded-xl border-2 border-emerald-400 shadow-sm border-l-4 border-l-emerald-600">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-900 uppercase mb-2">
+              <span>Costo por Hora de Motor</span>
+              <DollarSign size={18} className="text-emerald-600" />
+            </div>
+            <p className="text-2xl font-black text-emerald-900 font-mono">
+              {selectedMachineStat.cost_per_h ? `$ ${selectedMachineStat.cost_per_h.toLocaleString()}` : '—'} <span className="text-xs font-bold text-emerald-700">/ hs</span>
+            </p>
+            <p className="text-[11px] text-emerald-800 font-medium mt-1">Gasto total: {fmtCurrency(selectedMachineStat.totalCost)}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-xl border border-sky-200 shadow-sm border-l-4 border-l-sky-500">
+            <div className="flex items-center justify-between text-xs font-bold text-sky-700 uppercase mb-2">
+              <span>Combustible Consumido</span>
+              <Fuel size={18} className="text-sky-500" />
+            </div>
+            <p className="text-2xl font-black text-sky-900 font-mono">{fmt(totalLitersAll)} <span className="text-sm font-normal text-sky-700">L</span></p>
+            <p className="text-[11px] text-gray-400 mt-1">{filteredLoads.length} cargas registradas</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-emerald-200 shadow-sm border-l-4 border-l-emerald-500">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-700 uppercase mb-2">
+              <span>Gasto Total Combustible</span>
+              <DollarSign size={18} className="text-emerald-500" />
+            </div>
+            <p className="text-2xl font-black text-emerald-900 font-mono">{fmtCurrency(totalAmountAll)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Presupuesto invertido (estación + batán)</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-sm border-l-4 border-l-indigo-500">
+            <div className="flex items-center justify-between text-xs font-bold text-indigo-700 uppercase mb-2">
+              <span>Precio Ponderado / Litro</span>
+              <TrendingUp size={18} className="text-indigo-500" />
+            </div>
+            <p className="text-2xl font-black text-indigo-900 font-mono">$ {fmt(avgPricePerLiter > 0 ? avgPricePerLiter : batanReferencePrice)}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Costo $/L de combustible</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl border border-violet-200 shadow-sm border-l-4 border-l-violet-500">
+            <div className="flex items-center justify-between text-xs font-bold text-violet-700 uppercase mb-2">
+              <span>Cargas Validadas</span>
+              <FileCheck size={18} className="text-violet-500" />
+            </div>
+            <p className="text-2xl font-black text-violet-900 font-mono">{filteredLoads.length}</p>
+            <p className="text-[11px] text-gray-400 mt-1">Vales finalizados</p>
+          </div>
+        </div>
+      )}
+
+      {/* SECCIÓN ESPECIAL: RENDIMIENTOS Y CONSUMOS DE MAQUINARIA PARA PRESUPUESTO DE OBRA */}
+      <div className="bg-white rounded-xl border-2 border-amber-300 shadow-md overflow-hidden">
+        <div className="p-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100 border-b border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-amber-500 text-white rounded-lg"><HardHat size={18} /></span>
+              <h4 className="font-black text-gray-800 text-base">Consumos de Maquinaria Pesada para Presupuesto de Obra</h4>
+              <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded-full text-[11px] font-bold">APU & Costo Horario</span>
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Rendimientos calibrados en campo cruzando las horas reales de partes diarios y suministro de gasoil (reposición Batán: <strong>${Math.round(batanReferencePrice).toLocaleString()} / L</strong>).
+            </p>
+          </div>
+
+          <button
+            onClick={handleExportMachinery}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all shrink-0"
+          >
+            <Download size={14} /> Exportar a Excel (Presupuestos)
+          </button>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-emerald-200 shadow-sm border-l-4 border-l-emerald-500">
-          <div className="flex items-center justify-between text-xs font-bold text-emerald-700 uppercase mb-2">
-            <span>Importe Total Gastado</span>
-            <DollarSign size={18} className="text-emerald-500" />
-          </div>
-          <p className="text-2xl font-black text-emerald-900 font-mono">{fmtCurrency(totalAmountAll)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Presupuesto ejecutado</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-indigo-200 shadow-sm border-l-4 border-l-indigo-500">
-          <div className="flex items-center justify-between text-xs font-bold text-indigo-700 uppercase mb-2">
-            <span>Precio Promedio / Litro</span>
-            <TrendingUp size={18} className="text-indigo-500" />
-          </div>
-          <p className="text-2xl font-black text-indigo-900 font-mono">$ {fmt(avgPricePerLiter)}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Costo ponderado $/L</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-violet-200 shadow-sm border-l-4 border-l-violet-500">
-          <div className="flex items-center justify-between text-xs font-bold text-violet-700 uppercase mb-2">
-            <span>Cargas Validadas</span>
-            <FileCheck size={18} className="text-violet-500" />
-          </div>
-          <p className="text-2xl font-black text-violet-900 font-mono">{filteredLoads.length}</p>
-          <p className="text-[11px] text-gray-400 mt-1">Vales finalizados</p>
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr className="bg-amber-50/50">
+                <th>Equipo / Máquina</th>
+                <th>Marca / Modelo</th>
+                <th className="text-center">Horas Actuales</th>
+                <th className="text-center">Horas Operadas</th>
+                <th className="text-right">Litros Consumidos</th>
+                <th className="text-center bg-amber-100/60 font-bold text-amber-950">Consumo (L/hs)</th>
+                <th className="text-right bg-emerald-100/60 font-bold text-emerald-950">Costo Horario ($/hs)</th>
+                <th className="text-right">Gasto Imputado ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {machineryStats.map(m => (
+                <tr key={m.code} className="hover:bg-amber-50/30 transition-colors">
+                  <td className="font-medium text-xs">
+                    <span className="font-bold text-amber-900 block">{m.code}</span>
+                    <span className="text-gray-700 font-semibold">{m.desc}</span>
+                  </td>
+                  <td className="text-xs text-gray-600">
+                    {m.brand || m.model ? `${m.brand || ''} ${m.model || ''}`.trim() : '—'}
+                  </td>
+                  <td className="text-center font-mono text-xs text-gray-700">
+                    {formatHourmeter(m.currentHours)} hs
+                  </td>
+                  <td className="text-center font-mono text-xs font-semibold text-gray-800">
+                    {m.deltaHours > 0 ? `${m.deltaHours.toLocaleString()} hs` : '1 hs mín.'}
+                    <span className="text-[10px] text-gray-400 block font-normal">({m.reportsCount} partes)</span>
+                  </td>
+                  <td className="font-mono font-bold text-right text-xs text-sky-800">
+                    {fmt(m.liters)} L
+                    <span className="text-[10px] text-gray-400 block font-normal">({m.loadsCount} cargas)</span>
+                  </td>
+                  <td className="text-center font-mono font-black text-sm bg-amber-50 text-amber-900">
+                    {m.l_per_h ? (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-200 text-amber-950 inline-block font-bold">
+                        {m.l_per_h.toFixed(2)} L/h
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">Sin delta hs</span>
+                    )}
+                  </td>
+                  <td className="font-mono font-bold text-right text-xs bg-emerald-50 text-emerald-800">
+                    {m.cost_per_h ? (
+                      <span className="font-bold text-emerald-700">
+                        $ {m.cost_per_h.toLocaleString()} / h
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="font-mono font-bold text-right text-xs text-gray-800">
+                    {fmtCurrency(m.totalCost)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -2698,7 +2949,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
               <TrendingUp size={16} className="text-sky-600" /> 
               {metricView === 'amount' ? 'Evolución Histórica del Gasto en Combustible ($ ARS)' : 'Evolución del Volúmen Consumido (Litros)'}
             </h4>
-            <p className="text-xs text-gray-400">Tendencia mensual de consumo e importe gastado</p>
+            <p className="text-xs text-gray-400">Tendencia mensual de consumo e importe gastado (estación + batán valorizado)</p>
           </div>
 
           <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -2752,7 +3003,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
             <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
               <Truck size={16} className="text-sky-600" /> Consumo e Importe por Vehículo
             </h4>
-            <span className="text-xs text-gray-400">{vehicleStats.length} unidades con consumos</span>
+            <span className="text-xs text-gray-400">{vehicleStats.length} unidades</span>
           </div>
 
           <div className="overflow-x-auto flex-1">
@@ -2762,13 +3013,14 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
                   <th>Vehículo</th>
                   <th>Patente</th>
                   <th className="text-right">Litros Total</th>
-                  <th className="text-right">Importe Gastado ($)</th>
+                  <th className="text-center">Consumo Ref.</th>
+                  <th className="text-right">Importe Total ($)</th>
                   <th className="text-center">Cargas</th>
                 </tr>
               </thead>
               <tbody>
                 {vehicleStats.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center text-gray-400 py-6">Sin cargas registradas</td></tr>
+                  <tr><td colSpan={6} className="text-center text-gray-400 py-6">Sin cargas registradas</td></tr>
                 ) : vehicleStats.map(v => (
                   <tr key={v.code}>
                     <td className="font-medium text-xs">
@@ -2777,6 +3029,15 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
                     </td>
                     <td className="font-mono text-xs text-gray-500">{v.plate}</td>
                     <td className="font-mono font-bold text-right text-xs">{fmt(v.liters)} L</td>
+                    <td className="text-center font-mono text-xs">
+                      {v.isMachine && v.l_per_h ? (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                          {v.l_per_h.toFixed(1)} L/h
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="font-mono font-bold text-right text-xs text-emerald-700">{fmtCurrency(v.amount)}</td>
                     <td className="text-center text-xs font-mono">{v.loadsCount}</td>
                   </tr>
@@ -2801,7 +3062,7 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
                 <tr>
                   <th>Chofer / Responsable</th>
                   <th className="text-right">Litros Cargados</th>
-                  <th className="text-right">Importe Gastado ($)</th>
+                  <th className="text-right">Importe Total ($)</th>
                   <th className="text-center">Cargas</th>
                 </tr>
               </thead>
@@ -2825,3 +3086,4 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[] }
     </div>
   );
 };
+
