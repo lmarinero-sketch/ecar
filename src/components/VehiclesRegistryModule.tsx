@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Truck, DollarSign, Activity, Wrench, AlertCircle, Clock } from 'lucide-react';
 import { useFuelVehicles, useFuelLoads, useLogisticsMaintenanceLog, useVehicleDailyReports } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import { isVehicleHoursTracking } from '../lib/vehicleMaintenance';
+import { isVehicleHoursTracking } from '../lib/hourmeter';
 
 const ESTIMATED_BATAN_PRICE_PER_LITER = 2470; // Costo promedio Diesel Evolux
 
@@ -128,7 +128,7 @@ export const VehiclesRegistryModule: React.FC = () => {
                 const vMaintLogs = maintenanceLogs.filter(ml => ml.vehicle_id === v.id);
                 const vReports = dailyReports
                   .filter(r => r.vehicle_id === v.id)
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                  .sort((a, b) => new Date(a.report_date).getTime() - new Date(b.report_date).getTime());
                 
                 const vFuelCost = vFuelLoads.reduce((sum, fl) => {
                   const amt = fl.total_amount && fl.total_amount > 0 
@@ -170,7 +170,7 @@ export const VehiclesRegistryModule: React.FC = () => {
                 } else {
                   // Kilómetros
                   const kmReadings = vReports
-                    .map(r => r.kilometers ?? 0)
+                    .map(r => r.odometer_km ?? 0)
                     .filter(k => k > 0);
                   
                   let deltaKm = 0;

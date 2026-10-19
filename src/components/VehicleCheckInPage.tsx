@@ -8,7 +8,7 @@ import {
 import type { FuelVehicle, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
 import { useOfflineStore } from '../store/useOfflineStore';
 import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
-import { reliableLastHours, isVehicleHoursTracking, sanitizeOdometerInput, parseReadingValue } from '../lib/hourmeter';
+import { reliableLastHours, isVehicleHoursTracking, sanitizeOdometerInput, parseReadingValue, formatHourmeter } from '../lib/hourmeter';
 import { HourmeterInput } from './HourmeterInput';
 
 // ... (skipping some constants) ...

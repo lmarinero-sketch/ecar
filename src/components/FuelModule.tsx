@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft, HardHat, Zap, Clock } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft, HardHat, Zap, Clock, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects, useVehicleDailyReports } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -332,7 +332,7 @@ export const FuelModule: React.FC = () => {
 
           {/* Content */}
           {tab === 'requests' && <RequestsTab loads={loads} vehicles={vehicles} updateLoad={updateLoad} createLoad={createLoad} projects={projects} createBatan={createBatan} />}
-          {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} />}
+          {tab === 'loads' && <LoadsTab loads={loads} vehicles={vehicles} projects={projects} showForm={showForm} setShowForm={setShowForm} createLoad={createLoad} createBatan={createBatan} batanBalance={currentBatanStock} />}
           {tab === 'dashboard' && <FleetDashboardTab loads={loads} vehicles={vehicles} dailyReports={dailyReports} />}
           {tab === 'batan' && <BatanTab movements={enrichedBatanMovements} vehicles={vehicles} createBatan={createBatan} currentStock={currentBatanStock} />}
           {tab === 'fleet' && <FleetTab vehicles={vehicles} />}
@@ -344,10 +344,20 @@ export const FuelModule: React.FC = () => {
 
 
 /* ── Loads Tab ── */
-const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects: any[]; showForm: boolean; setShowForm: (v: boolean) => void; createLoad: any; createBatan: any }> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan }) => {
+const LoadsTab: React.FC<{ 
+  loads: FuelLoad[]; 
+  vehicles: FuelVehicle[]; 
+  projects: any[]; 
+  showForm: boolean; 
+  setShowForm: (v: boolean) => void; 
+  createLoad: any; 
+  createBatan: any;
+  batanBalance?: number;
+}> = ({ loads, vehicles, projects, showForm, setShowForm, createLoad, createBatan, batanBalance = 200 }) => {
   const { user, isAdmin, profile } = useAuth();
   const [viewingTicket, setViewingTicket] = useState<string | null>(null);
   const [showScannerModal, setShowScannerModal] = useState(false);
+  const [autoUpdateBatan, setAutoUpdateBatan] = useState(true);
 
   // Search & Filter state for global historical lookup
   const [searchTerm, setSearchTerm] = useState('');
@@ -378,6 +388,22 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
   const canDelete = isAdmin || userEmail.includes('gustavo') || userEmail.includes('lucas') || profile?.role === 'colaborador';
 
   const isFormBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
+  
+  // Detención de destino Batán (Llenado del tanque nominal de 200 L)
+  const isBatanDest = Boolean(
+    form.vehicle_code === 'BT-001' || 
+    form.vehicle_code?.toUpperCase().startsWith('BT-') ||
+    form.vehicle_description?.toLowerCase().includes('batán') ||
+    form.vehicle_description?.toLowerCase().includes('batan')
+  );
+
+  const currentBatanLiters = batanBalance;
+  const loadLiters = Number(form.liters) || 0;
+  const projectedBalance = currentBatanLiters + loadLiters;
+  const batanNominalCap = 200;
+  const projectedPct = Math.min(100, Math.round((projectedBalance / batanNominalCap) * 100));
+  const currentPct = Math.min(100, Math.round((currentBatanLiters / batanNominalCap) * 100));
+  const isOverCapacity = projectedBalance > batanNominalCap;
 
   // Multi-month & Multi-term filtering logic
   const filteredLoads = useMemo(() => {
@@ -469,6 +495,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
     
     try {
       const nextNum = loads.length + 1;
+      const loadNumber = `CARGA-${String(nextNum).padStart(4, '0')}`;
       const finalAmount = isBatan ? 0 : (form.total_amount || 0);
       const finalPrice = isBatan ? 0 : (form.price_per_liter || (form.liters ? finalAmount / form.liters : 0));
       const finalSupplier = isBatan ? 'Batán Interno' : (form.supplier === 'Otro' ? (form.custom_station || 'Otro') : form.supplier);
@@ -477,7 +504,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
       await createLoad.mutateAsync({
         ...validForm,
-        load_number: `CARGA-${String(nextNum).padStart(4, '0')}`,
+        load_number: loadNumber,
         validation_status: 'pending',
         load_source: isBatan ? 'batan' : (form.fuel_source || 'station'),
         created_by: 'web',
@@ -487,6 +514,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         price_per_liter: finalPrice
       });
 
+      // Si el origen fue el Batán Interno: Descontar stock (Descarga)
       if (isBatan) {
         await createBatan.mutateAsync({
           movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
@@ -495,7 +523,24 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
           fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
           liters_discharged: form.liters,
           movement_status: 'completed',
-          observations: `Consumo asociado a la carga: CARGA-${String(nextNum).padStart(4, '0')} (${form.vehicle_code})`
+          reference_load: loadNumber,
+          observations: `Consumo asociado a la carga: ${loadNumber} (${form.vehicle_code})`
+        });
+      } 
+      // Si el destino fue el Batán (BT-001) y está activa la actualización automática: Incrementar stock (Llenado/Compra)
+      else if (isBatanDest && autoUpdateBatan) {
+        await createBatan.mutateAsync({
+          movement_number: `AUTO-${String(Date.now()).slice(-6)}`,
+          movement_date: form.load_date,
+          movement_type: 'purchase',
+          fuel_type: form.fuel_type || 'Diesel Premium / V-Power',
+          liters_loaded: form.liters,
+          total_amount: finalAmount,
+          remito_number: form.remito_number || null,
+          supplier: finalSupplier,
+          movement_status: 'completed',
+          reference_load: loadNumber,
+          observations: `Ingreso automático generado desde carga ${loadNumber} (Remito: ${form.remito_number || 'S/R'})`
         });
       }
 
@@ -503,7 +548,9 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         'Carga Registrada', 
         isBatan 
           ? `✅ Carga a Batán Interno de ${form.liters} L registrada correctamente. Se descontaron ${form.liters} L del stock de Batán y el importe se guardó en $0.`
-          : `✅ Carga de ${form.liters} L registrada correctamente.`
+          : isBatanDest && autoUpdateBatan
+            ? `✅ Carga registrada y stock del Batán actualizado automáticamente (+${form.liters} L ingresados. Saldo proyectado: ${fmt(projectedBalance)} L).`
+            : `✅ Carga de ${form.liters} L registrada correctamente.`
       );
 
       setForm({ fuel_source: 'station', supplier: 'YPF', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
@@ -527,6 +574,7 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
 
   const saveEdit = async () => {
     if (!editingId) return;
+    const l = loads.find(x => x.id === editingId);
     try {
       await updateLoad.mutateAsync({
         id: editingId,
@@ -537,8 +585,31 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
         station_name: editForm.supplier,
         fuel_type: editForm.fuel_type
       });
+
+      // Sincronizar automáticamente en fuel_batan_movements si la carga corresponde a Batán
+      if (l && (l.vehicle_code?.startsWith('BT-') || l.load_source === 'batan')) {
+        const { supabase } = await import('../lib/supabase');
+        if (l.vehicle_code?.startsWith('BT-')) {
+          await supabase.from('fuel_batan_movements')
+            .update({
+              liters_loaded: editForm.liters,
+              total_amount: editForm.total_amount,
+              fuel_type: editForm.fuel_type,
+              supplier: editForm.supplier,
+            })
+            .or(`reference_load.eq.${l.load_number},observations.ilike.%${l.load_number}%`);
+        } else if (l.load_source === 'batan') {
+          await supabase.from('fuel_batan_movements')
+            .update({
+              liters_discharged: editForm.liters,
+              fuel_type: editForm.fuel_type,
+            })
+            .or(`reference_load.eq.${l.load_number},observations.ilike.%${l.load_number}%`);
+        }
+      }
+
       setEditingId(null);
-      useModalStore.getState().showAlert("Éxito", "Edición guardada correctamente.");
+      useModalStore.getState().showAlert("Éxito", "Edición guardada y sincronizada correctamente.");
     } catch (err: any) {
       useModalStore.getState().showAlert("Error al Guardar", err.message || 'Error desconocido');
     }
@@ -779,6 +850,129 @@ const LoadsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; projects:
             <label className="text-xs font-bold text-gray-500">Observaciones</label>
             <input value={form.observations || ''} onChange={e => setForm(f => ({ ...f, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Observaciones opcionales..." />
           </div>
+
+          {/* Tarjeta Destacada: Impacto en el Batán (Stock Automático) */}
+          {isBatanDest && (
+            <div className="bg-gradient-to-br from-amber-50/90 via-white to-sky-50/50 p-4 rounded-xl border-2 border-amber-300 shadow-sm space-y-3 animate-fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/80 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-amber-500 text-white rounded-lg shadow-xs">
+                    <Droplets size={18} />
+                  </div>
+                  <div>
+                    <h5 className="font-black text-gray-900 text-sm flex items-center gap-1.5">
+                      Impacto en el Batán (Stock Automático)
+                    </h5>
+                    <p className="text-[11px] text-gray-500">
+                      Destino detectado: <strong className="text-amber-800 font-mono">{form.vehicle_code}</strong> — Capacidad Nominal: <strong>200 L</strong>
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                  <Zap size={11} className="text-amber-600 fill-amber-500" /> Llenado de Tanque
+                </span>
+              </div>
+
+              {/* Métricas clave */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-xs">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Saldo Actual Batán</span>
+                  <span className="text-lg font-black text-gray-700 font-mono">{fmt(currentBatanLiters)} L</span>
+                  <span className="text-[10px] text-gray-400 block">{currentPct}% de capacidad</span>
+                </div>
+
+                <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs">
+                  <span className="text-[10px] font-bold text-amber-700 uppercase block">Carga Proyectada</span>
+                  <span className="text-lg font-black text-amber-600 font-mono">+{fmt(loadLiters)} L</span>
+                  <span className="text-[10px] text-amber-700 block font-medium">
+                    {form.total_amount ? fmtCurrency(form.total_amount) : (form.price_per_liter ? fmtCurrency(loadLiters * form.price_per_liter) : '$ 0')}
+                  </span>
+                </div>
+
+                <div className={`p-3 rounded-xl border shadow-xs ${isOverCapacity ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+                  <span className={`text-[10px] font-bold uppercase block ${isOverCapacity ? 'text-red-700' : 'text-emerald-700'}`}>
+                    Saldo al Guardar
+                  </span>
+                  <span className={`text-lg font-black font-mono ${isOverCapacity ? 'text-red-700' : 'text-emerald-800'}`}>
+                    {fmt(projectedBalance)} L
+                  </span>
+                  <span className={`text-[10px] block font-medium ${isOverCapacity ? 'text-red-600 font-bold' : 'text-emerald-600'}`}>
+                    {isOverCapacity ? '⚠️ Supera 200 L nominal' : `${projectedPct}% de capacidad`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Barra de progreso visual */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] font-bold text-gray-600">
+                  <span>Capacidad del Batán (200 L)</span>
+                  <span className="font-mono">{fmt(projectedBalance)} / 200 L ({projectedPct}%)</span>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden p-0.5 flex">
+                  <div 
+                    style={{ width: `${Math.min(100, (currentBatanLiters / batanNominalCap) * 100)}%` }} 
+                    className="h-full bg-sky-500 rounded-l-full transition-all duration-300"
+                    title={`Saldo actual: ${fmt(currentBatanLiters)} L`}
+                  />
+                  <div 
+                    style={{ width: `${Math.min(Math.max(0, 100 - (currentBatanLiters / batanNominalCap) * 100), (loadLiters / batanNominalCap) * 100)}%` }} 
+                    className={`h-full ${isOverCapacity ? 'bg-red-500' : 'bg-emerald-500'} transition-all duration-300`}
+                    title={`Carga a sumar: ${fmt(loadLiters)} L`}
+                  />
+                </div>
+              </div>
+
+              {/* Advertencia preventiva si supera la capacidad */}
+              {isOverCapacity && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-2.5 rounded-lg text-xs flex items-start gap-2">
+                  <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Advertencia de Capacidad:</span> La suma de la carga ({fmt(loadLiters)} L) y el saldo actual ({fmt(currentBatanLiters)} L) da <strong>{fmt(projectedBalance)} L</strong>, superando los 200 L nominales del Batán por {fmt(projectedBalance - 200)} L. Verifique el remito antes de confirmar.
+                  </div>
+                </div>
+              )}
+
+              {/* Resumen del movimiento automático */}
+              <div className="bg-white p-3 rounded-lg border border-amber-200/70 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <span className="text-[10px] text-gray-400 block font-semibold">Tipo Movimiento</span>
+                  <span className="font-bold text-emerald-700 flex items-center gap-1">
+                    <ArrowDownLeft size={13} /> Ingreso (Llenado)
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 block font-semibold">N° Remito / Factura</span>
+                  <span className="font-mono font-bold text-gray-800">{form.remito_number || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 block font-semibold">Proveedor / Estación</span>
+                  <span className="font-medium text-gray-700">{form.supplier || 'YPF'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 block font-semibold">Vinculación</span>
+                  <span className="font-mono font-bold text-sky-700">CARGA-{String(loads.length + 1).padStart(4, '0')}</span>
+                </div>
+              </div>
+
+              {/* Checkbox: Actualizar stock automáticamente */}
+              <label className="flex items-center gap-2.5 p-2 bg-amber-100/50 hover:bg-amber-100/80 border border-amber-200 rounded-lg cursor-pointer transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={autoUpdateBatan}
+                  onChange={e => setAutoUpdateBatan(e.target.checked)}
+                  className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500 border-gray-300"
+                />
+                <div>
+                  <span className="font-bold text-xs text-gray-800">
+                    Actualizar stock del Batán automáticamente
+                  </span>
+                  <span className="block text-[11px] text-gray-500">
+                    Genera el movimiento de Ingreso / Compra en Batán vinculado al remito y monto de esta carga.
+                  </span>
+                </div>
+              </label>
+            </div>
+          )}
 
           <button onClick={handleSubmit} disabled={createLoad.isPending || !form.load_date || !form.vehicle_code || !form.liters || (!isFormBatan && !form.total_amount && !form.price_per_liter)} className="btn-primary disabled:opacity-50">
             <Check size={16} /> {createLoad.isPending ? 'Guardando...' : 'Registrar Carga'}
@@ -1312,18 +1506,32 @@ const BatanTab: React.FC<{
 
                   return (
                     <tr key={m.id} className="hover:bg-sky-50/40 transition-colors">
-                      <td className="py-2.5 px-4 font-mono font-bold text-gray-700">{m.movement_number || '—'}</td>
+                      <td className="py-2.5 px-4 font-mono font-bold text-gray-700">
+                        <div>{m.movement_number || '—'}</div>
+                        {m.reference_load && (
+                          <div className="text-[10px] font-mono font-semibold text-sky-600 flex items-center gap-1">
+                            <Fuel size={10} /> {m.reference_load}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-2.5 px-4 text-gray-600 whitespace-nowrap">{m.movement_date || '—'}</td>
                       <td className="py-2.5 px-4 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                          isPurchase 
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                            : isAdjustment 
-                              ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                              : 'bg-amber-100 text-amber-800 border border-amber-200'
-                        }`}>
-                          {isPurchase ? 'Ingreso / Compra' : isAdjustment ? 'Ajuste' : 'Descarga'}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                            isPurchase 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : isAdjustment 
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }`}>
+                            {isPurchase ? 'Ingreso / Compra' : isAdjustment ? 'Ajuste' : 'Descarga'}
+                          </span>
+                          {(m.reference_load || m.movement_number?.includes('AUTO') || m.observations?.includes('CARGA-')) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wide">
+                              <Zap size={10} className="fill-purple-600 text-purple-600" /> AUTOMÁTICO
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2.5 px-4">
                         <p className="font-semibold text-gray-800">{m.fuel_type || 'Diesel EVOLUX'}</p>
@@ -2604,9 +2812,9 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; 
       const directAmount = mLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
       const totalCost = mLoads.reduce((s, l) => s + getLoadCost(l), 0);
 
-      const hsList = mReports
+      const hsList: number[] = mReports
         .map(r => r.hourmeter != null ? r.hourmeter : r.odometer_km)
-        .filter(h => h != null && h > 0);
+        .filter((h): h is number => typeof h === 'number' && h > 0);
 
       const minH = hsList.length > 0 ? Math.min(...hsList) : (m.current_hours || 0);
       const maxH = hsList.length > 0 ? Math.max(...hsList) : (m.current_hours || 0);
@@ -2635,6 +2843,224 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; 
       };
     }).sort((a, b) => (b.liters || 0) - (a.liters || 0));
   }, [vehicles, completedLoads, dailyReports, getLoadCost, batanReferencePrice]);
+
+  // Períodos mensuales dinámicos para Rendimiento por Máquina (Mes actual + 5 meses previos)
+  const availableMonths = useMemo(() => {
+    const result: { key: string; label: string; year: number; monthIndex: number; isCurrent: boolean }[] = [];
+    const now = new Date();
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+      const name = MONTHS_ES[m];
+      const isCurrent = i === 0;
+      result.push({
+        key,
+        label: isCurrent ? `${name} (parcial)` : `${name} ${y}`,
+        year: y,
+        monthIndex: m,
+        isCurrent
+      });
+    }
+    return result;
+  }, []);
+
+  const [selectedMonthKey, setSelectedMonthKey] = useState<string>(availableMonths[0]?.key || '2026-10');
+  const [expandedMachineCode, setExpandedMachineCode] = useState<string | null>(null);
+
+  const selectedPeriodObj = useMemo(() => {
+    return availableMonths.find(m => m.key === selectedMonthKey) || availableMonths[0];
+  }, [availableMonths, selectedMonthKey]);
+
+  // Rendimiento mensualizado por máquina para el período seleccionado
+  const monthlyMachineryStats = useMemo(() => {
+    const machines = vehicles.filter(v => isVehicleHoursTracking(v));
+    const [selYearStr, selMonthStr] = (selectedMonthKey || '').split('-');
+    const selYear = parseInt(selYearStr, 10);
+    const selMonthIdx = parseInt(selMonthStr, 10) - 1;
+    const selMonthName = MONTHS_ES[selMonthIdx];
+
+    return machines.map(m => {
+      // Cargas de la máquina en el mes seleccionado
+      const mLoads = completedLoads.filter(l => {
+        const isMatch = l.vehicle_code === m.code || l.vehicle_id === m.id;
+        if (!isMatch) return false;
+        if (l.load_date?.startsWith(selectedMonthKey)) return true;
+        if (l.year === selYear && l.month === selMonthName) return true;
+        return false;
+      });
+
+      const liters = mLoads.reduce((s, l) => s + (l.liters || 0), 0);
+      const directAmount = mLoads.reduce((s, l) => s + (l.total_amount || 0), 0);
+      const totalCost = mLoads.reduce((s, l) => s + getLoadCost(l), 0);
+
+      // Partes diarios ordenados por fecha ascendente
+      const allMReports = dailyReports
+        .filter(r => r.vehicle_id === m.id)
+        .sort((a, b) => (a.report_date || '').localeCompare(b.report_date || ''));
+
+      const reportsInMonth = allMReports.filter(r => r.report_date?.startsWith(selectedMonthKey));
+      const reportsBeforeMonth = allMReports.filter(r => r.report_date && r.report_date < `${selectedMonthKey}-01`);
+
+      // Horómetro inicio: último reporte antes del mes o primer reporte del mes
+      let startHours: number | null = null;
+      if (reportsBeforeMonth.length > 0) {
+        const lastBefore = reportsBeforeMonth[reportsBeforeMonth.length - 1];
+        startHours = lastBefore.hourmeter != null ? lastBefore.hourmeter : lastBefore.odometer_km;
+      } else if (reportsInMonth.length > 0) {
+        const firstIn = reportsInMonth[0];
+        startHours = firstIn.hourmeter != null ? firstIn.hourmeter : firstIn.odometer_km;
+      } else {
+        startHours = m.current_hours || null;
+      }
+
+      // Horómetro fin: último reporte en el mes
+      let endHours: number | null = null;
+      if (reportsInMonth.length > 0) {
+        const lastIn = reportsInMonth[reportsInMonth.length - 1];
+        endHours = lastIn.hourmeter != null ? lastIn.hourmeter : lastIn.odometer_km;
+      }
+
+      // Delta de horas
+      let deltaHours = 0;
+      if (endHours != null && startHours != null && endHours >= startHours) {
+        deltaHours = endHours - startHours;
+      } else if (reportsInMonth.length > 1) {
+        const hsIn = reportsInMonth
+          .map(r => r.hourmeter != null ? r.hourmeter : r.odometer_km)
+          .filter((h): h is number => h != null && h > 0);
+        if (hsIn.length > 1) {
+          deltaHours = Math.max(...hsIn) - Math.min(...hsIn);
+        }
+      }
+
+      // Jornadas distintas en el mes
+      const uniqueWorkDates = new Set(reportsInMonth.map(r => r.report_date).filter(Boolean));
+      const jornadas = uniqueWorkDates.size;
+      const jornadaProm = (jornadas > 0 && deltaHours > 0) ? (deltaHours / jornadas) : 0;
+
+      // Rendimiento horario L/h
+      const rendimiento = (deltaHours > 0 && liters > 0) ? (liters / deltaHours) : null;
+      const cost_per_h = deltaHours > 0 ? (totalCost / deltaHours) : (rendimiento ? rendimiento * batanReferencePrice : null);
+      const hasActivity = liters > 0 || jornadas > 0 || deltaHours > 0;
+
+      // Desglose día por día para vista expandible
+      const allDates = Array.from(new Set([
+        ...reportsInMonth.map(r => r.report_date).filter(Boolean),
+        ...mLoads.map(l => l.load_date).filter(Boolean)
+      ])).sort();
+
+      const dailyBreakdown = allDates.map(dateStr => {
+        const dayReports = reportsInMonth.filter(r => r.report_date === dateStr);
+        const dayLoads = mLoads.filter(l => l.load_date === dateStr);
+        const dayLiters = dayLoads.reduce((s, l) => s + (l.liters || 0), 0);
+        
+        const rep = dayReports[0];
+        const driver = rep?.driver_name || dayLoads[0]?.driver_name || '—';
+        const project = rep?.project?.name || dayLoads[0]?.project_name || '—';
+
+        const dayHsList = dayReports
+          .map(r => r.hourmeter != null ? r.hourmeter : r.odometer_km)
+          .filter((h): h is number => h != null && h > 0);
+
+        let dayStartHs: number | null = null;
+        let dayEndHs: number | null = null;
+
+        if (dayHsList.length > 1) {
+          dayStartHs = Math.min(...dayHsList);
+          dayEndHs = Math.max(...dayHsList);
+        } else if (dayHsList.length === 1) {
+          dayEndHs = dayHsList[0];
+          const prevReports = reportsInMonth.filter(r => r.report_date && r.report_date < dateStr);
+          if (prevReports.length > 0) {
+            const lastPrev = prevReports[prevReports.length - 1];
+            dayStartHs = lastPrev.hourmeter != null ? lastPrev.hourmeter : lastPrev.odometer_km;
+          } else if (startHours != null) {
+            dayStartHs = startHours;
+          }
+        }
+
+        const dayDeltaHs = (dayEndHs != null && dayStartHs != null && dayEndHs >= dayStartHs)
+          ? (dayEndHs - dayStartHs)
+          : (dayReports.length > 0 ? 8 : 0);
+
+        const dayRendimiento = (dayDeltaHs > 0 && dayLiters > 0) ? (dayLiters / dayDeltaHs) : null;
+
+        return {
+          date: dateStr,
+          driver,
+          project,
+          startHs: dayStartHs,
+          endHs: dayEndHs,
+          deltaHs: dayDeltaHs,
+          liters: dayLiters,
+          rendimiento: dayRendimiento,
+          loadsCount: dayLoads.length
+        };
+      });
+
+      return {
+        vehicle: m,
+        code: m.code,
+        desc: m.description,
+        brand: m.brand,
+        model: m.model,
+        currentHours: m.current_hours || endHours || 0,
+        startHours,
+        endHours,
+        liters,
+        directAmount,
+        totalCost,
+        loadsCount: mLoads.length,
+        reportsCount: reportsInMonth.length,
+        jornadas,
+        deltaHours,
+        jornadaProm,
+        rendimiento,
+        cost_per_h,
+        hasActivity,
+        dailyBreakdown
+      };
+    }).sort((a, b) => {
+      if (a.hasActivity && !b.hasActivity) return -1;
+      if (!a.hasActivity && b.hasActivity) return 1;
+      return (b.liters || 0) - (a.liters || 0);
+    });
+  }, [vehicles, completedLoads, dailyReports, selectedMonthKey, getLoadCost, batanReferencePrice]);
+
+  // Resumen global del mes seleccionado para las 4 tarjetas KPI
+  const monthlySummary = useMemo(() => {
+    const activeMachines = monthlyMachineryStats.filter(m => m.hasActivity);
+    const totalLiters = activeMachines.reduce((s, m) => s + m.liters, 0);
+    const totalHours = activeMachines.reduce((s, m) => s + m.deltaHours, 0);
+    const totalJornadas = activeMachines.reduce((s, m) => s + m.jornadas, 0);
+    const avgRendimiento = (totalHours > 0 && totalLiters > 0) ? (totalLiters / totalHours) : null;
+    return { totalLiters, totalHours, totalJornadas, avgRendimiento, activeCount: activeMachines.length };
+  }, [monthlyMachineryStats]);
+
+  const handleExportMonthlyMachinery = () => {
+    const monthLabel = availableMonths.find(m => m.key === selectedMonthKey)?.label || selectedMonthKey;
+    const data = monthlyMachineryStats.map(m => ({
+      'Período': monthLabel,
+      'Código': m.code,
+      'Descripción': m.desc,
+      'Marca / Modelo': `${m.brand || ''} ${m.model || ''}`.trim() || '—',
+      'Horómetro Inicio': m.startHours != null ? m.startHours : '—',
+      'Horómetro Fin': m.endHours != null ? m.endHours : '—',
+      'Horas Trabajadas': m.deltaHours || 0,
+      'Jornadas': m.jornadas || 0,
+      'Jornada Promedio (hs)': m.jornadaProm ? Number(m.jornadaProm.toFixed(1)) : 0,
+      'Consumo Total (L)': Number(m.liters.toFixed(1)),
+      'Rendimiento (L/h)': m.rendimiento ? Number(m.rendimiento.toFixed(2)) : 'Sin cálculo',
+      'Estado': m.hasActivity ? 'Operativo' : 'Sin cargas ni checklist en el período'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `Rendimiento_${selectedMonthKey}`);
+    XLSX.writeFile(wb, `Rendimiento_Maquinaria_${selectedMonthKey}.xlsx`);
+  };
 
   // Detección de vehículo seleccionado
   const selectedVehicleObj = useMemo(() => {
@@ -2712,30 +3138,6 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; 
 
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [completedLoads, getLoadCost]);
-
-  const handleExportMachinery = () => {
-    const data = machineryStats.map(m => ({
-      'Código': m.code,
-      'Descripción': m.desc,
-      'Marca': m.brand || '—',
-      'Modelo': m.model || '—',
-      'Horas Iniciales': m.minHours || 0,
-      'Horas Actuales': m.currentHours || 0,
-      'Horas Trabajadas': m.deltaHours || 0,
-      'Litros Consumidos': Number(m.liters.toFixed(1)),
-      'Consumo Horario (L/h)': m.l_per_h ? Number(m.l_per_h.toFixed(2)) : 'S/D',
-      'Precio Gasoil Reposición ($/L)': Math.round(batanReferencePrice),
-      'Costo por Hora de Motor ($/h)': m.cost_per_h ? Math.round(m.cost_per_h) : 'S/D',
-      'Costo Total Combustible ($)': Math.round(m.totalCost),
-      'Cargas Registradas': m.loadsCount,
-      'Partes Diarios': m.reportsCount
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Consumo_Maquinaria_Obra');
-    XLSX.writeFile(wb, `Consumos_Maquinaria_ECAR_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
 
   return (
     <div className="space-y-6">
@@ -2856,88 +3258,345 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; 
         </div>
       )}
 
-      {/* SECCIÓN ESPECIAL: RENDIMIENTOS Y CONSUMOS DE MAQUINARIA PARA PRESUPUESTO DE OBRA */}
-      <div className="bg-white rounded-xl border-2 border-amber-300 shadow-md overflow-hidden">
-        <div className="p-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100 border-b border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-amber-500 text-white rounded-lg"><HardHat size={18} /></span>
-              <h4 className="font-black text-gray-800 text-base">Consumos de Maquinaria Pesada para Presupuesto de Obra</h4>
-              <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded-full text-[11px] font-bold">APU & Costo Horario</span>
+      {/* SECCIÓN ESPECIAL: RENDIMIENTO POR MÁQUINA EN DASHBOARD & ANALÍTICA */}
+      <div className="bg-white rounded-2xl border-2 border-amber-300 shadow-md overflow-hidden space-y-0">
+        {/* Header & Monthly Period Selector */}
+        <div className="p-5 bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-100/90 border-b border-amber-200">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-amber-500 text-white rounded-xl shadow-xs">
+                  <HardHat size={20} />
+                </span>
+                <div>
+                  <h4 className="font-black text-gray-900 text-lg flex items-center gap-2">
+                    Rendimiento por Máquina en Dashboard & Analítica
+                  </h4>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Control de consumos de gasoil, horas motor y rendimientos horarios (L/h) para presupuestación de obras (APU).
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Rendimientos calibrados en campo cruzando las horas reales de partes diarios y suministro de gasoil (reposición Batán: <strong>${Math.round(batanReferencePrice).toLocaleString()} / L</strong>).
-            </p>
+
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+              {/* Period Selector Buttons */}
+              <div className="flex bg-white/90 p-1 rounded-xl border border-amber-200 shadow-xs gap-1 overflow-x-auto">
+                {availableMonths.slice(0, 4).map(m => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMonthKey(m.key);
+                      setExpandedMachineCode(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                      selectedMonthKey === m.key
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-amber-100/60'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={handleExportMonthlyMachinery}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow transition-all shrink-0"
+              >
+                <Download size={14} /> Exportar Excel
+              </button>
+            </div>
           </div>
 
-          <button
-            onClick={handleExportMachinery}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow transition-all shrink-0"
-          >
-            <Download size={14} /> Exportar a Excel (Presupuestos)
-          </button>
+          {/* 4 Top KPI Cards del Mes Seleccionado */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-amber-200/70">
+            <div className="bg-white p-3.5 rounded-xl border border-amber-200/80 shadow-xs">
+              <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                <Fuel size={13} className="text-sky-600" /> Consumo Máquinas
+              </span>
+              <p className="text-xl font-black text-sky-900 font-mono mt-1">
+                {fmt(monthlySummary.totalLiters)} <span className="text-xs font-bold text-sky-700">L</span>
+              </p>
+              <span className="text-[10px] text-gray-400 block mt-0.5">
+                {monthlySummary.activeCount} unidades con actividad
+              </span>
+            </div>
+
+            <div className="bg-white p-3.5 rounded-xl border border-amber-200/80 shadow-xs">
+              <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                <Clock size={13} className="text-indigo-600" /> Horas Trabajadas
+              </span>
+              <p className="text-xl font-black text-indigo-900 font-mono mt-1">
+                {monthlySummary.totalHours.toLocaleString()} <span className="text-xs font-bold text-indigo-700">hs</span>
+              </p>
+              <span className="text-[10px] text-gray-400 block mt-0.5">
+                Delta horómetros del período
+              </span>
+            </div>
+
+            <div className="bg-white p-3.5 rounded-xl border border-amber-200/80 shadow-xs">
+              <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                <Calendar size={13} className="text-amber-600" /> Jornadas
+              </span>
+              <p className="text-xl font-black text-amber-900 font-mono mt-1">
+                {monthlySummary.totalJornadas} <span className="text-xs font-bold text-amber-700">jornadas</span>
+              </p>
+              <span className="text-[10px] text-gray-400 block mt-0.5">
+                Partes diarios con checklist
+              </span>
+            </div>
+
+            <div className="bg-white p-3.5 rounded-xl border border-amber-300 shadow-xs bg-gradient-to-br from-white to-amber-50/50">
+              <span className="text-[10px] font-bold text-amber-800 uppercase flex items-center gap-1">
+                <Zap size={13} className="text-amber-600 fill-amber-500" /> Rendimiento Promedio
+              </span>
+              <p className="text-xl font-black text-amber-900 font-mono mt-1">
+                {monthlySummary.avgRendimiento ? `${monthlySummary.avgRendimiento.toFixed(2)}` : '—'} <span className="text-xs font-bold text-amber-700">L/h</span>
+              </p>
+              <span className="text-[10px] text-amber-700 font-medium block mt-0.5">
+                Litros totales / Horas totales
+              </span>
+            </div>
+          </div>
         </div>
 
+        {/* Tabla Principal de Rendimiento por Máquina */}
         <div className="overflow-x-auto">
-          <table className="data-table">
+          <table className="data-table w-full">
             <thead>
-              <tr className="bg-amber-50/50">
-                <th>Equipo / Máquina</th>
-                <th>Marca / Modelo</th>
-                <th className="text-center">Horas Actuales</th>
-                <th className="text-center">Horas Operadas</th>
-                <th className="text-right">Litros Consumidos</th>
-                <th className="text-center bg-amber-100/60 font-bold text-amber-950">Consumo (L/hs)</th>
-                <th className="text-right bg-emerald-100/60 font-bold text-emerald-950">Costo Horario ($/hs)</th>
-                <th className="text-right">Gasto Imputado ($)</th>
+              <tr className="bg-amber-50/60 text-gray-700 text-[11px] uppercase font-bold border-b border-amber-200">
+                <th className="py-3 px-4">Máquina</th>
+                <th className="py-3 px-4 text-right">Consumo Total</th>
+                <th className="py-3 px-4 text-center">H. Total</th>
+                <th className="py-3 px-4 text-center">Jornadas</th>
+                <th className="py-3 px-4 text-center">Jornada Prom.</th>
+                <th className="py-3 px-4 text-left w-56">Rendimiento (L/h)</th>
+                <th className="py-3 px-4 text-center">Detalle</th>
               </tr>
             </thead>
-            <tbody>
-              {machineryStats.map(m => (
-                <tr key={m.code} className="hover:bg-amber-50/30 transition-colors">
-                  <td className="font-medium text-xs">
-                    <span className="font-bold text-amber-900 block">{m.code}</span>
-                    <span className="text-gray-700 font-semibold">{m.desc}</span>
-                  </td>
-                  <td className="text-xs text-gray-600">
-                    {m.brand || m.model ? `${m.brand || ''} ${m.model || ''}`.trim() : '—'}
-                  </td>
-                  <td className="text-center font-mono text-xs text-gray-700">
-                    {formatHourmeter(m.currentHours)} hs
-                  </td>
-                  <td className="text-center font-mono text-xs font-semibold text-gray-800">
-                    {m.deltaHours > 0 ? `${m.deltaHours.toLocaleString()} hs` : '1 hs mín.'}
-                    <span className="text-[10px] text-gray-400 block font-normal">({m.reportsCount} partes)</span>
-                  </td>
-                  <td className="font-mono font-bold text-right text-xs text-sky-800">
-                    {fmt(m.liters)} L
-                    <span className="text-[10px] text-gray-400 block font-normal">({m.loadsCount} cargas)</span>
-                  </td>
-                  <td className="text-center font-mono font-black text-sm bg-amber-50 text-amber-900">
-                    {m.l_per_h ? (
-                      <span className="px-2 py-0.5 rounded-md bg-amber-200 text-amber-950 inline-block font-bold">
-                        {m.l_per_h.toFixed(2)} L/h
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-xs">Sin delta hs</span>
+            <tbody className="divide-y divide-gray-100">
+              {monthlyMachineryStats.map(m => {
+                const isExpanded = expandedMachineCode === m.code;
+
+                // Barra de rendimiento 0 a 5 L/h
+                const rendValue = m.rendimiento || 0;
+                const barPercent = Math.min(100, Math.max(0, (rendValue / 5) * 100));
+                
+                let barColor = 'bg-emerald-500';
+                let textColor = 'text-emerald-800 bg-emerald-100';
+                if (rendValue > 2.5 && rendValue <= 4.0) {
+                  barColor = 'bg-amber-500';
+                  textColor = 'text-amber-900 bg-amber-100';
+                } else if (rendValue > 4.0) {
+                  barColor = 'bg-rose-500';
+                  textColor = 'text-rose-900 bg-rose-100';
+                }
+
+                if (!m.hasActivity) {
+                  return (
+                    <tr key={m.code} className="bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-gray-400 font-mono block text-xs">{m.code}</span>
+                        <span className="text-gray-400 text-xs">{m.desc}</span>
+                      </td>
+                      <td colSpan={5} className="py-3 px-4 text-gray-400 italic text-xs">
+                        Sin cargas ni checklist en el período ({selectedPeriodObj.label})
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-300 text-xs">—</td>
+                    </tr>
+                  );
+                }
+
+                return (
+                  <React.Fragment key={m.code}>
+                    <tr 
+                      className={`hover:bg-amber-50/40 transition-colors cursor-pointer ${isExpanded ? 'bg-amber-50/50 border-l-4 border-l-amber-500' : ''}`}
+                      onClick={() => setExpandedMachineCode(isExpanded ? null : m.code)}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <span className="font-bold text-amber-950 font-mono block text-xs">{m.code}</span>
+                            <span className="text-gray-800 font-semibold text-xs">{m.desc}</span>
+                            {m.brand && <span className="text-[10px] text-gray-400 block">{m.brand} {m.model || ''}</span>}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4 text-right font-mono font-bold text-sky-800 text-xs whitespace-nowrap">
+                        {fmt(m.liters)} L
+                        <span className="text-[10px] text-gray-400 block font-normal">
+                          {m.loadsCount} {m.loadsCount === 1 ? 'carga' : 'cargas'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-center font-mono text-xs font-semibold text-gray-800 whitespace-nowrap">
+                        {m.deltaHours > 0 ? `${m.deltaHours.toLocaleString()} hs` : '1 hs mín.'}
+                        <span className="text-[10px] text-gray-400 block font-normal">
+                          {m.startHours != null ? `${m.startHours} → ${m.endHours ?? m.currentHours}` : `${m.reportsCount} partes`}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-center font-mono text-xs text-gray-700">
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 font-bold text-gray-700">
+                          {m.jornadas}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-center font-mono text-xs font-medium text-gray-700">
+                        {m.jornadaProm > 0 ? `${m.jornadaProm.toFixed(1)} hs` : '—'}
+                      </td>
+
+                      <td className="py-3 px-4">
+                        {m.rendimiento != null ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <span className={`px-2 py-0.5 rounded-md font-black text-xs ${textColor}`}>
+                                {m.rendimiento.toFixed(2)} L/h
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-sans">
+                                (0–5 L/h)
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                style={{ width: `${barPercent}%` }}
+                                className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">Sin delta hs</span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedMachineCode(isExpanded ? null : m.code);
+                          }}
+                          className={`p-1.5 rounded-lg border transition-all ${
+                            isExpanded 
+                              ? 'bg-amber-500 text-white border-amber-600' 
+                              : 'bg-gray-100 text-gray-600 hover:bg-amber-100 hover:text-amber-800 border-gray-200'
+                          }`}
+                          title={isExpanded ? 'Contraer desglose' : 'Ver desglose diario'}
+                        >
+                          {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Desglose Diario Expandible */}
+                    {isExpanded && (
+                      <tr className="bg-amber-50/20 border-b-2 border-amber-200">
+                        <td colSpan={7} className="p-4">
+                          <div className="bg-white rounded-xl border border-amber-200/80 p-4 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h5 className="font-bold text-gray-800 text-xs flex items-center gap-1.5">
+                                <Calendar size={14} className="text-amber-600" />
+                                Desglose Diario de Actividad y Cargas: <span className="font-mono text-amber-900">{m.code} — {m.desc}</span>
+                              </h5>
+                              <span className="text-[11px] text-gray-500">
+                                {m.dailyBreakdown.length} {m.dailyBreakdown.length === 1 ? 'jornada registrada' : 'jornadas registradas'} en {selectedPeriodObj.label}
+                              </span>
+                            </div>
+
+                            {m.dailyBreakdown.length === 0 ? (
+                              <p className="text-xs text-gray-400 py-3 text-center italic">No hay registros diarios detallados en este mes.</p>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                  <thead>
+                                    <tr className="bg-gray-100 text-gray-600 font-bold text-[10px] uppercase border-b border-gray-200">
+                                      <th className="py-2 px-3">Fecha</th>
+                                      <th className="py-2 px-3">Operador / Responsable</th>
+                                      <th className="py-2 px-3 text-center">Horómetro (Inicio → Fin)</th>
+                                      <th className="py-2 px-3 text-center">Horas Día</th>
+                                      <th className="py-2 px-3 text-right">Litros Cargados</th>
+                                      <th className="py-2 px-3 text-center">Rendimiento Día</th>
+                                      <th className="py-2 px-3">Obra / Destino</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100">
+                                    {m.dailyBreakdown.map((day, idx) => (
+                                      <tr key={idx} className="hover:bg-amber-50/30">
+                                        <td className="py-2 px-3 font-mono font-medium text-gray-700 whitespace-nowrap">
+                                          {day.date}
+                                        </td>
+                                        <td className="py-2 px-3 text-gray-800 font-medium">
+                                          {day.driver}
+                                        </td>
+                                        <td className="py-2 px-3 text-center font-mono text-gray-600">
+                                          {day.startHs != null && day.endHs != null 
+                                            ? `${day.startHs} → ${day.endHs}` 
+                                            : day.endHs != null ? `${day.endHs} hs` : '—'}
+                                        </td>
+                                        <td className="py-2 px-3 text-center font-mono font-bold text-gray-800">
+                                          {day.deltaHs > 0 ? `${day.deltaHs.toFixed(1)} hs` : '—'}
+                                        </td>
+                                        <td className="py-2 px-3 text-right font-mono font-bold text-sky-700 whitespace-nowrap">
+                                          {day.liters > 0 ? `${fmt(day.liters)} L` : '—'}
+                                        </td>
+                                        <td className="py-2 px-3 text-center font-mono">
+                                          {day.rendimiento ? (
+                                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[11px]">
+                                              {day.rendimiento.toFixed(2)} L/h
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-300 text-[10px]">—</span>
+                                          )}
+                                        </td>
+                                        <td className="py-2 px-3 text-gray-600 text-[11px]">
+                                          {day.project}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td className="font-mono font-bold text-right text-xs bg-emerald-50 text-emerald-800">
-                    {m.cost_per_h ? (
-                      <span className="font-bold text-emerald-700">
-                        $ {m.cost_per_h.toLocaleString()} / h
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="font-mono font-bold text-right text-xs text-gray-800">
-                    {fmtCurrency(m.totalCost)}
-                  </td>
-                </tr>
-              ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+
+        {/* Tarjeta Explicativa: Cómo se calcula */}
+        <div className="p-4 bg-gray-50/90 border-t border-amber-200/80 rounded-b-2xl">
+          <div className="flex items-start gap-2.5">
+            <div className="p-1.5 bg-sky-100 text-sky-700 rounded-lg shrink-0 mt-0.5">
+              <Info size={16} />
+            </div>
+            <div className="space-y-2 text-xs">
+              <span className="font-bold text-gray-800 block text-xs">
+                ¿Cómo se calculan estas métricas de rendimiento?
+              </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-gray-600 text-[11px] leading-relaxed">
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <strong className="text-gray-800 block mb-1">⛽ Consumo Total (L)</strong>
+                  Suma de todos los litros despachados a la máquina en el período analizado (estaciones de servicio y cargas desde el Batán interno).
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <strong className="text-gray-800 block mb-1">⏱️ Horas Trabajadas (H. Total)</strong>
+                  Diferencia entre la última lectura de horómetro del mes y la lectura inicial con la que arrancó el período (H_fin - H_inicio).
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <strong className="text-gray-800 block mb-1">📊 Rendimiento Horario (L/h)</strong>
+                  Cociente entre el Consumo Total en litros y las Horas Trabajadas. La barra sitúa el valor en escala 0–5 L/h (verde &lt;2.5, amarillo 2.5–4.0, rojo &gt;4.0).
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

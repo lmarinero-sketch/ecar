@@ -3718,6 +3718,28 @@ export function useCreateFuelBatanMovement() {
   });
 }
 
+export function useUpdateFuelBatanMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<FuelBatanMovement> & { id: string }) => {
+      const { error } = await supabase.from('fuel_batan_movements').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_batan_movements'] }),
+  });
+}
+
+export function useDeleteFuelBatanMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('fuel_batan_movements').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fuel_batan_movements'] }),
+  });
+}
+
 export function useFuelReconciliation() {
   return useQuery({
     queryKey: ['fuel_reconciliation'],
