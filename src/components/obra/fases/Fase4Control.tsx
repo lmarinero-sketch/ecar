@@ -249,7 +249,7 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
               className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
             >
               <Plus size={14} />
-              + Nuevo Hito de Control
+              Nuevo Hito de Control
             </button>
           </div>
 

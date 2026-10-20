@@ -3424,7 +3424,7 @@ export const InventoryModule: React.FC = () => {
                       }}
                       className="text-[11px] text-ecar-blue font-bold hover:underline flex items-center gap-0.5"
                     >
-                      <Plus size={12} /> + Nuevo Depósito
+                      <Plus size={12} /> Nuevo Depósito
                     </button>
                   </div>
                   <select

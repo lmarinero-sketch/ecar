@@ -466,7 +466,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                 className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
               >
                 <Plus size={14} />
-                + Nuevo Rubro
+                Nuevo Rubro
               </button>
             </div>
           </div>
@@ -731,7 +731,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                 className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
               >
                 <Plus size={14} />
-                + Nuevo Tramo
+                Nuevo Tramo
               </button>
             </div>
           </div>
