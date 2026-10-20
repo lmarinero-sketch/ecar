@@ -5,8 +5,8 @@ import {
   Pencil, Trash2
 } from 'lucide-react';
 import {
-  useObraTramos, useCreateObraTramo,
-  useObraRubros, useCreateObraRubro, useUpdateObraRubro, useDeleteObraRubro,
+  useObraTramos, useCreateObraTramo, useUpdateObraTramo, useDeleteObraTramo, useClearObraTramos,
+  useObraRubros, useCreateObraRubro, useUpdateObraRubro, useDeleteObraRubro, useClearObraWbs,
   useCreateObraSubrubro, useUpdateObraSubrubro, useDeleteObraSubrubro,
   useObraItems, useCreateObraItem, useUpdateObraItem, useDeleteObraItem,
   useObraTramoItems
@@ -30,9 +30,13 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   const { data: tramoItems = [] } = useObraTramoItems(projectId);
 
   const createTramo = useCreateObraTramo();
+  const updateTramo = useUpdateObraTramo();
+  const deleteTramo = useDeleteObraTramo();
+  const clearTramos = useClearObraTramos();
   const createRubro = useCreateObraRubro();
   const updateRubro = useUpdateObraRubro();
   const deleteRubro = useDeleteObraRubro();
+  const clearWbs = useClearObraWbs();
   const createSubrubro = useCreateObraSubrubro();
   const updateSubrubro = useUpdateObraSubrubro();
   const deleteSubrubro = useDeleteObraSubrubro();
@@ -59,6 +63,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [selectedSubrubroId, setSelectedSubrubroId] = useState<string>('');
   const [showNewTramoModal, setShowNewTramoModal] = useState(false);
+  const [showEditTramoModal, setShowEditTramoModal] = useState(false);
+  const [editingTramo, setEditingTramo] = useState<any | null>(null);
 
   // Forms
   const [rubroForm, setRubroForm] = useState({ codigo: '', nombre: '', descripcion: '', orden: 1 });
@@ -267,6 +273,66 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
     setShowNewTramoModal(false);
   };
 
+  const handleSaveEditTramo = async () => {
+    if (!editingTramo || !tramoForm.codigo || !tramoForm.nodo_inicio || !tramoForm.nodo_fin) return;
+    try {
+      await updateTramo.mutateAsync({
+        id: editingTramo.id,
+        project_id: projectId,
+        codigo: tramoForm.codigo,
+        nodo_inicio: tramoForm.nodo_inicio,
+        nodo_fin: tramoForm.nodo_fin,
+        longitud_m: Number(tramoForm.longitud_m),
+        calle_pasaje: tramoForm.calle_pasaje || null,
+        diametro_mm: Number(tramoForm.diametro_mm) || 75,
+        servicios_count: Number(tramoForm.servicios_count) || 0,
+        hidrantes_count: Number(tramoForm.hidrantes_count) || 0
+      });
+      setShowEditTramoModal(false);
+      setEditingTramo(null);
+      setTramoForm({ codigo: '', nodo_inicio: '', nodo_fin: '', longitud_m: 0, calle_pasaje: '', diametro_mm: 75, servicios_count: 0, hidrantes_count: 0 });
+      useModalStore.getState().showAlert('Tramo Actualizado', `El tramo ${tramoForm.codigo} fue actualizado con éxito.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el tramo.');
+    }
+  };
+
+  const handleDeleteTramo = async (tramo: any) => {
+    const msg = `¿Estás seguro de eliminar el tramo "${tramo.codigo}" (${tramo.nodo_inicio} → ${tramo.nodo_fin})? También se eliminarán sus registros asociados en la matriz de cómputos.`;
+    if (await useModalStore.getState().showConfirm('Eliminar Tramo', msg)) {
+      try {
+        await deleteTramo.mutateAsync({ id: tramo.id, projectId });
+        useModalStore.getState().showAlert('Tramo Eliminado', `El tramo ${tramo.codigo} fue eliminado correctamente.`);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el tramo.');
+      }
+    }
+  };
+
+  const handleClearWbs = async () => {
+    const msg = `ATENCIÓN: ¿Estás seguro de vaciar toda la estructura WBS de esta obra?\n\nSe eliminarán TODOS los ${rubros.length} rubros, subrubros e ítems contractuales, junto con sus registros en la matriz.\n\nUsa esta opción para dejar la obra completamente limpia y cargar la estructura idéntica a tu planilla de Excel.`;
+    if (await useModalStore.getState().showConfirm('Vaciar Toda la Planificación WBS', msg)) {
+      try {
+        await clearWbs.mutateAsync(projectId);
+        useModalStore.getState().showAlert('Planificación Vaciada', 'Se eliminaron todos los rubros, subrubros e ítems de la obra con éxito.');
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo vaciar la planificación.');
+      }
+    }
+  };
+
+  const handleClearTramos = async () => {
+    const msg = `ATENCIÓN: ¿Estás seguro de vaciar todos los tramos espaciales?\n\nSe eliminarán los ${tramos.length} tramos y nodos cargados en esta obra.\n\nUsa esta opción para dejar el módulo limpio y cargar los tramos idénticos a tu Excel.`;
+    if (await useModalStore.getState().showConfirm('Vaciar Tramos Espaciales', msg)) {
+      try {
+        await clearTramos.mutateAsync(projectId);
+        useModalStore.getState().showAlert('Tramos Vaciados', 'Se eliminaron todos los tramos de la obra con éxito.');
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudieron vaciar los tramos.');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Banner de Fase 1 */}
@@ -377,18 +443,32 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
       {/* CONTENIDO TAB 1: ESTRUCTURA WBS */}
       {activeTab === 'wbs' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div>
               <h4 className="font-bold text-slate-800 text-sm">Catálogo Maestro de Contrato</h4>
               <p className="text-xs text-slate-500">Define los componentes físicos medibles y sus incidencias sobre el valor total.</p>
             </div>
-            <button
-              onClick={() => setShowNewRubroModal(true)}
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-            >
-              <Plus size={14} />
-              + Nuevo Rubro
-            </button>
+            <div className="flex items-center gap-2">
+              {rubros.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearWbs}
+                  disabled={clearWbs.isPending}
+                  className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  title="Eliminar todos los rubros, subrubros e ítems cargados en esta obra para comenzar desde cero"
+                >
+                  <Trash2 size={13} />
+                  {clearWbs.isPending ? 'Vaciando...' : 'Vaciar WBS'}
+                </button>
+              )}
+              <button
+                onClick={() => setShowNewRubroModal(true)}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              >
+                <Plus size={14} />
+                + Nuevo Rubro
+              </button>
+            </div>
           </div>
 
           {loadingRubros ? (
@@ -628,18 +708,32 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
       {/* CONTENIDO TAB 2: TRAMOS */}
       {activeTab === 'tramos' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div>
               <h4 className="font-bold text-slate-800 text-sm">Topología Espacial de la Obra</h4>
               <p className="text-xs text-slate-500">División en tramos y nodos donde se ejecuta la obra.</p>
             </div>
-            <button
-              onClick={() => setShowNewTramoModal(true)}
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-            >
-              <Plus size={14} />
-              + Nuevo Tramo
-            </button>
+            <div className="flex items-center gap-2">
+              {tramos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearTramos}
+                  disabled={clearTramos.isPending}
+                  className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  title="Eliminar todos los tramos cargados en esta obra para comenzar desde cero"
+                >
+                  <Trash2 size={13} />
+                  {clearTramos.isPending ? 'Vaciando...' : 'Vaciar Tramos'}
+                </button>
+              )}
+              <button
+                onClick={() => setShowNewTramoModal(true)}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              >
+                <Plus size={14} />
+                + Nuevo Tramo
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -656,6 +750,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                     <th className="py-2.5 px-3 text-center">Servicios (u)</th>
                     <th className="py-2.5 px-3 text-center">Hidrantes (u)</th>
                     <th className="py-2.5 px-3">Observaciones</th>
+                    <th className="py-2.5 px-3 text-center w-20">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -670,6 +765,39 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                       <td className="py-2 px-3 text-center font-mono">{tramo.servicios_count || 0}</td>
                       <td className="py-2 px-3 text-center font-mono">{tramo.hidrantes_count || 0}</td>
                       <td className="py-2 px-3 text-slate-400 text-[11px] truncate max-w-xs">{tramo.observaciones || '-'}</td>
+                      <td className="py-2 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTramo(tramo);
+                              setTramoForm({
+                                codigo: tramo.codigo,
+                                nodo_inicio: tramo.nodo_inicio,
+                                nodo_fin: tramo.nodo_fin,
+                                longitud_m: Number(tramo.longitud_m) || 0,
+                                calle_pasaje: tramo.calle_pasaje || '',
+                                diametro_mm: Number(tramo.diametro_mm) || 75,
+                                servicios_count: Number(tramo.servicios_count) || 0,
+                                hidrantes_count: Number(tramo.hidrantes_count) || 0
+                              });
+                              setShowEditTramoModal(true);
+                            }}
+                            className="p-1 hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded transition-colors"
+                            title="Editar Tramo"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTramo(tramo)}
+                            className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-colors"
+                            title="Eliminar Tramo"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1156,6 +1284,101 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
             <button onClick={() => setShowNewTramoModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
             <button onClick={handleSaveTramo} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Tramo</button>
+          </div>
+        </div>
+      </ModalPortal>
+
+      {/* Modal Editar Tramo */}
+      <ModalPortal
+        isOpen={showEditTramoModal}
+        onClose={() => { setShowEditTramoModal(false); setEditingTramo(null); }}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800">Editar Tramo Topológico</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código Tramo (ej. N1 - N2)</label>
+              <input
+                value={tramoForm.codigo}
+                onChange={e => setTramoForm({ ...tramoForm, codigo: e.target.value })}
+                placeholder="N1 - N2"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Longitud (m)</label>
+              <input
+                type="number"
+                value={tramoForm.longitud_m || ''}
+                onChange={e => setTramoForm({ ...tramoForm, longitud_m: Number(e.target.value) })}
+                placeholder="165"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Inicio</label>
+              <input
+                value={tramoForm.nodo_inicio}
+                onChange={e => setTramoForm({ ...tramoForm, nodo_inicio: e.target.value })}
+                placeholder="N1"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nodo Fin</label>
+              <input
+                value={tramoForm.nodo_fin}
+                onChange={e => setTramoForm({ ...tramoForm, nodo_fin: e.target.value })}
+                placeholder="N2"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Calle / Pasaje</label>
+              <input
+                value={tramoForm.calle_pasaje}
+                onChange={e => setTramoForm({ ...tramoForm, calle_pasaje: e.target.value })}
+                placeholder="Pasaje N°13"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Diámetro (mm)</label>
+              <input
+                type="number"
+                value={tramoForm.diametro_mm || ''}
+                onChange={e => setTramoForm({ ...tramoForm, diametro_mm: Number(e.target.value) })}
+                placeholder="75"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Servicios (u)</label>
+              <input
+                type="number"
+                value={tramoForm.servicios_count || ''}
+                onChange={e => setTramoForm({ ...tramoForm, servicios_count: Number(e.target.value) })}
+                placeholder="0"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Hidrantes (u)</label>
+              <input
+                type="number"
+                value={tramoForm.hidrantes_count || ''}
+                onChange={e => setTramoForm({ ...tramoForm, hidrantes_count: Number(e.target.value) })}
+                placeholder="0"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => { setShowEditTramoModal(false); setEditingTramo(null); }} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveEditTramo} disabled={updateTramo.isPending} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer">
+              {updateTramo.isPending ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
           </div>
         </div>
       </ModalPortal>

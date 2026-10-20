@@ -50,6 +50,81 @@ export const useCreateObraTramo = () => {
   });
 };
 
+export const useUpdateObraTramo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }: Partial<ObraTramo> & { id: string }) => {
+      const { data, error } = await supabase.from('obra_tramos').update(patch).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['obra_tramos', vars.project_id] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', vars.project_id] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['obra_tramos'] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
+      }
+    },
+  });
+};
+
+export const useDeleteObraTramo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { error } = await supabase.from('obra_tramos').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['obra_tramos', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', vars.projectId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['obra_tramos'] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
+      }
+    },
+  });
+};
+
+export const useClearObraTramos = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.from('obra_tramos').delete().eq('project_id', projectId);
+      if (error) throw error;
+      return projectId;
+    },
+    onSuccess: (projectId) => {
+      queryClient.invalidateQueries({ queryKey: ['obra_tramos', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', projectId] });
+    },
+  });
+};
+
+export const useClearObraWbs = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error: errItems } = await supabase.from('obra_items').delete().eq('project_id', projectId);
+      if (errItems) throw errItems;
+      const { error: errSub } = await supabase.from('obra_subrubros').delete().eq('project_id', projectId);
+      if (errSub) throw errSub;
+      const { error: errRubros } = await supabase.from('obra_rubros').delete().eq('project_id', projectId);
+      if (errRubros) throw errRubros;
+      return projectId;
+    },
+    onSuccess: (projectId) => {
+      queryClient.invalidateQueries({ queryKey: ['obra_rubros', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['obra_items', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', projectId] });
+    },
+  });
+};
+
 export const useObraRubros = (projectId?: string) => {
   return useQuery({
     queryKey: ['obra_rubros', projectId],
