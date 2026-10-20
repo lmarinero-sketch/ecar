@@ -1387,7 +1387,9 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
   const isToolItem = (item: InventoryItem) => Boolean(
     item.is_tool ||
     item.category === 'herramienta' ||
-    (item.name && item.name.toLowerCase().includes('herramienta'))
+    (item.rubro && item.rubro.toLowerCase().includes('herramienta')) ||
+    (item.name && item.name.toLowerCase().includes('herramienta')) ||
+    /amolador|rotomartillo|taladro|soldadora|morsa|nivel|termometro|manometro|calibre|fresadora|sierra|generador|motobomba|faja|arnes|tenaza|pinza|martillo|pala|pico|disco|corta hierro/i.test(item.name || '')
   );
 
   const toolsAvailableToSelect = useMemo(() => {
@@ -1400,10 +1402,16 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
 
   const toggleSelectAllTools = () => {
     if (toolsAvailableToSelect.length === 0) return;
-    if (toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id))) {
-      setSelectedToolIds([]);
+    const allVisibleSelected = toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id));
+    if (allVisibleSelected) {
+      const visibleIds = new Set(toolsAvailableToSelect.map(t => t.id));
+      setSelectedToolIds(prev => prev.filter(id => !visibleIds.has(id)));
     } else {
-      setSelectedToolIds(toolsAvailableToSelect.map(t => t.id));
+      setSelectedToolIds(prev => {
+        const set = new Set(prev);
+        toolsAvailableToSelect.forEach(t => set.add(t.id));
+        return Array.from(set);
+      });
     }
   };
 
@@ -1411,18 +1419,23 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
     const selectedItems = (items || []).filter(i => selectedToolIds.includes(i.id));
     if (selectedItems.length === 0) return;
 
-    const existingIds = new Set(dispatchCartItems.map(c => c.item.id));
-    const newItems = selectedItems
-      .filter(i => !existingIds.has(i.id))
-      .map(i => ({ item: i, qty: '1' }));
-
-    setDispatchCartItems(prev => [...prev, ...newItems]);
+    setDispatchCartItems(prev => {
+      const existingIds = new Set(prev.map(c => c.item.id));
+      const newItems = selectedItems
+        .filter(i => !existingIds.has(i.id))
+        .map(i => ({ item: i, qty: '1' }));
+      return [...prev, ...newItems];
+    });
     setDispatchFilterToolsOnly(true);
     setShowDispatchCart(true);
     setSelectedToolIds([]);
   };
 
   const handleOpenToolRemito = () => {
+    if (selectedToolIds.length > 0) {
+      handleDispatchSelectedTools();
+      return;
+    }
     setDispatchFilterToolsOnly(true);
     setShowDispatchCart(true);
   };
@@ -2698,7 +2711,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                 className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 title="Abrir remito de pañol para despachar múltiples herramientas a la vez"
               >
-                <Truck size={16} /> 📄 Nuevo Remito / Despacho Múltiple
+                <Truck size={16} /> 📄 Nuevo Remito / Despacho Múltiple {selectedToolIds.length > 0 ? `(${selectedToolIds.length} seleccionada${selectedToolIds.length > 1 ? 's' : ''})` : ''}
               </button>
               <button
                 type="button"
@@ -4375,33 +4388,51 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                         if (!dispatchSearch) return dispatchFilterToolsOnly;
                         const s = dispatchSearch.toLowerCase();
                         return i.name.toLowerCase().includes(s) || (i.item_code || '').toLowerCase().includes(s) || (i.barcode || '').toLowerCase().includes(s);
-                      }).slice(0, 30).map(item => (
-                        <div key={item.id} className="p-3 hover:bg-orange-50/50 flex justify-between items-center transition-colors">
-                          <div>
-                            <p className="font-bold text-slate-800 text-sm">
-                              {item.name}
-                              {item.measure && <span className="ml-2 text-slate-500 font-normal">({item.measure})</span>}
-                            </p>
-                            <p className="text-xs text-slate-500 font-mono">Stock actual: <span className="font-bold text-slate-700">{item.current_stock} {item.unit}</span> | Cód: {item.item_code || item.barcode || 'S/C'}</p>
+                      }).slice(0, 30).map(item => {
+                        const inCart = dispatchCartItems.find(c => c.item.id === item.id);
+                        const inCartQty = inCart ? (parseFloat(inCart.qty) || 1) : 0;
+
+                        return (
+                          <div key={item.id} className="p-3 hover:bg-orange-50/50 flex justify-between items-center transition-colors">
+                            <div className="flex-1 mr-3">
+                              <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <span>{item.name}</span>
+                                {item.measure && <span className="text-slate-500 font-normal text-xs">({item.measure})</span>}
+                                {isToolItem(item) && (
+                                  <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold px-1.5 py-0.2 rounded">⚡ Herramienta</span>
+                                )}
+                              </p>
+                              <p className="text-xs text-slate-500 font-mono">Stock actual: <span className="font-bold text-slate-700">{item.current_stock} {item.unit}</span> | Cód: {item.item_code || item.barcode || 'S/C'}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (item.current_stock <= 0) {
+                                  const confirm = await useModalStore.getState().showConfirm('Sin Stock', `El artículo "${item.name}" no tiene stock disponible para despachar. ¿Deseas agregarlo de todos modos?`);
+                                  if (!confirm) return;
+                                }
+                                setDispatchCartItems(prev => {
+                                  const existingIdx = prev.findIndex(i => i.item.id === item.id);
+                                  if (existingIdx >= 0) {
+                                    const next = [...prev];
+                                    const currentQty = parseFloat(next[existingIdx].qty) || 1;
+                                    next[existingIdx] = { ...next[existingIdx], qty: String(currentQty + 1) };
+                                    return next;
+                                  }
+                                  return [...prev, { item, qty: '1' }];
+                                });
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer shrink-0 flex items-center gap-1 ${
+                                inCartQty > 0
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                  : 'bg-orange-100 text-orange-700 hover:bg-orange-600 hover:text-white'
+                              }`}
+                            >
+                              {inCartQty > 0 ? `✓ En remito (${inCartQty}) +1` : '+ Añadir'}
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (item.current_stock <= 0) {
-                                const confirm = await useModalStore.getState().showConfirm('Sin Stock', `El artículo "${item.name}" no tiene stock disponible para despachar. ¿Deseas agregarlo de todos modos?`);
-                                if (!confirm) return;
-                              }
-                              if (!dispatchCartItems.find(i => i.item.id === item.id)) {
-                                setDispatchCartItems([...dispatchCartItems, { item, qty: '1' }]);
-                              }
-                              setDispatchSearch('');
-                            }}
-                            className="bg-orange-100 text-orange-700 hover:bg-orange-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer"
-                          >
-                            + Añadir
-                          </button>
-                        </div>
-                    ))}
+                        );
+                      })}
                     {dispatchSearch && items?.filter(i => (dispatchFilterToolsOnly ? isToolItem(i) : true) && (i.name.toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.item_code || '').toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.barcode || '').toLowerCase().includes(dispatchSearch.toLowerCase()))).length === 0 && (
                       <div className="p-4 text-center text-slate-500 text-sm">No se encontraron productos.</div>
                     )}
@@ -4417,11 +4448,23 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                     <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
                       <ShoppingBag size={16} className="text-emerald-600" /> Ítems en el Remito ({dispatchCartItems.length})
                     </label>
-                    {dispatchCartItems.some(i => isToolItem(i.item)) && (
-                      <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                        ⚡ {dispatchCartItems.filter(i => isToolItem(i.item)).length} herramientas
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {dispatchCartItems.some(i => isToolItem(i.item)) && (
+                        <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                          ⚡ {dispatchCartItems.filter(i => isToolItem(i.item)).length} herramientas
+                        </span>
+                      )}
+                      {dispatchCartItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setDispatchCartItems([])}
+                          className="text-[11px] text-red-500 hover:text-red-700 font-bold px-2 py-0.5 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Vaciar todos los artículos del remito"
+                        >
+                          Vaciar
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {dispatchCartItems.some(i => isToolItem(i.item)) && (
@@ -4446,9 +4489,12 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                         return (
                           <div key={cartItem.item.id} className={`bg-white p-3 rounded-lg border shadow-sm flex items-center justify-between gap-3 ${isWarning ? 'border-red-300' : 'border-slate-200'}`}>
                             <div className="flex-1 min-w-0">
-                              <p className="font-bold text-slate-800 text-sm truncate">
-                                {cartItem.item.name}
-                                {cartItem.item.measure && <span className="ml-2 text-slate-500 font-normal">({cartItem.item.measure})</span>}
+                              <p className="font-bold text-slate-800 text-sm truncate flex items-center gap-1.5">
+                                <span>{cartItem.item.name}</span>
+                                {cartItem.item.measure && <span className="text-slate-500 font-normal text-xs">({cartItem.item.measure})</span>}
+                                {isToolItem(cartItem.item) && (
+                                  <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1 rounded">⚡</span>
+                                )}
                               </p>
                               <p className={`text-[10px] font-mono mt-0.5 ${isWarning ? 'text-red-600 font-bold' : 'text-slate-500'}`}>
                                 Quedarían en stock: {remaining} {cartItem.item.unit}
@@ -4461,9 +4507,14 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                                 min="0.01"
                                 value={cartItem.qty}
                                 onChange={(e) => {
-                                  const newCart = [...dispatchCartItems];
-                                  newCart[idx].qty = e.target.value;
-                                  setDispatchCartItems(newCart);
+                                  const val = e.target.value;
+                                  setDispatchCartItems(prev => {
+                                    const next = [...prev];
+                                    if (next[idx]) {
+                                      next[idx] = { ...next[idx], qty: val };
+                                    }
+                                    return next;
+                                  });
                                 }}
                                 className={`w-20 px-2 py-1.5 border rounded-lg text-sm font-mono font-bold text-right focus:outline-none focus:ring-2 ${isWarning ? 'border-red-300 focus:ring-red-500/50 bg-red-50' : 'border-slate-300 focus:ring-orange-500 bg-slate-50'}`}
                               />
@@ -4471,12 +4522,10 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const newCart = [...dispatchCartItems];
-                                  newCart.splice(idx, 1);
-                                  setDispatchCartItems(newCart);
+                                  setDispatchCartItems(prev => prev.filter((_, i) => i !== idx));
                                 }}
-                                className="p-1.5 hover:bg-red-100 text-slate-400 hover:text-red-600 rounded-lg transition-colors ml-1"
-                                title="Quitar del carrito"
+                                className="p-1.5 hover:bg-red-100 text-slate-400 hover:text-red-600 rounded-lg transition-colors ml-1 cursor-pointer"
+                                title="Quitar del remito"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -4495,7 +4544,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
               <button
                 type="button"
                 onClick={() => setShowDispatchCart(false)}
-                className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+                className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -4503,9 +4552,11 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                 type="button"
                 disabled={dispatchCartItems.length === 0 || !dispatchProject || !dispatchEmployee || createMovement.isPending}
                 onClick={handleDispatchCartSubmit}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {createMovement.isPending ? 'Procesando Remito...' : '🚚 Confirmar Despacho Múltiple'}
+                {createMovement.isPending
+                  ? 'Procesando Remito...'
+                  : `🚚 Confirmar Despacho (${dispatchCartItems.length} ítem${dispatchCartItems.length !== 1 ? 's' : ''})`}
               </button>
             </div>
           </div>
