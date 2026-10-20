@@ -696,4 +696,18 @@ export const TUTORIAL_CONTENT: Record<ModuleId, TutorialEntry> = {
       'El generador de informes de obra vuelca automáticamente fotos y avances del parte diario.',
     ],
   },
+  tools: {
+    title: 'Herramientas & Préstamos de Pañol',
+    description: 'Control de asignaciones, préstamos y devoluciones de herramientas eléctricas y manuales para operarios y obras.',
+    steps: [
+      'Visualizá el listado completo de herramientas en pañol y su estado actual.',
+      'Asigná herramientas a operarios vinculándolas a una obra específica.',
+      'Registrá la devolución indicando estado, novedades o roturas si las hubiera.',
+      'Consultá el historial de préstamos activos y devoluciones.',
+    ],
+    tips: [
+      'Podés filtrar rápidamente por herramientas asignadas o disponibles en pañol.',
+      'Si una herramienta sufre desperfectos, registralo en la devolución para gestionar su service.',
+    ],
+  },
 };

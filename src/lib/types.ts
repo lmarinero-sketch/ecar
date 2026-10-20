@@ -1722,6 +1722,7 @@ export const ALL_MODULES = [
   'obra_calidad',
   'obra_economia',
   'obra_documentacion',
+  'tools',
 ] as const;
 
 export type ModuleId = typeof ALL_MODULES[number];
@@ -1779,6 +1780,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   obra_calidad: '4. Calidad, Seguridad y Mejora',
   obra_economia: '5. Gestión Económica',
   obra_documentacion: '6. Documentación y Comunicación',
+  tools: 'Herramientas & Préstamos de Pañol',
 };
 
 

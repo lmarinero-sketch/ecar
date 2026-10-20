@@ -797,7 +797,11 @@ const ReturnToolModal: React.FC<{
   );
 };
 
-export const InventoryModule: React.FC = () => {
+export interface InventoryModuleProps {
+  initialTab?: Tab;
+}
+
+export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = 'stock' }) => {
   const { isAdmin, profile, canViewCosts } = useAuth();
   const showPrices = canViewCosts;
   const isPanolero = profile?.role === 'panolero' || !showPrices;
@@ -827,7 +831,13 @@ export const InventoryModule: React.FC = () => {
   const { data: dbCategories = [] } = useInventoryCategories();
   const createCategory = useCreateInventoryCategory();
 
-  const [tab, setTab] = useState<Tab>('stock');
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
   const [search, setSearch] = useState('');
   const [filterCat] = useState<string>('');
   const [filterShelf, setFilterShelf] = useState<string>('');
@@ -1319,6 +1329,11 @@ export const InventoryModule: React.FC = () => {
         if (!supMatch) return false;
       }
 
+      if (tab === 'tools') {
+        const isToolItem = Boolean(i.is_tool || i.category === 'herramienta' || (i.name && i.name.toLowerCase().includes('herramienta')));
+        return isToolItem;
+      }
+
       // Filter by Stock Status (Matching Image 2)
       if (filterStockStatus === 'CON_STOCK' && i.current_stock <= 0) return false;
       if (filterStockStatus === 'SIN_STOCK' && i.current_stock > 0) return false;
@@ -1328,7 +1343,6 @@ export const InventoryModule: React.FC = () => {
       // Filter category
       if (filterCat && i.category !== filterCat) return false;
 
-      if (tab === 'tools' && !i.is_tool) return false;
       return true;
     });
   }, [items, search, filterCat, filterDeposit, filterShelf, filterCode, filterProduct, filterMeasure, filterRubro, filterSupplier, filterStockStatus, tab, shelves]);
@@ -1812,13 +1826,13 @@ export const InventoryModule: React.FC = () => {
       {/* Tabs Navigation */}
       <div className="flex gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl overflow-x-auto shadow-inner">
         {([
-          ['stock', '📊 Stock'],
+          ['stock', '📊 Stock General'],
+          ['tools', '⚡ Préstamo de Herramientas'],
           ['movements', '📋 Movimientos'],
           ['reserved', '🔒 Stock Reservado'],
           ...(showPrices ? [['price_history', '📈 Historial de Precios'] as [Tab, string]] : []),
           ['deposits', '🏢 Depósitos'],
           ['shelves', '🗄️ Estanterías Almacén (A-E)'],
-          ['tools', '⚡ Herramientas Eléctricas'],
           ['epp', '🦺 Entrega de EPP']
         ] as [Tab, string][]).map(([id, label]) => (
           <button

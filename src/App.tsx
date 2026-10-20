@@ -169,7 +169,8 @@ function AppContent() {
       case 'finances': return <FinancesModule />;
       case 'obligations': return <ObligationsModule />;
       case 'rrhh': return <RrhhModule />;
-      case 'inventory': return <InventoryModule />;
+      case 'inventory': return <InventoryModule initialTab="stock" />;
+      case 'tools': return <InventoryModule initialTab="tools" />;
       case 'monthly_report': return <MonthlyReportModule />;
       case 'purchase_requests': return <PurchaseRequestsModule />;
       case 'logistics': return <LogisticsModule />;

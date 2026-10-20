@@ -9,7 +9,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
   Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe, ShieldCheck,
-  Moon, Sun
+  Moon, Sun, Wrench
 } from 'lucide-react';
 import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -52,6 +52,7 @@ const iconMap: Record<ModuleId, React.ElementType> = {
   obra_calidad: ShieldCheck,
   obra_economia: DollarSign,
   obra_documentacion: FolderOpen,
+  tools: Wrench,
 };
 
 /* ─── Short labels for collapsed tooltips ─── */
@@ -85,6 +86,7 @@ const SHORT_LABELS: Record<ModuleId, string> = {
   obra_calidad: 'Calidad & HyS',
   obra_economia: 'Gestión Económica',
   obra_documentacion: 'Documentación',
+  tools: 'Herramientas',
 };
 
 /* ─── Module accent colors for active indicator ─── */
@@ -161,6 +163,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: 'logistics', requires: true },
       { id: 'fleet', requires: true },
       { id: 'inventory', requires: true },
+      { id: 'tools', requires: true },
     ],
   },
   {
