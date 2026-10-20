@@ -352,7 +352,7 @@ export const OpportunitiesModule: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-4 md:space-y-6">
+    <div className={`flex flex-col flex-1 space-y-4 md:space-y-6 ${viewMode === 'pipeline' ? 'min-h-[620px]' : ''}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-ecar-blueDark via-blue-700 to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><Target size={120} /></div>

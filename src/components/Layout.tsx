@@ -378,7 +378,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
 
         {/* ── Footer ── */}
-        <div className={`border-t border-slate-100 dark:border-slate-800 ${expanded ? 'p-3' : 'p-2'}`}>
+        <div className={`border-t border-slate-100 dark:border-slate-800 ${expanded ? 'p-3 pb-5' : 'p-2 pb-4'}`}>
           {/* Expand toggle (collapsed) */}
           {!expanded && (
             <button
@@ -458,7 +458,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       )}
 
       {/* ─── Main Content ─── */}
-      <main className="flex-1 relative overflow-y-auto z-10 w-full">
+      <main className="flex-1 relative overflow-y-auto z-10 w-full flex flex-col">
         {/* Sticky Header */}
         <header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 md:px-6 py-2.5 flex justify-between items-center z-20">
           <div className="flex items-center gap-2 ml-10 md:ml-0">
@@ -540,7 +540,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </header>
 
         {/* Content with entrance animation */}
-        <div key={contentKey} className="p-4 md:p-6 w-full h-full animate-fade-in flex flex-col">
+        <div key={contentKey} className="p-4 md:p-6 pb-28 md:pb-32 w-full flex-1 flex flex-col animate-fade-in">
           {activeHidden ? null : children}
         </div>
       </main>

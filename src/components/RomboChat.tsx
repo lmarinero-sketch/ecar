@@ -234,6 +234,7 @@ export const RomboChat: React.FC = () => {
   const activeModule = useAppStore((s) => s.activeModule);
   const moduleLabel = MODULE_LABELS[activeModule] || 'Dashboard';
   const [open, setOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -241,7 +242,7 @@ export const RomboChat: React.FC = () => {
   const [showGreeting, setShowGreeting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevModuleRef = useRef<ModuleId>(activeModule);
-  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open, activeModule);
+  const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open || isMinimized, activeModule);
   const { data: aiUsage } = useAITokenUsage();
   const [downloadingIvaMonth, setDownloadingIvaMonth] = useState<string | null>(null);
 
@@ -810,7 +811,7 @@ export const RomboChat: React.FC = () => {
       )}
 
       {/* Walking Rombo (idle animation) */}
-      {walking && !open && (
+      {walking && !open && !isMinimized && (
         <div
           className="fixed z-[60] cursor-pointer group"
           style={{ left: pos.x, top: pos.y, transition: 'none' }}
@@ -841,19 +842,40 @@ export const RomboChat: React.FC = () => {
       )}
 
       {/* Floating Button (only when not walking and not open) */}
-      {!open && !walking && (
-        <button onClick={handleOpenChat} className={`fixed bottom-6 right-6 z-50 group ${bounce ? 'animate-bounce' : ''}`} title="Hablá con Rombo">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-white shadow-xl border-2 border-ecar-blue/20 overflow-hidden transition-transform group-hover:scale-110 group-active:scale-95">
-              <img src="/rombo.jpeg" alt="Rombo" className="w-full h-full object-cover" />
+      {!open && !walking && !isMinimized && (
+        <div className="fixed bottom-6 right-6 z-40 flex items-start gap-1 group">
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsMinimized(true); stopWalking(); }}
+            className="w-5 h-5 rounded-full bg-white/90 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-sm border border-slate-200 -mr-2 z-10"
+            title="Minimizar Rombo"
+          >
+            ×
+          </button>
+          <button onClick={handleOpenChat} className={`group ${bounce ? 'animate-bounce' : ''}`} title="Hablá con Rombo">
+            <div className="relative">
+              <div className="w-14 h-14 rounded-full bg-white shadow-xl border-2 border-ecar-blue/20 overflow-hidden transition-transform group-hover:scale-105 group-active:scale-95">
+                <img src="/rombo.jpeg" alt="Rombo" className="w-full h-full object-cover" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <Sparkles size={8} className="text-white" />
+              </div>
             </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-              <Sparkles size={10} className="text-white" />
-            </div>
-          </div>
-          <span className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            ¡Preguntale a Rombo! 🤖
-          </span>
+            <span className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              ¡Preguntale a Rombo! 🤖
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Minimized Chip (compact, out of the way) */}
+      {!open && isMinimized && (
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="fixed bottom-3 right-4 z-40 bg-white/95 dark:bg-slate-800 hover:bg-white text-slate-700 dark:text-slate-200 px-3 py-1 rounded-full text-xs font-semibold shadow-md border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+          title="Restaurar asistente Rombo"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>🤖 Rombo</span>
         </button>
       )}
 
