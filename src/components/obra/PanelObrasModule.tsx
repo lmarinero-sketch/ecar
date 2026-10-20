@@ -2,16 +2,18 @@ import React, { useState, useMemo } from 'react';
 import {
   Building2, Plus, Search, AlertTriangle,
   Clock, ShieldAlert, ShoppingBag,
-  MapPin, ChevronRight
+  MapPin, ChevronRight, Pencil
 } from 'lucide-react';
-import { useProjects, useCreateProject, useWbsElements, usePurchaseRequests, useNonConformities } from '../../hooks/useData';
+import { useProjects, useCreateProject, useUpdateProject, useWbsElements, usePurchaseRequests, useNonConformities } from '../../hooks/useData';
 import { useProjectMilestones } from '../../hooks/useObraData';
 import { useAppStore } from '../../store/useStore';
 import { useModalStore } from '../../store/useModalStore';
+import type { Project } from '../../lib/types';
 
 export const PanelObrasModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
   const { setActiveModule, setActiveProjectId } = useAppStore();
   const { data: allWbs = [] } = useWbsElements();
   const { data: allMilestones = [] } = useProjectMilestones();
@@ -28,6 +30,18 @@ export const PanelObrasModule: React.FC = () => {
     budget_ars: '',
     contract_amount: '',
     start_date: new Date().toISOString().split('T')[0],
+  });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    client_name: '',
+    location: '',
+    budget_ars: '',
+    contract_amount: '',
+    status: 'active' as 'active' | 'suspended' | 'completed',
+    start_date: '',
   });
 
   // KPI Calculations
@@ -79,6 +93,57 @@ export const PanelObrasModule: React.FC = () => {
       }
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', 'No se pudo crear la obra: ' + err.message);
+    }
+  };
+
+  const handleStatusChange = async (project: Project, newStatus: 'active' | 'suspended' | 'completed') => {
+    const statusLabel = newStatus === 'completed' ? 'Finalizada' : newStatus === 'suspended' ? 'Suspendida' : 'En Ejecución';
+    try {
+      await updateProject.mutateAsync({
+        id: project.id,
+        updates: { status: newStatus }
+      });
+      useModalStore.getState().showAlert('Estado Actualizado', `La obra "${project.name}" ahora está marcada como ${statusLabel}.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', 'No se pudo actualizar el estado: ' + err.message);
+    }
+  };
+
+  const handleOpenEditModal = (project: Project) => {
+    setEditingProject(project);
+    setEditForm({
+      name: project.name || '',
+      client_name: project.client_name || '',
+      location: project.location || '',
+      budget_ars: String(project.budget_ars || ''),
+      contract_amount: String(project.contract_amount || project.budget_ars || ''),
+      status: (project.status || 'active') as 'active' | 'suspended' | 'completed',
+      start_date: project.start_date || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject || !editForm.name.trim()) return;
+    try {
+      await updateProject.mutateAsync({
+        id: editingProject.id,
+        updates: {
+          name: editForm.name.trim(),
+          client_name: editForm.client_name.trim() || null,
+          location: editForm.location.trim() || null,
+          budget_ars: parseFloat(editForm.budget_ars) || 0,
+          contract_amount: parseFloat(editForm.contract_amount) || parseFloat(editForm.budget_ars) || 0,
+          status: editForm.status,
+          start_date: editForm.start_date || null,
+        }
+      });
+      setShowEditModal(false);
+      setEditingProject(null);
+      useModalStore.getState().showAlert('Obra Actualizada', `La obra "${editForm.name}" ha sido actualizada con éxito.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', 'No se pudo actualizar la obra: ' + err.message);
     }
   };
 
@@ -225,15 +290,33 @@ export const PanelObrasModule: React.FC = () => {
                 <div className="p-5 space-y-4">
                   {/* Top line: Status & Location */}
                   <div className="flex items-center justify-between gap-2 text-xs">
-                    <span className={`px-2.5 py-1 rounded-full font-bold uppercase tracking-wider text-[10px] ${
-                      project.status === 'completed'
-                        ? 'bg-slate-100 text-slate-700'
-                        : project.status === 'suspended'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {project.status === 'completed' ? 'Finalizada' : project.status === 'suspended' ? 'Suspendida' : 'En Ejecución'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={project.status || 'active'}
+                        onChange={(e) => handleStatusChange(project, e.target.value as 'active' | 'suspended' | 'completed')}
+                        className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] border cursor-pointer transition-all focus:outline-none ${
+                          project.status === 'completed'
+                            ? 'bg-slate-100 text-slate-700 border-slate-300'
+                            : project.status === 'suspended'
+                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        }`}
+                        title="Cambiar estado: En Ejecución / Suspendida / Finalizada"
+                      >
+                        <option value="active">🟢 En Ejecución</option>
+                        <option value="suspended">🟡 Suspendida</option>
+                        <option value="completed">🏁 Finalizada</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(project)}
+                        className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                        title="Editar datos de la obra"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </div>
 
                     {project.location && (
                       <span className="text-gray-500 flex items-center gap-1 line-clamp-1">
@@ -388,9 +471,114 @@ export const PanelObrasModule: React.FC = () => {
                 <button
                   type="submit"
                   disabled={createProject.isPending || !createForm.name.trim()}
-                  className="btn-primary bg-amber-500 hover:bg-amber-600 text-slate-950 border-none font-bold px-5 py-2"
+                  className="btn-primary bg-amber-500 hover:bg-amber-600 text-slate-950 border-none font-bold px-5 py-2 cursor-pointer"
                 >
                   {createProject.isPending ? 'Creando...' : 'Crear Obra'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: Editar Obra ─── */}
+      {showEditModal && editingProject && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-extrabold text-lg text-gray-900 flex items-center gap-2">
+                <Building2 size={20} className="text-amber-500" /> Editar Obra: {editingProject.name}
+              </h3>
+              <button onClick={() => { setShowEditModal(false); setEditingProject(null); }} className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Nombre de la Obra *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ej: Tendido Red Gas Barrio Norte"
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Estado de la Obra *</label>
+                <select
+                  value={editForm.status}
+                  onChange={e => setEditForm({ ...editForm, status: e.target.value as any })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm font-semibold focus:outline-none focus:border-amber-500 bg-white"
+                >
+                  <option value="active">🟢 En Ejecución (Activa)</option>
+                  <option value="suspended">🟡 Suspendida</option>
+                  <option value="completed">🏁 Finalizada</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Comitente / Cliente</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: OSSE / Municipalidad"
+                    value={editForm.client_name}
+                    onChange={e => setEditForm({ ...editForm, client_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Ubicación / Localidad</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Mar del Plata, Sector A"
+                    value={editForm.location}
+                    onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Monto Contractual ($ARS)</label>
+                  <input
+                    type="number"
+                    placeholder="Ej: 45000000"
+                    value={editForm.contract_amount}
+                    onChange={e => setEditForm({ ...editForm, contract_amount: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Fecha Inicio Prevista</label>
+                  <input
+                    type="date"
+                    value={editForm.start_date}
+                    onChange={e => setEditForm({ ...editForm, start_date: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditModal(false); setEditingProject(null); }}
+                  className="px-4 py-2 border rounded-lg text-sm text-gray-600 font-bold hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateProject.isPending || !editForm.name.trim()}
+                  className="btn-primary bg-amber-500 hover:bg-amber-600 text-slate-950 border-none font-bold px-5 py-2 cursor-pointer"
+                >
+                  {updateProject.isPending ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>

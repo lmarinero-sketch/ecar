@@ -3,8 +3,9 @@ import {
   FolderTree, Calendar, HardHat, ShieldCheck, RotateCcw,
   Building2, type LucideIcon
 } from 'lucide-react';
-import { useProjects } from '../../hooks/useData';
+import { useProjects, useUpdateProject } from '../../hooks/useData';
 import { useAppStore } from '../../store/useStore';
+import { useModalStore } from '../../store/useModalStore';
 import { Fase1Planificacion } from './fases/Fase1Planificacion';
 import { Fase2Programacion } from './fases/Fase2Programacion';
 import { Fase3Ejecucion } from './fases/Fase3Ejecucion';
@@ -87,6 +88,7 @@ export const NuevoModuloObra: React.FC = () => {
 
   const [activeFase, setActiveFase] = useState<FaseObra>('planificacion');
   const selectedProject = projects.find(p => p.id === activeProjectId);
+  const updateProject = useUpdateProject();
 
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto">
@@ -103,9 +105,34 @@ export const NuevoModuloObra: React.FC = () => {
                 {selectedProject?.name || 'Selecciona un proyecto'}
               </h2>
               {selectedProject && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  {selectedProject.status?.toUpperCase() || 'ACTIVO'}
-                </span>
+                <select
+                  value={selectedProject.status || 'active'}
+                  onChange={async (e) => {
+                    const newStatus = e.target.value as 'active' | 'suspended' | 'completed';
+                    try {
+                      await updateProject.mutateAsync({
+                        id: selectedProject.id,
+                        updates: { status: newStatus }
+                      });
+                      const label = newStatus === 'completed' ? 'Finalizada' : newStatus === 'suspended' ? 'Suspendida' : 'En Ejecución';
+                      useModalStore.getState().showAlert('Estado Actualizado', `La obra ahora está marcada como ${label}.`);
+                    } catch (err: any) {
+                      useModalStore.getState().showAlert('Error', err.message);
+                    }
+                  }}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border cursor-pointer transition-all focus:outline-none ${
+                    selectedProject.status === 'completed'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300'
+                      : selectedProject.status === 'suspended'
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  }`}
+                  title="Cambiar estado: En Ejecución / Suspendida / Finalizada"
+                >
+                  <option value="active">🟢 En Ejecución</option>
+                  <option value="suspended">🟡 Suspendida</option>
+                  <option value="completed">🏁 Finalizada</option>
+                </select>
               )}
             </div>
             {selectedProject?.client_name && (
