@@ -95,6 +95,68 @@ export const useCreateObraSubrubro = () => {
   });
 };
 
+export const useUpdateObraRubro = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates, project_id: _pid }: { id: string; updates: Partial<ObraRubro>; project_id?: string }) => {
+      const { data, error } = await supabase.from('obra_rubros').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, vars) => {
+      const pid = vars.project_id || data?.project_id;
+      if (pid) queryClient.invalidateQueries({ queryKey: ['obra_rubros', pid] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_rubros'] });
+    },
+  });
+};
+
+export const useDeleteObraRubro = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { error } = await supabase.from('obra_rubros').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) queryClient.invalidateQueries({ queryKey: ['obra_rubros', vars.projectId] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_rubros'] });
+    },
+  });
+};
+
+export const useUpdateObraSubrubro = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates, project_id: _pid }: { id: string; updates: Partial<ObraSubrubro>; project_id?: string }) => {
+      const { data, error } = await supabase.from('obra_subrubros').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, vars) => {
+      const pid = vars.project_id || data?.project_id;
+      if (pid) queryClient.invalidateQueries({ queryKey: ['obra_rubros', pid] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_rubros'] });
+    },
+  });
+};
+
+export const useDeleteObraSubrubro = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { error } = await supabase.from('obra_subrubros').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) queryClient.invalidateQueries({ queryKey: ['obra_rubros', vars.projectId] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_rubros'] });
+    },
+  });
+};
+
 export const useObraItems = (projectId?: string) => {
   return useQuery({
     queryKey: ['obra_items', projectId],

@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import {
   FolderTree, Plus, MapPin, Lock, CheckCircle2,
-  ChevronRight, ChevronDown, Layers, FileSpreadsheet
+  ChevronRight, ChevronDown, Layers, FileSpreadsheet,
+  Pencil, Trash2
 } from 'lucide-react';
 import {
   useObraTramos, useCreateObraTramo,
-  useObraRubros, useCreateObraRubro, useCreateObraSubrubro,
+  useObraRubros, useCreateObraRubro, useUpdateObraRubro, useDeleteObraRubro,
+  useCreateObraSubrubro, useUpdateObraSubrubro, useDeleteObraSubrubro,
   useObraItems, useCreateObraItem,
   useObraTramoItems
 } from '../../../hooks/useNuevoModuloObra';
 import { ModalPortal } from '../../common/ModalPortal';
+import { useModalStore } from '../../../store/useModalStore';
 
 interface Fase1PlanificacionProps {
   projectId: string;
@@ -28,7 +31,11 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
 
   const createTramo = useCreateObraTramo();
   const createRubro = useCreateObraRubro();
+  const updateRubro = useUpdateObraRubro();
+  const deleteRubro = useDeleteObraRubro();
   const createSubrubro = useCreateObraSubrubro();
+  const updateSubrubro = useUpdateObraSubrubro();
+  const deleteSubrubro = useDeleteObraSubrubro();
   const createItem = useCreateObraItem();
 
   const [activeTab, setActiveTab] = useState<'wbs' | 'tramos' | 'matriz'>('wbs');
@@ -37,7 +44,13 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
 
   // Modales
   const [showNewRubroModal, setShowNewRubroModal] = useState(false);
+  const [showEditRubroModal, setShowEditRubroModal] = useState(false);
+  const [editingRubro, setEditingRubro] = useState<any | null>(null);
+
   const [showNewSubrubroModal, setShowNewSubrubroModal] = useState(false);
+  const [showEditSubrubroModal, setShowEditSubrubroModal] = useState(false);
+  const [editingSubrubro, setEditingSubrubro] = useState<any | null>(null);
+
   const [selectedRubroId, setSelectedRubroId] = useState<string>('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);
   const [selectedSubrubroId, setSelectedSubrubroId] = useState<string>('');
@@ -102,6 +115,77 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
     });
     setSubrubroForm({ codigo: '', nombre: '', orden: 1 });
     setShowNewSubrubroModal(false);
+  };
+
+  const handleSaveEditRubro = async () => {
+    if (!editingRubro || !rubroForm.codigo || !rubroForm.nombre) return;
+    try {
+      await updateRubro.mutateAsync({
+        id: editingRubro.id,
+        updates: {
+          codigo: rubroForm.codigo,
+          nombre: rubroForm.nombre,
+          descripcion: rubroForm.descripcion || null,
+        },
+        project_id: projectId
+      });
+      setShowEditRubroModal(false);
+      setEditingRubro(null);
+      useModalStore.getState().showAlert('Rubro Actualizado', 'El rubro fue actualizado con éxito.');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el rubro.');
+    }
+  };
+
+  const handleDeleteRubro = async (rubro: any) => {
+    const subCount = rubro.subrubros?.length || 0;
+    const msg = subCount > 0
+      ? `¿Estás seguro de eliminar el rubro "${rubro.codigo} ${rubro.nombre}"? Contiene ${subCount} subrubro(s) y sus ítems, los cuales también se eliminarán.`
+      : `¿Estás seguro de eliminar el rubro "${rubro.codigo} ${rubro.nombre}"?`;
+    
+    if (await useModalStore.getState().showConfirm('Eliminar Rubro', msg)) {
+      try {
+        await deleteRubro.mutateAsync({ id: rubro.id, projectId });
+        useModalStore.getState().showAlert('Rubro Eliminado', `El rubro ${rubro.codigo} fue eliminado correctamente.`);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el rubro.');
+      }
+    }
+  };
+
+  const handleSaveEditSubrubro = async () => {
+    if (!editingSubrubro || !subrubroForm.codigo || !subrubroForm.nombre) return;
+    try {
+      await updateSubrubro.mutateAsync({
+        id: editingSubrubro.id,
+        updates: {
+          codigo: subrubroForm.codigo,
+          nombre: subrubroForm.nombre,
+        },
+        project_id: projectId
+      });
+      setShowEditSubrubroModal(false);
+      setEditingSubrubro(null);
+      useModalStore.getState().showAlert('Subrubro Actualizado', 'El subrubro fue actualizado con éxito.');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el subrubro.');
+    }
+  };
+
+  const handleDeleteSubrubro = async (subrubro: any) => {
+    const itemCount = subrubro.items?.length || 0;
+    const msg = itemCount > 0
+      ? `¿Estás seguro de eliminar el subrubro "${subrubro.codigo} ${subrubro.nombre}"? Contiene ${itemCount} ítem(s) contractual(es) que también se eliminarán.`
+      : `¿Estás seguro de eliminar el subrubro "${subrubro.codigo} ${subrubro.nombre}"?`;
+    
+    if (await useModalStore.getState().showConfirm('Eliminar Subrubro', msg)) {
+      try {
+        await deleteSubrubro.mutateAsync({ id: subrubro.id, projectId });
+        useModalStore.getState().showAlert('Subrubro Eliminado', `El subrubro ${subrubro.codigo} fue eliminado correctamente.`);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el subrubro.');
+      }
+    }
   };
 
   const handleSaveItem = async () => {
@@ -305,16 +389,48 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                         <span className="text-xs text-slate-500 font-mono">
                           {subrubros.length} subrubros
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedRubroId(rubro.id);
-                            setShowNewSubrubroModal(true);
-                          }}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold border border-slate-300 flex items-center gap-1"
-                        >
-                          <Plus size={12} /> Subrubro
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedRubroId(rubro.id);
+                              setShowNewSubrubroModal(true);
+                            }}
+                            className="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold border border-slate-300 flex items-center gap-1 transition-colors"
+                          >
+                            <Plus size={12} /> Subrubro
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingRubro(rubro);
+                              setRubroForm({
+                                codigo: rubro.codigo,
+                                nombre: rubro.nombre,
+                                descripcion: rubro.descripcion || '',
+                                orden: rubro.orden || 1
+                              });
+                              setShowEditRubroModal(true);
+                            }}
+                            className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-300 transition-colors"
+                            title="Editar Rubro"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteRubro(rubro);
+                            }}
+                            className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-300 transition-colors"
+                            title="Eliminar Rubro"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -339,16 +455,47 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                                     <span className="font-mono font-semibold text-indigo-700">{subrubro.codigo}</span>
                                     <span className="font-bold text-slate-700">{subrubro.nombre}</span>
                                   </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedSubrubroId(subrubro.id);
-                                      setShowNewItemModal(true);
-                                    }}
-                                    className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 flex items-center gap-1"
-                                  >
-                                    <Plus size={11} /> Ítem
-                                  </button>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSubrubroId(subrubro.id);
+                                        setShowNewItemModal(true);
+                                      }}
+                                      className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 flex items-center gap-1 transition-colors"
+                                    >
+                                      <Plus size={11} /> Ítem
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingSubrubro(subrubro);
+                                        setSubrubroForm({
+                                          codigo: subrubro.codigo,
+                                          nombre: subrubro.nombre,
+                                          orden: subrubro.orden || 1
+                                        });
+                                        setShowEditSubrubroModal(true);
+                                      }}
+                                      className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors"
+                                      title="Editar Subrubro"
+                                    >
+                                      <Pencil size={11} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteSubrubro(subrubro);
+                                      }}
+                                      className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-200 transition-colors"
+                                      title="Eliminar Subrubro"
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* Tabla de Ítems */}
@@ -559,6 +706,63 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         </div>
       </ModalPortal>
 
+      {/* Modal Editar Rubro */}
+      <ModalPortal
+        isOpen={showEditRubroModal}
+        onClose={() => {
+          setShowEditRubroModal(false);
+          setEditingRubro(null);
+        }}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <span className="p-1.5 bg-amber-100 text-amber-700 rounded-lg">
+              <Pencil size={18} />
+            </span>
+            <div>
+              <h3 className="font-bold text-lg text-slate-800">Editar Rubro</h3>
+              <p className="text-xs text-slate-500">Modifica el código o denominación del rubro en la estructura WBS.</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código del Rubro (ej. R-01)</label>
+              <input
+                value={rubroForm.codigo}
+                onChange={e => setRubroForm({ ...rubroForm, codigo: e.target.value })}
+                placeholder="R-01"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Rubro</label>
+              <input
+                value={rubroForm.nombre}
+                onChange={e => setRubroForm({ ...rubroForm, nombre: e.target.value })}
+                placeholder="01 Trabajos Preliminares"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción (opcional)</label>
+              <textarea
+                value={rubroForm.descripcion}
+                onChange={e => setRubroForm({ ...rubroForm, descripcion: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => { setShowEditRubroModal(false); setEditingRubro(null); }} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveEditRubro} disabled={updateRubro.isPending} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5">
+              {updateRubro.isPending ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          </div>
+        </div>
+      </ModalPortal>
+
       {/* Modal Nuevo Subrubro */}
       <ModalPortal
         isOpen={showNewSubrubroModal}
@@ -590,6 +794,54 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
             <button onClick={() => setShowNewSubrubroModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
             <button onClick={handleSaveSubrubro} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Subrubro</button>
+          </div>
+        </div>
+      </ModalPortal>
+
+      {/* Modal Editar Subrubro */}
+      <ModalPortal
+        isOpen={showEditSubrubroModal}
+        onClose={() => {
+          setShowEditSubrubroModal(false);
+          setEditingSubrubro(null);
+        }}
+        maxWidth="max-w-md"
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <span className="p-1.5 bg-amber-100 text-amber-700 rounded-lg">
+              <Pencil size={18} />
+            </span>
+            <div>
+              <h3 className="font-bold text-lg text-slate-800">Editar Subrubro</h3>
+              <p className="text-xs text-slate-500">Modifica el código o denominación del subrubro.</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código (ej. SR-01.1)</label>
+              <input
+                value={subrubroForm.codigo}
+                onChange={e => setSubrubroForm({ ...subrubroForm, codigo: e.target.value })}
+                placeholder="SR-01.1"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre del Subrubro</label>
+              <input
+                value={subrubroForm.nombre}
+                onChange={e => setSubrubroForm({ ...subrubroForm, nombre: e.target.value })}
+                placeholder="Zanjeo Troncal"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => { setShowEditSubrubroModal(false); setEditingSubrubro(null); }} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveEditSubrubro} disabled={updateSubrubro.isPending} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5">
+              {updateSubrubro.isPending ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
           </div>
         </div>
       </ModalPortal>
