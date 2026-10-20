@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import {
   Building2, Plus, Search, AlertTriangle,
   Clock, ShieldAlert, ShoppingBag,
-  MapPin, ChevronRight, Pencil
+  MapPin, ChevronRight, Pencil, Trash2
 } from 'lucide-react';
-import { useProjects, useCreateProject, useUpdateProject, useWbsElements, usePurchaseRequests, useNonConformities } from '../../hooks/useData';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useWbsElements, usePurchaseRequests, useNonConformities } from '../../hooks/useData';
 import { useProjectMilestones } from '../../hooks/useObraData';
 import { useAppStore } from '../../store/useStore';
 import { useModalStore } from '../../store/useModalStore';
@@ -14,6 +14,7 @@ export const PanelObrasModule: React.FC = () => {
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
   const { setActiveModule, setActiveProjectId } = useAppStore();
   const { data: allWbs = [] } = useWbsElements();
   const { data: allMilestones = [] } = useProjectMilestones();
@@ -144,6 +145,26 @@ export const PanelObrasModule: React.FC = () => {
       useModalStore.getState().showAlert('Obra Actualizada', `La obra "${editForm.name}" ha sido actualizada con éxito.`);
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', 'No se pudo actualizar la obra: ' + err.message);
+    }
+  };
+
+  const handleDeleteProject = async (project: Project) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Obra',
+      `¿Estás seguro de que deseas eliminar permanentemente la obra "${project.name}"?\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteProject.mutateAsync(project.id);
+      setShowEditModal(false);
+      setEditingProject(null);
+      useModalStore.getState().showAlert('Obra Eliminada', `La obra "${project.name}" ha sido eliminada con éxito.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert(
+        'No se puede eliminar la obra',
+        `Esta obra tiene registros vinculados en el sistema (por ejemplo certificados, pedidos o tareas asociadas). Debe eliminar o desvincular dichos registros primero.\n\nDetalle técnico: ${err.message}`
+      );
     }
   };
 
@@ -315,6 +336,14 @@ export const PanelObrasModule: React.FC = () => {
                         title="Editar datos de la obra"
                       >
                         <Pencil size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProject(project)}
+                        className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded transition-colors"
+                        title="Eliminar obra permanentemente"
+                      >
+                        <Trash2 size={13} />
                       </button>
                     </div>
 
@@ -565,21 +594,31 @@ export const PanelObrasModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-2 pt-3 border-t">
                 <button
                   type="button"
-                  onClick={() => { setShowEditModal(false); setEditingProject(null); }}
-                  className="px-4 py-2 border rounded-lg text-sm text-gray-600 font-bold hover:bg-gray-50 cursor-pointer"
+                  onClick={() => editingProject && handleDeleteProject(editingProject)}
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-red-200 sm:border-transparent"
+                  title="Eliminar esta obra del sistema"
                 >
-                  Cancelar
+                  <Trash2 size={15} /> Eliminar Obra
                 </button>
-                <button
-                  type="submit"
-                  disabled={updateProject.isPending || !editForm.name.trim()}
-                  className="btn-primary bg-amber-500 hover:bg-amber-600 text-slate-950 border-none font-bold px-5 py-2 cursor-pointer"
-                >
-                  {updateProject.isPending ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowEditModal(false); setEditingProject(null); }}
+                    className="px-4 py-2 border rounded-lg text-sm text-gray-600 font-bold hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateProject.isPending || !editForm.name.trim()}
+                    className="btn-primary bg-amber-500 hover:bg-amber-600 text-slate-950 border-none font-bold px-5 py-2 cursor-pointer"
+                  >
+                    {updateProject.isPending ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

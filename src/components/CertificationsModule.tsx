@@ -3,7 +3,7 @@ import {
   FileSignature, Plus, X, TrendingUp, Banknote,
   ChevronDown, ChevronUp, Building2, Upload, Pencil, Trash2
 } from 'lucide-react';
-import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate, useUpdateProject, useCreateProject } from '../hooks/useData';
+import { useProjects, useProjectCertificates, useCreateProjectCertificate, useUpdateProjectCertificate, useDeleteProjectCertificate, useUpdateProject, useCreateProject, useDeleteProject } from '../hooks/useData';
 import type { ProjectCertificate } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 import { ImageViewer } from './ImageViewer';
@@ -20,6 +20,7 @@ export const CertificationsModule: React.FC = () => {
   const deleteCert = useDeleteProjectCertificate();
   const updateProject = useUpdateProject();
   const createProject = useCreateProject();
+  const deleteProject = useDeleteProject();
 
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [editingProject, setEditingProject] = useState<any>(null);
@@ -93,6 +94,25 @@ export const CertificationsModule: React.FC = () => {
       await deleteCert.mutateAsync(c.id);
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err.message);
+    }
+  };
+
+  const handleDeleteProject = async (proj: any) => {
+    const confirmed = await useModalStore.getState().showConfirm(
+      'Eliminar Obra',
+      `¿Estás seguro de que deseas eliminar permanentemente la obra "${proj.name}"?\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteProject.mutateAsync(proj.id);
+      setEditingProject(null);
+      useModalStore.getState().showAlert('Obra Eliminada', `La obra "${proj.name}" ha sido eliminada con éxito.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert(
+        'No se puede eliminar la obra',
+        `Esta obra tiene registros vinculados en el sistema (por ejemplo certificados, pedidos o tareas asociadas). Debe eliminar o desvincular dichos registros primero.\n\nDetalle: ${err.message}`
+      );
     }
   };
 
@@ -248,6 +268,16 @@ export const CertificationsModule: React.FC = () => {
                           title="Editar contrato de obra"
                         >
                           <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(proj);
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors ml-1"
+                          title="Eliminar obra del sistema"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </h4>
                       <p className="text-xs text-gray-400 mt-0.5">{proj.contractor || '—'} · Contrato: {fmtM(proj.contract_amount)} · Anticipo {proj.advance_pct || 30}%: {fmtM(proj.advance_amount || 0)}</p>
@@ -568,28 +598,37 @@ export const CertificationsModule: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={async () => {
-                try {
-                  await updateProject.mutateAsync({
-                    id: editingProject.id,
-                    updates: {
-                      contract_amount: editingProject.contract_amount,
-                      advance_pct: editingProject.advance_pct,
-                      advance_amount: editingProject.advance_amount,
-                      advance_redetermination: editingProject.advance_redetermination,
-                      advance_deposit: editingProject.advance_deposit,
-                      advance_redetermination_deposit: editingProject.advance_redetermination_deposit
-                    }
-                  });
-                  setEditingProject(null);
-                } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
-              }}
-              disabled={updateProject.isPending}
-              className="w-full bg-ecar-blue text-white py-3 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
-            >
-              {updateProject.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
-            </button>
+            <div className="flex items-center justify-between gap-2 border-t pt-3">
+              <button
+                type="button"
+                onClick={() => handleDeleteProject(editingProject)}
+                className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Trash2 size={14} /> Eliminar Obra
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await updateProject.mutateAsync({
+                      id: editingProject.id,
+                      updates: {
+                        contract_amount: editingProject.contract_amount,
+                        advance_pct: editingProject.advance_pct,
+                        advance_amount: editingProject.advance_amount,
+                        advance_redetermination: editingProject.advance_redetermination,
+                        advance_deposit: editingProject.advance_deposit,
+                        advance_redetermination_deposit: editingProject.advance_redetermination_deposit
+                      }
+                    });
+                    setEditingProject(null);
+                  } catch (err: any) { useModalStore.getState().showAlert('Error', err.message); }
+                }}
+                disabled={updateProject.isPending}
+                className="bg-ecar-blue text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-50 hover:bg-ecar-blueDark transition-colors"
+              >
+                {updateProject.isPending ? 'Guardando...' : '✓ Guardar Cambios'}
+              </button>
+            </div>
           </div>
         </div>
       )}
