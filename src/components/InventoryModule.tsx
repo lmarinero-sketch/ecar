@@ -1141,6 +1141,8 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
 
   // Dispatch Cart State
   const [showDispatchCart, setShowDispatchCart] = useState(false);
+  const [selectedToolIds, setSelectedToolIds] = useState<string[]>([]);
+  const [dispatchFilterToolsOnly, setDispatchFilterToolsOnly] = useState(false);
   const [dispatchCartItems, setDispatchCartItems] = useState<{item: InventoryItem, qty: string}[]>(() => {
     try {
       const saved = localStorage.getItem('ecar_dispatch_cart_items');
@@ -1374,6 +1376,57 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
   const returnedAssignments = useMemo(() => (assignments || []).filter(a => a.status === 'returned' || a.status === 'damaged'), [assignments]);
   const [returningAssignment, setReturningAssignment] = useState<ToolAssignment | null>(null);
 
+  const activeAssignmentByItemId = useMemo(() => {
+    const map = new Map<string, ToolAssignment>();
+    (activeAssignments || []).forEach(a => {
+      map.set(a.item_id, a);
+    });
+    return map;
+  }, [activeAssignments]);
+
+  const isToolItem = (item: InventoryItem) => Boolean(
+    item.is_tool ||
+    item.category === 'herramienta' ||
+    (item.name && item.name.toLowerCase().includes('herramienta'))
+  );
+
+  const toolsAvailableToSelect = useMemo(() => {
+    return filtered.filter(i => isToolItem(i) && !activeAssignmentByItemId.has(i.id));
+  }, [filtered, activeAssignmentByItemId]);
+
+  const toggleSelectTool = (id: string) => {
+    setSelectedToolIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAllTools = () => {
+    if (toolsAvailableToSelect.length === 0) return;
+    if (toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id))) {
+      setSelectedToolIds([]);
+    } else {
+      setSelectedToolIds(toolsAvailableToSelect.map(t => t.id));
+    }
+  };
+
+  const handleDispatchSelectedTools = () => {
+    const selectedItems = (items || []).filter(i => selectedToolIds.includes(i.id));
+    if (selectedItems.length === 0) return;
+
+    const existingIds = new Set(dispatchCartItems.map(c => c.item.id));
+    const newItems = selectedItems
+      .filter(i => !existingIds.has(i.id))
+      .map(i => ({ item: i, qty: '1' }));
+
+    setDispatchCartItems(prev => [...prev, ...newItems]);
+    setDispatchFilterToolsOnly(true);
+    setShowDispatchCart(true);
+    setSelectedToolIds([]);
+  };
+
+  const handleOpenToolRemito = () => {
+    setDispatchFilterToolsOnly(true);
+    setShowDispatchCart(true);
+  };
+
   const handleReturnWithNovelty = async (data: { status: 'returned' | 'damaged'; notes: string }) => {
     if (!returningAssignment) return;
     const assignment = returningAssignment;
@@ -1598,6 +1651,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
         await exportManualDispatchPdf({
           project_name: pName,
           dispatched_by: profile?.full_name || profile?.email || 'Usuario ECAR',
+          delivered_to: dispatchEmployee,
           notes: dispatchNotes,
           items: dispatchCartItems.map(i => ({
             description: i.item.name,
@@ -1620,6 +1674,32 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
           delivered_to_text: dispatchEmployee || null,
           notes: dispatchNotes || 'Despacho múltiple a obra / Remito',
         });
+      }
+
+      // Automatic Tool Assignments for any tool items in the dispatch
+      const matchedEmployee = (employees || []).find(e =>
+        e.full_name.trim().toLowerCase() === dispatchEmployee.trim().toLowerCase()
+      );
+      const targetEmpId = matchedEmployee?.id || null;
+
+      let toolAssignmentsCreated = 0;
+      for (const cartItem of dispatchCartItems) {
+        if (isToolItem(cartItem.item)) {
+          const countToAssign = Math.max(1, Math.round(parseFloat(cartItem.qty) || 1));
+          for (let k = 0; k < countToAssign; k++) {
+            try {
+              await createAssignment.mutateAsync({
+                item_id: cartItem.item.id,
+                employee_id: targetEmpId as any,
+                project_id: dispatchProject || null,
+                notes: `Despacho por Remito a ${pName}. Retiró: ${dispatchEmployee}${dispatchNotes ? ` (${dispatchNotes})` : ''}`.trim(),
+              });
+              toolAssignmentsCreated++;
+            } catch (errAssign) {
+              console.error('Error creando asignación automática de herramienta:', errAssign);
+            }
+          }
+        }
       }
 
       // Create a "Purchase Request" in 'ordered' status so it shows up in "Despachos en Camino"
@@ -1667,7 +1747,10 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
         console.error('Error creando el registro en logistics_deliveries:', delErr);
       }
 
-      useModalStore.getState().showAlert('Éxito', `Se registraron ${dispatchCartItems.length} salidas hacia la obra correctamente y se descargó el remito.`);
+      const alertMsg = toolAssignmentsCreated > 0
+        ? `Remito emitido y descargado correctamente.\n\n• ${dispatchCartItems.length} materiales despachados a "${pName}".\n• ⚡ ${toolAssignmentsCreated} herramientas asignadas automáticamente como Préstamo Activo a nombre de "${dispatchEmployee}".`
+        : `Se registraron ${dispatchCartItems.length} salidas hacia la obra "${pName}" correctamente y se descargó el remito oficial.`;
+      useModalStore.getState().showAlert('Despacho Exitoso', alertMsg);
       
       // Reset state
       setShowDispatchCart(false);
@@ -2600,71 +2683,198 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
       {/* Tools tab (Herramientas Eléctricas & Prestamos) */}
       {tab === 'tools' && (
         <div className="space-y-6">
-          <div className="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center">
+          <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-base flex items-center gap-2">⚡ Gestión de Herramientas Eléctricas (Estantería A)</h3>
-              <p className="text-xs text-slate-300">Control individual con código único, estado físico (Operativa / Mantenimiento / No Funciona) y trazabilidad de préstamos.</p>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-1.5">
+                <span>⚡</span> Control de Pañol & Préstamos de Herramientas
+              </div>
+              <h3 className="font-extrabold text-lg text-white flex items-center gap-2">Gestión de Herramientas Eléctricas y de Mano</h3>
+              <p className="text-xs text-slate-300">Despacho individual o múltiple por Remito oficial con asignación directa de préstamos a obra.</p>
             </div>
-            <button
-              onClick={() => {
-                setShowNewItem(true);
-                setEditingItem(null);
-                setNewItem({
-                  name: '',
-                  category: 'herramienta',
-                  unit: 'unidad',
-                  measure: '',
-                  current_stock: '1',
-                  min_stock: '1',
-                  unit_cost: '',
-                  is_tool: true,
-                  barcode: '',
-                  location: 'Estantería A - Herramientas Eléctricas',
-                  deposit: 'DEPOSITO RAWSON',
-                  shelf_id: (shelves || []).find(s => s.code === 'A')?.id || '',
-                  shelf_position: 'A-1-1',
-                  tool_status: 'operativa'
-                });
-              }}
-              className="btn-primary"
-            >
-              <Plus size={16} /> Registrar Herramienta
-            </button>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleOpenToolRemito}
+                className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                title="Abrir remito de pañol para despachar múltiples herramientas a la vez"
+              >
+                <Truck size={16} /> 📄 Nuevo Remito / Despacho Múltiple
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNewItem(true);
+                  setEditingItem(null);
+                  setNewItem({
+                    name: '',
+                    category: 'herramienta',
+                    unit: 'unidad',
+                    measure: '',
+                    current_stock: '1',
+                    min_stock: '1',
+                    unit_cost: '',
+                    is_tool: true,
+                    barcode: '',
+                    location: 'Estantería A - Herramientas Eléctricas',
+                    deposit: 'DEPOSITO RAWSON',
+                    shelf_id: (shelves || []).find(s => s.code === 'A')?.id || '',
+                    shelf_position: 'A-1-1',
+                    tool_status: 'operativa'
+                  });
+                }}
+                className="btn-secondary text-xs px-3.5 py-2.5 flex items-center gap-1.5"
+              >
+                <Plus size={16} /> Nueva Herramienta
+              </button>
+            </div>
           </div>
 
+          {/* Floating/Banner for selected tools */}
+          {selectedToolIds.length > 0 && (
+            <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-orange-950 text-white p-4 px-6 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4 border border-amber-500/40 animate-fade-in">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
+                  <Wrench size={22} />
+                </div>
+                <div>
+                  <p className="font-extrabold text-base text-white flex items-center gap-2">
+                    <span className="bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full text-xs font-black">{selectedToolIds.length}</span>
+                    herramienta{selectedToolIds.length > 1 ? 's' : ''} seleccionada{selectedToolIds.length > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs text-amber-200/80">Listas para incluir en un solo Remito oficial y asignarlas juntas a una obra.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedToolIds([])}
+                  className="px-3.5 py-2 text-xs text-slate-300 hover:text-white font-semibold transition-colors cursor-pointer"
+                >
+                  Limpiar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDispatchSelectedTools}
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Truck size={17} /> Despachar en Lote por Remito ({selectedToolIds.length}) ➔
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tools Table with Fast Filter and Checkboxes */}
           <div className="light-card overflow-hidden">
+            {/* Quick table search toolbar */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, código o serie..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-amber-500 font-medium"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-semibold text-gray-500">
+                  Total: <strong className="text-gray-800">{filtered.length}</strong> herramientas
+                </span>
+                <span className="text-gray-300">|</span>
+                <span className="font-semibold text-emerald-600">
+                  🟢 {toolsAvailableToSelect.length} en Pañol
+                </span>
+                <span className="text-gray-300">|</span>
+                <span className="font-semibold text-amber-600">
+                  ⚡ {activeAssignments.length} en Préstamo
+                </span>
+              </div>
+            </div>
+
             <table className="data-table">
               <thead>
                 <tr>
+                  <th className="w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={toolsAvailableToSelect.length > 0 && toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id))}
+                      onChange={toggleSelectAllTools}
+                      disabled={toolsAvailableToSelect.length === 0}
+                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-40"
+                      title="Seleccionar todas las herramientas disponibles para despachar"
+                    />
+                  </th>
                   <th>Código Único / Serie</th>
                   <th>Herramienta</th>
-                  <th>Ubicación Estantería A</th>
-                  <th className="text-center">Estado Físico</th>
+                  <th>Ubicación Estantería</th>
+                  <th className="text-center">Estado Físico / Pañol</th>
                   <th className="text-center">Stock</th>
                   <th className="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(item => (
-                  <tr key={item.id}>
-                    <td className="font-mono text-xs font-bold text-ecar-blue">{item.barcode || 'SIN-CÓDIGO'}</td>
-                    <td className="font-medium text-gray-800">{item.name}</td>
-                    <td className="font-mono text-xs text-gray-600">
-                      📍 {item.shelf_position || 'Estantería A'}
-                    </td>
-                    <td className="text-center">
-                      <span className="badge badge-success flex items-center gap-1 justify-center mx-auto">
-                        <CheckCircle2 size={12} /> Operativa
-                      </span>
-                    </td>
-                    <td className="text-center font-mono font-bold">{item.current_stock} {item.unit}</td>
-                    <td className="text-center">
-                      <button onClick={() => setShowAssign(item)} className="btn-secondary text-xs px-2.5 py-1 py-0.5">
-                        <User size={12} /> Asignar / Préstamo
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map(item => {
+                  const activeAss = activeAssignmentByItemId.get(item.id);
+                  const isAssigned = Boolean(activeAss);
+                  const isSelected = selectedToolIds.includes(item.id);
+
+                  return (
+                    <tr key={item.id} className={isSelected ? 'bg-amber-50/60' : ''}>
+                      <td className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={isAssigned}
+                          onChange={() => toggleSelectTool(item.id)}
+                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                          title={isAssigned ? "Esta herramienta ya está prestada" : "Seleccionar para remito múltiple"}
+                        />
+                      </td>
+                      <td className="font-mono text-xs font-bold text-ecar-blue">{item.barcode || item.item_code || 'SIN-CÓDIGO'}</td>
+                      <td className="font-bold text-gray-800">
+                        {item.name}
+                        {item.measure && <span className="text-xs text-gray-400 font-normal ml-1.5">({item.measure})</span>}
+                      </td>
+                      <td className="font-mono text-xs text-gray-600">
+                        📍 {item.shelf_position || 'Estantería A'}
+                      </td>
+                      <td className="text-center">
+                        {isAssigned ? (
+                          <span className="badge badge-warning flex items-center gap-1 justify-center mx-auto text-[11px] font-bold">
+                            <User size={11} /> Prestada ({(activeAss?.employee as any)?.full_name || 'Operario'})
+                          </span>
+                        ) : (
+                          <span className="badge badge-success flex items-center gap-1 justify-center mx-auto text-[11px] font-bold">
+                            <CheckCircle2 size={11} /> Disponible en Pañol
+                          </span>
+                        )}
+                      </td>
+                      <td className="text-center font-mono font-bold">{item.current_stock} {item.unit}</td>
+                      <td className="text-center">
+                        {isAssigned ? (
+                          <button
+                            type="button"
+                            onClick={() => activeAss && setReturningAssignment(activeAss)}
+                            className="badge badge-success hover:bg-emerald-600 cursor-pointer text-xs py-1.5 px-3 flex items-center gap-1 justify-center mx-auto shadow-2xs font-bold"
+                            title="Registrar devolución de esta herramienta a pañol"
+                          >
+                            <RotateCcw size={12} /> Devolución
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowAssign(item)}
+                            className="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1 justify-center mx-auto"
+                            title="Asignar préstamo individual"
+                          >
+                            <User size={12} /> Asignar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -4096,15 +4306,24 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Entregado a (Retira) *</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Entregado a (Retira / Operario) *</label>
+                    <span className="text-[10px] text-gray-400 font-medium">Empleado o chofer</span>
+                  </div>
                   <input
+                    list="dispatch-employees-list"
                     type="text"
                     required
                     value={dispatchEmployee}
                     onChange={e => setDispatchEmployee(e.target.value)}
-                    placeholder="Ej. Juan Pérez"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    placeholder="Escribí o seleccioná un empleado..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none bg-white font-medium"
                   />
+                  <datalist id="dispatch-employees-list">
+                    {(employees || []).map(emp => (
+                      <option key={emp.id} value={emp.full_name} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nota del Remito</label>
@@ -4122,22 +4341,41 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Side: Search and Add Items */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Search size={16} className="text-orange-600" /> Buscar Productos
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <Search size={16} className="text-orange-600" /> Buscar Productos
+                    </label>
+                    <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setDispatchFilterToolsOnly(false)}
+                        className={`px-2 py-0.5 text-xs rounded-md font-bold transition-all cursor-pointer ${!dispatchFilterToolsOnly ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'}`}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDispatchFilterToolsOnly(true)}
+                        className={`px-2 py-0.5 text-xs rounded-md font-bold transition-all flex items-center gap-1 cursor-pointer ${dispatchFilterToolsOnly ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-500 hover:text-slate-800'}`}
+                      >
+                        ⚡ Solo Herramientas
+                      </button>
+                    </div>
+                  </div>
                   <input
                     type="text"
-                    placeholder="Buscar por nombre o código..."
+                    placeholder={dispatchFilterToolsOnly ? "Buscar herramientas por nombre o código..." : "Buscar por nombre o código..."}
                     value={dispatchSearch}
                     onChange={e => setDispatchSearch(e.target.value)}
                     className="w-full px-3 py-2 border-2 border-orange-200 focus:border-orange-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-orange-500/20"
                   />
                   <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-xl shadow-inner bg-white divide-y divide-slate-100">
                     {items?.filter(i => {
-                        if (!dispatchSearch) return false;
+                        if (dispatchFilterToolsOnly && !isToolItem(i)) return false;
+                        if (!dispatchSearch) return dispatchFilterToolsOnly;
                         const s = dispatchSearch.toLowerCase();
                         return i.name.toLowerCase().includes(s) || (i.item_code || '').toLowerCase().includes(s) || (i.barcode || '').toLowerCase().includes(s);
-                      }).slice(0, 20).map(item => (
+                      }).slice(0, 30).map(item => (
                         <div key={item.id} className="p-3 hover:bg-orange-50/50 flex justify-between items-center transition-colors">
                           <div>
                             <p className="font-bold text-slate-800 text-sm">
@@ -4158,16 +4396,16 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                               }
                               setDispatchSearch('');
                             }}
-                            className="bg-orange-100 text-orange-700 hover:bg-orange-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                            className="bg-orange-100 text-orange-700 hover:bg-orange-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer"
                           >
                             + Añadir
                           </button>
                         </div>
                     ))}
-                    {dispatchSearch && items?.filter(i => i.name.toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.item_code || '').toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.barcode || '').toLowerCase().includes(dispatchSearch.toLowerCase())).length === 0 && (
+                    {dispatchSearch && items?.filter(i => (dispatchFilterToolsOnly ? isToolItem(i) : true) && (i.name.toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.item_code || '').toLowerCase().includes(dispatchSearch.toLowerCase()) || (i.barcode || '').toLowerCase().includes(dispatchSearch.toLowerCase()))).length === 0 && (
                       <div className="p-4 text-center text-slate-500 text-sm">No se encontraron productos.</div>
                     )}
-                    {!dispatchSearch && (
+                    {!dispatchSearch && !dispatchFilterToolsOnly && (
                       <div className="p-4 text-center text-slate-400 text-xs italic">Ingresá el nombre o código para buscar un producto.</div>
                     )}
                   </div>
@@ -4175,9 +4413,25 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
 
                 {/* Right Side: Cart Items */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <ShoppingBag size={16} className="text-emerald-600" /> Ítems en el Remito ({dispatchCartItems.length})
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <ShoppingBag size={16} className="text-emerald-600" /> Ítems en el Remito ({dispatchCartItems.length})
+                    </label>
+                    {dispatchCartItems.some(i => isToolItem(i.item)) && (
+                      <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                        ⚡ {dispatchCartItems.filter(i => isToolItem(i.item)).length} herramientas
+                      </span>
+                    )}
+                  </div>
+
+                  {dispatchCartItems.some(i => isToolItem(i.item)) && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 px-3 flex items-start gap-2 text-xs text-amber-900">
+                      <span className="text-base shrink-0">⚡</span>
+                      <div>
+                        <strong>Asignación automática de Pañol:</strong> Las herramientas incluidas se registrarán como <strong>Préstamo Activo</strong> a nombre de <strong>{dispatchEmployee || 'el operario receptor'}</strong> en la obra seleccionada al confirmar el remito.
+                      </div>
+                    </div>
+                  )}
                   <div className="max-h-80 overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-2">
                     {dispatchCartItems.length === 0 ? (
                       <div className="h-full min-h-48 flex flex-col items-center justify-center text-slate-400">

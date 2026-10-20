@@ -339,6 +339,7 @@ export async function exportThreeWayComparisonPdf(req: PurchaseRequest) {
 export async function exportManualDispatchPdf(data: {
   project_name: string;
   dispatched_by: string;
+  delivered_to?: string;
   notes: string;
   items: { description: string; quantity: number; unit: string }[];
 }) {
@@ -364,11 +365,12 @@ export async function exportManualDispatchPdf(data: {
   doc.setFontSize(9);
   doc.setTextColor(COLOR_DARK);
   doc.text(`Despachante: ${data.dispatched_by || 'Pañolero'}`, 55, y + 36);
-  doc.text(`Fecha Despacho: ${new Date().toLocaleDateString('es-AR')}`, 55, y + 50);
+  doc.text(`Receptor / Retira: ${data.delivered_to || 'Personal de Obra'}`, 55, y + 50);
 
   doc.text(`ID Despacho: ${docCode}`, 320, y + 20);
+  doc.text(`Fecha Despacho: ${new Date().toLocaleDateString('es-AR')}`, 320, y + 36);
   if (data.notes) {
-    doc.text(`Notas: ${data.notes.slice(0, 45)}`, 320, y + 36);
+    doc.text(`Notas: ${data.notes.slice(0, 45)}`, 320, y + 50);
   }
 
   y += 85;
@@ -396,7 +398,7 @@ export async function exportManualDispatchPdf(data: {
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 40;
-  drawSignatures(doc, Math.max(finalY, 680), 'Despachante (Pañol Central)', 'Receptor');
+  drawSignatures(doc, Math.max(finalY, 680), `Despachante (${data.dispatched_by || 'Pañol Central'})`, `Receptor (${data.delivered_to || 'Obra'})`);
   drawFooter(doc);
 
   doc.save(`ECAR_Remito_Manual_${docCode}.pdf`);
