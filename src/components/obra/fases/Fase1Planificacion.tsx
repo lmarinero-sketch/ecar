@@ -8,7 +8,7 @@ import {
   useObraTramos, useCreateObraTramo,
   useObraRubros, useCreateObraRubro, useUpdateObraRubro, useDeleteObraRubro,
   useCreateObraSubrubro, useUpdateObraSubrubro, useDeleteObraSubrubro,
-  useObraItems, useCreateObraItem,
+  useObraItems, useCreateObraItem, useUpdateObraItem, useDeleteObraItem,
   useObraTramoItems
 } from '../../../hooks/useNuevoModuloObra';
 import { ModalPortal } from '../../common/ModalPortal';
@@ -37,6 +37,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   const updateSubrubro = useUpdateObraSubrubro();
   const deleteSubrubro = useDeleteObraSubrubro();
   const createItem = useCreateObraItem();
+  const updateItem = useUpdateObraItem();
+  const deleteItem = useDeleteObraItem();
 
   const [activeTab, setActiveTab] = useState<'wbs' | 'tramos' | 'matriz'>('wbs');
   const [expandedRubros, setExpandedRubros] = useState<Record<string, boolean>>({});
@@ -53,6 +55,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
 
   const [selectedRubroId, setSelectedRubroId] = useState<string>('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);
+  const [showEditItemModal, setShowEditItemModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
   const [selectedSubrubroId, setSelectedSubrubroId] = useState<string>('');
   const [showNewTramoModal, setShowNewTramoModal] = useState(false);
 
@@ -206,6 +210,43 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
     });
     setItemForm({ codigo_item: '', descripcion: '', unidad: 'ml', cantidad_contractual: 0, precio_unitario_ars: 0, rendimiento_base_dia: 70, criterio_medicion: '' });
     setShowNewItemModal(false);
+  };
+
+  const handleSaveEditItem = async () => {
+    if (!editingItem || !itemForm.codigo_item || !itemForm.descripcion) return;
+    const importe = Number(itemForm.cantidad_contractual) * Number(itemForm.precio_unitario_ars);
+    try {
+      await updateItem.mutateAsync({
+        id: editingItem.id,
+        project_id: projectId,
+        codigo_item: itemForm.codigo_item,
+        descripcion: itemForm.descripcion,
+        unidad: itemForm.unidad,
+        cantidad_contractual: Number(itemForm.cantidad_contractual),
+        precio_unitario_ars: Number(itemForm.precio_unitario_ars),
+        importe_contractual_ars: importe,
+        rendimiento_base_dia: Number(itemForm.rendimiento_base_dia),
+        criterio_medicion: itemForm.criterio_medicion || null,
+      });
+      setShowEditItemModal(false);
+      setEditingItem(null);
+      setItemForm({ codigo_item: '', descripcion: '', unidad: 'ml', cantidad_contractual: 0, precio_unitario_ars: 0, rendimiento_base_dia: 70, criterio_medicion: '' });
+      useModalStore.getState().showAlert('Ítem Actualizado', `El ítem ${itemForm.codigo_item} fue actualizado correctamente.`);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el ítem.');
+    }
+  };
+
+  const handleDeleteItem = async (item: any) => {
+    const msg = `¿Estás seguro de que deseas eliminar el ítem "${item.codigo_item} - ${item.descripcion}"?`;
+    if (await useModalStore.getState().showConfirm('Eliminar Ítem', msg)) {
+      try {
+        await deleteItem.mutateAsync({ id: item.id, projectId });
+        useModalStore.getState().showAlert('Ítem Eliminado', `El ítem ${item.codigo_item} fue eliminado correctamente.`);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el ítem.');
+      }
+    }
   };
 
   const handleSaveTramo = async () => {
@@ -511,6 +552,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                                           <th className="py-2 px-3 text-right">P.U. s/IVA</th>
                                           <th className="py-2 px-3 text-right">Total s/IVA</th>
                                           <th className="py-2 px-3 text-right">Incidencia Obra</th>
+                                          <th className="py-2 px-3 text-center w-20">Acciones</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100 bg-white">
@@ -526,6 +568,42 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
                                             </td>
                                             <td className="py-2 px-3 text-right font-mono font-bold text-emerald-600">
                                               {Number(item.incidencia_obra_pct || 0).toFixed(2)}%
+                                            </td>
+                                            <td className="py-2 px-3 text-center">
+                                              <div className="flex items-center justify-center gap-1">
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingItem(item);
+                                                    setItemForm({
+                                                      codigo_item: item.codigo_item,
+                                                      descripcion: item.descripcion,
+                                                      unidad: item.unidad,
+                                                      cantidad_contractual: Number(item.cantidad_contractual) || 0,
+                                                      precio_unitario_ars: Number(item.precio_unitario_ars) || 0,
+                                                      rendimiento_base_dia: Number(item.rendimiento_base_dia) || 70,
+                                                      criterio_medicion: item.criterio_medicion || ''
+                                                    });
+                                                    setShowEditItemModal(true);
+                                                  }}
+                                                  className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors cursor-pointer"
+                                                  title="Editar Ítem"
+                                                >
+                                                  <Pencil size={11} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteItem(item);
+                                                  }}
+                                                  className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-200 transition-colors cursor-pointer"
+                                                  title="Eliminar Ítem"
+                                                >
+                                                  <Trash2 size={11} />
+                                                </button>
+                                              </div>
                                             </td>
                                           </tr>
                                         ))}
@@ -921,6 +999,90 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
             <button onClick={() => setShowNewItemModal(false)} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
             <button onClick={handleSaveItem} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Guardar Ítem</button>
+          </div>
+        </div>
+      </ModalPortal>
+
+      {/* Modal Editar Ítem */}
+      <ModalPortal
+        isOpen={showEditItemModal}
+        onClose={() => { setShowEditItemModal(false); setEditingItem(null); }}
+        maxWidth="max-w-lg"
+      >
+        <div className="p-6 space-y-4">
+          <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <Pencil size={18} className="text-amber-600" />
+            Editar Ítem de Obra
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Código Ítem (ej. 2 o AG-03)</label>
+              <input
+                value={itemForm.codigo_item}
+                onChange={e => setItemForm({ ...itemForm, codigo_item: e.target.value })}
+                placeholder="AG-03"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Unidad Física</label>
+              <select
+                value={itemForm.unidad}
+                onChange={e => setItemForm({ ...itemForm, unidad: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm bg-white"
+              >
+                <option value="ml">ml (metros lineales)</option>
+                <option value="m3">m³ (metros cúbicos)</option>
+                <option value="un">un (unidades)</option>
+                <option value="gl">gl (global)</option>
+                <option value="m2">m² (metros cuadrados)</option>
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Descripción Contractual</label>
+              <input
+                value={itemForm.descripcion}
+                onChange={e => setItemForm({ ...itemForm, descripcion: e.target.value })}
+                placeholder="Descripción del ítem"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Cantidad Contractual Total</label>
+              <input
+                type="number"
+                value={itemForm.cantidad_contractual || ''}
+                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: Number(e.target.value) })}
+                placeholder="4200"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Precio Unitario s/IVA ($)</label>
+              <input
+                type="number"
+                value={itemForm.precio_unitario_ars || ''}
+                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: Number(e.target.value) })}
+                placeholder="3683.59"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">Rendimiento Base/Día</label>
+              <input
+                type="number"
+                value={itemForm.rendimiento_base_dia || ''}
+                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: Number(e.target.value) })}
+                placeholder="70"
+                className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={() => { setShowEditItemModal(false); setEditingItem(null); }} className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer">Cancelar</button>
+            <button onClick={handleSaveEditItem} disabled={updateItem.isPending} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5">
+              {updateItem.isPending ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
           </div>
         </div>
       </ModalPortal>
