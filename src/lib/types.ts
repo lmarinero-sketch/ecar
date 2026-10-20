@@ -1642,6 +1642,8 @@ export type FuelBatanMovement = {
   project_name: string | null;
   balance_after: number | null;
   movement_status: 'available' | 'used' | 'reconciled';
+  reference_load?: string | null;
+  unit_price?: number | null;
   observations: string | null;
   created_at: string;
 };
