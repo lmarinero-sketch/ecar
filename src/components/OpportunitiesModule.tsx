@@ -236,23 +236,29 @@ export const OpportunitiesModule: React.FC = () => {
         const newOpp = await createOpp.mutateAsync({ ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
         if (pendingFiles.length > 0 && newOpp) {
           for (const pf of pendingFiles) {
-            await uploadFile.mutateAsync({
-              opportunityId: newOpp.id,
-              file: pf.file,
-              title: pf.title,
-              category: pf.category,
-              observations: pf.observations,
-              uploadedBy: 'Colaborador'
-            });
+            try {
+              await uploadFile.mutateAsync({
+                opportunityId: newOpp.id,
+                file: pf.file,
+                title: pf.title,
+                category: pf.category,
+                observations: pf.observations,
+                uploadedBy: 'Colaborador'
+              });
+            } catch (fileErr) {
+              console.error('Error subiendo archivo adjunto pendiente:', fileErr);
+            }
           }
         }
       }
       setShowForm(false);
       setSelectedOpp(null);
       resetForm();
+      setPendingFiles([]);
       setActiveTab('general');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      useModalStore.getState().showAlert('Error al guardar', err?.message || 'No se pudo guardar la oportunidad.');
     }
   };
 
@@ -863,7 +869,13 @@ export const OpportunitiesModule: React.FC = () => {
                 <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><Upload size={16} /> Subir Nuevo Archivo</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                   <div className="col-span-2">
-                    <input type="text" placeholder="Título del archivo" value={fileForm.title} onChange={e => setFileForm({...fileForm, title: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30" />
+                    <input 
+                      type="text" 
+                      placeholder="Título del archivo (opcional, se auto-completa)" 
+                      value={fileForm.title} 
+                      onChange={e => setFileForm({...fileForm, title: e.target.value})} 
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30" 
+                    />
                   </div>
                   <div>
                     <select value={fileForm.category} onChange={e => setFileForm({...fileForm, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30">
@@ -876,29 +888,66 @@ export const OpportunitiesModule: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <input type="file" onChange={e => setFileForm({...fileForm, file: e.target.files?.[0] || null})} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-50 file:text-ecar-blue hover:file:bg-ecar-blueLight" />
+                    <input 
+                      type="file" 
+                      onChange={e => {
+                        const f = e.target.files?.[0] || null;
+                        if (f) {
+                          setFileForm(prev => ({
+                            ...prev,
+                            file: f,
+                            title: prev.title.trim() ? prev.title : f.name.replace(/\.[^/.]+$/, ''),
+                          }));
+                        } else {
+                          setFileForm(prev => ({ ...prev, file: null }));
+                        }
+                      }} 
+                      className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-ecar-blue hover:file:bg-ecar-blueLight cursor-pointer" 
+                    />
                   </div>
                 </div>
+
+                {fileForm.file && (
+                  <div className="mb-3 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex items-center justify-between animate-fade-in">
+                    <span className="truncate">📎 Archivo seleccionado: <strong>{fileForm.file.name}</strong> ({(fileForm.file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                    <span className="text-[11px] font-semibold text-blue-800 shrink-0 ml-2">Click en "Subir" para adjuntar</span>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <input type="text" placeholder="Observaciones (opcional)" value={fileForm.observations} onChange={e => setFileForm({...fileForm, observations: e.target.value})} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ecar-blue/30" />
-                  <button disabled={!fileForm.file || !fileForm.title || uploadFile.isPending}
+                  <button 
+                    disabled={!fileForm.file || uploadFile.isPending}
                     onClick={async () => {
-                      if (selectedOpp && fileForm.file) {
-                        await uploadFile.mutateAsync({
-                          opportunityId: selectedOpp.id,
-                          file: fileForm.file,
-                          title: fileForm.title,
-                          category: fileForm.category,
-                          observations: fileForm.observations,
-                          uploadedBy: 'Colaborador'
-                        });
-                        setFileForm({ title: '', category: 'adicional', observations: '', file: null });
-                        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                        if (fileInput) fileInput.value = '';
-                      } else if (!selectedOpp && fileForm.file) {
+                      if (!fileForm.file) {
+                        useModalStore.getState().showAlert('Atención', 'Por favor seleccioná un archivo de tu equipo antes de hacer clic en Subir.');
+                        return;
+                      }
+
+                      const finalTitle = fileForm.title.trim() || fileForm.file.name.replace(/\.[^/.]+$/, '') || fileForm.file.name;
+
+                      if (selectedOpp) {
+                        try {
+                          await uploadFile.mutateAsync({
+                            opportunityId: selectedOpp.id,
+                            file: fileForm.file,
+                            title: finalTitle,
+                            category: fileForm.category,
+                            observations: fileForm.observations,
+                            uploadedBy: 'Colaborador'
+                          });
+                          setFileForm({ title: '', category: 'adicional', observations: '', file: null });
+                          const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                          if (fileInput) fileInput.value = '';
+                          useModalStore.getState().showAlert('Éxito', `Archivo "${finalTitle}" subido correctamente.`);
+                        } catch (err: any) {
+                          console.error('Error al subir archivo:', err);
+                          useModalStore.getState().showAlert('Error al subir', err?.message || 'No se pudo subir el archivo.');
+                        }
+                      } else {
                         setPendingFiles(prev => [...prev, {
                           id: Math.random().toString(36).substring(7),
-                          title: fileForm.title,
+                          title: finalTitle,
                           category: fileForm.category,
                           observations: fileForm.observations,
                           file: fileForm.file!
@@ -908,7 +957,7 @@ export const OpportunitiesModule: React.FC = () => {
                         if (fileInput) fileInput.value = '';
                       }
                     }}
-                    className="btn-primary">
+                    className={`btn-primary flex items-center gap-1.5 ${!fileForm.file ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     {uploadFile.isPending ? 'Subiendo...' : <><Upload size={16} /> Subir</>}
                   </button>
                 </div>
