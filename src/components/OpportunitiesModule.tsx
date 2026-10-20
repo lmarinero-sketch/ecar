@@ -12,7 +12,59 @@ import { ImageViewer } from './ImageViewer';
 import { supabase } from '../lib/supabase';
 import { useModalStore } from '../store/useModalStore';
 
-const fmt = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+const fmt = (n: number) => `$${(n || 0).toLocaleString('es-AR', { minimumFractionDigits: (n || 0) % 1 !== 0 ? 2 : 0, maximumFractionDigits: 2 })}`;
+
+const formatNumberToArsString = (val: number | string | undefined | null): string => {
+  if (val === undefined || val === null || val === '') return '';
+  const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+  if (isNaN(num)) return '';
+  return num.toLocaleString('es-AR', {
+    minimumFractionDigits: num % 1 !== 0 ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+};
+
+const parseAndFormatArsInput = (raw: string): { display: string; numeric: number | '' } => {
+  if (!raw || raw.trim() === '') {
+    return { display: '', numeric: '' };
+  }
+
+  // Si el usuario escribe punto al final (del teclado numérico), lo convertimos en coma decimal
+  let val = raw;
+  if (!val.includes(',') && val.endsWith('.')) {
+    val = val.slice(0, -1) + ',';
+  }
+
+  const hasComma = val.includes(',');
+  let intStr = '';
+  let decStr = '';
+
+  if (hasComma) {
+    const parts = val.split(',');
+    intStr = parts[0].replace(/\D/g, '');
+    decStr = parts.slice(1).join('').replace(/\D/g, '').slice(0, 2);
+  } else {
+    intStr = val.replace(/\D/g, '');
+  }
+
+  if (!intStr && !decStr) {
+    return { display: hasComma ? '0,' : '', numeric: '' };
+  }
+
+  const intNum = intStr ? parseInt(intStr, 10) : 0;
+  const formattedInt = intNum.toLocaleString('es-AR');
+
+  let display = formattedInt;
+  if (hasComma) {
+    display = `${formattedInt},${decStr}`;
+  }
+
+  const numeric = parseFloat(`${intNum}.${decStr || '0'}`);
+  return {
+    display,
+    numeric: isNaN(numeric) ? '' : numeric,
+  };
+};
 
 const STAGES: { id: OpportunityStage; label: string; color: string; bgColor: string }[] = [
   { id: 'oportunidad', label: 'Oportunidad', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
@@ -98,6 +150,7 @@ export const OpportunitiesModule: React.FC = () => {
   const [draggedOppId, setDraggedOppId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<{ id: string; title: string; category: string; observations: string; file: File }[]>([]);
+  const [amountInput, setAmountInput] = useState<string>('');
   const [form, setForm] = useState({
     client_name: '',
     client_contact: '',
@@ -230,10 +283,14 @@ export const OpportunitiesModule: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      const finalAmount = typeof form.estimated_amount === 'number'
+        ? form.estimated_amount
+        : (amountInput ? parseFloat(amountInput.replace(/\./g, '').replace(',', '.')) || 0 : 0);
+
       if (selectedOpp) {
-        await updateOpp.mutateAsync({ id: selectedOpp.id, ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
+        await updateOpp.mutateAsync({ id: selectedOpp.id, ...form, estimated_amount: finalAmount, project_id: form.project_id || null });
       } else {
-        const newOpp = await createOpp.mutateAsync({ ...form, estimated_amount: Number(form.estimated_amount) || 0, project_id: form.project_id || null });
+        const newOpp = await createOpp.mutateAsync({ ...form, estimated_amount: finalAmount, project_id: form.project_id || null });
         if (pendingFiles.length > 0 && newOpp) {
           for (const pf of pendingFiles) {
             try {
@@ -282,6 +339,7 @@ export const OpportunitiesModule: React.FC = () => {
       location: '', estimated_deadline: '', assumptions: '', exclusions: '', project_id: '',
       documentation_checklist: { ...emptyChecklist },
     });
+    setAmountInput('');
     setPendingFiles([]);
     setFileForm({ title: '', category: 'adicional', observations: '', file: null });
   };
@@ -289,6 +347,7 @@ export const OpportunitiesModule: React.FC = () => {
   const openEdit = (opp: Opportunity) => {
     setSelectedOpp(opp);
     setActiveTab('general');
+    setAmountInput(formatNumberToArsString(opp.estimated_amount));
     setForm({
       client_name: opp.client_name,
       client_contact: opp.client_contact || '',
@@ -730,13 +789,17 @@ export const OpportunitiesModule: React.FC = () => {
                         <span className="block text-xs font-bold text-gray-600">Monto Estimado ($)</span>
                         <span className="block text-[10px] text-gray-400 font-normal mt-0.5">(Valor aproximado sin IVA)</span>
                       </label>
-                      <input type="text"
-                        value={form.estimated_amount === '' ? '' : Number(form.estimated_amount).toLocaleString('es-AR')}
+                      <input 
+                        type="text"
+                        value={amountInput}
                         onChange={e => {
-                          const val = e.target.value.replace(/\D/g, '');
-                          setForm({ ...form, estimated_amount: val === '' ? '' : Number(val) });
+                          const { display, numeric } = parseAndFormatArsInput(e.target.value);
+                          setAmountInput(display);
+                          setForm(prev => ({ ...prev, estimated_amount: numeric }));
                         }}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30" placeholder="0" />
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 font-mono" 
+                        placeholder="0,00" 
+                      />
                     </div>
                     <div>
                       <label className="block mb-1">
