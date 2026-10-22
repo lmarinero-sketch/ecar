@@ -421,7 +421,9 @@ export const FuelRequestPage: React.FC = () => {
         }
       }
 
-      const isFillingBatan = activeRequest.vehicle_code?.startsWith('BT-');
+      // Solo el Batán de 200 L de Gasoil (BT-001) ingresa stock al Batán móvil.
+      // BT-002 (BATAN NAFTA) es para compras de nafta para herramientas menores y NO debe sumar al Batán 200L.
+      const isFillingBatan = activeRequest.vehicle_code === 'BT-001';
       if (isFillingBatan && !isBatan) {
         // Check if an ingreso was already registered for this load number
         const { data: existingIngreso } = await supabase.from('fuel_batan_movements')

@@ -97,9 +97,9 @@ export const FuelModule: React.FC = () => {
     });
   }, [loads, periodMode, currentYear, currentMonth, lastMonthYear, lastMonthName, getLoadPeriod]);
 
-  // Breakdown of loads in the selected period
-  const fleetLoads = useMemo(() => periodLoads.filter(l => !l.vehicle_code?.startsWith('BT-')), [periodLoads]);
-  const batanFills = useMemo(() => periodLoads.filter(l => l.vehicle_code?.startsWith('BT-')), [periodLoads]);
+  // Breakdown of loads in the selected period (BT-001 is the 200L diesel cistern; BT-002 is nafta for small tools)
+  const fleetLoads = useMemo(() => periodLoads.filter(l => l.vehicle_code !== 'BT-001'), [periodLoads]);
+  const batanFills = useMemo(() => periodLoads.filter(l => l.vehicle_code === 'BT-001'), [periodLoads]);
 
   // Liters
   const totalFleetLiters = fleetLoads.reduce((s, l) => s + (l.liters || 0), 0);
@@ -390,12 +390,11 @@ const LoadsTab: React.FC<{
 
   const isFormBatan = form.fuel_source === 'batan' || form.supplier === 'Batán Interno' || form.station_name === 'Batán Interno';
   
-  // Detención de destino Batán (Llenado del tanque nominal de 200 L)
+  // Detección de destino Batán (Llenado del tanque nominal de 200 L de gasoil BT-001)
+  // IMPORTANTE: BT-002 (BATAN NAFTA) es para compra de nafta para maquinaria chica y NO debe sumar ni restar en Batán 200L.
   const isBatanDest = Boolean(
     form.vehicle_code === 'BT-001' || 
-    form.vehicle_code?.toUpperCase().startsWith('BT-') ||
-    form.vehicle_description?.toLowerCase().includes('batán') ||
-    form.vehicle_description?.toLowerCase().includes('batan')
+    (form.vehicle_code?.toUpperCase().startsWith('BT-') && form.vehicle_code !== 'BT-002' && !form.vehicle_description?.toLowerCase().includes('nafta') && !form.fuel_type?.toLowerCase().includes('nafta'))
   );
 
   const currentBatanLiters = batanBalance;
@@ -588,10 +587,10 @@ const LoadsTab: React.FC<{
         fuel_type: editForm.fuel_type
       });
 
-      // Sincronizar automáticamente en fuel_batan_movements si la carga corresponde a Batán
-      if (l && (l.vehicle_code?.startsWith('BT-') || l.load_source === 'batan')) {
+      // Sincronizar automáticamente en fuel_batan_movements si la carga corresponde a Batán 200L
+      if (l && (l.vehicle_code === 'BT-001' || l.load_source === 'batan')) {
         const { supabase } = await import('../lib/supabase');
-        if (l.vehicle_code?.startsWith('BT-')) {
+        if (l.vehicle_code === 'BT-001') {
           await supabase.from('fuel_batan_movements')
             .update({
               liters_loaded: editForm.liters,
@@ -1205,8 +1204,8 @@ const LoadsTab: React.FC<{
                             if (await useModalStore.getState().showConfirm('Confirmar Eliminación', `¿Seguro que deseás borrar la carga realizada ${l.load_number} (${l.liters} L)?`)) {
                               try {
                                 await deleteLoad.mutateAsync(l.id);
-                                // Delete corresponding batan movement if this load came from or filled batan!
-                                if (l.load_source === 'batan' || l.vehicle_code?.startsWith('BT-')) {
+                                // Delete corresponding batan movement if this load came from or filled batan 200L!
+                                if (l.load_source === 'batan' || l.vehicle_code === 'BT-001') {
                                   const { supabase } = await import('../lib/supabase');
                                   await supabase.from('fuel_batan_movements')
                                     .delete()
@@ -2258,7 +2257,10 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
   const handleComplete = async () => {
     const isBatan = completeForm.fuel_source === 'batan';
     const loadObj = loads.find(x => x.id === completingId);
-    const isFillingBatan = loadObj?.vehicle_code?.startsWith('BT-');
+    const isFillingBatan = Boolean(
+      loadObj?.vehicle_code === 'BT-001' || 
+      (loadObj?.vehicle_code?.startsWith('BT-') && loadObj?.vehicle_code !== 'BT-002' && !loadObj?.vehicle_description?.toLowerCase().includes('nafta') && !completeForm.fuel_type?.toLowerCase().includes('nafta'))
+    );
     
     let ticketUrl = undefined;
     if (ticketFile) {
@@ -2786,9 +2788,9 @@ const FleetDashboardTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; 
   
   const completedLoads = useMemo(() => loads.filter(l => l.workflow_status === 'completed' || !l.workflow_status), [loads]);
 
-  // Precio de referencia de reposición de combustible Batán (promedio ponderado compras BT-* o $2.470/L)
+  // Precio de referencia de reposición de combustible Batán (promedio ponderado compras BT-001 o $2.470/L)
   const batanReferencePrice = useMemo(() => {
-    const batanPurchases = loads.filter(l => l.vehicle_code?.startsWith('BT-') && (l.total_amount || 0) > 0 && (l.liters || 0) > 0);
+    const batanPurchases = loads.filter(l => l.vehicle_code === 'BT-001' && (l.total_amount || 0) > 0 && (l.liters || 0) > 0);
     if (batanPurchases.length === 0) return 2470;
     const totL = batanPurchases.reduce((s, p) => s + (p.liters || 0), 0);
     const totA = batanPurchases.reduce((s, p) => s + (p.total_amount || 0), 0);
