@@ -88,7 +88,9 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
     await createParteItem.mutateAsync({
       project_id: projectId,
       odt_id: activeOdt.id,
-      tramo_item_id: activeOdt.tramo_item_id,
+      item_id: activeOdt.item_id,
+      tramo_item_id: activeOdt.tramo_item_id || null,
+      tramo_id: activeOdt.tramo_id || null,
       fecha: selectedFecha,
       cantidad_real: real,
       unidad: activeOdt.unidad,
@@ -212,9 +214,16 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                       <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-mono font-bold text-xs">
                         {odt.numero_odt}
                       </span>
-                      <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                        Tramo {odt.tramo?.codigo}
-                      </span>
+                      {odt.item?.codigo_item && (
+                        <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                          WBS {odt.item.codigo_item}
+                        </span>
+                      )}
+                      {odt.tramo?.codigo && (
+                        <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                          Tramo {odt.tramo.codigo}
+                        </span>
+                      )}
                     </div>
 
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -225,12 +234,18 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                   </div>
 
                   <h4 className="font-bold text-slate-900 text-base mb-1">
-                    {odt.item?.descripcion}
+                    {odt.item?.descripcion || 'Actividad Contractual'}
                   </h4>
-                  <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
-                    <MapPin size={12} className="text-slate-400" />
-                    {odt.tramo?.calle_pasaje || 'Sin calle'} — Ø{odt.tramo?.diametro_mm}mm
-                  </p>
+                  {odt.tramo?.calle_pasaje ? (
+                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
+                      <MapPin size={12} className="text-slate-400" />
+                      {odt.tramo.calle_pasaje} — Ø{odt.tramo.diametro_mm}mm
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-400 mb-3">
+                      Actividad WBS programada para jornada diaria
+                    </p>
+                  )}
 
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 grid grid-cols-2 gap-2 text-xs mb-4">
                     <div>

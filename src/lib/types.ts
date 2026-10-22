@@ -2290,8 +2290,8 @@ export type ObraOrdenTrabajo = {
   project_id: string;
   numero_odt: string;
   fecha: string;
-  tramo_item_id: string;
-  tramo_id: string;
+  tramo_item_id?: string | null;
+  tramo_id?: string | null;
   item_id: string;
   meta_cantidad: number;
   unidad: string;
@@ -2316,7 +2316,9 @@ export type ObraParteDiarioItem = {
   tenant_id?: string;
   project_id: string;
   odt_id?: string | null;
-  tramo_item_id: string;
+  tramo_item_id?: string | null;
+  item_id?: string | null;
+  tramo_id?: string | null;
   fecha: string;
   cantidad_real: number;
   unidad: string;

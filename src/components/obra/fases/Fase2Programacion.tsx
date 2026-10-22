@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Calendar, MapPin, Send, CheckCircle2, Clock, Filter, FileText,
-  Truck, Wrench, Users, Package, Plus, X
+  Calendar, Send, CheckCircle2, Clock, Filter, FileText,
+  Truck, Wrench, Users, Package, Plus, Search,
+  FolderTree
 } from 'lucide-react';
 import {
-  useObraTramos,
-  useObraTramoItems,
+  useObraRubros,
+  useObraItems,
   useObraOrdenesTrabajo,
-  useCreateObraOrdenTrabajo
+  useCreateObraOrdenTrabajo,
+  useObraParteDiarioItems
 } from '../../../hooks/useNuevoModuloObra';
 import { useEmployees, useFuelVehicles } from '../../../hooks/useData';
-import type { ObraTramoItem } from '../../../lib/types';
+import type { ObraItem } from '../../../lib/types';
 import { ModalPortal } from '../../common/ModalPortal';
 
 interface Fase2ProgramacionProps {
@@ -21,17 +23,18 @@ interface Fase2ProgramacionProps {
 export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
   projectId
 }) => {
-  const { data: tramos = [] } = useObraTramos(projectId);
-  const [selectedTramoId, setSelectedTramoId] = useState<string>('');
-
-  const { data: tramoItems = [] } = useObraTramoItems(projectId, selectedTramoId || undefined);
+  const { data: rubros = [] } = useObraRubros(projectId);
+  const { data: items = [], isLoading: loadingItems } = useObraItems(projectId);
   const { data: odts = [] } = useObraOrdenesTrabajo(projectId);
+  const { data: partes = [] } = useObraParteDiarioItems(projectId);
   const { data: employees = [] } = useEmployees();
   const { data: fuelVehicles = [] } = useFuelVehicles();
   const createOdt = useCreateObraOrdenTrabajo();
 
+  const [selectedRubroId, setSelectedRubroId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeSubTab, setActiveSubTab] = useState<'para_programar' | 'odts'>('para_programar');
-  const [selectedTramoItem, setSelectedTramoItem] = useState<ObraTramoItem | null>(null);
+  const [selectedWbsItem, setSelectedWbsItem] = useState<(ObraItem & { saldo: number; contractual: number; programadoOdt: number; ejecutadoReal: number; rubroNombre: string }) | null>(null);
 
   // Estados de Checklist de Recursos Operativos
   const [resourceTab, setResourceTab] = useState<'maquinaria' | 'personal' | 'herramientas' | 'materiales'>('maquinaria');
@@ -81,24 +84,62 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     materiales_requeridos: '',
     inicio_plan: '07:30',
     fin_plan: '16:00',
-    instrucciones_calidad: 'Verificar nivelación y ancho de zanja antes de compactar.'
+    instrucciones_calidad: 'Verificar alineación, cotas de nivel y normas de seguridad laboral.'
   });
 
-  // Filtrar ítems para la bandeja "Para Programar"
+  // Mapa de ítems procesados desde WBS
   const paraProgramarItems = useMemo(() => {
-    return tramoItems.filter(ti => {
-      const saldo = Number(ti.cantidad_prevista || 0) - Number(ti.cantidad_ejecutada || 0);
-      return saldo > 0 && ti.estado !== 'bloqueada';
+    const subrubroToRubro = new Map<string, string>();
+    rubros.forEach(r => {
+      r.subrubros?.forEach((sr: any) => {
+        subrubroToRubro.set(sr.id, r.nombre);
+      });
     });
-  }, [tramoItems]);
 
-  const handleOpenProgramar = (ti: ObraTramoItem) => {
-    setSelectedTramoItem(ti);
-    const saldo = Math.max(0, Number(ti.cantidad_prevista || 0) - Number(ti.cantidad_ejecutada || 0));
-    const rendimiento = Number(ti.item?.rendimiento_base_dia) || 70;
-    const metaSugerida = Math.min(saldo, rendimiento);
+    return items
+      .map(item => {
+        const contractual = Number(item.cantidad_contractual) || 0;
+        const programadoOdt = odts
+          .filter(o => o.item_id === item.id && o.estado !== 'anulada')
+          .reduce((acc, o) => acc + Number(o.meta_cantidad || 0), 0);
+        const ejecutadoReal = partes
+          .filter(p => p.item_id === item.id || (p.odt?.item_id === item.id))
+          .reduce((acc, p) => acc + Number(p.cantidad_real || 0), 0);
 
-    // Inicializar checklist predeterminado
+        const saldo = Math.max(0, contractual - programadoOdt);
+        const rubroNombre = subrubroToRubro.get(item.subrubro_id) || 'Rubro General';
+
+        return {
+          ...item,
+          contractual,
+          programadoOdt,
+          ejecutadoReal,
+          saldo,
+          rubroNombre
+        };
+      })
+      .filter(item => {
+        if (selectedRubroId) {
+          const rubro = rubros.find(r => r.id === selectedRubroId);
+          const subIds = rubro?.subrubros?.map((s: any) => s.id) || [];
+          if (!subIds.includes(item.subrubro_id)) return false;
+        }
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchCode = item.codigo_item?.toLowerCase().includes(q);
+          const matchDesc = item.descripcion?.toLowerCase().includes(q);
+          if (!matchCode && !matchDesc) return false;
+        }
+        return true;
+      });
+  }, [items, rubros, odts, partes, selectedRubroId, searchQuery]);
+
+  const handleOpenProgramar = (item: any) => {
+    setSelectedWbsItem(item);
+    const rend = Number(item.rendimiento_base_dia) || 70;
+    const metaSugerida = item.saldo > 0 ? Math.min(item.saldo, rend) : rend;
+
+    // Inicializar checklist
     setSelectedVehicles(['Retropala HMK 102B (HMK-01)']);
     setSelectedPersonnel(employees.slice(0, 3).map(e => e.full_name));
     setSelectedTools(['Conos y vallas de seguridad vial', 'Nivel óptico / Láser topográfico']);
@@ -111,10 +152,10 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       cuadrilla_nombre: 'Cuadrilla 1 - B. Guevara',
       responsable_id: employees[0]?.id || '',
       equipo_asignado: 'Retropala HMK',
-      materiales_requeridos: 'Cañería, arena de asiento y cinta de señalización',
+      materiales_requeridos: 'Materiales base según especificación técnica del ítem',
       inicio_plan: '07:30',
       fin_plan: '16:00',
-      instrucciones_calidad: 'Cumplir cota de proyecto y señalización de seguridad.'
+      instrucciones_calidad: 'Cumplir cotas de proyecto, alineación y normas de seguridad en obra.'
     });
   };
 
@@ -145,7 +186,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
   };
 
   const handleEmitirOdt = async () => {
-    if (!selectedTramoItem) return;
+    if (!selectedWbsItem) return;
     const nextNum = `ODT-${String(odts.length + 1).padStart(3, '0')}`;
     const respEmp = employees.find(e => e.id === odtForm.responsable_id);
 
@@ -163,11 +204,9 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       project_id: projectId,
       numero_odt: nextNum,
       fecha: odtForm.fecha,
-      tramo_item_id: selectedTramoItem.id,
-      tramo_id: selectedTramoItem.tramo_id,
-      item_id: selectedTramoItem.item_id,
+      item_id: selectedWbsItem.id,
       meta_cantidad: Number(odtForm.meta_cantidad),
-      unidad: selectedTramoItem.item?.unidad || 'ml',
+      unidad: selectedWbsItem.unidad || 'ml',
       cuadrilla_nombre: cuadrillaConsolidada,
       responsable_id: odtForm.responsable_id || null,
       responsable_nombre: respEmp?.full_name || 'B. Guevara',
@@ -179,7 +218,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       estado: 'emitida'
     });
 
-    setSelectedTramoItem(null);
+    setSelectedWbsItem(null);
     setActiveSubTab('odts');
   };
 
@@ -196,40 +235,53 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
           </div>
           <h2 className="text-2xl font-bold">Programación Operativa — Órdenes de Trabajo (ODT)</h2>
           <p className="text-amber-100 text-sm mt-1 max-w-2xl">
-            <strong>Bloqueo estricto:</strong> En esta vista no se pueden crear rubros ni alterar cómputos. Seleccione un nodo o tramo para ver las actividades habilitadas con saldo y emitir la ODT diaria.
+            Toma las actividades contractuales de la <strong>Estructura WBS</strong> y programa las Órdenes de Trabajo diarias asignando metas, cuadrilla, maquinaria y herramientas.
           </p>
         </div>
       </div>
 
-      {/* Selector de Tramo Topológico */}
+      {/* Barra de Filtros y Búsqueda WBS */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <MapPin size={20} className="text-amber-600 shrink-0" />
+          <FolderTree size={20} className="text-amber-600 shrink-0" />
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Filtrar por Nodo / Tramo de Obra</label>
-            <span className="text-xs text-slate-400">Selecciona el tramo para filtrar la bandeja de tareas pendientes</span>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Filtrar Actividades WBS</label>
+            <span className="text-xs text-slate-400">Seleccioná un rubro o buscá por código/actividad para programar</span>
           </div>
         </div>
 
-        <select
-          value={selectedTramoId}
-          onChange={e => setSelectedTramoId(e.target.value)}
-          className="px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 min-w-[280px]"
-        >
-          <option value="">-- Todos los tramos ({tramos.length}) --</option>
-          {tramos.map(t => (
-            <option key={t.id} value={t.id}>
-              {t.codigo} — {t.calle_pasaje || 'Sin calle'} ({t.longitud_m}m)
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-2xl justify-end">
+          <select
+            value={selectedRubroId}
+            onChange={e => setSelectedRubroId(e.target.value)}
+            className="px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          >
+            <option value="">-- Todos los Rubros ({rubros.length}) --</option>
+            {rubros.map(r => (
+              <option key={r.id} value={r.id}>
+                {r.codigo} — {r.nombre}
+              </option>
+            ))}
+          </select>
+
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Buscar por código o descripción..."
+              className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Navegación interna de Fase 2 */}
       <div className="flex border-b border-slate-200 gap-6 text-sm font-semibold">
         <button
           onClick={() => setActiveSubTab('para_programar')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
             activeSubTab === 'para_programar'
               ? 'border-amber-600 text-amber-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -241,7 +293,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
 
         <button
           onClick={() => setActiveSubTab('odts')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
             activeSubTab === 'odts'
               ? 'border-amber-600 text-amber-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -252,60 +304,66 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
         </button>
       </div>
 
-      {/* SUBTAB 1: BANDEJA PARA PROGRAMAR */}
+      {/* SUBTAB 1: BANDEJA PARA PROGRAMAR DESDE WBS */}
       {activeSubTab === 'para_programar' && (
         <div className="space-y-4">
-          {paraProgramarItems.length === 0 ? (
+          {loadingItems ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
+              <div className="w-8 h-8 border-3 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-slate-500">Cargando actividades de la estructura WBS...</p>
+            </div>
+          ) : paraProgramarItems.length === 0 ? (
             <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
               <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-3" />
-              <h4 className="font-bold text-slate-700">No hay tareas pendientes en este tramo</h4>
+              <h4 className="font-bold text-slate-700">No se encontraron actividades</h4>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                {selectedTramoId
-                  ? 'Todas las actividades planificadas para este tramo ya están programadas o completadas.'
-                  : 'Selecciona un tramo específico o carga la planificación en la Fase 1.'}
+                {items.length === 0
+                  ? 'Primero debes cargar o importar Rubros e Ítems en la Fase 1 (Planificación).'
+                  : 'No hay actividades que coincidan con los filtros seleccionados.'}
               </p>
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-xs text-slate-500">
-                <span>Mostrando actividades con <strong>Saldo &gt; 0</strong> listas para programar cuadrilla y maquinaria</span>
-                <span className="font-bold text-slate-700">{paraProgramarItems.length} ítems disponibles</span>
+                <span>Actividades contractuales de la WBS disponibles para programar en ODTs</span>
+                <span className="font-bold text-slate-700">{paraProgramarItems.length} actividades disponibles</span>
               </div>
 
               <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10 border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-3">Tramo</th>
-                      <th className="py-2.5 px-3">Código</th>
+                      <th className="py-2.5 px-3">Código WBS</th>
+                      <th className="py-2.5 px-3">Rubro</th>
                       <th className="py-2.5 px-3">Actividad Contractual</th>
                       <th className="py-2.5 px-3 text-center">Unidad</th>
-                      <th className="py-2.5 px-3 text-right">Cómputo Tramo</th>
-                      <th className="py-2.5 px-3 text-right">Saldo a Ejecutar</th>
-                      <th className="py-2.5 px-3 text-right">Rend. Sugerido/Día</th>
+                      <th className="py-2.5 px-3 text-right">Cómputo Total</th>
+                      <th className="py-2.5 px-3 text-right">Programado en ODTs</th>
+                      <th className="py-2.5 px-3 text-right">Saldo por Programar</th>
+                      <th className="py-2.5 px-3 text-right">Rend. Base/Día</th>
                       <th className="py-2.5 px-3 text-center">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {paraProgramarItems.map(ti => {
-                      const previsto = Number(ti.cantidad_prevista || 0);
-                      const ejecutado = Number(ti.cantidad_ejecutada || 0);
-                      const saldo = Math.max(0, previsto - ejecutado);
-                      const rend = Number(ti.item?.rendimiento_base_dia || 70);
+                    {paraProgramarItems.map(item => {
+                      const rend = Number(item.rendimiento_base_dia) || 70;
 
                       return (
-                        <tr key={ti.id} className="hover:bg-amber-50/40">
-                          <td className="py-2.5 px-3 font-mono font-bold text-blue-700">{ti.tramo?.codigo || '-'}</td>
-                          <td className="py-2.5 px-3 font-mono font-bold text-slate-700">{ti.item?.codigo_item || '-'}</td>
-                          <td className="py-2.5 px-3 font-medium text-slate-900">{ti.item?.descripcion || '-'}</td>
-                          <td className="py-2.5 px-3 text-center font-mono uppercase text-slate-500">{ti.item?.unidad || 'ml'}</td>
-                          <td className="py-2.5 px-3 text-right font-mono text-slate-600">{previsto}</td>
-                          <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-700">{saldo}</td>
+                        <tr key={item.id} className="hover:bg-amber-50/40">
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-700">{item.codigo_item || '-'}</td>
+                          <td className="py-2.5 px-3 text-slate-500 text-[11px] truncate max-w-[140px]">{item.rubroNombre}</td>
+                          <td className="py-2.5 px-3 font-medium text-slate-900">{item.descripcion || '-'}</td>
+                          <td className="py-2.5 px-3 text-center font-mono uppercase text-slate-500">{item.unidad || 'ml'}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-600 font-semibold">{item.contractual.toLocaleString('es-AR')}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-blue-600">{item.programadoOdt.toLocaleString('es-AR')}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-700">
+                            {item.saldo.toLocaleString('es-AR')}
+                          </td>
                           <td className="py-2.5 px-3 text-right font-mono text-slate-500">{rend}</td>
                           <td className="py-2.5 px-3 text-center">
                             <button
-                              onClick={() => handleOpenProgramar(ti)}
-                              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-sm"
+                              onClick={() => handleOpenProgramar(item)}
+                              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-sm cursor-pointer"
                             >
                               <Send size={12} />
                               Programar ODT
@@ -325,61 +383,73 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       {/* SUBTAB 2: LISTA DE ODTs EMITIDAS */}
       {activeSubTab === 'odts' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10 border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-3">N° ODT</th>
-                    <th className="py-2.5 px-3">Fecha Programada</th>
-                    <th className="py-2.5 px-3">Tramo</th>
-                    <th className="py-2.5 px-3">Actividad</th>
-                    <th className="py-2.5 px-3 text-right">Meta Planificada</th>
-                    <th className="py-2.5 px-3">Cuadrilla Asignada</th>
-                    <th className="py-2.5 px-3">Equipo Principal</th>
-                    <th className="py-2.5 px-3 text-center">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {odts.map(odt => (
-                    <tr key={odt.id} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-mono font-bold text-amber-700">{odt.numero_odt}</td>
-                      <td className="py-2.5 px-3 font-mono">{odt.fecha}</td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-blue-700">{odt.tramo?.codigo || '-'}</td>
-                      <td className="py-2.5 px-3 font-medium text-slate-800">{odt.item?.descripcion || '-'}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold">
-                        {odt.meta_cantidad} {odt.unidad}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-700">{odt.cuadrilla_nombre || '-'}</td>
-                      <td className="py-2.5 px-3 text-slate-600">{odt.equipo_asignado || '-'}</td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          odt.estado === 'cumplida' ? 'bg-emerald-100 text-emerald-700' :
-                          odt.estado === 'en_ejecucion' ? 'bg-blue-100 text-blue-700' :
-                          odt.estado === 'emitida' ? 'bg-amber-100 text-amber-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>
-                          {odt.estado.toUpperCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {odts.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+              <FileText size={40} className="mx-auto text-slate-300 mb-3" />
+              <h4 className="font-bold text-slate-700">No hay órdenes de trabajo emitidas aún</h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                Selecciona una actividad de la bandeja "Para Programar" para emitir la primera ODT diaria de la obra.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10 border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-3">N° ODT</th>
+                      <th className="py-2.5 px-3">Fecha</th>
+                      <th className="py-2.5 px-3">Código WBS</th>
+                      <th className="py-2.5 px-3">Actividad Contractual</th>
+                      <th className="py-2.5 px-3 text-right">Meta Asignada</th>
+                      <th className="py-2.5 px-3">Cuadrilla Asignada</th>
+                      <th className="py-2.5 px-3">Equipos / Flota</th>
+                      <th className="py-2.5 px-3 text-center">Horario</th>
+                      <th className="py-2.5 px-3 text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {odts.map(odt => (
+                      <tr key={odt.id} className="hover:bg-slate-50">
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-700">{odt.numero_odt}</td>
+                        <td className="py-2.5 px-3 font-mono">{odt.fecha}</td>
+                        <td className="py-2.5 px-3 font-mono font-semibold text-slate-600">{odt.item?.codigo_item || '-'}</td>
+                        <td className="py-2.5 px-3 font-medium text-slate-800">{odt.item?.descripcion || '-'}</td>
+                        <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-800">
+                          {Number(odt.meta_cantidad || 0).toLocaleString('es-AR')} {odt.unidad}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-700 truncate max-w-xs">{odt.cuadrilla_nombre || '-'}</td>
+                        <td className="py-2.5 px-3 text-slate-600 truncate max-w-xs">{odt.equipo_asignado || '-'}</td>
+                        <td className="py-2.5 px-3 text-center font-mono text-slate-500">{odt.inicio_plan} - {odt.fin_plan}</td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            odt.estado === 'cumplida' ? 'bg-emerald-100 text-emerald-700' :
+                            odt.estado === 'en_ejecucion' ? 'bg-blue-100 text-blue-700' :
+                            odt.estado === 'emitida' ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {odt.estado.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Modal Programar y Emitir ODT con Checklist de Recursos */}
       <ModalPortal
-        isOpen={Boolean(selectedTramoItem)}
-        onClose={() => setSelectedTramoItem(null)}
+        isOpen={Boolean(selectedWbsItem)}
+        onClose={() => setSelectedWbsItem(null)}
         maxWidth="max-w-2xl"
       >
-        {selectedTramoItem && (() => {
-          const saldoTramo = Math.max(0, Number(selectedTramoItem.cantidad_prevista || 0) - Number(selectedTramoItem.cantidad_ejecutada || 0));
-          const rendimientoSugerido = Number(selectedTramoItem.item?.rendimiento_base_dia || 70);
+        {selectedWbsItem && (() => {
+          const saldoItem = selectedWbsItem.saldo;
+          const rendSugerido = Number(selectedWbsItem.rendimiento_base_dia) || 70;
 
           return (
             <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
@@ -390,16 +460,16 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     Emisión & Despacho de Orden de Trabajo
                   </span>
                   <h3 className="font-bold text-lg text-slate-900 mt-0.5">
-                    {selectedTramoItem.item?.descripcion}
+                    {selectedWbsItem.codigo_item} — {selectedWbsItem.descripcion}
                   </h3>
-                  <p className="text-xs text-slate-500 font-mono">
-                    Tramo: {selectedTramoItem.tramo?.codigo} ({selectedTramoItem.tramo?.calle_pasaje || 'Sin calle'}) | Longitud: {selectedTramoItem.tramo?.longitud_m || 0}m
+                  <p className="text-xs text-slate-500">
+                    Rubro: <strong className="text-slate-700">{selectedWbsItem.rubroNombre}</strong> | Cómputo Total: <span className="font-mono">{selectedWbsItem.contractual} {selectedWbsItem.unidad}</span>
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo Pendiente</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo por Programar</span>
                   <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-mono font-bold">
-                    {saldoTramo} {selectedTramoItem.item?.unidad}
+                    {saldoItem.toLocaleString('es-AR')} {selectedWbsItem.unidad}
                   </span>
                 </div>
               </div>
@@ -419,20 +489,19 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="font-semibold text-slate-600">
-                      Meta Física ({selectedTramoItem.item?.unidad})
+                      Meta Física ({selectedWbsItem.unidad})
                     </label>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      Máx: {saldoTramo} {selectedTramoItem.item?.unidad}
+                      Saldo: {saldoItem} {selectedWbsItem.unidad}
                     </span>
                   </div>
                   <input
                     type="number"
                     min={1}
-                    max={saldoTramo}
                     value={odtForm.meta_cantidad || ''}
                     onChange={e => {
                       const val = Number(e.target.value);
-                      setOdtForm({ ...odtForm, meta_cantidad: Math.min(saldoTramo, Math.max(0, val)) });
+                      setOdtForm({ ...odtForm, meta_cantidad: Math.max(0, val) });
                     }}
                     className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold text-amber-700 bg-white"
                   />
@@ -440,18 +509,20 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                   <div className="flex gap-1.5 mt-1.5">
                     <button
                       type="button"
-                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: Math.min(saldoTramo, rendimientoSugerido) })}
+                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido })}
                       className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100/70 text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer"
                     >
-                      Rendimiento Diario ({Math.min(saldoTramo, rendimientoSugerido)})
+                      Rendimiento Diario ({saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido})
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoTramo })}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer"
-                    >
-                      Saldo Total ({saldoTramo})
-                    </button>
+                    {saldoItem > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoItem })}
+                        className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer"
+                      >
+                        Saldo Total ({saldoItem})
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -549,35 +620,34 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                   </button>
                 </div>
 
-                {/* Contenido según pestaña de recursos activa */}
-                <div className="p-4">
-                  {/* Pestaña 1: Maquinarias y Movilidades */}
+                {/* Contenido de la pestaña activa de recursos */}
+                <div className="p-3">
+                  {/* Pestaña 1: Maquinaria */}
                   {resourceTab === 'maquinaria' && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-slate-600">Marque las maquinarias y vehículos asignados a esta jornada:</span>
-                        <span className="text-slate-400 text-[11px]">{selectedVehicles.length} seleccionadas</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                        {availableVehicles.map(veh => {
-                          const isSelected = selectedVehicles.includes(veh);
+                    <div className="space-y-2">
+                      <span className="text-[11px] text-slate-500 block">
+                        Selecciona los vehículos, camiones o máquinas pesadas asignadas a esta orden:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                        {availableVehicles.map(v => {
+                          const isSel = selectedVehicles.includes(v);
                           return (
                             <label
-                              key={veh}
-                              onClick={() => toggleVehicle(veh)}
-                              className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'bg-amber-50/80 border-amber-400 text-amber-900 shadow-2xs'
-                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              key={v}
+                              onClick={() => toggleVehicle(v)}
+                              className={`p-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer transition-all ${
+                                isSel
+                                  ? 'bg-amber-50 border-amber-300 text-amber-900 font-semibold'
+                                  : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
-                              <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
-                                isSelected ? 'bg-amber-600 text-white' : 'border border-slate-300'
-                              }`}>
-                                {isSelected ? <CheckCircle2 size={12} /> : null}
-                              </div>
-                              <Truck size={14} className={isSelected ? 'text-amber-600 shrink-0' : 'text-slate-400 shrink-0'} />
-                              <span className="truncate">{veh}</span>
+                              <input
+                                type="checkbox"
+                                checked={isSel}
+                                onChange={() => {}}
+                                className="rounded text-amber-600 focus:ring-amber-500"
+                              />
+                              <span className="truncate">{v}</span>
                             </label>
                           );
                         })}
@@ -585,51 +655,35 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     </div>
                   )}
 
-                  {/* Pestaña 2: Personal y Operarios */}
+                  {/* Pestaña 2: Personal */}
                   {resourceTab === 'personal' && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3 text-xs mb-2">
-                        <div>
-                          <label className="font-semibold text-slate-600 block mb-1">Nombre Cuadrilla Base</label>
-                          <select
-                            value={odtForm.cuadrilla_nombre}
-                            onChange={e => setOdtForm({ ...odtForm, cuadrilla_nombre: e.target.value })}
-                            className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white"
-                          >
-                            <option value="Cuadrilla 1 - B. Guevara">Cuadrilla 1 - B. Guevara</option>
-                            <option value="Cuadrilla 2 - Zanjas y Tapadas">Cuadrilla 2 - Zanjas y Tapadas</option>
-                            <option value="Cuadrilla 3 - Fusión y Pruebas">Cuadrilla 3 - Fusión y Pruebas</option>
-                          </select>
-                        </div>
-                        <div className="flex items-end justify-end">
-                          <span className="text-[11px] text-slate-500 font-semibold">
-                            Operarios asignados: <strong className="text-amber-700">{selectedPersonnel.length}</strong>
-                          </span>
-                        </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-[11px] text-slate-500">
+                        <span>Marca los operarios de la cuadrilla asignados a la tarea de hoy:</span>
+                        <span className="font-bold text-amber-700">{selectedPersonnel.length} asignados</span>
                       </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                         {employees.map(emp => {
-                          const isSelected = selectedPersonnel.includes(emp.full_name);
+                          const isSel = selectedPersonnel.includes(emp.full_name);
                           return (
                             <label
                               key={emp.id}
                               onClick={() => togglePersonnel(emp.full_name)}
-                              className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'bg-blue-50/80 border-blue-400 text-blue-900 shadow-2xs'
-                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              className={`p-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer transition-all ${
+                                isSel
+                                  ? 'bg-blue-50 border-blue-300 text-blue-900 font-semibold'
+                                  : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
-                              <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${
-                                isSelected ? 'bg-blue-600 text-white' : 'border border-slate-300'
-                              }`}>
-                                {isSelected ? <CheckCircle2 size={12} /> : null}
-                              </div>
-                              <Users size={14} className={isSelected ? 'text-blue-600 shrink-0' : 'text-slate-400 shrink-0'} />
+                              <input
+                                type="checkbox"
+                                checked={isSel}
+                                onChange={() => {}}
+                                className="rounded text-blue-600 focus:ring-blue-500"
+                              />
                               <div className="truncate">
-                                <span className="block truncate">{emp.full_name}</span>
-                                <span className="text-[10px] text-slate-400 block">{emp.category?.name || 'Operario de cuadrilla'}</span>
+                                <p className="font-medium truncate">{emp.full_name}</p>
+                                <p className="text-[10px] text-slate-400 font-normal">{emp.legajo ? `Legajo: ${emp.legajo}` : 'Operario de Cuadrilla'}</p>
                               </div>
                             </label>
                           );
@@ -638,63 +692,46 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     </div>
                   )}
 
-                  {/* Pestaña 3: Herramientas y Pañol */}
+                  {/* Pestaña 3: Herramientas */}
                   {resourceTab === 'herramientas' && (
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-slate-600">Checklist de herramientas y equipos menores:</span>
-                        <span className="text-slate-400 text-[11px]">{selectedTools.length} seleccionadas</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
-                        {HERRAMIENTAS_CATALOGO.map(tool => {
-                          const isSelected = selectedTools.includes(tool);
+                      <span className="text-[11px] text-slate-500 block">
+                        Equipos menores y herramientas específicas para despachar:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                        {[...HERRAMIENTAS_CATALOGO, ...selectedTools.filter(t => !HERRAMIENTAS_CATALOGO.includes(t))].map(tool => {
+                          const isSel = selectedTools.includes(tool);
                           return (
                             <label
                               key={tool}
                               onClick={() => toggleTool(tool)}
-                              className={`flex items-center gap-2 p-1.5 px-2.5 rounded-lg border text-xs cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold'
-                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              className={`p-2 rounded-xl border text-xs flex items-center gap-2 cursor-pointer transition-all ${
+                                isSel
+                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold'
+                                  : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'
                               }`}
                             >
-                              <div className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${
-                                isSelected ? 'bg-emerald-600 text-white' : 'border border-slate-300'
-                              }`}>
-                                {isSelected ? <CheckCircle2 size={11} /> : null}
-                              </div>
+                              <input
+                                type="checkbox"
+                                checked={isSel}
+                                onChange={() => {}}
+                                className="rounded text-emerald-600 focus:ring-emerald-500"
+                              />
                               <span className="truncate">{tool}</span>
                             </label>
                           );
                         })}
-
-                        {/* Herramientas personalizadas adicionales */}
-                        {selectedTools.filter(t => !HERRAMIENTAS_CATALOGO.includes(t)).map(tool => (
-                          <div
-                            key={tool}
-                            className="flex items-center justify-between gap-1 p-1.5 px-2.5 rounded-lg border bg-purple-50 border-purple-300 text-purple-900 text-xs font-semibold"
-                          >
-                            <span className="truncate">⭐ {tool}</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleTool(tool)}
-                              className="text-purple-600 hover:text-purple-800"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))}
                       </div>
 
-                      {/* Agregar herramienta libre */}
+                      {/* Agregar herramienta personalizada */}
                       <div className="flex gap-2 pt-2 border-t border-slate-100">
                         <input
+                          type="text"
                           value={customToolInput}
                           onChange={e => setCustomToolInput(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomTool(); } }}
-                          placeholder="Otra herramienta o equipo específico..."
-                          className="flex-1 px-3 py-1.5 border rounded-xl text-xs"
+                          placeholder="Otra herramienta específica..."
+                          className="flex-1 px-3 py-1.5 border rounded-xl text-xs bg-slate-50"
                         />
                         <button
                           type="button"
@@ -711,13 +748,13 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                   {resourceTab === 'materiales' && (
                     <div className="space-y-2 text-xs">
                       <label className="font-semibold text-slate-600 block">
-                        Materiales, Caños e Insumos Críticos a Despachar para esta Jornada
+                        Materiales e Insumos Críticos a Despachar para esta Jornada
                       </label>
                       <textarea
                         value={odtForm.materiales_requeridos}
                         onChange={e => setOdtForm({ ...odtForm, materiales_requeridos: e.target.value })}
                         rows={3}
-                        placeholder="Ej: 70m caño PEAD 75mm clase 10, 3 m3 arena de asiento, 1 rollo cinta de advertencia OSSE..."
+                        placeholder="Ej: Materiales específicos para la ejecución de la actividad..."
                         className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
                       />
                     </div>
@@ -754,7 +791,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
 
                 <div className="flex gap-2 w-full sm:w-auto justify-end">
                   <button
-                    onClick={() => setSelectedTramoItem(null)}
+                    onClick={() => setSelectedWbsItem(null)}
                     className="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                   >
                     Cancelar

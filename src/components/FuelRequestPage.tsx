@@ -90,6 +90,7 @@ export const FuelRequestPage: React.FC = () => {
     station_name: 'YPF',
     fuel_type: 'Diesel Premium / V-Power',
   });
+  const [fuelCustom, setFuelCustom] = useState(false);
 
   const [completeForm, setCompleteForm] = useState({
     station_name: 'YPF',
@@ -307,6 +308,7 @@ export const FuelRequestPage: React.FC = () => {
         setCreatedLoad(inserted as FuelLoad);
         setSuccessState('request');
         setForm({ vehicle_code: '', requested_liters: '', odometer_km: '', project_name: '', requested_by: '', observations: '', station_name: 'YPF', fuel_type: 'Diesel Premium / V-Power' });
+        setFuelCustom(false);
       } else {
         localStorage.setItem('ecar_active_fuel_request', inserted.id);
         setActiveRequest(inserted as FuelLoad);
@@ -613,7 +615,7 @@ export const FuelRequestPage: React.FC = () => {
                 <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Vehículo / Máquina <span className="text-ecar-red">*</span></label>
                 <select value={form.vehicle_code} onChange={e => {
                   const v = vehicles.find(x => x.code === e.target.value);
-                  setForm({ ...form, vehicle_code: e.target.value, fuel_type: v?.preferred_fuel || form.fuel_type });
+                  setForm({ ...form, vehicle_code: e.target.value, fuel_type: fuelCustom ? form.fuel_type : (v?.preferred_fuel || form.fuel_type) });
                 }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-gray-800 font-medium">
                   <option value="">Seleccionar vehículo...</option>
                   {vehicles.map(v => <option key={v.id} value={v.code}>{v.code} — {v.description}</option>)}
@@ -644,7 +646,10 @@ export const FuelRequestPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-ecar-blue font-bold text-xs uppercase tracking-wider block mb-1">Tipo de Comb. <span className="text-ecar-red">*</span></label>
-                  <select value={form.fuel_type} onChange={e => setForm({ ...form, fuel_type: e.target.value })} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800">
+                  <select value={form.fuel_type} onChange={e => {
+                    setFuelCustom(true);
+                    setForm({ ...form, fuel_type: e.target.value });
+                  }} className="w-full bg-surface-secondary border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-gray-800">
                     <option value="Diesel Premium / V-Power">Diesel Premium</option>
                     <option value="Diesel Comun / X-10">Diesel Común</option>
                     <option value="Nafta Premium / V-Power">Nafta Premium</option>

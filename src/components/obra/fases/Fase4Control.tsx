@@ -6,7 +6,8 @@ import {
 import {
   useObraHitos, useUpdateObraHito, useCreateObraHito,
   useObraTramos, useObraItems, useObraTramoItems,
-  useObraCertificados, useCreateObraCertificado
+  useObraCertificados, useCreateObraCertificado,
+  useObraParteDiarioItems
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraHito, ObraCertificado } from '../../../lib/types';
 import { ModalPortal } from '../../common/ModalPortal';
@@ -24,6 +25,7 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
   const { data: items = [] } = useObraItems(projectId);
   const { data: tramoItems = [] } = useObraTramoItems(projectId);
   const { data: certificados = [] } = useObraCertificados(projectId);
+  const { data: partes = [] } = useObraParteDiarioItems(projectId);
 
   const updateHito = useUpdateObraHito();
   const createHito = useCreateObraHito();
@@ -65,9 +67,15 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
 
     // Calcular por cada ítem la cantidad ejecutada total acumulada
     const lineas = items.map(item => {
-      // Buscar la suma de cantidades ejecutadas en todos los tramos para este ítem
+      // Buscar la suma de cantidades reportadas en partes diarios (Fase 3) aprobados/vigentes
+      const partesItem = partes.filter(p => (p.item_id === item.id || p.odt?.item_id === item.id) && p.estado !== 'rechazado');
+      const cantPartes = partesItem.reduce((s, p) => s + Number(p.cantidad_real || 0), 0);
+
+      // Buscar si existen tramos históricos
       const tiList = tramoItems.filter(ti => ti.item_id === item.id);
-      const cantAcumulada = tiList.reduce((s, ti) => s + Number(ti.cantidad_ejecutada || 0), 0);
+      const cantTramos = tiList.reduce((s, ti) => s + Number(ti.cantidad_ejecutada || 0), 0);
+
+      const cantAcumulada = Math.max(cantPartes, cantTramos);
       const cantContractual = Number(item.cantidad_contractual) || 0;
       const pu = Number(item.precio_unitario_ars) || 0;
 
@@ -128,7 +136,7 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
       neto,
       lineas
     };
-  }, [certificados, items, tramoItems]);
+  }, [certificados, items, tramoItems, partes]);
 
   const handleEmitirCertificado = async () => {
     await createCertificado.mutateAsync({
