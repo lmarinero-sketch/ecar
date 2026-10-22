@@ -1725,12 +1725,29 @@ export function useCreateDeposit() {
 export function useUpdateDeposit() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<InventoryDeposit> & { id: string }) => {
+    mutationFn: async ({ id, oldName, ...updates }: Partial<InventoryDeposit> & { id: string; oldName?: string }) => {
+      let previousName = oldName;
+      if (!previousName && updates.name) {
+        const { data: current } = await supabase.from('inventory_deposits').select('name').eq('id', id).single();
+        previousName = current?.name;
+      }
+
       const { data, error } = await supabase.from('inventory_deposits').update(updates).eq('id', id).select().single();
       if (error) throw error;
+
+      if (updates.name && previousName && updates.name.trim().toUpperCase() !== previousName.trim().toUpperCase()) {
+        await supabase
+          .from('inventory_items')
+          .update({ deposit: updates.name.trim() })
+          .ilike('deposit', previousName.trim());
+      }
+
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_deposits'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+    },
   });
 }
 
@@ -1741,7 +1758,10 @@ export function useDeleteDeposit() {
       const { error } = await supabase.from('inventory_deposits').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory_deposits'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory_deposits'] });
+      qc.invalidateQueries({ queryKey: ['inventory_items'] });
+    },
   });
 }
 

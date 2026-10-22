@@ -116,22 +116,16 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
   const [targetShelfId, setTargetShelfId] = useState<string>('');
   const [targetShelfPos, setTargetShelfPos] = useState<string>('');
 
-  // Combined deposits list: from DB + default fallbacks
+  // Combined deposits list: from DB
   const allDepositOptions = useMemo(() => {
-    const list: { id: string; name: string; location?: string | null }[] = [...deposits];
-    if (!list.some(d => d.name === 'DEPOSITO RAWSON')) {
-      list.push({ id: 'rawson-default', name: 'DEPOSITO RAWSON', location: 'Rawson' });
-    }
-    if (!list.some(d => d.name === 'ALMACEN CENTRAL')) {
-      list.push({ id: 'central-default', name: 'ALMACEN CENTRAL', location: 'Central' });
-    }
-    return list;
+    if (deposits && deposits.length > 0) return deposits;
+    return [{ id: 'default', name: 'ROQUE', location: '' }];
   }, [deposits]);
 
   // Auto-suggest a target deposit different from the current one
   useEffect(() => {
     if (!targetDeposit) {
-      const currentDep = (item.deposit || 'DEPOSITO RAWSON').trim().toUpperCase();
+      const currentDep = (item.deposit || deposits?.[0]?.name || 'ROQUE').trim().toUpperCase();
       const alternative = allDepositOptions.find(d => d.name.trim().toUpperCase() !== currentDep);
       if (alternative) {
         setTargetDeposit(alternative.name);
@@ -139,7 +133,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
         setTargetDeposit(allDepositOptions[0].name);
       }
     }
-  }, [allDepositOptions, item.deposit, targetDeposit]);
+  }, [allDepositOptions, item.deposit, targetDeposit, deposits]);
 
   const handleQuickSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,7 +249,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
           <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium text-ecar-blue shadow-xs">
             <Boxes size={14} />
             <span>Depósito Actual:</span>
-            <span className="font-bold">{item.deposit || 'DEPOSITO RAWSON'}</span>
+            <span className="font-bold">{item.deposit || 'ROQUE'}</span>
           </div>
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium shadow-xs">
             <span className="text-slate-500">Stock Actual:</span>
@@ -323,7 +317,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
                     </span>
                   </div>
                   <div className="text-slate-700 flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="font-semibold">🏢 {item.deposit || 'DEPOSITO RAWSON'}</span>
+                    <span className="font-semibold">🏢 {item.deposit || 'ROQUE'}</span>
                     {item.shelf && (
                       <span className="bg-white border border-blue-200 px-1.5 py-0.2 rounded text-[10px] text-slate-700 font-medium">
                         🗄️ {item.shelf.code} - {item.shelf.name}
@@ -389,7 +383,7 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
                     <option value="">Seleccionar depósito destino...</option>
                     {allDepositOptions.map(d => (
                       <option key={d.id} value={d.name}>
-                        {d.name} {d.name === (item.deposit || 'DEPOSITO RAWSON') ? '(Mismo depósito - Reubicar estantería)' : ''}
+                        {d.name} {d.name === (item.deposit || 'ROQUE') ? '(Mismo depósito - Reubicar estantería)' : ''}
                       </option>
                     ))}
                   </select>
@@ -920,7 +914,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
     is_tool: false,
     barcode: '',
     location: '',
-    deposit: 'DEPOSITO RAWSON',
+    deposit: 'ROQUE',
     shelf_id: '',
     shelf_position: '',
     measure: '',
@@ -1248,7 +1242,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
       barcode: newItem.barcode,
       category: newItem.category || 'material',
       location: newItem.location || 'Depósito',
-      deposit: newItem.deposit || 'DEPOSITO RAWSON',
+      deposit: newItem.deposit || deposits?.[0]?.name || 'ROQUE',
       shelf_id: newItem.shelf_id || null,
       current_stock: parseFloat(newItem.current_stock) || 0,
       unit: newItem.unit || 'unidad',
@@ -1505,7 +1499,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
         is_tool: newItem.is_tool || newItem.category === 'herramienta',
         barcode: newItem.barcode ? newItem.barcode.trim() : null,
         location: computedPos ? `Ubicación ${computedPos}` : (newItem.location || 'Depósito'),
-        deposit: newItem.deposit || 'DEPOSITO RAWSON',
+        deposit: newItem.deposit || deposits?.[0]?.name || 'ROQUE',
         shelf_id: newItem.shelf_id || null,
         shelf_position: computedPos || null,
       };
@@ -1563,7 +1557,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
         is_tool: false,
         barcode: '',
         location: '',
-        deposit: 'DEPOSITO RAWSON',
+        deposit: deposits?.[0]?.name || 'ROQUE',
         shelf_id: '',
         shelf_position: '',
         tool_status: 'operativa'
@@ -1812,12 +1806,25 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
 
   const handleSaveDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanName = depositForm.name.trim();
+    if (!cleanName) {
+      useModalStore.getState().showAlert('Atención', 'El nombre del depósito es obligatorio.');
+      return;
+    }
     try {
       if (editingDeposit) {
-        await updateDeposit.mutateAsync({ id: editingDeposit.id, ...depositForm });
+        await updateDeposit.mutateAsync({
+          id: editingDeposit.id,
+          name: cleanName,
+          location: depositForm.location?.trim() || null,
+          oldName: editingDeposit.name
+        });
         useModalStore.getState().showAlert('Éxito', 'Depósito actualizado correctamente.');
       } else {
-        await createDeposit.mutateAsync(depositForm);
+        await createDeposit.mutateAsync({
+          name: cleanName,
+          location: depositForm.location?.trim() || null
+        });
         useModalStore.getState().showAlert('Éxito', 'Depósito creado correctamente.');
       }
       setShowDepositModal(false);
@@ -1828,7 +1835,19 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
   };
 
   const handleDeleteDeposit = async (id: string) => {
-    const confirm = await useModalStore.getState().showConfirm('Eliminar Depósito', '¿Está seguro de eliminar este depósito?');
+    const depositToDelete = deposits?.find(d => d.id === id);
+    if (!depositToDelete) return;
+
+    const assignedCount = (items || []).filter(i => (i.deposit || '').trim().toUpperCase() === depositToDelete.name.trim().toUpperCase()).length;
+    if (assignedCount > 0) {
+      useModalStore.getState().showAlert(
+        'No se puede eliminar',
+        `El depósito "${depositToDelete.name}" tiene ${assignedCount} artículo(s) asignado(s). Primero debes reubicar o reasignar esos artículos a otro depósito antes de poder eliminarlo.`
+      );
+      return;
+    }
+
+    const confirm = await useModalStore.getState().showConfirm('Eliminar Depósito', `¿Está seguro de eliminar el depósito "${depositToDelete.name}"?`);
     if (!confirm) return;
     try {
       await deleteDeposit.mutateAsync(id);
@@ -1990,12 +2009,6 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                   {(deposits || []).map(d => (
                     <option key={d.id} value={d.name}>{d.name}</option>
                   ))}
-                  {!(deposits || []).some(d => d.name === 'DEPOSITO RAWSON') && (
-                    <option value="DEPOSITO RAWSON">DEPOSITO RAWSON</option>
-                  )}
-                  {!(deposits || []).some(d => d.name === 'ALMACEN CENTRAL') && (
-                    <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
-                  )}
                 </select>
               </div>
 
@@ -2118,7 +2131,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                           is_tool: false,
                           barcode: '',
                           location: '',
-                          deposit: 'DEPOSITO RAWSON',
+                          deposit: deposits?.[0]?.name || 'ROQUE',
                           shelf_id: '',
                           shelf_position: '',
                           tool_status: 'operativa'
@@ -2349,7 +2362,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                                     is_tool: item.is_tool,
                                     barcode: item.barcode || '',
                                     location: item.location || '',
-                                    deposit: item.deposit || 'DEPOSITO RAWSON',
+                                    deposit: item.deposit || deposits?.[0]?.name || 'ROQUE',
                                     shelf_id: detectedShelfId,
                                     shelf_position: item.shelf_position || '',
                                     tool_status: 'operativa'
@@ -2729,7 +2742,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                     is_tool: true,
                     barcode: '',
                     location: 'Estantería A - Herramientas Eléctricas',
-                    deposit: 'DEPOSITO RAWSON',
+                    deposit: deposits?.[0]?.name || 'ROQUE',
                     shelf_id: (shelves || []).find(s => s.code === 'A')?.id || '',
                     shelf_position: 'A-1-1',
                     tool_status: 'operativa'
@@ -3672,12 +3685,6 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                     {(deposits || []).map(d => (
                       <option key={d.id} value={d.name}>{d.name}</option>
                     ))}
-                    {!(deposits || []).some(d => d.name === 'DEPOSITO RAWSON') && (
-                      <option value="DEPOSITO RAWSON">DEPOSITO RAWSON</option>
-                    )}
-                    {!(deposits || []).some(d => d.name === 'ALMACEN CENTRAL') && (
-                      <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
-                    )}
                   </select>
                 </div>
                 <div>

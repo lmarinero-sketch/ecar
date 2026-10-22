@@ -8,7 +8,8 @@ import {
   useSuppliers, useCreateSupplier, useLegalEntities,
   useInventoryItems, useCreateInventoryItem,
   useProjects, usePurchaseInvoices, usePurchaseInvoiceItems,
-  useCreatePurchaseInvoiceWithItems, useUpdatePurchaseInvoiceWithItems
+  useCreatePurchaseInvoiceWithItems, useUpdatePurchaseInvoiceWithItems,
+  useInventoryDeposits
 } from '../../hooks/useData';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModalStore } from '../../store/useModalStore';
@@ -83,6 +84,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
   const { data: suppliers = [] } = useSuppliers();
   const { data: legalEntities = [] } = useLegalEntities();
   const { data: inventoryItems = [] } = useInventoryItems();
+  const { data: deposits = [] } = useInventoryDeposits();
   const { data: projects = [] } = useProjects();
   const { data: pastInvoices = [] } = usePurchaseInvoices();
   const { data: existingItems = [] } = usePurchaseInvoiceItems(invoiceToEdit?.id);
@@ -102,7 +104,7 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
   const [paymentCondition, setPaymentCondition] = useState(invoiceToEdit?.payment_condition || 'Contado');
   const [issueDate, setIssueDate] = useState(invoiceToEdit?.issue_date || new Date().toISOString().split('T')[0]);
   const [hasReception, setHasReception] = useState(invoiceToEdit?.has_reception ?? true);
-  const [depositLocation, setDepositLocation] = useState(invoiceToEdit?.deposit_location || 'DEPOSITO RAWSON');
+  const [depositLocation, setDepositLocation] = useState(invoiceToEdit?.deposit_location || deposits[0]?.name || 'ROQUE');
   const [relatedInvoiceId, setRelatedInvoiceId] = useState<string | null>(invoiceToEdit?.related_invoice_id || null);
   const [relatedInvoiceSearch, setRelatedInvoiceSearch] = useState('');
   const [isRelatedOpen, setIsRelatedOpen] = useState(false);
@@ -744,8 +746,9 @@ export const NewPurchaseInvoiceModal: React.FC<Props> = ({ invoiceToEdit, onClos
                   onChange={e => setDepositLocation(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue"
                 >
-                  <option value="DEPOSITO RAWSON">DEPOSITO RAWSON (Pañol Central)</option>
-                  <option value="ALMACEN CENTRAL">ALMACEN CENTRAL</option>
+                  {deposits.map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
                   {projects.map(p => (
                     <option key={p.id} value={`OBRA: ${p.name}`}>OBRA: {p.name}</option>
                   ))}

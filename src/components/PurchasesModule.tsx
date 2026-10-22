@@ -1134,7 +1134,7 @@ export const PurchasesModule: React.FC = () => {
                                     )}
                                   </div>
                                   <div className="text-[11px] text-slate-500 font-mono truncate">
-                                    {inv.deposit_location || 'DEPOSITO RAWSON'}
+                                    {inv.deposit_location || 'ROQUE'}
                                   </div>
                                 </div>
 
