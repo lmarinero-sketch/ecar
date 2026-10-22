@@ -64,7 +64,7 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
   // Comparativa de Rendimientos
   const rendimientoBenchmark = useMemo(() => {
     return items.slice(0, 8).map(item => {
-      const partesItem = partes.filter(p => p.tramo_item?.item_id === item.id);
+      const partesItem = partes.filter(p => p.item_id === item.id || p.odt?.item_id === item.id || p.tramo_item?.item_id === item.id);
       const totalProducido = partesItem.reduce((s, p) => s + Number(p.cantidad_real || 0), 0);
       const diasTrabajados = partesItem.length || 1;
       const promedioReal = partesItem.length > 0 ? Math.round(totalProducido / diasTrabajados) : Number(item.rendimiento_base_dia);
