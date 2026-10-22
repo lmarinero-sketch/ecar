@@ -27,7 +27,7 @@ const FASES: Array<{
     id: 'planificacion',
     numero: 'Fase 1',
     nombre: 'Planificación',
-    subtitulo: 'WBS, Rubros, Ítems & Tramos',
+    subtitulo: 'WBS, Rubros & Presupuesto',
     icon: FolderTree,
     color: 'text-blue-600',
     activeBg: 'bg-blue-50 border-blue-600 text-blue-700'
@@ -36,7 +36,7 @@ const FASES: Array<{
     id: 'programacion',
     numero: 'Fase 2',
     nombre: 'Programación',
-    subtitulo: 'Bandeja PP & Emisión ODTs',
+    subtitulo: 'Asignación WBS & Emisión ODTs',
     icon: Calendar,
     color: 'text-amber-600',
     activeBg: 'bg-amber-50 border-amber-600 text-amber-800'
