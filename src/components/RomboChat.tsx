@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck, Download, ShieldAlert } from 'lucide-react';
+import { Send, Minimize2, Sparkles, Zap, BarChart3, Users, Banknote, Bell, FileText, ShoppingCart, Building2, ClipboardList, Truck, HardHat, Receipt, CalendarCheck, Download, ShieldAlert, Mic, Trash2, Loader2, AudioLines } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
@@ -245,6 +245,14 @@ export const RomboChat: React.FC = () => {
   const { walking, pos, facingRight, phrase, showPhrase, stopWalking, forceStart: _forceStart } = useIdleWalker(open || isMinimized, activeModule);
   const { data: aiUsage } = useAITokenUsage();
   const [downloadingIvaMonth, setDownloadingIvaMonth] = useState<string | null>(null);
+
+  // Audio recording & Whisper transcription state (ChatGPT-style voice interaction)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tokenLimitReached = (aiUsage?.costUsd || 0) >= 10;
 
@@ -688,6 +696,114 @@ export const RomboChat: React.FC = () => {
     setLoading(false);
   };
 
+  const formatRecordingTime = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const startRecording = async () => {
+    if (loading || isTranscribing || tokenLimitReached) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      console.error('Error starting audio recording:', err);
+      useModalStore.getState().showAlert(
+        'Micrófono no disponible',
+        'No se pudo acceder al micrófono. Por favor, verificá los permisos de audio en tu navegador.'
+      );
+    }
+  };
+
+  const cancelRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.onstop = () => {
+        mediaRecorderRef.current?.stream?.getTracks().forEach((track) => track.stop());
+      };
+      mediaRecorderRef.current.stop();
+    }
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordingSeconds(0);
+  };
+
+  const stopAndSendRecording = () => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return;
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    mediaRecorderRef.current.onstop = async () => {
+      mediaRecorderRef.current?.stream?.getTracks().forEach((track) => track.stop());
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      audioChunksRef.current = [];
+      setIsRecording(false);
+      setRecordingSeconds(0);
+
+      if (audioBlob.size < 500) {
+        return;
+      }
+
+      setIsTranscribing(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.webm');
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: formData,
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        const transcribedText = (data?.text || '').trim();
+        if (transcribedText) {
+          sendMessage(transcribedText);
+        } else {
+          useModalStore.getState().showAlert('Audio no reconocido', 'No se pudieron detectar palabras en el audio enviado.');
+        }
+      } catch (err: any) {
+        console.error('Error transcribiendo audio:', err);
+        useModalStore.getState().showAlert('Error al procesar audio', err?.message || 'Error al transcribir el audio con Whisper.');
+      } finally {
+        setIsTranscribing(false);
+      }
+    };
+
+    mediaRecorderRef.current.stop();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stream?.getTracks().forEach((track) => track.stop());
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
+
   const handleDownloadFromRombo = async (month: string, entityId?: string, entityName?: string) => {
     setDownloadingIvaMonth(month);
     try {
@@ -945,23 +1061,69 @@ export const RomboChat: React.FC = () => {
               <div className="text-xs text-red-500 font-medium text-center p-2 bg-red-50 rounded-lg border border-red-100">
                 Límite de $10 USD alcanzado. Por favor, contacte al administrador.
               </div>
+            ) : isRecording ? (
+              <div className="flex items-center justify-between bg-red-50/80 border border-red-200 rounded-full px-4 py-2 text-sm shadow-sm animate-pulse">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                  <div className="flex items-center gap-1.5 font-mono text-red-700 font-semibold text-xs">
+                    <AudioLines size={15} className="text-red-500" />
+                    <span>{formatRecordingTime(recordingSeconds)}</span>
+                  </div>
+                  <span className="text-xs text-red-600 font-medium hidden sm:inline">Grabando audio para Rombo...</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={cancelRecording}
+                    title="Cancelar grabación"
+                    className="p-1.5 text-gray-500 hover:text-red-600 rounded-full hover:bg-red-100 transition"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopAndSendRecording}
+                    title="Enviar audio"
+                    className="p-1.5 bg-ecar-blue text-white rounded-full hover:bg-blue-700 shadow-sm transition flex items-center justify-center cursor-pointer"
+                  >
+                    <Send size={14} className="translate-x-[0.5px]" />
+                  </button>
+                </div>
+              </div>
+            ) : isTranscribing ? (
+              <div className="flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 rounded-full py-2.5 px-4 text-xs font-medium text-ecar-blue shadow-sm">
+                <Loader2 size={15} className="animate-spin text-ecar-blue" />
+                <span>Transcribiendo audio con Whisper de OpenAI...</span>
+              </div>
             ) : (
               <form onSubmit={sendMessage} className="relative flex items-center">
                 <input
                   type="text"
                   value={input}
                   onChange={handleInputChange}
-                  placeholder="Escribí tu consulta acá..."
+                  placeholder="Escribí o grabá un audio para Rombo..."
                   disabled={loading}
-                  className="w-full pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all disabled:opacity-60"
+                  className="w-full pl-4 pr-20 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-ecar-blue/30 focus:border-ecar-blue transition-all disabled:opacity-60"
                 />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || loading}
-                  className="btn-primary absolute w-8
-                ">
-                  <Send size={14} className={input.trim() && !loading ? 'translate-x-[1px]' : ''} />
-                </button>
+                <div className="absolute right-1.5 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    disabled={loading}
+                    title="Enviar mensaje de voz a Rombo"
+                    className="p-1.5 text-gray-500 hover:text-ecar-blue hover:bg-blue-50 rounded-full transition disabled:opacity-40 cursor-pointer"
+                  >
+                    <Mic size={17} />
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || loading}
+                    title="Enviar mensaje"
+                    className="w-8 h-8 rounded-full bg-ecar-blue hover:bg-blue-700 text-white flex items-center justify-center transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    <Send size={14} className={input.trim() && !loading ? 'translate-x-[1px]' : ''} />
+                  </button>
+                </div>
               </form>
             )}
             <p className="text-[10px] text-gray-400 text-center mt-2">Rombo puede cometer errores. Verificá los datos importantes.</p>

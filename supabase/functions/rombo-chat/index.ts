@@ -10,72 +10,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const BASE_SYSTEM_PROMPT = `Sos "Rombo", el asistente IA de ECAR Constructora. Hablás en español argentino. Sos experto en el ERP de ECAR.
+const BASE_SYSTEM_PROMPT = `Sos "Rombo" 🤖, el copiloto IA inteligente y agente operativo de gestión integral de ECAR Constructora.
+Hablás en español argentino (vos, che, dale). Sos ejecutivo, ultra eficiente, proactivo y resolutivo, exactamente como ChatGPT Plus empresarial pero conectado en tiempo real al ERP y base de datos de ECAR.
 
-## PRINCIPIO FUNDAMENTAL — ACCESO TOTAL, UNIVERSAL E IRRESTRICTO
-Sos el copiloto y asistente central de TODO el ERP de ECAR Constructora.
-Tenés acceso absoluto, irrestricto y en tiempo real a ABSOLUTAMENTE TODA la información y a TODOS los módulos de la empresa:
-- Combustible & Batán (todas las cargas de combustible por vehículo, vales, litros, precios, importes en ARS, odómetro, cargas en estación de servicio vs batán interno, cargas no autorizadas, tickets adjuntos).
-- Flota & Maquinaria (vehículos, camiones, camionetas, retroexcavadoras, hidromek, batán, kilometrajes, mantenimientos vencidos y próximos, VTV, seguros).
-- Inventario & Pañol (materiales, herramientas, stock mínimo, kardex completo de movimientos con fecha/hora y responsable pañolero, despachos a obras).
-- Pedidos de Obra & Requerimientos de Logística (trazabilidad tripartita: solicitado en obra, despachado pañol, recibido obra, remitos oficiales y saldos faltantes).
-- Órdenes de Compra (OC-XXXX, proveedores, condiciones de pago, ítems y entregas).
-- Proveedores & Evaluaciones (maestro de 110+ proveedores, CUIT, formas de pago, calificaciones, cuentas bancarias).
-- Finanzas & Tesorería (cheques físicos y eCheqs emitidos y recibidos, vencimientos, gastos fijos, cuentas bancarias, saldos reales en caja/bancos/Balanz, flujo de fondos y cashflow a 30 días).
-- Compras & Facturación (facturas con OCR, Libro IVA compras/ventas, retenciones, discriminación por empresa ECAR SAS y Carlos Adolfo Regalado).
-- Alertas & Obligaciones (vencimientos fiscales AFIP, ART, seguros, alquileres, recordatorios automáticos de WhatsApp).
-- RRHH & Legajos (nómina de personal activo, legajo digital, asistencia con QR, ausencias, licencias, adelantos, indumentaria, talles y EPP).
-- Obras & Proyectos — Estándar de Ingeniería en 5 Fases:
-  * Fase 1 (Planificación): Presupuesto Aprobado con WBS jerárquico cerrado (Rubros ➔ Subrubros ➔ Ítems contractuales con P.U. e incidencias matemáticas exactas), Red espacial topológica de Tramos con Nodos de inicio/fin, diámetros y servicios, y Matriz Física Tramo-Ítem con cómputos métricos congelados y saldos.
-  * Fase 2 (Programación): Filtro inteligente por Nodo, Bandeja "Para Programar" con saldo > 0 (cantidad_prevista - cantidad_ejecutada), asignación de cuadrillas y emisión formal de ODTs numeradas. Bloqueo estricto: Prohibido crear tareas o ítems acá.
-  * Fase 3 (Ejecución): Modo terreno/tablet para capataces. Cero porcentajes subjetivos: carga métrica real (ml, un, m³), personal presente y registro de paradas de obra con causa raíz obligatoria (rotura, falta de material en pañol, clima, etc.).
-  * Fase 4 (Control): Hitos binarios 0% o 100% de inspección y calidad (actas, OSSE, laboratorio) con bloqueo topológico en caso de no aprobación, semáforo base 3/3 (Plazo, Costo, Calidad) y emisión de Certificados de Obra contractuales automáticos e inmutables con acumulados y retenciones.
-  * Fase 5 (Retroalimentación): Rendimientos reales medidos en terreno vs cotizados, análisis de tiempos muertos y banco de lecciones aprendidas para futuros presupuestos.
-  * Obra Insignia Lote Roque: 50 tramos topológicos (N1 a N43), 7 rubros, 12 subrubros, 18 ítems contractuales, $114.600.550,96 contractuales s/IVA, 500 combinaciones tramo-ítem con saldos calculados y 4 hitos regulatorios (HI-01 a HI-04).
-- Seguridad & Calidad (informes semanales de Higiene y Seguridad listos para entrega bajo Decreto 911/96 y Res. SRT 905/15 con 4 fotos de evidencia formal, incidentes laborales, observaciones de riesgo 5x5, pedidos automáticos de EPP y cartelería de zanja a Compras/Pañol, inspecciones de obra, punch list, no conformidades, protocolos).
-- Comunicaciones (registro completo de mensajes y conversaciones de WhatsApp).
+## PRINCIPIO FUNDAMENTAL — GESTIÓN TOTAL POR TEXTO Y VOZ
+El usuario puede interactuar con vos escribiendo o enviándote notas de audio (los audios son transcriptos automáticamente con OpenAI Whisper).
+Tu misión es permitir que el usuario GESTIONE TODO EL SISTEMA directamente desde esta conversación:
+- NUNCA respondas diciendo "tenés que ir al módulo X para cargar eso", "hacelo desde la pestaña tal" o "no puedo hacer esa acción".
+- SIEMPRE que el usuario te pida registrar, cargar, anotar, modificar, cambiar de estado o consultar algo:
+  1. EJECUTÁ LA HERRAMIENTA CORRESPONDIENTE DE FORMA INMEDIATA.
+  2. Guardá o actualizá la información en la base de datos de producción.
+  3. Respondé confirmando con los datos exactos generados (número de carga, número de ODT, remito, importes, saldos, etc.).
 
-## GUÍA PASO A PASO: CÓMO USAR EL NUEVO MÓDULO DE GESTIÓN DE OBRA (5 FASES)
-Si cualquier usuario, ingeniero, jefe de obra o capataz te pregunta cómo usar el módulo de obra o cuál es el flujo de trabajo, enseñale con claridad pedagógica este paso a paso:
-1. **Paso 1 - Planificación (Fase 1):**
-   - El punto de partida OBLIGATORIO es el Presupuesto Aprobado y la Topología del proyecto.
-   - En la pestaña WBS se visualiza el árbol jerárquico Rubro ➔ Subrubro ➔ Ítem. Cada ítem tiene su unidad (ml, m³, un), precio unitario e incidencia porcentual matemática.
-   - En la pestaña Tramos se auditan los tramos topológicos con sus nodos (ej: N1 - N2), longitudes en metros, diámetros en mm y conexiones de servicios.
-   - En la Matriz Física se asignan los cómputos métricos previstos por tramo e ítem. Los cómputos quedan congelados y calculan automáticamente el saldo para programar.
-2. **Paso 2 - Programación (Fase 2):**
-   - El ingeniero o jefe de obra selecciona el Nodo/Tramo donde se abrirá frente de trabajo.
-   - El sistema activa la bandeja "Para Programar", que muestra SOLO los ítems con Saldo > 0.
-   - Selecciona la cuadrilla asignada, responsable técnico, fechas y meta de cantidad.
-   - Hace clic en "Emitir Orden de Trabajo" para generar la ODT formal.
-   - 🔒 REGLA DE ORO: En Programación está terminantemente prohibido crear tareas o ítems nuevos; todo nace en el presupuesto planificado.
-3. **Paso 3 - Ejecución (Fase 3):**
-   - Diseñado para capataces en el frente de obra (modo tablet/celular con botones grandes).
-   - No se usan porcentajes subjetivos ("vamos un 60%"): se cargan METROS REALES ejecutados (ej: 45 ml de zanjeo o 3 un de válvulas).
-   - Se marca el personal presente que trabajó y maquinarias utilizadas.
-   - Si hubo paradas o tiempos muertos, se registran los minutos y la CAUSA RAÍZ obligatoria (rotura máquina, falta de material en pañol, lluvia, interferencia de suelo).
-4. **Paso 4 - Control (Fase 4):**
-   - Hitos Binarios (0% o 100%): Si una prueba hidráulica o inspección de ente (OSSE) está pendiente, vale 0% y BLOQUEA el tramo impidiendo tapar la zanja. Al aprobarse, pasa a 100% y se registra el acta.
-   - Semáforo Base 3/3: Evalúa el desempeño integral del frente.
-   - Certificados de Obra: Con 1 clic se emite el certificado contractual que congela cantidades anteriores, presentes y acumuladas, calcula el importe contractual, deduce el fondo de reparo y anticipo, y entrega el neto a cobrar exacto e inmutable.
-5. **Paso 5 - Retroalimentación (Fase 5):**
-   - Permite auditar el desvío entre rendimientos presupuestados vs rendimientos reales de cuadrillas.
-   - Permite registrar Lecciones Aprendidas (problema, causa raíz y acción adoptada) para que los presupuestos futuros coticen con datos reales de campo.
+## CAPACIDADES DE GESTIÓN OPERATIVA EN TODOS LOS MÓDULOS
+Podés operar sobre todos los módulos del ERP:
+1. ⛽ COMBUSTIBLE Y FLOTA:
+   - Cargar combustible (create_fuel_load): vehículo, litros, estación o batán interno, monto, chofer, odómetro/horómetro. Si es Batán, descuenta stock automáticamente en fuel_batan_movements.
+   - Movimientos de Batán (create_fuel_batan_movement): compras, recargas de cisterna, descargas.
+   - Consultar consumos, rendimientos y última carga (query_fuel_loads, query_fleet_vehicles).
+2. 🛒 COMPRAS Y PAÑOL:
+   - Crear pedidos de compra (create_purchase_request): obra, urgencia, lista de materiales solicitados.
+   - Movimientos de inventario (register_stock_movement): entradas y salidas de pañol para obras.
+   - Consultar stock, Kardex y órdenes de compra (query_inventory, query_inventory_movements, query_purchase_orders).
+3. 💰 FINANZAS Y TESORERÍA:
+   - Cargar y eliminar cheques (create_cheque, delete_cheque).
+   - Actualizar estado de cheques (update_cheque_status): depositado, cobrado, rebotado.
+   - Registrar cobros y pagos de caja/banco (register_payment).
+   - Registrar gastos operativos mensuales (register_gasto_monto).
+   - Consultar liquidez, flujo de caja a 30 días y cuentas bancarias (calculate_cashflow, query_bank_accounts).
+4. 👷 RRHH Y PERSONAL:
+   - Registrar asistencia diaria (register_attendance): presente, ausente, tardanza, medio día.
+   - Registrar ausencias y licencias (register_employee_absence): vacaciones, médico, suspensión, ART.
+   - Registrar adelantos de sueldo (register_employee_advance).
+   - Consultar plantilla, legajos y EPP (query_employees, query_employee_ppe).
+5. 🏗️ GESTIÓN DE OBRAS (5 FASES):
+   - Fase 1 (Planificación): WBS, tramos, nodos, cómputos congelados (query_obra_wbs, query_obra_tramos, query_obra_matriz_fisica).
+   - Fase 2 (Programación): Emitir ODTs formales con meta y cuadrilla (create_obra_odt, query_obra_odts).
+   - Fase 3 (Ejecución): Carga métrica en terreno, personal presente y paradas con causa raíz (register_obra_produccion, query_obra_partes_terreno).
+   - Fase 4 (Control): Aprobar hitos binarios 0/100% con número de acta (update_obra_hito, query_obra_hitos, query_obra_certificados).
+   - Fase 5 (Retroalimentación): Rendimientos y lecciones aprendidas (query_obra_lecciones).
+   - Partes diarios generales de obra (create_parte_diario, query_partes_diarios).
+6. 🦺 HIGIENE, SEGURIDAD Y CALIDAD:
+   - Registrar incidentes y observaciones de seguridad (register_safety_incident, register_safety_observation).
+   - Consultar punch list, RFI, inspecciones y health score de obra.
+7. 🌐 ACCIÓN UNIVERSAL:
+   - Podés ejecutar acciones directas en cualquier tabla si el usuario lo requiere (execute_db_action, query_database_table).
 
-## INDEPENDENCIA ABSOLUTA DEL MÓDULO VISUAL
-- El módulo donde se encuentra el usuario (marcado como "📍") SOLO indica en qué pantalla del navegador web está parado en este instante.
-- **BAJO NINGUNA CIRCUNSTANCIA LIMITA TUS CONOCIMIENTOS NI TUS ACCESOS A LOS DATOS**.
-- **PROHIBICIÓN ESTRICTA**: NUNCA digas frases como "no tengo acceso a datos sobre combustible porque estás en inventario", ni "esa información se gestiona en un módulo diferente por lo que no puedo verla", ni ninguna excusa similar.
-- Si el usuario te pregunta por combustible mientras está en Inventario, o por cheques mientras está en Partes Diarios, o por personal mientras está en Compras: **DEBES consultar de inmediato la base de datos con tus herramientas (ej: query_fuel_loads, query_cheques, query_employees, query_database_table, etc.) y responder con la información completa, exacta y actualizada**.
-- Podés añadir como sugerencia secundaria al final: *(Nota: también podés ver este detalle en el módulo correspondiente)*, pero SIEMPRE entregando primero los datos solicitados.
-
-## REGLAS CRÍTICAS
-1. **SIEMPRE consultá datos reales ANTES de responder.** NUNCA respondas con información genérica o inventada. Usá las herramientas para consultar los datos actuales de la base de datos y respondé con números y hechos concretos.
-2. Si te preguntan por "la última carga", "el último cheque", "el último movimiento", etc., consultá la herramienta correspondiente y presentá los datos detallados: fecha, vehículo/proveedor/responsable, litros/monto, estado y observaciones.
-3. Si ninguna herramienta especializada cubre exactamente lo que pide el usuario, usá la herramienta "query_database_table" para consultar directamente cualquier tabla del ERP (ej: fuel_loads, fuel_vehicles, purchase_requests, purchase_orders, obra_actividades_catalogo, obra_cuadrillas, obra_sectores, obra_tareas_planificadas, seguridad_informes_semanales, etc.).
-4. Valores monetarios en formato ARS: $ 1.234,56. Fechas en formato argentino: DD/MM/AAAA.
-5. Sé conciso, preciso, proactivo y útil. Respondé con tono argentino profesional y cercano.
-6. Cuando ejecutes acciones (crear cheque, marcar pagado, etc.), confirmá qué hiciste mostrando los datos.
-7. IMPORTANTE: Si el usuario pregunta "¿qué puedo hacer acá?", orientalo sobre el módulo donde está parado, pero recordale que podés responder sobre cualquier dato de toda la empresa.`
+## FORMATO DE RESPUESTA
+- Usá markdown claro, prolijo y estructurado.
+- Destacá códigos importantes en negrita (ej: **CARGA-0116**, **ODT-0045**, **$ 350.000**).
+- Incluí emojis sutiles para dar jerarquía visual y dinamismo.
+- Si registraste una carga de combustible desde Batán, aclarale que el stock del Batán fue descontado automáticamente.
+- Sé rápido, directo y con total confianza técnica.`
 
 // Module-specific context instructions for the AI
 const MODULE_CONTEXT: Record<string, string> = {
@@ -892,19 +878,319 @@ const tools = [
       }
     }
   },
+  // ─── TOOLS DE GESTIÓN OPERATIVA Y MUTACIÓN (CHAT-OPS) ───
   {
     type: 'function', function: {
-      name: 'query_obra_lecciones',
-      description: 'Consultar el banco de lecciones aprendidas y desvíos de rendimiento (Fase 5 Retroalimentación). Muestra categoría, problema detectado, causa raíz, acción adoptada, rendimiento cotizado vs real y recomendación para futuros presupuestos.',
+      name: 'create_fuel_load',
+      description: 'Registrar una carga de combustible para un vehículo o maquinaria (en estación de servicio o desde el batán interno). Si es batán, descuenta automáticamente el stock del batán. Puede actualizar odómetro u horómetro.',
+      parameters: {
+        type: 'object',
+        properties: {
+          vehicle_code: { type: 'string', description: 'Código o patente del vehículo/maquinaria (ej: RP-001, BT-001, C-002, AG839PV, etc.)' },
+          liters: { type: 'number', description: 'Cantidad exacta de litros cargados' },
+          fuel_type: { type: 'string', description: 'Tipo de combustible (Diesel EVOLUX, Infinia Diesel, Nafta Súper, etc.)' },
+          supplier: { type: 'string', description: 'Estación de servicio o proveedor (YPF, Shell, Batán Interno, etc.)' },
+          load_source: { type: 'string', enum: ['station', 'batan'], description: 'Origen: "batan" si fue desde el batán interno en obra, "station" si fue en estación de servicio' },
+          total_amount: { type: 'number', description: 'Importe total facturado en ARS (si es de batán interno es 0)' },
+          price_per_liter: { type: 'number', description: 'Precio unitario por litro en ARS' },
+          driver_name: { type: 'string', description: 'Nombre del chofer u operador' },
+          project_name: { type: 'string', description: 'Nombre de la obra o centro de costos asignado' },
+          odometer_km: { type: 'number', description: 'Kilometraje actual del vehículo' },
+          hourmeter: { type: 'number', description: 'Horómetro actual de la máquina' },
+          remito_number: { type: 'string', description: 'Número de remito' },
+          voucher_number: { type: 'string', description: 'Número de vale' },
+          load_date: { type: 'string', description: 'Fecha de la carga YYYY-MM-DD (default hoy)' },
+          observations: { type: 'string', description: 'Notas u observaciones adicionales' }
+        },
+        required: ['vehicle_code', 'liters']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'create_fuel_batan_movement',
+      description: 'Registrar un movimiento manual en el batán móvil (ingreso de cisterna, compra, descarga a equipo o ajuste de calibración).',
+      parameters: {
+        type: 'object',
+        properties: {
+          movement_type: { type: 'string', enum: ['purchase', 'discharge', 'adjustment'], description: 'purchase = ingreso/llenado, discharge = descarga, adjustment = calibración' },
+          liters: { type: 'number', description: 'Litros del movimiento' },
+          fuel_type: { type: 'string', description: 'Tipo de combustible (Diesel EVOLUX, etc.)' },
+          supplier: { type: 'string', description: 'Proveedor o estación donde se cargó el batán' },
+          remito_number: { type: 'string', description: 'Número de remito' },
+          total_amount: { type: 'number', description: 'Monto total en ARS si fue compra' },
+          movement_date: { type: 'string', description: 'Fecha YYYY-MM-DD' },
+          observations: { type: 'string', description: 'Observaciones' }
+        },
+        required: ['movement_type', 'liters']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_payment',
+      description: 'Registrar un movimiento de caja o pago/cobro bancario. Úsalo cuando digan "Pagué X a Y" o "Cobramos X de Y".',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['income', 'expense'], description: 'income = ingreso/cobro, expense = egreso/pago' },
+          amount: { type: 'number', description: 'Monto en ARS' },
+          counterpart: { type: 'string', description: 'A quién se le pagó o de quién se cobró' },
+          category: { type: 'string', description: 'Categoría: Sueldos/Honorarios, Seguros, Servicios, Impuestos ARCA, Gremios, Combustibles, Cheques/Echeqs, Pagos a terceros, Servicios contratados, Viandas, Varios, Cobro certificado, Otro ingreso' },
+          description: { type: 'string', description: 'Detalle adicional' },
+          payment_method: { type: 'string', description: 'transfer, cash, cheque, echeq' }
+        },
+        required: ['type', 'amount', 'counterpart', 'category']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'update_cheque_status',
+      description: 'Cambiar el estado de un cheque (marcarlo como depositado, cobrado, rebotado o pendiente).',
+      parameters: {
+        type: 'object',
+        properties: {
+          cheque_number: { type: 'string', description: 'Número del cheque' },
+          new_status: { type: 'string', enum: ['pending', 'deposited', 'cashed', 'bounced'], description: 'Nuevo estado' },
+          notes: { type: 'string', description: 'Notas opcionales' }
+        },
+        required: ['cheque_number', 'new_status']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'create_purchase_request',
+      description: 'Crear un pedido de compra o solicitud de materiales para una obra.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra' },
+          urgency: { type: 'string', enum: ['low', 'normal', 'urgent'], description: 'Urgencia' },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                description: { type: 'string' },
+                quantity: { type: 'number' },
+                unit: { type: 'string' }
+              },
+              required: ['description', 'quantity']
+            }
+          },
+          requested_by: { type: 'string', description: 'Nombre del solicitante' }
+        },
+        required: ['project_name', 'items']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_stock_movement',
+      description: 'Registrar una entrada o salida de material/herramienta del pañol.',
+      parameters: {
+        type: 'object',
+        properties: {
+          item_name: { type: 'string', description: 'Nombre del material o herramienta' },
+          movement_type: { type: 'string', enum: ['in', 'out'], description: 'in = ingreso, out = salida' },
+          quantity: { type: 'number', description: 'Cantidad' },
+          project_name: { type: 'string', description: 'Obra de destino (si es salida)' },
+          notes: { type: 'string', description: 'Notas' }
+        },
+        required: ['item_name', 'movement_type', 'quantity']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_gasto_monto',
+      description: 'Registrar o actualizar el monto mensual de un gasto operativo (personal, seguros, servicios, impuestos, etc.). Se puede buscar por nombre del concepto o por ID.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search_name: { type: 'string', description: 'Nombre del concepto (ej: "sueldos", "liderar", "osse", "gas", etc.)' },
+          item_id: { type: 'string', description: 'ID del rubro de gasto (uuid si se conoce)' },
+          amount: { type: 'number', description: 'Monto del gasto en pesos ARS' },
+          periodo: { type: 'string', description: 'Período YYYY-MM (default mes actual)' },
+          pagado: { type: 'boolean', description: 'Si ya está pagado' },
+          metodo_pago: { type: 'string', description: 'Forma de pago' },
+          notas: { type: 'string', description: 'Comentarios' }
+        },
+        required: ['amount']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_attendance',
+      description: 'Registrar o corregir la asistencia de un empleado (presente, ausente, tardanza, medio día).',
+      parameters: {
+        type: 'object',
+        properties: {
+          employee_name: { type: 'string', description: 'Nombre o parte del nombre del empleado' },
+          date: { type: 'string', description: 'Fecha YYYY-MM-DD (default hoy)' },
+          status: { type: 'string', enum: ['present', 'absent', 'late', 'half_day'], description: 'Estado' },
+          worked_hours: { type: 'number', description: 'Horas trabajadas (default 8 si presente, 0 si ausente)' },
+          notes: { type: 'string', description: 'Notas u observaciones' }
+        },
+        required: ['employee_name', 'status']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_employee_absence',
+      description: 'Registrar una ausencia, licencia médica, vacaciones, suspensión o ART de un colaborador.',
+      parameters: {
+        type: 'object',
+        properties: {
+          employee_name: { type: 'string', description: 'Nombre del empleado' },
+          absence_type: { type: 'string', enum: ['vacation', 'medical', 'suspension', 'art_leave', 'half_day', 'unjustified'], description: 'Tipo de ausencia' },
+          start_date: { type: 'string', description: 'Fecha de inicio YYYY-MM-DD' },
+          end_date: { type: 'string', description: 'Fecha de fin YYYY-MM-DD (opcional)' },
+          reason: { type: 'string', description: 'Motivo o detalle del certificado/novedad' }
+        },
+        required: ['employee_name', 'absence_type', 'start_date']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_employee_advance',
+      description: 'Registrar un adelanto de sueldo otorgado a un empleado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          employee_name: { type: 'string', description: 'Nombre del empleado' },
+          amount_ars: { type: 'number', description: 'Monto del adelanto en pesos ARS' },
+          advance_date: { type: 'string', description: 'Fecha YYYY-MM-DD (default hoy)' },
+          reason: { type: 'string', description: 'Motivo del adelanto' }
+        },
+        required: ['employee_name', 'amount_ars']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'create_obra_odt',
+      description: 'Emitir una Orden de Trabajo (ODT) en Fase 2 Programación para un tramo o ítem presupuestado.',
       parameters: {
         type: 'object',
         properties: {
           project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
-          categoria: { type: 'string', description: 'rendimiento / calidad / seguridad / interferencia_suelo / maquinaria / proveedor' }
-        }
+          tramo_codigo: { type: 'string', description: 'Código o nodos del tramo (ej: N1-N2, T-01)' },
+          item_codigo: { type: 'string', description: 'Código o descripción del ítem de obra (ej: AG-EXC, Zanjeo)' },
+          cuadrilla_nombre: { type: 'string', description: 'Nombre de la cuadrilla (ej: Cuadrilla Gomez, C-01)' },
+          responsable_nombre: { type: 'string', description: 'Responsable técnico o capataz' },
+          meta_cantidad: { type: 'number', description: 'Cantidad métrica a ejecutar planificada' },
+          fecha: { type: 'string', description: 'Fecha de ejecución YYYY-MM-DD' },
+          instrucciones_calidad: { type: 'string', description: 'Instrucciones o recaudos de seguridad' }
+        },
+        required: ['project_name', 'cuadrilla_nombre', 'meta_cantidad']
       }
     }
   },
+  {
+    type: 'function', function: {
+      name: 'register_obra_produccion',
+      description: 'Registrar avance métrico real en terreno (Fase 3 Ejecución), personal presente y paradas con causa raíz obligatoria.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          odt_numero: { type: 'string', description: 'Número de ODT asociada (ej: ODT-0001) si se conoce' },
+          tramo_codigo: { type: 'string', description: 'Tramo ejecutado (ej: N1-N2)' },
+          item_codigo: { type: 'string', description: 'Ítem ejecutado (ej: Zanjeo)' },
+          cantidad_real: { type: 'number', description: 'Cantidad real ejecutada en metros o unidades' },
+          fecha: { type: 'string', description: 'Fecha YYYY-MM-DD (default hoy)' },
+          horas_trabajadas: { type: 'number', description: 'Horas trabajadas de la jornada' },
+          personal_real_count: { type: 'number', description: 'Cantidad de operarios presentes' },
+          personal_nombres: { type: 'string', description: 'Nombres del personal presente' },
+          equipo_usado: { type: 'string', description: 'Maquinaria utilizada' },
+          minutos_parada: { type: 'number', description: 'Minutos de parada o tiempo muerto (si hubo)' },
+          motivo_parada: { type: 'string', description: 'Causa raíz obligatoria de la parada (rotura máquina, lluvia, falta material, interferencia)' },
+          novedades_interferencias: { type: 'string', description: 'Novedades de suelo o interferencias' }
+        },
+        required: ['project_name', 'cantidad_real']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'update_obra_hito',
+      description: 'Aprobar o actualizar un hito binario (0% o 100%) y acta de inspección regulatoria (Fase 4 Control).',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra (ej: Roque)' },
+          codigo_hito: { type: 'string', description: 'Código o nombre del hito (ej: HI-01, HI-02, Prueba Hidráulica)' },
+          estado_binario: { type: 'number', enum: [0, 100], description: '100 = aprobado, 0 = pendiente' },
+          acta_numero: { type: 'string', description: 'Número de acta de inspección (ej: ACTA-4589)' },
+          inspector_nombre: { type: 'string', description: 'Nombre del inspector u organismo (ej: OSSE)' },
+          fecha_inspeccion: { type: 'string', description: 'Fecha de la inspección YYYY-MM-DD' },
+          observaciones: { type: 'string', description: 'Observaciones de la inspección' }
+        },
+        required: ['project_name', 'codigo_hito', 'estado_binario']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_safety_incident',
+      description: 'Registrar un incidente, accidente laboral o cuasi-accidente en obra.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra' },
+          tipo: { type: 'string', enum: ['accidente', 'incidente', 'cuasi_accidente', 'enfermedad_laboral'], description: 'Tipo' },
+          gravedad: { type: 'string', enum: ['leve', 'moderada', 'grave', 'fatal'], description: 'Gravedad' },
+          descripcion: { type: 'string', description: 'Descripción de lo sucedido' },
+          persona_afectada: { type: 'string', description: 'Nombre del trabajador afectado' },
+          causa_raiz: { type: 'string', description: 'Causa raíz determinada' },
+          acciones_correctivas: { type: 'string', description: 'Medidas correctivas adoptadas' }
+        },
+        required: ['project_name', 'tipo', 'descripcion']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'register_safety_observation',
+      description: 'Registrar una observación preventiva de seguridad o desvío detectado en frente de obra.',
+      parameters: {
+        type: 'object',
+        properties: {
+          project_name: { type: 'string', description: 'Nombre de la obra' },
+          observador: { type: 'string', description: 'Quién reporta la observación' },
+          categoria: { type: 'string', description: 'epp, excavaciones, senializacion, maquinaria, orden_limpieza, etc.' },
+          descripcion: { type: 'string', description: 'Descripción del desvío observado' },
+          severidad: { type: 'number', description: 'Nivel de severidad 1 a 5' },
+          probabilidad: { type: 'number', description: 'Nivel de probabilidad 1 a 5' },
+          accion_sugerida: { type: 'string', description: 'Medida o acción correctiva inmediata' }
+        },
+        required: ['project_name', 'descripcion']
+      }
+    }
+  },
+  {
+    type: 'function', function: {
+      name: 'execute_db_action',
+      description: 'Acción universal de modificación de base de datos para tablas autorizadas cuando el usuario solicite explícitamente insertar, actualizar o eliminar un registro específico.',
+      parameters: {
+        type: 'object',
+        properties: {
+          table_name: { type: 'string', description: 'Nombre de la tabla' },
+          action_type: { type: 'string', enum: ['insert', 'update', 'delete'], description: 'Tipo de operación' },
+          data: { type: 'object', description: 'Datos a insertar o actualizar' },
+          filter_column: { type: 'string', description: 'Columna de condición WHERE (para update o delete)' },
+          filter_value: { type: 'string', description: 'Valor de condición WHERE (para update o delete)' }
+        },
+        required: ['table_name', 'action_type']
+      }
+    }
+  }
 ]
 
 // Helper to get Argentina date/time
@@ -1994,6 +2280,505 @@ async function executeTool(name: string, args: Record<string, any>): Promise<str
         const { data, error } = await q
         if (error) return JSON.stringify({ error: error.message })
         return JSON.stringify({ lecciones_count: (data || []).length, lecciones: data || [] })
+      }
+
+      // ─── HANDLERS DE GESTIÓN OPERATIVA Y MUTACIÓN (CHAT-OPS) ───
+      case 'create_fuel_load': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        
+        let vehicle: any = null
+        if (args.vehicle_code) {
+          const { data: vList } = await sb.from('fuel_vehicles').select('*')
+            .or(`code.ilike.%${args.vehicle_code}%,plate.ilike.%${args.vehicle_code}%,description.ilike.%${args.vehicle_code}%`)
+            .limit(1)
+          if (vList && vList.length > 0) vehicle = vList[0]
+        }
+
+        const { count } = await sb.from('fuel_loads').select('*', { count: 'exact', head: true })
+        const nextNum = (count || 0) + 1
+        const loadNumber = `CARGA-${String(nextNum).padStart(4, '0')}`
+
+        const isBatan = args.load_source === 'batan' || 
+          String(args.supplier || '').toLowerCase().includes('batán') || 
+          String(args.supplier || '').toLowerCase().includes('batan')
+
+        const loadDate = args.load_date || todayStr
+        const [y, m, d] = loadDate.split('-').map(Number)
+        const dateObj = new Date(y, m - 1, d)
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+        const liters = Number(args.liters) || 0
+        const totalAmount = isBatan ? 0 : (Number(args.total_amount) || (args.price_per_liter ? Number(args.price_per_liter) * liters : 0))
+        const pricePerLiter = isBatan ? 0 : (Number(args.price_per_liter) || (liters ? totalAmount / liters : 0))
+        const supplierName = isBatan ? 'Batán Interno' : (args.supplier || 'YPF')
+
+        const newLoad = {
+          tenant_id: tenant?.id,
+          load_number: loadNumber,
+          load_date: loadDate,
+          month: monthNames[dateObj.getMonth()],
+          year: dateObj.getFullYear(),
+          day_of_week: dayNames[dateObj.getDay()],
+          vehicle_id: vehicle?.id || null,
+          vehicle_code: vehicle?.code || args.vehicle_code,
+          vehicle_description: vehicle?.description || 'Vehículo/Maquinaria',
+          plate: vehicle?.plate || '',
+          vehicle_type: vehicle?.vehicle_type || 'Maquinaria',
+          driver_name: args.driver_name || vehicle?.default_driver || 'Operador',
+          project_name: args.project_name || 'Movimientos Internos',
+          supplier: supplierName,
+          station_name: supplierName,
+          fuel_type: args.fuel_type || vehicle?.preferred_fuel || 'Diesel Premium / V-Power',
+          liters: liters,
+          price_per_liter: pricePerLiter,
+          total_amount: totalAmount,
+          odometer_km: args.odometer_km ? Number(args.odometer_km) : null,
+          hourmeter: args.hourmeter ? Number(args.hourmeter) : null,
+          voucher_number: args.voucher_number || null,
+          remito_number: args.remito_number || null,
+          observations: args.observations || `Carga registrada por Rombo IA (${isBatan ? 'Batán Interno' : 'Estación'})`,
+          validation_status: 'ok',
+          load_source: isBatan ? 'batan' : 'station',
+          created_by: 'rombo-ia'
+        }
+
+        const { data: insertedLoad, error: loadErr } = await sb.from('fuel_loads').insert(newLoad).select().single()
+        if (loadErr) return JSON.stringify({ error: loadErr.message })
+
+        let batanMovement = null
+        if (isBatan) {
+          const { data: bMov, error: bErr } = await sb.from('fuel_batan_movements').insert({
+            tenant_id: tenant?.id,
+            movement_number: `DESCARGA-${String(Date.now()).slice(-6)}`,
+            movement_date: loadDate,
+            movement_type: 'discharge',
+            fuel_type: newLoad.fuel_type,
+            liters_discharged: liters,
+            movement_status: 'completed',
+            reference_load: loadNumber,
+            observations: `Consumo asociado a la carga: ${loadNumber} (${newLoad.vehicle_code}) registrado por Rombo IA`
+          }).select().single()
+          batanMovement = bMov
+        }
+
+        if (vehicle?.id && (newLoad.odometer_km || newLoad.hourmeter)) {
+          const vUpdates: any = {}
+          if (newLoad.odometer_km) vUpdates.current_km = newLoad.odometer_km
+          if (newLoad.hourmeter) vUpdates.current_hours = newLoad.hourmeter
+          await sb.from('fuel_vehicles').update(vUpdates).eq('id', vehicle.id)
+        }
+
+        return JSON.stringify({
+          success: true,
+          mensaje: `Carga ${loadNumber} registrada exitosamente.`,
+          load_number: loadNumber,
+          vehiculo: `${newLoad.vehicle_code} (${newLoad.vehicle_description})`,
+          litros: `${liters} L`,
+          combustible: newLoad.fuel_type,
+          origen: isBatan ? 'Batán Interno (stock descontado automáticamente)' : supplierName,
+          monto_total_ars: totalAmount,
+          chofer: newLoad.driver_name,
+          fecha: loadDate,
+          movimiento_batan: batanMovement?.movement_number || null
+        })
+      }
+
+      case 'create_fuel_batan_movement': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        const movDate = args.movement_date || todayStr
+        const prefix = args.movement_type === 'purchase' ? 'AUTO' : 'DESCARGA'
+        const movNumber = `${prefix}-${String(Date.now()).slice(-6)}`
+        const liters = Number(args.liters) || 0
+
+        const newMov = {
+          tenant_id: tenant?.id,
+          movement_number: movNumber,
+          movement_date: movDate,
+          movement_type: args.movement_type,
+          fuel_type: args.fuel_type || 'Diesel Premium / V-Power',
+          liters_loaded: args.movement_type === 'purchase' ? liters : null,
+          liters_discharged: args.movement_type === 'discharge' ? liters : null,
+          total_amount: args.total_amount ? Number(args.total_amount) : null,
+          remito_number: args.remito_number || null,
+          supplier: args.supplier || 'YPF',
+          movement_status: 'completed',
+          observations: args.observations || `Registrado por Rombo IA`
+        }
+
+        const { data, error } = await sb.from('fuel_batan_movements').insert(newMov).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Movimiento de Batán ${movNumber} registrado exitosamente.`,
+          movimiento: data
+        })
+      }
+
+      case 'register_payment': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        const { data, error } = await sb.from('cash_movements').insert({
+          tenant_id: tenant?.id,
+          movement_date: todayStr,
+          type: args.type,
+          category: args.category,
+          amount: Number(args.amount),
+          counterpart: args.counterpart,
+          description: args.description || `Pago/Cobro a ${args.counterpart} vía Rombo IA`,
+          payment_method: args.payment_method || 'transfer',
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Movimiento de caja registrado: ${args.type === 'income' ? 'Ingreso' : 'Egreso'} de $${Number(args.amount).toLocaleString('es-AR')} a ${args.counterpart}`,
+          id: data.id
+        })
+      }
+
+      case 'update_cheque_status': {
+        const { data: chq, error: findErr } = await sb.from('cheques').select('*').eq('cheque_number', args.cheque_number).limit(1).single()
+        if (findErr || !chq) return JSON.stringify({ error: `No se encontró el cheque ${args.cheque_number}` })
+        const { error } = await sb.from('cheques').update({ status: args.new_status }).eq('id', chq.id)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Cheque N° ${chq.cheque_number} (${chq.bank_name} - $${Number(chq.amount_ars).toLocaleString('es-AR')}) actualizado a "${args.new_status}"`
+        })
+      }
+
+      case 'create_purchase_request': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        let projectId = null
+        if (args.project_name) {
+          const { data: proj } = await sb.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projectId = proj?.id
+        }
+        const { data: req, error: reqErr } = await sb.from('purchase_requests').insert({
+          tenant_id: tenant?.id,
+          project_id: projectId,
+          requested_by: args.requested_by || 'Rombo IA',
+          urgency: args.urgency || 'normal',
+          status: 'pending'
+        }).select().single()
+        if (reqErr) return JSON.stringify({ error: reqErr.message })
+
+        if (args.items?.length) {
+          await sb.from('purchase_request_items').insert(
+            args.items.map((i: any) => ({
+              request_id: req.id,
+              description: i.description,
+              quantity: i.quantity || 1,
+              unit: i.unit || 'unidad'
+            }))
+          )
+        }
+        return JSON.stringify({
+          success: true,
+          mensaje: `Pedido de compra creado para ${args.project_name || 'Obra'} (${args.items?.length || 0} ítems).`,
+          request_id: req.id
+        })
+      }
+
+      case 'register_stock_movement': {
+        const { data: item } = await sb.from('inventory_items').select('id, name, current_stock, unit').ilike('name', `%${args.item_name}%`).limit(1).single()
+        if (!item) return JSON.stringify({ error: `No se encontró "${args.item_name}" en pañol` })
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        let projectId = null
+        if (args.project_name) {
+          const { data: proj } = await sb.from('projects').select('id, name').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projectId = proj?.id
+        }
+        const qty = Number(args.quantity) || 1
+        await sb.from('inventory_movements').insert({
+          tenant_id: tenant?.id,
+          item_id: item.id,
+          movement_type: args.movement_type,
+          quantity: qty,
+          project_id: projectId,
+          notes: args.notes || 'Registrado por Rombo IA',
+          created_by: 'rombo-ia'
+        })
+        const newStock = args.movement_type === 'in' ? item.current_stock + qty : item.current_stock - qty
+        await sb.from('inventory_items').update({ current_stock: newStock }).eq('id', item.id)
+        return JSON.stringify({
+          success: true,
+          mensaje: `${args.movement_type === 'in' ? 'Ingreso' : 'Despacho/Salida'} de ${qty} ${item.unit} de ${item.name}. Stock anterior: ${item.current_stock}, Nuevo stock: ${newStock}`,
+          nuevo_stock: newStock
+        })
+      }
+
+      case 'register_gasto_monto': {
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        let itemId = args.item_id
+        if (!itemId && args.search_name) {
+          const { data: found } = await sb.from('gastos_items').select('id, descripcion').ilike('descripcion', `%${args.search_name}%`).limit(1).single()
+          itemId = found?.id
+        }
+        if (!itemId) {
+          return JSON.stringify({ error: `No se encontró el rubro de gasto "${args.search_name || ''}". Podés consultar los rubros con query_gasto_items.` })
+        }
+        const now = new Date()
+        const defaultPeriod = args.periodo || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        const { data: itemData } = await sb.from('gastos_items').select('descripcion, categoria').eq('id', itemId).single()
+        
+        const record = {
+          tenant_id: tenant?.id,
+          item_id: itemId,
+          periodo: defaultPeriod,
+          monto_real: Number(args.amount) || 0,
+          pagado: args.pagado ?? true,
+          metodo_pago: args.metodo_pago || 'transferencia',
+          notas: args.notas || 'Registrado vía Rombo IA'
+        }
+        const { data, error } = await sb.from('gastos_mensuales').upsert(record, { onConflict: 'tenant_id,item_id,periodo' }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Gasto de "${itemData?.descripcion || 'Rubro'}" por $${Number(args.amount).toLocaleString('es-AR')} para ${defaultPeriod} registrado correctamente.`
+        })
+      }
+
+      case 'register_attendance': {
+        const { data: emp } = await sb.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró el empleado "${args.employee_name}"` })
+        const attDate = args.date || todayStr
+        const hours = args.worked_hours !== undefined ? Number(args.worked_hours) : (args.status === 'present' ? 8 : 0)
+        const { data, error } = await sb.from('attendance_records').upsert({
+          employee_id: emp.id,
+          date: attDate,
+          status: args.status,
+          worked_hours: hours,
+          notes: args.notes || 'Registrado por Rombo IA'
+        }, { onConflict: 'employee_id,date' }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Asistencia de ${emp.full_name} para el ${attDate} registrada como "${args.status}" (${hours} hs).`
+        })
+      }
+
+      case 'register_employee_absence': {
+        const { data: emp } = await sb.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró el empleado "${args.employee_name}"` })
+        const { data, error } = await sb.from('employee_absences').insert({
+          employee_id: emp.id,
+          absence_type: args.absence_type,
+          start_date: args.start_date,
+          end_date: args.end_date || args.start_date,
+          reason: args.reason || 'Informado por Rombo IA',
+          status: 'active'
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Ausencia/Licencia (${args.absence_type}) de ${emp.full_name} registrada desde el ${args.start_date}.`
+        })
+      }
+
+      case 'register_employee_advance': {
+        const { data: emp } = await sb.from('employees').select('id, full_name').ilike('full_name', `%${args.employee_name}%`).limit(1).single()
+        if (!emp) return JSON.stringify({ error: `No se encontró el empleado "${args.employee_name}"` })
+        const { data, error } = await sb.from('employee_advances').insert({
+          employee_id: emp.id,
+          amount_ars: Number(args.amount_ars),
+          advance_date: args.advance_date || todayStr,
+          reason: args.reason || 'Adelanto otorgado vía Rombo IA',
+          deducted: false
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Adelanto de $${Number(args.amount_ars).toLocaleString('es-AR')} registrado para ${emp.full_name}.`
+        })
+      }
+
+      case 'create_obra_odt': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let tramoId = null
+        if (args.tramo_codigo) {
+          const { data: tr } = await sb.from('obra_tramos').select('id').eq('project_id', projId)
+            .or(`codigo.ilike.%${args.tramo_codigo}%,nodo_inicio.ilike.%${args.tramo_codigo}%,nodo_fin.ilike.%${args.tramo_codigo}%`).limit(1).single()
+          tramoId = tr?.id
+        }
+        let itemId = null
+        if (args.item_codigo) {
+          const { data: it } = await sb.from('obra_items').select('id').eq('project_id', projId)
+            .or(`codigo_item.ilike.%${args.item_codigo}%,descripcion.ilike.%${args.item_codigo}%`).limit(1).single()
+          itemId = it?.id
+        }
+
+        const { count } = await sb.from('obra_ordenes_trabajo').select('*', { count: 'exact', head: true }).eq('project_id', projId)
+        const nextNum = (count || 0) + 1
+        const numeroOdt = `ODT-${String(nextNum).padStart(4, '0')}`
+
+        const { data, error } = await sb.from('obra_ordenes_trabajo').insert({
+          project_id: projId,
+          numero_odt: numeroOdt,
+          fecha: args.fecha || todayStr,
+          tramo_id: tramoId,
+          item_id: itemId,
+          cuadrilla_nombre: args.cuadrilla_nombre,
+          responsable_nombre: args.responsable_nombre || 'Capataz de Cuadrilla',
+          meta_cantidad: Number(args.meta_cantidad),
+          unidad: 'ml',
+          estado: 'emitida',
+          instrucciones_calidad: args.instrucciones_calidad || 'Control topográfico y de tapada reglamentaria.'
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Orden de Trabajo ${numeroOdt} emitida exitosamente para cuadrilla ${args.cuadrilla_nombre} (Meta: ${args.meta_cantidad}).`,
+          odt: data
+        })
+      }
+
+      case 'register_obra_produccion': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+
+        let odtId = null
+        if (args.odt_numero) {
+          const { data: odt } = await sb.from('obra_ordenes_trabajo').select('id').eq('project_id', projId).ilike('numero_odt', `%${args.odt_numero}%`).limit(1).single()
+          odtId = odt?.id
+        }
+
+        const { data, error } = await sb.from('obra_parte_diario_items').insert({
+          project_id: projId,
+          odt_id: odtId,
+          fecha: args.fecha || todayStr,
+          cantidad_real: Number(args.cantidad_real),
+          unidad: 'ml',
+          horas_trabajadas: Number(args.horas_trabajadas) || 8,
+          personal_real_count: Number(args.personal_real_count) || 4,
+          personal_nombres: args.personal_nombres || null,
+          equipo_usado: args.equipo_usado || null,
+          minutos_parada: Number(args.minutos_parada) || 0,
+          motivo_parada: args.motivo_parada || null,
+          novedades_interferencias: args.novedades_interferencias || null,
+          estado: 'registrado'
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Parte de terreno registrado: ${args.cantidad_real} ml ejecutados el ${args.fecha || todayStr}.${args.minutos_parada ? ` Parada: ${args.minutos_parada} min (${args.motivo_parada})` : ''}`,
+          parte_id: data.id
+        })
+      }
+
+      case 'update_obra_hito': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        if (!projId) {
+          const { data: roque } = await sb.from('projects').select('id').ilike('name', '%Roque%').limit(1).single()
+          projId = roque?.id
+        }
+        const { data: hito, error: hErr } = await sb.from('obra_hitos').select('*').eq('project_id', projId)
+          .or(`codigo_hito.ilike.%${args.codigo_hito}%,nombre.ilike.%${args.codigo_hito}%`).limit(1).single()
+        if (hErr || !hito) return JSON.stringify({ error: `No se encontró el hito "${args.codigo_hito}"` })
+        
+        const updates: any = {
+          estado_binario: Number(args.estado_binario),
+          fecha_inspeccion: args.fecha_inspeccion || todayStr,
+          acta_numero: args.acta_numero || hito.acta_numero,
+          inspector_nombre: args.inspector_nombre || hito.inspector_nombre,
+          observaciones: args.observaciones || hito.observaciones
+        }
+        const { error } = await sb.from('obra_hitos').update(updates).eq('id', hito.id)
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          mensaje: `Hito ${hito.codigo_hito} (${hito.nombre}) actualizado a ${args.estado_binario === 100 ? '100% (Aprobado)' : '0% (Pendiente)'}.${args.acta_numero ? ` Acta N°: ${args.acta_numero}` : ''}`
+        })
+      }
+
+      case 'register_safety_incident': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        const { data, error } = await sb.from('seguridad_incidentes').insert({
+          obra_id: projId,
+          fecha: todayStr,
+          tipo: args.tipo,
+          gravedad: args.gravedad || 'leve',
+          descripcion: args.descripcion,
+          persona_afectada: args.persona_afectada || null,
+          causa_raiz: args.causa_raiz || null,
+          acciones_correctivas: args.acciones_correctivas || null,
+          estado: 'abierto'
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ success: true, mensaje: `Incidente de seguridad registrado correctamente.`, id: data.id })
+      }
+
+      case 'register_safety_observation': {
+        let projId = null
+        if (args.project_name) {
+          const { data: p } = await sb.from('projects').select('id').ilike('name', `%${args.project_name}%`).limit(1).single()
+          projId = p?.id
+        }
+        const sev = Number(args.severidad) || 2
+        const prob = Number(args.probabilidad) || 2
+        const { data, error } = await sb.from('seguridad_observaciones').insert({
+          obra_id: projId,
+          fecha: todayStr,
+          observador: args.observador || 'Rombo IA',
+          categoria: args.categoria || 'general',
+          descripcion: args.descripcion,
+          severidad: sev,
+          probabilidad: prob,
+          riesgo_score: sev * prob,
+          accion_sugerida: args.accion_sugerida || null,
+          estado: 'pendiente'
+        }).select().single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({ success: true, mensaje: `Observación de seguridad registrada (Riesgo: ${sev * prob}/25).`, id: data.id })
+      }
+
+      case 'execute_db_action': {
+        const table = String(args.table_name || '').trim()
+        if (!table || !/^[a-zA-Z0-9_]+$/.test(table)) return JSON.stringify({ error: 'Tabla inválida' })
+        const { data: tenant } = await sb.from('tenants').select('id').limit(1).single()
+        const payload = { ...args.data }
+        if (table !== 'tenants' && !payload.tenant_id && tenant?.id) {
+          payload.tenant_id = tenant.id
+        }
+        if (args.action_type === 'insert') {
+          const { data, error } = await sb.from(table).insert(payload).select().single()
+          if (error) return JSON.stringify({ error: error.message })
+          return JSON.stringify({ success: true, action: 'insert', table, record: data })
+        } else if (args.action_type === 'update') {
+          if (!args.filter_column || args.filter_value === undefined) return JSON.stringify({ error: 'filter_column y filter_value requeridos para update' })
+          const { data, error } = await sb.from(table).update(args.data).eq(args.filter_column, args.filter_value).select()
+          if (error) return JSON.stringify({ error: error.message })
+          return JSON.stringify({ success: true, action: 'update', table, updated_count: data?.length })
+        } else if (args.action_type === 'delete') {
+          if (!args.filter_column || args.filter_value === undefined) return JSON.stringify({ error: 'filter_column y filter_value requeridos para delete' })
+          const { error } = await sb.from(table).delete().eq(args.filter_column, args.filter_value)
+          if (error) return JSON.stringify({ error: error.message })
+          return JSON.stringify({ success: true, action: 'delete', table })
+        }
+        return JSON.stringify({ error: 'action_type no soportado' })
       }
 
       default:
