@@ -2015,11 +2015,24 @@ export interface TransferStockParams {
   quantity: number;
   targetDeposit: string;
   targetShelfId?: string | null;
+  targetShelfCode?: string | null;
   targetShelfPosition?: string | null;
   targetShelfName?: string | null;
   notes?: string;
   userName?: string;
 }
+
+const normalizeShelfPos = (shelfCode?: string | null, rawPos?: string | null): string | null => {
+  if (!rawPos || !rawPos.trim()) return null;
+  let clean = rawPos.trim().toUpperCase();
+  clean = clean.replace(/^N(\d+)[-_\s]*C?(\d+)$/i, '$1-$2');
+  const code = (shelfCode || '').trim().toUpperCase();
+  if (code) {
+    if (clean.startsWith(`${code}-`)) return clean;
+    return `${code}-${clean}`;
+  }
+  return clean;
+};
 
 export function useTransferInventoryStock() {
   const qc = useQueryClient();
@@ -2029,6 +2042,7 @@ export function useTransferInventoryStock() {
       quantity,
       targetDeposit,
       targetShelfId,
+      targetShelfCode,
       targetShelfPosition,
       targetShelfName,
       notes,
@@ -2050,24 +2064,42 @@ export function useTransferInventoryStock() {
         throw new Error(`Stock insuficiente: disponible ${originCurrentStock}, se intentó transferir ${q}`);
       }
 
-      // 2. Look for destination item in targetDeposit
+      const normalizedTargetPos = normalizeShelfPos(targetShelfCode, targetShelfPosition);
+
+      // 2. Look for exact destination item in targetDeposit (matching name, measure, shelf_id, and shelf_position)
       const { data: existingDestItems, error: destSearchErr } = await supabase
         .from('inventory_items')
         .select('*')
-        .ilike('name', freshOrigin.name)
+        .ilike('name', freshOrigin.name.trim())
         .eq('deposit', targetDeposit);
       if (destSearchErr) throw destSearchErr;
 
-      let destItem = existingDestItems?.find(di => (targetShelfId ? di.shelf_id === targetShelfId : true)) || existingDestItems?.[0];
+      const originMeasure = (freshOrigin.measure || '').trim().toUpperCase();
+      const targetShelfIdNorm = targetShelfId || null;
+      const targetPosNorm = (normalizedTargetPos || '').trim().toUpperCase();
+
+      const destItem = existingDestItems?.find(di => {
+        if (di.id === freshOrigin.id) return false;
+        const diMeasure = (di.measure || '').trim().toUpperCase();
+        if (diMeasure !== originMeasure) return false;
+        const diShelfId = di.shelf_id || null;
+        if (diShelfId !== targetShelfIdNorm) return false;
+        const diPosNorm = (normalizeShelfPos(targetShelfCode, di.shelf_position) || '').trim().toUpperCase();
+        return diPosNorm === targetPosNorm;
+      });
+
       let destItemId = destItem?.id;
 
       if (destItem) {
         // 2A. Update destination item stock (+q)
         const destNewStock = (Number(destItem.current_stock) || 0) + q;
         const updatePayload: any = { current_stock: destNewStock };
-        if (targetShelfId && !destItem.shelf_id) {
-          updatePayload.shelf_id = targetShelfId;
-          if (targetShelfPosition) updatePayload.shelf_position = targetShelfPosition;
+        if (targetShelfIdNorm && !destItem.shelf_id) {
+          updatePayload.shelf_id = targetShelfIdNorm;
+        }
+        if (normalizedTargetPos && destItem.shelf_position !== normalizedTargetPos) {
+          updatePayload.shelf_position = normalizedTargetPos;
+          updatePayload.location = `Ubicación ${normalizedTargetPos}`;
         }
         const { error: updDestErr } = await supabase
           .from('inventory_items')
@@ -2075,7 +2107,7 @@ export function useTransferInventoryStock() {
           .eq('id', destItem.id);
         if (updDestErr) throw updDestErr;
       } else {
-        // 2B. Create destination item clone with current_stock = q
+        // 2B. Create destination item clone in the new location with current_stock = q
         const newDestPayload = {
           name: freshOrigin.name,
           category: freshOrigin.category,
@@ -2089,9 +2121,13 @@ export function useTransferInventoryStock() {
           measure: freshOrigin.measure || null,
           rubro: freshOrigin.rubro || null,
           deposit: targetDeposit,
-          shelf_id: targetShelfId || null,
-          shelf_position: targetShelfPosition || null,
-          location: targetShelfName ? `Estantería ${targetShelfName}` : targetDeposit,
+          shelf_id: targetShelfIdNorm,
+          shelf_position: normalizedTargetPos,
+          location: normalizedTargetPos
+            ? `Ubicación ${normalizedTargetPos}`
+            : targetShelfName
+              ? `Estantería ${targetShelfName}`
+              : targetDeposit,
           current_stock: q,
           tenant_id: ECAR_TENANT_ID,
         };
@@ -2118,8 +2154,11 @@ export function useTransferInventoryStock() {
         finalUserName = authData?.user?.user_metadata?.full_name || authData?.user?.email || 'Pañol Central';
       }
 
+      const destLocationLabel = normalizedTargetPos || targetShelfName || '';
+      const originLocationLabel = freshOrigin.shelf_position || originItem.shelf?.code || '';
+
       // 4. Kardex egress movement for Origin
-      const originNotes = `Transferencia hacia ${targetDeposit}${targetShelfName ? ` (${targetShelfName})` : ''}${notes ? ` - ${notes}` : ''}`;
+      const originNotes = `Transferencia hacia ${targetDeposit}${destLocationLabel ? ` (${destLocationLabel})` : ''}${notes ? ` - ${notes}` : ''}`;
       const { error: movOutErr } = await supabase.from('inventory_movements').insert({
         tenant_id: ECAR_TENANT_ID,
         item_id: freshOrigin.id,
@@ -2132,7 +2171,7 @@ export function useTransferInventoryStock() {
 
       // 5. Kardex ingress movement for Destination
       if (destItemId) {
-        const destNotes = `Transferencia recibida desde ${freshOrigin.deposit || 'Origen'}${originItem.shelf?.code ? ` (${originItem.shelf.code})` : ''}${notes ? ` - ${notes}` : ''}`;
+        const destNotes = `Transferencia recibida desde ${freshOrigin.deposit || 'Origen'}${originLocationLabel ? ` (${originLocationLabel})` : ''}${notes ? ` - ${notes}` : ''}`;
         const { error: movInErr } = await supabase.from('inventory_movements').insert({
           tenant_id: ECAR_TENANT_ID,
           item_id: destItemId,

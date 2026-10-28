@@ -111,9 +111,9 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
   const [quickProjectId, setQuickProjectId] = useState('');
   const [quickAssignedTo, setQuickAssignedTo] = useState('');
 
-  // Transfer specific state
-  const [targetDeposit, setTargetDeposit] = useState<string>('');
-  const [targetShelfId, setTargetShelfId] = useState<string>('');
+  // Transfer specific state (default to item's current deposit and shelf so internal bin/shelf relocations don't jump deposit unintentionally)
+  const [targetDeposit, setTargetDeposit] = useState<string>(item.deposit || '');
+  const [targetShelfId, setTargetShelfId] = useState<string>(item.shelf_id || '');
   const [targetShelfPos, setTargetShelfPos] = useState<string>('');
 
   // Combined deposits list: from DB
@@ -122,13 +122,13 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
     return [{ id: 'default', name: 'ROQUE', location: '' }];
   }, [deposits]);
 
-  // Auto-suggest a target deposit different from the current one
+  // Default target deposit to the item's current deposit so internal relocations stay in the same deposit unless changed
   useEffect(() => {
     if (!targetDeposit) {
-      const currentDep = (item.deposit || deposits?.[0]?.name || 'ROQUE').trim().toUpperCase();
-      const alternative = allDepositOptions.find(d => d.name.trim().toUpperCase() !== currentDep);
-      if (alternative) {
-        setTargetDeposit(alternative.name);
+      const currentDep = (item.deposit || deposits?.[0]?.name || 'ROQUE').trim();
+      const matching = allDepositOptions.find(d => d.name.trim().toUpperCase() === currentDep.toUpperCase());
+      if (matching) {
+        setTargetDeposit(matching.name);
       } else if (allDepositOptions.length > 0) {
         setTargetDeposit(allDepositOptions[0].name);
       }
@@ -184,21 +184,30 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
       return;
     }
 
+    const targetShelf = shelves.find(s => s.id === targetShelfId);
+    const targetShelfCode = targetShelf?.code || null;
+    const targetShelfName = targetShelf ? `${targetShelf.code} - ${targetShelf.name}` : undefined;
+
     const currentDep = (item.deposit || '').trim().toUpperCase();
     const targetDep = targetDeposit.trim().toUpperCase();
     const isSameDeposit = currentDep === targetDep;
     const isSameShelf = (targetShelfId || null) === (item.shelf_id || null);
 
-    if (isSameDeposit && isSameShelf) {
+    const normalizedCurrentPos = item.shelf_position
+      ? formatShelfPosition(item.shelf?.code, item.shelf_position).trim().toUpperCase()
+      : '';
+    const normalizedTargetPos = targetShelfPos.trim()
+      ? formatShelfPosition(targetShelfCode || undefined, targetShelfPos.trim().toUpperCase()).trim().toUpperCase()
+      : '';
+    const isSamePosition = normalizedCurrentPos === normalizedTargetPos;
+
+    if (isSameDeposit && isSameShelf && isSamePosition) {
       useModalStore.getState().showAlert(
         'Atención',
-        'El destino seleccionado es idéntico a la ubicación actual del artículo (mismo depósito y misma estantería). Selecciona un depósito o estantería diferente.'
+        'El destino seleccionado es idéntico a la ubicación actual del artículo (mismo depósito, misma estantería y misma posición/cajón). Selecciona una posición, estantería o depósito diferente.'
       );
       return;
     }
-
-    const targetShelf = shelves.find(s => s.id === targetShelfId);
-    const targetShelfName = targetShelf ? `${targetShelf.code} - ${targetShelf.name}` : undefined;
 
     try {
       await transferStock.mutateAsync({
@@ -206,18 +215,21 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
         quantity: q,
         targetDeposit: targetDep,
         targetShelfId: targetShelfId || null,
-        targetShelfPosition: targetShelfPos ? targetShelfPos.toUpperCase().trim() : null,
+        targetShelfCode,
+        targetShelfPosition: normalizedTargetPos || null,
         targetShelfName,
         notes: quickNotes.trim() || undefined,
         userName: profile?.full_name || 'Pañol Central',
       });
 
+      const destLabel = normalizedTargetPos || targetShelfName || '';
       useModalStore.getState().showAlert(
         'Transferencia Exitosa',
-        `Se transfirieron ${q} ${item.unit} de "${item.name}" hacia "${targetDep}"${targetShelfName ? ` (${targetShelfName})` : ''}. Se registraron los egresos e ingresos en Kardex correspondientes.`
+        `Se transfirieron ${q} ${item.unit} de "${item.name}" hacia "${targetDep}"${destLabel ? ` (${destLabel})` : ''}. Se creó/actualizó la ubicación de destino y se registraron los movimientos en Kardex.`
       );
       setQuickQty('1');
       setQuickNotes('');
+      setTargetShelfPos('');
     } catch (err: any) {
       useModalStore.getState().showAlert('Error', err?.message || 'No se pudo realizar la transferencia.');
     }
@@ -412,10 +424,18 @@ const ItemMovementsAccordion: React.FC<ItemMovementsAccordionProps> = ({
                       value={targetShelfPos}
                       onChange={e => setTargetShelfPos(e.target.value)}
                       className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-ecar-blue focus:outline-none font-mono"
-                      placeholder="Ej. 1-1 o N1-C2"
+                      placeholder="Ej. 2-6 o D-2-6"
                     />
                   </div>
                 </div>
+                {(targetShelfId || targetShelfPos.trim()) && (
+                  <div className="text-[11px] font-mono bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1.5 rounded-lg flex items-center justify-between">
+                    <span className="font-sans font-semibold text-emerald-700">📍 Nueva Ubicación Destino:</span>
+                    <span className="font-bold">
+                      {targetDeposit} • {formatShelfPosition(shelves.find(s => s.id === targetShelfId)?.code, targetShelfPos.trim().toUpperCase() || null)}
+                    </span>
+                  </div>
+                )}
 
                 {/* Nota / Motivo */}
                 <div>

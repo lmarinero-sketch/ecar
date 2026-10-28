@@ -41,13 +41,22 @@ export const ShelfFrontView: React.FC<Props> = ({ shelf, items }) => {
                 
                 const itemsInThisCell = items.filter(i => {
                   if (!i.shelf_position) return false;
-                  // If position is N2-C1
-                  if (i.shelf_position === positionCode) return true;
-                  
-                  // Fallback: If it's just N2-B46, we might just put it in the first column for visualization 
-                  // if we don't have enough columns.
-                  const isLevelMatch = i.shelf_position.startsWith(`N${row}-`);
-                  if (isLevelMatch && col === 1 && !i.shelf_position.includes('-C')) return true; 
+                  const pos = i.shelf_position.trim().toUpperCase();
+                  const shelfCode = (shelf.code || '').trim().toUpperCase();
+                  if (
+                    pos === positionCode ||
+                    pos === `${shelfCode}-${row}-${col}` ||
+                    pos === `${row}-${col}`
+                  ) {
+                    return true;
+                  }
+                  const isLevelMatch =
+                    pos.startsWith(`N${row}-`) ||
+                    pos.startsWith(`${shelfCode}-${row}-`);
+                  if (isLevelMatch && col === 1 && !pos.includes('-C')) {
+                    const binNum = parseInt(pos.split('-').pop() || '0', 10);
+                    if (binNum > (shelf.columns_count || 1)) return true;
+                  }
                   return false;
                 });
 
