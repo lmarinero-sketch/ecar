@@ -1,16 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
   ShieldCheck, FileCheck, Layers, CheckCircle2,
-  XCircle, Plus, Lock, Eye
+  XCircle, Plus, Lock, Eye, Trash2
 } from 'lucide-react';
 import {
-  useObraHitos, useUpdateObraHito, useCreateObraHito,
+  useObraHitos, useUpdateObraHito, useCreateObraHito, useDeleteObraHito,
   useObraTramos, useObraItems, useObraTramoItems,
-  useObraCertificados, useCreateObraCertificado,
+  useObraCertificados, useCreateObraCertificado, useDeleteObraCertificado,
   useObraParteDiarioItems
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraHito, ObraCertificado } from '../../../lib/types';
 import { ModalPortal } from '../../common/ModalPortal';
+import { useModalStore } from '../../../store/useModalStore';
 
 interface Fase4ControlProps {
   projectId: string;
@@ -29,7 +30,9 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
 
   const updateHito = useUpdateObraHito();
   const createHito = useCreateObraHito();
+  const deleteHito = useDeleteObraHito();
   const createCertificado = useCreateObraCertificado();
+  const deleteCertificado = useDeleteObraCertificado();
 
   const [activeSubTab, setActiveSubTab] = useState<'hitos' | 'semaforo' | 'certificados'>('hitos');
 
@@ -177,6 +180,34 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
     setSelectedHito(null);
   };
 
+  const handleDeleteHito = async (hito: ObraHito) => {
+    if (await useModalStore.getState().showConfirm(
+      'Eliminar Hito Técnico',
+      `¿Estás seguro de eliminar el hito "${hito.codigo_hito} — ${hito.nombre}"?`
+    )) {
+      try {
+        await deleteHito.mutateAsync({ id: hito.id, projectId });
+        if (selectedHito?.id === hito.id) setSelectedHito(null);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el hito.');
+      }
+    }
+  };
+
+  const handleDeleteCertificado = async (cert: ObraCertificado) => {
+    if (await useModalStore.getState().showConfirm(
+      'Eliminar Certificado',
+      `¿Estás seguro de eliminar el Certificado N° ${cert.numero_certificado} (${cert.periodo_desde} al ${cert.periodo_hasta})?`
+    )) {
+      try {
+        await deleteCertificado.mutateAsync({ id: cert.id, projectId });
+        if (selectedCertificadoView?.id === cert.id) setSelectedCertificadoView(null);
+      } catch (err: any) {
+        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar el certificado.');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Banner de Fase 4 */}
@@ -261,9 +292,9 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {hitos.length === 0 ? (
-              <div className="col-span-2 p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+              <div className="col-span-full p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
                 <ShieldCheck size={40} className="mx-auto text-slate-300 mb-3" />
                 <h4 className="font-bold text-slate-700">Sin hitos registrados</h4>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
@@ -318,6 +349,7 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
 
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedHito(hito);
                           setHitoForm({
@@ -326,9 +358,18 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
                             fecha_inspeccion: hito.fecha_inspeccion || new Date().toISOString().split('T')[0]
                           });
                         }}
-                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all text-center"
+                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
                       >
                         Gestionar Protocolo / Acta
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteHito(hito)}
+                        disabled={deleteHito.isPending}
+                        className="px-2.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer"
+                        title="Eliminar Hito de Control"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -438,10 +479,20 @@ export const Fase4Control: React.FC<Fase4ControlProps> = ({
                         <Lock size={12} /> CERRADO / INMUTABLE
                       </span>
                       <button
+                        type="button"
                         onClick={() => setSelectedCertificadoView(cert)}
-                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <Eye size={14} /> Ver Detalle Ítems
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCertificado(cert)}
+                        disabled={deleteCertificado.isPending}
+                        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl transition-all cursor-pointer"
+                        title="Eliminar Certificado emitido por error"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>

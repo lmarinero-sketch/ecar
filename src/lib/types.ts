@@ -2341,6 +2341,8 @@ export type ObraParteDiarioItem = {
   created_at?: string;
   odt?: ObraOrdenTrabajo;
   tramo_item?: ObraTramoItem;
+  item?: ObraItem;
+  tramo?: ObraTramo;
 };
 
 export type ObraHito = {

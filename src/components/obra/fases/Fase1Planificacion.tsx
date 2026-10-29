@@ -2,12 +2,13 @@ import React, { useState, useMemo } from 'react';
 import {
   FolderTree, Plus, Lock, CheckCircle2,
   ChevronRight, ChevronDown, FileSpreadsheet,
-  Pencil, Trash2
+  Pencil, Trash2, Activity
 } from 'lucide-react';
 import {
   useObraRubros, useCreateObraRubro, useUpdateObraRubro, useDeleteObraRubro, useClearObraWbs,
   useCreateObraSubrubro, useUpdateObraSubrubro, useDeleteObraSubrubro,
-  useObraItems, useCreateObraItem, useUpdateObraItem, useDeleteObraItem
+  useObraItems, useCreateObraItem, useUpdateObraItem, useDeleteObraItem,
+  useObraOrdenesTrabajo, useObraParteDiarioItems
 } from '../../../hooks/useNuevoModuloObra';
 import { ModalPortal } from '../../common/ModalPortal';
 import { useModalStore } from '../../../store/useModalStore';
@@ -24,17 +25,23 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
 }) => {
   const { data: rubros = [], isLoading: loadingRubros } = useObraRubros(projectId);
   const { data: items = [] } = useObraItems(projectId);
+  const { data: odts = [] } = useObraOrdenesTrabajo(projectId);
+  const { data: partes = [] } = useObraParteDiarioItems(projectId);
 
   const createRubro = useCreateObraRubro();
   const updateRubro = useUpdateObraRubro();
   const deleteRubro = useDeleteObraRubro();
   const clearWbs = useClearObraWbs();
   const createSubrubro = useCreateObraSubrubro();
-  const updateSubrubro = useUpdateObraSubrubro();
+  const updateSubrubro = useUpdateSubrubroHook();
   const deleteSubrubro = useDeleteObraSubrubro();
   const createItem = useCreateObraItem();
   const updateItem = useUpdateObraItem();
   const deleteItem = useDeleteObraItem();
+
+  function useUpdateSubrubroHook() {
+    return useUpdateObraSubrubro();
+  }
 
   const [expandedRubros, setExpandedRubros] = useState<Record<string, boolean>>({});
   const [expandedSubrubros, setExpandedSubrubros] = useState<Record<string, boolean>>({});
@@ -62,19 +69,100 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
     precio_unitario_ars: 0, rendimiento_base_dia: 70, criterio_medicion: ''
   });
 
-  // KPIs de Planificación
+  // Mapa de Comunicación / Vinculación en vivo con Fase 2 (ODTs) y Fase 3 (Partes Diarios)
+  const itemExecutionMap = useMemo(() => {
+    const map: Record<string, {
+      ejecutadoReal: number;
+      programadoOdts: number;
+      pctEjecutado: number;
+      odts: typeof odts;
+      odtActiva?: (typeof odts)[0];
+      tieneOdtOEjecucion: boolean;
+      estado: 'pendiente' | 'odt_emitida' | 'en_ejecucion' | 'completado';
+    }> = {};
+
+    const partesPorItem: Record<string, number> = {};
+    partes.forEach(p => {
+      const itemId = p.item_id || p.odt?.item_id || p.tramo_item?.item_id;
+      if (itemId) {
+        partesPorItem[itemId] = (partesPorItem[itemId] || 0) + Number(p.cantidad_real || 0);
+      }
+    });
+
+    items.forEach(it => {
+      const contractual = Number(it.cantidad_contractual || 0);
+      const ejecutadoReal = partesPorItem[it.id] || 0;
+      const itemOdts = odts.filter(o => o.item_id === it.id && o.estado !== 'anulada');
+      const programadoOdts = itemOdts.reduce((acc, o) => acc + Number(o.meta_cantidad || 0), 0);
+      const pctEjecutado = contractual > 0
+        ? Math.min(100, Number(((ejecutadoReal / contractual) * 100).toFixed(1)))
+        : 0;
+      const odtActiva = itemOdts.find(o => o.estado === 'emitida' || o.estado === 'en_ejecucion');
+      const tieneOdtOEjecucion = itemOdts.length > 0 || ejecutadoReal > 0;
+
+      let estado: 'pendiente' | 'odt_emitida' | 'en_ejecucion' | 'completado' = 'pendiente';
+      if (contractual > 0 && ejecutadoReal >= contractual) {
+        estado = 'completado';
+      } else if (ejecutadoReal > 0 || itemOdts.some(o => o.estado === 'en_ejecucion')) {
+        estado = 'en_ejecucion';
+      } else if (itemOdts.length > 0) {
+        estado = 'odt_emitida';
+      }
+
+      map[it.id] = {
+        ejecutadoReal,
+        programadoOdts,
+        pctEjecutado,
+        odts: itemOdts,
+        odtActiva,
+        tieneOdtOEjecucion,
+        estado
+      };
+    });
+
+    return map;
+  }, [items, odts, partes]);
+
+  // KPIs de Planificación + Avance Real Sincronizado
   const kpis = useMemo(() => {
     const totalContractual = items.reduce((s, i) => s + (Number(i.importe_contractual_ars) || (Number(i.cantidad_contractual) * Number(i.precio_unitario_ars)) || 0), 0);
     const subrubrosCount = rubros.reduce((acc, r) => acc + (r.subrubros?.length || 0), 0);
     const sumaIncidencias = items.reduce((s, i) => s + Number(i.incidencia_obra_pct || 0), 0);
+
+    let totalCantContractual = 0;
+    let totalCantEjecutada = 0;
+    let itemsConOdt = 0;
+    let itemsEnEjecucion = 0;
+    let itemsCompletados = 0;
+
+    items.forEach(i => {
+      const cant = Number(i.cantidad_contractual || 0);
+      const exec = itemExecutionMap[i.id];
+      totalCantContractual += cant;
+      if (exec) {
+        totalCantEjecutada += cant > 0 ? Math.min(cant, exec.ejecutadoReal) : 0;
+        if (exec.tieneOdtOEjecucion) itemsConOdt++;
+        if (exec.estado === 'en_ejecucion') itemsEnEjecucion++;
+        if (exec.estado === 'completado') itemsCompletados++;
+      }
+    });
+
+    const avanceGlobalPct = totalCantContractual > 0
+      ? Math.min(100, Number(((totalCantEjecutada / totalCantContractual) * 100).toFixed(1)))
+      : 0;
+
     return {
       totalContractual,
       rubrosCount: rubros.length,
       subrubrosCount,
       itemsCount: items.length,
-      sumaIncidencias: sumaIncidencias || (items.length > 0 ? 100 : 0)
+      sumaIncidencias: sumaIncidencias || (items.length > 0 ? 100 : 0),
+      avanceGlobalPct,
+      itemsConOdt,
+      itemsEnEjecucion,
+      itemsCompletados
     };
-  }, [items, rubros]);
+  }, [items, rubros, itemExecutionMap]);
 
   const toggleRubro = (id: string) => {
     setExpandedRubros(prev => ({ ...prev, [id]: !prev[id] }));
@@ -82,6 +170,15 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
 
   const toggleSubrubro = (id: string) => {
     setExpandedSubrubros(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const showLockedItemAlert = (item: any) => {
+    const exec = itemExecutionMap[item.id];
+    const odtsList = exec?.odts.map(o => o.numero_odt).join(', ') || 'Sin código';
+    useModalStore.getState().showAlert(
+      '🔒 Ítem Bloqueado por Ejecución / ODT Activa',
+      `No se puede editar ni eliminar el ítem "${item.codigo_item} — ${item.descripcion}" en Planificación porque ya se encuentra vinculado con:\n\n• ODTs generadas: ${odtsList}\n• Avance físico registrado: ${exec?.ejecutadoReal || 0} ${item.unidad} (${exec?.pctEjecutado || 0}%)\n\nSi la Orden de Trabajo se emitió por error, primero debés anularla o eliminarla desde Fase 2 (Programación).`
+    );
   };
 
   const handleSaveRubro = async () => {
@@ -131,6 +228,16 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   };
 
   const handleDeleteRubro = async (rubro: any) => {
+    const rubroItems = (rubro.subrubros || []).flatMap((s: any) => s.items || []);
+    const hasLocked = rubroItems.some((it: any) => itemExecutionMap[it.id]?.tieneOdtOEjecucion);
+    if (hasLocked) {
+      useModalStore.getState().showAlert(
+        '🔒 Rubro con Ítems en Ejecución / ODT',
+        `No se puede eliminar el rubro "${rubro.codigo} ${rubro.nombre}" porque contiene actividades que ya tienen Órdenes de Trabajo emitidas o avances cargados en Ejecución.\n\nPara eliminarlo, primero debés anular sus ODTs en Fase 2.`
+      );
+      return;
+    }
+
     const subCount = rubro.subrubros?.length || 0;
     const msg = subCount > 0
       ? `¿Estás seguro de eliminar el rubro "${rubro.codigo} ${rubro.nombre}"? Contiene ${subCount} subrubro(s) y sus ítems, los cuales también se eliminarán.`
@@ -166,7 +273,17 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   };
 
   const handleDeleteSubrubro = async (subrubro: any) => {
-    const itemCount = subrubro.items?.length || 0;
+    const subItems = subrubro.items || [];
+    const hasLocked = subItems.some((it: any) => itemExecutionMap[it.id]?.tieneOdtOEjecucion);
+    if (hasLocked) {
+      useModalStore.getState().showAlert(
+        '🔒 Subrubro con Ítems en Ejecución / ODT',
+        `No se puede eliminar el subrubro "${subrubro.codigo} ${subrubro.nombre}" porque contiene ítems con Órdenes de Trabajo emitidas o en ejecución.\n\nPrimero debés anular las ODTs asociadas en Fase 2.`
+      );
+      return;
+    }
+
+    const itemCount = subItems.length;
     const msg = itemCount > 0
       ? `¿Estás seguro de eliminar el subrubro "${subrubro.codigo} ${subrubro.nombre}"? Contiene ${itemCount} ítem(s) contractual(es) que también se eliminarán.`
       : `¿Estás seguro de eliminar el subrubro "${subrubro.codigo} ${subrubro.nombre}"?`;
@@ -227,6 +344,10 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   };
 
   const handleDeleteItem = async (item: any) => {
+    if (itemExecutionMap[item.id]?.tieneOdtOEjecucion) {
+      showLockedItemAlert(item);
+      return;
+    }
     const msg = `¿Estás seguro de que deseas eliminar el ítem "${item.codigo_item} - ${item.descripcion}"?`;
     if (await useModalStore.getState().showConfirm('Eliminar Ítem', msg)) {
       try {
@@ -239,6 +360,13 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   };
 
   const handleClearWbs = async () => {
+    if (kpis.itemsConOdt > 0) {
+      useModalStore.getState().showAlert(
+        '🔒 No se puede vaciar la WBS con ODTs Activas',
+        `Existen ${kpis.itemsConOdt} ítem(s) que ya tienen Órdenes de Trabajo emitidas o avances cargados en terreno.\n\nPor integridad del sistema, no se puede vaciar la Planificación mientras haya ODTs activas o ejecutadas.`
+      );
+      return;
+    }
     const msg = `ATENCIÓN: ¿Estás seguro de vaciar toda la estructura WBS de esta obra?\n\nSe eliminarán TODOS los ${rubros.length} rubros, subrubros e ítems contractuales, junto con sus registros en la matriz.\n\nUsa esta opción para dejar la obra completamente limpia y cargar la estructura idéntica a tu planilla de Excel.`;
     if (await useModalStore.getState().showConfirm('Vaciar Toda la Planificación WBS', msg)) {
       try {
@@ -251,7 +379,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Banner de Fase 1 */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
         <div className="absolute right-4 -bottom-6 opacity-10 pointer-events-none">
@@ -260,11 +388,11 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Lock size={12} /> Fase 1: Alcance Contractual y Cómputo
+              <Lock size={12} /> Fase 1: Alcance Contractual, Cómputo y Seguimiento WBS
             </div>
-            <h2 className="text-2xl font-bold">Planificación de Obra — Estructura WBS</h2>
-            <p className="text-blue-200 text-sm mt-1 max-w-2xl">
-              Entorno para estructurar Rubros, Subrubros e Ítems contractuales. Las incidencias matemáticas y los cómputos definen la base legal inmutable de la obra.
+            <h2 className="text-2xl font-bold">Planificación de Obra — Estructura WBS Vinculada</h2>
+            <p className="text-blue-200 text-sm mt-1 max-w-3xl">
+              Estructura de Rubros, Subrubros e Ítems sincronizada en tiempo real con Programación (Fase 2) y Ejecución (Fase 3). Los ítems con ODT emitida o en ejecución quedan protegidos contra edición o borrado.
             </p>
           </div>
 
@@ -280,8 +408,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         </div>
       </div>
 
-      {/* Tarjetas de Métricas de Planificación */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Tarjetas de Métricas de Planificación y Estado Sincronizado */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <span className="text-xs font-semibold text-slate-500 block mb-1">Monto Contractual Base</span>
           <span className="text-xl font-black text-slate-900 font-mono">
@@ -316,276 +444,409 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           </div>
           <span className="text-[11px] text-slate-400 block mt-1">Ponderación cerrada</span>
         </div>
+
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 shadow-sm col-span-2 lg:col-span-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+              <Activity size={13} /> Avance Físico Real
+            </span>
+            <span className="text-lg font-black text-emerald-700 font-mono">{kpis.avanceGlobalPct}%</span>
+          </div>
+          <div className="w-full h-2 bg-emerald-200/70 rounded-full overflow-hidden mb-1.5">
+            <div
+              className="h-full bg-emerald-600 rounded-full transition-all"
+              style={{ width: `${Math.min(100, kpis.avanceGlobalPct)}%` }}
+            />
+          </div>
+          <span className="text-[11px] text-emerald-700 font-medium block">
+            {kpis.itemsConOdt} con ODT · {kpis.itemsCompletados} al 100%
+          </span>
+        </div>
       </div>
 
       {/* CONTENIDO: ESTRUCTURA WBS */}
       <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <h4 className="font-bold text-slate-800 text-sm">Catálogo Maestro de Contrato</h4>
-              <p className="text-xs text-slate-500">Define los componentes físicos medibles y sus incidencias sobre el valor total.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {rubros.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearWbs}
-                  disabled={clearWbs.isPending}
-                  className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                  title="Eliminar todos los rubros, subrubros e ítems cargados en esta obra para comenzar desde cero"
-                >
-                  <Trash2 size={13} />
-                  {clearWbs.isPending ? 'Vaciando...' : 'Vaciar WBS'}
-                </button>
-              )}
-              <button
-                onClick={() => setShowNewRubroModal(true)}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              >
-                <Plus size={14} />
-                Nuevo Rubro
-              </button>
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <h4 className="font-bold text-slate-800 text-sm">Catálogo Maestro de Contrato y Estado de Ejecución</h4>
+            <p className="text-xs text-slate-500">
+              Visualizá en vivo qué actividades tienen ODT emitida o avance en terreno. Los ítems en curso muestran candado <span className="font-semibold text-amber-700">🔒</span> y no pueden alterarse desde Planificación.
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            {rubros.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearWbs}
+                disabled={clearWbs.isPending}
+                className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                title="Eliminar todos los rubros, subrubros e ítems cargados en esta obra para comenzar desde cero"
+              >
+                <Trash2 size={13} />
+                {clearWbs.isPending ? 'Vaciando...' : 'Vaciar WBS'}
+              </button>
+            )}
+            <button
+              onClick={() => setShowNewRubroModal(true)}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            >
+              <Plus size={14} />
+              Nuevo Rubro
+            </button>
+          </div>
+        </div>
 
-          {loadingRubros ? (
-            <div className="p-8 text-center text-slate-400">Cargando estructura WBS...</div>
-          ) : rubros.length === 0 ? (
-            <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
-              <FolderTree size={40} className="mx-auto text-slate-300 mb-3" />
-              <h4 className="font-bold text-slate-700">Aún no hay Rubros cargados</h4>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                Crea los rubros manualmente o utiliza el importador de Excel para cargar la estructura de Loteo Roque.
-              </p>
-              {onOpenImporter && (
-                <button
-                  onClick={onOpenImporter}
-                  className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2"
-                >
-                  <FileSpreadsheet size={14} /> Importar Datos de Excel Roque
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {rubros.map(rubro => {
-                const isExpanded = expandedRubros[rubro.id] ?? true;
-                const subrubros = rubro.subrubros || [];
-                return (
-                  <div key={rubro.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                    {/* Header de Rubro */}
-                    <div
-                      onClick={() => toggleRubro(rubro.id)}
-                      className="px-4 py-3 bg-slate-100/80 hover:bg-slate-100 flex items-center justify-between cursor-pointer transition-all border-b border-slate-200"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {isExpanded ? <ChevronDown size={16} className="text-slate-500" /> : <ChevronRight size={16} className="text-slate-500" />}
-                        <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-mono font-bold">{rubro.codigo}</span>
-                        <span className="font-bold text-slate-800 text-sm">{rubro.nombre}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs text-slate-500 font-mono">
-                          {subrubros.length} subrubros
+        {loadingRubros ? (
+          <div className="p-8 text-center text-slate-400">Cargando estructura WBS...</div>
+        ) : rubros.length === 0 ? (
+          <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+            <FolderTree size={40} className="mx-auto text-slate-300 mb-3" />
+            <h4 className="font-bold text-slate-700">Aún no hay Rubros cargados</h4>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Crea los rubros manualmente o utiliza el importador de Excel para cargar la estructura de Loteo Roque.
+            </p>
+            {onOpenImporter && (
+              <button
+                onClick={onOpenImporter}
+                className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2"
+              >
+                <FileSpreadsheet size={14} /> Importar Datos de Excel Roque
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {rubros.map(rubro => {
+              const isExpanded = expandedRubros[rubro.id] ?? true;
+              const subrubros = rubro.subrubros || [];
+              const rubroItems = subrubros.flatMap((s: any) => s.items || []);
+              const rubroTotalCant = rubroItems.reduce((acc: number, it: any) => acc + Number(it.cantidad_contractual || 0), 0);
+              const rubroEjecCant = rubroItems.reduce((acc: number, it: any) => {
+                const cant = Number(it.cantidad_contractual || 0);
+                const ej = itemExecutionMap[it.id]?.ejecutadoReal || 0;
+                return acc + (cant > 0 ? Math.min(cant, ej) : 0);
+              }, 0);
+              const rubroPct = rubroTotalCant > 0 ? Math.min(100, Number(((rubroEjecCant / rubroTotalCant) * 100).toFixed(1))) : 0;
+              const rubroLocked = rubroItems.some((it: any) => itemExecutionMap[it.id]?.tieneOdtOEjecucion);
+
+              return (
+                <div key={rubro.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  {/* Header de Rubro */}
+                  <div
+                    onClick={() => toggleRubro(rubro.id)}
+                    className="px-4 py-3 bg-slate-100/80 hover:bg-slate-100 flex flex-wrap items-center justify-between gap-3 cursor-pointer transition-all border-b border-slate-200"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {isExpanded ? <ChevronDown size={16} className="text-slate-500" /> : <ChevronRight size={16} className="text-slate-500" />}
+                      <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-mono font-bold">{rubro.codigo}</span>
+                      <span className="font-bold text-slate-800 text-sm">{rubro.nombre}</span>
+                      {rubroLocked && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200">
+                          <Lock size={10} /> Con ODT / En Ejecución
                         </span>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedRubroId(rubro.id);
-                              setShowNewSubrubroModal(true);
-                            }}
-                            className="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold border border-slate-300 flex items-center gap-1 transition-colors"
-                          >
-                            <Plus size={12} /> Subrubro
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingRubro(rubro);
-                              setRubroForm({
-                                codigo: rubro.codigo,
-                                nombre: rubro.nombre,
-                                descripcion: rubro.descripcion || '',
-                                orden: rubro.orden || 1
-                              });
-                              setShowEditRubroModal(true);
-                            }}
-                            className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-300 transition-colors"
-                            title="Editar Rubro"
-                          >
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteRubro(rubro);
-                            }}
-                            className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-300 transition-colors"
-                            title="Eliminar Rubro"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
+                          <div
+                            className={`h-full rounded-full ${rubroPct >= 100 ? 'bg-emerald-500' : rubroPct > 0 ? 'bg-blue-600' : 'bg-slate-300'}`}
+                            style={{ width: `${rubroPct}%` }}
+                          />
                         </div>
+                        <span className={`text-xs font-mono font-bold ${rubroPct >= 100 ? 'text-emerald-700' : rubroPct > 0 ? 'text-blue-700' : 'text-slate-500'}`}>
+                          {rubroPct}% ejec.
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-500 font-mono">
+                        {subrubros.length} subrubros ({rubroItems.length} ítems)
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRubroId(rubro.id);
+                            setShowNewSubrubroModal(true);
+                          }}
+                          className="px-2.5 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold border border-slate-300 flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Plus size={12} /> Subrubro
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingRubro(rubro);
+                            setRubroForm({
+                              codigo: rubro.codigo,
+                              nombre: rubro.nombre,
+                              descripcion: rubro.descripcion || '',
+                              orden: rubro.orden || 1
+                            });
+                            setShowEditRubroModal(true);
+                          }}
+                          className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-300 transition-colors cursor-pointer"
+                          title="Editar Rubro"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteRubro(rubro);
+                          }}
+                          className={`p-1 rounded border transition-colors cursor-pointer ${
+                            rubroLocked
+                              ? 'bg-slate-100 text-slate-300 border-slate-200'
+                              : 'bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 border-slate-300'
+                          }`}
+                          title={rubroLocked ? 'Bloqueado: contiene ítems con ODT o en ejecución' : 'Eliminar Rubro'}
+                        >
+                          {rubroLocked ? <Lock size={12} /> : <Trash2 size={12} />}
+                        </button>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Subrubros e Ítems */}
-                    {isExpanded && (
-                      <div className="p-3 space-y-3">
-                        {subrubros.length === 0 ? (
-                          <div className="text-xs text-slate-400 italic p-3 text-center">Sin subrubros en este rubro.</div>
-                        ) : (
-                          subrubros.map(subrubro => {
-                            const isSubExpanded = expandedSubrubros[subrubro.id] ?? true;
-                            const subItems = subrubro.items || [];
-                            return (
-                              <div key={subrubro.id} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
-                                {/* Header Subrubro */}
-                                <div
-                                  onClick={() => toggleSubrubro(subrubro.id)}
-                                  className="px-3.5 py-2 bg-slate-100 flex items-center justify-between cursor-pointer border-b border-slate-200 text-xs"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {isSubExpanded ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
-                                    <span className="font-mono font-semibold text-indigo-700">{subrubro.codigo}</span>
-                                    <span className="font-bold text-slate-700">{subrubro.nombre}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedSubrubroId(subrubro.id);
-                                        setShowNewItemModal(true);
-                                      }}
-                                      className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 flex items-center gap-1 transition-colors"
-                                    >
-                                      <Plus size={11} /> Ítem
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingSubrubro(subrubro);
-                                        setSubrubroForm({
-                                          codigo: subrubro.codigo,
-                                          nombre: subrubro.nombre,
-                                          orden: subrubro.orden || 1
-                                        });
-                                        setShowEditSubrubroModal(true);
-                                      }}
-                                      className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors"
-                                      title="Editar Subrubro"
-                                    >
-                                      <Pencil size={11} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteSubrubro(subrubro);
-                                      }}
-                                      className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-200 transition-colors"
-                                      title="Eliminar Subrubro"
-                                    >
-                                      <Trash2 size={11} />
-                                    </button>
-                                  </div>
+                  {/* Subrubros e Ítems */}
+                  {isExpanded && (
+                    <div className="p-3 space-y-3">
+                      {subrubros.length === 0 ? (
+                        <div className="text-xs text-slate-400 italic p-3 text-center">Sin subrubros en este rubro.</div>
+                      ) : (
+                        subrubros.map(subrubro => {
+                          const isSubExpanded = expandedSubrubros[subrubro.id] ?? true;
+                          const subItems = subrubro.items || [];
+                          const subTotalCant = subItems.reduce((acc: number, it: any) => acc + Number(it.cantidad_contractual || 0), 0);
+                          const subEjecCant = subItems.reduce((acc: number, it: any) => {
+                            const cant = Number(it.cantidad_contractual || 0);
+                            const ej = itemExecutionMap[it.id]?.ejecutadoReal || 0;
+                            return acc + (cant > 0 ? Math.min(cant, ej) : 0);
+                          }, 0);
+                          const subPct = subTotalCant > 0 ? Math.min(100, Number(((subEjecCant / subTotalCant) * 100).toFixed(1))) : 0;
+                          const subLocked = subItems.some((it: any) => itemExecutionMap[it.id]?.tieneOdtOEjecucion);
+
+                          return (
+                            <div key={subrubro.id} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
+                              {/* Header Subrubro */}
+                              <div
+                                onClick={() => toggleSubrubro(subrubro.id)}
+                                className="px-3.5 py-2 bg-slate-100 flex flex-wrap items-center justify-between gap-2 cursor-pointer border-b border-slate-200 text-xs"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isSubExpanded ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
+                                  <span className="font-mono font-semibold text-indigo-700">{subrubro.codigo}</span>
+                                  <span className="font-bold text-slate-700">{subrubro.nombre}</span>
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                                    subPct >= 100
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : subPct > 0
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-slate-200 text-slate-600'
+                                  }`}>
+                                    Avance: {subPct}%
+                                  </span>
                                 </div>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedSubrubroId(subrubro.id);
+                                      setShowNewItemModal(true);
+                                    }}
+                                    className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold border border-blue-200 flex items-center gap-1 transition-colors cursor-pointer"
+                                  >
+                                    <Plus size={11} /> Ítem
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingSubrubro(subrubro);
+                                      setSubrubroForm({
+                                        codigo: subrubro.codigo,
+                                        nombre: subrubro.nombre,
+                                        orden: subrubro.orden || 1
+                                      });
+                                      setShowEditSubrubroModal(true);
+                                    }}
+                                    className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors cursor-pointer"
+                                    title="Editar Subrubro"
+                                  >
+                                    <Pencil size={11} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteSubrubro(subrubro);
+                                    }}
+                                    className={`p-1 rounded border transition-colors cursor-pointer ${
+                                      subLocked
+                                        ? 'bg-slate-100 text-slate-300 border-slate-200'
+                                        : 'bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 border-slate-200'
+                                    }`}
+                                    title={subLocked ? 'Bloqueado: contiene ítems con ODT o en ejecución' : 'Eliminar Subrubro'}
+                                  >
+                                    {subLocked ? <Lock size={11} /> : <Trash2 size={11} />}
+                                  </button>
+                                </div>
+                              </div>
 
-                                {/* Tabla de Ítems */}
-                                {isSubExpanded && subItems.length > 0 && (
-                                  <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs">
-                                      <thead className="bg-white text-slate-500 font-semibold border-b border-slate-200">
-                                        <tr>
-                                          <th className="py-2 px-3">Código</th>
-                                          <th className="py-2 px-3">Descripción</th>
-                                          <th className="py-2 px-3 text-center">Unidad</th>
-                                          <th className="py-2 px-3 text-right">Cant. Contractual</th>
-                                          <th className="py-2 px-3 text-right">P.U. s/IVA</th>
-                                          <th className="py-2 px-3 text-right">Total s/IVA</th>
-                                          <th className="py-2 px-3 text-right">Incidencia Obra</th>
-                                          <th className="py-2 px-3 text-center w-20">Acciones</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-slate-100 bg-white">
-                                        {subItems.map(item => (
+                              {/* Tabla de Ítems */}
+                              {isSubExpanded && subItems.length > 0 && (
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left text-xs">
+                                    <thead className="bg-white text-slate-500 font-semibold border-b border-slate-200">
+                                      <tr>
+                                        <th className="py-2 px-3">Código</th>
+                                        <th className="py-2 px-3">Descripción</th>
+                                        <th className="py-2 px-3 text-center">Unidad</th>
+                                        <th className="py-2 px-3 text-right">Cant. Contractual</th>
+                                        <th className="py-2 px-3 text-right">P.U. s/IVA</th>
+                                        <th className="py-2 px-3 text-right">Total s/IVA</th>
+                                        <th className="py-2 px-3 text-right">Incidencia</th>
+                                        <th className="py-2 px-3 text-center">Estado (Fases 2 & 3)</th>
+                                        <th className="py-2 px-3 text-right min-w-[150px]">% Ejecución Real</th>
+                                        <th className="py-2 px-3 text-center w-28">Acciones</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                      {subItems.map(item => {
+                                        const exec = itemExecutionMap[item.id];
+                                        const isLocked = exec?.tieneOdtOEjecucion || false;
+                                        const pct = exec?.pctEjecutado || 0;
+                                        const ejecReal = exec?.ejecutadoReal || 0;
+
+                                        return (
                                           <tr key={item.id} className="hover:bg-blue-50/40">
-                                            <td className="py-2 px-3 font-mono font-bold text-blue-700">{item.codigo_item}</td>
-                                            <td className="py-2 px-3 text-slate-800 font-medium">{item.descripcion}</td>
-                                            <td className="py-2 px-3 text-center font-mono text-slate-500 uppercase">{item.unidad}</td>
-                                            <td className="py-2 px-3 text-right font-mono font-bold">{Number(item.cantidad_contractual).toLocaleString('es-AR')}</td>
-                                            <td className="py-2 px-3 text-right font-mono text-slate-600">${Number(item.precio_unitario_ars).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                                            <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                                            <td className="py-2.5 px-3 font-mono font-bold text-blue-700 whitespace-nowrap">{item.codigo_item}</td>
+                                            <td className="py-2.5 px-3 text-slate-800 font-medium">{item.descripcion}</td>
+                                            <td className="py-2.5 px-3 text-center font-mono text-slate-500 uppercase">{item.unidad}</td>
+                                            <td className="py-2.5 px-3 text-right font-mono font-bold">{Number(item.cantidad_contractual).toLocaleString('es-AR')}</td>
+                                            <td className="py-2.5 px-3 text-right font-mono text-slate-600">${Number(item.precio_unitario_ars).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                                               ${(Number(item.importe_contractual_ars) || (Number(item.cantidad_contractual) * Number(item.precio_unitario_ars))).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                                             </td>
-                                            <td className="py-2 px-3 text-right font-mono font-bold text-emerald-600">
+                                            <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">
                                               {Number(item.incidencia_obra_pct || 0).toFixed(2)}%
                                             </td>
-                                            <td className="py-2 px-3 text-center">
-                                              <div className="flex items-center justify-center gap-1">
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingItem(item);
-                                                    setItemForm({
-                                                      codigo_item: item.codigo_item,
-                                                      descripcion: item.descripcion,
-                                                      unidad: item.unidad,
-                                                      cantidad_contractual: Number(item.cantidad_contractual) || 0,
-                                                      precio_unitario_ars: Number(item.precio_unitario_ars) || 0,
-                                                      rendimiento_base_dia: Number(item.rendimiento_base_dia) || 70,
-                                                      criterio_medicion: item.criterio_medicion || ''
-                                                    });
-                                                    setShowEditItemModal(true);
-                                                  }}
-                                                  className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors cursor-pointer"
-                                                  title="Editar Ítem"
-                                                >
-                                                  <Pencil size={11} />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteItem(item);
-                                                  }}
-                                                  className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-200 transition-colors cursor-pointer"
-                                                  title="Eliminar Ítem"
-                                                >
-                                                  <Trash2 size={11} />
-                                                </button>
+                                            <td className="py-2.5 px-3 text-center">
+                                              {exec?.estado === 'completado' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                  🟢 100% Cumplido
+                                                </span>
+                                              ) : exec?.estado === 'en_ejecucion' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                                                  🔵 En Ejecución ({exec.odtActiva?.numero_odt || 'ODT'})
+                                                </span>
+                                              ) : exec?.estado === 'odt_emitida' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                  🟠 ODT Emitida ({exec.odtActiva?.numero_odt || exec.odts[0]?.numero_odt})
+                                                </span>
+                                              ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
+                                                  ⚪ Pendiente
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="py-2.5 px-3 text-right">
+                                              <div className="flex flex-col items-end gap-1">
+                                                <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                                                  <span className="text-slate-600">
+                                                    {ejecReal.toLocaleString('es-AR')} / {Number(item.cantidad_contractual).toLocaleString('es-AR')} {item.unidad}
+                                                  </span>
+                                                  <span className={`font-black ${pct >= 100 ? 'text-emerald-700' : pct > 0 ? 'text-blue-700' : 'text-slate-400'}`}>
+                                                    ({pct}%)
+                                                  </span>
+                                                </div>
+                                                <div className="w-28 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                  <div
+                                                    className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-emerald-500' : pct > 0 ? 'bg-blue-600' : 'bg-slate-300'}`}
+                                                    style={{ width: `${pct}%` }}
+                                                  />
+                                                </div>
                                               </div>
                                             </td>
+                                            <td className="py-2.5 px-3 text-center">
+                                              {isLocked ? (
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    showLockedItemAlert(item);
+                                                  }}
+                                                  className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold cursor-pointer transition-colors"
+                                                  title="Bloqueado porque ya tiene ODT emitida o avance en ejecución. Clic para ver detalle."
+                                                >
+                                                  <Lock size={11} /> Bloqueado
+                                                </button>
+                                              ) : (
+                                                <div className="flex items-center justify-center gap-1">
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setEditingItem(item);
+                                                      setItemForm({
+                                                        codigo_item: item.codigo_item,
+                                                        descripcion: item.descripcion,
+                                                        unidad: item.unidad,
+                                                        cantidad_contractual: Number(item.cantidad_contractual) || 0,
+                                                        precio_unitario_ars: Number(item.precio_unitario_ars) || 0,
+                                                        rendimiento_base_dia: Number(item.rendimiento_base_dia) || 70,
+                                                        criterio_medicion: item.criterio_medicion || ''
+                                                      });
+                                                      setShowEditItemModal(true);
+                                                    }}
+                                                    className="p-1 bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded border border-slate-200 transition-colors cursor-pointer"
+                                                    title="Editar Ítem"
+                                                  >
+                                                    <Pencil size={11} />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteItem(item);
+                                                    }}
+                                                    className="p-1 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 rounded border border-slate-200 transition-colors cursor-pointer"
+                                                    title="Eliminar Ítem"
+                                                  >
+                                                    <Trash2 size={11} />
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </td>
                                           </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Modal Nuevo Rubro */}
       <ModalPortal
         isOpen={showNewRubroModal}
         onClose={() => setShowNewRubroModal(false)}
         maxWidth="max-w-md"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Rubro</h3>
@@ -633,6 +894,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           setEditingRubro(null);
         }}
         maxWidth="max-w-md"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -687,6 +949,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         isOpen={showNewSubrubroModal}
         onClose={() => setShowNewSubrubroModal(false)}
         maxWidth="max-w-md"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Subrubro</h3>
@@ -725,6 +988,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
           setEditingSubrubro(null);
         }}
         maxWidth="max-w-md"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -770,6 +1034,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         isOpen={showNewItemModal}
         onClose={() => setShowNewItemModal(false)}
         maxWidth="max-w-lg"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <h3 className="font-bold text-lg text-slate-800">Crear Nuevo Ítem Medible</h3>
@@ -810,8 +1075,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Cantidad Contractual Total</label>
               <input
                 type="number"
-                value={itemForm.cantidad_contractual || ''}
-                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: Number(e.target.value) })}
+                value={itemForm.cantidad_contractual === 0 ? '' : itemForm.cantidad_contractual}
+                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="4200"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />
@@ -820,8 +1085,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Precio Unitario s/IVA ($)</label>
               <input
                 type="number"
-                value={itemForm.precio_unitario_ars || ''}
-                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: Number(e.target.value) })}
+                value={itemForm.precio_unitario_ars === 0 ? '' : itemForm.precio_unitario_ars}
+                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="3683.59"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />
@@ -830,8 +1095,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Rendimiento Base/Día</label>
               <input
                 type="number"
-                value={itemForm.rendimiento_base_dia || ''}
-                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: Number(e.target.value) })}
+                value={itemForm.rendimiento_base_dia === 0 ? '' : itemForm.rendimiento_base_dia}
+                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="70"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />
@@ -849,6 +1114,7 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
         isOpen={showEditItemModal}
         onClose={() => { setShowEditItemModal(false); setEditingItem(null); }}
         maxWidth="max-w-lg"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4">
           <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -892,8 +1158,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Cantidad Contractual Total</label>
               <input
                 type="number"
-                value={itemForm.cantidad_contractual || ''}
-                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: Number(e.target.value) })}
+                value={itemForm.cantidad_contractual === 0 ? '' : itemForm.cantidad_contractual}
+                onChange={e => setItemForm({ ...itemForm, cantidad_contractual: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="4200"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />
@@ -902,8 +1168,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Precio Unitario s/IVA ($)</label>
               <input
                 type="number"
-                value={itemForm.precio_unitario_ars || ''}
-                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: Number(e.target.value) })}
+                value={itemForm.precio_unitario_ars === 0 ? '' : itemForm.precio_unitario_ars}
+                onChange={e => setItemForm({ ...itemForm, precio_unitario_ars: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="3683.59"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />
@@ -912,8 +1178,8 @@ export const Fase1Planificacion: React.FC<Fase1PlanificacionProps> = ({
               <label className="text-xs font-semibold text-slate-500 block mb-1">Rendimiento Base/Día</label>
               <input
                 type="number"
-                value={itemForm.rendimiento_base_dia || ''}
-                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: Number(e.target.value) })}
+                value={itemForm.rendimiento_base_dia === 0 ? '' : itemForm.rendimiento_base_dia}
+                onChange={e => setItemForm({ ...itemForm, rendimiento_base_dia: e.target.value === '' ? 0 : Number(e.target.value) })}
                 placeholder="70"
                 className="w-full px-3 py-2 border rounded-xl text-sm font-mono"
               />

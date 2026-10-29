@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FolderTree, Calendar, HardHat, ShieldCheck, RotateCcw,
   Building2, type LucideIcon
 } from 'lucide-react';
 import { useProjects, useUpdateProject } from '../../hooks/useData';
+import {
+  useObraItems,
+  useObraOrdenesTrabajo,
+  useObraParteDiarioItems,
+  useObraHitos,
+  useObraLeccionesAprendidas
+} from '../../hooks/useNuevoModuloObra';
 import { useAppStore } from '../../store/useStore';
 import { useModalStore } from '../../store/useModalStore';
 import { Fase1Planificacion } from './fases/Fase1Planificacion';
@@ -90,17 +97,86 @@ export const NuevoModuloObra: React.FC = () => {
   const selectedProject = projects.find(p => p.id === activeProjectId);
   const updateProject = useUpdateProject();
 
+  // Datos sincronizados en vivo para los indicadores de comunicación entre las 5 Fases
+  const { data: items = [] } = useObraItems(selectedProject?.id);
+  const { data: odts = [] } = useObraOrdenesTrabajo(selectedProject?.id);
+  const { data: partes = [] } = useObraParteDiarioItems(selectedProject?.id);
+  const { data: hitos = [] } = useObraHitos(selectedProject?.id);
+  const { data: lecciones = [] } = useObraLeccionesAprendidas(selectedProject?.id);
+
+  const liveMetrics = useMemo(() => {
+    const odtsActivas = odts.filter(o => o.estado === 'emitida' || o.estado === 'en_ejecucion');
+    const odtsCumplidas = odts.filter(o => o.estado === 'cumplida');
+
+    const ejecutadoPorItem: Record<string, number> = {};
+    partes.forEach(p => {
+      const itemId = p.item_id || p.odt?.item_id || p.tramo_item?.item_id;
+      if (itemId) {
+        ejecutadoPorItem[itemId] = (ejecutadoPorItem[itemId] || 0) + Number(p.cantidad_real || 0);
+      }
+    });
+
+    let totalContractual = 0;
+    let totalEjecutadoAcotado = 0;
+    let itemsConAvance = 0;
+    let itemsCompletos = 0;
+
+    items.forEach(it => {
+      const cant = Number(it.cantidad_contractual || 0);
+      const ejec = ejecutadoPorItem[it.id] || 0;
+      totalContractual += cant;
+      totalEjecutadoAcotado += cant > 0 ? Math.min(cant, ejec) : 0;
+      if (ejec > 0) itemsConAvance++;
+      if (cant > 0 && ejec >= cant) itemsCompletos++;
+    });
+
+    const avanceGlobalPct = totalContractual > 0
+      ? Math.min(100, Number(((totalEjecutadoAcotado / totalContractual) * 100).toFixed(1)))
+      : 0;
+
+    const hitosAprobados = hitos.filter(h => h.estado_binario === 100).length;
+
+    return {
+      totalItems: items.length,
+      itemsConAvance,
+      itemsCompletos,
+      odtsActivas: odtsActivas.length,
+      odtsCumplidas: odtsCumplidas.length,
+      totalOdts: odts.filter(o => o.estado !== 'anulada').length,
+      totalPartes: partes.length,
+      avanceGlobalPct,
+      hitosAprobados,
+      totalHitos: hitos.length,
+      totalLecciones: lecciones.length
+    };
+  }, [items, odts, partes, hitos, lecciones]);
+
+  const getFaseBadge = (faseId: FaseObra) => {
+    switch (faseId) {
+      case 'planificacion':
+        return `${liveMetrics.totalItems} ítems · ${liveMetrics.avanceGlobalPct}% ejec.`;
+      case 'programacion':
+        return `${liveMetrics.odtsActivas} activas · ${liveMetrics.odtsCumplidas} cumplidas`;
+      case 'ejecucion':
+        return `${liveMetrics.totalPartes} partes · ${liveMetrics.avanceGlobalPct}% avance`;
+      case 'control':
+        return `${liveMetrics.hitosAprobados}/${liveMetrics.totalHitos} hitos 100%`;
+      case 'retroalimentacion':
+        return `${liveMetrics.totalLecciones} lecciones`;
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-16 max-w-7xl mx-auto">
+    <div className="space-y-5 pb-16 w-full px-2 sm:px-4">
       {/* Barra Superior de Proyecto */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold shadow-md shrink-0">
             <Building2 size={24} />
           </div>
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Proyecto de Obra Activo</span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900 leading-tight">
                 {selectedProject?.name || 'Selecciona un proyecto'}
               </h2>
@@ -134,6 +210,11 @@ export const NuevoModuloObra: React.FC = () => {
                   <option value="completed">🏁 Finalizada</option>
                 </select>
               )}
+              {selectedProject && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+                  Avance Físico Global: {liveMetrics.avanceGlobalPct}% ({liveMetrics.itemsCompletos}/{liveMetrics.totalItems} ítems al 100%)
+                </span>
+              )}
             </div>
             {selectedProject?.client_name && (
               <span className="text-xs text-slate-500">Comitente: {selectedProject.client_name}</span>
@@ -157,7 +238,7 @@ export const NuevoModuloObra: React.FC = () => {
         </div>
       </div>
 
-      {/* Navegación del Ciclo de 5 Fases de Obra */}
+      {/* Navegación del Ciclo de 5 Fases de Obra con Comunicación de Estado en Vivo */}
       <div className="bg-white rounded-2xl p-2 border border-slate-200 shadow-sm">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {FASES.map(fase => {
@@ -173,7 +254,7 @@ export const NuevoModuloObra: React.FC = () => {
                     : 'bg-white border-slate-100 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-1">
                   <span className={`text-[10px] font-bold tracking-wider uppercase ${isActive ? 'opacity-90' : 'text-slate-400'}`}>
                     {fase.numero}
                   </span>
@@ -185,6 +266,11 @@ export const NuevoModuloObra: React.FC = () => {
                 <div className="text-[11px] text-slate-400 truncate mt-0.5">
                   {fase.subtitulo}
                 </div>
+                <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                  isActive ? 'bg-white/80 text-slate-800 border border-slate-200/80' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {getFaseBadge(fase.id)}
+                </div>
               </button>
             );
           })}
@@ -193,7 +279,7 @@ export const NuevoModuloObra: React.FC = () => {
 
       {/* Contenido de la Fase Activa */}
       {selectedProject ? (
-        <div>
+        <div className="w-full">
           {activeFase === 'planificacion' && (
             <Fase1Planificacion
               projectId={selectedProject.id}

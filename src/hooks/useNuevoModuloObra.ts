@@ -397,6 +397,31 @@ export const useUpdateObraOrdenTrabajo = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
+    },
+  });
+};
+
+export const useDeleteObraOrdenTrabajo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      // Eliminar partes diarios asociados a esta ODT si los hubiera
+      await supabase.from('obra_parte_diario_items').delete().eq('odt_id', id);
+      const { error } = await supabase.from('obra_ordenes_trabajo').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', vars.projectId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
+        queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
+      }
     },
   });
 };
@@ -412,7 +437,7 @@ export const useObraParteDiarioItems = (projectId?: string, fecha?: string) => {
       if (!projectId) return [];
       let query = supabase
         .from('obra_parte_diario_items')
-        .select('*, odt:obra_ordenes_trabajo(*), tramo_item:obra_tramo_items(*, tramo:obra_tramos(*), item:obra_items(*))')
+        .select('*, item:obra_items(*), tramo:obra_tramos(*), odt:obra_ordenes_trabajo(*, item:obra_items(*), tramo:obra_tramos(*)), tramo_item:obra_tramo_items(*, tramo:obra_tramos(*), item:obra_items(*))')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
@@ -463,12 +488,21 @@ export const useCreateObraParteDiarioItem = () => {
         }
       }
 
-      // 3. If ODT was linked, update its status
+      // 3. If ODT was linked, solo cerrar ('cumplida') cuando el avance acumulado llegue al 100% de meta_cantidad
       if (item.odt_id) {
+        const [{ data: odtRow }, { data: partesOdt }] = await Promise.all([
+          supabase.from('obra_ordenes_trabajo').select('meta_cantidad').eq('id', item.odt_id).single(),
+          supabase.from('obra_parte_diario_items').select('cantidad_real').eq('odt_id', item.odt_id)
+        ]);
+
+        const metaCantidad = Number(odtRow?.meta_cantidad || 0);
+        const totalEjecutadoOdt = (partesOdt || []).reduce((acc, p) => acc + Number(p.cantidad_real || 0), 0);
+        const nuevoEstadoOdt = metaCantidad > 0 && totalEjecutadoOdt >= metaCantidad ? 'cumplida' : 'en_ejecucion';
+
         await supabase
           .from('obra_ordenes_trabajo')
           .update({
-            estado: 'cumplida',
+            estado: nuevoEstadoOdt,
             updated_at: new Date().toISOString()
           })
           .eq('id', item.odt_id);
@@ -478,8 +512,90 @@ export const useCreateObraParteDiarioItem = () => {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items', vars.project_id] });
+      queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
       queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', vars.project_id] });
       queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo', vars.project_id] });
+      queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
+    },
+  });
+};
+
+export const useDeleteObraParteDiarioItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { data: parte } = await supabase
+        .from('obra_parte_diario_items')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      const { error } = await supabase.from('obra_parte_diario_items').delete().eq('id', id);
+      if (error) throw error;
+
+      // Recalcular tramo_item si correspondía
+      if (parte?.tramo_item_id && parte?.cantidad_real) {
+        const { data: ti } = await supabase
+          .from('obra_tramo_items')
+          .select('cantidad_prevista, cantidad_ejecutada')
+          .eq('id', parte.tramo_item_id)
+          .single();
+
+        if (ti) {
+          const nuevaEjecutada = Math.max(0, Number(ti.cantidad_ejecutada || 0) - Number(parte.cantidad_real));
+          const progresoPct = ti.cantidad_prevista > 0
+            ? Math.min(100, Math.round((nuevaEjecutada / Number(ti.cantidad_prevista)) * 100))
+            : 0;
+          const nuevoEstado = nuevaEjecutada <= 0 ? 'pendiente' : progresoPct >= 100 ? 'terminada' : 'en_ejecucion';
+
+          await supabase
+            .from('obra_tramo_items')
+            .update({
+              cantidad_ejecutada: nuevaEjecutada,
+              progreso_pct: progresoPct,
+              estado: nuevoEstado,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', parte.tramo_item_id);
+        }
+      }
+
+      // Recalcular estado de la ODT
+      if (parte?.odt_id) {
+        const [{ data: odtRow }, { data: partesOdt }] = await Promise.all([
+          supabase.from('obra_ordenes_trabajo').select('meta_cantidad').eq('id', parte.odt_id).single(),
+          supabase.from('obra_parte_diario_items').select('cantidad_real').eq('odt_id', parte.odt_id)
+        ]);
+
+        const metaCantidad = Number(odtRow?.meta_cantidad || 0);
+        const totalEjecutadoOdt = (partesOdt || []).reduce((acc, p) => acc + Number(p.cantidad_real || 0), 0);
+        const nuevoEstadoOdt =
+          totalEjecutadoOdt <= 0
+            ? 'emitida'
+            : metaCantidad > 0 && totalEjecutadoOdt >= metaCantidad
+            ? 'cumplida'
+            : 'en_ejecucion';
+
+        await supabase
+          .from('obra_ordenes_trabajo')
+          .update({
+            estado: nuevoEstadoOdt,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', parte.odt_id);
+      }
+
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_tramo_items', vars.projectId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
     },
   });
 };
@@ -553,6 +669,22 @@ export const useUpdateObraHito = () => {
   });
 };
 
+export const useDeleteObraHito = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { error } = await supabase.from('obra_hitos').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) queryClient.invalidateQueries({ queryKey: ['obra_hitos', vars.projectId] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_hitos'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
+    },
+  });
+};
+
 export const useObraCertificados = (projectId?: string) => {
   return useQuery({
     queryKey: ['obra_certificados', projectId],
@@ -601,6 +733,22 @@ export const useCreateObraCertificado = () => {
   });
 };
 
+export const useDeleteObraCertificado = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      await supabase.from('obra_certificado_lineas').delete().eq('certificado_id', id);
+      const { error } = await supabase.from('obra_certificados').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) queryClient.invalidateQueries({ queryKey: ['obra_certificados', vars.projectId] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_certificados'] });
+    },
+  });
+};
+
 // ==============================================================================
 // HOOKS: FASE 5 - RETROALIMENTACIÓN (Lecciones Aprendidas & Rendimientos)
 // ==============================================================================
@@ -632,6 +780,21 @@ export const useCreateObraLeccionAprendida = () => {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['obra_lecciones_aprendidas', vars.project_id] });
+    },
+  });
+};
+
+export const useDeleteObraLeccionAprendida = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid }: { id: string; projectId?: string }) => {
+      const { error } = await supabase.from('obra_lecciones_aprendidas').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) queryClient.invalidateQueries({ queryKey: ['obra_lecciones_aprendidas', vars.projectId] });
+      else queryClient.invalidateQueries({ queryKey: ['obra_lecciones_aprendidas'] });
     },
   });
 };

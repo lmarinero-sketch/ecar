@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import {
   RotateCcw, TrendingUp, AlertTriangle, Lightbulb, CheckCircle2,
-  Plus, BookOpen, Database
+  Plus, BookOpen, Database, Trash2
 } from 'lucide-react';
 import {
   useObraItems,
   useObraParteDiarioItems,
   useObraLeccionesAprendidas,
-  useCreateObraLeccionAprendida
+  useCreateObraLeccionAprendida,
+  useDeleteObraLeccionAprendida
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraLeccionAprendida } from '../../../lib/types';
 import { ModalPortal } from '../../common/ModalPortal';
+import { useModalStore } from '../../../store/useModalStore';
 
 interface Fase5RetroalimentacionProps {
   projectId: string;
@@ -24,6 +26,7 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
   const { data: partes = [] } = useObraParteDiarioItems(projectId);
   const { data: lecciones = [] } = useObraLeccionesAprendidas(projectId);
   const createLeccion = useCreateObraLeccionAprendida();
+  const deleteLeccion = useDeleteObraLeccionAprendida();
 
   const [showNewModal, setShowNewModal] = useState(false);
   const [form, setForm] = useState({
@@ -271,14 +274,28 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
             <p className="text-[11px] text-slate-400 mt-0.5">Registra desviaciones de suelo, interferencias de servicios o mejoras constructivas.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {lecciones.map(lec => (
               <div key={lec.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                   <span className="px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-bold uppercase text-[10px]">
                     {lec.categoria}
                   </span>
-                  <span className="text-slate-400 text-[11px]">{lec.autor}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-[11px]">{lec.autor}</span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (await useModalStore.getState().showConfirm('Eliminar Lección', `¿Estás seguro de eliminar "${lec.titulo}"?`)) {
+                          await deleteLeccion.mutateAsync({ id: lec.id, projectId });
+                        }
+                      }}
+                      className="p-1 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200 cursor-pointer"
+                      title="Eliminar Lección Aprendida"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </div>
 
                 <h4 className="font-bold text-slate-900 text-sm">{lec.titulo}</h4>
@@ -299,6 +316,7 @@ export const Fase5Retroalimentacion: React.FC<Fase5RetroalimentacionProps> = ({
         isOpen={showNewModal}
         onClose={() => setShowNewModal(false)}
         maxWidth="max-w-lg"
+        closeOnBackdrop={false}
       >
         <div className="p-6 space-y-4 overflow-y-auto max-h-[88vh]">
           <h3 className="font-bold text-lg text-slate-900">Registrar Lección Aprendida</h3>
