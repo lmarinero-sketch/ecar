@@ -291,6 +291,7 @@ const PayWorkerModal: React.FC<{
 // PAYMENT MANAGEMENT TAB
 // ═══════════════════════════════════════════════════════════════════
 const PaymentManagementTab: React.FC = () => {
+  const { profile } = useAuth();
   const { data: weeklyPayments = [], isLoading: loadingPayments } = useWeeklyPayments();
   const createPayment = useCreateWeeklyPayment();
   const deletePayment = useDeleteWeeklyPayment();
@@ -298,6 +299,7 @@ const PaymentManagementTab: React.FC = () => {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const [showNewPayment, setShowNewPayment] = useState(false);
   const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
+  const [newNotes, setNewNotes] = useState('');
 
   // Filter weekly payments to only show worker-related
   const workerPayments = useMemo(() => weeklyPayments, [weeklyPayments]);
@@ -305,15 +307,17 @@ const PaymentManagementTab: React.FC = () => {
   const handleCreatePayment = async () => {
     const result = await createPayment.mutateAsync({
       payment_date: newDate,
-      responsible: 'Sistema',
-      notes: 'Pago a trabajadores',
+      responsible: (profile?.full_name || 'Sistema').toUpperCase(),
+      notes: newNotes.trim() || 'Pago a trabajadores',
     });
     setSelectedPaymentId(result.id);
+    setNewNotes('');
     setShowNewPayment(false);
   };
 
   if (selectedPaymentId) {
-    return <PaymentDetailView paymentId={selectedPaymentId} onBack={() => setSelectedPaymentId(null)} />;
+    const selectedPayment = weeklyPayments.find((p: any) => p.id === selectedPaymentId);
+    return <PaymentDetailView paymentId={selectedPaymentId} payment={selectedPayment} onBack={() => setSelectedPaymentId(null)} />;
   }
 
   return (
@@ -329,10 +333,15 @@ const PaymentManagementTab: React.FC = () => {
       {/* New Payment Quick Form */}
       {showNewPayment && (
         <div className="light-card p-4 border-2 border-amber-200 bg-amber-50/30">
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="w-48">
               <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Fecha de Pago</label>
               <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
+                className="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 ring-amber-200" />
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Notas (Ej: ECAR SAS / REGALADO CARLOS A)</label>
+              <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Ej: ECAR SAS"
                 className="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 ring-amber-200" />
             </div>
             <button onClick={handleCreatePayment} disabled={createPayment.isPending}
@@ -361,9 +370,10 @@ const PaymentManagementTab: React.FC = () => {
             <thead>
               <tr className="bg-slate-800 text-white">
                 <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Fecha de Pago</th>
+                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Empresa / Notas</th>
                 <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Responsable</th>
-                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Estado</th>
-                <th className="px-3 py-2.5 text-right text-[10px] uppercase tracking-wider font-bold">Total a Pagar</th>
+                <th className="px-3 py-2.5 text-left text-[10px] uppercase tracking-wider font-bold">Estado Trabajadores</th>
+                <th className="px-3 py-2.5 text-right text-[10px] uppercase tracking-wider font-bold">Total Trabajadores</th>
                 <th className="px-3 py-2.5 text-center text-[10px] uppercase tracking-wider font-bold">Acciones</th>
               </tr>
             </thead>
@@ -373,14 +383,12 @@ const PaymentManagementTab: React.FC = () => {
                   key={p.id} 
                   payment={p} 
                   onClick={() => setSelectedPaymentId(p.id)} 
-                  onDelete={async () => {
-                    if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta planilla de pagos de forma definitiva? Se perderán todos sus ítems.')) {
-                      try {
-                        await deletePayment.mutateAsync(p.id);
-                        useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
-                      } catch (err: any) {
-                        useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
-                      }
+                  onDeletePayment={async () => {
+                    try {
+                      await deletePayment.mutateAsync(p.id);
+                      useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
+                    } catch (err: any) {
+                      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
                     }
                   }}
                 />
@@ -394,13 +402,42 @@ const PaymentManagementTab: React.FC = () => {
 };
 
 // ─── Payment Week Row ───
-const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDelete: () => void }> = ({ payment, onClick, onDelete }) => {
+const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDeletePayment: () => Promise<void> }> = ({ payment, onClick, onDeletePayment }) => {
   const { data: items = [] } = useWeeklyPaymentItems(payment.id);
+  const deleteItem = useDeleteWeeklyPaymentItem();
   const workerItems = items.filter((i: any) => i.source_type === 'sueldos_obreros');
+  const otherItems = items.filter((i: any) => i.source_type !== 'sueldos_obreros');
   const total = workerItems.reduce((s: number, i: any) => s + Number(i.monto || 0), 0);
   const pagados = workerItems.filter((i: any) => i.pagado).length;
   const d = new Date(payment.payment_date + 'T12:00:00');
   const dateLabel = d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const handleSafeDelete = async () => {
+    if (otherItems.length > 0) {
+      if (workerItems.length === 0) {
+        useModalStore.getState().showAlert(
+          'Planilla con Pagos Semanales',
+          `Esta planilla (${payment.notes || dateLabel}) tiene ${otherItems.length} pago(s) cargados en "Control de Pagos Semanales" y 0 trabajadores. Para no borrar esos pagos, eliminá o gestioná la planilla desde Control de Pagos Semanales.`
+        );
+        return;
+      }
+      const ok = await useModalStore.getState().showConfirm(
+        'Vaciar Trabajadores de esta Semana',
+        `Esta planilla (${payment.notes || dateLabel}) también tiene ${otherItems.length} pago(s) en "Control de Pagos Semanales". ¿Deseás eliminar únicamente los ${workerItems.length} pagos a trabajadores manteniendo intacta la planilla de Control de Pagos?`
+      );
+      if (ok) {
+        for (const wi of workerItems) {
+          await deleteItem.mutateAsync({ id: wi.id, payment_id: payment.id });
+        }
+        useModalStore.getState().showAlert('Éxito', 'Se eliminaron los pagos a trabajadores de esta semana sin afectar Control de Pagos Semanales.');
+      }
+      return;
+    }
+
+    if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta semana de pagos de forma definitiva?')) {
+      await onDeletePayment();
+    }
+  };
 
   return (
     <tr className="group hover:bg-amber-50/50 transition-colors cursor-pointer" onClick={onClick}>
@@ -410,6 +447,22 @@ const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDelete: ()
             <Calendar size={14} className="text-amber-600" />
           </div>
           <span className="font-bold text-gray-800 text-sm">{dateLabel}</span>
+        </div>
+      </td>
+      <td>
+        <div className="flex items-center gap-2 flex-wrap">
+          {payment.notes ? (
+            <span className="px-2.5 py-1 rounded-lg bg-amber-100/80 text-amber-900 font-bold text-xs uppercase tracking-wide">
+              {payment.notes}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">—</span>
+          )}
+          {otherItems.length > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200" title="Ítems en Control de Pagos Semanales">
+              +{otherItems.length} en Pagos Sem.
+            </span>
+          )}
         </div>
       </td>
       <td>
@@ -432,10 +485,10 @@ const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDelete: ()
           <button 
             onClick={async (e) => {
               e.stopPropagation();
-              onDelete();
+              await handleSafeDelete();
             }}
             className="p-2 rounded-lg bg-gray-50 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
-            title="Eliminar Planilla"
+            title="Eliminar"
           >
             <Trash2 size={14} />
           </button>
@@ -446,7 +499,7 @@ const PaymentWeekRow: React.FC<{ payment: any; onClick: () => void; onDelete: ()
 };
 
 // ─── Payment Detail View ───
-const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = ({ paymentId, onBack }) => {
+const PaymentDetailView: React.FC<{ paymentId: string; payment?: any; onBack: () => void }> = ({ paymentId, payment, onBack }) => {
   const { profile } = useAuth();
   const { data: items = [], isLoading } = useWeeklyPaymentItems(paymentId);
   const updateItem = useUpdateWeeklyPaymentItem();
@@ -608,10 +661,27 @@ const PaymentDetailView: React.FC<{ paymentId: string; onBack: () => void }> = (
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors">
-          <ChevronDown size={16} className="rotate-90" /> Volver a semanas
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl">
+            <ChevronDown size={16} className="rotate-90" /> Volver a semanas
+          </button>
+          {payment && (
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-base text-gray-800">
+                  Semana del {new Date(payment.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </h3>
+                {payment.notes && (
+                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 text-xs font-black uppercase">
+                    {payment.notes}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Responsable: {payment.responsible || 'N/A'}</p>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button onClick={exportPDF} className="bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-900 transition-all">
             <Download size={14} /> PDF

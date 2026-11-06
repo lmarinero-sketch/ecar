@@ -4268,7 +4268,8 @@ export function useWeeklyPayments() {
       const { data, error } = await supabase
         .from('weekly_payments')
         .select('*')
-        .order('payment_date', { ascending: false });
+        .order('payment_date', { ascending: false })
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -4367,13 +4368,12 @@ export function useAllWorkerPaymentItems() {
       const { data, error } = await supabase
         .from('weekly_payment_items')
         .select('*, payment:weekly_payments(payment_date)')
-        .eq('source_type', 'sueldos_obreros')
-        .order('created_at', { ascending: false });
+        .eq('source_type', 'sueldos_obreros');
       if (error) throw error;
       return data as Array<{
         id: string; concepto: string; monto: number; alias_cbu: string;
         titular_cuenta: string; observaciones: string; pagado: boolean;
-        created_at: string; payment: { payment_date: string } | null;
+        created_at?: string; payment: { payment_date: string } | null;
       }>;
     },
   });

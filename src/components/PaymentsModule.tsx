@@ -21,12 +21,13 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const { data: rawItems = [], isLoading } = useWeeklyPaymentItems(payment.id);
   
   const items = useMemo(() => {
-    return rawItems.filter(item => 
-      item.source_type !== 'sueldos_obreros' &&
-      !item.concepto.toUpperCase().includes('SUELDO TRABAJADORES') &&
-      !item.concepto.toUpperCase().includes('SUELDO OBREROS')
-    );
+    return rawItems.filter(item => item.source_type !== 'sueldos_obreros');
   }, [rawItems]);
+
+  const workerItemsCount = useMemo(() => {
+    return rawItems.filter(item => item.source_type === 'sueldos_obreros').length;
+  }, [rawItems]);
+
   const createItem = useCreateWeeklyPaymentItem();
   const updateItem = useUpdateWeeklyPaymentItem();
   const deleteItem = useDeleteWeeklyPaymentItem();
@@ -65,19 +66,23 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
   const handleAdd = async () => {
     const monto = parseFloat(form.monto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     if (!form.concepto.trim() || monto <= 0) return;
-    await createItem.mutateAsync({
-      payment_id: payment.id,
-      concepto: form.concepto.trim().toUpperCase(),
-      monto,
-      alias_cbu: form.alias_cbu,
-      titular_cuenta: form.titular_cuenta,
-      nro_factura: form.nro_factura,
-      observaciones: form.observaciones,
-      source_type: 'manual',
-      orden: items.length,
-    });
-    setForm({ concepto: '', monto: '', alias_cbu: '', titular_cuenta: '', nro_factura: '', observaciones: '' });
-    setShowAdd(false);
+    try {
+      await createItem.mutateAsync({
+        payment_id: payment.id,
+        concepto: form.concepto.trim().toUpperCase(),
+        monto,
+        alias_cbu: form.alias_cbu,
+        titular_cuenta: form.titular_cuenta,
+        nro_factura: form.nro_factura,
+        observaciones: form.observaciones,
+        source_type: 'manual',
+        orden: items.length,
+      });
+      setForm({ concepto: '', monto: '', alias_cbu: '', titular_cuenta: '', nro_factura: '', observaciones: '' });
+      setShowAdd(false);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar el pago.');
+    }
   };
 
   const handleImport = (gasto: any) => {
@@ -90,24 +95,32 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
     const finalMonto = parseFloat(importMonto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     if (finalMonto <= 0) return;
 
-    await createItem.mutateAsync({
-      payment_id: payment.id,
-      concepto: importGasto.item_desc,
-      monto: finalMonto,
-      alias_cbu: importGasto.alias_cbu,
-      titular_cuenta: importGasto.titular_cuenta,
-      nro_factura: importGasto.nro_factura || '',
-      observaciones: '',
-      source_type: 'gastos_operativos',
-      source_id: importGasto.id,
-      orden: items.length,
-    });
-    setImportGasto(null);
-    setImportMonto('');
+    try {
+      await createItem.mutateAsync({
+        payment_id: payment.id,
+        concepto: importGasto.item_desc,
+        monto: finalMonto,
+        alias_cbu: importGasto.alias_cbu,
+        titular_cuenta: importGasto.titular_cuenta,
+        nro_factura: importGasto.nro_factura || '',
+        observaciones: '',
+        source_type: 'gastos_operativos',
+        source_id: importGasto.id,
+        orden: items.length,
+      });
+      setImportGasto(null);
+      setImportMonto('');
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo importar el gasto.');
+    }
   };
 
   const handleTogglePagado = async (item: any) => {
-    await updateItem.mutateAsync({ id: item.id, payment_id: payment.id, pagado: !item.pagado });
+    try {
+      await updateItem.mutateAsync({ id: item.id, payment_id: payment.id, pagado: !item.pagado });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el estado.');
+    }
   };
 
   const startEdit = (item: any) => {
@@ -123,13 +136,17 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
     if (!editId) return;
     const monto = parseFloat(editForm.monto.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
     const resto = parseFloat((editForm.resto || '0').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-    await updateItem.mutateAsync({
-      id: editId, payment_id: payment.id,
-      concepto: editForm.concepto.trim().toUpperCase(),
-      monto, alias_cbu: editForm.alias_cbu, titular_cuenta: editForm.titular_cuenta,
-      nro_factura: editForm.nro_factura, observaciones: editForm.observaciones, resto,
-    });
-    setEditId(null);
+    try {
+      await updateItem.mutateAsync({
+        id: editId, payment_id: payment.id,
+        concepto: editForm.concepto.trim().toUpperCase(),
+        monto, alias_cbu: editForm.alias_cbu, titular_cuenta: editForm.titular_cuenta,
+        nro_factura: editForm.nro_factura, observaciones: editForm.observaciones, resto,
+      });
+      setEditId(null);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar el pago.');
+    }
   };
 
   // PDF Generation
@@ -202,9 +219,21 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
           <ArrowLeft size={18} />
         </button>
         <div className="flex-1">
-          <h3 className="font-bold text-lg text-gray-800">
-            Control de Pagos — {new Date(payment.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-lg text-gray-800">
+              Control de Pagos — {new Date(payment.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </h3>
+            {payment.notes && (
+              <span className="px-2.5 py-0.5 rounded-lg bg-blue-100 text-ecar-blue text-xs font-black uppercase">
+                {payment.notes}
+              </span>
+            )}
+            {workerItemsCount > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+                +{workerItemsCount} obreros en Pago a Trabajadores
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500">Responsable: {payment.responsible || 'N/A'} · {items.length} ítems · {pagados}/{items.length} pagados</p>
         </div>
         <button onClick={generatePDF} className="bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-900 shadow-md transition-all">
@@ -299,7 +328,7 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
               <button onClick={() => setShowAdd(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto} className="btn-primary">
+              <button onClick={handleAdd} disabled={!form.concepto.trim() || !form.monto || createItem.isPending} className="btn-primary">
                 <Save size={16} /> Guardar Pago
               </button>
             </div>
@@ -436,7 +465,17 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
                             {isPartial ? 'Parcial' : item.pagado ? 'Pagado' : 'Confirmar'}
                           </button>
                           <button onClick={() => startEdit(item)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-100" title="Editar"><Edit2 size={14} /></button>
-                          <button onClick={() => deleteItem.mutate({ id: item.id, payment_id: payment.id })} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100" title="Eliminar"><Trash2 size={14} /></button>
+                          <button
+                            onClick={async () => {
+                              if (await useModalStore.getState().showConfirm('Eliminar Pago', `¿Seguro que deseás eliminar el pago "${item.concepto}" por ${formatARS(Number(item.monto))}?`)) {
+                                deleteItem.mutate({ id: item.id, payment_id: payment.id });
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -459,6 +498,106 @@ const PaymentDetail: React.FC<{ payment: any; onBack: () => void }> = ({ payment
       </div>
 
     </div>
+  );
+};
+
+// ─── Planilla Row in Main List ───
+const PaymentPlanillaRow: React.FC<{
+  payment: any;
+  onSelect: () => void;
+  onDeletePayment: () => Promise<void>;
+}> = ({ payment, onSelect, onDeletePayment }) => {
+  const { data: rawItems = [] } = useWeeklyPaymentItems(payment.id);
+  const deleteItem = useDeleteWeeklyPaymentItem();
+
+  const manualItems = rawItems.filter((i: any) => i.source_type !== 'sueldos_obreros');
+  const workerItems = rawItems.filter((i: any) => i.source_type === 'sueldos_obreros');
+  const totalManual = manualItems.reduce((s: number, i: any) => s + Number(i.monto || 0), 0);
+  const pagadosManual = manualItems.filter((i: any) => i.pagado).length;
+
+  const handleSafeDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (workerItems.length > 0) {
+      if (manualItems.length === 0) {
+        useModalStore.getState().showAlert(
+          'Planilla con Pagos a Trabajadores',
+          `Esta planilla tiene ${workerItems.length} pago(s) cargados en "Pago a Trabajadores". Para no borrar esos pagos de obreros, gestioná esa nómina desde Pago a Trabajadores.`
+        );
+        return;
+      }
+      const ok = await useModalStore.getState().showConfirm(
+        'Vaciar Pagos Semanales',
+        `Esta planilla también contiene ${workerItems.length} pago(s) en "Pago a Trabajadores". ¿Deseás eliminar únicamente los ${manualItems.length} pagos de esta vista manteniendo intactos los pagos a trabajadores?`
+      );
+      if (ok) {
+        for (const mi of manualItems) {
+          await deleteItem.mutateAsync({ id: mi.id, payment_id: payment.id });
+        }
+        useModalStore.getState().showAlert('Éxito', 'Se eliminaron los pagos semanales manteniendo intactos los pagos a trabajadores.');
+      }
+      return;
+    }
+
+    if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta planilla de pagos de forma definitiva? Se perderán todos sus ítems.')) {
+      await onDeletePayment();
+    }
+  };
+
+  return (
+    <tr className="group hover:bg-blue-50/50 transition-colors cursor-pointer" onClick={onSelect}>
+      <td>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-ecar-blueLight flex items-center justify-center shrink-0">
+            <Calendar size={14} className="text-ecar-blue" />
+          </div>
+          <span className="font-bold text-gray-800 text-sm">
+            {new Date(payment.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </span>
+        </div>
+      </td>
+      <td>
+        <div className="flex items-center gap-2 flex-wrap">
+          {payment.notes ? (
+            <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-ecar-blue font-bold text-xs uppercase tracking-wide border border-blue-100">
+              {payment.notes}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">—</span>
+          )}
+          {workerItems.length > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200" title="Obreros cargados en Pago a Trabajadores">
+              +{workerItems.length} Trab.
+            </span>
+          )}
+        </div>
+      </td>
+      <td>
+        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{payment.responsible}</span>
+      </td>
+      <td>
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-gray-800">{manualItems.length} ítems</span>
+          <span className="text-[10px] text-gray-500 uppercase">{pagadosManual}/{manualItems.length} Pagados</span>
+        </div>
+      </td>
+      <td className="text-right">
+        <span className="font-mono font-bold text-gray-900">{manualItems.length > 0 ? formatARS(totalManual) : '—'}</span>
+      </td>
+      <td className="text-center">
+        <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); onSelect(); }} className="p-2 rounded-lg bg-gray-50 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
+            <ChevronRight size={14} />
+          </button>
+          <button 
+            onClick={handleSafeDelete}
+            className="p-2 rounded-lg bg-gray-50 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+            title="Eliminar Planilla"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 };
 
@@ -526,8 +665,8 @@ export const PaymentsModule: React.FC = () => {
                 <input value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="ADOLFO" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
               <div className="sm:col-span-3">
-                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Notas (opcional)</label>
-                <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Pagos semana 1 de junio" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Empresa / Notas (Ej: ECAR SAS / REGALADO CARLOS A)</label>
+                <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Ej: ECAR SAS" className="w-full px-4 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:ring-2 ring-ecar-blueLight transition-all" />
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-3 border-t mt-4">
@@ -555,63 +694,28 @@ export const PaymentsModule: React.FC = () => {
             <thead>
               <tr>
                 <th>Fecha de Pago</th>
+                <th>Empresa / Notas</th>
                 <th>Responsable</th>
-                <th>Estado</th>
-                <th>Notas</th>
+                <th>Ítems</th>
+                <th className="text-right">Total Planilla</th>
                 <th className="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {payments.map(p => (
-                <tr key={p.id} className="group hover:bg-blue-50/50 transition-colors">
-                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-ecar-blueLight flex items-center justify-center shrink-0">
-                        <Calendar size={14} className="text-ecar-blue" />
-                      </div>
-                      <span className="font-bold text-gray-800 text-sm">
-                        {new Date(p.payment_date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
-                  </td>
-                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
-                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{p.responsible}</span>
-                  </td>
-                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      p.status === 'executed' ? 'bg-green-100 text-green-700' :
-                      p.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-500'
-                    }`}>{p.status === 'executed' ? 'Ejecutado' : p.status === 'approved' ? 'Aprobado' : 'Borrador'}</span>
-                  </td>
-                  <td onClick={() => setSelectedPayment(p)} className="cursor-pointer w-1/3">
-                    <span className="text-xs text-gray-500 truncate max-w-[250px] block">{p.notes || '—'}</span>
-                  </td>
-                  <td className="text-center">
-                    <div className="flex items-center justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => { e.stopPropagation(); setSelectedPayment(p); }} className="p-2 rounded-lg bg-gray-50 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
-                        <ChevronRight size={14} />
-                      </button>
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (await useModalStore.getState().showConfirm('Confirmar Eliminación', '¿Seguro que deseás borrar esta planilla de pagos de forma definitiva? Se perderán todos sus ítems.')) {
-                            try {
-                              await deletePayment.mutateAsync(p.id);
-                              useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
-                            } catch (err: any) {
-                              useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
-                            }
-                          }
-                        }}
-                        className="p-2 rounded-lg bg-gray-50 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Eliminar Planilla"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <PaymentPlanillaRow
+                  key={p.id}
+                  payment={p}
+                  onSelect={() => setSelectedPayment(p)}
+                  onDeletePayment={async () => {
+                    try {
+                      await deletePayment.mutateAsync(p.id);
+                      useModalStore.getState().showAlert('Éxito', 'La planilla de pagos fue eliminada.');
+                    } catch (err: any) {
+                      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo eliminar la planilla.');
+                    }
+                  }}
+                />
               ))}
             </tbody>
           </table>
