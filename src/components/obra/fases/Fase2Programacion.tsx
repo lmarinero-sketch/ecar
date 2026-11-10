@@ -2,13 +2,14 @@ import React, { useState, useMemo } from 'react';
 import {
   Calendar, Send, CheckCircle2, Clock, Filter, FileText,
   Truck, Wrench, Users, Package, Plus, Search,
-  FolderTree, Eye, Trash2, BellRing, Lock
+  FolderTree, Eye, Trash2, BellRing, Lock, Unlock, Edit3, Check, GitBranch
 } from 'lucide-react';
 import {
   useObraRubros,
   useObraItems,
   useObraOrdenesTrabajo,
   useCreateObraOrdenTrabajo,
+  useUpdateObraOrdenTrabajo,
   useDeleteObraOrdenTrabajo,
   useObraParteDiarioItems,
   useDeleteObraParteDiarioItem
@@ -23,6 +24,63 @@ interface Fase2ProgramacionProps {
   projectName?: string;
 }
 
+export interface SecuenciaRule {
+  permiteIniciarOtra: 'no' | 'si';
+  allowedItemIds: string[];
+  cleanInstrucciones: string;
+  hasExplicitRule: boolean;
+}
+
+const SECUENCIA_REGEX = /\s*\[SECUENCIA:(NO|SI(?::[^\]]*)?)\]/i;
+
+export function parseSecuenciaFromInstrucciones(raw?: string | null): SecuenciaRule {
+  const text = raw || '';
+  const match = text.match(SECUENCIA_REGEX);
+  const cleanInstrucciones = text.replace(SECUENCIA_REGEX, '').trim();
+
+  if (!match) {
+    return {
+      permiteIniciarOtra: 'no',
+      allowedItemIds: [],
+      cleanInstrucciones,
+      hasExplicitRule: false
+    };
+  }
+
+  const token = match[1];
+  if (token.toUpperCase() === 'NO') {
+    return {
+      permiteIniciarOtra: 'no',
+      allowedItemIds: [],
+      cleanInstrucciones,
+      hasExplicitRule: true
+    };
+  }
+
+  const parts = token.split(':');
+  const idsRaw = parts.slice(1).join(':').trim();
+  const allowedItemIds = idsRaw ? idsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  return {
+    permiteIniciarOtra: 'si',
+    allowedItemIds,
+    cleanInstrucciones,
+    hasExplicitRule: true
+  };
+}
+
+export function buildInstruccionesWithSecuencia(
+  cleanText: string,
+  permiteIniciarOtra: 'no' | 'si',
+  allowedItemIds: string[]
+): string {
+  const base = (cleanText || '').replace(SECUENCIA_REGEX, '').trim();
+  const tag =
+    permiteIniciarOtra === 'no'
+      ? '[SECUENCIA:NO]'
+      : `[SECUENCIA:SI:${allowedItemIds.join(',')}]`;
+  return base ? `${base} ${tag}` : tag;
+}
+
 export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
   projectId
 }) => {
@@ -35,6 +93,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
   const { data: inventoryItems = [] } = useInventoryItems();
 
   const createOdt = useCreateObraOrdenTrabajo();
+  const updateOdt = useUpdateObraOrdenTrabajo();
   const deleteOdt = useDeleteObraOrdenTrabajo();
   const deleteParte = useDeleteObraParteDiarioItem();
 
@@ -51,6 +110,18 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     rubroNombre: string;
   }) | null>(null);
   const [viewingOdt, setViewingOdt] = useState<ObraOrdenTrabajo | null>(null);
+
+  // Estados de edición rápida en el modal de Informe de ODT (Meta y Secuencia)
+  const [editingMetaValue, setEditingMetaValue] = useState<string>('');
+  const [isEditingMeta, setIsEditingMeta] = useState<boolean>(false);
+  const [editSecuenciaMode, setEditSecuenciaMode] = useState<'no' | 'si'>('no');
+  const [editAllowedItemIds, setEditAllowedItemIds] = useState<string[]>([]);
+  const [editSuccessorSearch, setEditSuccessorSearch] = useState<string>('');
+
+  // Estados de Regla de Secuencia al emitir una nueva ODT
+  const [permiteIniciarOtra, setPermiteIniciarOtra] = useState<'no' | 'si'>('no');
+  const [allowedSuccessorIds, setAllowedSuccessorIds] = useState<string[]>([]);
+  const [successorSearch, setSuccessorSearch] = useState<string>('');
 
   // Estados de Checklist de Recursos Operativos
   const [resourceTab, setResourceTab] = useState<'maquinaria' | 'personal' | 'herramientas' | 'materiales'>('maquinaria');
@@ -147,6 +218,63 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     return map;
   }, [odts, partes]);
 
+  // ODTs actualmente abiertas (< 100%) y su regla de secuencia activa
+  const activeSequenceStatus = useMemo(() => {
+    const openOdts = odts.filter(o => {
+      if (o.estado === 'anulada') return false;
+      const prog = odtProgressMap[o.id];
+      const isComplete = prog ? prog.pct >= 100 : o.estado === 'cumplida';
+      return !isComplete;
+    });
+
+    // Buscar ODTs abiertas que tengan una regla de secuencia activa
+    const blockingOdts: { odt: ObraOrdenTrabajo; rule: SecuenciaRule }[] = [];
+    const authorizingOdts: { odt: ObraOrdenTrabajo; rule: SecuenciaRule }[] = [];
+
+    openOdts.forEach(o => {
+      const rule = parseSecuenciaFromInstrucciones(o.instrucciones_calidad);
+      if (rule.permiteIniciarOtra === 'no') {
+        blockingOdts.push({ odt: o, rule });
+      } else if (rule.permiteIniciarOtra === 'si') {
+        authorizingOdts.push({ odt: o, rule });
+      }
+    });
+
+    return {
+      openOdts,
+      blockingOdts,
+      authorizingOdts
+    };
+  }, [odts, odtProgressMap]);
+
+  // Determinar si un ítem WBS está bloqueado o habilitado por las ODTs en curso
+  const getItemSequenceLock = (itemId: string) => {
+    const { openOdts, blockingOdts, authorizingOdts } = activeSequenceStatus;
+    if (openOdts.length === 0) {
+      return { locked: false, authorizedBy: null as ObraOrdenTrabajo | null, blockedBy: null as ObraOrdenTrabajo | null };
+    }
+
+    // Si este ítem ya fue explícitamente autorizado por alguna ODT abierta con "SÍ", está habilitado
+    const authMatch = authorizingOdts.find(a => a.rule.allowedItemIds.includes(itemId));
+    if (authMatch) {
+      return { locked: false, authorizedBy: authMatch.odt, blockedBy: null };
+    }
+
+    // Si hay alguna ODT abierta con regla "NO" (no permite iniciar otra), bloquea las demás
+    const blockMatch = blockingOdts.find(b => b.odt.item_id !== itemId);
+    if (blockMatch) {
+      return { locked: true, authorizedBy: null, blockedBy: blockMatch.odt };
+    }
+
+    // Si hay alguna ODT abierta con regla "SÍ" pero este ítem NO está en su lista de sucesoras autorizadas, queda bloqueado
+    const nonAuthMatch = authorizingOdts.find(a => a.odt.item_id !== itemId && !a.rule.allowedItemIds.includes(itemId));
+    if (nonAuthMatch) {
+      return { locked: true, authorizedBy: null, blockedBy: nonAuthMatch.odt };
+    }
+
+    return { locked: false, authorizedBy: null, blockedBy: null };
+  };
+
   // Mapa de ítems procesados desde WBS
   const paraProgramarItems = useMemo(() => {
     const subrubroToRubro = new Map<string, string>();
@@ -211,6 +339,28 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       });
   }, [items, rubros, odts, partes, odtProgressMap, selectedRubroId, searchQuery, hideEmittedOrCompleted]);
 
+  // Sugerir automáticamente la actividad sucesora del mismo tramo (ej. 1-N1-N2 -> 2-N1-N2)
+  const getSuggestedSuccessorIds = (currentItem: ObraItem): string[] => {
+    const code = currentItem.codigo_item || '';
+    const match = code.match(/^(\d+)-(.+)$/);
+    if (!match) return [];
+    const nextStepNum = parseInt(match[1], 10) + 1;
+    const tramoSuffix = match[2];
+    const nextCode = `${nextStepNum}-${tramoSuffix}`;
+    const found = items.find(i => i.codigo_item?.toUpperCase() === nextCode.toUpperCase());
+    return found ? [found.id] : [];
+  };
+
+  const handleOpenViewOdt = (odt: ObraOrdenTrabajo) => {
+    setViewingOdt(odt);
+    setEditingMetaValue(String(odt.meta_cantidad || 0));
+    setIsEditingMeta(false);
+    const rule = parseSecuenciaFromInstrucciones(odt.instrucciones_calidad);
+    setEditSecuenciaMode(rule.permiteIniciarOtra);
+    setEditAllowedItemIds(rule.allowedItemIds);
+    setEditSuccessorSearch('');
+  };
+
   const handleOpenProgramar = (item: any) => {
     if (item.odtAbierta) {
       useModalStore.getState().showAlert(
@@ -220,9 +370,21 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       return;
     }
 
+    const seqLock = getItemSequenceLock(item.id);
+    if (seqLock.locked && seqLock.blockedBy) {
+      handleOpenViewOdt(seqLock.blockedBy);
+      return;
+    }
+
     setSelectedWbsItem(item);
     const rend = Number(item.rendimiento_base_dia) || 70;
-    const metaSugerida = item.saldo > 0 ? Math.min(item.saldo, rend) : rend;
+    // Video 1: Por defecto tomamos el 100% del saldo/cómputo del tramo (ej. 165 ml) en lugar de truncarlo a 70 ml
+    const metaSugerida = item.saldo > 0 ? item.saldo : (item.contractual > 0 ? item.contractual : rend);
+
+    // Inicializar regla de secuencia (Video 2)
+    setPermiteIniciarOtra('no');
+    setAllowedSuccessorIds(getSuggestedSuccessorIds(item));
+    setSuccessorSearch('');
 
     // Inicializar checklist
     setSelectedVehicles(['Retropala HMK 102B (HMK-01)']);
@@ -273,6 +435,18 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     );
   };
 
+  const toggleAllowedSuccessor = (itemId: string) => {
+    setAllowedSuccessorIds(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const toggleEditAllowedSuccessor = (itemId: string) => {
+    setEditAllowedItemIds(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
   const handleAddCustomTool = () => {
     if (!customToolInput.trim()) return;
     if (!selectedTools.includes(customToolInput.trim())) {
@@ -293,6 +467,14 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     if (!selectedWbsItem) return;
     if (Number(odtForm.meta_cantidad) <= 0) {
       useModalStore.getState().showAlert('Meta Inválida', 'Ingresá una Meta Física mayor a 0 para emitir la ODT.');
+      return;
+    }
+
+    if (permiteIniciarOtra === 'si' && allowedSuccessorIds.length === 0) {
+      useModalStore.getState().showAlert(
+        'Seleccioná la Actividad Sucesora',
+        'Indicaste que SÍ se puede iniciar otra ODT antes de terminar esta. Por favor seleccioná cuál(es) actividad(es) le sigue(n) y queda(n) habilitada(s).'
+      );
       return;
     }
 
@@ -327,6 +509,13 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
     }
     const materialesConsolidados = matParts.join(' | ') || null;
 
+    // Incorporar regla de secuencia en instrucciones_calidad
+    const instruccionesConSecuencia = buildInstruccionesWithSecuencia(
+      odtForm.instrucciones_calidad,
+      permiteIniciarOtra,
+      allowedSuccessorIds
+    );
+
     await createOdt.mutateAsync({
       project_id: projectId,
       numero_odt: nextNum,
@@ -341,7 +530,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       materiales_requeridos: materialesConsolidados,
       inicio_plan: odtForm.inicio_plan,
       fin_plan: odtForm.fin_plan,
-      instrucciones_calidad: odtForm.instrucciones_calidad,
+      instrucciones_calidad: instruccionesConSecuencia,
       estado: 'emitida'
     });
 
@@ -354,6 +543,70 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
 
     setSelectedWbsItem(null);
     setActiveSubTab('odts');
+  };
+
+  const handleSaveMetaOdt = async () => {
+    if (!viewingOdt) return;
+    const nuevaMeta = Number(editingMetaValue);
+    if (!nuevaMeta || nuevaMeta <= 0) {
+      useModalStore.getState().showAlert('Meta Inválida', 'La meta física debe ser mayor a 0.');
+      return;
+    }
+
+    try {
+      const updated = await updateOdt.mutateAsync({
+        id: viewingOdt.id,
+        meta_cantidad: nuevaMeta
+      });
+      setViewingOdt({
+        ...viewingOdt,
+        meta_cantidad: nuevaMeta,
+        estado: updated?.estado || viewingOdt.estado
+      });
+      setIsEditingMeta(false);
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar la meta de la ODT.');
+    }
+  };
+
+  const handleSaveSecuenciaOdt = async (modeOverride?: 'no' | 'si', idsOverride?: string[]) => {
+    if (!viewingOdt) return;
+    const targetMode = modeOverride ?? editSecuenciaMode;
+    const targetIds = idsOverride ?? editAllowedItemIds;
+
+    if (targetMode === 'si' && targetIds.length === 0) {
+      useModalStore.getState().showAlert(
+        'Seleccioná la Actividad que le sigue',
+        'Marcá al menos una actividad sucesora para habilitar su inicio.'
+      );
+      return;
+    }
+
+    const parsed = parseSecuenciaFromInstrucciones(viewingOdt.instrucciones_calidad);
+    const nuevasInstrucciones = buildInstruccionesWithSecuencia(
+      parsed.cleanInstrucciones,
+      targetMode,
+      targetIds
+    );
+
+    try {
+      await updateOdt.mutateAsync({
+        id: viewingOdt.id,
+        instrucciones_calidad: nuevasInstrucciones
+      });
+      setViewingOdt({
+        ...viewingOdt,
+        instrucciones_calidad: nuevasInstrucciones
+      });
+      useModalStore.getState().showAlert(
+        'Secuencia Actualizada',
+        targetMode === 'no'
+          ? `La ${viewingOdt.numero_odt} quedó configurada en NO: no se permite iniciar otra ODT hasta completar esta al 100%.`
+          : `La ${viewingOdt.numero_odt} ahora autoriza iniciar ${targetIds.length} actividad(es) siguiente(s).`
+      );
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo guardar la regla de secuencia.');
+    }
   };
 
   const handleDeleteOdt = async (odt: ObraOrdenTrabajo) => {
@@ -397,10 +650,42 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
           </div>
           <h2 className="text-2xl font-bold">Programación Operativa — Órdenes de Trabajo (ODT)</h2>
           <p className="text-amber-100 text-sm mt-1 max-w-3xl">
-            Toma las actividades contractuales de la <strong>Estructura WBS</strong> y programa las Órdenes de Trabajo asignando metas, cuadrilla, maquinaria, herramientas y materiales. Una ODT permanece abierta hasta completar el <strong>100%</strong> de su meta.
+            Toma las actividades contractuales de la <strong>Estructura WBS</strong> y programa las Órdenes de Trabajo por el <strong>100% del tramo</strong> (o la meta indicada), definiendo si permite o bloquea el inicio de la actividad siguiente mientras esté en curso.
           </p>
         </div>
       </div>
+
+      {/* Aviso de Regla de Secuencia Activa si hay ODTs abiertas */}
+      {activeSequenceStatus.openOdts.length > 0 && (
+        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <GitBranch size={18} className="text-amber-700 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold text-amber-900 block">
+                Control de Secuencia de ODTs en Curso ({activeSequenceStatus.openOdts.length} abierta{activeSequenceStatus.openOdts.length > 1 ? 's' : ''})
+              </span>
+              <p className="text-amber-800 mt-0.5">
+                {activeSequenceStatus.blockingOdts.length > 0 ? (
+                  <>
+                    La ODT <strong>{activeSequenceStatus.blockingOdts[0].odt.numero_odt}</strong> ({activeSequenceStatus.blockingOdts[0].odt.item?.codigo_item} — {activeSequenceStatus.blockingOdts[0].odt.item?.descripcion}) tiene indicado <strong>"NO iniciar otra ODT hasta terminar"</strong>.
+                  </>
+                ) : activeSequenceStatus.authorizingOdts.length > 0 ? (
+                  <>
+                    La ODT <strong>{activeSequenceStatus.authorizingOdts[0].odt.numero_odt}</strong> ({activeSequenceStatus.authorizingOdts[0].odt.item?.codigo_item}) autoriza iniciar únicamente las actividades sucesoras seleccionadas.
+                  </>
+                ) : null}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleOpenViewOdt(activeSequenceStatus.openOdts[0])}
+            className="px-3 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg font-bold text-xs shrink-0 inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <Unlock size={13} /> Configurar Secuencia / Habilitar Siguiente
+          </button>
+        </div>
+      )}
 
       {/* Barra de Filtros y Búsqueda WBS */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -497,7 +782,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center text-xs text-slate-500">
-                <span>Actividades contractuales de la WBS — Las actividades con ODT abierta muestran su estado y no pueden duplicarse</span>
+                <span>Actividades contractuales de la WBS — Las actividades respetan el cómputo total del tramo y la secuencia definida en las ODTs activas</span>
                 <span className="font-bold text-slate-700">{paraProgramarItems.length} actividades listadas</span>
               </div>
 
@@ -514,7 +799,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                       <th className="py-2.5 px-3 text-right">Ejecutado Real</th>
                       <th className="py-2.5 px-3 text-right">Saldo por Programar</th>
                       <th className="py-2.5 px-3 text-right">Rend. Base/Día</th>
-                      <th className="py-2.5 px-3 text-center">Estado ODT</th>
+                      <th className="py-2.5 px-3 text-center">Estado / Secuencia</th>
                       <th className="py-2.5 px-3 text-center">Acción</th>
                     </tr>
                   </thead>
@@ -525,6 +810,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                       const progAbierta = odtAbierta ? odtProgressMap[odtAbierta.id] : null;
                       const isCompleted = item.pctEjecutado >= 100 || (item.contractual > 0 && item.ejecutadoReal >= item.contractual);
                       const lastOdt = item.itemOdts[0];
+                      const seqLock = !isCompleted && !odtAbierta ? getItemSequenceLock(item.id) : { locked: false, authorizedBy: null, blockedBy: null };
 
                       return (
                         <tr
@@ -534,6 +820,10 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                               ? 'bg-emerald-50/30 hover:bg-emerald-50/60'
                               : odtAbierta
                               ? 'bg-amber-50/30 hover:bg-amber-50/60'
+                              : seqLock.authorizedBy
+                              ? 'bg-emerald-50/20 hover:bg-emerald-50/40'
+                              : seqLock.locked
+                              ? 'bg-slate-50/80 text-slate-400'
                               : 'hover:bg-amber-50/40'
                           }`}
                         >
@@ -565,6 +855,14 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                                   ? `🔵 EN EJECUCIÓN (${odtAbierta.numero_odt} · ${progAbierta?.pct || 0}%)`
                                   : `🟠 EMITIDA (${odtAbierta.numero_odt})`}
                               </span>
+                            ) : seqLock.authorizedBy ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                ✅ Habilitada por {seqLock.authorizedBy.numero_odt}
+                              </span>
+                            ) : seqLock.locked && seqLock.blockedBy ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
+                                🔒 Espera fin de {seqLock.blockedBy.numero_odt}
+                              </span>
                             ) : item.itemOdts.length > 0 ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 Parcial ({item.pctEjecutado}%)
@@ -579,7 +877,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                             {isCompleted ? (
                               <button
                                 type="button"
-                                onClick={() => lastOdt && setViewingOdt(lastOdt)}
+                                onClick={() => lastOdt && handleOpenViewOdt(lastOdt)}
                                 className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all cursor-pointer"
                               >
                                 <Eye size={12} />
@@ -588,9 +886,9 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                             ) : odtAbierta ? (
                               <button
                                 type="button"
-                                onClick={() => setViewingOdt(odtAbierta)}
+                                onClick={() => handleOpenViewOdt(odtAbierta)}
                                 className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all cursor-pointer"
-                                title="Ya tiene una ODT emitida/abierta. Hacé clic para ver su informe o anularla si hubo un error."
+                                title="Ya tiene una ODT emitida/abierta. Hacé clic para ver su informe, editar su meta o configurar su secuencia."
                               >
                                 <Lock size={12} />
                                 ODT Emitida ({odtAbierta.numero_odt})
@@ -598,11 +896,21 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                             ) : item.saldo <= 0 ? (
                               <button
                                 type="button"
-                                onClick={() => lastOdt && setViewingOdt(lastOdt)}
+                                onClick={() => lastOdt && handleOpenViewOdt(lastOdt)}
                                 className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all cursor-pointer"
                               >
                                 <Eye size={12} />
                                 Saldo 0 · Ver ODT
+                              </button>
+                            ) : seqLock.locked && seqLock.blockedBy ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenViewOdt(seqLock.blockedBy!)}
+                                className="px-3 py-1.5 bg-slate-200 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-300 rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all cursor-pointer"
+                                title={`Bloqueada hasta terminar ${seqLock.blockedBy.numero_odt}. Hacé clic para autorizar su inicio desde ${seqLock.blockedBy.numero_odt}.`}
+                              >
+                                <Lock size={12} />
+                                Bloqueada ({seqLock.blockedBy.numero_odt})
                               </button>
                             ) : (
                               <button
@@ -649,9 +957,9 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                       <th className="py-2.5 px-3">Actividad Contractual</th>
                       <th className="py-2.5 px-3 text-right">Meta Asignada</th>
                       <th className="py-2.5 px-3 text-right min-w-[140px]">Ejecutado / Avance</th>
+                      <th className="py-2.5 px-3">Regla Secuencia</th>
                       <th className="py-2.5 px-3">Cuadrilla Asignada</th>
                       <th className="py-2.5 px-3">Equipos / Herramientas / Materiales</th>
-                      <th className="py-2.5 px-3 text-center">Horario</th>
                       <th className="py-2.5 px-3 text-center">Estado</th>
                       <th className="py-2.5 px-3 text-center">Acciones</th>
                     </tr>
@@ -661,6 +969,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                       const prog = odtProgressMap[odt.id] || { ejecutado: 0, pct: 0, partesOdt: [] };
                       const is100 = prog.pct >= 100 || (odt.estado === 'cumplida' && prog.ejecutado >= Number(odt.meta_cantidad || 0));
                       const isEnEjecucion = !is100 && (prog.ejecutado > 0 || odt.estado === 'en_ejecucion');
+                      const seqRule = parseSecuenciaFromInstrucciones(odt.instrucciones_calidad);
 
                       return (
                         <tr key={odt.id} className="hover:bg-slate-50">
@@ -684,6 +993,17 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                               </div>
                             </div>
                           </td>
+                          <td className="py-2.5 px-3">
+                            {seqRule.permiteIniciarOtra === 'no' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                                🔒 No iniciar otra hasta 100%
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold text-[11px]">
+                                ✅ Habilita {seqRule.allowedItemIds.length} act.
+                              </span>
+                            )}
+                          </td>
                           <td className="py-2.5 px-3 text-slate-700">{odt.cuadrilla_nombre || '-'}</td>
                           <td className="py-2.5 px-3 text-slate-600">
                             <div>{odt.equipo_asignado || '-'}</div>
@@ -693,7 +1013,6 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-mono text-slate-500 whitespace-nowrap">{odt.inicio_plan} - {odt.fin_plan}</td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                               is100 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
@@ -707,11 +1026,11 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => setViewingOdt(odt)}
+                                onClick={() => handleOpenViewOdt(odt)}
                                 className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                                title="Ver Informe Completo de la ODT y Partes Cargados"
+                                title="Ver Informe Completo, Editar Meta o Configurar Secuencia"
                               >
-                                <Eye size={12} /> Informe
+                                <Eye size={12} /> Informe / Editar
                               </button>
                               <button
                                 type="button"
@@ -735,7 +1054,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
         </div>
       )}
 
-      {/* Modal Programar y Emitir ODT con Checklist de Recursos */}
+      {/* Modal Programar y Emitir ODT con Checklist de Recursos + Regla de Secuencia */}
       <ModalPortal
         isOpen={Boolean(selectedWbsItem)}
         onClose={() => setSelectedWbsItem(null)}
@@ -744,10 +1063,21 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
       >
         {selectedWbsItem && (() => {
           const saldoItem = selectedWbsItem.saldo;
+          const totalTramo = selectedWbsItem.contractual || saldoItem;
           const rendSugerido = Number(selectedWbsItem.rendimiento_base_dia) || 70;
           const filteredMaterials = MATERIALES_CATALOGO.filter(m =>
             !materialSearch.trim() || m.toLowerCase().includes(materialSearch.toLowerCase())
           );
+
+          const candidateSuccessors = items.filter(it => {
+            if (it.id === selectedWbsItem.id) return false;
+            if (!successorSearch.trim()) return true;
+            const q = successorSearch.toLowerCase();
+            return (
+              it.codigo_item?.toLowerCase().includes(q) ||
+              it.descripcion?.toLowerCase().includes(q)
+            );
+          });
 
           return (
             <div className="p-6 space-y-4 overflow-y-auto max-h-[90vh]">
@@ -761,11 +1091,11 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     {selectedWbsItem.codigo_item} — {selectedWbsItem.descripcion}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Rubro: <strong className="text-slate-700">{selectedWbsItem.rubroNombre}</strong> | Cómputo Total: <span className="font-mono">{selectedWbsItem.contractual} {selectedWbsItem.unidad}</span>
+                    Rubro: <strong className="text-slate-700">{selectedWbsItem.rubroNombre}</strong> | Cómputo Total del Tramo: <span className="font-mono font-bold text-slate-800">{selectedWbsItem.contractual} {selectedWbsItem.unidad}</span>
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo por Programar</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Saldo del Tramo por Programar</span>
                   <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-mono font-bold">
                     {saldoItem.toLocaleString('es-AR')} {selectedWbsItem.unidad}
                   </span>
@@ -775,7 +1105,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
               {/* Parámetros Operativos Principales */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
                 <div>
-                  <label className="font-semibold text-slate-600 block mb-1">Fecha Programada</label>
+                  <label className="font-semibold text-slate-600 block mb-1">Fecha Programada de Inicio</label>
                   <input
                     type="date"
                     value={odtForm.fecha}
@@ -787,10 +1117,10 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="font-semibold text-slate-600">
-                      Meta Física ({selectedWbsItem.unidad})
+                      Meta Física de la ODT ({selectedWbsItem.unidad})
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Saldo: {saldoItem} {selectedWbsItem.unidad}
+                    <span className="text-[10px] text-amber-700 font-mono font-bold">
+                      Total Tramo: {totalTramo} {selectedWbsItem.unidad}
                     </span>
                   </div>
                   <input
@@ -801,27 +1131,27 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                       const raw = e.target.value;
                       setOdtForm({ ...odtForm, meta_cantidad: raw === '' ? 0 : Math.max(0, Number(raw)) });
                     }}
-                    placeholder="Ej: 70"
+                    placeholder={`Ej: ${saldoItem || totalTramo}`}
                     className="w-full px-3 py-2 border rounded-xl text-sm font-mono font-bold text-amber-700 bg-white"
                   />
                   {/* Botones de selección rápida */}
-                  <div className="flex gap-1.5 mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido })}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100/70 text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer"
-                    >
-                      Rendimiento Diario ({saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido})
-                    </button>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {saldoItem > 0 && (
                       <button
                         type="button"
                         onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoItem })}
-                        className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer"
+                        className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors cursor-pointer"
                       >
-                        Saldo Total ({saldoItem})
+                        100% Saldo Tramo ({saldoItem} {selectedWbsItem.unidad})
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setOdtForm({ ...odtForm, meta_cantidad: saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido })}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors cursor-pointer"
+                    >
+                      Rendimiento Diario ({saldoItem > 0 ? Math.min(saldoItem, rendSugerido) : rendSugerido} {selectedWbsItem.unidad})
+                    </button>
                   </div>
                 </div>
 
@@ -857,6 +1187,91 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* VIDEO 2: REGLA DE SECUENCIA / PRECEDENCIA ENTRE ODTs */}
+              <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 space-y-3 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-amber-900 flex items-center gap-1.5 text-sm">
+                      <GitBranch size={15} className="text-amber-700" />
+                      De esta ODT, una vez iniciada, ¿se puede iniciar otra actividad antes de terminarla al 100%?
+                    </span>
+                    <p className="text-[11px] text-amber-800 mt-0.5">
+                      Si elegís <strong>NO</strong>, no se podrá programar otra ODT hasta completar esta. Si elegís <strong>SÍ</strong>, indicá cuál es la actividad que le sigue para dejarla habilitada.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setPermiteIniciarOtra('no')}
+                      className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all cursor-pointer ${
+                        permiteIniciarOtra === 'no'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Lock size={13} />
+                      NO (Bloquear hasta terminar)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPermiteIniciarOtra('si')}
+                      className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all cursor-pointer ${
+                        permiteIniciarOtra === 'si'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Unlock size={13} />
+                      SÍ (Autorizar la que le sigue)
+                    </button>
+                  </div>
+                </div>
+
+                {permiteIniciarOtra === 'si' && (
+                  <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <label className="font-bold text-emerald-900">
+                        ¿Cuál es la actividad que le sigue y queda autorizada para iniciar? ({allowedSuccessorIds.length} seleccionada{allowedSuccessorIds.length === 1 ? '' : 's'})
+                      </label>
+                      <input
+                        type="text"
+                        value={successorSearch}
+                        onChange={e => setSuccessorSearch(e.target.value)}
+                        placeholder="Buscar por código (ej: 2-N1-N2) o actividad..."
+                        className="px-2.5 py-1 border border-slate-300 rounded-lg text-xs w-full sm:w-64"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pt-1">
+                      {candidateSuccessors.map(it => {
+                        const isChecked = allowedSuccessorIds.includes(it.id);
+                        return (
+                          <label
+                            key={it.id}
+                            onClick={() => toggleAllowedSuccessor(it.id)}
+                            className={`p-2 rounded-lg border text-xs flex items-center gap-2 cursor-pointer transition-all ${
+                              isChecked
+                                ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                                : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="rounded text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span className="font-mono font-bold text-slate-800 shrink-0">{it.codigo_item}</span>
+                            <span className="truncate">{it.descripcion}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* SECCIÓN DE CHECKLIST DE RECURSOS OPERATIVOS */}
@@ -1186,7 +1601,7 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
         })()}
       </ModalPortal>
 
-      {/* Modal Informe Detallado de ODT y Producción Cargada */}
+      {/* Modal Informe Detallado de ODT + Edición de Meta (Video 1) y Secuencia (Video 2) */}
       <ModalPortal
         isOpen={Boolean(viewingOdt)}
         onClose={() => setViewingOdt(null)}
@@ -1195,6 +1610,18 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
         {viewingOdt && (() => {
           const prog = odtProgressMap[viewingOdt.id] || { ejecutado: 0, pct: 0, partesOdt: [] };
           const saldoOdt = Math.max(0, Number(viewingOdt.meta_cantidad || 0) - prog.ejecutado);
+          const contractualWbs = Number(viewingOdt.item?.cantidad_contractual || 0);
+          const parsedRule = parseSecuenciaFromInstrucciones(viewingOdt.instrucciones_calidad);
+
+          const editCandidates = items.filter(it => {
+            if (it.id === viewingOdt.item_id) return false;
+            if (!editSuccessorSearch.trim()) return true;
+            const q = editSuccessorSearch.toLowerCase();
+            return (
+              it.codigo_item?.toLowerCase().includes(q) ||
+              it.descripcion?.toLowerCase().includes(q)
+            );
+          });
 
           return (
             <div className="p-6 space-y-5 overflow-y-auto max-h-[90vh]">
@@ -1236,14 +1663,82 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                 </div>
               </div>
 
-              {/* Resumen de Meta vs Ejecución */}
+              {/* Resumen de Meta vs Ejecución (con Edición Directa de Meta - Video 1) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <span className="text-[11px] text-slate-500 font-semibold block">Meta Asignada en ODT</span>
-                  <span className="text-lg font-black text-slate-900 font-mono">
-                    {Number(viewingOdt.meta_cantidad || 0).toLocaleString('es-AR')} {viewingOdt.unidad}
-                  </span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-500 font-semibold">Meta Asignada en ODT</span>
+                    {!isEditingMeta && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingMetaValue(String(viewingOdt.meta_cantidad || 0));
+                          setIsEditingMeta(true);
+                        }}
+                        className="text-[11px] font-bold text-amber-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Edit3 size={11} /> Editar Meta
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditingMeta ? (
+                    <div className="mt-1.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min={1}
+                          value={editingMetaValue}
+                          onChange={e => setEditingMetaValue(e.target.value)}
+                          className="w-28 px-2.5 py-1 border border-amber-400 rounded-lg font-mono font-bold text-sm bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveMetaOdt}
+                          disabled={updateOdt.isPending}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Check size={12} /> Guardar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingMeta(false)}
+                          className="px-2 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                      {contractualWbs > 0 && Number(editingMetaValue) !== contractualWbs && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingMetaValue(String(contractualWbs))}
+                          className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded cursor-pointer"
+                        >
+                          Usar 100% Cómputo Tramo ({contractualWbs} {viewingOdt.unidad})
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-lg font-black text-slate-900 font-mono block">
+                        {Number(viewingOdt.meta_cantidad || 0).toLocaleString('es-AR')} {viewingOdt.unidad}
+                      </span>
+                      {contractualWbs > 0 && contractualWbs !== Number(viewingOdt.meta_cantidad || 0) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMetaValue(String(contractualWbs));
+                            setIsEditingMeta(true);
+                          }}
+                          className="text-[10px] font-bold text-amber-700 hover:underline mt-0.5 block cursor-pointer"
+                        >
+                          Cómputo Total Tramo: {contractualWbs} {viewingOdt.unidad} (Ajustar al 100%)
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
+
                 <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
                   <span className="text-[11px] text-emerald-700 font-semibold block">Producción Acumulada Cargada</span>
                   <span className="text-lg font-black text-emerald-800 font-mono">
@@ -1256,6 +1751,107 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                     {saldoOdt.toLocaleString('es-AR')} {viewingOdt.unidad}
                   </span>
                 </div>
+              </div>
+
+              {/* Panel de Regla de Secuencia de esta ODT (Video 2) */}
+              <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-3 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <GitBranch size={15} className="text-amber-700" />
+                      De esta ODT, una vez iniciada, ¿se puede iniciar otra actividad antes de terminarla?
+                    </span>
+                    <span className="text-[11px] text-amber-800 block mt-0.5">
+                      Podés cambiar esta condición en cualquier momento para bloquear o autorizar la actividad que le sigue.
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditSecuenciaMode('no');
+                        handleSaveSecuenciaOdt('no', []);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 border cursor-pointer ${
+                        editSecuenciaMode === 'no'
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Lock size={12} /> NO
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditSecuenciaMode('si');
+                        if (editAllowedItemIds.length === 0 && viewingOdt.item) {
+                          setEditAllowedItemIds(getSuggestedSuccessorIds(viewingOdt.item));
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 border cursor-pointer ${
+                        editSecuenciaMode === 'si'
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Unlock size={12} /> SÍ (Elegir cuál le sigue)
+                    </button>
+                  </div>
+                </div>
+
+                {editSecuenciaMode === 'si' && (
+                  <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="font-bold text-emerald-900">
+                        ¿Cuál es la actividad que le sigue? ({editAllowedItemIds.length} seleccionada{editAllowedItemIds.length === 1 ? '' : 's'})
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editSuccessorSearch}
+                          onChange={e => setEditSuccessorSearch(e.target.value)}
+                          placeholder="Buscar actividad..."
+                          className="px-2.5 py-1 border border-slate-300 rounded-lg text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSecuenciaOdt('si', editAllowedItemIds)}
+                          disabled={updateOdt.isPending}
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs inline-flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          <Check size={12} /> Guardar Autorización
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-36 overflow-y-auto">
+                      {editCandidates.map(it => {
+                        const isChecked = editAllowedItemIds.includes(it.id);
+                        return (
+                          <label
+                            key={it.id}
+                            onClick={() => toggleEditAllowedSuccessor(it.id)}
+                            className={`p-2 rounded-lg border text-xs flex items-center gap-2 cursor-pointer ${
+                              isChecked
+                                ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-bold'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="rounded text-emerald-600"
+                            />
+                            <span className="font-mono font-bold">{it.codigo_item}</span>
+                            <span className="truncate">{it.descripcion}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Ficha de Recursos Asignados */}
@@ -1272,10 +1868,10 @@ export const Fase2Programacion: React.FC<Fase2ProgramacionProps> = ({
                   <span className="text-[10px] font-bold text-slate-400 uppercase block">Materiales Requeridos / Observaciones</span>
                   <p className="font-semibold text-slate-800 mt-0.5">{viewingOdt.materiales_requeridos || 'Sin materiales específicos registrados'}</p>
                 </div>
-                {viewingOdt.instrucciones_calidad && (
+                {parsedRule.cleanInstrucciones && (
                   <div className="md:col-span-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Instrucciones de Calidad y Seguridad</span>
-                    <p className="text-slate-700 mt-0.5">{viewingOdt.instrucciones_calidad}</p>
+                    <p className="text-slate-700 mt-0.5">{parsedRule.cleanInstrucciones}</p>
                   </div>
                 )}
               </div>

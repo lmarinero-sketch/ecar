@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import {
   HardHat, Play, CheckCircle2, Clock, AlertTriangle,
-  MapPin, Check, TrendingUp, Eye, Trash2, Calendar
+  MapPin, Check, TrendingUp, Eye, Trash2, Calendar, Edit3
 } from 'lucide-react';
 import {
   useObraOrdenesTrabajo,
   useObraParteDiarioItems,
   useCreateObraParteDiarioItem,
+  useUpdateObraParteDiarioItem,
   useDeleteObraParteDiarioItem,
+  useUpdateObraOrdenTrabajo,
   useDeleteObraOrdenTrabajo
 } from '../../../hooks/useNuevoModuloObra';
 import type { ObraOrdenTrabajo } from '../../../lib/types';
@@ -42,6 +44,15 @@ function formatearDuracionLegible(horasDecimales: number): string {
   return `${h}h ${m}m (${horasDecimales} hs)`;
 }
 
+function sumarUnDia(fechaIso: string): string {
+  if (!fechaIso) return new Date().toISOString().split('T')[0];
+  const [y, m, d] = fechaIso.split('-').map(Number);
+  if (!y || !m || !d) return fechaIso;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  return dt.toISOString().split('T')[0];
+}
+
 export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
   projectId
 }) => {
@@ -54,14 +65,19 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
   const { data: allOdts = [] } = useObraOrdenesTrabajo(projectId);
   const { data: allPartes = [] } = useObraParteDiarioItems(projectId);
   const createParteItem = useCreateObraParteDiarioItem();
+  const updateParteItem = useUpdateObraParteDiarioItem();
   const deleteParteItem = useDeleteObraParteDiarioItem();
+  const updateOdt = useUpdateObraOrdenTrabajo();
   const deleteOdt = useDeleteObraOrdenTrabajo();
 
   const [activeOdt, setActiveOdt] = useState<ObraOrdenTrabajo | null>(null);
   const [viewingOdtReport, setViewingOdtReport] = useState<ObraOrdenTrabajo | null>(null);
+  const [editingMetaOdtId, setEditingMetaOdtId] = useState<string | null>(null);
+  const [editingMetaVal, setEditingMetaVal] = useState<string>('');
 
-  // Formulario de Terreno (usamos strings en inputs numéricos para poder borrar limpiamente sin que quede un 0 trabado)
+  // Formulario de Terreno (incluye fecha_ejecucion propia para elegir la fecha real de cada parte)
   const [form, setForm] = useState({
+    fecha_ejecucion: new Date().toISOString().split('T')[0],
     cantidad_real: '',
     hora_inicio_real: '07:30',
     hora_fin_real: '16:00',
@@ -145,6 +161,19 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
     const prog = odtProgressMap[odt.id];
     const saldoSugerido = prog && prog.saldoPendiente > 0 ? prog.saldoPendiente : Number(odt.meta_cantidad || 0);
 
+    // Video 3: Si ya hay un parte cargado en esta ODT, sugerir el día siguiente al último parte; si es el primero, sugerir la fecha de la ODT
+    let fechaSugerida = odt.fecha || selectedFecha;
+    if (prog && prog.partesOdt.length > 0) {
+      const fechasOrdenadas = [...prog.partesOdt]
+        .map(p => p.fecha)
+        .filter(Boolean)
+        .sort();
+      const ultimaFecha = fechasOrdenadas[fechasOrdenadas.length - 1];
+      if (ultimaFecha) {
+        fechaSugerida = sumarUnDia(ultimaFecha);
+      }
+    }
+
     // Extraer cantidad real de operarios desde cuadrilla_nombre (ej. "(2 operarios: ...)")
     const matchOp = odt.cuadrilla_nombre?.match(/\((\d+)\s*operario/i);
     const opCount = matchOp ? matchOp[1] : '2';
@@ -154,6 +183,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
     const duracionInicial = calcularDuracionHoras(horaIni, horaFin);
 
     setForm({
+      fecha_ejecucion: fechaSugerida,
       cantidad_real: String(saldoSugerido),
       hora_inicio_real: horaIni,
       hora_fin_real: horaFin,
@@ -197,6 +227,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
       return;
     }
 
+    const fechaFinal = form.fecha_ejecucion || selectedFecha;
     const meta = Number(activeOdt.meta_cantidad || 0);
     const progPrevio = odtProgressMap[activeOdt.id]?.ejecutadoAcumulado || 0;
     const nuevoAcumulado = progPrevio + real;
@@ -211,7 +242,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
       item_id: activeOdt.item_id,
       tramo_item_id: activeOdt.tramo_item_id || null,
       tramo_id: activeOdt.tramo_id || null,
-      fecha: selectedFecha,
+      fecha: fechaFinal,
       cantidad_real: real,
       unidad: activeOdt.unidad,
       cumplimiento_pct: pct,
@@ -231,6 +262,42 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
     });
 
     setActiveOdt(null);
+  };
+
+  const handleChangeFechaParte = async (parteId: string, nuevaFecha: string) => {
+    if (!nuevaFecha) return;
+    try {
+      await updateParteItem.mutateAsync({
+        id: parteId,
+        projectId,
+        fecha: nuevaFecha
+      });
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar la fecha del parte.');
+    }
+  };
+
+  const handleGuardarMetaOdt = async (odt: ObraOrdenTrabajo, nuevaMetaNum: number) => {
+    if (!nuevaMetaNum || nuevaMetaNum <= 0) {
+      useModalStore.getState().showAlert('Meta Inválida', 'Ingresá una meta física mayor a 0.');
+      return;
+    }
+    try {
+      const updated = await updateOdt.mutateAsync({
+        id: odt.id,
+        meta_cantidad: nuevaMetaNum
+      });
+      setEditingMetaOdtId(null);
+      if (viewingOdtReport?.id === odt.id) {
+        setViewingOdtReport({
+          ...viewingOdtReport,
+          meta_cantidad: nuevaMetaNum,
+          estado: updated?.estado || viewingOdtReport.estado
+        });
+      }
+    } catch (err: any) {
+      useModalStore.getState().showAlert('Error', err?.message || 'No se pudo actualizar la meta de la ODT.');
+    }
   };
 
   const handleDeleteParte = async (parteId: string) => {
@@ -274,7 +341,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
             </div>
             <h2 className="text-2xl font-bold">Ejecución & Avance Físico Real</h2>
             <p className="text-emerald-100 text-sm mt-1 max-w-3xl">
-              <strong>Regla Operativa:</strong> Una ODT permanece <strong>Abierta (En Ejecución)</strong> hasta alcanzar el <strong>100%</strong> de su meta física. Las horas trabajadas se calculan automáticamente a partir de la duración real (<code className="text-emerald-200">Hora Fin - Hora Inicio</code>).
+              <strong>Regla Operativa:</strong> Una ODT permanece <strong>Abierta (En Ejecución)</strong> hasta alcanzar el <strong>100%</strong> de su meta física. Al cargar cada parte diario podés indicar la <strong>Fecha Real de Ejecución</strong> en terreno.
             </p>
           </div>
 
@@ -292,7 +359,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
             <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 flex items-center gap-3">
               <Calendar size={18} className="text-emerald-300" />
               <div>
-                <span className="text-[10px] uppercase font-bold text-emerald-200 block">Fecha de Parte Diario</span>
+                <span className="text-[10px] uppercase font-bold text-emerald-200 block">Filtro / Fecha Referencia</span>
                 <input
                   type="date"
                   value={selectedFecha}
@@ -381,6 +448,8 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
               };
               const estaCumplida = prog.esta100Cumplida;
               const enEjecucionParcial = !estaCumplida && prog.ejecutadoAcumulado > 0;
+              const contractualWbs = Number(odt.item?.cantidad_contractual || 0);
+              const isEditingThisMeta = editingMetaOdtId === odt.id;
 
               return (
                 <div
@@ -439,7 +508,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                       </p>
                     ) : (
                       <p className="text-xs text-slate-400 mb-3">
-                        Actividad WBS programada para jornada diaria
+                        Actividad WBS programada {contractualWbs > 0 ? `(Cómputo Tramo: ${contractualWbs} ${odt.unidad})` : ''}
                       </p>
                     )}
 
@@ -465,12 +534,67 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                           <span className="font-mono font-bold">{prog.saldoPendiente.toLocaleString('es-AR')} {odt.unidad}</span>
                         </div>
                       )}
+                      {contractualWbs > 0 && Number(odt.meta_cantidad) < contractualWbs && (
+                        <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between gap-2 text-[11px]">
+                          <span className="text-amber-800 font-medium">
+                            Total del Tramo WBS: <strong>{contractualWbs} {odt.unidad}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleGuardarMetaOdt(odt, contractualWbs)}
+                            className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded font-bold cursor-pointer"
+                          >
+                            Ajustar Meta a {contractualWbs} {odt.unidad}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 grid grid-cols-2 gap-2 text-xs mb-4">
                       <div>
-                        <span className="text-slate-400 block text-[10px]">Meta ODT</span>
-                        <span className="font-bold text-slate-800 font-mono">{odt.meta_cantidad} {odt.unidad}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 text-[10px]">Meta ODT</span>
+                          {!isEditingThisMeta && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingMetaOdtId(odt.id);
+                                setEditingMetaVal(String(odt.meta_cantidad || 0));
+                              }}
+                              className="text-[10px] font-bold text-amber-700 hover:underline inline-flex items-center gap-0.5 cursor-pointer"
+                              title="Editar Meta Física de la ODT"
+                            >
+                              <Edit3 size={10} /> Editar
+                            </button>
+                          )}
+                        </div>
+                        {isEditingThisMeta ? (
+                          <div className="flex items-center gap-1 mt-1">
+                            <input
+                              type="number"
+                              min={1}
+                              value={editingMetaVal}
+                              onChange={e => setEditingMetaVal(e.target.value)}
+                              className="w-20 px-1.5 py-0.5 border border-amber-400 rounded font-mono font-bold text-xs bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleGuardarMetaOdt(odt, Number(editingMetaVal))}
+                              className="px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold cursor-pointer"
+                            >
+                              OK
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingMetaOdtId(null)}
+                              className="px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] cursor-pointer"
+                            >
+                              X
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="font-bold text-slate-800 font-mono">{odt.meta_cantidad} {odt.unidad}</span>
+                        )}
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[10px]">Horario Plan</span>
@@ -541,14 +665,14 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
         )}
       </div>
 
-      {/* Historial de Partes Registrados */}
+      {/* Historial de Partes Registrados (con edición rápida de Fecha - Video 3) */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
           <span className="font-bold text-xs text-slate-800">
             Resumen de Registros de Terreno Cargados ({visiblePartes.length})
           </span>
           <span className="text-[11px] text-slate-500">
-            Hacé clic en <strong>Informe</strong> para ver el detalle completo o en el ícono de papelera para borrar un parte con error
+            Podés modificar directamente la <strong>Fecha</strong> de cualquier registro o hacer clic en <strong>Informe</strong> para ver el detalle completo
           </span>
         </div>
         {visiblePartes.length === 0 ? (
@@ -560,7 +684,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-3">Fecha</th>
+                  <th className="py-2.5 px-3">Fecha Ejecución</th>
                   <th className="py-2.5 px-3">ODT</th>
                   <th className="py-2.5 px-3">Código WBS / Tramo</th>
                   <th className="py-2.5 px-3">Actividad Contractual</th>
@@ -580,7 +704,15 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
 
                   return (
                     <tr key={p.id} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-mono whitespace-nowrap">{p.fecha}</td>
+                      <td className="py-2 px-3 font-mono whitespace-nowrap">
+                        <input
+                          type="date"
+                          value={p.fecha || ''}
+                          onChange={e => handleChangeFechaParte(p.id, e.target.value)}
+                          title="Cambiar Fecha Real de Ejecución de este parte"
+                          className="px-2 py-1 border border-slate-200 hover:border-emerald-400 rounded-lg text-xs font-mono bg-white text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-amber-700 whitespace-nowrap">{p.odt?.numero_odt || '-'}</td>
                       <td className="py-2.5 px-3 font-mono font-bold text-blue-700 whitespace-nowrap">{codigoWbs}</td>
                       <td className="py-2.5 px-3 font-medium text-slate-800">{actividadDesc}</td>
@@ -658,6 +790,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
           const metaOdt = Number(activeOdt.meta_cantidad || 0);
           const pctNuevo = metaOdt > 0 ? Math.round((nuevoTotalOdt / metaOdt) * 100) : 100;
           const duracionCalculada = calcularDuracionHoras(form.hora_inicio_real, form.hora_fin_real);
+          const hoyIso = new Date().toISOString().split('T')[0];
 
           return (
             <div className="p-6 space-y-4 overflow-y-auto max-h-[90vh]">
@@ -684,10 +817,56 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                 </div>
               </div>
 
+              {/* VIDEO 3: Selector de Fecha Real de Ejecución dentro del Modal */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Calendar size={14} className="text-emerald-600" />
+                    Fecha Real de Ejecución en Terreno
+                  </label>
+                  <span className="text-[11px] text-slate-500 block mt-0.5">
+                    Elegí el día en que se ejecutó este avance (Fecha ODT: <strong className="font-mono">{activeOdt.fecha}</strong>)
+                  </span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <input
+                    type="date"
+                    value={form.fecha_ejecucion}
+                    onChange={e => setForm({ ...form, fecha_ejecucion: e.target.value })}
+                    className="px-3 py-1.5 border-2 border-emerald-500 rounded-xl text-sm font-mono font-bold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  />
+                  <div className="flex flex-wrap gap-1">
+                    {activeOdt.fecha && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, fecha_ejecucion: activeOdt.fecha })}
+                        className="px-2 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold cursor-pointer"
+                      >
+                        Fecha ODT ({activeOdt.fecha})
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, fecha_ejecucion: sumarUnDia(form.fecha_ejecucion) })}
+                      className="px-2 py-0.5 rounded bg-blue-100 hover:bg-blue-200 text-blue-900 text-[10px] font-bold cursor-pointer"
+                    >
+                      +1 Día
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, fecha_ejecucion: hoyIso })}
+                      className="px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold cursor-pointer"
+                    >
+                      Hoy ({hoyIso})
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Input Gigante para Tablet de Producción Real */}
               <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 text-center">
                 <label className="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-1">
-                  ¿Cuántos {activeOdt.unidad} se produjeron en este turno?
+                  ¿Cuántos {activeOdt.unidad} se produjeron en esta jornada ({form.fecha_ejecucion})?
                 </label>
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <input
@@ -834,7 +1013,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer"
                 >
                   <Check size={16} />
-                  Guardar Parte de Producción
+                  Guardar Parte ({form.fecha_ejecucion})
                 </button>
               </div>
             </div>
@@ -856,6 +1035,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
             partesOdt: [],
             esta100Cumplida: false
           };
+          const contractualWbs = Number(viewingOdtReport.item?.cantidad_contractual || 0);
 
           return (
             <div className="p-6 space-y-5 overflow-y-auto max-h-[90vh]">
@@ -898,9 +1078,18 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                   <span className="text-[11px] text-slate-500 font-semibold block">Meta Asignada</span>
-                  <span className="text-lg font-black text-slate-900 font-mono">
+                  <span className="text-lg font-black text-slate-900 font-mono block">
                     {Number(viewingOdtReport.meta_cantidad).toLocaleString('es-AR')} {viewingOdtReport.unidad}
                   </span>
+                  {contractualWbs > 0 && contractualWbs !== Number(viewingOdtReport.meta_cantidad) && (
+                    <button
+                      type="button"
+                      onClick={() => handleGuardarMetaOdt(viewingOdtReport, contractualWbs)}
+                      className="text-[10px] font-bold text-amber-700 hover:underline mt-1 block cursor-pointer"
+                    >
+                      Ajustar al Total Tramo ({contractualWbs} {viewingOdtReport.unidad})
+                    </button>
+                  )}
                 </div>
                 <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
                   <span className="text-[11px] text-emerald-700 font-semibold block">Total Cargado en Terreno</span>
@@ -944,7 +1133,7 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
                         <tr>
-                          <th className="py-2 px-3">Fecha</th>
+                          <th className="py-2 px-3">Fecha Ejecución</th>
                           <th className="py-2 px-3 text-right">Cant. Real</th>
                           <th className="py-2 px-3 text-center">Horario Real</th>
                           <th className="py-2 px-3 text-center">Duración (Horas)</th>
@@ -956,7 +1145,14 @@ export const Fase3Ejecucion: React.FC<Fase3EjecucionProps> = ({
                       <tbody className="divide-y divide-slate-100 bg-white">
                         {prog.partesOdt.map(p => (
                           <tr key={p.id}>
-                            <td className="py-2 px-3 font-mono">{p.fecha}</td>
+                            <td className="py-2 px-3 font-mono">
+                              <input
+                                type="date"
+                                value={p.fecha || ''}
+                                onChange={e => handleChangeFechaParte(p.id, e.target.value)}
+                                className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-mono bg-white"
+                              />
+                            </td>
                             <td className="py-2 px-3 text-right font-mono font-bold text-emerald-700">
                               {Number(p.cantidad_real).toLocaleString('es-AR')} {p.unidad}
                             </td>

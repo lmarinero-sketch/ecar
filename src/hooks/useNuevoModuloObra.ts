@@ -391,13 +391,41 @@ export const useUpdateObraOrdenTrabajo = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...patch }: Partial<ObraOrdenTrabajo> & { id: string }) => {
-      const { data, error } = await supabase.from('obra_ordenes_trabajo').update(patch).eq('id', id).select().single();
+      const finalPatch: Record<string, any> = {
+        ...patch,
+        updated_at: new Date().toISOString()
+      };
+
+      // Si cambia meta_cantidad y no se forzó 'anulada', recalculamos automáticamente el estado según partes cargados
+      if (patch.meta_cantidad !== undefined && patch.estado !== 'anulada') {
+        const { data: partesOdt } = await supabase
+          .from('obra_parte_diario_items')
+          .select('cantidad_real')
+          .eq('odt_id', id);
+
+        const totalEjecutadoOdt = (partesOdt || []).reduce((acc, p) => acc + Number(p.cantidad_real || 0), 0);
+        const nuevaMeta = Number(patch.meta_cantidad || 0);
+        finalPatch.estado =
+          totalEjecutadoOdt <= 0
+            ? 'emitida'
+            : nuevaMeta > 0 && totalEjecutadoOdt >= nuevaMeta
+            ? 'cumplida'
+            : 'en_ejecucion';
+      }
+
+      const { data, error } = await supabase
+        .from('obra_ordenes_trabajo')
+        .update(finalPatch)
+        .eq('id', id)
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
       queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
     },
   });
 };
@@ -596,6 +624,33 @@ export const useDeleteObraParteDiarioItem = () => {
       queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
       queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
       queryClient.invalidateQueries({ queryKey: ['obra_tramo_items'] });
+    },
+  });
+};
+
+export const useUpdateObraParteDiarioItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId: _pid, ...patch }: Partial<ObraParteDiarioItem> & { id: string; projectId?: string }) => {
+      const { data, error } = await supabase
+        .from('obra_parte_diario_items')
+        .update({
+          ...patch,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      if (vars.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items', vars.projectId] });
+        queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo', vars.projectId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['obra_parte_diario_items'] });
+      queryClient.invalidateQueries({ queryKey: ['obra_ordenes_trabajo'] });
     },
   });
 };
