@@ -751,7 +751,7 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
       {/* Lightbox Modal */}
       {activePhotoIndex !== null && photos[activePhotoIndex] && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[10010] bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 animate-in fade-in duration-200"
           onClick={() => setActivePhotoIndex(null)}
         >
           {/* Lightbox Topbar */}
@@ -923,10 +923,18 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
 
   // Form view
   if (view === 'form') {
+    const handleReturnFromForm = () => {
+      setFormVehicleId(undefined);
+      if (preselectedVehicleId && onBack) {
+        onBack();
+      } else {
+        setView('list');
+      }
+    };
     return (
       <div className="space-y-4">
-        <button onClick={() => { onBack ? onBack() : setView('list'); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group cursor-pointer">
-          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver
+        <button onClick={handleReturnFromForm} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group cursor-pointer">
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Parte Diario
         </button>
         <div className="light-card p-6">
           <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
@@ -936,10 +944,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
             vehicles={vehicles}
             projects={projects}
             preselectedVehicleId={formVehicleId || preselectedVehicleId}
-            onClose={() => {
-              setFormVehicleId(undefined);
-              onBack ? onBack() : setView('list');
-            }}
+            onClose={handleReturnFromForm}
           />
         </div>
       </div>

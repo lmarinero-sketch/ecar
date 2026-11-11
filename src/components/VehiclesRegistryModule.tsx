@@ -3,12 +3,14 @@ import { Truck, DollarSign, Activity, Wrench, AlertCircle, Clock } from 'lucide-
 import { useFuelVehicles, useFuelLoads, useLogisticsMaintenanceLog, useVehicleDailyReports } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { isVehicleHoursTracking } from '../lib/hourmeter';
+import { isBatanUnit } from '../lib/vehicleMaintenance';
 
 const ESTIMATED_BATAN_PRICE_PER_LITER = 2470; // Costo promedio Diesel Evolux
 
 export const VehiclesRegistryModule: React.FC = () => {
   const { canViewCosts } = useAuth();
-  const { data: vehicles = [], isLoading: isLoadingV } = useFuelVehicles();
+  const { data: allVehicles = [], isLoading: isLoadingV } = useFuelVehicles();
+  const vehicles = useMemo(() => allVehicles.filter(v => !isBatanUnit(v)), [allVehicles]);
   const { data: fuelLoads = [], isLoading: isLoadingF } = useFuelLoads();
   const { data: maintenanceLogs = [], isLoading: isLoadingM } = useLogisticsMaintenanceLog();
   const { data: dailyReports = [], isLoading: isLoadingR } = useVehicleDailyReports();

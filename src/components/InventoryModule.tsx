@@ -1346,8 +1346,13 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
       }
 
       if (tab === 'tools') {
-        const isToolItem = Boolean(i.is_tool || i.category === 'herramienta' || (i.name && i.name.toLowerCase().includes('herramienta')));
-        return isToolItem;
+        return Boolean(
+          i.is_tool ||
+          i.category === 'herramienta' ||
+          (i.rubro && i.rubro.toLowerCase().includes('herramienta')) ||
+          (i.name && i.name.toLowerCase().includes('herramienta')) ||
+          /amolador|rotomartillo|taladro|soldadora|morsa|nivel|termometro|manometro|calibre|fresadora|sierra|generador|motobomba|faja|arnes|tenaza|pinza|martillo|pala|pico|disco|corta hierro/i.test(i.name || '')
+        );
       }
 
       // Filter by Stock Status (Matching Image 2)
@@ -1406,9 +1411,18 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
     /amolador|rotomartillo|taladro|soldadora|morsa|nivel|termometro|manometro|calibre|fresadora|sierra|generador|motobomba|faja|arnes|tenaza|pinza|martillo|pala|pico|disco|corta hierro/i.test(item.name || '')
   );
 
+  const isToolInRepair = (item: InventoryItem) =>
+    item.tool_status === 'mantenimiento' ||
+    item.tool_status === 'no_funciona' ||
+    (item as any).tool_status === 'reparacion';
+
   const toolsAvailableToSelect = useMemo(() => {
-    return filtered.filter(i => isToolItem(i) && !activeAssignmentByItemId.has(i.id));
+    return filtered.filter(i => isToolItem(i) && !activeAssignmentByItemId.has(i.id) && !isToolInRepair(i));
   }, [filtered, activeAssignmentByItemId]);
+
+  const toolsInRepairCount = useMemo(() => {
+    return filtered.filter(i => isToolItem(i) && isToolInRepair(i)).length;
+  }, [filtered]);
 
   const [toolStatusFilter, setToolStatusFilter] = useState<'all' | 'disponible' | 'prestada' | 'reparacion'>('all');
   const [openToolGroups, setOpenToolGroups] = useState<Record<string, boolean>>({});
@@ -2906,7 +2920,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                     { id: 'all', label: `Todas (${filtered.length})`, activeClass: 'bg-slate-800 text-white border-slate-800' },
                     { id: 'disponible', label: `🟢 Disponibles (${toolsAvailableToSelect.length})`, activeClass: 'bg-emerald-600 text-white border-emerald-600' },
                     { id: 'prestada', label: `⚡ Prestadas (${activeAssignments.length})`, activeClass: 'bg-amber-500 text-white border-amber-500' },
-                    { id: 'reparacion', label: `🔧 Reparación`, activeClass: 'bg-red-600 text-white border-red-600' },
+                    { id: 'reparacion', label: `🔧 Reparación (${toolsInRepairCount})`, activeClass: 'bg-red-600 text-white border-red-600' },
                   ] as const).map(pill => (
                     <button
                       key={pill.id}
