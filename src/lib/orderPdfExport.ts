@@ -475,3 +475,213 @@ export async function exportPurchaseOrderPdf(po: import('./types').PurchaseOrder
 
   doc.save(`ECAR_${docCode}.pdf`);
 }
+
+/**
+ * 6. Impresión de Remito en formato Ticket Térmico 55 mm (ancho útil 48-50 mm) con QR
+ */
+export interface Ticket55mmRemitoPayload {
+  remitoNumber?: string;
+  date?: string | Date;
+  obra?: string;
+  destination?: string;
+  origin?: string;
+  responsable?: string;
+  driverOrReceiver?: string;
+  despachante?: string;
+  dispatchedBy?: string;
+  notes?: string;
+  items: Array<{ code?: string; quantity: number; unit?: string; description: string }>;
+}
+
+export function printTicket55mmRemito(payload: Ticket55mmRemitoPayload) {
+  const remitoNum =
+    payload.remitoNumber ||
+    `0001-${String(Math.floor(100000 + Math.random() * 900000)).padStart(8, '0')}`;
+  const fechaStr =
+    payload.date instanceof Date
+      ? payload.date.toLocaleString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : payload.date ||
+        new Date().toLocaleString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+  const obraStr = payload.obra || payload.destination || 'Pañol Central / Obra';
+  const respStr = payload.responsable || payload.driverOrReceiver || 'Personal Autorizado';
+  const qrData = encodeURIComponent(
+    `ECAR|REMITO:${remitoNum}|FECHA:${fechaStr}|OBRA:${obraStr}|RESP:${respStr}|ITEMS:${payload.items.length}`
+  );
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${qrData}`;
+
+  const itemsHtml = (payload.items || [])
+    .map(
+      it => `
+      <div class="item-row">
+        <span class="qty">${it.quantity}${it.unit ? ` ${it.unit}` : ''} x</span>
+        <span class="desc">${it.description}</span>
+      </div>`
+    )
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Ticket Remito 55mm — ${remitoNum}</title>
+  <style>
+    @page {
+      size: 55mm auto;
+      margin: 2mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      color: #000000 !important;
+      background: #ffffff !important;
+    }
+    body {
+      width: 49mm;
+      max-width: 49mm;
+      margin: 0 auto;
+      padding: 1.5mm 0;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.25;
+    }
+    .center { text-align: center; }
+    .brand {
+      font-size: 13pt;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      font-size: 8pt;
+      font-weight: bold;
+      margin-top: 1px;
+    }
+    .divider {
+      border-top: 1px dashed #000;
+      margin: 4px 0;
+    }
+    .meta {
+      font-size: 8pt;
+      margin: 2px 0;
+      word-break: break-word;
+    }
+    .meta strong { font-weight: bold; }
+    .item-row {
+      display: flex;
+      gap: 4px;
+      font-size: 8.5pt;
+      margin: 2.5px 0;
+      align-items: flex-start;
+    }
+    .qty {
+      font-weight: bold;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .desc {
+      word-break: break-word;
+      flex: 1;
+    }
+    .sign-area {
+      margin-top: 14px;
+      font-size: 8pt;
+    }
+    .sign-line {
+      border-bottom: 1px solid #000;
+      height: 18px;
+      margin-bottom: 3px;
+    }
+    .qr-box {
+      margin-top: 8px;
+      text-align: center;
+    }
+    .qr-box img {
+      width: 28mm;
+      height: 28mm;
+      display: inline-block;
+    }
+    .no-print {
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .no-print button {
+      padding: 5px 10px;
+      font-family: sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      border: 1px solid #000;
+      cursor: pointer;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { width: 49mm; max-width: 49mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Imprimir Ticket (55mm)</button>
+  </div>
+  <div class="center">
+    <div class="brand">ECAR</div>
+    <div class="subtitle">CONSTRUCCIONES · PAÑOL</div>
+    <div class="subtitle">REMITO N° ${remitoNum}</div>
+  </div>
+  <div class="divider"></div>
+  <div class="meta"><strong>Fecha:</strong> ${fechaStr}</div>
+  <div class="meta"><strong>Obra:</strong> ${obraStr}</div>
+  <div class="meta"><strong>Resp.:</strong> ${respStr}</div>
+  ${payload.despachante ? `<div class="meta"><strong>Desp.:</strong> ${payload.despachante}</div>` : ''}
+  <div class="divider"></div>
+  <div class="meta"><strong>DETALLE DE ÍTEMS (${payload.items.length})</strong></div>
+  ${itemsHtml || '<div class="meta">Sin ítems detallados</div>'}
+  ${payload.notes ? `<div class="divider"></div><div class="meta"><strong>Obs.:</strong> ${payload.notes}</div>` : ''}
+  <div class="divider"></div>
+  <div class="sign-area">
+    <div class="sign-line"></div>
+    <div class="center">Firma y Aclaración Receptor</div>
+  </div>
+  <div class="qr-box">
+    <img src="${qrUrl}" alt="QR Remito" onload="setTimeout(function(){ window.print(); }, 250);" />
+    <div style="font-size:7pt; margin-top:2px;">${remitoNum}</div>
+  </div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=360,height=640');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
+}
+
+export function exportDispatchTicket55mm(req: PurchaseRequest) {
+  const shortId = req.id ? req.id.slice(0, 8).toUpperCase() : '00000001';
+  printTicket55mmRemito({
+    remitoNumber: `0001-${shortId}`,
+    date: req.dispatched_at
+      ? new Date(req.dispatched_at).toLocaleString('es-AR')
+      : new Date().toLocaleString('es-AR'),
+    obra: req.project?.name || 'Obra Central',
+    responsable: req.received_by || req.requested_by || 'Jefe de Obra',
+    despachante: req.dispatched_by || 'Pañol Central',
+    notes: req.notes || undefined,
+    items: (req.items || []).map(it => ({
+      quantity: it.quantity_sent ?? it.quantity ?? 1,
+      unit: it.unit || 'u',
+      description: it.description,
+    })),
+  });
+}

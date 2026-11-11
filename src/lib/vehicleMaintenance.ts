@@ -28,6 +28,43 @@ export const DAYS_PREVENTIVE_THRESHOLD = 7; // Alerta amarilla si faltan <= 7 d�
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 /**
+ * Identifica si la unidad es un Batán / Recipiente de Combustible (ej: BT-001, BT-002),
+ * los cuales no tienen odómetro (km), horómetro (hs), plan de service ni documentación vehicular (VTV/Seguro).
+ */
+export function isBatanUnit(vehicle?: Partial<FuelVehicle> | null): boolean {
+  if (!vehicle) return false;
+  const code = String(vehicle.code || '').trim().toUpperCase();
+  const type = String(vehicle.vehicle_type || '').trim().toLowerCase();
+  const desc = String(vehicle.description || '').trim().toLowerCase();
+  return (
+    code.startsWith('BT-') ||
+    type === 'batan' ||
+    type === 'batán' ||
+    type === 'recipiente' ||
+    desc.includes('batan') ||
+    desc.includes('batán')
+  );
+}
+
+/**
+ * Devuelve la lista de documentos vencidos de una unidad (excluyendo batanes).
+ */
+export function getVehicleExpiredDocuments(
+  vehicle?: Partial<FuelVehicle> | null
+): Array<{ type: 'Seguro' | 'VTV'; expiryDate: string }> {
+  if (!vehicle || isBatanUnit(vehicle)) return [];
+  const today = todayStr();
+  const expired: Array<{ type: 'Seguro' | 'VTV'; expiryDate: string }> = [];
+  if (vehicle.insurance_expiry && vehicle.insurance_expiry <= today) {
+    expired.push({ type: 'Seguro', expiryDate: vehicle.insurance_expiry });
+  }
+  if (vehicle.vtv_expiry && vehicle.vtv_expiry <= today) {
+    expired.push({ type: 'VTV', expiryDate: vehicle.vtv_expiry });
+  }
+  return expired;
+}
+
+/**
  * Evalúa el estado de mantenimiento de un vehículo considerando
  * Odómetro (Km), Horómetro (Hs) y Fecha estimada.
  * 
@@ -38,6 +75,27 @@ export function checkVehicleMaintenance(
   vehicle: FuelVehicle,
   readingOverride?: number | null
 ): MaintenanceCheckResult {
+  if (isBatanUnit(vehicle)) {
+    return {
+      level: 'none',
+      primaryReason: null,
+      overdueReasons: [],
+      soonReasons: [],
+      kmDiff: null,
+      hoursDiff: null,
+      daysDiff: null,
+      currentValue: null,
+      targetValue: null,
+      unit: 'L',
+      summary: 'Recipiente de combustible (Sin service por km/hs)',
+      detail: 'Unidad de almacenamiento de combustible.',
+      badgeLabel: 'Recipiente',
+      badgeClass: 'bg-sky-100 text-sky-700 border-sky-200',
+      isOverdue: false,
+      isSoon: false,
+    };
+  }
+
   const isHours = vehicle.tracking_type === 'hours' || vehicle.vehicle_type === 'maquinaria';
   const unit = isHours ? 'hs' : 'km';
 

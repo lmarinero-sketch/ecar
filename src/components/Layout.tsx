@@ -9,7 +9,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Search, ChevronRight, HardHat, Fuel,  Rocket,
   GraduationCap, KeyRound, Save, CheckCircle2, AlertCircle, Banknote,
   Activity, BookOpen, FileText, PieChart, Mail, Building2, Globe, ShieldCheck,
-  Moon, Sun, Wrench
+  Moon, Sun, Wrench, ArrowLeft
 } from 'lucide-react';
 import { usePurchaseRequests, useFuelLoads } from '../hooks/useData';
 import type { ModuleId } from '../lib/types';
@@ -211,6 +211,44 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   },
 ];
 
+/* ─── Mapa jerárquico determinístico de navegación Padre (← Volver y Breadcrumb) ─── */
+const MODULE_PARENT_MAP: Partial<Record<ModuleId, { parentId: ModuleId; sectionLabel: string }>> = {
+  opportunities: { parentId: 'budget_landing', sectionLabel: 'Ger. Presupuestos' },
+  project_budget: { parentId: 'budget_landing', sectionLabel: 'Ger. Presupuestos' },
+  wbs: { parentId: 'budget_landing', sectionLabel: 'Ger. Presupuestos' },
+  purchases: { parentId: 'compras_intro', sectionLabel: 'Ger. Compras' },
+  purchase_orders: { parentId: 'compras_intro', sectionLabel: 'Ger. Compras' },
+  payment_orders: { parentId: 'compras_intro', sectionLabel: 'Ger. Compras' },
+  supplier_eval: { parentId: 'compras_intro', sectionLabel: 'Ger. Compras' },
+  purchase_requests: { parentId: 'logistics_intro', sectionLabel: 'Ger. Logística' },
+  logistics: { parentId: 'logistics_intro', sectionLabel: 'Ger. Logística' },
+  fleet: { parentId: 'logistics_intro', sectionLabel: 'Ger. Logística' },
+  fuel: { parentId: 'fleet', sectionLabel: 'Flota y Maquinaria' },
+  inventory: { parentId: 'logistics_intro', sectionLabel: 'Ger. Logística' },
+  tools: { parentId: 'logistics_intro', sectionLabel: 'Ger. Logística' },
+  obra_gestion: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  obra_recursos: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  obra_calidad: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  obra_economia: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  obra_documentacion: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  field: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  safety: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  inspections: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  quality: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  nonconformities: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  rfi: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  documents: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  scope_changes: { parentId: 'obra_panel', sectionLabel: 'Ger. Obras' },
+  finances: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  obligations: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  certifications: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  expenses: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  payments: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  worker_payments: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  invoicing: { parentId: 'finanzas_intro', sectionLabel: 'Ger. Adm. y Finanzas' },
+  rrhh: { parentId: 'rrhh_intro', sectionLabel: 'Ger. RRHH' },
+};
+
 /* ════════════════════════════════════════════════════════════ */
 /*                          LAYOUT                             */
 /* ════════════════════════════════════════════════════════════ */
@@ -227,6 +265,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+  const [subView, setSubView] = useState<{ label: string; onBack: () => void } | null>(null);
 
   const { startTour } = useOnboardingStore();
   const { data: purchaseRequests = [] } = usePurchaseRequests();
@@ -235,11 +274,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { data: fuelLoads = [] } = useFuelLoads();
   const unseenFuelReqs = fuelLoads.filter(l => l.workflow_status === 'requested' && !seenFuelRequests.includes(l.id)).length;
 
+  // Listen to module sub-view navigation events for 3rd-level breadcrumb & deterministic back button
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ label: string | null; onBack?: () => void }>;
+      if (custom.detail && custom.detail.label && custom.detail.onBack) {
+        setSubView({ label: custom.detail.label, onBack: custom.detail.onBack });
+      } else {
+        setSubView(null);
+      }
+    };
+    window.addEventListener('ecar-subview-change', handler);
+    return () => window.removeEventListener('ecar-subview-change', handler);
+  }, []);
+
   // Trigger content animation on module change
   useEffect(() => {
     if (prevModule.current !== activeModule) {
       setContentKey(k => k + 1);
       prevModule.current = activeModule;
+      setSubView(null);
     }
     
     // Auto-expand the section containing the active module
@@ -248,6 +302,34 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       setExpandedSections(prev => ({ ...prev, [activeSectionIndex]: true }));
     }
   }, [activeModule]);
+
+  const getRootModule = (): ModuleId => {
+    if (!isModuleHidden('bi') && hasModule('bi')) return 'bi';
+    for (const section of SIDEBAR_SECTIONS) {
+      const first = section.items.find(i =>
+        !isModuleHidden(i.id) &&
+        ((i.id === 'user_management' || i.id === 'user_activity') ? isAdmin : (!i.requires || hasModule(i.id)))
+      );
+      if (first) return first.id;
+    }
+    return 'bi';
+  };
+
+  const handleBackNavigation = () => {
+    if (subView) {
+      subView.onBack();
+      return;
+    }
+    const parentInfo = MODULE_PARENT_MAP[activeModule];
+    if (parentInfo && !isModuleHidden(parentInfo.parentId) && hasModule(parentInfo.parentId)) {
+      setActiveModule(parentInfo.parentId);
+      return;
+    }
+    const rootMod = getRootModule();
+    if (activeModule !== rootMod) {
+      setActiveModule(rootMod);
+    }
+  };
 
   const handleSelect = (id: ModuleId) => {
     setActiveModule(id);
@@ -464,15 +546,75 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <main className="flex-1 relative overflow-y-auto z-10 w-full flex flex-col">
         {/* Sticky Header */}
         <header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 md:px-6 py-2.5 flex justify-between items-center z-20">
-          <div className="flex items-center gap-2 ml-10 md:ml-0">
-            {/* Module breadcrumb */}
-            <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">ECAR</span>
+          <div className="flex items-center gap-2.5 ml-10 md:ml-0 flex-wrap">
+            {/* Botón ← Volver determinístico hacia nivel padre */}
+            {(subView !== null || activeModule !== getRootModule()) && (
+              <button
+                type="button"
+                onClick={handleBackNavigation}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all shadow-xs cursor-pointer"
+                title="Volver al nivel anterior"
+              >
+                <ArrowLeft size={13} />
+                <span>Volver</span>
+              </button>
+            )}
+
+            {/* Module breadcrumb clickeable de hasta 3 niveles */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  if (subView) setSubView(null);
+                  setActiveModule(getRootModule());
+                }}
+                className="text-slate-400 hover:text-ecar-blue dark:text-slate-400 dark:hover:text-sky-400 font-medium hidden sm:inline transition-colors cursor-pointer"
+                title="Ir al Inicio (ECAR)"
+              >
+                ECAR
+              </button>
+
+              {MODULE_PARENT_MAP[activeModule] && (
+                <>
+                  <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 hidden sm:block" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const parent = MODULE_PARENT_MAP[activeModule]!;
+                      setSubView(null);
+                      setActiveModule(parent.parentId);
+                    }}
+                    className="text-slate-500 hover:text-ecar-blue dark:text-slate-400 dark:hover:text-sky-400 font-medium hidden md:inline transition-colors cursor-pointer"
+                    title={`Volver a ${MODULE_PARENT_MAP[activeModule]!.sectionLabel}`}
+                  >
+                    {MODULE_PARENT_MAP[activeModule]!.sectionLabel}
+                  </button>
+                </>
+              )}
+
               <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 hidden sm:block" />
-              <h2 className="font-semibold text-slate-900 dark:text-white tracking-tight">
-                {MODULE_LABELS[activeModule]}
-              </h2>
-            </div>
+
+              {subView ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => subView.onBack()}
+                    className="text-slate-600 hover:text-ecar-blue dark:text-slate-300 dark:hover:text-sky-400 font-semibold transition-colors cursor-pointer"
+                    title={`Volver a ${MODULE_LABELS[activeModule]}`}
+                  >
+                    {MODULE_LABELS[activeModule]}
+                  </button>
+                  <ChevronRight size={12} className="text-slate-300 dark:text-slate-600" />
+                  <h2 className="font-semibold text-slate-900 dark:text-white tracking-tight">
+                    {subView.label}
+                  </h2>
+                </>
+              ) : (
+                <h2 className="font-semibold text-slate-900 dark:text-white tracking-tight">
+                  {MODULE_LABELS[activeModule]}
+                </h2>
+              )}
+            </nav>
           </div>
 
           <div className="flex items-center gap-2.5">

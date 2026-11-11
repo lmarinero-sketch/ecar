@@ -2,14 +2,14 @@ import React, { useState, useMemo } from 'react';
 import {
   Truck, Plus, Package, ShieldAlert,
   PackageCheck, FileText, Search, Wrench,
-  Warehouse, TrendingUp, ShoppingCart
+  Warehouse, TrendingUp, ShoppingCart, Printer
 } from 'lucide-react';
 import {
   useAllFuelVehicles, useProjects,
   useLogisticsDeliveries, useCreateLogisticsDelivery, useUpdateLogisticsDelivery,
   useEmployees
 } from '../hooks/useData';
-import { exportDispatchPdf } from '../lib/orderPdfExport';
+import { exportDispatchPdf, printTicket55mmRemito } from '../lib/orderPdfExport';
 import type { FuelVehicle, LogisticsDelivery } from '../lib/types';
 import { useModalStore } from '../store/useModalStore';
 
@@ -316,13 +316,39 @@ export const DeliveriesTab: React.FC<{
                           </button>
                         )}
 
-                        {/* PDF Remito */}
+                        {/* PDF Remito A4 */}
                         <button
+                          type="button"
                           onClick={() => exportDispatchPdf(d as any)}
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all"
-                          title="Descargar Remito PDF"
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                          title="Descargar Remito A4 (PDF)"
                         >
                           <FileText size={14} />
+                        </button>
+
+                        {/* 6. Imprimir Ticket Térmico 55 mm */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const proj = projects.find(p => p.id === d.project_id);
+                            printTicket55mmRemito({
+                              remitoNumber: d.remito_number || `0001-${d.id.slice(0, 8).toUpperCase()}`,
+                              date: (d as any).scheduled_date || d.created_at || new Date().toLocaleDateString('es-AR'),
+                              obra: proj?.name || (d as any).destination_address || 'Obra',
+                              responsable: d.driver_name || 'Chofer / Receptor',
+                              despachante: 'Logística ECAR',
+                              notes: d.notes || undefined,
+                              items: (d.items || []).map((it: any) => ({
+                                quantity: Number(it.quantity || 1),
+                                unit: it.unit || 'u',
+                                description: it.description || it.item_name || 'Material',
+                              })),
+                            });
+                          }}
+                          className="px-2 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          title="Imprimir ticket térmico (55mm)"
+                        >
+                          <Printer size={13} /> 55mm
                         </button>
                       </div>
                     </td>

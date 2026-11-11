@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 import { useFuelVehicles, useProjects, useVehicleDailyReports, useCreateVehicleDailyReport, useUpdateVehicleDailyReport } from '../hooks/useData';
 import type { FuelVehicle, VehicleDailyReport, VehicleChecklistItem, VehicleFuelLevel, VehicleCondition } from '../lib/types';
-import { checkVehicleMaintenance } from '../lib/vehicleMaintenance';
+import { checkVehicleMaintenance, isBatanUnit } from '../lib/vehicleMaintenance';
 import { reliableLastHours, formatHourmeter, isVehicleHoursTracking, sanitizeOdometerInput, parseReadingValue } from '../lib/hourmeter';
 import { HourmeterInput } from './HourmeterInput';
+import { ModalPortal } from './common/ModalPortal';
 
 // ── Constants ──
 const DEFAULT_CHECKLIST: VehicleChecklistItem[] = [
@@ -559,27 +560,38 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
   };
 
   return (
-    <div className="space-y-4">
-      <button onClick={onClose} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
-        <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a listado
-      </button>
-
-      <div className="light-card p-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
-              {VEHICLE_ICON[report.vehicle?.vehicle_type || ''] || '🚐'}
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800">{report.vehicle?.code} — {report.vehicle?.description}</h3>
-              <p className="text-xs text-gray-500">{report.report_date} · {report.driver_name} · {report.source.toUpperCase()}</p>
-            </div>
+    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[88vh] flex flex-col">
+      {/* Top Modal Header */}
+      <div className="p-5 bg-slate-900 text-white flex items-start justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-2xl">
+            {VEHICLE_ICON[report.vehicle?.vehicle_type || ''] || '🚐'}
           </div>
+          <div>
+            <h3 className="font-bold text-white text-base">
+              {report.vehicle?.code} — {report.vehicle?.description}
+            </h3>
+            <p className="text-xs text-slate-300">
+              {report.report_date} · {report.driver_name} · {report.source.toUpperCase()}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <span className={`px-3 py-1 rounded-full text-xs font-bold ${condition.cls}`}>
             {condition.icon} {condition.label}
           </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            title="Cerrar (Esc)"
+          >
+            <X size={18} />
+          </button>
         </div>
+      </div>
+
+      <div className="p-6 space-y-5 overflow-y-auto flex-1">
 
         {/* Info Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -841,33 +853,67 @@ const ReportDetail: React.FC<{ report: VehicleDailyReport; projects: any[]; onCl
 };
 
 // ── Main Module ──
+type DailyKpiFilter = 'all' | 'today' | 'vehicles_today' | 'damage';
+
 export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string; onBack?: () => void }> = ({ preselectedVehicleId, onBack }) => {
   const [view, setView] = useState<ViewMode>(preselectedVehicleId ? 'form' : 'list');
   const [selectedReport, setSelectedReport] = useState<VehicleDailyReport | null>(null);
   const [qrVehicle, setQrVehicle] = useState<FuelVehicle | null>(null);
   const [filterVehicle, setFilterVehicle] = useState('');
   const [filterDamage, setFilterDamage] = useState(false);
+  const [activeKpiFilter, setActiveKpiFilter] = useState<DailyKpiFilter>('all');
+  const [vehiclesTodaySubView, setVehiclesTodaySubView] = useState<'reported' | 'pending'>('reported');
+  const [formVehicleId, setFormVehicleId] = useState<string | undefined>(preselectedVehicleId);
 
-  const { data: vehicles = [] } = useFuelVehicles();
+  const { data: allVehicles = [] } = useFuelVehicles();
+  const vehicles = useMemo(() => allVehicles.filter(v => !isBatanUnit(v)), [allVehicles]);
   const { data: projects = [] } = useProjects();
   const { data: reports = [], isLoading } = useVehicleDailyReports();
-
-  const filteredReports = useMemo(() => {
-    let r = reports;
-    if (filterVehicle) r = r.filter(rep => rep.vehicle_id === filterVehicle);
-    if (filterDamage) r = r.filter(rep => rep.has_damage);
-    return r;
-  }, [reports, filterVehicle, filterDamage]);
 
   const todayReports = useMemo(() => reports.filter(r => r.report_date === today()), [reports]);
   const damageReports = useMemo(() => reports.filter(r => r.has_damage), [reports]);
   const vehiclesReportedToday = useMemo(() => new Set(todayReports.map(r => r.vehicle_id)), [todayReports]);
+  const pendingVehiclesToday = useMemo(
+    () => vehicles.filter(v => !vehiclesReportedToday.has(v.id)),
+    [vehicles, vehiclesReportedToday]
+  );
+
+  const handleKpiClick = (kpi: DailyKpiFilter) => {
+    if (kpi === 'all') {
+      setActiveKpiFilter('all');
+      setFilterDamage(false);
+      setFilterVehicle('');
+      return;
+    }
+    if (activeKpiFilter === kpi) {
+      // Toggle off on second click
+      setActiveKpiFilter('all');
+      if (kpi === 'damage') setFilterDamage(false);
+      return;
+    }
+    setActiveKpiFilter(kpi);
+    if (kpi === 'damage') {
+      setFilterDamage(true);
+    } else {
+      setFilterDamage(false);
+    }
+  };
+
+  const filteredReports = useMemo(() => {
+    let r = reports;
+    if (activeKpiFilter === 'today' || activeKpiFilter === 'vehicles_today') {
+      r = r.filter(rep => rep.report_date === today());
+    }
+    if (filterVehicle) r = r.filter(rep => rep.vehicle_id === filterVehicle);
+    if (filterDamage || activeKpiFilter === 'damage') r = r.filter(rep => rep.has_damage);
+    return r;
+  }, [reports, filterVehicle, filterDamage, activeKpiFilter]);
 
   // QR view
   if (view === 'qr' && qrVehicle) {
     return (
       <div className="space-y-4">
-        <button onClick={() => { setView('list'); setQrVehicle(null); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
+        <button onClick={() => { setView('list'); setQrVehicle(null); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group cursor-pointer">
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver
         </button>
         <QRCodeDisplay vehicleId={qrVehicle.id} vehicle={qrVehicle} />
@@ -875,16 +921,11 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
     );
   }
 
-  // Detail view
-  if (view === 'detail' && selectedReport) {
-    return <ReportDetail report={selectedReport} projects={projects} onClose={() => { setView('list'); setSelectedReport(null); }} />;
-  }
-
   // Form view
   if (view === 'form') {
     return (
       <div className="space-y-4">
-        <button onClick={() => { onBack ? onBack() : setView('list'); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group">
+        <button onClick={() => { onBack ? onBack() : setView('list'); }} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group cursor-pointer">
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver
         </button>
         <div className="light-card p-6">
@@ -894,8 +935,11 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
           <ReportForm
             vehicles={vehicles}
             projects={projects}
-            preselectedVehicleId={preselectedVehicleId}
-            onClose={() => onBack ? onBack() : setView('list')}
+            preselectedVehicleId={formVehicleId || preselectedVehicleId}
+            onClose={() => {
+              setFormVehicleId(undefined);
+              onBack ? onBack() : setView('list');
+            }}
           />
         </div>
       </div>
@@ -905,6 +949,16 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
   // List view (default)
   return (
     <div className="space-y-6">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-ecar-blue transition-colors group cursor-pointer"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" /> Volver a Flota y Maquinaria
+        </button>
+      )}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-ecar-blueDark to-ecar-blue rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10"><ClipboardCheck size={120} /></div>
@@ -914,37 +968,88 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* 2.1 Clickable KPIs (Filtro de 1 click sobre el Historial) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><ClipboardCheck size={16} className="text-ecar-blue" /> Reportes Hoy</div>
+        <button
+          type="button"
+          onClick={() => handleKpiClick('today')}
+          className={`light-card p-5 text-left cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
+            activeKpiFilter === 'today' ? 'ring-2 ring-ecar-blue !border-ecar-blue' : ''
+          }`}
+        >
+          <div className="flex items-center justify-between text-sm font-bold text-gray-500 mb-2">
+            <span className="flex items-center gap-2"><ClipboardCheck size={16} className="text-ecar-blue" /> Reportes Hoy</span>
+            {activeKpiFilter === 'today' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-ecar-blue text-white">Activo</span>}
+          </div>
           <p className="text-2xl font-black text-ecar-blue font-mono">{todayReports.length}</p>
-        </div>
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Truck size={16} className="text-sky-500" /> Vehículos Reportados</div>
-          <p className="text-2xl font-black text-sky-600 font-mono">{vehiclesReportedToday.size} <span className="text-sm font-medium text-gray-400">/ {vehicles.length}</span></p>
-        </div>
-        <div className={`light-card p-5 ${damageReports.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'}`}>
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><AlertTriangle size={16} className="text-red-500" /> Con Daños</div>
+          <p className="text-[11px] text-gray-400 mt-1">Click para filtrar hoy</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleKpiClick('vehicles_today')}
+          className={`light-card p-5 text-left cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
+            activeKpiFilter === 'vehicles_today' ? 'ring-2 ring-sky-500 !border-sky-500' : ''
+          }`}
+        >
+          <div className="flex items-center justify-between text-sm font-bold text-gray-500 mb-2">
+            <span className="flex items-center gap-2"><Truck size={16} className="text-sky-500" /> Vehículos Reportados</span>
+            {activeKpiFilter === 'vehicles_today' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-600 text-white">Activo</span>}
+          </div>
+          <p className="text-2xl font-black text-sky-600 font-mono">
+            {vehiclesReportedToday.size} <span className="text-sm font-medium text-gray-400">/ {vehicles.length}</span>
+          </p>
+          <p className="text-[11px] text-gray-400 mt-1">
+            {pendingVehiclesToday.length} pendientes sin parte hoy
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleKpiClick('damage')}
+          className={`light-card p-5 text-left cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
+            damageReports.length > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+          } ${filterDamage || activeKpiFilter === 'damage' ? 'ring-2 ring-red-500 !border-red-500' : ''}`}
+        >
+          <div className="flex items-center justify-between text-sm font-bold text-gray-500 mb-2">
+            <span className="flex items-center gap-2"><AlertTriangle size={16} className="text-red-500" /> Con Daños</span>
+            {(filterDamage || activeKpiFilter === 'damage') && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white">Activo</span>
+            )}
+          </div>
           <p className="text-2xl font-black text-red-600 font-mono">{damageReports.length}</p>
-        </div>
-        <div className="light-card p-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-gray-500 mb-2"><Calendar size={16} className="text-emerald-500" /> Total Reportes</div>
+          <p className="text-[11px] text-red-500/80 mt-1">Click para ver reportes con daños</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleKpiClick('all')}
+          className={`light-card p-5 text-left cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
+            activeKpiFilter === 'all' && !filterDamage && !filterVehicle ? 'ring-2 ring-emerald-500 !border-emerald-500' : ''
+          }`}
+        >
+          <div className="flex items-center justify-between text-sm font-bold text-gray-500 mb-2">
+            <span className="flex items-center gap-2"><Calendar size={16} className="text-emerald-500" /> Total Reportes</span>
+          </div>
           <p className="text-2xl font-black text-emerald-600 font-mono">{reports.length}</p>
-        </div>
+          <p className="text-[11px] text-gray-400 mt-1">Mostrar todo el historial</p>
+        </button>
       </div>
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-3">
         <button
-          onClick={() => setView('form')}
-          className="btn-primary"
+          onClick={() => {
+            setFormVehicleId(undefined);
+            setView('form');
+          }}
+          className="btn-primary cursor-pointer"
         >
           <Plus size={16} /> Nuevo Parte
         </button>
 
         {/* Filters */}
-        <div className="flex-1 flex items-center gap-3 justify-end">
+        <div className="flex-1 flex items-center gap-3 justify-end flex-wrap">
           <select
             value={filterVehicle}
             onChange={e => setFilterVehicle(e.target.value)}
@@ -959,7 +1064,12 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
             <input
               type="checkbox"
               checked={filterDamage}
-              onChange={e => setFilterDamage(e.target.checked)}
+              onChange={e => {
+                const next = e.target.checked;
+                setFilterDamage(next);
+                if (next) setActiveKpiFilter('damage');
+                else if (activeKpiFilter === 'damage') setActiveKpiFilter('all');
+              }}
               className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
             />
             <AlertTriangle size={14} className="text-red-500" /> Solo con daños
@@ -977,7 +1087,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
             <button
               key={v.id}
               onClick={() => { setQrVehicle(v); setView('qr'); }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all hover:shadow-sm ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-all hover:shadow-sm cursor-pointer ${
                 vehiclesReportedToday.has(v.id)
                   ? 'bg-green-50 border-green-200 text-green-700'
                   : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-ecar-blueLight hover:bg-slate-50'
@@ -992,35 +1102,117 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
         </div>
       </div>
 
-      {/* Reports Table */}
+      {/* Reports Table / Vehicles Reported Today Sub-Toggle */}
       <div className="light-card overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
-          <h3 className="font-bold text-gray-800">Historial de Reportes ({filteredReports.length})</h3>
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-gray-800">
+              Historial de Reportes ({filteredReports.length})
+            </h3>
+            {activeKpiFilter === 'today' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-ecar-blue text-white">
+                Hoy <button type="button" onClick={() => handleKpiClick('all')} className="ml-1 cursor-pointer">✕</button>
+              </span>
+            )}
+            {activeKpiFilter === 'vehicles_today' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-600 text-white">
+                Vehículos Hoy <button type="button" onClick={() => handleKpiClick('all')} className="ml-1 cursor-pointer">✕</button>
+              </span>
+            )}
+            {(filterDamage || activeKpiFilter === 'damage') && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white">
+                Con Daños <button type="button" onClick={() => handleKpiClick('all')} className="ml-1 cursor-pointer">✕</button>
+              </span>
+            )}
+          </div>
+
+          {activeKpiFilter === 'vehicles_today' && (
+            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setVehiclesTodaySubView('reported')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  vehiclesTodaySubView === 'reported'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Reportados hoy ({vehiclesReportedToday.size})
+              </button>
+              <button
+                type="button"
+                onClick={() => setVehiclesTodaySubView('pending')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  vehiclesTodaySubView === 'pending'
+                    ? 'bg-amber-500 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Pendientes sin parte hoy ({pendingVehiclesToday.length})
+              </button>
+            </div>
+          )}
         </div>
-        {isLoading ? (
+
+        {activeKpiFilter === 'vehicles_today' && vehiclesTodaySubView === 'pending' ? (
+          <div className="p-4">
+            {pendingVehiclesToday.length === 0 ? (
+              <div className="text-center py-10 text-emerald-600 font-semibold text-sm">
+                🎉 Todas las unidades activas registraron su Parte Diario hoy.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {pendingVehiclesToday.map(v => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between p-3 rounded-xl border border-amber-200 bg-amber-50/40"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-xl">{VEHICLE_ICON[v.vehicle_type] || '🚐'}</span>
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-gray-800 truncate">{v.code} — {v.description}</p>
+                        <p className="text-[11px] text-amber-700">Sin parte registrado hoy</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormVehicleId(v.id);
+                        setView('form');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-ecar-blue text-white text-xs font-bold hover:opacity-90 shrink-0 cursor-pointer"
+                    >
+                      + Cargar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-16"><div className="w-8 h-8 border-4 border-gray-200 border-t-slate-500 rounded-full animate-spin" /></div>
         ) : filteredReports.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <ClipboardCheck size={48} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-500">No hay reportes aún</p>
-            <p className="text-sm">Creá el primer parte diario vehicular</p>
+            <p className="font-medium text-gray-500">No hay reportes para el filtro activo</p>
+            <p className="text-sm">Probá limpiando el filtro o creá un nuevo parte diario vehicular</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th >Fecha</th>
-                  <th >Vehículo</th>
-                  <th >Chofer</th>
-                  <th >Obra</th>
-                  <th >Km</th>
-                  <th >Combustible</th>
-                  <th >Checklist</th>
-                  <th >Fotos</th>
-                  <th >Daño</th>
-                  <th >Estado</th>
-                  <th ></th>
+                  <th>Fecha</th>
+                  <th>Vehículo</th>
+                  <th>Chofer</th>
+                  <th>Obra</th>
+                  <th>Km</th>
+                  <th>Combustible</th>
+                  <th>Checklist</th>
+                  <th>Fotos</th>
+                  <th>Daño</th>
+                  <th>Estado</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -1031,7 +1223,7 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                   return (
                     <tr key={r.id} className={`hover:bg-gray-50 ${r.has_damage ? 'bg-red-50/30' : ''}`}>
                       <td className="font-mono text-xs">{r.report_date}</td>
-                      <td >
+                      <td>
                         <div className="flex items-center gap-2">
                           <span>{VEHICLE_ICON[r.vehicle?.vehicle_type || ''] || '🚐'}</span>
                           <div>
@@ -1044,17 +1236,18 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                       <td className="text-xs">{r.project?.name || '—'}</td>
                       <td className="font-mono text-xs">{r.hourmeter != null ? `${formatHourmeter(r.hourmeter)} hs` : (r.odometer_km != null ? `${r.odometer_km.toLocaleString()} km` : '—')}</td>
                       <td className="text-xs">{fl?.icon} {fl?.label}</td>
-                      <td >
+                      <td>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${faults > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                           {faults > 0 ? `${faults} fallas` : 'OK'}
                         </span>
                       </td>
-                      <td >
+                      <td>
                         {r.damage_photos && r.damage_photos.length > 0 ? (
                           <button
-                            onClick={() => { setSelectedReport(r); setView('detail'); }}
+                            type="button"
+                            onClick={() => setSelectedReport(r)}
                             title="Ver fotos adjuntas"
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-ecar-blue border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all"
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-ecar-blue border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer"
                           >
                             <Camera size={11} />
                             {r.damage_photos.length} {r.damage_photos.length === 1 ? 'foto' : 'fotos'}
@@ -1063,20 +1256,22 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
                           <span className="text-[10px] text-gray-300">—</span>
                         )}
                       </td>
-                      <td >
+                      <td>
                         {r.has_damage ? (
                           <span className="badge badge-danger"><AlertTriangle size={10} /> Sí</span>
                         ) : (
                           <span className="text-[10px] text-gray-400">—</span>
                         )}
                       </td>
-                      <td >
+                      <td>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cond.cls}`}>{cond.icon} {cond.label}</span>
                       </td>
-                      <td >
+                      <td>
                         <button
-                          onClick={() => { setSelectedReport(r); setView('detail'); }}
-                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition-all"
+                          type="button"
+                          onClick={() => setSelectedReport(r)}
+                          className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-500 hover:text-blue-700 transition-all cursor-pointer"
+                          title="Ver detalle del reporte"
                         >
                           <Eye size={14} />
                         </button>
@@ -1089,6 +1284,17 @@ export const VehicleDailyReportModule: React.FC<{ preselectedVehicleId?: string;
           </div>
         )}
       </div>
+
+      {/* 4.1 Vista de detalle ("ojo") centrada en el viewport como Modal */}
+      <ModalPortal isOpen={!!selectedReport} onClose={() => setSelectedReport(null)} maxWidth="max-w-3xl">
+        {selectedReport && (
+          <ReportDetail
+            report={selectedReport}
+            projects={projects}
+            onClose={() => setSelectedReport(null)}
+          />
+        )}
+      </ModalPortal>
     </div>
   );
 };

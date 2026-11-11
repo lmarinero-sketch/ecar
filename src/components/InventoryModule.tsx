@@ -3,9 +3,9 @@ import {
   Package, Wrench, Search, Plus, X, ArrowDownToLine,
   RotateCcw, AlertTriangle, Boxes, User, Barcode,
   LayoutGrid, Trash2, Edit3, ShoppingBag,
-  CheckCircle2, ChevronDown, ChevronUp, History, Zap, ArrowUpRight,
+  CheckCircle2, ChevronDown, ChevronUp, ChevronRight, History, Zap, ArrowUpRight,
   TrendingUp, TrendingDown, Filter, Download, FileDown, RefreshCw,
-  Eye, Truck, Repeat, FileSpreadsheet, Building2
+  Eye, Truck, Repeat, FileSpreadsheet, Building2, Printer
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
@@ -21,7 +21,7 @@ import {
   useCreateLogisticsDelivery
 } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import { exportDispatchPdf, exportManualDispatchPdf } from '../lib/orderPdfExport';
+import { exportDispatchPdf, exportManualDispatchPdf, exportDispatchTicket55mm, printTicket55mmRemito } from '../lib/orderPdfExport';
 import { useModalStore } from '../store/useModalStore';
 import { createPortal } from 'react-dom';
 import type { InventoryItem, WarehouseShelf, ToolAssignment, InventoryDeposit } from '../lib/types';
@@ -1410,23 +1410,80 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
     return filtered.filter(i => isToolItem(i) && !activeAssignmentByItemId.has(i.id));
   }, [filtered, activeAssignmentByItemId]);
 
-  const toggleSelectTool = (id: string) => {
-    setSelectedToolIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const [toolStatusFilter, setToolStatusFilter] = useState<'all' | 'disponible' | 'prestada' | 'reparacion'>('all');
+  const [openToolGroups, setOpenToolGroups] = useState<Record<string, boolean>>({});
+
+  const getToolGroupFamily = (name: string): string => {
+    const clean = (name || 'OTRAS HERRAMIENTAS')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    const firstWord = clean.split(/[\s\-_/.,()]+/).filter(Boolean)[0] || 'OTRAS';
+    if (firstWord.length <= 2) return 'OTRAS HERRAMIENTAS';
+    // Pluralize common Spanish singular tool families for cleaner headers
+    if (firstWord.endsWith('OR')) return `${firstWord}ES`;
+    if (firstWord.endsWith('A') || firstWord.endsWith('E') || firstWord.endsWith('O')) return `${firstWord}S`;
+    return firstWord;
   };
 
-  const toggleSelectAllTools = () => {
-    if (toolsAvailableToSelect.length === 0) return;
-    const allVisibleSelected = toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id));
-    if (allVisibleSelected) {
-      const visibleIds = new Set(toolsAvailableToSelect.map(t => t.id));
-      setSelectedToolIds(prev => prev.filter(id => !visibleIds.has(id)));
-    } else {
-      setSelectedToolIds(prev => {
-        const set = new Set(prev);
-        toolsAvailableToSelect.forEach(t => set.add(t.id));
-        return Array.from(set);
-      });
-    }
+  const groupedTools = useMemo(() => {
+    const map = new Map<string, {
+      groupName: string;
+      items: InventoryItem[];
+      total: number;
+      disponibles: number;
+      prestadas: number;
+      reparacion: number;
+    }>();
+
+    filtered.forEach(item => {
+      const isAssigned = activeAssignmentByItemId.has(item.id);
+      const isRepair = item.tool_status === 'mantenimiento' || item.tool_status === 'no_funciona' || (item as any).tool_status === 'reparacion';
+      const isAvail = !isAssigned && !isRepair;
+
+      if (toolStatusFilter === 'disponible' && !isAvail) return;
+      if (toolStatusFilter === 'prestada' && !isAssigned) return;
+      if (toolStatusFilter === 'reparacion' && !isRepair) return;
+
+      const family = getToolGroupFamily(item.name);
+      if (!map.has(family)) {
+        map.set(family, {
+          groupName: family,
+          items: [],
+          total: 0,
+          disponibles: 0,
+          prestadas: 0,
+          reparacion: 0,
+        });
+      }
+      const grp = map.get(family)!;
+      grp.items.push(item);
+      grp.total += 1;
+      if (isRepair) grp.reparacion += 1;
+      else if (isAssigned) grp.prestadas += 1;
+      else grp.disponibles += 1;
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.groupName.localeCompare(b.groupName, 'es'));
+  }, [filtered, activeAssignmentByItemId, toolStatusFilter]);
+
+  const toggleToolGroup = (groupName: string) => {
+    setOpenToolGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
+
+  const expandAllToolGroups = () => {
+    const next: Record<string, boolean> = {};
+    groupedTools.forEach(g => { next[g.groupName] = true; });
+    setOpenToolGroups(next);
+  };
+
+  const collapseAllToolGroups = () => {
+    setOpenToolGroups({});
+  };
+
+  const toggleSelectTool = (id: string) => {
+    setSelectedToolIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const handleDispatchSelectedTools = () => {
@@ -2590,13 +2647,22 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                         </ul>
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <button
-                          onClick={() => exportDispatchPdf(req)}
-                          className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors font-bold text-xs inline-flex flex-col items-center gap-1"
-                          title="Descargar Remito PDF"
-                        >
-                          <ArrowDownToLine size={16} /> Remito
-                        </button>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            onClick={() => exportDispatchPdf(req)}
+                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors font-bold text-xs inline-flex flex-col items-center gap-1"
+                            title="Descargar Remito PDF (A4)"
+                          >
+                            <ArrowDownToLine size={16} /> Remito
+                          </button>
+                          <button
+                            onClick={() => exportDispatchTicket55mm(req)}
+                            className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors font-bold text-xs inline-flex flex-col items-center gap-1"
+                            title="Imprimir ticket térmico (55mm)"
+                          >
+                            <Printer size={16} /> 55mm
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -2809,120 +2875,225 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
             </div>
           )}
 
-          {/* Tools Table with Fast Filter and Checkboxes */}
+          {/* Tools Accordion grouped by Tool Family (Point 5.1) */}
           <div className="light-card overflow-hidden">
-            {/* Quick table search toolbar */}
-            <div className="p-3.5 bg-slate-50/80 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, código o serie..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-amber-500 font-medium"
-                />
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="font-semibold text-gray-500">
-                  Total: <strong className="text-gray-800">{filtered.length}</strong> herramientas
-                </span>
-                <span className="text-gray-300">|</span>
-                <span className="font-semibold text-emerald-600">
-                  🟢 {toolsAvailableToSelect.length} en Pañol
-                </span>
-                <span className="text-gray-300">|</span>
-                <span className="font-semibold text-amber-600">
-                  ⚡ {activeAssignments.length} en Préstamo
-                </span>
+            {/* Quick table search & status filter toolbar */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-gray-200 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="relative flex-1 min-w-[240px] max-w-md">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar herramienta por nombre, código o serie (abre grupos automáticamente)..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-full pl-9 pr-8 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:border-amber-500 font-medium"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Pills de filtro rápido de estado */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {([
+                    { id: 'all', label: `Todas (${filtered.length})`, activeClass: 'bg-slate-800 text-white border-slate-800' },
+                    { id: 'disponible', label: `🟢 Disponibles (${toolsAvailableToSelect.length})`, activeClass: 'bg-emerald-600 text-white border-emerald-600' },
+                    { id: 'prestada', label: `⚡ Prestadas (${activeAssignments.length})`, activeClass: 'bg-amber-500 text-white border-amber-500' },
+                    { id: 'reparacion', label: `🔧 Reparación`, activeClass: 'bg-red-600 text-white border-red-600' },
+                  ] as const).map(pill => (
+                    <button
+                      key={pill.id}
+                      type="button"
+                      onClick={() => setToolStatusFilter(pill.id)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                        toolStatusFilter === pill.id
+                          ? pill.activeClass
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={expandAllToolGroups}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-semibold text-[11px] cursor-pointer"
+                  >
+                    Expandir todo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAllToolGroups}
+                    className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-semibold text-[11px] cursor-pointer"
+                  >
+                    Colapsar todo
+                  </button>
+                </div>
               </div>
             </div>
 
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th className="w-12 text-center">
-                    <input
-                      type="checkbox"
-                      checked={toolsAvailableToSelect.length > 0 && toolsAvailableToSelect.every(t => selectedToolIds.includes(t.id))}
-                      onChange={toggleSelectAllTools}
-                      disabled={toolsAvailableToSelect.length === 0}
-                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-40"
-                      title="Seleccionar todas las herramientas disponibles para despachar"
-                    />
-                  </th>
-                  <th>Código Único / Serie</th>
-                  <th>Herramienta</th>
-                  <th>Ubicación Estantería</th>
-                  <th className="text-center">Estado Físico / Pañol</th>
-                  <th className="text-center">Stock</th>
-                  <th className="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(item => {
-                  const activeAss = activeAssignmentByItemId.get(item.id);
-                  const isAssigned = Boolean(activeAss);
-                  const isSelected = selectedToolIds.includes(item.id);
+            {/* Accordion Groups */}
+            <div className="divide-y divide-slate-200">
+              {groupedTools.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-sm">
+                  No se encontraron herramientas con los filtros seleccionados.
+                </div>
+              ) : (
+                groupedTools.map(group => {
+                  const autoExpand = search.trim().length > 0 || toolStatusFilter !== 'all';
+                  const isOpen = autoExpand || Boolean(openToolGroups[group.groupName]);
 
                   return (
-                    <tr key={item.id} className={isSelected ? 'bg-amber-50/60' : ''}>
-                      <td className="text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          disabled={isAssigned}
-                          onChange={() => toggleSelectTool(item.id)}
-                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          title={isAssigned ? "Esta herramienta ya está prestada" : "Seleccionar para remito múltiple"}
-                        />
-                      </td>
-                      <td className="font-mono text-xs font-bold text-ecar-blue">{item.barcode || item.item_code || 'SIN-CÓDIGO'}</td>
-                      <td className="font-bold text-gray-800">
-                        {item.name}
-                        {item.measure && <span className="text-xs text-gray-400 font-normal ml-1.5">({item.measure})</span>}
-                      </td>
-                      <td className="font-mono text-xs text-gray-600">
-                        📍 {item.shelf_position || 'Estantería A'}
-                      </td>
-                      <td className="text-center">
-                        {isAssigned ? (
-                          <span className="badge badge-warning flex items-center gap-1 justify-center mx-auto text-[11px] font-bold">
-                            <User size={11} /> Prestada ({(activeAss?.employee as any)?.full_name || 'Operario'})
+                    <div key={group.groupName} className="bg-white">
+                      {/* Accordion Header */}
+                      <button
+                        type="button"
+                        onClick={() => toggleToolGroup(group.groupName)}
+                        className={`w-full px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-left transition-colors cursor-pointer ${
+                          isOpen ? 'bg-slate-100/90 border-b border-slate-200' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-slate-500">
+                            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           </span>
-                        ) : (
-                          <span className="badge badge-success flex items-center gap-1 justify-center mx-auto text-[11px] font-bold">
-                            <CheckCircle2 size={11} /> Disponible en Pañol
+                          <span className="font-black text-xs sm:text-sm tracking-wide text-slate-800 uppercase">
+                            {group.groupName}
                           </span>
-                        )}
-                      </td>
-                      <td className="text-center font-mono font-bold">{item.current_stock} {item.unit}</td>
-                      <td className="text-center">
-                        {isAssigned ? (
-                          <button
-                            type="button"
-                            onClick={() => activeAss && setReturningAssignment(activeAss)}
-                            className="badge badge-success hover:bg-emerald-600 cursor-pointer text-xs py-1.5 px-3 flex items-center gap-1 justify-center mx-auto shadow-2xs font-bold"
-                            title="Registrar devolución de esta herramienta a pañol"
-                          >
-                            <RotateCcw size={12} /> Devolución
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setShowAssign(item)}
-                            className="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1 justify-center mx-auto"
-                            title="Asignar préstamo individual"
-                          >
-                            <User size={12} /> Asignar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-700 font-mono">
+                            {group.total} total
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+                            {group.disponibles} disp.
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span className={`px-2 py-0.5 rounded-md font-mono ${
+                            group.prestadas > 0
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-slate-50 text-slate-400'
+                          }`}>
+                            {group.prestadas} prestadas
+                          </span>
+                          {group.reparacion > 0 && (
+                            <>
+                              <span className="text-slate-300">·</span>
+                              <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 font-mono">
+                                {group.reparacion} reparación
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Lazy-rendered Accordion Body */}
+                      {isOpen && (
+                        <div className="overflow-x-auto">
+                          <table className="data-table">
+                            <thead>
+                              <tr>
+                                <th className="w-12 text-center">Sel.</th>
+                                <th>Código Único / Serie</th>
+                                <th>Herramienta y Estado</th>
+                                <th>Ubicación Estantería</th>
+                                <th className="text-center">Stock</th>
+                                <th className="text-center">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.items.map(item => {
+                                const activeAss = activeAssignmentByItemId.get(item.id);
+                                const isAssigned = Boolean(activeAss);
+                                const isRepair = item.tool_status === 'mantenimiento' || item.tool_status === 'no_funciona' || (item as any).tool_status === 'reparacion';
+                                const isSelected = selectedToolIds.includes(item.id);
+
+                                return (
+                                  <tr key={item.id} className={isSelected ? 'bg-amber-50/60' : ''}>
+                                    <td className="text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        disabled={isAssigned || isRepair}
+                                        onChange={() => toggleSelectTool(item.id)}
+                                        className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                        title={isAssigned ? 'Esta herramienta ya está prestada' : isRepair ? 'En reparación / mantenimiento' : 'Seleccionar para remito múltiple'}
+                                      />
+                                    </td>
+                                    <td className="font-mono text-xs font-bold text-ecar-blue">
+                                      {item.barcode || item.item_code || 'SIN-CÓDIGO'}
+                                    </td>
+                                    <td>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="font-bold text-gray-800">
+                                          {item.name}
+                                          {item.measure && <span className="text-xs text-gray-400 font-normal ml-1.5">({item.measure})</span>}
+                                        </span>
+                                        {isRepair ? (
+                                          <span className="badge badge-danger inline-flex items-center gap-1 text-[10px] font-bold">
+                                            <AlertTriangle size={10} /> En Reparación
+                                          </span>
+                                        ) : isAssigned ? (
+                                          <span className="badge badge-warning inline-flex items-center gap-1 text-[10px] font-bold">
+                                            <User size={10} /> Prestada ({(activeAss?.employee as any)?.full_name || 'Operario'})
+                                          </span>
+                                        ) : (
+                                          <span className="badge badge-success inline-flex items-center gap-1 text-[10px] font-bold">
+                                            <CheckCircle2 size={10} /> Disponible
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="font-mono text-xs text-gray-600">
+                                      📍 {item.shelf_position || 'Estantería A'}
+                                    </td>
+                                    <td className="text-center font-mono font-bold">{item.current_stock} {item.unit}</td>
+                                    <td className="text-center">
+                                      {isAssigned ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => activeAss && setReturningAssignment(activeAss)}
+                                          className="badge badge-success hover:bg-emerald-600 cursor-pointer text-xs py-1.5 px-3 flex items-center gap-1 justify-center mx-auto shadow-2xs font-bold"
+                                          title="Registrar devolución de esta herramienta a pañol"
+                                        >
+                                          <RotateCcw size={12} /> Devolución
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          disabled={isRepair}
+                                          onClick={() => setShowAssign(item)}
+                                          className="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1 justify-center mx-auto disabled:opacity-40"
+                                          title="Asignar préstamo individual"
+                                        >
+                                          <User size={12} /> Asignar
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
                   );
-                })}
-              </tbody>
-            </table>
+                })
+              )}
+            </div>
           </div>
 
           {/* Active Tool Assignments */}
@@ -3179,25 +3350,51 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                           <div className="flex items-center justify-between">
                             <span>{group.notes || 'Sin observaciones'}</span>
                             {group.movement_type === 'out' && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  exportManualDispatchPdf({
-                                    project_name: (group.project as any)?.name || 'Obra no especificada',
-                                    dispatched_by: group.created_by || 'Usuario ECAR',
-                                    notes: group.notes,
-                                    items: group.items.map((i: any) => ({
-                                      description: i.item?.name || 'Ítem desconocido',
-                                      quantity: i.quantity,
-                                      unit: i.item?.unit || 'UN'
-                                    }))
-                                  });
-                                }}
-                                className="ml-2 bg-orange-100 text-orange-700 hover:bg-orange-200 p-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
-                                title="Descargar Remito PDF"
-                              >
-                                <FileDown size={14} /> PDF
-                              </button>
+                              <div className="flex items-center gap-1 ml-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    exportManualDispatchPdf({
+                                      project_name: (group.project as any)?.name || 'Obra no especificada',
+                                      dispatched_by: group.created_by || 'Usuario ECAR',
+                                      notes: group.notes,
+                                      items: group.items.map((i: any) => ({
+                                        description: i.item?.name || 'Ítem desconocido',
+                                        quantity: i.quantity,
+                                        unit: i.item?.unit || 'UN'
+                                      }))
+                                    });
+                                  }}
+                                  className="bg-orange-100 text-orange-700 hover:bg-orange-200 p-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
+                                  title="Descargar Remito PDF (A4)"
+                                >
+                                  <FileDown size={14} /> PDF
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    printTicket55mmRemito({
+                                      remitoNumber: `REM-${new Date(group.created_at).getTime().toString().slice(-6)}`,
+                                      date: new Date(group.created_at),
+                                      origin: 'Pañol Central ECAR',
+                                      destination: (group.project as any)?.name || 'Obra / Uso General',
+                                      driverOrReceiver: group.created_by || 'Operario ECAR',
+                                      dispatchedBy: group.created_by || 'Pañol Central',
+                                      notes: group.notes || '',
+                                      items: group.items.map((i: any) => ({
+                                        code: i.item?.barcode || i.item?.item_code || '',
+                                        description: i.item?.name || 'Ítem',
+                                        quantity: i.quantity,
+                                        unit: i.item?.unit || 'un',
+                                      })),
+                                    });
+                                  }}
+                                  className="bg-slate-100 text-slate-700 hover:bg-slate-200 p-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
+                                  title="Imprimir ticket térmico (55mm)"
+                                >
+                                  <Printer size={14} /> 55mm
+                                </button>
+                              </div>
                             )}
                           </div>
                         </td>
@@ -4567,24 +4764,52 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <button
                 type="button"
-                onClick={() => setShowDispatchCart(false)}
-                className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                disabled={dispatchCartItems.length === 0}
+                onClick={() => {
+                  const projName = (projects || []).find(p => p.id === dispatchProject)?.name || 'Obra / Uso General';
+                  printTicket55mmRemito({
+                    remitoNumber: `REM-${Date.now().toString().slice(-6)}`,
+                    date: new Date(),
+                    origin: 'Pañol Central ECAR',
+                    destination: projName,
+                    driverOrReceiver: dispatchEmployee || 'Operario Receptor',
+                    dispatchedBy: profile?.full_name || 'Pañol Central',
+                    notes: dispatchNotes || '',
+                    items: dispatchCartItems.map(c => ({
+                      code: c.item.barcode || c.item.item_code || '',
+                      description: c.item.name,
+                      quantity: parseFloat(c.qty) || 1,
+                      unit: c.item.unit || 'un',
+                    })),
+                  });
+                }}
+                className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
+                title="Previsualizar e imprimir ticket térmico de 55 mm"
               >
-                Cancelar
+                <Printer size={15} /> Imprimir ticket (55mm)
               </button>
-              <button
-                type="button"
-                disabled={dispatchCartItems.length === 0 || !dispatchProject || !dispatchEmployee || createMovement.isPending}
-                onClick={handleDispatchCartSubmit}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {createMovement.isPending
-                  ? 'Procesando Remito...'
-                  : `🚚 Confirmar Despacho (${dispatchCartItems.length} ítem${dispatchCartItems.length !== 1 ? 's' : ''})`}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDispatchCart(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={dispatchCartItems.length === 0 || !dispatchProject || !dispatchEmployee || createMovement.isPending}
+                  onClick={handleDispatchCartSubmit}
+                  className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {createMovement.isPending
+                    ? 'Procesando Remito...'
+                    : `🚚 Confirmar Despacho (${dispatchCartItems.length} ítem${dispatchCartItems.length !== 1 ? 's' : ''})`}
+                </button>
+              </div>
             </div>
           </div>
         </div>,
