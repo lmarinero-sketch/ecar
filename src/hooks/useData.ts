@@ -4446,10 +4446,69 @@ export function useAuditLogs() {
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(1000);
+        .limit(3000);
       if (error) throw error;
       return data;
-    }
+    },
+    refetchInterval: 30000,
+  });
+}
+
+export interface DbTableStat {
+  table: string;
+  label: string;
+  rows: number;
+  avgRowBytes: number;
+  estimatedBytes: number;
+}
+
+const MONITORED_DB_TABLES: Array<{ table: string; label: string; avgRowBytes: number }> = [
+  { table: 'audit_logs', label: 'Logs de Auditoría', avgRowBytes: 620 },
+  { table: 'inventory_movements', label: 'Movimientos de Pañol', avgRowBytes: 480 },
+  { table: 'inventory_items', label: 'Artículos de Inventario', avgRowBytes: 750 },
+  { table: 'fuel_loads', label: 'Cargas de Combustible', avgRowBytes: 850 },
+  { table: 'vehicle_daily_reports', label: 'Partes Diarios Flota', avgRowBytes: 1400 },
+  { table: 'purchase_requests', label: 'Pedidos de Compra', avgRowBytes: 650 },
+  { table: 'purchase_orders', label: 'Órdenes de Compra', avgRowBytes: 900 },
+  { table: 'weekly_payments', label: 'Liquidaciones Semanales', avgRowBytes: 580 },
+  { table: 'cheques', label: 'Cartera de Cheques', avgRowBytes: 720 },
+  { table: 'fleet_maintenance_orders', label: 'Órdenes de Taller', avgRowBytes: 950 },
+  { table: 'projects', label: 'Obras / Proyectos', avgRowBytes: 680 },
+  { table: 'employees', label: 'Personal / RRHH', avgRowBytes: 640 },
+];
+
+export function useDatabaseMemoryStats() {
+  return useQuery({
+    queryKey: ['db_memory_stats'],
+    queryFn: async (): Promise<DbTableStat[]> => {
+      const results = await Promise.all(
+        MONITORED_DB_TABLES.map(async t => {
+          try {
+            const { count, error } = await supabase
+              .from(t.table)
+              .select('*', { count: 'exact', head: true });
+            const rows = !error && typeof count === 'number' ? count : 0;
+            return {
+              table: t.table,
+              label: t.label,
+              rows,
+              avgRowBytes: t.avgRowBytes,
+              estimatedBytes: rows * t.avgRowBytes,
+            };
+          } catch {
+            return {
+              table: t.table,
+              label: t.label,
+              rows: 0,
+              avgRowBytes: t.avgRowBytes,
+              estimatedBytes: 0,
+            };
+          }
+        })
+      );
+      return results.sort((a, b) => b.estimatedBytes - a.estimatedBytes);
+    },
+    staleTime: 60000,
   });
 }
 
