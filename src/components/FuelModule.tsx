@@ -1205,6 +1205,14 @@ const LoadsTab: React.FC<{
                       >
                         <Printer size={14} />
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => generateFuelValePdf(l, profile?.signature_data)}
+                        className="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-ecar-blue transition-all cursor-pointer"
+                        title="Descargar ticket / vale PDF"
+                      >
+                        <Download size={14} />
+                      </button>
                       <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all cursor-pointer" title="Editar carga"><Pencil size={14} /></button>
                       {canDelete && (
                         <button 
@@ -2627,6 +2635,14 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                       Esperando Autorización
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => generateFuelValePdf(r, profile?.signature_data)}
+                    className="px-2 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-ecar-blue text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                    title="Descargar Vale PDF"
+                  >
+                    <Download size={13} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => printFuelValeTicket58mm(r, profile?.signature_data)}
