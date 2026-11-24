@@ -11,6 +11,7 @@ import { useAppStore } from './store/useStore';
 import { MesaTecnicaPresentation } from './components/MesaTecnicaPresentation';
 import { FuelRequestPage } from './components/FuelRequestPage';
 import { ShowcasePage } from './components/showcase/ShowcasePage';
+import { TicketVerifyPage } from './components/TicketVerifyPage';
 
 // Module imports
 import { BiDashboard } from './components/BiDashboard';
@@ -76,8 +77,11 @@ const queryClient = new QueryClient({
   },
 });
 
-function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'manual_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | { type: 'fuel_request' } | { type: 'showcase' } | null {
+function getPublicRoute(): { type: 'checkin_attendance' } | { type: 'manual_attendance' } | { type: 'checkin_vehicle'; vehicleId: string } | { type: 'mesa_tecnica' } | { type: 'tracking' } | { type: 'fuel_request' } | { type: 'showcase' } | { type: 'verify_ticket' } | null {
   const path = window.location.pathname;
+  if (path === '/verificar' || path === '/verificar/') {
+    return { type: 'verify_ticket' };
+  }
   if (path === '/paginaweb' || path === '/paginaweb/' || path === '/showcase' || path === '/showcase/' || path === '/web' || path === '/web/') {
     return { type: 'showcase' };
   }
@@ -122,6 +126,9 @@ function AppContent() {
   // Public routes (no auth required)
   const publicRoute = getPublicRoute();
   if (publicRoute) {
+    if (publicRoute.type === 'verify_ticket') {
+      return <TicketVerifyPage />;
+    }
     if (publicRoute.type === 'showcase') {
       return <ShowcasePage />;
     }

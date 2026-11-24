@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Send, FileText, AlertCircle, Camera, Upload, X, Copy, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Check, Send, FileText, AlertCircle, Camera, Upload, X, Copy, Sparkles, RefreshCw, CheckCircle2, Printer } from 'lucide-react';
 import { supabase, ECAR_TENANT_ID } from '../lib/supabase';
 import { useModalStore } from '../store/useModalStore';
-import { generateFuelValePdf } from '../lib/generateFuelValePdf';
+import { generateFuelValePdf, printFuelValeTicket58mm } from '../lib/generateFuelValePdf';
 import type { FuelLoad } from '../lib/types';
 
 type Vehicle = { id: string; code: string; description: string; vehicle_type: string; plate?: string; preferred_fuel?: string };
@@ -514,13 +514,23 @@ export const FuelRequestPage: React.FC = () => {
                   <Copy size={14} /> Copiar Código
                 </button>
                 {createdLoad && (
-                  <button
-                    type="button"
-                    onClick={() => generateFuelValePdf(createdLoad)}
-                    className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    <FileText size={14} /> Descargar Vale PDF
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => generateFuelValePdf(createdLoad)}
+                      className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                    >
+                      <FileText size={14} /> Descargar Vale PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => printFuelValeTicket58mm(createdLoad)}
+                      className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                      title="Imprimir en impresora térmica 58mm"
+                    >
+                      <Printer size={14} /> Ticket 58mm
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -735,13 +745,23 @@ export const FuelRequestPage: React.FC = () => {
                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Nº de Solicitud</span>
                     <span className="text-xl font-black font-mono text-ecar-red tracking-wider">{activeRequest.load_number}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => generateFuelValePdf(activeRequest)}
-                    className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow transition-all"
-                  >
-                    <FileText size={14} /> Descargar Vale PDF
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => generateFuelValePdf(activeRequest)}
+                      className="bg-ecar-blue hover:bg-ecar-blueDark text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow transition-all cursor-pointer"
+                    >
+                      <FileText size={14} /> Vale PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => printFuelValeTicket58mm(activeRequest)}
+                      className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow transition-all cursor-pointer"
+                      title="Imprimir en impresora térmica 58mm"
+                    >
+                      <Printer size={14} /> Ticket 58mm
+                    </button>
+                  </div>
                 </div>
                 <p className="mb-1"><span className="text-gray-500 font-semibold">Vehículo:</span> <span className="font-bold text-ecar-blue">{activeRequest.vehicle_description} ({activeRequest.vehicle_code})</span></p>
                 <p><span className="text-gray-500 font-semibold">Litros Pedidos:</span> <span className="font-bold text-ecar-red">{activeRequest.requested_liters} L</span></p>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft, HardHat, Zap, Clock, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Fuel, Plus, Truck, BarChart3, FileCheck, Droplets, Calendar, X, Check, Pencil, ClipboardCheck, Camera, PieChart, Info, Download, Trash2, Users, DollarSign, TrendingUp, Image as ImageIcon, Search, Eye, Gauge, Sliders, ArrowUpRight, ArrowDownLeft, HardHat, Zap, Clock, AlertTriangle, ChevronDown, ChevronUp, Printer } from 'lucide-react';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useFuelVehicles, useFuelLoads, useCreateFuelLoad, useUpdateFuelLoad, useDeleteFuelLoad, useFuelBatanMovements, useCreateFuelBatanMovement, useProjects, useVehicleDailyReports } from '../hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,7 +7,7 @@ import { useAppStore } from '../store/useStore';
 import { useModalStore } from '../store/useModalStore';
 import type { FuelVehicle, FuelLoad, VehicleDailyReport } from '../lib/types';
 import { useImplementationStore } from '../store/useImplementationStore';
-import { generateFuelValePdf } from '../lib/generateFuelValePdf';
+import { generateFuelValePdf, printFuelValeTicket58mm } from '../lib/generateFuelValePdf';
 import { FuelTicketScannerModal } from './FuelTicketScannerModal';
 import { isVehicleHoursTracking, formatHourmeter } from '../lib/hourmeter';
 import * as XLSX from 'xlsx';
@@ -1197,6 +1197,14 @@ const LoadsTab: React.FC<{
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => printFuelValeTicket58mm(l, profile?.signature_data)}
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer"
+                        title="Imprimir ticket térmico 58mm"
+                      >
+                        <Printer size={14} />
+                      </button>
                       <button onClick={() => startEdit(l)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all cursor-pointer" title="Editar carga"><Pencil size={14} /></button>
                       {canDelete && (
                         <button 
@@ -2609,15 +2617,25 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                   </div>
                 )}
                 <div className="text-xs text-gray-500 mt-1 line-clamp-1">{r.observations || 'Sin notas'}</div>
-                {canAuthorize ? (
-                  <button onClick={() => handleAuthorize(r.id, r.unauthorized_load && r.workflow_status === 'completed')} className={`mt-3 w-full text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
-                    <Check size={14} /> {r.unauthorized_load ? 'Auditar y Aprobar Carga' : 'Autorizar con Firma'}
+                <div className="mt-3 flex items-center gap-2">
+                  {canAuthorize ? (
+                    <button onClick={() => handleAuthorize(r.id, r.unauthorized_load && r.workflow_status === 'completed')} className={`flex-1 text-white py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-pointer ${r.unauthorized_load ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}>
+                      <Check size={14} /> {r.unauthorized_load ? 'Auditar y Aprobar Carga' : 'Autorizar con Firma'}
+                    </button>
+                  ) : (
+                    <div className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                      Esperando Autorización
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => printFuelValeTicket58mm(r, profile?.signature_data)}
+                    className="px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                    title="Imprimir Ticket 58mm"
+                  >
+                    <Printer size={13} /> 58mm
                   </button>
-                ) : (
-                  <div className={`mt-3 w-full py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${r.unauthorized_load ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
-                    Esperando Autorización
-                  </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -2660,12 +2678,23 @@ const RequestsTab: React.FC<{ loads: FuelLoad[]; vehicles: FuelVehicle[]; update
                 <div className="text-[10px] text-gray-500 font-mono mt-1 bg-white p-1 rounded border border-green-100 line-clamp-2">
                   {r.supervisor_signature}
                 </div>
-                <button 
-                  onClick={() => generateFuelValePdf(r, profile?.signature_data)}
-                  className="mt-2 text-xs font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1"
-                >
-                  <Download size={14} /> Descargar PDF Autorizado (con N° de Solicitud)
-                </button>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => generateFuelValePdf(r, profile?.signature_data)}
+                    className="text-xs font-bold text-ecar-blue hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download size={14} /> Descargar PDF (A4)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => printFuelValeTicket58mm(r, profile?.signature_data)}
+                    className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Imprimir ticket adaptado a impresora térmica de 58 mm"
+                  >
+                    <Printer size={13} /> Ticket 58mm
+                  </button>
+                </div>
 
                 {completingId === r.id ? (
                   <div className="mt-3 bg-white p-3 rounded-xl border border-green-300 shadow-md space-y-3">

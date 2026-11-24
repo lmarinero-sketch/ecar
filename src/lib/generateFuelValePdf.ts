@@ -1,5 +1,61 @@
 import jsPDF from 'jspdf';
 import type { FuelLoad } from './types';
+import { printThermalTicket58mm } from './thermalTicket58mm';
+
+const formatLocalDate = (dateStr?: string) => {
+  if (!dateStr) return '-';
+  const parts = dateStr.split('T')[0].split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return dateStr;
+};
+
+/**
+ * Impresión de Vale de Combustible y Lubricantes adaptado a impresora térmica de 58 mm.
+ */
+export function printFuelValeTicket58mm(load: Partial<FuelLoad>, signatureData?: string | null) {
+  const solNumber = load.load_number || load.id || 'SOL-XXXXX';
+  const fechaStr = formatLocalDate(load.load_date);
+  const vehiculoStr = [load.vehicle_code, load.vehicle_description].filter(Boolean).join(' - ') || '-';
+  const isCompleted = load.workflow_status === 'completed' || (load.liters != null && load.liters > 0);
+  const litrosStr = isCompleted
+    ? `${load.liters || load.requested_liters || 0} L`
+    : `${load.requested_liters || 0} L`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ecar.app';
+  const qrUrlTarget = `${origin}/verificar?tipo=vale&codigo=${encodeURIComponent(solNumber)}`;
+
+  printThermalTicket58mm({
+    documentTitle: isCompleted ? 'Ticket de Carga de Combustible' : 'Vale de Combustible y Lubricantes',
+    subtitle: 'Construcciones · Flota y Energía',
+    badgeLabel: 'N° de Solicitud / Carga',
+    badgeCode: solNumber,
+    fields: [
+      { label: 'Fecha:', value: fechaStr },
+      { label: 'Vehículo:', value: vehiculoStr },
+      { label: 'Odóm./Hs.:', value: load.odometer_km ? `${load.odometer_km.toLocaleString()} km/hs` : '-' },
+      { label: 'Combustible:', value: load.fuel_type || 'Diesel Premium / V-Power' },
+      ...(load.station_name ? [{ label: 'Estación:', value: load.station_name }] : []),
+      {
+        label: isCompleted ? 'Litros Cargados:' : 'Litros Autor.:',
+        value: litrosStr,
+        highlight: true,
+      },
+      ...(isCompleted && load.requested_liters && load.liters && load.requested_liters !== load.liters
+        ? [{ label: 'Litros Solicit.:', value: `${load.requested_liters} L` }]
+        : []),
+      { label: 'Solicitante:', value: load.driver_name || load.requested_by || 'Operario' },
+      { label: 'Obra / Centro:', value: load.project_name || 'Uso General' },
+      ...(load.remito_number ? [{ label: 'Remito:', value: load.remito_number }] : []),
+      ...(load.voucher_number ? [{ label: 'N° Vale:', value: load.voucher_number }] : []),
+    ],
+    notes: load.observations || undefined,
+    authorizationTitle: 'Autorización de Gerencia',
+    authorizationText: load.supervisor_signature || 'Pendiente de Autorización por Gerencia',
+    signatureImage: signatureData || null,
+    signatureLineLabel: 'Firma Operario / Estación',
+    qrPayload: qrUrlTarget,
+    footerCode: solNumber,
+  });
+}
 
 export async function generateFuelValePdf(load: Partial<FuelLoad>, signatureData?: string | null) {
   const doc = new jsPDF('p', 'pt', 'a4');

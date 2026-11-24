@@ -2672,9 +2672,9 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                           <button
                             onClick={() => exportDispatchTicket55mm(req)}
                             className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors font-bold text-xs inline-flex flex-col items-center gap-1"
-                            title="Imprimir ticket térmico (55mm)"
+                            title="Imprimir ticket térmico (58mm)"
                           >
-                            <Printer size={16} /> 55mm
+                            <Printer size={16} /> 58mm
                           </button>
                         </div>
                       </td>
@@ -3404,9 +3404,9 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                                     });
                                   }}
                                   className="bg-slate-100 text-slate-700 hover:bg-slate-200 p-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"
-                                  title="Imprimir ticket térmico (55mm)"
+                                  title="Imprimir ticket térmico (58mm)"
                                 >
-                                  <Printer size={14} /> 55mm
+                                  <Printer size={14} /> 58mm
                                 </button>
                               </div>
                             )}
@@ -4801,9 +4801,9 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({ initialTab = '
                   });
                 }}
                 className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
-                title="Previsualizar e imprimir ticket térmico de 55 mm"
+                title="Previsualizar e imprimir ticket térmico de 58 mm"
               >
-                <Printer size={15} /> Imprimir ticket (55mm)
+                <Printer size={15} /> Imprimir ticket (58mm)
               </button>
               <div className="flex items-center gap-3">
                 <button

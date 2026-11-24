@@ -346,9 +346,9 @@ export const DeliveriesTab: React.FC<{
                             });
                           }}
                           className="px-2 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                          title="Imprimir ticket térmico (55mm)"
+                          title="Imprimir ticket térmico (58mm)"
                         >
-                          <Printer size={13} /> 55mm
+                          <Printer size={13} /> 58mm
                         </button>
                       </div>
                     </td>
