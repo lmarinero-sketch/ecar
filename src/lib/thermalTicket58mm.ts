@@ -21,7 +21,7 @@ export interface ThermalTicketItem {
 
 export interface ThermalTicket58mmOptions {
   documentTitle: string;
-  subtitle: string;
+  subtitle?: string;
   badgeLabel: string;
   badgeCode: string;
   fields: ThermalTicketField[];
@@ -330,7 +330,7 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
     <div class="header">
       <img class="brand-logo" src="${logoUrl}" alt="ECAR" onerror="this.style.display='none'; document.getElementById('brand-fallback').style.display='block';" />
       <div id="brand-fallback" class="brand" style="display:none;">ECAR</div>
-      <div class="brand-sub">${escapeHtml(opts.subtitle)}</div>
+      ${opts.subtitle ? `<div class="brand-sub">${escapeHtml(opts.subtitle)}</div>` : ''}
       <div class="doc-title">${escapeHtml(opts.documentTitle)}</div>
     </div>
 

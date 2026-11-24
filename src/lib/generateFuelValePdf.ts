@@ -25,7 +25,6 @@ export function printFuelValeTicket58mm(load: Partial<FuelLoad>, signatureData?:
 
   printThermalTicket58mm({
     documentTitle: isCompleted ? 'Ticket de Carga de Combustible' : 'Vale de Combustible y Lubricantes',
-    subtitle: 'Construcciones · Flota y Energía',
     badgeLabel: 'N° de Solicitud / Carga',
     badgeCode: solNumber,
     fields: [
