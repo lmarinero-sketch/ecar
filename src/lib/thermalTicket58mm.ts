@@ -44,6 +44,8 @@ const escapeHtml = (str: string): string =>
     .replace(/"/g, '&quot;');
 
 export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const logoUrl = `${origin}/logoECAR.png`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(
     opts.qrPayload
   )}`;
@@ -111,6 +113,16 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
       text-align: center;
       padding-bottom: 4px;
       border-bottom: 1.5px solid #000;
+    }
+    .brand-logo {
+      display: block;
+      max-width: 32mm;
+      max-height: 12mm;
+      width: auto;
+      height: auto;
+      margin: 0 auto 3px;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(150%);
     }
     .brand {
       font-size: 14pt;
@@ -316,7 +328,8 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
 
   <div class="ticket">
     <div class="header">
-      <div class="brand">ECAR</div>
+      <img class="brand-logo" src="${logoUrl}" alt="ECAR" onerror="this.style.display='none'; document.getElementById('brand-fallback').style.display='block';" />
+      <div id="brand-fallback" class="brand" style="display:none;">ECAR</div>
       <div class="brand-sub">${escapeHtml(opts.subtitle)}</div>
       <div class="doc-title">${escapeHtml(opts.documentTitle)}</div>
     </div>
@@ -376,11 +389,16 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
     <div class="divider-solid"></div>
 
     <div class="qr-box">
-      <img src="${qrUrl}" alt="QR Verificación" onload="setTimeout(function(){ window.print(); }, 250);" />
+      <img src="${qrUrl}" alt="QR Verificación" />
       <div class="footer-code">${escapeHtml(opts.footerCode || opts.badgeCode)}</div>
     </div>
     <div class="footer-note">Documento válido · Sistema ECAR ERP</div>
   </div>
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() { window.print(); }, 250);
+    });
+  </script>
 </body>
 </html>`;
 
