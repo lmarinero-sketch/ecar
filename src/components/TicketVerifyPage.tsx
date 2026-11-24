@@ -12,11 +12,14 @@ import {
   Calendar,
   FileText,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { FuelLoad } from '../lib/types';
-import { printFuelValeTicket58mm } from '../lib/generateFuelValePdf';
-import { printTicket58mmRemito } from '../lib/orderPdfExport';
+import { generateFuelValePdf, printFuelValeTicket58mm } from '../lib/generateFuelValePdf';
+import { exportDispatchPdf, exportManualDispatchPdf, printTicket58mmRemito } from '../lib/orderPdfExport';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const formatDateTimeAR = (val?: string | null) => {
   if (!val) return '—';
@@ -64,12 +67,13 @@ export const TicketVerifyPage: React.FC = () => {
             if (active) setErrorMsg('No se especificó el código de solicitud del vale.');
             return;
           }
-          const { data, error } = await supabase
-            .from('fuel_loads')
-            .select('*')
-            .or(`load_number.eq.${codigo},id.eq.${codigo}`)
-            .limit(1)
-            .maybeSingle();
+          let query = supabase.from('fuel_loads').select('*');
+          if (UUID_REGEX.test(codigo)) {
+            query = query.or(`load_number.eq.${codigo},id.eq.${codigo}`);
+          } else {
+            query = query.eq('load_number', codigo);
+          }
+          const { data, error } = await query.limit(1).maybeSingle();
 
           if (error) throw error;
           if (!data) {
@@ -233,7 +237,42 @@ export const TicketVerifyPage: React.FC = () => {
                     <span className="font-semibold text-slate-800">{fuelLoad.station_name}</span>
                   </div>
                 )}
+                {fuelLoad.odometer_km != null && fuelLoad.odometer_km > 0 && (
+                  <div className="px-4 py-2.5 flex justify-between gap-4 bg-white">
+                    <span className="text-slate-500">Odómetro / Horómetro</span>
+                    <span className="font-mono font-semibold text-slate-800">{fuelLoad.odometer_km.toLocaleString()}</span>
+                  </div>
+                )}
+                {fuelLoad.remito_number && (
+                  <div className="px-4 py-2.5 flex justify-between gap-4 bg-white">
+                    <span className="text-slate-500">N° Remito</span>
+                    <span className="font-mono font-semibold text-slate-800">{fuelLoad.remito_number}</span>
+                  </div>
+                )}
+                {fuelLoad.voucher_number && (
+                  <div className="px-4 py-2.5 flex justify-between gap-4 bg-white">
+                    <span className="text-slate-500">N° Vale</span>
+                    <span className="font-mono font-semibold text-slate-800">{fuelLoad.voucher_number}</span>
+                  </div>
+                )}
+                {fuelLoad.observations && (
+                  <div className="px-4 py-2.5 bg-white">
+                    <span className="text-slate-500 block text-xs mb-0.5">Observaciones</span>
+                    <span className="text-slate-800 text-xs">{fuelLoad.observations}</span>
+                  </div>
+                )}
               </div>
+
+              {fuelLoad.ticket_photo_url && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 p-3 space-y-2">
+                  <span className="text-[11px] font-bold uppercase text-slate-500 block">Foto del Ticket Adjunto</span>
+                  <img
+                    src={fuelLoad.ticket_photo_url}
+                    alt="Ticket adjunto"
+                    className="w-full max-h-72 object-contain rounded-lg bg-white border border-slate-200"
+                  />
+                </div>
+              )}
 
               {fuelLoad.supervisor_signature && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900">
@@ -245,16 +284,23 @@ export const TicketVerifyPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <button
                   type="button"
+                  onClick={() => generateFuelValePdf(fuelLoad)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#0B2240] hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                >
+                  <Download size={15} /> Descargar PDF
+                </button>
+                <button
+                  type="button"
                   onClick={() => printFuelValeTicket58mm(fuelLoad)}
                   className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Printer size={15} /> Imprimir Ticket 58mm
+                  <Printer size={15} /> Ticket 58mm
                 </button>
                 <a
                   href={`/fuel-request`}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#0B2240] hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 text-center"
+                  className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 text-center"
                 >
-                  <FileText size={15} /> Portal Combustible
+                  <FileText size={15} /> Portal
                 </a>
               </div>
             </div>
@@ -348,23 +394,43 @@ export const TicketVerifyPage: React.FC = () => {
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        printTicket58mmRemito({
-                          remitoNumber: remitoNum,
-                          date: fechaDisplay,
-                          obra: obraName,
-                          responsable: receptor,
-                          despachante,
-                          notes: rec.notes || undefined,
-                          items: itemsList,
-                        })
-                      }
-                      className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Printer size={15} /> Reimprimir Ticket 58mm
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isReq) {
+                            exportDispatchPdf(rec);
+                          } else {
+                            exportManualDispatchPdf({
+                              project_name: obraName,
+                              dispatched_by: despachante,
+                              notes: rec.notes || undefined,
+                              items: itemsList,
+                            });
+                          }
+                        }}
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0B2240] hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        <Download size={15} /> Descargar PDF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          printTicket58mmRemito({
+                            remitoNumber: remitoNum,
+                            date: fechaDisplay,
+                            obra: obraName,
+                            responsable: receptor,
+                            despachante,
+                            notes: rec.notes || undefined,
+                            items: itemsList,
+                          })
+                        }
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Printer size={15} /> Reimprimir Ticket 58mm
+                      </button>
+                    </div>
                   </>
                 );
               })()}
