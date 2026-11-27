@@ -1,9 +1,16 @@
+import { useModalStore } from '../store/useModalStore';
+import {
+  buildEscPosTicketBytes,
+  tryPrintViaLocalBridge,
+  uint8ToBase64,
+} from './escpos58mm';
+
 /**
- * Generador unificado de Tickets Térmicos de 58 mm (ancho útil seguro: 48–50 mm).
- * Optimizado para impresoras térmicas de 58 mm (203 dpi, blanco y negro puro):
- * - Sin fondos negros sólidos que manchen el papel térmico ni saturen el cabezal.
- * - Tipografía nítida (sans-serif para lectura + monospace para códigos y cantidades).
- * - Separadores punteados/dobles, recuadro de comprobante, firma y código QR.
+ * Generador unificado de Tickets Térmicos de 58 mm (ESC/POS nativo + fallback HTML 32 cols).
+ * - Si el puente local ESC/POS (ecar-print-bridge.ps1) está corriendo en la PC, envía los
+ *   bytes ESC/POS crudos directo al spooler RAW de Windows (impresión idéntica a térmica nativa).
+ * - Si no está corriendo, abre la vista previa con soporte Web Serial, descarga directa del puente
+ *   .ps1 y fallback por navegador sin margen izquierdo.
  */
 
 export interface ThermalTicketField {
@@ -43,10 +50,23 @@ const escapeHtml = (str: string): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
+export async function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
+  const escposBytes = await buildEscPosTicketBytes(opts);
+  const escposBase64 = uint8ToBase64(escposBytes);
+
+  // 1. Intentar impresión directa ESC/POS RAW vía puente local Windows
+  const printedViaBridge = await tryPrintViaLocalBridge(escposBytes);
+  if (printedViaBridge) {
+    useModalStore
+      .getState()
+      .showAlert('Ticket Impreso (ESC/POS 58mm)', `El comprobante ${opts.badgeCode} se envió directamente a la impresora térmica.`);
+    return;
+  }
+
+  // 2. Si no está el puente activo, abrir vista previa con controles ESC/POS + fallback corregido sin margen izquierdo
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const logoUrl = `${origin}/logoECAR.png`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(
+  const bridgeDownloadUrl = `${origin}/ecar-print-bridge.ps1`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${encodeURIComponent(
     opts.qrPayload
   )}`;
 
@@ -54,9 +74,8 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
     .filter(f => f.value !== undefined && f.value !== null && String(f.value).trim() !== '')
     .map(
       f => `
-      <div class="kv-row ${f.highlight ? 'kv-highlight' : ''}">
-        <span class="kv-label">${escapeHtml(f.label)}</span>
-        <span class="kv-value">${escapeHtml(f.value)}</span>
+      <div class="row ${f.highlight ? 'bold' : ''}">
+        <span>${escapeHtml(f.label)} ${escapeHtml(f.value)}</span>
       </div>`
     )
     .join('');
@@ -66,13 +85,10 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
     ? (opts.items || [])
         .map(
           it => `
-        <div class="item-row">
-          <div class="item-qty">${escapeHtml(String(it.quantity))}${it.unit ? ` ${escapeHtml(it.unit)}` : ''}</div>
-          <div class="item-desc">
-            ${escapeHtml(it.description)}
-            ${it.code ? `<div class="item-code">Cód: ${escapeHtml(it.code)}</div>` : ''}
-          </div>
-        </div>`
+        <div class="row bold">
+          ${escapeHtml(String(it.quantity))}${it.unit ? ` ${escapeHtml(it.unit)}` : ''} x ${escapeHtml(it.description)}
+        </div>
+        ${it.code ? `<div class="row">  Cod: ${escapeHtml(it.code)}</div>` : ''}`
         )
         .join('')
     : '';
@@ -86,7 +102,7 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
   <style>
     @page {
       size: 58mm auto;
-      margin: 1.5mm;
+      margin: 0mm;
     }
     * {
       box-sizing: border-box;
@@ -100,309 +116,201 @@ export function printThermalTicket58mm(opts: ThermalTicket58mmOptions) {
       background: #ffffff !important;
       width: 100%;
     }
-    .ticket {
-      width: 49mm;
-      max-width: 49mm;
-      margin: 0 auto;
-      padding: 1.5mm 0.5mm 3mm;
-      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
-      font-size: 8.5pt;
-      line-height: 1.3;
-    }
-    .header {
-      text-align: center;
-      padding-bottom: 4px;
-      border-bottom: 1.5px solid #000;
-    }
-    .brand-logo {
-      display: block;
-      max-width: 32mm;
-      max-height: 12mm;
-      width: auto;
-      height: auto;
-      margin: 0 auto 3px;
-      object-fit: contain;
-      filter: grayscale(100%) contrast(150%);
-    }
-    .brand {
-      font-size: 14pt;
-      font-weight: 900;
-      letter-spacing: 2px;
-      line-height: 1.1;
-    }
-    .brand-sub {
-      font-size: 7pt;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      margin-top: 1px;
-    }
-    .doc-title {
-      font-size: 8.5pt;
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-top: 4px;
-      line-height: 1.2;
-    }
-    .doc-box {
-      margin: 5px 0;
-      padding: 4px 5px;
-      border: 1.5px solid #000;
-      border-radius: 3px;
-      text-align: center;
-    }
-    .doc-box-label {
-      font-size: 6.5pt;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .doc-box-code {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 10.5pt;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      margin-top: 1px;
-    }
-    .divider-dashed {
-      border-top: 1px dashed #000;
-      margin: 5px 0;
-    }
-    .divider-solid {
-      border-top: 1px solid #000;
-      margin: 5px 0;
-    }
-    .kv-list {
+    .panel-controls {
+      max-width: 340px;
+      margin: 10px auto 14px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc !important;
+      font-family: 'Segoe UI', Arial, sans-serif;
       display: flex;
       flex-direction: column;
-      gap: 3px;
-    }
-    .kv-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
       gap: 6px;
-      font-size: 8pt;
-      padding-bottom: 2px;
-      border-bottom: 1px dotted #ccc;
     }
-    .kv-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
+    .panel-controls h4 {
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 2px;
     }
-    .kv-label {
+    .panel-controls p {
+      font-size: 11px;
+      line-height: 1.35;
+      color: #334155 !important;
+    }
+    .btn {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 11px;
       font-weight: 700;
-      flex-shrink: 0;
-      max-width: 44%;
-      word-break: break-word;
+      border: 1.5px solid #0B2240;
+      border-radius: 6px;
+      background: #ffffff !important;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      display: block;
     }
-    .kv-value {
-      text-align: right;
-      word-break: break-word;
-      flex: 1;
+    .btn-primary {
+      background: #0B2240 !important;
+      color: #ffffff !important;
     }
-    .kv-highlight .kv-value {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 9.5pt;
-      font-weight: 900;
+    .btn-accent {
+      background: #0284c7 !important;
+      border-color: #0284c7;
+      color: #ffffff !important;
     }
-    .section-title {
-      font-size: 7.5pt;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-bottom: 3px;
+    .status-msg {
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      min-height: 14px;
     }
-    .item-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 5px;
-      font-size: 8pt;
-      padding: 2.5px 0;
-      border-bottom: 1px dotted #ccc;
-    }
-    .item-row:last-child {
-      border-bottom: none;
-    }
-    .item-qty {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-weight: 900;
-      white-space: nowrap;
-      flex-shrink: 0;
-      min-width: 11mm;
-    }
-    .item-desc {
-      flex: 1;
-      word-break: break-word;
-    }
-    .item-code {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 7pt;
-    }
-    .notes-box {
-      font-size: 7.5pt;
-      word-break: break-word;
+    /* Estilo idéntico a ESC/POS 32 columnas, ancho 44mm pegado a la izquierda para compensar drivers Windows */
+    .ticket {
+      width: 45mm;
+      max-width: 45mm;
+      margin: 0 auto;
+      padding: 1mm 0 3mm;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 8.5pt;
       line-height: 1.25;
-    }
-    .auth-box {
-      font-size: 7.5pt;
       word-break: break-word;
+    }
+    .bold { font-weight: 700; }
+    .divider {
+      border-top: 1px dashed #000;
+      margin: 4px 0;
+    }
+    .row {
+      margin: 1.5px 0;
     }
     .sig-img {
       display: block;
-      max-width: 34mm;
-      max-height: 14mm;
+      max-width: 32mm;
+      max-height: 12mm;
       margin: 4px auto 2px;
       object-fit: contain;
     }
-    .sign-area {
-      margin-top: 10px;
-      font-size: 7.5pt;
-      text-align: center;
-    }
     .sign-line {
-      border-bottom: 1px solid #000;
+      border-bottom: 1px dashed #000;
       height: 14px;
-      margin: 0 4mm 2px;
+      margin-top: 8px;
+      margin-bottom: 2px;
     }
     .qr-box {
       margin-top: 6px;
       text-align: center;
     }
     .qr-box img {
-      width: 24mm;
-      height: 24mm;
+      width: 26mm;
+      height: 26mm;
       display: inline-block;
-      border: 1px solid #000;
-      padding: 1px;
-    }
-    .footer-code {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 7pt;
-      margin-top: 2px;
-      font-weight: 700;
-    }
-    .footer-note {
-      font-size: 6.5pt;
-      margin-top: 3px;
-      text-align: center;
-    }
-    .no-print {
-      max-width: 49mm;
-      margin: 6px auto 10px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .no-print button {
-      width: 100%;
-      padding: 7px 10px;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1.5px solid #000;
-      border-radius: 4px;
-      background: #ffffff !important;
-      cursor: pointer;
-    }
-    .no-print button:hover {
-      background: #f1f5f9 !important;
-    }
-    .no-print span {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 9px;
     }
     @media print {
-      .no-print { display: none !important; }
-      html, body { width: 58mm; margin: 0; padding: 0; }
-      .ticket { width: 49mm; max-width: 49mm; padding: 0.5mm 0 2mm; }
+      .panel-controls { display: none !important; }
+      html, body { width: 58mm; margin: 0 !important; padding: 0 !important; }
+      .ticket { width: 44mm; max-width: 44mm; margin: 0 !important; padding: 0 0 2mm 0 !important; }
     }
   </style>
 </head>
 <body>
-  <div class="no-print">
-    <button onclick="window.print()">🖨️ Imprimir Ticket (58mm)</button>
-    <span>Formato adaptado para impresora térmica 58mm</span>
+  <div class="panel-controls">
+    <h4>🖨️ Impresión Óptima ESC/POS (58mm)</h4>
+    <p>Para imprimir sin márgenes ni cortes (como ESC/POS nativo), ejecutá el puente en la PC de la impresora o conectá por USB/Serial:</p>
+    <button class="btn btn-primary" onclick="printViaBridge()">⚡ Reintentar Puente Local ESC/POS</button>
+    <button class="btn btn-accent" onclick="printViaSerial()">🔌 Imprimir ESC/POS Directo (USB / COM)</button>
+    <a class="btn" href="${bridgeDownloadUrl}" download="ecar-print-bridge.ps1">⬇️ Descargar Puente Windows (.ps1)</a>
+    <button class="btn" onclick="window.print()">🖨️ Imprimir por Navegador (Driver Windows)</button>
+    <div id="status" class="status-msg"></div>
   </div>
 
   <div class="ticket">
-    <div class="header">
-      <img class="brand-logo" src="${logoUrl}" alt="ECAR" onerror="this.style.display='none'; document.getElementById('brand-fallback').style.display='block';" />
-      <div id="brand-fallback" class="brand" style="display:none;">ECAR</div>
-      ${opts.subtitle ? `<div class="brand-sub">${escapeHtml(opts.subtitle)}</div>` : ''}
-      <div class="doc-title">${escapeHtml(opts.documentTitle)}</div>
-    </div>
-
-    <div class="doc-box">
-      <div class="doc-box-label">${escapeHtml(opts.badgeLabel)}</div>
-      <div class="doc-box-code">${escapeHtml(opts.badgeCode)}</div>
-    </div>
-
-    <div class="kv-list">
-      ${fieldsHtml}
-    </div>
-
+    <div class="bold">${escapeHtml(opts.documentTitle)}</div>
+    <div class="bold">ECAR S.A.S</div>
+    ${opts.subtitle ? `<div class="bold">${escapeHtml(opts.subtitle)}</div>` : ''}
+    <div class="divider"></div>
+    <div class="bold">${escapeHtml(opts.badgeLabel.toUpperCase())}: ${escapeHtml(opts.badgeCode)}</div>
+    ${fieldsHtml}
     ${
       hasItems
-        ? `
-      <div class="divider-dashed"></div>
-      <div class="section-title">${escapeHtml(opts.itemsTitle || `Detalle de Ítems (${opts.items?.length || 0})`)}</div>
-      ${itemsHtml || '<div class="notes-box">Sin ítems detallados</div>'}
-    `
+        ? `<div class="divider"></div>
+           <div class="bold">${escapeHtml(opts.itemsTitle || `DETALLE (${opts.items?.length || 0})`)}</div>
+           ${itemsHtml || '<div class="row">Sin ítems</div>'}`
         : ''
     }
-
-    ${
-      opts.notes
-        ? `
-      <div class="divider-dashed"></div>
-      <div class="notes-box"><strong>Obs.:</strong> ${escapeHtml(opts.notes)}</div>
-    `
-        : ''
-    }
-
+    ${opts.notes ? `<div class="divider"></div><div class="row">Obs.: ${escapeHtml(opts.notes)}</div>` : ''}
     ${
       opts.authorizationTitle || opts.authorizationText || opts.signatureImage
-        ? `
-      <div class="divider-dashed"></div>
-      <div class="auth-box">
-        ${opts.authorizationTitle ? `<div class="section-title">${escapeHtml(opts.authorizationTitle)}</div>` : ''}
-        ${opts.authorizationText ? `<div>${escapeHtml(opts.authorizationText)}</div>` : ''}
-        ${opts.signatureImage ? `<img class="sig-img" src="${opts.signatureImage}" alt="Firma" />` : ''}
-      </div>
-    `
+        ? `<div style="margin-top:6px;">
+             ${opts.authorizationTitle ? `<div class="bold">${escapeHtml(opts.authorizationTitle.toUpperCase())}</div>` : ''}
+             ${opts.authorizationText ? `<div class="row">${escapeHtml(opts.authorizationText)}</div>` : ''}
+             ${opts.signatureImage ? `<img class="sig-img" src="${opts.signatureImage}" alt="Firma" />` : ''}
+           </div>`
         : ''
     }
-
     ${
       opts.signatureLineLabel
-        ? `
-      <div class="sign-area">
-        <div class="sign-line"></div>
-        <div>${escapeHtml(opts.signatureLineLabel)}</div>
-      </div>
-    `
+        ? `<div class="sign-line"></div><div>${escapeHtml(opts.signatureLineLabel)}</div>`
         : ''
     }
-
-    <div class="divider-solid"></div>
-
     <div class="qr-box">
-      <img src="${qrUrl}" alt="QR Verificación" />
-      <div class="footer-code">${escapeHtml(opts.footerCode || opts.badgeCode)}</div>
+      <img src="${qrUrl}" alt="QR" />
     </div>
-    <div class="footer-note">Documento válido · Sistema ECAR ERP</div>
+    <div class="bold" style="margin-top:4px;">${escapeHtml(opts.footerCode || opts.badgeCode)}</div>
+    <div>Documento valido - Sistema ECAR ERP</div>
   </div>
+
   <script>
-    window.addEventListener('load', function() {
-      setTimeout(function() { window.print(); }, 250);
-    });
+    const ESCPOS_B64 = "${escposBase64}";
+    function b64ToBytes(b64) {
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+    async function printViaBridge() {
+      const st = document.getElementById('status');
+      st.textContent = 'Conectando con puente 127.0.0.1:18181...';
+      try {
+        const res = await fetch('http://127.0.0.1:18181/print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ escposBase64: ESCPOS_B64 })
+        });
+        const j = await res.json();
+        if (j && j.ok) {
+          st.textContent = '✅ Ticket ESC/POS enviado a la impresora.';
+        } else {
+          st.textContent = '❌ No se pudo imprimir en el puente.';
+        }
+      } catch (e) {
+        st.textContent = '⚠️ Puente no detectado. Descargá y ejecutá ecar-print-bridge.ps1';
+      }
+    }
+    async function printViaSerial() {
+      const st = document.getElementById('status');
+      if (!navigator.serial) {
+        st.textContent = '⚠️ Usá Chrome o Edge para Web Serial.';
+        return;
+      }
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        const writer = port.writable.getWriter();
+        await writer.write(b64ToBytes(ESCPOS_B64));
+        writer.releaseLock();
+        await port.close();
+        st.textContent = '✅ Ticket ESC/POS impreso por puerto Serial.';
+      } catch (e) {
+        st.textContent = '❌ ' + (e.message || 'Error Web Serial');
+      }
+    }
   </script>
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', 'width=360,height=680');
+  const win = window.open('', '_blank', 'width=400,height=740');
   if (win) {
     win.document.write(html);
     win.document.close();
